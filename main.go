@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backoffice/handlers/customers"
 	"backoffice/handlers/home"
 	"backoffice/handlers/login"
 	"html/template"
@@ -9,16 +10,20 @@ import (
 )
 
 func init() {
-	// 템플릿 파싱
-	templates := template.Must(template.ParseGlob("templates/*.html"))
+	// 템플릿 파싱 (재귀적으로 모든 하위 디렉터리 포함)
+	templates := template.Must(template.ParseGlob("templates/**/*.html"))
 	home.Templates = templates
 	login.Templates = templates
+	customers.Templates = templates
 }
 
 func main() {
 	// 라우트 설정
-	http.HandleFunc("/", login.Handler)         // 랜딩 페이지 = 로그인
-	http.HandleFunc("/dashboard", home.Handler) // 대시보드
+	http.HandleFunc("/", login.Handler)                    // 랜딩 페이지 = 로그인
+	http.HandleFunc("/dashboard", home.Handler)            // 대시보드
+	http.HandleFunc("/customers", customers.Handler)       // 고객 관리
+	http.HandleFunc("/customers/detail", customers.DetailHandler) // 고객 상세
+	http.HandleFunc("/customers/edit", customers.EditHandler)     // 고객 수정
 
 	// 정적 파일 서빙 (CSS, JS, 이미지 등)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))

@@ -17,6 +17,16 @@ coverage.*
 *.coverprofile
 profile.cov
 
+# 환경 설정 파일
+.env
+.env.local
+.env.*.local
+
+# 데이터베이스 파일
+*.db
+data/
+logs/
+
 # Dependency directories (remove the comment below to include it)
 # vendor/
 

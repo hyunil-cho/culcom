@@ -17,7 +17,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		Error: "",
 	}
 
-	if err := Templates.ExecuteTemplate(w, "login.html", data); err != nil {
+	if err := Templates.ExecuteTemplate(w, "auth/login.html", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Println("Template error:", err)
 	}
