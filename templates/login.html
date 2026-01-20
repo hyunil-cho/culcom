@@ -1,0 +1,71 @@
+{{define "login.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - 백오피스</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/login.css">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <div class="logo">🏢</div>
+                <h1>백오피스</h1>
+                <p>관리자 로그인</p>
+            </div>
+
+            {{if .Error}}
+            <div class="error-message">
+                <span class="error-icon">⚠️</span>
+                <span>{{.Error}}</span>
+            </div>
+            {{end}}
+
+            <div class="login-form">
+                <div class="form-group">
+                    <label for="username">아이디</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">👤</span>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username" 
+                            placeholder="아이디를 입력하세요"
+                        >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">비밀번호</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            placeholder="비밀번호를 입력하세요"
+                        >
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" name="remember">
+                        <span>로그인 상태 유지</span>
+                    </label>
+                </div>
+
+                <a href="/dashboard" class="login-btn">로그인</a>
+            </div>
+
+            <div class="login-footer">
+                <p>&copy; 2026 백오피스. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+{{end}}
