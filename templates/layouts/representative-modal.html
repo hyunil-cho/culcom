@@ -1,24 +1,25 @@
 {{define "representative-modal"}}
 <!-- 대표자 선택 모달 -->
 <div id="representativeModal" class="modal">
-    <div class="modal-content" style="max-width: 700px; max-height: 80vh; display: flex; flex-direction: column;">
+    <div class="modal-content" style="max-width: 800px; max-height: 85vh; display: flex; flex-direction: column;">
         <div class="modal-header" style="padding: 20px;">
             <h3>대표자 선택</h3>
             <span class="modal-close" onclick="closeRepresentativeModal()">&times;</span>
         </div>
         <div class="modal-body" style="padding: 0 20px; overflow-y: auto; flex: 1;">
             <div class="search-section" style="margin-bottom: 20px; padding-top: 10px;">
-                <div class="search-filters">
-                    <div class="filter-group">
-                        <input type="text" id="representativeSearch" placeholder="이름으로 검색" class="search-input" onkeyup="filterRepresentatives()">
-                    </div>
-                    <div class="filter-actions">
-                        <button class="btn-search" onclick="filterRepresentatives()">🔍 검색</button>
-                    </div>
+                <div class="search-filters" style="display: flex; align-items: center; gap: 10px;">
+                    <select id="representativeSearchColumn" class="search-input" style="width: 150px; height: 40px; padding: 8px;">
+                        <option value="name">이름</option>
+                        <option value="alias">별명</option>
+                        <option value="phone">전화번호</option>
+                    </select>
+                    <input type="text" id="representativeSearch" placeholder="검색어를 입력하세요" class="search-input" style="flex: 1; height: 40px; padding: 8px;" onkeyup="filterRepresentatives()">
+                    <button class="btn-search" onclick="filterRepresentatives()" style="height: 40px; white-space: nowrap; padding: 8px 16px;">🔍 검색</button>
                 </div>
             </div>
             
-            <div class="table-wrapper" style="max-height: 300px; overflow-y: auto;">
+            <div class="table-wrapper" style="max-height: 350px; overflow-y: auto;">
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -29,49 +30,49 @@
                         </tr>
                     </thead>
                     <tbody id="representativeList">
-                        <tr data-name="김철수" data-id="EMP001">
+                        <tr data-name="김철수" data-alias="철수" data-phone="010-1234-5678" data-id="EMP001">
                             <td><button class="btn-table-action" onclick="selectRepresentative('김철수', 'EMP001')">선택</button></td>
                             <td>김철수</td>
                             <td>철수</td>
                             <td>010-1234-5678</td>
                         </tr>
-                        <tr data-name="이영희" data-id="EMP002">
+                        <tr data-name="이영희" data-alias="영희" data-phone="010-2345-6789" data-id="EMP002">
                             <td><button class="btn-table-action" onclick="selectRepresentative('이영희', 'EMP002')">선택</button></td>
                             <td>이영희</td>
                             <td>영희</td>
                             <td>010-2345-6789</td>
                         </tr>
-                        <tr data-name="박민수" data-id="EMP003">
+                        <tr data-name="박민수" data-alias="민수" data-phone="010-3456-7890" data-id="EMP003">
                             <td><button class="btn-table-action" onclick="selectRepresentative('박민수', 'EMP003')">선택</button></td>
                             <td>박민수</td>
                             <td>민수</td>
                             <td>010-3456-7890</td>
                         </tr>
-                        <tr data-name="정수진" data-id="EMP004">
+                        <tr data-name="정수진" data-alias="수진" data-phone="010-4567-8901" data-id="EMP004">
                             <td><button class="btn-table-action" onclick="selectRepresentative('정수진', 'EMP004')">선택</button></td>
                             <td>정수진</td>
                             <td>수진</td>
                             <td>010-4567-8901</td>
                         </tr>
-                        <tr data-name="최동욱" data-id="EMP005">
+                        <tr data-name="최동욱" data-alias="동욱" data-phone="010-5678-9012" data-id="EMP005">
                             <td><button class="btn-table-action" onclick="selectRepresentative('최동욱', 'EMP005')">선택</button></td>
                             <td>최동욱</td>
                             <td>동욱</td>
                             <td>010-5678-9012</td>
                         </tr>
-                        <tr data-name="강지훈" data-id="EMP006">
+                        <tr data-name="강지훈" data-alias="지훈" data-phone="010-6789-0123" data-id="EMP006">
                             <td><button class="btn-table-action" onclick="selectRepresentative('강지훈', 'EMP006')">선택</button></td>
                             <td>강지훈</td>
                             <td>지훈</td>
                             <td>010-6789-0123</td>
                         </tr>
-                        <tr data-name="윤서연" data-id="EMP007">
+                        <tr data-name="윤서연" data-alias="서연" data-phone="010-7890-1234" data-id="EMP007">
                             <td><button class="btn-table-action" onclick="selectRepresentative('윤서연', 'EMP007')">선택</button></td>
                             <td>윤서연</td>
                             <td>서연</td>
                             <td>010-7890-1234</td>
                         </tr>
-                        <tr data-name="한재민" data-id="EMP008">
+                        <tr data-name="한재민" data-alias="재민" data-phone="010-8901-2345" data-id="EMP008">
                             <td><button class="btn-table-action" onclick="selectRepresentative('한재민', 'EMP008')">선택</button></td>
                             <td>한재민</td>
                             <td>재민</td>
@@ -117,12 +118,21 @@
 
     function filterRepresentatives() {
         const searchValue = document.getElementById('representativeSearch').value.toLowerCase();
+        const searchColumn = document.getElementById('representativeSearchColumn').value;
         const rows = document.querySelectorAll('#representativeList tr');
         let visibleRows = [];
         
         rows.forEach(row => {
-            const name = row.getAttribute('data-name').toLowerCase();
-            if (name.includes(searchValue)) {
+            let fieldValue = '';
+            if (searchColumn === 'name') {
+                fieldValue = row.getAttribute('data-name').toLowerCase();
+            } else if (searchColumn === 'alias') {
+                fieldValue = row.getAttribute('data-alias').toLowerCase();
+            } else if (searchColumn === 'phone') {
+                fieldValue = row.getAttribute('data-phone').toLowerCase();
+            }
+            
+            if (fieldValue.includes(searchValue)) {
                 visibleRows.push(row);
             }
         });
@@ -145,11 +155,20 @@
     function changeRepPage(page) {
         const rows = document.querySelectorAll('#representativeList tr');
         const searchValue = document.getElementById('representativeSearch').value.toLowerCase();
+        const searchColumn = document.getElementById('representativeSearchColumn').value;
         let visibleCount = 0;
         
         rows.forEach(row => {
-            const name = row.getAttribute('data-name').toLowerCase();
-            if (name.includes(searchValue)) {
+            let fieldValue = '';
+            if (searchColumn === 'name') {
+                fieldValue = row.getAttribute('data-name').toLowerCase();
+            } else if (searchColumn === 'alias') {
+                fieldValue = row.getAttribute('data-alias').toLowerCase();
+            } else if (searchColumn === 'phone') {
+                fieldValue = row.getAttribute('data-phone').toLowerCase();
+            }
+            
+            if (fieldValue.includes(searchValue)) {
                 visibleCount++;
             }
         });
