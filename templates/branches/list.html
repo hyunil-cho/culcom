@@ -1,0 +1,95 @@
+{{define "branches/list.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - 백오피스</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    {{template "sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+<!-- 검색 및 필터 -->
+<div class="content-card">
+    <div class="search-section">
+        <div class="search-filters">
+            <div class="filter-group">
+                <label>검색어</label>
+                <input type="text" placeholder="지점명, 별칭, 주소" class="search-input">
+            </div>
+            <div class="filter-group">
+                <label>등록일</label>
+                <input type="date" class="filter-input">
+            </div>
+            <div class="filter-actions">
+                <button class="btn-search">🔍 검색</button>
+                <button class="btn-reset">🔄 초기화</button>
+            </div>
+        </div>
+        <div class="action-buttons">
+            <button class="btn-primary">➕ 지점 추가</button>
+            <button class="btn-secondary">📥 엑셀 다운로드</button>
+        </div>
+    </div>
+</div>
+
+<!-- 지점 테이블 -->
+<div class="content-card">
+    <div class="table-header">
+        <div class="table-info">
+            <span>총 <strong>{{len .Branches}}</strong>개 지점</span>
+        </div>
+    </div>
+    
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th><input type="checkbox"></th>
+                    <th>지점코드</th>
+                    <th>지점명</th>
+                    <th>별칭</th>
+                    <th>주소</th>
+                    <th>대표자</th>
+                    <th>등록일</th>
+                    <th>관리</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Branches}}
+                <tr>
+                    <td><input type="checkbox"></td>
+                    <td>{{.ID}}</td>
+                    <td><strong>{{.Name}}</strong></td>
+                    <td><span class="status-badge status-active">{{.Alias}}</span></td>
+                    <td>{{.Address}}</td>
+                    <td>{{.Representative}}</td>
+                    <td>{{.RegisterDate}}</td>
+                    <td>
+                        <a href="/branches/detail?id={{.ID}}" class="btn-table-action">상세</a>
+                        <a href="/branches/edit?id={{.ID}}" class="btn-table-action">수정</a>
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 페이지네이션 -->
+    <div class="pagination">
+        <button class="page-btn">◀</button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">▶</button>
+    </div>
+</div>
+        </main>
+    </div>
+</body>
+</html>
+{{end}}

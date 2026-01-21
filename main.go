@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backoffice/handlers/branches"
 	"backoffice/handlers/customers"
 	"backoffice/handlers/home"
 	"backoffice/handlers/login"
@@ -14,11 +15,13 @@ func init() {
 	templates := template.Must(template.ParseGlob("templates/layouts/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/dashboard/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/customers/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/branches/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/auth/*.html"))
 
 	home.Templates = templates
 	login.Templates = templates
 	customers.Templates = templates
+	branches.Templates = templates
 }
 
 func main() {
@@ -26,6 +29,9 @@ func main() {
 	http.HandleFunc("/", login.Handler)                           // 랜딩 페이지 = 로그인
 	http.HandleFunc("/dashboard", home.Handler)                   // 대시보드
 	http.HandleFunc("/customers", customers.Handler)              // 고객 관리
+	http.HandleFunc("/branches", branches.Handler)                // 지점 관리
+	http.HandleFunc("/branches/detail", branches.DetailHandler)   // 지점 상세
+	http.HandleFunc("/branches/edit", branches.EditHandler)       // 지점 수정
 	http.HandleFunc("/customers/detail", customers.DetailHandler) // 고객 상세
 	http.HandleFunc("/customers/edit", customers.EditHandler)     // 고객 수정
 

@@ -1,0 +1,32 @@
+package branches
+
+// Branch - 지점 데이터 구조체
+type Branch struct {
+	ID             string
+	Name           string
+	Alias          string
+	Address        string
+	Representative string
+	RegisterDate   string
+}
+
+// PageData - 지점 관리 페이지 데이터 구조체
+type PageData struct {
+	Title      string
+	ActiveMenu string
+	Branches   []Branch
+}
+
+// DetailPageData - 지점 상세 페이지 데이터 구조체
+type DetailPageData struct {
+	Title      string
+	ActiveMenu string
+	Branch     Branch
+}
+
+// EditPageData - 지점 수정 페이지 데이터 구조체
+type EditPageData struct {
+	Title      string
+	ActiveMenu string
+	Branch     Branch
+}
