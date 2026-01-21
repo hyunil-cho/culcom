@@ -5,6 +5,7 @@ import (
 	"backoffice/handlers/customers"
 	"backoffice/handlers/employees"
 	"backoffice/handlers/home"
+	"backoffice/handlers/integrations"
 	"backoffice/handlers/login"
 	"html/template"
 	"log"
@@ -18,6 +19,7 @@ func init() {
 	templates = template.Must(templates.ParseGlob("templates/customers/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/branches/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/employees/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/integrations/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/auth/*.html"))
 
 	home.Templates = templates
@@ -25,24 +27,27 @@ func init() {
 	customers.Templates = templates
 	branches.Templates = templates
 	employees.Templates = templates
+	integrations.Templates = templates
 }
 
 func main() {
 	// 라우트 설정
-	http.HandleFunc("/", login.Handler)                           // 랜딩 페이지 = 로그인
-	http.HandleFunc("/dashboard", home.Handler)                   // 대시보드
-	http.HandleFunc("/customers", customers.Handler)              // 고객 관리
-	http.HandleFunc("/customers/detail", customers.DetailHandler) // 고객 상세
-	http.HandleFunc("/customers/edit", customers.EditHandler)     // 고객 수정
-	http.HandleFunc("/customers/add", customers.AddHandler)       // 고객 추가
-	http.HandleFunc("/branches", branches.Handler)                // 지점 관리
-	http.HandleFunc("/branches/detail", branches.DetailHandler)   // 지점 상세
-	http.HandleFunc("/branches/edit", branches.EditHandler)       // 지점 수정
-	http.HandleFunc("/branches/add", branches.AddHandler)         // 지점 추가
-	http.HandleFunc("/employees", employees.Handler)              // 직원 관리
-	http.HandleFunc("/employees/detail", employees.DetailHandler) // 직원 상세
-	http.HandleFunc("/employees/edit", employees.EditHandler)     // 직원 수정
-	http.HandleFunc("/employees/add", employees.AddHandler)       // 직원 추가
+	http.HandleFunc("/", login.Handler)                                       // 랜딩 페이지 = 로그인
+	http.HandleFunc("/dashboard", home.Handler)                               // 대시보드
+	http.HandleFunc("/customers", customers.Handler)                          // 고객 관리
+	http.HandleFunc("/customers/detail", customers.DetailHandler)             // 고객 상세
+	http.HandleFunc("/customers/edit", customers.EditHandler)                 // 고객 수정
+	http.HandleFunc("/customers/add", customers.AddHandler)                   // 고객 추가
+	http.HandleFunc("/branches", branches.Handler)                            // 지점 관리
+	http.HandleFunc("/branches/detail", branches.DetailHandler)               // 지점 상세
+	http.HandleFunc("/branches/edit", branches.EditHandler)                   // 지점 수정
+	http.HandleFunc("/branches/add", branches.AddHandler)                     // 지점 추가
+	http.HandleFunc("/employees", employees.Handler)                          // 직원 관리
+	http.HandleFunc("/employees/detail", employees.DetailHandler)             // 직원 상세
+	http.HandleFunc("/employees/edit", employees.EditHandler)                 // 직원 수정
+	http.HandleFunc("/employees/add", employees.AddHandler)                   // 직원 추가
+	http.HandleFunc("/integrations", integrations.Handler)                    // 외부 시스템 연동
+	http.HandleFunc("/integrations/configure", integrations.ConfigureHandler) // 연동 설정
 
 	// 정적 파일 서빙 (CSS, JS, 이미지 등)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
