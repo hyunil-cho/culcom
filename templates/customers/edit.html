@@ -1,136 +1,74 @@
-{{define "customers/edit.html"}}
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Title}} - 백오피스</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-    <!-- 사이드바 -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <h2>🏢 백오피스</h2>
-        </div>
-        <nav class="sidebar-nav">
-            <a href="/dashboard" class="nav-item">
-                <span class="nav-icon">📊</span>
-                <span class="nav-text">대시보드</span>
-            </a>
-            <a href="/customers" class="nav-item active">
-                <span class="nav-icon">👥</span>
-                <span class="nav-text">고객 관리</span>
-            </a>
-            <a href="/products" class="nav-item">
-                <span class="nav-icon">📦</span>
-                <span class="nav-text">상품 관리</span>
-            </a>
-            <a href="/orders" class="nav-item">
-                <span class="nav-icon">🛒</span>
-                <span class="nav-text">주문 관리</span>
-            </a>
-            <a href="/analytics" class="nav-item">
-                <span class="nav-icon">📈</span>
-                <span class="nav-text">통계 분석</span>
-            </a>
-            <a href="/settings" class="nav-item">
-                <span class="nav-icon">⚙️</span>
-                <span class="nav-text">설정</span>
-            </a>
-        </nav>
-    </aside>
+{{define "content"}}
+<!-- 액션 버튼 -->
+<div class="detail-actions">
+    <a href="/customers/detail?id={{.Customer.ID}}" class="btn-back">← 상세로</a>
+</div>
 
-    <!-- 메인 컨텐츠 -->
-    <div class="main-wrapper">
-        <!-- 상단 헤더 -->
-        <header class="top-header">
-            <div class="header-left">
-                <h1>{{.Title}}</h1>
-            </div>
-            <div class="header-right">
-                <div class="user-info">
-                    <span class="user-avatar">👤</span>
-                    <span class="user-name">관리자</span>
-                    <a href="/" class="logout-btn">로그아웃</a>
-                </div>
-            </div>
-        </header>
-
-        <!-- 메인 컨텐츠 영역 -->
-        <main class="content">
-            <!-- 액션 버튼 -->
-            <div class="detail-actions">
-                <a href="/customers/detail?id={{.Customer.ID}}" class="btn-back">← 상세로</a>
-            </div>
-
-            <!-- 고객 수정 폼 -->
-            <div class="content-card">
-                <div class="form-header">
-                    <h2>기본 정보</h2>
-                </div>
-                <div class="form-body">
-                    <div class="form-row">
-                        <label class="form-label">고객번호</label>
-                        <input type="text" class="form-input" value="{{.Customer.ID}}" disabled>
-                    </div>
-
-                    <div class="form-row">
-                        <label class="form-label">이름 <span class="required">*</span></label>
-                        <input type="text" class="form-input" value="{{.Customer.Name}}" placeholder="이름을 입력하세요">
-                    </div>
-
-                    <div class="form-row">
-                        <label class="form-label">전화번호 <span class="required">*</span></label>
-                        <input type="tel" class="form-input" value="{{.Customer.Phone}}" placeholder="전화번호를 입력하세요">
-                    </div>
-
-                    <div class="form-row">
-                        <label class="form-label">이메일 <span class="required">*</span></label>
-                        <input type="email" class="form-input" value="{{.Customer.Email}}" placeholder="이메일을 입력하세요">
-                    </div>
-
-                    <div class="form-row">
-                        <label class="form-label">상태</label>
-                        <select class="form-select">
-                            <option value="정상" {{if eq .Customer.Status "정상"}}selected{{end}}>정상</option>
-                            <option value="휴면" {{if eq .Customer.Status "휴면"}}selected{{end}}>휴면</option>
-                            <option value="탈퇴" {{if eq .Customer.Status "탈퇴"}}selected{{end}}>탈퇴</option>
-                        </select>
-                    </div>
-
-                    <div class="form-row">
-                        <label class="form-label">가입일</label>
-                        <input type="text" class="form-input" value="{{.Customer.RegisterDate}}" disabled>
-                    </div>
-
-                    <div class="form-row">
-                        <label class="form-label">최근 방문</label>
-                        <input type="text" class="form-input" value="{{.Customer.LastVisit}}" disabled>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 추가 정보 -->
-            <div class="content-card">
-                <div class="form-header">
-                    <h2>추가 정보</h2>
-                </div>
-                <div class="form-body">
-                    <div class="form-row">
-                        <label class="form-label">메모</label>
-                        <textarea class="form-textarea" rows="5" placeholder="메모를 입력하세요"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 저장 버튼 -->
-            <div class="form-actions">
-                <button class="btn-primary-large">💾 저장</button>
-                <a href="/customers/detail?id={{.Customer.ID}}" class="btn-secondary-large">취소</a>
-            </div>
-        </main>
+<!-- 고객 수정 폼 -->
+<div class="content-card">
+    <div class="form-header">
+        <h2>기본 정보</h2>
     </div>
-</body>
-</html>
+    <div class="form-body">
+        <div class="form-row">
+            <label class="form-label">고객번호</label>
+            <input type="text" class="form-input" value="{{.Customer.ID}}" disabled>
+        </div>
+
+        <div class="form-row">
+            <label class="form-label">이름 <span class="required">*</span></label>
+            <input type="text" class="form-input" value="{{.Customer.Name}}" placeholder="이름을 입력하세요">
+        </div>
+
+        <div class="form-row">
+            <label class="form-label">전화번호 <span class="required">*</span></label>
+            <input type="tel" class="form-input" value="{{.Customer.Phone}}" placeholder="전화번호를 입력하세요">
+        </div>
+
+        <div class="form-row">
+            <label class="form-label">이메일 <span class="required">*</span></label>
+            <input type="email" class="form-input" value="{{.Customer.Email}}" placeholder="이메일을 입력하세요">
+        </div>
+
+        <div class="form-row">
+            <label class="form-label">상태</label>
+            <select class="form-select">
+                <option value="정상" {{if eq .Customer.Status "정상"}}selected{{end}}>정상</option>
+                <option value="휴면" {{if eq .Customer.Status "휴면"}}selected{{end}}>휴면</option>
+                <option value="탈퇴" {{if eq .Customer.Status "탈퇴"}}selected{{end}}>탈퇴</option>
+            </select>
+        </div>
+
+        <div class="form-row">
+            <label class="form-label">가입일</label>
+            <input type="text" class="form-input" value="{{.Customer.RegisterDate}}" disabled>
+        </div>
+
+        <div class="form-row">
+            <label class="form-label">최근 방문</label>
+            <input type="text" class="form-input" value="{{.Customer.LastVisit}}" disabled>
+        </div>
+    </div>
+</div>
+
+<!-- 추가 정보 -->
+<div class="content-card">
+    <div class="form-header">
+        <h2>추가 정보</h2>
+    </div>
+    <div class="form-body">
+        <div class="form-row">
+            <label class="form-label">메모</label>
+            <textarea class="form-textarea" rows="5" placeholder="메모를 입력하세요"></textarea>
+        </div>
+    </div>
+</div>
+
+<!-- 저장 버튼 -->
+<div class="form-actions">
+    <button class="btn-primary-large">💾 저장</button>
+    <a href="/customers/detail?id={{.Customer.ID}}" class="btn-secondary-large">취소</a>
+</div>
 {{end}}
+
+{{template "base" .}}

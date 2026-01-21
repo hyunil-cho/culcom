@@ -35,8 +35,9 @@ func getCustomerByID(id string) *Customer {
 // Handler - 고객 관리 페이지 핸들러
 func Handler(w http.ResponseWriter, r *http.Request) {
 	data := PageData{
-		Title:     "고객 관리",
-		Customers: dummyCustomers,
+		Title:      "고객 관리",
+		ActiveMenu: "customers",
+		Customers:  dummyCustomers,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "customers/list.html", data); err != nil {
@@ -61,8 +62,9 @@ func DetailHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := DetailPageData{
-		Title:    "고객 상세",
-		Customer: *customer,
+		Title:      "고객 상세",
+		ActiveMenu: "customers",
+		Customer:   *customer,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "customers/detail.html", data); err != nil {
@@ -87,8 +89,9 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := EditPageData{
-		Title:    "고객 수정",
-		Customer: *customer,
+		Title:      "고객 수정",
+		ActiveMenu: "customers",
+		Customer:   *customer,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "customers/edit.html", data); err != nil {

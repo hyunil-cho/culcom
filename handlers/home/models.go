@@ -10,7 +10,8 @@ type StatCard struct {
 
 // PageData - 홈페이지 데이터 구조체
 type PageData struct {
-	Title     string
-	AdminName string
-	Stats     []StatCard
+	Title      string
+	ActiveMenu string
+	AdminName  string
+	Stats      []StatCard
 }

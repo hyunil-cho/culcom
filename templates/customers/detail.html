@@ -1,206 +1,144 @@
-{{define "customers/detail.html"}}
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Title}} - 백오피스</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-    <!-- 사이드바 -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <h2>🏢 백오피스</h2>
+{{define "content"}}
+<!-- 액션 버튼 -->
+<div class="detail-actions">
+    <a href="/customers" class="btn-back">← 목록으로</a>
+    <div class="action-group">
+        <a href="/customers/edit?id={{.Customer.ID}}" class="btn-primary">✏️ 수정</a>
+        <button class="btn-danger" onclick="showDeleteModal('{{.Customer.Name}}', '{{.Customer.ID}}')">🗑️ 삭제</button>
+    </div>
+</div>
+
+<!-- 삭제 확인 모달 -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span class="modal-icon">⚠️</span>
+            <h3>고객 삭제 확인</h3>
         </div>
-        <nav class="sidebar-nav">
-            <a href="/dashboard" class="nav-item">
-                <span class="nav-icon">📊</span>
-                <span class="nav-text">대시보드</span>
-            </a>
-            <a href="/customers" class="nav-item active">
-                <span class="nav-icon">👥</span>
-                <span class="nav-text">고객 관리</span>
-            </a>
-            <a href="/products" class="nav-item">
-                <span class="nav-icon">📦</span>
-                <span class="nav-text">상품 관리</span>
-            </a>
-            <a href="/orders" class="nav-item">
-                <span class="nav-icon">🛒</span>
-                <span class="nav-text">주문 관리</span>
-            </a>
-            <a href="/analytics" class="nav-item">
-                <span class="nav-icon">📈</span>
-                <span class="nav-text">통계 분석</span>
-            </a>
-            <a href="/settings" class="nav-item">
-                <span class="nav-icon">⚙️</span>
-                <span class="nav-text">설정</span>
-            </a>
-        </nav>
-    </aside>
+        <div class="modal-body">
+            <p>정말로 <strong id="customerNameToDelete"></strong> 고객을 삭제하시겠습니까?</p>
+            <p class="warning-text">⚠️ 이 작업은 되돌릴 수 없습니다.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal-cancel" onclick="closeDeleteModal()">취소</button>
+            <button class="btn-modal-confirm" onclick="confirmDelete()">삭제</button>
+        </div>
+    </div>
+</div>
 
-    <!-- 메인 컨텐츠 -->
-    <div class="main-wrapper">
-        <!-- 상단 헤더 -->
-        <header class="top-header">
-            <div class="header-left">
-                <h1>{{.Title}}</h1>
+<!-- 고객 상세 정보 -->
+<div class="content-card">
+    <div class="detail-header">
+        <h2>기본 정보</h2>
+    </div>
+    <div class="detail-body">
+        <div class="detail-row">
+            <div class="detail-label">고객번호</div>
+            <div class="detail-value">{{.Customer.ID}}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">이름</div>
+            <div class="detail-value"><strong>{{.Customer.Name}}</strong></div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">전화번호</div>
+            <div class="detail-value">{{.Customer.Phone}}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">이메일</div>
+            <div class="detail-value">{{.Customer.Email}}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">상태</div>
+            <div class="detail-value">
+                <span class="status-badge status-active">{{.Customer.Status}}</span>
             </div>
-            <div class="header-right">
-                <div class="user-info">
-                    <span class="user-avatar">👤</span>
-                    <span class="user-name">관리자</span>
-                    <a href="/" class="logout-btn">로그아웃</a>
-                </div>
-            </div>
-        </header>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">가입일</div>
+            <div class="detail-value">{{.Customer.RegisterDate}}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">최근 방문</div>
+            <div class="detail-value">{{.Customer.LastVisit}}</div>
+        </div>
+    </div>
+</div>
 
-        <!-- 메인 컨텐츠 영역 -->
-        <main class="content">
-            <!-- 액션 버튼 -->
-            <div class="detail-actions">
-                <a href="/customers" class="btn-back">← 목록으로</a>
-                <div class="action-group">
-                    <a href="/customers/edit?id={{.Customer.ID}}" class="btn-primary">✏️ 수정</a>
-                    <button class="btn-danger" onclick="showDeleteModal('{{.Customer.Name}}', '{{.Customer.ID}}')">🗑️ 삭제</button>
-                </div>
+<!-- 추가 정보 섹션 -->
+<div class="content-grid">
+    <div class="content-card">
+        <div class="detail-header">
+            <h3>구매 이력</h3>
+        </div>
+        <div class="detail-body">
+            <div class="info-item">
+                <span class="info-label">총 구매 횟수</span>
+                <span class="info-value">12회</span>
             </div>
-
-            <!-- 삭제 확인 모달 -->
-            <div id="deleteModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <span class="modal-icon">⚠️</span>
-                        <h3>고객 삭제 확인</h3>
-                    </div>
-                    <div class="modal-body">
-                        <p>정말로 <strong id="customerNameToDelete"></strong> 고객을 삭제하시겠습니까?</p>
-                        <p class="warning-text">⚠️ 이 작업은 되돌릴 수 없습니다.</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn-modal-cancel" onclick="closeDeleteModal()">취소</button>
-                        <button class="btn-modal-confirm" onclick="confirmDelete()">삭제</button>
-                    </div>
-                </div>
+            <div class="info-item">
+                <span class="info-label">총 구매 금액</span>
+                <span class="info-value">₩1,234,000</span>
             </div>
-
-            <!-- 고객 상세 정보 -->
-            <div class="content-card">
-                <div class="detail-header">
-                    <h2>기본 정보</h2>
-                </div>
-                <div class="detail-body">
-                    <div class="detail-row">
-                        <div class="detail-label">고객번호</div>
-                        <div class="detail-value">{{.Customer.ID}}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">이름</div>
-                        <div class="detail-value"><strong>{{.Customer.Name}}</strong></div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">전화번호</div>
-                        <div class="detail-value">{{.Customer.Phone}}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">이메일</div>
-                        <div class="detail-value">{{.Customer.Email}}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">상태</div>
-                        <div class="detail-value">
-                            <span class="status-badge status-active">{{.Customer.Status}}</span>
-                        </div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">가입일</div>
-                        <div class="detail-value">{{.Customer.RegisterDate}}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">최근 방문</div>
-                        <div class="detail-value">{{.Customer.LastVisit}}</div>
-                    </div>
-                </div>
+            <div class="info-item">
+                <span class="info-label">평균 구매 금액</span>
+                <span class="info-value">₩102,833</span>
             </div>
-
-            <!-- 추가 정보 섹션 -->
-            <div class="content-grid">
-                <div class="content-card">
-                    <div class="detail-header">
-                        <h3>구매 이력</h3>
-                    </div>
-                    <div class="detail-body">
-                        <div class="info-item">
-                            <span class="info-label">총 구매 횟수</span>
-                            <span class="info-value">12회</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">총 구매 금액</span>
-                            <span class="info-value">₩1,234,000</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">평균 구매 금액</span>
-                            <span class="info-value">₩102,833</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="content-card">
-                    <div class="detail-header">
-                        <h3>활동 정보</h3>
-                    </div>
-                    <div class="detail-body">
-                        <div class="info-item">
-                            <span class="info-label">총 방문 횟수</span>
-                            <span class="info-value">45회</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">마지막 구매</span>
-                            <span class="info-value">2026-01-20</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">회원 등급</span>
-                            <span class="info-value">골드</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+        </div>
     </div>
 
-    <script>
-        let customerIdToDelete = null;
+    <div class="content-card">
+        <div class="detail-header">
+            <h3>활동 정보</h3>
+        </div>
+        <div class="detail-body">
+            <div class="info-item">
+                <span class="info-label">총 방문 횟수</span>
+                <span class="info-value">45회</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">마지막 구매</span>
+                <span class="info-value">2026-01-20</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">회원 등급</span>
+                <span class="info-value">골드</span>
+            </div>
+        </div>
+    </div>
+</div>
 
-        function showDeleteModal(customerName, customerId) {
-            customerIdToDelete = customerId;
-            document.getElementById('customerNameToDelete').textContent = customerName;
-            document.getElementById('deleteModal').style.display = 'flex';
-        }
+<script>
+    let customerIdToDelete = null;
 
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').style.display = 'none';
-            customerIdToDelete = null;
-        }
+    function showDeleteModal(customerName, customerId) {
+        customerIdToDelete = customerId;
+        document.getElementById('customerNameToDelete').textContent = customerName;
+        document.getElementById('deleteModal').style.display = 'flex';
+    }
 
-        function confirmDelete() {
-            if (customerIdToDelete) {
-                // TODO: 실제 삭제 로직 구현
-                // window.location.href = '/customers/delete?id=' + customerIdToDelete;
-                alert('삭제 기능은 아직 구현되지 않았습니다.');
-                closeDeleteModal();
-            }
-        }
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+        customerIdToDelete = null;
+    }
 
-        // 모달 외부 클릭 시 닫기
-        window.onclick = function(event) {
-            const modal = document.getElementById('deleteModal');
-            if (event.target === modal) {
-                closeDeleteModal();
-            }
+    function confirmDelete() {
+        if (customerIdToDelete) {
+            // TODO: 실제 삭제 로직 구현
+            // window.location.href = '/customers/delete?id=' + customerIdToDelete;
+            alert('삭제 기능은 아직 구현되지 않았습니다.');
+            closeDeleteModal();
         }
-    </script>
-</body>
-</html>
+    }
+
+    // 모달 외부 클릭 시 닫기
+    window.onclick = function(event) {
+        const modal = document.getElementById('deleteModal');
+        if (event.target === modal) {
+            closeDeleteModal();
+        }
+    }
+</script>
 {{end}}
+
+{{template "base" .}}

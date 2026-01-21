@@ -1,0 +1,17 @@
+{{define "sidebar"}}
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <h2>🏢 백오피스</h2>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="/dashboard" class="nav-item {{if eq .ActiveMenu "dashboard"}}active{{end}}">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">대시보드</span>
+        </a>
+        <a href="/customers" class="nav-item {{if eq .ActiveMenu "customers"}}active{{end}}">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">고객 관리</span>
+        </a>
+    </nav>
+</aside>
+{{end}}
