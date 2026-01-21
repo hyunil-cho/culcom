@@ -1,0 +1,245 @@
+{{define "branches-modal"}}
+<!-- 지점 다중 선택 모달 -->
+<div id="branchesModal" class="modal">
+    <div class="modal-content" style="max-width: 800px; max-height: 85vh; display: flex; flex-direction: column;">
+        <div class="modal-header" style="padding: 20px;">
+            <h3>소속 지점 선택</h3>
+            <span class="modal-close" onclick="closeBranchesModal()">&times;</span>
+        </div>
+        <div class="modal-body" style="padding: 0 20px; overflow-y: auto; flex: 1;">
+            <div class="search-section" style="margin-bottom: 20px; padding-top: 10px;">
+                <div class="search-filters" style="display: flex; align-items: center; gap: 10px;">
+                    <select id="branchesSearchColumn" class="search-input" style="width: 150px; height: 40px; padding: 8px;">
+                        <option value="name">지점명</option>
+                        <option value="alias">별칭</option>
+                        <option value="address">주소</option>
+                    </select>
+                    <input type="text" id="branchesSearch" placeholder="검색어를 입력하세요" class="search-input" style="flex: 1; height: 40px; padding: 8px;" onkeyup="filterBranches()">
+                    <button class="btn-search" onclick="filterBranches()" style="height: 40px; white-space: nowrap; padding: 8px 16px;">🔍 검색</button>
+                </div>
+            </div>
+            
+            <div class="table-wrapper" style="max-height: 350px; overflow-y: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center; width: 60px;">선택</th>
+                            <th style="text-align: center">지점명</th>
+                            <th style="text-align: center">별칭</th>
+                            <th style="text-align: center">주소</th>
+                        </tr>
+                    </thead>
+                    <tbody id="branchesList">
+                        <tr data-name="강남점" data-alias="gangnam" data-address="서울시 강남구" data-id="BR001">
+                            <td style="text-align: center;">
+                                <input type="checkbox" class="branch-checkbox" value="강남점" data-id="BR001" onchange="updateSelectedBranches()">
+                            </td>
+                            <td>강남점</td>
+                            <td>gangnam</td>
+                            <td>서울시 강남구</td>
+                        </tr>
+                        <tr data-name="홍대점" data-alias="hongdae" data-address="서울시 마포구" data-id="BR002">
+                            <td style="text-align: center;">
+                                <input type="checkbox" class="branch-checkbox" value="홍대점" data-id="BR002" onchange="updateSelectedBranches()">
+                            </td>
+                            <td>홍대점</td>
+                            <td>hongdae</td>
+                            <td>서울시 마포구</td>
+                        </tr>
+                        <tr data-name="신촌점" data-alias="sinchon" data-address="서울시 서대문구" data-id="BR003">
+                            <td style="text-align: center;">
+                                <input type="checkbox" class="branch-checkbox" value="신촌점" data-id="BR003" onchange="updateSelectedBranches()">
+                            </td>
+                            <td>신촌점</td>
+                            <td>sinchon</td>
+                            <td>서울시 서대문구</td>
+                        </tr>
+                        <tr data-name="잠실점" data-alias="jamsil" data-address="서울시 송파구" data-id="BR004">
+                            <td style="text-align: center;">
+                                <input type="checkbox" class="branch-checkbox" value="잠실점" data-id="BR004" onchange="updateSelectedBranches()">
+                            </td>
+                            <td>잠실점</td>
+                            <td>jamsil</td>
+                            <td>서울시 송파구</td>
+                        </tr>
+                        <tr data-name="건대점" data-alias="konkuk" data-address="서울시 광진구" data-id="BR005">
+                            <td style="text-align: center;">
+                                <input type="checkbox" class="branch-checkbox" value="건대점" data-id="BR005" onchange="updateSelectedBranches()">
+                            </td>
+                            <td>건대점</td>
+                            <td>konkuk</td>
+                            <td>서울시 광진구</td>
+                        </tr>
+                        <tr data-name="압구정점" data-alias="apgujeong" data-address="서울시 강남구" data-id="BR006">
+                            <td style="text-align: center;">
+                                <input type="checkbox" class="branch-checkbox" value="압구정점" data-id="BR006" onchange="updateSelectedBranches()">
+                            </td>
+                            <td>압구정점</td>
+                            <td>apgujeong</td>
+                            <td>서울시 강남구</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 페이지네이션 -->
+            <div class="pagination" style="margin-top: 20px;">
+                <button class="page-btn" onclick="changeBranchPage('prev')">◀</button>
+                <button class="page-btn active" id="branch-page-1" onclick="changeBranchPage(1)">1</button>
+                <button class="page-btn" id="branch-page-2" onclick="changeBranchPage(2)">2</button>
+                <button class="page-btn" onclick="changeBranchPage('next')">▶</button>
+            </div>
+        </div>
+        <div class="modal-footer" style="padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="color: #666;">
+                <span id="selectedCount">0</span>개 지점 선택됨
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-primary" onclick="confirmBranchesSelection()">확인</button>
+                <button class="btn-modal-cancel" onclick="closeBranchesModal()">취소</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentBranchPage = 1;
+    const branchItemsPerPage = 5;
+    let selectedBranches = [];
+
+    function openBranchesModal() {
+        document.getElementById('branchesModal').style.display = 'flex';
+        document.getElementById('branchesSearch').value = '';
+        currentBranchPage = 1;
+        
+        // 기존 선택된 지점 불러오기
+        const currentValue = document.getElementById('branchesInput').value;
+        selectedBranches = currentValue ? currentValue.split(', ').filter(b => b.trim()) : [];
+        
+        // 체크박스 상태 복원
+        document.querySelectorAll('.branch-checkbox').forEach(checkbox => {
+            checkbox.checked = selectedBranches.includes(checkbox.value);
+        });
+        
+        updateSelectedCount();
+        filterBranches();
+    }
+
+    function closeBranchesModal() {
+        document.getElementById('branchesModal').style.display = 'none';
+    }
+
+    function updateSelectedBranches() {
+        selectedBranches = [];
+        document.querySelectorAll('.branch-checkbox:checked').forEach(checkbox => {
+            selectedBranches.push(checkbox.value);
+        });
+        updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+        document.getElementById('selectedCount').textContent = selectedBranches.length;
+    }
+
+    function confirmBranchesSelection() {
+        document.getElementById('branchesInput').value = selectedBranches.join(', ');
+        closeBranchesModal();
+    }
+
+    function filterBranches() {
+        const searchValue = document.getElementById('branchesSearch').value.toLowerCase();
+        const searchColumn = document.getElementById('branchesSearchColumn').value;
+        const rows = document.querySelectorAll('#branchesList tr');
+        let visibleRows = [];
+        
+        rows.forEach(row => {
+            let fieldValue = '';
+            if (searchColumn === 'name') {
+                fieldValue = row.getAttribute('data-name').toLowerCase();
+            } else if (searchColumn === 'alias') {
+                fieldValue = row.getAttribute('data-alias').toLowerCase();
+            } else if (searchColumn === 'address') {
+                fieldValue = row.getAttribute('data-address').toLowerCase();
+            }
+            
+            if (fieldValue.includes(searchValue)) {
+                visibleRows.push(row);
+            }
+        });
+        
+        // 페이지네이션 적용
+        const totalPages = Math.ceil(visibleRows.length / branchItemsPerPage);
+        const startIdx = (currentBranchPage - 1) * branchItemsPerPage;
+        const endIdx = startIdx + branchItemsPerPage;
+        
+        rows.forEach(row => row.style.display = 'none');
+        visibleRows.forEach((row, idx) => {
+            if (idx >= startIdx && idx < endIdx) {
+                row.style.display = '';
+            }
+        });
+        
+        updateBranchPagination(totalPages);
+    }
+
+    function changeBranchPage(page) {
+        const rows = document.querySelectorAll('#branchesList tr');
+        const searchValue = document.getElementById('branchesSearch').value.toLowerCase();
+        const searchColumn = document.getElementById('branchesSearchColumn').value;
+        let visibleCount = 0;
+        
+        rows.forEach(row => {
+            let fieldValue = '';
+            if (searchColumn === 'name') {
+                fieldValue = row.getAttribute('data-name').toLowerCase();
+            } else if (searchColumn === 'alias') {
+                fieldValue = row.getAttribute('data-alias').toLowerCase();
+            } else if (searchColumn === 'address') {
+                fieldValue = row.getAttribute('data-address').toLowerCase();
+            }
+            
+            if (fieldValue.includes(searchValue)) {
+                visibleCount++;
+            }
+        });
+        
+        const totalPages = Math.ceil(visibleCount / branchItemsPerPage);
+        
+        if (page === 'prev') {
+            if (currentBranchPage > 1) currentBranchPage--;
+        } else if (page === 'next') {
+            if (currentBranchPage < totalPages) currentBranchPage++;
+        } else {
+            currentBranchPage = page;
+        }
+        
+        filterBranches();
+    }
+
+    function updateBranchPagination(totalPages) {
+        const pageButtons = document.querySelectorAll('#branchesModal .pagination .page-btn');
+        pageButtons.forEach(btn => {
+            if (btn.id && btn.id.startsWith('branch-page-')) {
+                const pageNum = parseInt(btn.id.split('-')[2]);
+                if (pageNum <= totalPages) {
+                    btn.style.display = '';
+                    if (pageNum === currentBranchPage) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                } else {
+                    btn.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    window.onclick = function(event) {
+        const modal = document.getElementById('branchesModal');
+        if (event.target === modal) {
+            closeBranchesModal();
+        }
+    }
+</script>
+{{end}}

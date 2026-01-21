@@ -3,6 +3,7 @@ package main
 import (
 	"backoffice/handlers/branches"
 	"backoffice/handlers/customers"
+	"backoffice/handlers/employees"
 	"backoffice/handlers/home"
 	"backoffice/handlers/login"
 	"html/template"
@@ -16,12 +17,14 @@ func init() {
 	templates = template.Must(templates.ParseGlob("templates/dashboard/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/customers/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/branches/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/employees/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/auth/*.html"))
 
 	home.Templates = templates
 	login.Templates = templates
 	customers.Templates = templates
 	branches.Templates = templates
+	employees.Templates = templates
 }
 
 func main() {
@@ -36,6 +39,10 @@ func main() {
 	http.HandleFunc("/branches/detail", branches.DetailHandler)   // 지점 상세
 	http.HandleFunc("/branches/edit", branches.EditHandler)       // 지점 수정
 	http.HandleFunc("/branches/add", branches.AddHandler)         // 지점 추가
+	http.HandleFunc("/employees", employees.Handler)              // 직원 관리
+	http.HandleFunc("/employees/detail", employees.DetailHandler) // 직원 상세
+	http.HandleFunc("/employees/edit", employees.EditHandler)     // 직원 수정
+	http.HandleFunc("/employees/add", employees.AddHandler)       // 직원 추가
 
 	// 정적 파일 서빙 (CSS, JS, 이미지 등)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))

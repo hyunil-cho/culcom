@@ -1,0 +1,95 @@
+{{define "employees/list.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - 백오피스</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    {{template "sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+<!-- 페이지 헤더 -->
+<div class="page-header">
+    <h1>직원 관리</h1>
+</div>
+
+<!-- 검색 및 필터 -->
+<div class="content-card">
+    <div class="search-section">
+        <div class="search-filters">
+            <div class="filter-group">
+                <label>검색어</label>
+                <input type="text" placeholder="이름, 별명, 전화번호" class="search-input">
+            </div>
+            <div class="filter-group">
+                <label>등록일</label>
+                <input type="date" class="filter-input">
+            </div>
+            <div class="filter-actions">
+                <button class="btn-search">🔍 검색</button>
+                <button class="btn-reset">🔄 초기화</button>
+            </div>
+        </div>
+        <div class="action-buttons">
+            <a href="/employees/add" class="btn-primary">➕ 직원 추가</a>
+            <button class="btn-secondary">📥 엑셀 다운로드</button>
+        </div>
+    </div>
+</div>
+
+<!-- 직원 테이블 -->
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>직원 ID</th>
+                <th>이름</th>
+                <th>별명</th>
+                <th>전화번호</th>
+                <th>소속 지점</th>
+                <th>등록일</th>
+                <th>작업</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Employees}}
+            <tr>
+                <td>{{.ID}}</td>
+                <td>{{.Name}}</td>
+                <td>{{.Alias}}</td>
+                <td>{{.Phone}}</td>
+                <td>
+                    {{range $index, $branch := .Branches}}
+                        {{if $index}}, {{end}}{{$branch}}
+                    {{end}}
+                </td>
+                <td>{{.RegisterDate}}</td>
+                <td class="action-cell">
+                    <a href="/employees/detail?id={{.ID}}" class="btn-table-action">상세</a>
+                    <a href="/employees/edit?id={{.ID}}" class="btn-table-action">수정</a>
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+
+<!-- 페이지네이션 -->
+<div class="pagination">
+    <button class="page-btn">◀</button>
+    <button class="page-btn active">1</button>
+    <button class="page-btn">2</button>
+    <button class="page-btn">3</button>
+    <button class="page-btn">▶</button>
+</div>
+        </main>
+    </div>
+</body>
+</html>
+{{end}}
