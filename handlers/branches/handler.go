@@ -1,6 +1,7 @@
 package branches
 
 import (
+	"backoffice/handlers/errorhandler"
 	"html/template"
 	"log"
 	"net/http"
@@ -51,7 +52,7 @@ func DetailHandler(w http.ResponseWriter, r *http.Request) {
 
 	branch := getBranchByID(id)
 	if branch == nil {
-		http.Error(w, "지점을 찾을 수 없습니다", http.StatusNotFound)
+		errorhandler.Handler404(w, r)
 		return
 	}
 
@@ -77,7 +78,7 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 
 	branch := getBranchByID(id)
 	if branch == nil {
-		http.Error(w, "지점을 찾을 수 없습니다", http.StatusNotFound)
+		errorhandler.Handler404(w, r)
 		return
 	}
 

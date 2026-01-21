@@ -1,6 +1,7 @@
 package customers
 
 import (
+	"backoffice/handlers/errorhandler"
 	"html/template"
 	"log"
 	"net/http"
@@ -57,7 +58,7 @@ func DetailHandler(w http.ResponseWriter, r *http.Request) {
 
 	customer := getCustomerByID(id)
 	if customer == nil {
-		http.Error(w, "고객을 찾을 수 없습니다", http.StatusNotFound)
+		errorhandler.Handler404(w, r)
 		return
 	}
 
@@ -84,7 +85,7 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 
 	customer := getCustomerByID(id)
 	if customer == nil {
-		http.Error(w, "고객을 찾을 수 없습니다", http.StatusNotFound)
+		errorhandler.Handler404(w, r)
 		return
 	}
 
