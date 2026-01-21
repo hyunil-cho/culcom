@@ -99,3 +99,16 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Template error:", err)
 	}
 }
+
+// AddHandler - 고객 추가 페이지 핸들러
+func AddHandler(w http.ResponseWriter, r *http.Request) {
+	data := PageData{
+		Title:      "고객 추가",
+		ActiveMenu: "customers",
+	}
+
+	if err := Templates.ExecuteTemplate(w, "customers/add.html", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println("Template error:", err)
+	}
+}

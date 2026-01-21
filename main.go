@@ -29,11 +29,13 @@ func main() {
 	http.HandleFunc("/", login.Handler)                           // 랜딩 페이지 = 로그인
 	http.HandleFunc("/dashboard", home.Handler)                   // 대시보드
 	http.HandleFunc("/customers", customers.Handler)              // 고객 관리
+	http.HandleFunc("/customers/detail", customers.DetailHandler) // 고객 상세
+	http.HandleFunc("/customers/edit", customers.EditHandler)     // 고객 수정
+	http.HandleFunc("/customers/add", customers.AddHandler)       // 고객 추가
 	http.HandleFunc("/branches", branches.Handler)                // 지점 관리
 	http.HandleFunc("/branches/detail", branches.DetailHandler)   // 지점 상세
 	http.HandleFunc("/branches/edit", branches.EditHandler)       // 지점 수정
-	http.HandleFunc("/customers/detail", customers.DetailHandler) // 고객 상세
-	http.HandleFunc("/customers/edit", customers.EditHandler)     // 고객 수정
+	http.HandleFunc("/branches/add", branches.AddHandler)         // 지점 추가
 
 	// 정적 파일 서빙 (CSS, JS, 이미지 등)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))

@@ -92,3 +92,16 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Template error:", err)
 	}
 }
+
+// AddHandler - 지점 추가 페이지 핸들러
+func AddHandler(w http.ResponseWriter, r *http.Request) {
+	data := PageData{
+		Title:      "지점 추가",
+		ActiveMenu: "branches",
+	}
+
+	if err := Templates.ExecuteTemplate(w, "branches/add.html", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println("Template error:", err)
+	}
+}

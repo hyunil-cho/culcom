@@ -1,4 +1,4 @@
-{{define "branches/edit.html"}}
+{{define "branches/add.html"}}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -16,47 +16,37 @@
         <main class="content">
 <!-- 액션 버튼 -->
 <div class="detail-actions">
-    <a href="/branches/detail?id={{.Branch.ID}}" class="btn-back">← 상세로</a>
+    <a href="/branches" class="btn-back">← 목록으로</a>
 </div>
 
-<!-- 지점 수정 폼 -->
+<!-- 지점 추가 폼 -->
 <div class="content-card">
     <div class="form-header">
         <h2>기본 정보</h2>
     </div>
     <div class="form-body">
         <div class="form-row">
-            <label class="form-label">지점코드</label>
-            <input type="text" class="form-input" value="{{.Branch.ID}}" disabled>
-        </div>
-
-        <div class="form-row">
             <label class="form-label">지점명 <span class="required">*</span></label>
-            <input type="text" class="form-input" value="{{.Branch.Name}}" placeholder="지점명을 입력하세요">
+            <input type="text" class="form-input" placeholder="지점명을 입력하세요">
         </div>
 
         <div class="form-row">
             <label class="form-label">별칭 <span class="required">*</span></label>
-            <input type="text" class="form-input" value="{{.Branch.Alias}}" placeholder="영문 별칭을 입력하세요">
+            <input type="text" class="form-input" placeholder="영문 별칭을 입력하세요">
             <small class="form-hint">영문만 입력 가능합니다 (예: gangnam, hongdae)</small>
         </div>
 
         <div class="form-row">
             <label class="form-label">주소 <span class="required">*</span></label>
-            <input type="text" class="form-input" value="{{.Branch.Address}}" placeholder="주소를 입력하세요">
+            <input type="text" class="form-input" placeholder="주소를 입력하세요">
         </div>
 
         <div class="form-row">
             <label class="form-label">대표자 <span class="required">*</span></label>
             <div style="display: flex; gap: 10px;">
-                <input type="text" id="representativeInput" class="form-input" value="{{.Branch.Representative}}" placeholder="대표자를 선택하세요" readonly>
+                <input type="text" id="representativeInput" class="form-input" placeholder="대표자를 선택하세요" readonly>
                 <button type="button" class="btn-primary" onclick="openRepresentativeModal()">찾아보기</button>
             </div>
-        </div>
-
-        <div class="form-row">
-            <label class="form-label">등록일</label>
-            <input type="text" class="form-input" value="{{.Branch.RegisterDate}}" disabled>
         </div>
     </div>
 </div>
@@ -77,7 +67,7 @@
 <!-- 저장 버튼 -->
 <div class="form-actions">
     <button class="btn-primary-large">💾 저장</button>
-    <a href="/branches/detail?id={{.Branch.ID}}" class="btn-secondary-large">취소</a>
+    <a href="/branches" class="btn-secondary-large">취소</a>
 </div>
 
 <!-- 대표자 선택 모달 -->

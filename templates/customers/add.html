@@ -1,0 +1,76 @@
+{{define "customers/add.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - 백오피스</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    {{template "sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+<!-- 액션 버튼 -->
+<div class="detail-actions">
+    <a href="/customers" class="btn-back">← 목록으로</a>
+</div>
+
+<!-- 고객 추가 폼 -->
+<div class="content-card">
+    <div class="form-header">
+        <h2>기본 정보</h2>
+    </div>
+    <div class="form-body">
+        <div class="form-row">
+            <label class="form-label">이름 <span class="required">*</span></label>
+            <input type="text" class="form-input" placeholder="이름을 입력하세요">
+        </div>
+
+        <div class="form-row">
+            <label class="form-label">전화번호 <span class="required">*</span></label>
+            <input type="tel" class="form-input" placeholder="전화번호를 입력하세요">
+        </div>
+
+        <div class="form-row">
+            <label class="form-label">이메일 <span class="required">*</span></label>
+            <input type="email" class="form-input" placeholder="이메일을 입력하세요">
+        </div>
+
+        <div class="form-row">
+            <label class="form-label">상태</label>
+            <select class="form-select">
+                <option value="정상" selected>정상</option>
+                <option value="휴면">휴면</option>
+                <option value="탈퇴">탈퇴</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- 추가 정보 -->
+<div class="content-card">
+    <div class="form-header">
+        <h2>추가 정보</h2>
+    </div>
+    <div class="form-body">
+        <div class="form-row">
+            <label class="form-label">메모</label>
+            <textarea class="form-textarea" rows="5" placeholder="메모를 입력하세요"></textarea>
+        </div>
+    </div>
+</div>
+
+<!-- 저장 버튼 -->
+<div class="form-actions">
+    <button class="btn-primary-large">💾 저장</button>
+    <a href="/customers" class="btn-secondary-large">취소</a>
+</div>
+        </main>
+    </div>
+</body>
+</html>
+{{end}}
