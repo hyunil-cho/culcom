@@ -8,145 +8,100 @@
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <!-- 사이드바 -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <h2>🏢 백오피스</h2>
-        </div>
-        <nav class="sidebar-nav">
-            <a href="/dashboard" class="nav-item">
-                <span class="nav-icon">📊</span>
-                <span class="nav-text">대시보드</span>
-            </a>
-            <a href="/customers" class="nav-item active">
-                <span class="nav-icon">👥</span>
-                <span class="nav-text">고객 관리</span>
-            </a>
-            <a href="/products" class="nav-item">
-                <span class="nav-icon">📦</span>
-                <span class="nav-text">상품 관리</span>
-            </a>
-            <a href="/orders" class="nav-item">
-                <span class="nav-icon">🛒</span>
-                <span class="nav-text">주문 관리</span>
-            </a>
-            <a href="/analytics" class="nav-item">
-                <span class="nav-icon">📈</span>
-                <span class="nav-text">통계 분석</span>
-            </a>
-            <a href="/settings" class="nav-item">
-                <span class="nav-icon">⚙️</span>
-                <span class="nav-text">설정</span>
-            </a>
-        </nav>
-    </aside>
-
-    <!-- 메인 컨텐츠 -->
+    {{template "sidebar" .}}
+    
     <div class="main-wrapper">
-        <!-- 상단 헤더 -->
-        <header class="top-header">
-            <div class="header-left">
-                <h1>{{.Title}}</h1>
-            </div>
-            <div class="header-right">
-                <div class="user-info">
-                    <span class="user-avatar">👤</span>
-                    <span class="user-name">관리자</span>
-                    <a href="/" class="logout-btn">로그아웃</a>
-                </div>
-            </div>
-        </header>
-
-        <!-- 메인 컨텐츠 영역 -->
+        {{template "header" .}}
+        
         <main class="content">
-            <!-- 검색 및 필터 -->
-            <div class="content-card">
-                <div class="search-section">
-                    <div class="search-filters">
-                        <div class="filter-group">
-                            <label>검색어</label>
-                            <input type="text" placeholder="고객명, 전화번호, 이메일" class="search-input">
-                        </div>
-                        <div class="filter-group">
-                            <label>상태</label>
-                            <select class="filter-select">
-                                <option>전체</option>
-                                <option>정상</option>
-                                <option>휴면</option>
-                                <option>탈퇴</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label>등록일</label>
-                            <input type="date" class="filter-input">
-                        </div>
-                        <div class="filter-actions">
-                            <button class="btn-search">🔍 검색</button>
-                            <button class="btn-reset">🔄 초기화</button>
-                        </div>
-                    </div>
-                    <div class="action-buttons">
-                        <button class="btn-primary">➕ 고객 추가</button>
-                        <button class="btn-secondary">📥 엑셀 다운로드</button>
-                    </div>
-                </div>
+<!-- 검색 및 필터 -->
+<div class="content-card">
+    <div class="search-section">
+        <div class="search-filters">
+            <div class="filter-group">
+                <label>검색어</label>
+                <input type="text" placeholder="고객명, 전화번호, 이메일" class="search-input">
             </div>
-
-            <!-- 고객 테이블 -->
-            <div class="content-card">
-                <div class="table-header">
-                    <div class="table-info">
-                        <span>총 <strong>{{len .Customers}}</strong>명</span>
-                    </div>
-                </div>
-                
-                <div class="table-wrapper">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th><input type="checkbox"></th>
-                                <th>고객번호</th>
-                                <th>이름</th>
-                                <th>전화번호</th>
-                                <th>이메일</th>
-                                <th>상태</th>
-                                <th>가입일</th>
-                                <th>최근방문</th>
-                                <th>관리</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {{range .Customers}}
-                            <tr>
-                                <td><input type="checkbox"></td>
-                                <td>{{.ID}}</td>
-                                <td><strong>{{.Name}}</strong></td>
-                                <td>{{.Phone}}</td>
-                                <td>{{.Email}}</td>
-                                <td><span class="status-badge status-active">{{.Status}}</span></td>
-                                <td>{{.RegisterDate}}</td>
-                                <td>{{.LastVisit}}</td>
-                                <td>
-                                    <a href="/customers/detail?id={{.ID}}" class="btn-table-action">상세</a>
-                                    <a href="/customers/edit?id={{.ID}}" class="btn-table-action">수정</a>
-                                </td>
-                            </tr>
-                            {{end}}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- 페이지네이션 -->
-                <div class="pagination">
-                    <button class="page-btn">◀</button>
-                    <button class="page-btn active">1</button>
-                    <button class="page-btn">2</button>
-                    <button class="page-btn">3</button>
-                    <button class="page-btn">4</button>
-                    <button class="page-btn">5</button>
-                    <button class="page-btn">▶</button>
-                </div>
+            <div class="filter-group">
+                <label>상태</label>
+                <select class="filter-select">
+                    <option>전체</option>
+                    <option>정상</option>
+                    <option>휴면</option>
+                    <option>탈퇴</option>
+                </select>
             </div>
+            <div class="filter-group">
+                <label>등록일</label>
+                <input type="date" class="filter-input">
+            </div>
+            <div class="filter-actions">
+                <button class="btn-search">🔍 검색</button>
+                <button class="btn-reset">🔄 초기화</button>
+            </div>
+        </div>
+        <div class="action-buttons">
+            <button class="btn-primary">➕ 고객 추가</button>
+            <button class="btn-secondary">📥 엑셀 다운로드</button>
+        </div>
+    </div>
+</div>
+
+<!-- 고객 테이블 -->
+<div class="content-card">
+    <div class="table-header">
+        <div class="table-info">
+            <span>총 <strong>{{len .Customers}}</strong>명</span>
+        </div>
+    </div>
+    
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th><input type="checkbox"></th>
+                    <th>고객번호</th>
+                    <th>이름</th>
+                    <th>전화번호</th>
+                    <th>이메일</th>
+                    <th>상태</th>
+                    <th>가입일</th>
+                    <th>최근방문</th>
+                    <th>관리</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Customers}}
+                <tr>
+                    <td><input type="checkbox"></td>
+                    <td>{{.ID}}</td>
+                    <td><strong>{{.Name}}</strong></td>
+                    <td>{{.Phone}}</td>
+                    <td>{{.Email}}</td>
+                    <td><span class="status-badge status-active">{{.Status}}</span></td>
+                    <td>{{.RegisterDate}}</td>
+                    <td>{{.LastVisit}}</td>
+                    <td>
+                        <a href="/customers/detail?id={{.ID}}" class="btn-table-action">상세</a>
+                        <a href="/customers/edit?id={{.ID}}" class="btn-table-action">수정</a>
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 페이지네이션 -->
+    <div class="pagination">
+        <button class="page-btn">◀</button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <button class="page-btn">4</button>
+        <button class="page-btn">5</button>
+        <button class="page-btn">▶</button>
+    </div>
+</div>
         </main>
     </div>
 </body>

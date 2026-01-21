@@ -1,4 +1,19 @@
-{{define "content"}}
+{{define "customers/detail.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - 백오피스</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    {{template "sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
 <!-- 액션 버튼 -->
 <div class="detail-actions">
     <a href="/customers" class="btn-back">← 목록으로</a>
@@ -139,6 +154,8 @@
         }
     }
 </script>
+        </main>
+    </div>
+</body>
+</html>
 {{end}}
-
-{{template "base" .}}

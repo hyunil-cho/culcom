@@ -4,103 +4,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Title}} - CulCom-BackOffice</title>
+    <title>{{.Title}} - 백오피스</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <!-- 사이드바 -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <h2>🏢 CulCom</h2>
-        </div>
-        <nav class="sidebar-nav">
-            <a href="/dashboard" class="nav-item active">
-                <span class="nav-icon">📊</span>
-                <span class="nav-text">대시보드</span>
-            </a>
-            <a href="/customers" class="nav-item">
-                <span class="nav-icon">👥</span>
-                <span class="nav-text">고객 관리</span>
-            </a>
-        </nav>
-    </aside>
-
-    <!-- 메인 컨텐츠 -->
+    {{template "sidebar" .}}
+    
     <div class="main-wrapper">
-        <!-- 상단 헤더 -->
-        <header class="top-header">
-            <div class="header-left">
-                <h1>{{.Title}}</h1>
-            </div>
-            <div class="header-right">
-                <div class="user-info">
-                    <span class="user-avatar">👤</span>
-                    <span class="user-name">{{.AdminName}}</span>
-                    <button class="logout-btn">로그아웃</button>
-                </div>
-            </div>
-        </header>
-
-        <!-- 메인 컨텐츠 영역 -->
+        {{template "header" .}}
+        
         <main class="content">
-            <!-- 통계 카드 그리드 -->
-            <div class="stats-grid">
-                {{range .Stats}}
-                <div class="stat-card" style="border-left: 4px solid {{.Color}}">
-                    <div class="stat-icon">{{.Icon}}</div>
-                    <div class="stat-info">
-                        <div class="stat-title">{{.Title}}</div>
-                        <div class="stat-value">{{.Value}}</div>
-                    </div>
-                </div>
-                {{end}}
-            </div>
+<!-- 통계 카드 그리드 -->
+<div class="stats-grid">
+    {{range .Stats}}
+    <div class="stat-card" style="border-left: 4px solid {{.Color}}">
+        <div class="stat-icon">{{.Icon}}</div>
+        <div class="stat-info">
+            <div class="stat-title">{{.Title}}</div>
+            <div class="stat-value">{{.Value}}</div>
+        </div>
+    </div>
+    {{end}}
+</div>
 
-            <!-- 콘텐츠 섹션 -->
-            <div class="content-grid">
-                <div class="content-card">
-                    <div class="card-header">
-                        <h3>최근 활동</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="activity-item">
-                            <div class="activity-icon">✅</div>
-                            <div class="activity-details">
-                                <div class="activity-title">새로운 주문이 접수되었습니다</div>
-                                <div class="activity-time">5분 전</div>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon">👤</div>
-                            <div class="activity-details">
-                                <div class="activity-title">새로운 사용자가 가입했습니다</div>
-                                <div class="activity-time">15분 전</div>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon">📦</div>
-                            <div class="activity-details">
-                                <div class="activity-title">상품 재고가 업데이트되었습니다</div>
-                                <div class="activity-time">1시간 전</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="content-card">
-                    <div class="card-header">
-                        <h3>빠른 작업</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="quick-actions">
-                            <button class="action-btn">➕ 사용자 추가</button>
-                            <button class="action-btn">📦 상품 등록</button>
-                            <button class="action-btn">📊 보고서 생성</button>
-                            <button class="action-btn">⚙️ 설정 변경</button>
-                        </div>
-                    </div>
+<!-- 콘텐츠 섹션 -->
+<div class="content-grid">
+    <div class="content-card">
+        <div class="card-header">
+            <h3>최근 활동</h3>
+        </div>
+        <div class="card-body">
+            <div class="activity-item">
+                <div class="activity-icon">✅</div>
+                <div class="activity-details">
+                    <div class="activity-title">새로운 주문이 접수되었습니다</div>
+                    <div class="activity-time">5분 전</div>
                 </div>
             </div>
+            <div class="activity-item">
+                <div class="activity-icon">👤</div>
+                <div class="activity-details">
+                    <div class="activity-title">새로운 사용자가 가입했습니다</div>
+                    <div class="activity-time">15분 전</div>
+                </div>
+            </div>
+            <div class="activity-item">
+                <div class="activity-icon">📦</div>
+                <div class="activity-details">
+                    <div class="activity-title">상품 재고가 업데이트되었습니다</div>
+                    <div class="activity-time">1시간 전</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-card">
+        <div class="card-header">
+            <h3>빠른 작업</h3>
+        </div>
+        <div class="card-body">
+            <div class="quick-actions">
+                <button class="action-btn">➕ 사용자 추가</button>
+                <button class="action-btn">📦 상품 등록</button>
+                <button class="action-btn">📊 보고서 생성</button>
+                <button class="action-btn">⚙️ 설정 변경</button>
+            </div>
+        </div>
+    </div>
+</div>
         </main>
     </div>
 </body>

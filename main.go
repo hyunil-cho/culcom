@@ -10,8 +10,12 @@ import (
 )
 
 func init() {
-	// 템플릿 파싱 (재귀적으로 모든 하위 디렉터리 포함)
-	templates := template.Must(template.ParseGlob("templates/**/*.html"))
+	// 템플릿 파싱 - layouts, dashboard, customers 등 모든 템플릿 파일 로드
+	templates := template.Must(template.ParseGlob("templates/layouts/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/dashboard/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/customers/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/auth/*.html"))
+
 	home.Templates = templates
 	login.Templates = templates
 	customers.Templates = templates
@@ -19,9 +23,9 @@ func init() {
 
 func main() {
 	// 라우트 설정
-	http.HandleFunc("/", login.Handler)                    // 랜딩 페이지 = 로그인
-	http.HandleFunc("/dashboard", home.Handler)            // 대시보드
-	http.HandleFunc("/customers", customers.Handler)       // 고객 관리
+	http.HandleFunc("/", login.Handler)                           // 랜딩 페이지 = 로그인
+	http.HandleFunc("/dashboard", home.Handler)                   // 대시보드
+	http.HandleFunc("/customers", customers.Handler)              // 고객 관리
 	http.HandleFunc("/customers/detail", customers.DetailHandler) // 고객 상세
 	http.HandleFunc("/customers/edit", customers.EditHandler)     // 고객 수정
 
