@@ -219,13 +219,19 @@
             {{if .Connected}}
                 {{if eq .ID "sms"}}
                     <a href="/integrations/sms-config" class="btn-manage">⚙️ 관리</a>
+                {{else if eq .ID "message-templates"}}
+                    <a href="/integrations/message-templates" class="btn-manage">📝 관리</a>
                 {{else}}
                     <a href="/integrations/manage?id={{.ID}}" class="btn-manage">⚙️ 관리</a>
                 {{end}}
+                {{if ne .ID "message-templates"}}
                 <button class="btn-disconnect" onclick="disconnectService('{{.ID}}', '{{.Name}}')">🔌 연결 해제</button>
+                {{end}}
             {{else}}
                 {{if eq .ID "sms"}}
                     <a href="/integrations/sms-config" class="btn-configure">🔗 연동하기</a>
+                {{else if eq .ID "message-templates"}}
+                    <a href="/integrations/message-templates" class="btn-configure">📝 시작하기</a>
                 {{else}}
                     <a href="/integrations/configure?id={{.ID}}" class="btn-configure">🔗 연동하기</a>
                 {{end}}

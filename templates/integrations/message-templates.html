@@ -1,0 +1,498 @@
+{{define "integrations/message-templates.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - 백오피스</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-header h1 {
+            margin: 0;
+            font-size: 28px;
+            color: #333;
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+            color: #2e7d32;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .filter-section {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .templates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 20px;
+        }
+
+        .template-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .template-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .template-card.inactive {
+            opacity: 0.6;
+        }
+
+        .template-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .template-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 4px 0;
+        }
+
+        .template-category {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #e3f2fd;
+            color: #1976d2;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .template-status {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .template-status.active {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .template-status.inactive {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .template-description {
+            color: #666;
+            font-size: 13px;
+            margin: 8px 0 12px 0;
+            line-height: 1.4;
+        }
+
+        .template-content {
+            background: #f9f9f9;
+            border-left: 3px solid #667eea;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333;
+            margin: 12px 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .placeholder {
+            background: #fff3e0;
+            color: #e65100;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .template-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: #999;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .template-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-edit {
+            background: #2196f3;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #1976d2;
+        }
+
+        .btn-delete {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #d32f2f;
+        }
+
+        .btn-preview {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-preview:hover {
+            background: #45a049;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state h3 {
+            margin: 0 0 8px 0;
+            color: #666;
+        }
+
+        /* 페이징 스타일 */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 40px;
+            gap: 8px;
+        }
+
+        .pagination-info {
+            color: #666;
+            font-size: 14px;
+            margin-right: 20px;
+        }
+
+        .pagination {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .page-btn {
+            padding: 8px 14px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.2s;
+            min-width: 38px;
+            text-align: center;
+        }
+
+        .page-btn:hover:not(.active):not(:disabled) {
+            background: #f5f5f5;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .page-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-btn.arrow {
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    {{template "sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+            <!-- 페이지 헤더 -->
+            <div class="page-header">
+                <h1>📝 메시지 템플릿 관리</h1>
+                <a href="/message-templates/add" class="btn-add">
+                    ➕ 새 템플릿 만들기
+                </a>
+            </div>
+
+            <!-- 성공 메시지 -->
+            <div id="successMessage" class="success-message"></div>
+
+            <!-- 필터 섹션 -->
+            <div class="filter-section">
+                {{range .Categories}}
+                <button class="filter-btn {{if eq . "전체"}}active{{end}}" onclick="filterByCategory('{{.}}')">
+                    {{.}}
+                </button>
+                {{end}}
+            </div>
+
+            <!-- 템플릿 그리드 -->
+            <div class="templates-grid" id="templatesGrid">
+                {{if .Templates}}
+                    {{range .Templates}}
+                    <div class="template-card {{if not .IsActive}}inactive{{end}}" data-category="{{.Category}}">
+                        <div class="template-header">
+                            <div>
+                                <h3 class="template-title">{{.Name}}</h3>
+                                <span class="template-category">{{.Category}}</span>
+                            </div>
+                        </div>
+                        <span class="template-status {{if .IsActive}}active{{else}}inactive{{end}}">
+                            {{if .IsActive}}사용 중{{else}}비활성{{end}}
+                        </span>
+                        
+                        <p class="template-description">{{.Description}}</p>
+                        
+                        <div class="template-content">
+                            {{.Content}}
+                        </div>
+
+                        <div class="template-meta">
+                            <span>🕐 생성: {{.CreatedAt}}</span>
+                            <span>📝 수정: {{.UpdatedAt}}</span>
+                        </div>
+
+                        <div class="template-actions">
+                            <button class="btn-action btn-preview" onclick="previewTemplate({{.ID}})">
+                                👁️ 미리보기
+                            </button>
+                            <a href="/message-templates/edit?id={{.ID}}" class="btn-action btn-edit">
+                                ✏️ 수정
+                            </a>
+                            <button class="btn-action btn-delete" onclick="deleteTemplate({{.ID}}, '{{.Name}}')">
+                                🗑️ 삭제
+                            </button>
+                        </div>
+                    </div>
+                    {{end}}
+                {{else}}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <h3>등록된 템플릿이 없습니다</h3>
+                        <p>새 템플릿을 만들어 메시지를 효율적으로 관리하세요</p>
+                    </div>
+                {{end}}
+            </div>
+
+            <!-- 페이지네이션 -->
+            {{if gt .Pagination.TotalPages 1}}
+            <div class="pagination-container">
+                <div class="pagination">
+                    <!-- 이전 페이지 -->
+                    {{if .Pagination.HasPrev}}
+                        <a href="?page={{printf "%d" (sub .Pagination.CurrentPage 1)}}" class="page-btn page-arrow">
+                            ◀
+                        </a>
+                    {{else}}
+                        <span class="page-btn page-arrow disabled">◀</span>
+                    {{end}}
+
+                    <!-- 페이지 번호 -->
+                    {{range .Pagination.Pages}}
+                        {{if eq . $.Pagination.CurrentPage}}
+                            <span class="page-btn active">{{.}}</span>
+                        {{else}}
+                            <a href="?page={{.}}" class="page-btn">{{.}}</a>
+                        {{end}}
+                    {{end}}
+
+                    <!-- 다음 페이지 -->
+                    {{if .Pagination.HasNext}}
+                        <a href="?page={{printf "%d" (add $.Pagination.CurrentPage 1)}}" class="page-btn page-arrow">
+                            ▶
+                        </a>
+                    {{else}}
+                        <span class="page-btn page-arrow disabled">▶</span>
+                    {{end}}
+                </div>
+                
+                <div style="text-align: center; margin-top: 15px; color: #666; font-size: 14px;">
+                    {{.Pagination.CurrentPage}} / {{.Pagination.TotalPages}} 페이지 (총 {{.Pagination.TotalItems}}개)
+                </div>
+            </div>
+            {{end}}
+
+        </main>
+    </div>
+
+    <script>
+        // URL 파라미터로 성공 메시지 표시
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const success = urlParams.get('success');
+            const successMessage = document.getElementById('successMessage');
+            
+            if (success === 'add') {
+                successMessage.textContent = '✅ 새 템플릿이 성공적으로 추가되었습니다.';
+                successMessage.classList.add('show');
+            } else if (success === 'edit') {
+                successMessage.textContent = '✅ 템플릿이 성공적으로 수정되었습니다.';
+                successMessage.classList.add('show');
+            } else if (success === 'delete') {
+                successMessage.textContent = '✅ 템플릿이 성공적으로 삭제되었습니다.';
+                successMessage.classList.add('show');
+            }
+            
+            if (success) {
+                setTimeout(function() {
+                    successMessage.classList.remove('show');
+                }, 3000);
+                
+                // URL에서 파라미터 제거
+                window.history.replaceState({}, '', '/message-templates');
+            }
+        });
+
+        // 카테고리 필터링
+        function filterByCategory(category) {
+            const cards = document.querySelectorAll('.template-card');
+            const buttons = document.querySelectorAll('.filter-btn');
+            
+            // 버튼 활성화 상태 변경
+            buttons.forEach(btn => {
+                if (btn.textContent.trim() === category) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // 카드 필터링
+            cards.forEach(card => {
+                if (category === '전체' || card.dataset.category === category) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // 템플릿 미리보기
+        function previewTemplate(id) {
+            // TODO: 실제 구현 시 모달로 미리보기 표시
+            alert('템플릿 미리보기 기능\n(실제 구현 시 플레이스홀더에 샘플 데이터를 적용한 미리보기를 모달로 표시)');
+        }
+
+        // 템플릿 삭제
+        function deleteTemplate(id, name) {
+            if (confirm(`"${name}" 템플릿을 정말 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+                // 폼 생성 및 제출
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/message-templates/delete?id=' + id;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
+</body>
+</html>
+{{end}}
