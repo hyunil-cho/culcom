@@ -217,10 +217,18 @@
         
         <div class="integration-actions">
             {{if .Connected}}
-                <a href="/integrations/manage?id={{.ID}}" class="btn-manage">⚙️ 관리</a>
+                {{if eq .ID "sms"}}
+                    <a href="/integrations/sms-config" class="btn-manage">⚙️ 관리</a>
+                {{else}}
+                    <a href="/integrations/manage?id={{.ID}}" class="btn-manage">⚙️ 관리</a>
+                {{end}}
                 <button class="btn-disconnect" onclick="disconnectService('{{.ID}}', '{{.Name}}')">🔌 연결 해제</button>
             {{else}}
-                <a href="/integrations/configure?id={{.ID}}" class="btn-configure">🔗 연동하기</a>
+                {{if eq .ID "sms"}}
+                    <a href="/integrations/sms-config" class="btn-configure">🔗 연동하기</a>
+                {{else}}
+                    <a href="/integrations/configure?id={{.ID}}" class="btn-configure">🔗 연동하기</a>
+                {{end}}
             {{end}}
         </div>
     </div>

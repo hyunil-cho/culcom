@@ -39,22 +39,23 @@ func main() {
 	mux := http.NewServeMux()
 
 	// 라우트 설정 (panic recovery 미들웨어 적용)
-	mux.HandleFunc("/dashboard", middleware.RecoverFunc(home.Handler))                               // 대시보드
-	mux.HandleFunc("/customers", middleware.RecoverFunc(customers.Handler))                          // 고객 관리
-	mux.HandleFunc("/customers/detail", middleware.RecoverFunc(customers.DetailHandler))             // 고객 상세
-	mux.HandleFunc("/customers/edit", middleware.RecoverFunc(customers.EditHandler))                 // 고객 수정
-	mux.HandleFunc("/customers/add", middleware.RecoverFunc(customers.AddHandler))                   // 고객 추가
-	mux.HandleFunc("/branches", middleware.RecoverFunc(branches.Handler))                            // 지점 관리
-	mux.HandleFunc("/branches/detail", middleware.RecoverFunc(branches.DetailHandler))               // 지점 상세
-	mux.HandleFunc("/branches/edit", middleware.RecoverFunc(branches.EditHandler))                   // 지점 수정
-	mux.HandleFunc("/branches/add", middleware.RecoverFunc(branches.AddHandler))                     // 지점 추가
-	mux.HandleFunc("/employees", middleware.RecoverFunc(employees.Handler))                          // 직원 관리
-	mux.HandleFunc("/employees/detail", middleware.RecoverFunc(employees.DetailHandler))             // 직원 상세
-	mux.HandleFunc("/employees/edit", middleware.RecoverFunc(employees.EditHandler))                 // 직원 수정
-	mux.HandleFunc("/employees/add", middleware.RecoverFunc(employees.AddHandler))                   // 직원 추가
-	mux.HandleFunc("/integrations", middleware.RecoverFunc(integrations.Handler))                    // 외부 시스템 연동
-	mux.HandleFunc("/integrations/configure", middleware.RecoverFunc(integrations.ConfigureHandler)) // 연동 설정
-	mux.HandleFunc("/error", middleware.RecoverFunc(errorhandler.Handler404))                        // 에러 페이지
+	mux.HandleFunc("/dashboard", middleware.RecoverFunc(home.Handler))                                // 대시보드
+	mux.HandleFunc("/customers", middleware.RecoverFunc(customers.Handler))                           // 고객 관리
+	mux.HandleFunc("/customers/detail", middleware.RecoverFunc(customers.DetailHandler))              // 고객 상세
+	mux.HandleFunc("/customers/edit", middleware.RecoverFunc(customers.EditHandler))                  // 고객 수정
+	mux.HandleFunc("/customers/add", middleware.RecoverFunc(customers.AddHandler))                    // 고객 추가
+	mux.HandleFunc("/branches", middleware.RecoverFunc(branches.Handler))                             // 지점 관리
+	mux.HandleFunc("/branches/detail", middleware.RecoverFunc(branches.DetailHandler))                // 지점 상세
+	mux.HandleFunc("/branches/edit", middleware.RecoverFunc(branches.EditHandler))                    // 지점 수정
+	mux.HandleFunc("/branches/add", middleware.RecoverFunc(branches.AddHandler))                      // 지점 추가
+	mux.HandleFunc("/employees", middleware.RecoverFunc(employees.Handler))                           // 직원 관리
+	mux.HandleFunc("/employees/detail", middleware.RecoverFunc(employees.DetailHandler))              // 직원 상세
+	mux.HandleFunc("/employees/edit", middleware.RecoverFunc(employees.EditHandler))                  // 직원 수정
+	mux.HandleFunc("/employees/add", middleware.RecoverFunc(employees.AddHandler))                    // 직원 추가
+	mux.HandleFunc("/integrations", middleware.RecoverFunc(integrations.Handler))                     // 외부 시스템 연동
+	mux.HandleFunc("/integrations/configure", middleware.RecoverFunc(integrations.ConfigureHandler))  // 연동 설정
+	mux.HandleFunc("/integrations/sms-config", middleware.RecoverFunc(integrations.SMSConfigHandler)) // SMS 연동 설정
+	mux.HandleFunc("/error", middleware.RecoverFunc(errorhandler.Handler404))                         // 에러 페이지
 
 	// 정적 파일 서빙 (CSS, JS, 이미지 등)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))

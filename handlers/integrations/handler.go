@@ -11,56 +11,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		ActiveMenu: "integrations",
 		Services: []IntegrationService{
 			{
-				ID:          "gmail",
-				Name:        "Google Gmail",
-				Description: "Gmail API를 통한 이메일 발송 및 수신",
-				Icon:        "📧",
-				Category:    "email",
-				Status:      "active",
-				Connected:   true,
-			},
-			{
 				ID:          "sms",
 				Name:        "SMS 서비스",
 				Description: "문자 메시지 발송 서비스",
 				Icon:        "💬",
 				Category:    "sms",
-				Status:      "active",
-				Connected:   true,
-			},
-			{
-				ID:          "slack",
-				Name:        "Slack",
-				Description: "팀 협업 및 알림 전송",
-				Icon:        "💼",
-				Category:    "collaboration",
-				Status:      "inactive",
-				Connected:   false,
-			},
-			{
-				ID:          "aws-s3",
-				Name:        "AWS S3",
-				Description: "파일 저장 및 관리",
-				Icon:        "☁️",
-				Category:    "storage",
-				Status:      "not-configured",
-				Connected:   false,
-			},
-			{
-				ID:          "kakao",
-				Name:        "카카오톡 알림",
-				Description: "카카오톡 비즈니스 메시지",
-				Icon:        "💛",
-				Category:    "messaging",
-				Status:      "not-configured",
-				Connected:   false,
-			},
-			{
-				ID:          "payment",
-				Name:        "결제 시스템",
-				Description: "PG사 연동 결제 처리",
-				Icon:        "💳",
-				Category:    "payment",
 				Status:      "active",
 				Connected:   true,
 			},
@@ -77,16 +32,6 @@ func ConfigureHandler(w http.ResponseWriter, r *http.Request) {
 	// 서비스 정보 가져오기 (실제로는 DB에서 조회)
 	var service IntegrationService
 	switch id {
-	case "gmail":
-		service = IntegrationService{
-			ID:          "gmail",
-			Name:        "Google Gmail",
-			Description: "Gmail API를 통한 이메일 발송 및 수신",
-			Icon:        "📧",
-			Category:    "email",
-			Status:      "active",
-			Connected:   true,
-		}
 	case "sms":
 		service = IntegrationService{
 			ID:          "sms",
@@ -96,16 +41,6 @@ func ConfigureHandler(w http.ResponseWriter, r *http.Request) {
 			Category:    "sms",
 			Status:      "active",
 			Connected:   true,
-		}
-	case "slack":
-		service = IntegrationService{
-			ID:          "slack",
-			Name:        "Slack",
-			Description: "팀 협업 및 알림 전송",
-			Icon:        "💼",
-			Category:    "collaboration",
-			Status:      "inactive",
-			Connected:   false,
 		}
 	default:
 		service = IntegrationService{
@@ -130,4 +65,79 @@ func ConfigureHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	Templates.ExecuteTemplate(w, "integrations/configure.html", data)
+}
+
+// SMSConfigHandler SMS 연동 설정 페이지
+func SMSConfigHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		// SMS 설정 조회 및 페이지 렌더링
+		// TODO: 실제로는 DB에서 기존 설정을 조회
+		var config *SMSConfig
+		// 임시로 더미 데이터 사용 (실제 구현 시 DB 조회)
+		hasConfig := true // DB에서 설정이 있는지 확인
+		if hasConfig {
+			config = &SMSConfig{
+				ID:           1,
+				Provider:     "알리고",
+				AccountID:    "testaccount",
+				Password:     "••••••••", // 보안상 마스킹
+				SenderPhones: []string{"01012345678", "01087654321", "0213334444"},
+				IsActive:     true,
+				CreatedAt:    "2024-01-10 10:30:00",
+				UpdatedAt:    "2024-01-20 15:45:00",
+			}
+		}
+
+		data := SMSConfigPageData{
+			Title:      "SMS 연동 설정",
+			ActiveMenu: "integrations",
+			Service: IntegrationService{
+				ID:          "sms",
+				Name:        "SMS 서비스",
+				Description: "문자 메시지 발송 서비스",
+				Icon:        "💬",
+				Category:    "sms",
+				Status:      "active",
+				Connected:   config != nil && config.IsActive,
+			},
+			Config: config,
+			Providers: []string{
+				"알리고",
+				"문자나라",
+				"비즈톡",
+				"카카오 알림톡",
+			},
+		}
+
+		Templates.ExecuteTemplate(w, "integrations/sms-config.html", data)
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		// SMS 설정 저장
+		err := r.ParseForm()
+		if err != nil {
+			http.Error(w, "잘못된 요청입니다", http.StatusBadRequest)
+			return
+		}
+
+		// 폼 데이터 추출
+		senderPhones := r.Form["sender_phones[]"]
+		_ = SMSConfig{
+			Provider:     r.FormValue("provider"),
+			AccountID:    r.FormValue("account_id"),
+			Password:     r.FormValue("password"),
+			SenderPhones: senderPhones,
+			IsActive:     r.FormValue("is_active") == "on",
+		}
+
+		// TODO: 실제로는 DB에 저장
+		// database.SaveSMSConfig(&config)
+
+		// 설정 저장 후 다시 설정 페이지로 리다이렉트
+		http.Redirect(w, r, "/integrations/sms-config?success=true", http.StatusSeeOther)
+		return
+	}
+
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 }

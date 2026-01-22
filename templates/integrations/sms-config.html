@@ -1,0 +1,1190 @@
+{{define "integrations/sms-config.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - 백오피스</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .integration-header-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .integration-header-icon {
+            font-size: 64px;
+            background: white;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+        }
+
+        .integration-header-info h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+        }
+
+        .integration-header-info p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        .status-badge.connected {
+            background: #4caf50;
+            color: white;
+        }
+
+        .status-badge.disconnected {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .info-box-title {
+            font-weight: 600;
+            color: #1976d2;
+            margin-bottom: 8px;
+        }
+
+        .info-box-content {
+            color: #424242;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .info-box ul {
+            margin: 8px 0 0 0;
+            padding-left: 20px;
+        }
+
+        .info-box li {
+            margin-bottom: 4px;
+        }
+
+        .config-section {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .config-section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f5f5f5;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-label .required {
+            color: #f44336;
+            margin-left: 4px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            background: white;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        .form-checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .form-checkbox-label {
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .credential-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 6px;
+        }
+
+        .credential-label {
+            min-width: 120px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .credential-value {
+            flex: 1;
+            padding: 8px 12px;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: #667eea;
+            border: 1px solid #667eea;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #f5f7ff;
+        }
+
+        .btn-back {
+            background: #fff;
+            color: #666;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+
+        .btn-back:hover {
+            background: #f5f5f5;
+            border-color: #bbb;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+            color: #2e7d32;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .password-toggle {
+            position: relative;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 4px 8px;
+        }
+
+        .password-toggle-btn:hover {
+            color: #333;
+        }
+
+        #senderPhonesContainer {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .sender-phone-item {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .sender-phone-input {
+            flex: 1;
+            margin-bottom: 0 !important;
+        }
+
+        .btn-remove-phone {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .btn-remove-phone:hover {
+            background: #d32f2f;
+        }
+
+        .btn-add-phone {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+        }
+
+        .btn-add-phone:hover {
+            background: #45a049;
+        }
+
+        /* 모달 스타일 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 0;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-body {
+            padding: 24px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .sender-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sender-option:hover {
+            border-color: #667eea;
+            background: #f5f7ff;
+            transform: translateX(4px);
+        }
+
+        .sender-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .sender-option-content {
+            flex: 1;
+        }
+
+        .sender-option-phone {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            font-family: monospace;
+        }
+
+        .sender-option-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modal-btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .modal-btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .modal-btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 테스트 메시지 모달 추가 스타일 */
+        .test-message-info {
+            background: #f5f7ff;
+            border: 1px solid #e0e7ff;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #667eea;
+            min-width: 80px;
+        }
+
+        .info-value {
+            font-family: monospace;
+            font-size: 16px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .char-count {
+            text-align: right;
+            font-size: 12px;
+            color: #666;
+            margin-top: 6px;
+        }
+
+        .char-count #charCount {
+            font-weight: 600;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    {{template "sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+            <!-- 액션 버튼 -->
+            <a href="/integrations" class="btn-back">← 연동 관리로</a>
+
+            <!-- 성공 메시지 -->
+            <div id="successMessage" class="success-message">
+                ✓ SMS 연동 설정이 성공적으로 저장되었습니다.
+            </div>
+
+            <!-- 연동 헤더 -->
+            <div class="integration-header-card">
+                <div class="integration-header-icon">
+                    {{.Service.Icon}}
+                </div>
+                <div class="integration-header-info">
+                    <h1>{{.Service.Name}}</h1>
+                    <p>{{.Service.Description}}</p>
+                    <span class="status-badge {{if .Service.Connected}}connected{{else}}disconnected{{end}}">
+                        {{if .Service.Connected}}✓ 연동됨{{else}}○ 연동 안됨{{end}}
+                    </span>
+                </div>
+            </div>
+
+            <!-- 안내 정보 -->
+            <div class="info-box">
+                <div class="info-box-title">📌 SMS 연동 안내</div>
+                <div class="info-box-content">
+                    SMS 서비스 제공업체의 계정 정보를 등록하여 고객에게 문자 메시지를 발송할 수 있습니다.
+                    <ul>
+                        <li>지원되는 SMS 제공업체: 알리고, 문자나라, 비즈톡, 카카오 알림톡</li>
+                        <li>각 제공업체의 계정 정보(ID, 비밀번호)가 필요합니다</li>
+                        <li>발신번호는 사전에 제공업체에 등록된 번호여야 합니다</li>
+                        <li>설정 후 테스트 발송을 통해 연동을 확인하세요</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 현재 연동 정보 (연동된 경우) -->
+            {{if .Config}}
+            <div class="config-section">
+                <div class="config-section-title">🔗 현재 연동 정보</div>
+                <div class="credential-item">
+                    <span class="credential-label">제공업체</span>
+                    <span class="credential-value">{{.Config.Provider}}</span>
+                </div>
+                <div class="credential-item">
+                    <span class="credential-label">계정 ID</span>
+                    <span class="credential-value">{{.Config.AccountID}}</span>
+                </div>
+                <div class="credential-item">
+                    <span class="credential-label">발신번호</span>
+                    <span class="credential-value">
+                        {{range $index, $phone := .Config.SenderPhones}}
+                            {{if $index}}, {{end}}{{$phone}}
+                        {{end}}
+                    </span>
+                </div>
+                <div class="credential-item">
+                    <span class="credential-label">상태</span>
+                    <span class="credential-value">{{if .Config.IsActive}}활성화{{else}}비활성화{{end}}</span>
+                </div>
+                <div class="credential-item">
+                    <span class="credential-label">마지막 수정</span>
+                    <span class="credential-value">{{.Config.UpdatedAt}}</span>
+                </div>
+            </div>
+            {{end}}
+
+            <!-- 설정 폼 -->
+            <div class="config-section">
+                <div class="config-section-title">⚙️ SMS 연동 설정</div>
+                <form id="smsConfigForm" method="POST" action="/integrations/sms-config">
+                    <div class="form-group">
+                        <label class="form-label">
+                            SMS 제공업체<span class="required">*</span>
+                        </label>
+                        <select name="provider" class="form-select" required>
+                            <option value="">제공업체 선택</option>
+                            {{range .Providers}}
+                            <option value="{{.}}" {{if $.Config}}{{if eq $.Config.Provider .}}selected{{end}}{{end}}>{{.}}</option>
+                            {{end}}
+                        </select>
+                        <div class="form-help-text">
+                            문자 메시지를 발송할 SMS 제공업체를 선택하세요
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            계정 ID (사용자명)<span class="required">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            name="account_id" 
+                            class="form-input" 
+                            placeholder="SMS 서비스 계정 ID를 입력하세요"
+                            value="{{if .Config}}{{.Config.AccountID}}{{end}}"
+                            required
+                        >
+                        <div class="form-help-text">
+                            SMS 제공업체에서 발급받은 계정 ID 또는 사용자명을 입력하세요
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            비밀번호 (API Key)<span class="required">*</span>
+                        </label>
+                        <div class="password-toggle">
+                            <input 
+                                type="password" 
+                                id="passwordInput"
+                                name="password" 
+                                class="form-input" 
+                                placeholder="비밀번호 또는 API Key를 입력하세요"
+                                required
+                            >
+                            <button type="button" class="password-toggle-btn" onclick="togglePassword()">
+                                👁️
+                            </button>
+                        </div>
+                        <div class="form-help-text">
+                            SMS 제공업체의 비밀번호 또는 API Key를 입력하세요 (보안을 위해 암호화되어 저장됩니다)
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            발신번호<span class="required">*</span>
+                        </label>
+                        <div id="senderPhonesContainer">
+                            {{if .Config}}
+                                {{range $index, $phone := .Config.SenderPhones}}
+                                <div class="sender-phone-item" data-index="{{$index}}">
+                                    <input 
+                                        type="tel" 
+                                        name="sender_phones[]" 
+                                        class="form-input sender-phone-input" 
+                                        placeholder="01012345678 (하이픈 없이 입력)"
+                                        value="{{$phone}}"
+                                        pattern="[0-9]{10,11}"
+                                        required
+                                    >
+                                    <button type="button" class="btn-remove-phone" onclick="removeSenderPhone(this)">✕</button>
+                                </div>
+                                {{end}}
+                            {{else}}
+                                <div class="sender-phone-item" data-index="0">
+                                    <input 
+                                        type="tel" 
+                                        name="sender_phones[]" 
+                                        class="form-input sender-phone-input" 
+                                        placeholder="01012345678 (하이픈 없이 입력)"
+                                        pattern="[0-9]{10,11}"
+                                        required
+                                    >
+                                    <button type="button" class="btn-remove-phone" onclick="removeSenderPhone(this)">✕</button>
+                                </div>
+                            {{end}}
+                        </div>
+                        <button type="button" class="btn-add-phone" onclick="addSenderPhone()">
+                            ➕ 발신번호 추가
+                        </button>
+                        <div class="form-help-text">
+                            SMS 발송 시 사용할 발신번호를 입력하세요 (하이픈 없이 숫자만 입력)
+                            <br>※ 발신번호는 SMS 제공업체에 사전 등록된 번호여야 합니다
+                            <br>※ 여러 개의 발신번호를 등록할 수 있습니다
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-checkbox-group">
+                            <input 
+                                type="checkbox" 
+                                id="isActive" 
+                                name="is_active" 
+                                class="form-checkbox"
+                                {{if .Config}}{{if .Config.IsActive}}checked{{end}}{{else}}checked{{end}}
+                            >
+                            <label for="isActive" class="form-checkbox-label">
+                                이 연동 설정을 활성화
+                            </label>
+                        </div>
+                        <div class="form-help-text">
+                            활성화 상태에서만 SMS 발송이 가능합니다
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            💾 설정 저장
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="testConnection()">
+                            🔍 연결 테스트
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="sendTestMessage()">
+                            📤 테스트 발송
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- 발신번호 선택 모달 -->
+    <div id="senderPhoneModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📞 발신번호 선택</h2>
+                <button class="modal-close" onclick="closeSenderModal()">×</button>
+            </div>
+            <div class="modal-body" id="senderPhoneList">
+                <!-- JavaScript로 동적 생성 -->
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeSenderModal()">취소</button>
+                <button class="modal-btn modal-btn-primary" onclick="confirmSenderSelection()">선택 완료</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 테스트 메시지 발송 모달 -->
+    <div id="testMessageModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📤 테스트 메시지 발송</h2>
+                <button class="modal-close" onclick="closeTestMessageModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="test-message-info">
+                    <div class="info-item">
+                        <span class="info-label">📱 발신번호</span>
+                        <span class="info-value" id="selectedSenderDisplay">-</span>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label">
+                        수신번호<span class="required">*</span>
+                    </label>
+                    <input 
+                        type="tel" 
+                        id="receiverPhone" 
+                        class="form-input" 
+                        placeholder="01012345678 (하이픈 없이 입력)"
+                        pattern="[0-9]{10,11}"
+                        maxlength="11"
+                    >
+                    <div class="form-help-text">
+                        테스트 메시지를 받을 휴대폰 번호를 입력하세요 (10~11자리 숫자)
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label">
+                        메시지 내용<span class="required">*</span>
+                    </label>
+                    <textarea 
+                        id="messageContent" 
+                        class="form-textarea" 
+                        placeholder="테스트 메시지 내용을 입력하세요"
+                        rows="4"
+                        maxlength="2000"
+                    ></textarea>
+                    <div class="char-count">
+                        <span id="charCount">0</span> / 2000자
+                    </div>
+                    <div class="form-help-text">
+                        SMS는 90자(한글 45자), LMS는 2000자까지 입력 가능합니다
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeTestMessageModal()">취소</button>
+                <button class="modal-btn modal-btn-primary" onclick="sendTestMessageConfirm()">📤 발송하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 테스트 메시지 발송 모달 -->
+    <div id="testMessageModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📤 테스트 메시지 발송</h2>
+                <button class="modal-close" onclick="closeTestMessageModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="test-message-info">
+                    <div class="info-item">
+                        <span class="info-label">📱 발신번호</span>
+                        <span class="info-value" id="selectedSenderDisplay">-</span>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label">
+                        수신번호<span class="required">*</span>
+                    </label>
+                    <input 
+                        type="tel" 
+                        id="receiverPhone" 
+                        class="form-input" 
+                        placeholder="01012345678 (하이픈 없이 입력)"
+                        pattern="[0-9]{10,11}"
+                        maxlength="11"
+                    >
+                    <div class="form-help-text">
+                        테스트 메시지를 받을 휴대폰 번호를 입력하세요 (10~11자리 숫자)
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label">
+                        메시지 내용<span class="required">*</span>
+                    </label>
+                    <textarea 
+                        id="messageContent" 
+                        class="form-textarea" 
+                        placeholder="테스트 메시지 내용을 입력하세요"
+                        rows="4"
+                        maxlength="2000"
+                    ></textarea>
+                    <div class="char-count">
+                        <span id="charCount">0</span> / 2000자
+                    </div>
+                    <div class="form-help-text">
+                        SMS는 90자(한글 45자), LMS는 2000자까지 입력 가능합니다
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeTestMessageModal()">취소</button>
+                <button class="modal-btn modal-btn-primary" onclick="sendTestMessageConfirm()">📤 발송하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // URL에 success 파라미터가 있으면 성공 메시지 표시
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('success') === 'true') {
+                const successMessage = document.getElementById('successMessage');
+                successMessage.classList.add('show');
+                
+                // 3초 후 메시지 자동 숨김
+                setTimeout(function() {
+                    successMessage.classList.remove('show');
+                }, 3000);
+
+                // URL에서 success 파라미터 제거
+                window.history.replaceState({}, '', '/integrations/sms-config');
+            }
+        });
+
+        // 비밀번호 표시/숨김 토글
+        function togglePassword() {
+            const passwordInput = document.getElementById('passwordInput');
+            const toggleBtn = event.target;
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
+
+        // 모달 관련 변수
+        let selectedSenderPhone = null;
+        let currentSenderPhones = [];
+
+        // 발신번호 선택 모달 열기
+        function openSenderModal(senderPhones) {
+            currentSenderPhones = senderPhones;
+            const modal = document.getElementById('senderPhoneModal');
+            const listContainer = document.getElementById('senderPhoneList');
+            
+            // 목록 생성
+            listContainer.innerHTML = '';
+            senderPhones.forEach((phone, index) => {
+                const option = document.createElement('div');
+                option.className = 'sender-option';
+                option.onclick = function() {
+                    document.querySelectorAll('.sender-option input[type="radio"]').forEach(radio => radio.checked = false);
+                    this.querySelector('input[type="radio"]').checked = true;
+                    selectedSenderPhone = phone;
+                };
+                
+                option.innerHTML = `
+                    <input type="radio" name="sender_selection" value="${phone}" id="sender_${index}">
+                    <div class="sender-option-content">
+                        <div class="sender-option-phone">${phone}</div>
+                        <div class="sender-option-label">발신번호 #${index + 1}</div>
+                    </div>
+                `;
+                
+                listContainer.appendChild(option);
+            });
+            
+            // 첫 번째 항목 기본 선택
+            if (senderPhones.length > 0) {
+                selectedSenderPhone = senderPhones[0];
+                document.getElementById('sender_0').checked = true;
+            }
+            
+            modal.classList.add('show');
+        }
+
+        // 발신번호 선택 모달 닫기
+        function closeSenderModal() {
+            const modal = document.getElementById('senderPhoneModal');
+            modal.classList.remove('show');
+        }
+
+        // 발신번호 선택 확인
+        function confirmSenderSelection() {
+            if (!selectedSenderPhone) {
+                alert('발신번호를 선택해주세요.');
+                return;
+            }
+            
+            closeSenderModal();
+            
+            // 테스트 메시지 발송 모달 열기
+            openTestMessageModal();
+        }
+
+        // 테스트 메시지 발송 모달 열기
+        function openTestMessageModal() {
+            const modal = document.getElementById('testMessageModal');
+            document.getElementById('selectedSenderDisplay').textContent = selectedSenderPhone;
+            document.getElementById('receiverPhone').value = '';
+            document.getElementById('messageContent').value = '[테스트] 컬컴 SMS 연동 테스트 메시지입니다.';
+            updateCharCount();
+            modal.classList.add('show');
+        }
+
+        // 테스트 메시지 발송 모달 닫기
+        function closeTestMessageModal() {
+            const modal = document.getElementById('testMessageModal');
+            modal.classList.remove('show');
+        }
+
+        // 글자 수 업데이트
+        function updateCharCount() {
+            const content = document.getElementById('messageContent').value;
+            document.getElementById('charCount').textContent = content.length;
+        }
+
+        // 테스트 메시지 발송 확인
+        function sendTestMessageConfirm() {
+            const receiverPhone = document.getElementById('receiverPhone').value;
+            const messageContent = document.getElementById('messageContent').value;
+
+            // 유효성 검사
+            if (!receiverPhone) {
+                alert('수신번호를 입력해주세요.');
+                document.getElementById('receiverPhone').focus();
+                return;
+            }
+
+            if (!/^[0-9]{10,11}$/.test(receiverPhone)) {
+                alert('올바른 휴대폰 번호를 입력해주세요 (10~11자리 숫자)');
+                document.getElementById('receiverPhone').focus();
+                return;
+            }
+
+            if (!messageContent.trim()) {
+                alert('메시지 내용을 입력해주세요.');
+                document.getElementById('messageContent').focus();
+                return;
+            }
+
+            closeTestMessageModal();
+
+            // TODO: 실제 테스트 메시지 발송 API 호출
+            alert('📤 테스트 메시지를 발송합니다...\n발신번호: ' + selectedSenderPhone + '\n수신번호: ' + receiverPhone + '\n메시지: ' + messageContent.substring(0, 30) + (messageContent.length > 30 ? '...' : '') + '\n\n(실제 구현 시 API 호출 필요)');
+            
+            // 임시 응답 시뮬레이션
+            setTimeout(() => {
+                alert('✅ 테스트 메시지가 성공적으로 발송되었습니다!');
+            }, 1000);
+        }
+
+        // 모달 외부 클릭 시 닫기
+        document.getElementById('senderPhoneModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeSenderModal();
+            }
+        });
+
+        document.getElementById('testMessageModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeTestMessageModal();
+            }
+        });
+
+        // 메시지 내용 글자 수 카운터
+        document.addEventListener('DOMContentLoaded', function() {
+            const messageContent = document.getElementById('messageContent');
+            if (messageContent) {
+                messageContent.addEventListener('input', updateCharCount);
+            }
+        });
+
+        // 발신번호 추가
+        function addSenderPhone() {
+            const container = document.getElementById('senderPhonesContainer');
+            const items = container.querySelectorAll('.sender-phone-item');
+            const newIndex = items.length;
+            
+            const newItem = document.createElement('div');
+            newItem.className = 'sender-phone-item';
+            newItem.setAttribute('data-index', newIndex);
+            newItem.innerHTML = `
+                <input 
+                    type="tel" 
+                    name="sender_phones[]" 
+                    class="form-input sender-phone-input" 
+                    placeholder="01012345678 (하이픈 없이 입력)"
+                    pattern="[0-9]{10,11}"
+                    required
+                >
+                <button type="button" class="btn-remove-phone" onclick="removeSenderPhone(this)">✕</button>
+            `;
+            
+            container.appendChild(newItem);
+        }
+
+        // 발신번호 제거
+        function removeSenderPhone(button) {
+            const container = document.getElementById('senderPhonesContainer');
+            const items = container.querySelectorAll('.sender-phone-item');
+            
+            // 최소 1개는 남겨야 함
+            if (items.length <= 1) {
+                alert('최소 1개의 발신번호는 필요합니다.');
+                return;
+            }
+            
+            const item = button.parentElement;
+            item.remove();
+        }
+
+        // 연결 테스트
+        function testConnection() {
+            const form = document.getElementById('smsConfigForm');
+            const formData = new FormData(form);
+            
+            // 필수 필드 확인
+            if (!formData.get('provider') || !formData.get('account_id') || !formData.get('password')) {
+                alert('제공업체, 계정 ID, 비밀번호를 모두 입력해주세요.');
+                return;
+            }
+
+            // TODO: 실제 연결 테스트 API 호출
+            alert('🔍 연결 테스트를 진행합니다...\n(실제 구현 시 API 호출 필요)');
+            
+            // 임시 응답 시뮬레이션
+            setTimeout(() => {
+                if (confirm('✅ 연결 테스트 성공!\nSMS 제공업체와 정상적으로 연결되었습니다.')) {
+                    // 성공
+                }
+            }, 1000);
+        }
+
+        // 테스트 메시지 발송
+        function sendTestMessage() {
+            const form = document.getElementById('smsConfigForm');
+            const formData = new FormData(form);
+            
+            const senderPhones = formData.getAll('sender_phones[]').filter(phone => phone.trim() !== '');
+            
+            // 필수 필드 확인
+            if (!formData.get('provider') || !formData.get('account_id') || !formData.get('password') || senderPhones.length === 0) {
+                alert('모든 필수 항목을 입력해주세요.');
+                return;
+            }
+
+            // 발신번호가 1개면 바로 테스트 메시지 모달로, 여러 개면 발신번호 선택 모달로
+            if (senderPhones.length === 1) {
+                selectedSenderPhone = senderPhones[0];
+                openTestMessageModal();
+            } else {
+                // 모달로 발신번호 선택
+                openSenderModal(senderPhones);
+            }
+        }
+
+        // 폼 제출 전 확인
+        document.getElementById('smsConfigForm').addEventListener('submit', function(e) {
+            if (!confirm('SMS 연동 설정을 저장하시겠습니까?')) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
+{{end}}
