@@ -13,13 +13,14 @@ var Templates *template.Template
 // Handler - 홈페이지 핸들러
 func Handler(w http.ResponseWriter, r *http.Request) {
 	data := PageData{
-		Title:     "대시보드",
-		AdminName: "관리자",
+		Title:      "대시보드",
+		ActiveMenu: "dashboard",
+		AdminName:  "관리자",
 		Stats: []StatCard{
-			{Title: "총 사용자", Value: "1,234", Icon: "👥", Color: "#3498db"},
-			{Title: "오늘 방문자", Value: "456", Icon: "📊", Color: "#2ecc71"},
-			{Title: "총 매출", Value: "₩12,345,678", Icon: "💰", Color: "#f39c12"},
-			{Title: "대기 중인 작업", Value: "23", Icon: "⏰", Color: "#e74c3c"},
+			{Title: "금일 총 예약자", Value: "1,234", Icon: "👥", Color: "#3498db"},
+			{Title: "카카오싱크 예약", Value: "456", Icon: "📊", Color: "#2ecc71"},
+			{Title: "워크인 회원", Value: "23", Icon: "⏰", Color: "#e74c3c"},
+			{Title: "잔여 SMS 메시지", Value: "345/2000", Icon: "💰", Color: "#f39c12"},
 		},
 	}
 

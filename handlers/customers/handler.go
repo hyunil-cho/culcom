@@ -62,10 +62,50 @@ func DetailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 샘플 영업 히스토리 데이터
+	sampleHistory := []SalesHistory{
+		{
+			Date:    "2026-01-24",
+			Agent:   "김영업",
+			Content: "제품 문의 전화 상담",
+			Detail:  "A 제품에 대한 상세 사양 및 가격 문의. 대량 구매 가능성 있음.",
+			Comment: "재방문 예정",
+		},
+		{
+			Date:    "2026-01-22",
+			Agent:   "박차장",
+			Content: "제안서 발표 미팅",
+			Detail:  "본사 방문하여 신규 프로젝트 제안서 발표 진행. 긍정적인 반응.",
+			Comment: "긍정적 반응, 다음 주 후속 미팅",
+		},
+		{
+			Date:    "2026-01-20",
+			Agent:   "김영업",
+			Content: "견적서 발송",
+			Detail:  "요청하신 제품 견적서 이메일로 발송 완료.",
+			Comment: "검토 중",
+		},
+		{
+			Date:    "2026-01-18",
+			Agent:   "이대리",
+			Content: "고객사 방문 상담",
+			Detail:  "제품 데모 시연 및 도입 관련 상담 진행.",
+			Comment: "데모 만족, 견적 요청",
+		},
+		{
+			Date:    "2026-01-15",
+			Agent:   "최과장",
+			Content: "이메일 문의 응대",
+			Detail:  "제품 브로슈어 및 기술 스펙 자료 전달.",
+			Comment: "자료 검토 후 연락 예정",
+		},
+	}
+
 	data := DetailPageData{
-		Title:      "고객 상세",
-		ActiveMenu: "customers",
-		Customer:   *customer,
+		Title:        "고객 상세",
+		ActiveMenu:   "customers",
+		Customer:     *customer,
+		SalesHistory: sampleHistory,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "customers/detail.html", data); err != nil {

@@ -829,6 +829,209 @@ body {
     box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
 }
 
+/* 모달 닫기 버튼 */
+.modal-close {
+    position: absolute;
+    right: 1.5rem;
+    top: 1.5rem;
+    font-size: 2rem;
+    font-weight: 300;
+    color: #5a6c7d;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: #2c3e50;
+}
+
+/* 모달 헤더 (응대 모달용) */
+.modal-header {
+    position: relative;
+    padding: 2rem;
+    text-align: center;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+/* 모달 고객 정보 */
+.modal-customer-info {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.modal-customer-info p {
+    margin: 0.5rem 0;
+    color: #2c3e50;
+    font-size: 1rem;
+}
+
+.modal-customer-info strong {
+    display: inline-block;
+    width: 100px;
+    color: #5a6c7d;
+}
+
+/* 상담 내용 스타일 */
+.consultation-content strong {
+    display: block;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.consultation-detail {
+    font-size: 0.875rem;
+    color: #5a6c7d;
+    margin-top: 0.5rem;
+    line-height: 1.5;
+}
+
+/* 영업 히스토리 (더 이상 사용 안 함 - 레거시) */
+.history-timeline {
+    padding: 1rem 0;
+}
+
+.history-item {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.history-item:last-child {
+    border-bottom: none;
+}
+
+.history-date {
+    flex-shrink: 0;
+    width: 70px;
+    text-align: center;
+    padding-top: 0.5rem;
+}
+
+.history-day {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    line-height: 1;
+}
+
+.history-month-year {
+    font-size: 0.875rem;
+    color: #5a6c7d;
+    margin-top: 0.25rem;
+}
+
+.history-content {
+    flex: 1;
+}
+
+.history-type {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.history-type.type-call {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.history-type.type-visit {
+    background-color: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.history-type.type-email {
+    background-color: #e8f5e9;
+    color: #388e3c;
+}
+
+.history-type.type-meeting {
+    background-color: #fff3e0;
+    color: #f57c00;
+}
+
+.history-type.type-quote {
+    background-color: #fce4ec;
+    color: #c2185b;
+}
+
+.history-type.type-contract {
+    background-color: #e0f2f1;
+    color: #00796b;
+}
+
+.history-type.type-other {
+    background-color: #f5f5f5;
+    color: #616161;
+}
+
+.history-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.history-description {
+    font-size: 0.95rem;
+    color: #5a6c7d;
+    line-height: 1.6;
+    margin-bottom: 0.75rem;
+}
+
+.history-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: #95a5a6;
+}
+
+.history-author {
+    font-weight: 500;
+}
+
+.history-time::before {
+    content: "•";
+    margin-right: 0.5rem;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-text {
+    font-size: 1.1rem;
+    color: #5a6c7d;
+    margin-bottom: 1.5rem;
+}
+
+/* 버튼 크기 변형 */
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 /* 반응형 */
 @media (max-width: 1024px) {
     .sidebar {

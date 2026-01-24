@@ -84,6 +84,7 @@
                     <td>
                         <a href="/customers/detail?id={{.ID}}" class="btn-table-action">상세</a>
                         <a href="/customers/edit?id={{.ID}}" class="btn-table-action">수정</a>
+                        <button class="btn-table-action" onclick="openResponseModal({{.ID}}, '{{.Name}}', '{{.Phone}}')">응대</button>
                     </td>
                 </tr>
                 {{end}}
@@ -102,6 +103,52 @@
         <button class="page-btn">▶</button>
     </div>
 </div>
+
+<!-- 응대 모달 -->
+<div id="responseModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>고객 응대</h3>
+            <span class="modal-close" onclick="closeResponseModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="modal-customer-info">
+                <p><strong>고객명:</strong> <span id="modalCustomerName"></span></p>
+                <p><strong>전화번호:</strong> <span id="modalCustomerPhone"></span></p>
+            </div>
+            <!-- 여기에 추가 콘텐츠가 들어갈 예정 -->
+            <div id="modalResponseContent">
+                <p style="text-align: center; color: #888; padding: 40px 0;">
+                    응대 내용이 여기에 표시됩니다.
+                </p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeResponseModal()">닫기</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function openResponseModal(customerId, customerName, customerPhone) {
+    document.getElementById('modalCustomerName').textContent = customerName;
+    document.getElementById('modalCustomerPhone').textContent = customerPhone;
+    document.getElementById('responseModal').style.display = 'block';
+}
+
+function closeResponseModal() {
+    document.getElementById('responseModal').style.display = 'none';
+}
+
+// 모달 외부 클릭 시 닫기
+window.onclick = function(event) {
+    const modal = document.getElementById('responseModal');
+    if (event.target == modal) {
+        closeResponseModal();
+    }
+}
+</script>
+
         </main>
     </div>
 </body>
