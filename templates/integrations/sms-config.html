@@ -778,9 +778,6 @@
                         <button type="submit" class="btn-primary">
                             💾 설정 저장
                         </button>
-                        <button type="button" class="btn-secondary" onclick="testConnection()">
-                            🔍 연결 테스트
-                        </button>
                         <button type="button" class="btn-secondary" onclick="sendTestMessage()">
                             📤 테스트 발송
                         </button>
@@ -1132,29 +1129,7 @@
             const item = button.parentElement;
             item.remove();
         }
-
-        // 연결 테스트
-        function testConnection() {
-            const form = document.getElementById('smsConfigForm');
-            const formData = new FormData(form);
-            
-            // 필수 필드 확인
-            if (!formData.get('provider') || !formData.get('account_id') || !formData.get('password')) {
-                alert('제공업체, 계정 ID, 비밀번호를 모두 입력해주세요.');
-                return;
-            }
-
-            // TODO: 실제 연결 테스트 API 호출
-            alert('🔍 연결 테스트를 진행합니다...\n(실제 구현 시 API 호출 필요)');
-            
-            // 임시 응답 시뮬레이션
-            setTimeout(() => {
-                if (confirm('✅ 연결 테스트 성공!\nSMS 제공업체와 정상적으로 연결되었습니다.')) {
-                    // 성공
-                }
-            }, 1000);
-        }
-
+        
         // 테스트 메시지 발송
         function sendTestMessage() {
             const form = document.getElementById('smsConfigForm');
