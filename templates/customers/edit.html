@@ -22,14 +22,9 @@
 <!-- 고객 수정 폼 -->
 <div class="content-card">
     <div class="form-header">
-        <h2>기본 정보</h2>
+        <h2>고객 정보 수정</h2>
     </div>
     <div class="form-body">
-        <div class="form-row">
-            <label class="form-label">고객번호</label>
-            <input type="text" class="form-input" value="{{.Customer.ID}}" disabled>
-        </div>
-
         <div class="form-row">
             <label class="form-label">이름 <span class="required">*</span></label>
             <input type="text" class="form-input" value="{{.Customer.Name}}" placeholder="이름을 입력하세요">
@@ -43,38 +38,6 @@
         <div class="form-row">
             <label class="form-label">이메일 <span class="required">*</span></label>
             <input type="email" class="form-input" value="{{.Customer.Email}}" placeholder="이메일을 입력하세요">
-        </div>
-
-        <div class="form-row">
-            <label class="form-label">상태</label>
-            <select class="form-select">
-                <option value="정상" {{if eq .Customer.Status "정상"}}selected{{end}}>정상</option>
-                <option value="휴면" {{if eq .Customer.Status "휴면"}}selected{{end}}>휴면</option>
-                <option value="탈퇴" {{if eq .Customer.Status "탈퇴"}}selected{{end}}>탈퇴</option>
-            </select>
-        </div>
-
-        <div class="form-row">
-            <label class="form-label">가입일</label>
-            <input type="text" class="form-input" value="{{.Customer.RegisterDate}}" disabled>
-        </div>
-
-        <div class="form-row">
-            <label class="form-label">최근 방문</label>
-            <input type="text" class="form-input" value="{{.Customer.LastVisit}}" disabled>
-        </div>
-    </div>
-</div>
-
-<!-- 추가 정보 -->
-<div class="content-card">
-    <div class="form-header">
-        <h2>추가 정보</h2>
-    </div>
-    <div class="form-body">
-        <div class="form-row">
-            <label class="form-label">메모</label>
-            <textarea class="form-textarea" rows="5" placeholder="메모를 입력하세요"></textarea>
         </div>
     </div>
 </div>
