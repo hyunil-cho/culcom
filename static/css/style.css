@@ -439,7 +439,7 @@ body {
 
 .data-table th {
     padding: 1rem;
-    text-align: left;
+    text-align: center;
     font-weight: 600;
     color: #2c3e50;
     border-bottom: 2px solid #e0e0e0;
@@ -449,6 +449,8 @@ body {
 .data-table td {
     padding: 1rem;
     border-bottom: 1px solid #f0f0f0;
+    text-align: center;
+    vertical-align: middle;
 }
 
 .data-table tbody tr {
@@ -872,6 +874,64 @@ body {
     display: inline-block;
     width: 100px;
     color: #5a6c7d;
+}
+
+/* 응대 모달 전용 스타일 */
+.response-section {
+    margin-bottom: 2rem;
+}
+
+.response-section:last-child {
+    margin-bottom: 0;
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #3498db;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    background-color: #f8f9fa;
+    padding: 1.25rem;
+    border-radius: 8px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.info-label {
+    font-size: 0.875rem;
+    color: #5a6c7d;
+    font-weight: 500;
+}
+
+.info-value {
+    font-size: 1rem;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.empty-message {
+    background-color: #f8f9fa;
+    padding: 2.5rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.empty-message p {
+    color: #95a5a6;
+    font-size: 0.95rem;
+    margin: 0;
 }
 
 /* 상담 내용 스타일 */

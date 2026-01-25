@@ -80,90 +80,6 @@
     </div>
 </div>
 
-<!-- 영업 히스토리 -->
-<div class="content-card">
-    <div class="detail-header">
-        <h2>영업 히스토리</h2>
-    </div>
-    <div class="detail-body">
-        {{if .SalesHistory}}
-        <div class="table-wrapper">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th style="width: 15%;">날짜</th>
-                        <th style="width: 15%;">상담원</th>
-                        <th style="width: 50%;">상담 내용</th>
-                        <th style="width: 20%;">코멘트</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{range .SalesHistory}}
-                    <tr>
-                        <td>{{.Date}}</td>
-                        <td>{{.Agent}}</td>
-                        <td>
-                            <div class="consultation-content">
-                                <strong>{{.Content}}</strong>
-                                {{if .Detail}}
-                                <div class="consultation-detail">{{.Detail}}</div>
-                                {{end}}
-                            </div>
-                        </td>
-                        <td>{{.Comment}}</td>
-                    </tr>
-                    {{end}}
-                </tbody>
-            </table>
-        </div>
-        {{else}}
-        <div class="empty-state">
-            <div class="empty-icon">📋</div>
-            <div class="empty-text">아직 영업 히스토리가 없습니다.</div>
-            <button class="btn-secondary" onclick="openAddHistoryModal()">첫 히스토리 추가하기</button>
-        </div>
-        {{end}}
-    </div>
-</div>
-
-<!-- 히스토리 추가 모달 -->
-<div id="addHistoryModal" class="modal">
-    <div class="modal-content" style="max-width: 600px;">
-        <div class="modal-header">
-            <h3>영업 히스토리 추가</h3>
-            <span class="modal-close" onclick="closeAddHistoryModal()">&times;</span>
-        </div>
-        <div class="modal-body" style="text-align: left;">
-            <form id="historyForm">
-                <div class="form-group">
-                    <label class="form-label">날짜 *</label>
-                    <input type="date" class="form-input" name="date" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">상담원 *</label>
-                    <input type="text" class="form-input" name="agent" placeholder="상담원 이름을 입력하세요" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">상담 내용 *</label>
-                    <input type="text" class="form-input" name="content" placeholder="상담 내용을 입력하세요" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">상세 내용</label>
-                    <textarea class="form-input" name="detail" rows="3" placeholder="상세 내용을 입력하세요"></textarea>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">코멘트</label>
-                    <textarea class="form-input" name="comment" rows="2" placeholder="코멘트를 입력하세요"></textarea>
-                </div>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-secondary" onclick="closeAddHistoryModal()">취소</button>
-            <button class="btn-primary" onclick="submitHistory()">저장</button>
-        </div>
-    </div>
-</div>
-
 <script>
     let customerIdToDelete = null;
 
@@ -187,47 +103,12 @@
         }
     }
 
-    // 히스토리 추가 모달
-    function openAddHistoryModal() {
-        // 현재 날짜를 기본값으로 설정
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const dateValue = `${year}-${month}-${day}`;
-        
-        document.querySelector('input[name="date"]').value = dateValue;
-        document.getElementById('addHistoryModal').style.display = 'block';
-    }
-
-    function closeAddHistoryModal() {
-        document.getElementById('addHistoryModal').style.display = 'none';
-        document.getElementById('historyForm').reset();
-    }
-
-    function submitHistory() {
-        const form = document.getElementById('historyForm');
-        if (form.checkValidity()) {
-            // TODO: 실제 저장 로직 구현
-            const formData = new FormData(form);
-            console.log('Form data:', Object.fromEntries(formData));
-            alert('히스토리가 추가되었습니다.\n(실제 저장 기능은 백엔드에서 구현 필요)');
-            closeAddHistoryModal();
-        } else {
-            form.reportValidity();
-        }
-    }
-
     // 모달 외부 클릭 시 닫기
     window.onclick = function(event) {
         const deleteModal = document.getElementById('deleteModal');
-        const historyModal = document.getElementById('addHistoryModal');
         
         if (event.target === deleteModal) {
             closeDeleteModal();
-        }
-        if (event.target === historyModal) {
-            closeAddHistoryModal();
         }
     }
 </script>

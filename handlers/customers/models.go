@@ -6,9 +6,11 @@ type Customer struct {
 	Name         string
 	Phone        string
 	Email        string
+	AdName       string
 	Status       string
 	RegisterDate string
 	LastVisit    string
+	CallCount    int
 }
 
 // SalesHistory - 영업 히스토리 구조체
