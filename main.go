@@ -3,7 +3,6 @@ package main
 import (
 	"backoffice/handlers/branches"
 	"backoffice/handlers/customers"
-	"backoffice/handlers/employees"
 	"backoffice/handlers/errorhandler"
 	"backoffice/handlers/home"
 	"backoffice/handlers/integrations"
@@ -30,7 +29,6 @@ func init() {
 	templates = template.Must(templates.ParseGlob("templates/dashboard/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/customers/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/branches/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/employees/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/integrations/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/auth/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/error.html"))
@@ -39,7 +37,6 @@ func init() {
 	login.Templates = templates
 	customers.Templates = templates
 	branches.Templates = templates
-	employees.Templates = templates
 	integrations.Templates = templates
 	errorhandler.Templates = templates
 }
@@ -58,10 +55,6 @@ func main() {
 	mux.HandleFunc("/branches/detail", middleware.RecoverFunc(branches.DetailHandler))                             // 지점 상세
 	mux.HandleFunc("/branches/edit", middleware.RecoverFunc(branches.EditHandler))                                 // 지점 수정
 	mux.HandleFunc("/branches/add", middleware.RecoverFunc(branches.AddHandler))                                   // 지점 추가
-	mux.HandleFunc("/employees", middleware.RecoverFunc(employees.Handler))                                        // 직원 관리
-	mux.HandleFunc("/employees/detail", middleware.RecoverFunc(employees.DetailHandler))                           // 직원 상세
-	mux.HandleFunc("/employees/edit", middleware.RecoverFunc(employees.EditHandler))                               // 직원 수정
-	mux.HandleFunc("/employees/add", middleware.RecoverFunc(employees.AddHandler))                                 // 직원 추가
 	mux.HandleFunc("/integrations", middleware.RecoverFunc(integrations.Handler))                                  // 외부 시스템 연동
 	mux.HandleFunc("/integrations/configure", middleware.RecoverFunc(integrations.ConfigureHandler))               // 연동 설정
 	mux.HandleFunc("/integrations/sms-config", middleware.RecoverFunc(integrations.SMSConfigHandler))              // SMS 연동 설정

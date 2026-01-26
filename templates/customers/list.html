@@ -17,29 +17,22 @@
 <!-- 검색 및 필터 -->
 <div class="content-card">
     <div class="search-section">
-        <div class="search-filters">
-            <div class="filter-group">
-                <label>검색어</label>
-                <input type="text" placeholder="고객명, 전화번호, 이메일" class="search-input">
-            </div>
-            <div class="filter-group">
-                <label>상태</label>
-                <select class="filter-select">
-                    <option>전체</option>
-                    <option>신규</option>
-                    <option>부재중</option>
-                    <option>예약완료</option>
-                    <option>전화상 안함</option>
-                    <option>GG</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>등록일</label>
-                <input type="date" class="filter-input">
+        <div class="search-filters" style="gap: 0.5rem;">
+            <div style="display: flex; gap: 0; flex: 1; max-width: 650px;">
+                <div class="filter-group" style="min-width: auto; margin: 0;">
+                    <label>검색 조건</label>
+                    <select class="filter-select" style="width: 100px;">
+                        <option value="name">이름</option>
+                        <option value="phone">전화번호</option>
+                    </select>
+                </div>
+                <div class="filter-group" style="flex: 1; margin: 0;">
+                    <label>검색어</label>
+                    <input type="text" placeholder="검색어를 입력하세요" class="search-input">
+                </div>
             </div>
             <div class="filter-actions">
                 <button class="btn-search">🔍 검색</button>
-                <button class="btn-reset">🔄 초기화</button>
             </div>
         </div>
         <div class="action-buttons">
@@ -51,8 +44,15 @@
 <!-- 고객 테이블 -->
 <div class="content-card">
     <div class="table-header">
-        <div class="table-info">
-            <span>총 <strong>{{len .Customers}}</strong>명</span>
+        <div style="display: flex; gap: 0.5rem; margin-left: auto;">
+            <button class="customer-filter-btn active" onclick="filterCustomers('new')" data-filter="new" 
+                    style="padding: 0.6rem 1.5rem; border: 2px solid #4a90e2; background: #4a90e2; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
+                신규
+            </button>
+            <button class="customer-filter-btn" onclick="filterCustomers('all')" data-filter="all" 
+                    style="padding: 0.6rem 1.5rem; border: 2px solid #ddd; background: white; color: #666; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
+                전체
+            </button>
         </div>
     </div>
     
@@ -61,6 +61,7 @@
             <thead>
                 <tr>
                     <th>이름</th>
+                    <th>코멘트</th>
                     <th>전화번호</th>
                     <th>CALLER</th>
                     <th>TEXT</th>
@@ -73,9 +74,19 @@
             </thead>
             <tbody>
                 {{range .Customers}}
-                <tr>
+                <tr data-last-visit="{{.LastVisit}}" data-customer-id="{{.ID}}">
                     <td><strong>{{.Name}}</strong></td>
-                    <td>{{.Phone}}</td>
+                    <td>
+                        <div style="display: flex; gap: 0.3rem; align-items: center;">
+                            <input type="text" id="comment-{{.ID}}" placeholder="코멘트 입력" 
+                                   style="padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; width: 150px;">
+                            <button onclick="saveComment({{.ID}})" 
+                                    style="padding: 0.4rem 0.7rem; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">등록</button>
+                        </div>
+                    </td>
+                    <td id="phone-{{.ID}}" class="phone-hidden">
+                        <span class="phone-number">{{.Phone}}</span>
+                    </td>
                     <td>
                         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; width: fit-content; margin: 0 auto;">
                             <button type="button" class="caller-btn" onclick="selectCaller({{.ID}}, 'A')" data-customer-id="{{.ID}}" data-letter="A">A</button>
@@ -446,7 +457,7 @@ function loadResponseHistory(customerId) {
             comment: '본사 방문 예약 완료'
         },
         {
-            date: '2026-01-22 16:45',
+            date: '2026-01-26 18:45',
             agent: '이대리',
             type: '부재중',
             comment: '연락 안됨. 내일 오전 재시도 예정'
@@ -832,6 +843,13 @@ function selectCaller(customerId, letter) {
     // 클릭한 버튼 선택
     event.target.classList.add('selected');
     
+    // 전화번호 표시
+    const phoneCell = document.getElementById(`phone-${customerId}`);
+    if (phoneCell) {
+        phoneCell.classList.remove('phone-hidden');
+        phoneCell.classList.add('phone-visible');
+    }
+    
     console.log(`Customer ${customerId}: Selected caller ${letter}`);
     
     // TODO: 서버에 caller 정보 저장
@@ -1121,6 +1139,184 @@ function confirmInterviewDateTime() {
     pendingInterviewCustomerName = null;
 }
 
+// 코멘트 저장
+function saveComment(customerId) {
+    const commentInput = document.getElementById(`comment-${customerId}`);
+    const comment = commentInput.value.trim();
+    
+    if (!comment) {
+        alert('코멘트를 입력해주세요.');
+        return;
+    }
+    
+    // TODO: 실제로는 서버에 저장
+    console.log(`Customer ${customerId}: Comment saved - "${comment}"`);
+    
+    alert('코멘트가 등록되었습니다.');
+    
+    // 입력 필드 초기화 (선택사항)
+    // commentInput.value = '';
+}
+
+// 최근 응대 시간 체크
+function checkRecentContacts() {
+    const now = new Date();
+    const rows = document.querySelectorAll('tbody tr[data-last-visit]');
+    
+    rows.forEach(row => {
+        const lastVisitStr = row.getAttribute('data-last-visit');
+        if (!lastVisitStr) return;
+        
+        // 날짜 파싱 (2026-01-20 17:34 형식)
+        const lastVisitDate = new Date(lastVisitStr.replace(' ', 'T'));
+        
+        // 시간 차이 계산 (밀리초)
+        const diffMs = now - lastVisitDate;
+        const diffHours = diffMs / (1000 * 60 * 60);
+        
+        // 1시간 이내면 클래스 추가
+        if (diffHours <= 1 && diffHours >= 0) {
+            row.classList.add('recent-contact');
+        }
+    });
+}
+
+// 페이지 로드 시 최근 응대 체크 실행
+document.addEventListener('DOMContentLoaded', function() {
+    checkRecentContacts();
+    
+    // 기존 DOMContentLoaded 로직들
+    const responseTypeSelect = document.getElementById('responseType');
+    if (responseTypeSelect) {
+        responseTypeSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            const contentDiv = document.getElementById('responseTypeContent');
+            
+            // 기존 내용 초기화
+            contentDiv.innerHTML = '';
+            
+            if (selectedType === '방문예약') {
+                contentDiv.innerHTML = `
+                    <div style="background: #fff9e6; padding: 1.5rem; border-radius: 8px; border: 1px solid #ffd700;">
+                        <h5 style="margin: 0 0 1rem 0; color: #333; font-size: 1rem;">📅 예약 정보</h5>
+                        
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">예약확정일</label>
+                            <input type="date" id="appointmentDate" class="form-input" 
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"
+                                   min="${new Date().toISOString().split('T')[0]}">
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">예약 시간</label>
+                            <input type="time" id="appointmentTime" class="form-input" 
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                        </div>
+                    </div>
+                `;
+            } else if (selectedType === '전화상담') {
+                contentDiv.innerHTML = `
+                    <div style="background: #f0f8ff; padding: 1.5rem; border-radius: 8px; border: 1px solid #4a90e2;">
+                        <h5 style="margin: 0 0 1rem 0; color: #333; font-size: 1rem;">📞 상담 정보</h5>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">상담 내용</label>
+                            <textarea id="consultContent" class="form-input" rows="4" placeholder="상담 내용을 입력하세요..."
+                                      style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; resize: vertical;"></textarea>
+                        </div>
+                    </div>
+                `;
+            } else if (selectedType === '부재중') {
+                const nextCount = currentCustomerAbsentCount + 1;
+                contentDiv.innerHTML = `
+                    <div style="background: #fff5f5; padding: 1.5rem; border-radius: 8px; border: 1px solid #fc8181;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                            <h5 style="margin: 0; color: #333; font-size: 1rem;">📵 부재중</h5>
+                            <span style="background: #fc8181; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">
+                                ${nextCount}번째 부재중
+                            </span>
+                        </div>
+                        <div style="background: #fff; padding: 1rem; border-radius: 4px; border-left: 4px solid #fc8181;">
+                            <p style="margin: 0; color: #666; font-size: 0.9rem;">
+                                ℹ️ 이 고객은 현재까지 <strong style="color: #e53e3e;">${currentCustomerAbsentCount}번</strong> 부재중이었습니다.
+                            </p>
+                        </div>
+                    </div>
+                `;
+            } else if (selectedType === '상담거절') {
+                contentDiv.innerHTML = `
+                    <div style="background: #f7f7f7; padding: 1.5rem; border-radius: 8px; border: 1px solid #999;">
+                        <h5 style="margin: 0 0 1rem 0; color: #333; font-size: 1rem;">❌ 거절 정보</h5>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">거절 사유</label>
+                            <textarea id="rejectReason" class="form-input" rows="4" placeholder="거절 사유를 입력하세요..."
+                                      style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; resize: vertical;"></textarea>
+                        </div>
+                    </div>
+                `;
+            } else if (selectedType === '기타') {
+                contentDiv.innerHTML = `
+                    <div style="background: #faf5ff; padding: 1.5rem; border-radius: 8px; border: 1px solid #9f7aea;">
+                        <h5 style="margin: 0 0 1rem 0; color: #333; font-size: 1rem;">📝 기타 정보</h5>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">상세 내용</label>
+                            <textarea id="otherContent" class="form-input" rows="4" placeholder="내용을 입력하세요..."
+                                      style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; resize: vertical;"></textarea>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+    }
+    
+    // 메시지 글자 수 카운트
+    const messageTextarea = document.getElementById('smsMessageContent');
+    if (messageTextarea) {
+        messageTextarea.addEventListener('input', function() {
+            const length = this.value.length;
+            document.getElementById('messageLength').textContent = length;
+        });
+    }
+    
+    // TEXT 메시지 글자 수 카운트
+    const textMessageTextarea = document.getElementById('textMessageContent');
+    if (textMessageTextarea) {
+        textMessageTextarea.addEventListener('input', function() {
+            const length = this.value.length;
+            document.getElementById('textMessageLength').textContent = length;
+        });
+    }
+});
+
+// 고객 필터링
+let currentFilter = 'new';
+
+function filterCustomers(filterType) {
+    currentFilter = filterType;
+    
+    // 모든 필터 버튼 비활성화
+    document.querySelectorAll('.customer-filter-btn').forEach(btn => {
+        btn.style.background = 'white';
+        btn.style.borderColor = '#ddd';
+        btn.style.color = '#666';
+        btn.classList.remove('active');
+    });
+    
+    // 선택된 버튼 활성화
+    const activeBtn = document.querySelector(`[data-filter="${filterType}"]`);
+    if (activeBtn) {
+        activeBtn.style.background = '#4a90e2';
+        activeBtn.style.borderColor = '#4a90e2';
+        activeBtn.style.color = 'white';
+        activeBtn.classList.add('active');
+    }
+    
+    // TODO: 실제로는 서버에서 필터링된 데이터를 가져와야 함
+    console.log(`고객 필터 변경: ${filterType}`);
+    
+    // 여기서 페이지를 다시 로드하거나 AJAX로 데이터를 가져올 수 있습니다
+    // 예: window.location.href = `/customers?filter=${filterType}`;
+}
+
 </script>
 
 <style>
@@ -1147,6 +1343,27 @@ function confirmInterviewDateTime() {
     background: #4a90e2;
     color: white;
     border-color: #4a90e2;
+}
+
+.phone-hidden .phone-number {
+    visibility: hidden;
+}
+
+.phone-hidden::before {
+    content: '***-****-****';
+    color: #999;
+}
+
+.phone-visible .phone-number {
+    visibility: visible;
+}
+
+.recent-contact {
+    background-color: #f3e8ff !important;
+}
+
+.recent-contact:hover {
+    background-color: #e9d5ff !important;
 }
 </style>
 
