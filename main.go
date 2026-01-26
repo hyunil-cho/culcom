@@ -8,6 +8,7 @@ import (
 	"backoffice/handlers/home"
 	"backoffice/handlers/integrations"
 	"backoffice/handlers/login"
+	"backoffice/handlers/messagetemplates"
 	"backoffice/middleware"
 	"html/template"
 	"log"
@@ -31,6 +32,7 @@ func init() {
 	templates = template.Must(templates.ParseGlob("templates/customers/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/branches/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/integrations/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/message-templates/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/auth/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/error.html"))
 
@@ -39,6 +41,7 @@ func init() {
 	customers.Templates = templates
 	branches.Templates = templates
 	integrations.Templates = templates
+	messagetemplates.Templates = templates
 	errorhandler.Templates = templates
 }
 
@@ -50,24 +53,24 @@ func main() {
 	mux := http.NewServeMux()
 
 	// 라우트 설정 (panic recovery 미들웨어 적용)
-	mux.HandleFunc("/dashboard", middleware.RecoverFunc(home.Handler))                                                      // 대시보드
-	mux.HandleFunc("/customers", middleware.RecoverFunc(customers.Handler))                                                 // 고객 관리
-	mux.HandleFunc("/customers/detail", middleware.RecoverFunc(customers.DetailHandler))                                    // 고객 상세
-	mux.HandleFunc("/customers/edit", middleware.RecoverFunc(customers.EditHandler))                                        // 고객 수정
-	mux.HandleFunc("/customers/add", middleware.RecoverFunc(customers.AddHandler))                                          // 고객 추가
-	mux.HandleFunc("/branches", middleware.RecoverFunc(branches.Handler))                                                   // 지점 관리
-	mux.HandleFunc("/branches/detail", middleware.RecoverFunc(branches.DetailHandler))                                      // 지점 상세
-	mux.HandleFunc("/branches/edit", middleware.RecoverFunc(branches.EditHandler))                                          // 지점 수정
-	mux.HandleFunc("/branches/add", middleware.RecoverFunc(branches.AddHandler))                                            // 지점 추가
-	mux.HandleFunc("/integrations", middleware.RecoverFunc(integrations.Handler))                                           // 외부 시스템 연동
-	mux.HandleFunc("/integrations/configure", middleware.RecoverFunc(integrations.ConfigureHandler))                        // 연동 설정
-	mux.HandleFunc("/integrations/sms-config", middleware.RecoverFunc(integrations.SMSConfigHandler))                       // SMS 연동 설정
-	mux.HandleFunc("/message-templates", middleware.RecoverFunc(integrations.MessageTemplatesHandler))                      // 메시지 템플릿 목록
-	mux.HandleFunc("/message-templates/add", middleware.RecoverFunc(integrations.MessageTemplateAddHandler))                // 메시지 템플릿 추가
-	mux.HandleFunc("/message-templates/edit", middleware.RecoverFunc(integrations.MessageTemplateEditHandler))              // 메시지 템플릿 수정
-	mux.HandleFunc("/message-templates/delete", middleware.RecoverFunc(integrations.MessageTemplateDeleteHandler))          // 메시지 템플릿 삭제
-	mux.HandleFunc("/message-templates/set-default", middleware.RecoverFunc(integrations.MessageTemplateSetDefaultHandler)) // 메시지 템플릿 기본값 설정
-	mux.HandleFunc("/error", middleware.RecoverFunc(errorhandler.Handler404))                                               // 에러 페이지
+	mux.HandleFunc("/dashboard", middleware.RecoverFunc(home.Handler))                                           // 대시보드
+	mux.HandleFunc("/customers", middleware.RecoverFunc(customers.Handler))                                      // 고객 관리
+	mux.HandleFunc("/customers/detail", middleware.RecoverFunc(customers.DetailHandler))                         // 고객 상세
+	mux.HandleFunc("/customers/edit", middleware.RecoverFunc(customers.EditHandler))                             // 고객 수정
+	mux.HandleFunc("/customers/add", middleware.RecoverFunc(customers.AddHandler))                               // 고객 추가
+	mux.HandleFunc("/branches", middleware.RecoverFunc(branches.Handler))                                        // 지점 관리
+	mux.HandleFunc("/branches/detail", middleware.RecoverFunc(branches.DetailHandler))                           // 지점 상세
+	mux.HandleFunc("/branches/edit", middleware.RecoverFunc(branches.EditHandler))                               // 지점 수정
+	mux.HandleFunc("/branches/add", middleware.RecoverFunc(branches.AddHandler))                                 // 지점 추가
+	mux.HandleFunc("/integrations", middleware.RecoverFunc(integrations.Handler))                                // 외부 시스템 연동
+	mux.HandleFunc("/integrations/configure", middleware.RecoverFunc(integrations.ConfigureHandler))             // 연동 설정
+	mux.HandleFunc("/integrations/sms-config", middleware.RecoverFunc(integrations.SMSConfigHandler))            // SMS 연동 설정
+	mux.HandleFunc("/message-templates", middleware.RecoverFunc(messagetemplates.Handler))                       // 메시지 템플릿 목록
+	mux.HandleFunc("/message-templates/add", middleware.RecoverFunc(messagetemplates.AddHandler))                // 메시지 템플릿 추가
+	mux.HandleFunc("/message-templates/edit", middleware.RecoverFunc(messagetemplates.EditHandler))              // 메시지 템플릿 수정
+	mux.HandleFunc("/message-templates/delete", middleware.RecoverFunc(messagetemplates.DeleteHandler))          // 메시지 템플릿 삭제
+	mux.HandleFunc("/message-templates/set-default", middleware.RecoverFunc(messagetemplates.SetDefaultHandler)) // 메시지 템플릿 기본값 설정
+	mux.HandleFunc("/error", middleware.RecoverFunc(errorhandler.Handler404))                                    // 에러 페이지
 
 	// 정적 파일 서빙 (CSS, JS, 이미지 등)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
