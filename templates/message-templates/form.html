@@ -360,21 +360,6 @@
 
                             <div class="form-group">
                                 <label class="form-label">
-                                    카테고리<span class="required">*</span>
-                                </label>
-                                <select name="category" class="form-select" required>
-                                    <option value="">카테고리 선택</option>
-                                    {{range .Categories}}
-                                    <option value="{{.}}" {{if $.Template}}{{if eq $.Template.Category .}}selected{{end}}{{end}}>{{.}}</option>
-                                    {{end}}
-                                </select>
-                                <div class="form-help-text">
-                                    템플릿의 용도를 선택하세요
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">
                                     설명
                                 </label>
                                 <input 

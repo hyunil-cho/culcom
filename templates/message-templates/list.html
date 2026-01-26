@@ -133,16 +133,6 @@
             box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
         }
 
-        .template-category {
-            display: inline-block;
-            padding: 4px 12px;
-            background: #e3f2fd;
-            color: #1976d2;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
         .template-status {
             position: absolute;
             top: 16px;
@@ -349,27 +339,17 @@
             <!-- 성공 메시지 -->
             <div id="successMessage" class="success-message"></div>
 
-            <!-- 필터 섹션 -->
-            <div class="filter-section">
-                {{range .Categories}}
-                <button class="filter-btn {{if eq . "전체"}}active{{end}}" onclick="filterByCategory('{{.}}')">
-                    {{.}}
-                </button>
-                {{end}}
-            </div>
-
             <!-- 템플릿 그리드 -->
             <div class="templates-grid" id="templatesGrid">
                 {{if .Templates}}
                     {{range .Templates}}
-                    <div class="template-card {{if not .IsActive}}inactive{{end}}" data-category="{{.Category}}">
+                    <div class="template-card {{if not .IsActive}}inactive{{end}}">
                         <div class="template-header">
                             <div>
                                 <h3 class="template-title">
                                     {{.Name}}
                                     {{if .IsDefault}}<span class="default-badge">⭐ 기본</span>{{end}}
                                 </h3>
-                                <span class="template-category">{{.Category}}</span>
                             </div>
                         </div>
                         <span class="template-status {{if .IsActive}}active{{else}}inactive{{end}}">
@@ -390,12 +370,9 @@
                         <div class="template-actions">
                             {{if not .IsDefault}}
                             <button class="btn-action btn-set-default" onclick="setAsDefault({{.ID}}, '{{.Name}}')">
-                                ⭐ 기본값 설정
+                                ⭐ 기본 설정
                             </button>
                             {{end}}
-                            <button class="btn-action btn-preview" onclick="previewTemplate({{.ID}})">
-                                👁️ 미리보기
-                            </button>
                             <a href="/message-templates/edit?id={{.ID}}" class="btn-action btn-edit">
                                 ✏️ 수정
                             </a>
@@ -456,10 +433,11 @@
     </div>
 
     <script>
-        // URL 파라미터로 성공 메시지 표시
+        // URL 파라미터로 성공/에러 메시지 표시
         window.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
             const success = urlParams.get('success');
+            const error = urlParams.get('error');
             const successMessage = document.getElementById('successMessage');
             
             if (success === 'add') {
@@ -474,47 +452,39 @@
             } else if (success === 'default') {
                 successMessage.textContent = '⭐ 기본 템플릿이 성공적으로 설정되었습니다.';
                 successMessage.classList.add('show');
+            } else if (error === 'invalid_id') {
+                successMessage.textContent = '❌ 잘못된 템플릿 ID입니다.';
+                successMessage.style.background = '#ffebee';
+                successMessage.style.borderColor = '#f44336';
+                successMessage.style.color = '#c62828';
+                successMessage.classList.add('show');
+            } else if (error === 'set_default_failed') {
+                successMessage.textContent = '❌ 기본 템플릿 설정에 실패했습니다.';
+                successMessage.style.background = '#ffebee';
+                successMessage.style.borderColor = '#f44336';
+                successMessage.style.color = '#c62828';
+                successMessage.classList.add('show');
+            } else if (error === 'delete_failed') {
+                successMessage.textContent = '❌ 템플릿 삭제에 실패했습니다.';
+                successMessage.style.background = '#ffebee';
+                successMessage.style.borderColor = '#f44336';
+                successMessage.style.color = '#c62828';
+                successMessage.classList.add('show');
             }
             
-            if (success) {
+            if (success || error) {
                 setTimeout(function() {
                     successMessage.classList.remove('show');
+                    // 스타일 초기화
+                    successMessage.style.background = '#e8f5e9';
+                    successMessage.style.borderColor = '#4caf50';
+                    successMessage.style.color = '#2e7d32';
                 }, 3000);
                 
                 // URL에서 파라미터 제거
                 window.history.replaceState({}, '', '/message-templates');
             }
         });
-
-        // 카테고리 필터링
-        function filterByCategory(category) {
-            const cards = document.querySelectorAll('.template-card');
-            const buttons = document.querySelectorAll('.filter-btn');
-            
-            // 버튼 활성화 상태 변경
-            buttons.forEach(btn => {
-                if (btn.textContent.trim() === category) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
-            
-            // 카드 필터링
-            cards.forEach(card => {
-                if (category === '전체' || card.dataset.category === category) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        }
-
-        // 템플릿 미리보기
-        function previewTemplate(id) {
-            // TODO: 실제 구현 시 모달로 미리보기 표시
-            alert('템플릿 미리보기 기능\n(실제 구현 시 플레이스홀더에 샘플 데이터를 적용한 미리보기를 모달로 표시)');
-        }
 
         // 템플릿 삭제
         function deleteTemplate(id, name) {

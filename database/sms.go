@@ -16,15 +16,16 @@ type SMSConfig struct {
 }
 
 // GetSMSConfig SMS 설정 조회
-func GetSMSConfig() (*SMSConfig, error) {
-	log.Println("=== SMS 설정 조회 ===")
+func GetSMSConfig(branchCode string) (*SMSConfig, error) {
+	log.Printf("=== SMS 설정 조회 - BranchCode: %s ===", branchCode)
 	log.Println("현재 DB 연동 전 - 빈 설정 반환")
 	return nil, nil
 }
 
 // SaveSMSConfig SMS 설정 저장 (INSERT 또는 UPDATE)
-func SaveSMSConfig(accountID, password string, senderPhones []string, isActive bool) error {
+func SaveSMSConfig(branchCode, accountID, password string, senderPhones []string, isActive bool) error {
 	log.Println("=== SMS 설정 저장 ===")
+	log.Printf("지점 코드: %s", branchCode)
 	log.Printf("계정 ID: %s", accountID)
 	log.Printf("비밀번호: %s", maskSMSPassword(password))
 	log.Printf("발신번호: %v", senderPhones)

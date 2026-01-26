@@ -256,8 +256,11 @@ func SMSConfigSaveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Database를 통해 설정 저장
-	if err := database.SaveSMSConfig(accountID, password, senderPhones, isActive); err != nil {
+	// 세션에서 선택된 지점 정보 가져오기
+	branchCode := middleware.GetSelectedBranch(r)
+
+	// Database를 통해 설정 저장 (지점별)
+	if err := database.SaveSMSConfig(branchCode, accountID, password, senderPhones, isActive); err != nil {
 		log.Printf("SMS 설정 저장 오류: %v", err)
 		http.Redirect(w, r, "/integrations?error=save_failed", http.StatusSeeOther)
 		return

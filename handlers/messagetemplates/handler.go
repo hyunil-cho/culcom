@@ -1,6 +1,9 @@
 package messagetemplates
 
 import (
+	"backoffice/database"
+	"backoffice/middleware"
+	"backoffice/utils"
 	"log"
 	"net/http"
 	"strconv"
@@ -17,159 +20,54 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// TODO: 실제로는 DB에서 템플릿 목록 조회
-	allTemplates := []MessageTemplate{
-		{
-			ID:          1,
-			Name:        "예약 확인 메시지",
-			Category:    "예약",
-			Content:     "{이름}님, {날짜} {시간}에 {지점명} 예약이 완료되었습니다.",
-			Description: "고객 예약 확인용 메시지",
-			IsActive:    true,
-			IsDefault:   true,
-			CreatedAt:   "2024-01-15 10:00:00",
-			UpdatedAt:   "2024-01-15 10:00:00",
-		},
-		{
-			ID:          2,
-			Name:        "결제 완료 안내",
-			Category:    "결제",
-			Content:     "{이름}님, {금액}원 결제가 완료되었습니다. 감사합니다.",
-			Description: "결제 완료 시 발송되는 메시지",
-			IsActive:    true,
-			IsDefault:   false,
-			CreatedAt:   "2024-01-16 14:30:00",
-			UpdatedAt:   "2024-01-16 14:30:00",
-		},
-		{
-			ID:          3,
-			Name:        "이벤트 안내",
-			Category:    "마케팅",
-			Content:     "[{지점명}] {이름}님께 특별한 혜택을 드립니다. {이벤트내용}",
-			Description: "프로모션 및 이벤트 안내용",
-			IsActive:    false,
-			IsDefault:   false,
-			CreatedAt:   "2024-01-10 09:00:00",
-			UpdatedAt:   "2024-01-18 16:00:00",
-		},
-		{
-			ID:          4,
-			Name:        "예약 리마인더",
-			Category:    "예약",
-			Content:     "{이름}님, 내일 {시간}에 {지점명} 예약이 있습니다.",
-			Description: "예약 하루 전 발송되는 알림",
-			IsActive:    true,
-			IsDefault:   false,
-			CreatedAt:   "2024-01-17 11:00:00",
-			UpdatedAt:   "2024-01-17 11:00:00",
-		},
-		{
-			ID:          5,
-			Name:        "예약 취소 확인",
-			Category:    "예약",
-			Content:     "{이름}님, {날짜} {시간} 예약이 취소되었습니다.",
-			Description: "예약 취소 시 발송되는 메시지",
-			IsActive:    true,
-			IsDefault:   false,
-			CreatedAt:   "2024-01-18 15:20:00",
-			UpdatedAt:   "2024-01-18 15:20:00",
-		},
-		{
-			ID:          6,
-			Name:        "신규 회원 환영",
-			Category:    "마케팅",
-			Content:     "{이름}님, 회원가입을 환영합니다! 첫 구매 시 10% 할인 혜택을 드립니다.",
-			Description: "신규 회원 가입 시 환영 메시지",
-			IsActive:    true,
-			IsDefault:   false,
-			CreatedAt:   "2024-01-19 09:30:00",
-			UpdatedAt:   "2024-01-19 09:30:00",
-		},
-		{
-			ID:          7,
-			Name:        "생일 축하 메시지",
-			Category:    "마케팅",
-			Content:     "{이름}님, 생일을 진심으로 축하드립니다! 특별한 쿠폰을 선물로 드립니다.",
-			Description: "고객 생일 축하 메시지",
-			IsActive:    true,
-			IsDefault:   false,
-			CreatedAt:   "2024-01-20 10:00:00",
-			UpdatedAt:   "2024-01-20 10:00:00",
-		},
-		{
-			ID:          8,
-			Name:        "결제 실패 안내",
-			Category:    "결제",
-			Content:     "{이름}님, 결제 처리 중 오류가 발생했습니다. 다시 시도해주세요.",
-			Description: "결제 실패 시 안내 메시지",
-			IsActive:    true,
-			IsDefault:   false,
-			CreatedAt:   "2024-01-21 13:45:00",
-			UpdatedAt:   "2024-01-21 13:45:00",
-		},
+	// 세션에서 선택된 지점 정보 가져오기
+	branchCode := middleware.GetSelectedBranch(r)
+
+	// DB에서 템플릿 목록 조회 (지점별)
+	dbTemplates, err := database.GetMessageTemplates(branchCode)
+	if err != nil {
+		log.Printf("템플릿 조회 오류: %v", err)
+		http.Error(w, "템플릿 조회 실패", http.StatusInternalServerError)
+		return
 	}
 
-	// 페이징 계산
+	// DB 템플릿을 핸들러 모델로 변환
+	allTemplates := make([]MessageTemplate, len(dbTemplates))
+	for i, tmpl := range dbTemplates {
+		allTemplates[i] = MessageTemplate{
+			ID:          tmpl.ID,
+			Name:        tmpl.Name,
+			Content:     tmpl.Content,
+			Description: tmpl.Description,
+			IsActive:    tmpl.IsActive,
+			IsDefault:   tmpl.IsDefault,
+			CreatedAt:   tmpl.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt:   tmpl.UpdatedAt.Format("2006-01-02 15:04:05"),
+		}
+	}
+
+	// 페이징 처리
 	itemsPerPage := 6
 	totalItems := len(allTemplates)
-	totalPages := (totalItems + itemsPerPage - 1) / itemsPerPage
+	pagination := utils.CalculatePagination(currentPage, totalItems, itemsPerPage)
 
-	// 현재 페이지가 범위를 벗어나면 조정
-	if currentPage > totalPages && totalPages > 0 {
-		currentPage = totalPages
-	}
-
-	// 현재 페이지에 해당하는 템플릿만 추출
-	startIdx := (currentPage - 1) * itemsPerPage
-	endIdx := startIdx + itemsPerPage
-	if endIdx > totalItems {
-		endIdx = totalItems
-	}
+	// 페이징에 따른 슬라이스 범위 계산
+	startIdx, endIdx := utils.GetSliceRange(pagination.CurrentPage, itemsPerPage, totalItems)
 
 	var templates []MessageTemplate
 	if startIdx < totalItems {
 		templates = allTemplates[startIdx:endIdx]
 	}
 
-	// 페이지 번호 목록 생성 (최대 5개 표시)
-	pages := []int{}
-	startPage := currentPage - 2
-	if startPage < 1 {
-		startPage = 1
-	}
-	endPage := startPage + 4
-	if endPage > totalPages {
-		endPage = totalPages
-		startPage = endPage - 4
-		if startPage < 1 {
-			startPage = 1
-		}
-	}
-	for i := startPage; i <= endPage; i++ {
-		pages = append(pages, i)
-	}
-
-	// 페이징 정보 구성
-	pagination := Pagination{
-		CurrentPage:  currentPage,
-		TotalPages:   totalPages,
-		TotalItems:   totalItems,
-		ItemsPerPage: itemsPerPage,
-		HasPrev:      currentPage > 1,
-		HasNext:      currentPage < totalPages,
-		Pages:        pages,
-	}
-
 	data := TemplateListPageData{
 		Title:      "메시지 템플릿 관리",
 		ActiveMenu: "message-templates",
 		Templates:  templates,
-		Categories: []string{"전체", "예약", "결제", "마케팅", "공지"},
 		Pagination: pagination,
 	}
 
 	log.Println("Executing template: message-templates/list.html")
-	err := Templates.ExecuteTemplate(w, "message-templates/list.html", data)
+	err = Templates.ExecuteTemplate(w, "message-templates/list.html", data)
 	if err != nil {
 		log.Printf("Template execution error: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -180,18 +78,26 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 // AddHandler 메시지 템플릿 추가 페이지
 func AddHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		// 사용 가능한 플레이스홀더 목록
-		placeholders := []Placeholder{
-			{Key: "{이름}", Label: "고객 이름", Description: "고객의 이름", Example: "홍길동"},
-			{Key: "{날짜}", Label: "날짜", Description: "예약 또는 이벤트 날짜", Example: "2024년 1월 23일"},
-			{Key: "{시간}", Label: "시간", Description: "예약 시간", Example: "14:00"},
-			{Key: "{지점명}", Label: "지점명", Description: "서비스 제공 지점", Example: "강남점"},
-			{Key: "{금액}", Label: "금액", Description: "결제 또는 청구 금액", Example: "50,000"},
-			{Key: "{전화번호}", Label: "전화번호", Description: "고객 전화번호", Example: "010-1234-5678"},
-			{Key: "{이메일}", Label: "이메일", Description: "고객 이메일", Example: "customer@example.com"},
-			{Key: "{주소}", Label: "주소", Description: "고객 주소", Example: "서울시 강남구"},
-			{Key: "{이벤트내용}", Label: "이벤트 내용", Description: "이벤트 상세 내용", Example: "20% 할인 쿠폰"},
-			{Key: "{담당자}", Label: "담당자", Description: "담당 직원 이름", Example: "김매니저"},
+		// 세션에서 선택된 지점 정보 가져오기
+		branchCode := middleware.GetSelectedBranch(r)
+
+		// DB에서 플레이스홀더 목록 조회 (지점별)
+		dbPlaceholders, err := database.GetPlaceholders(branchCode)
+		if err != nil {
+			log.Printf("플레이스홀더 조회 오류: %v", err)
+			http.Error(w, "플레이스홀더 조회 실패", http.StatusInternalServerError)
+			return
+		}
+
+		// DB 플레이스홀더를 핸들러 모델로 변환
+		placeholders := make([]Placeholder, len(dbPlaceholders))
+		for i, ph := range dbPlaceholders {
+			placeholders[i] = Placeholder{
+				Key:         ph.Key,
+				Label:       ph.Label,
+				Description: ph.Description,
+				Example:     ph.Example,
+			}
 		}
 
 		data := TemplateFormPageData{
@@ -199,7 +105,6 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 			ActiveMenu:   "message-templates",
 			Template:     nil,
 			Placeholders: placeholders,
-			Categories:   []string{"예약", "결제", "마케팅", "공지", "기타"},
 			IsEdit:       false,
 		}
 
@@ -241,7 +146,6 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 		template := &MessageTemplate{
 			ID:          1,
 			Name:        "예약 확인 메시지",
-			Category:    "예약",
 			Content:     "{이름}님, {날짜} {시간}에 {지점명} 예약이 완료되었습니다.",
 			Description: "고객 예약 확인용 메시지",
 			IsActive:    true,
@@ -249,17 +153,26 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 			UpdatedAt:   "2024-01-15 10:00:00",
 		}
 
-		placeholders := []Placeholder{
-			{Key: "{이름}", Label: "고객 이름", Description: "고객의 이름", Example: "홍길동"},
-			{Key: "{날짜}", Label: "날짜", Description: "예약 또는 이벤트 날짜", Example: "2024년 1월 23일"},
-			{Key: "{시간}", Label: "시간", Description: "예약 시간", Example: "14:00"},
-			{Key: "{지점명}", Label: "지점명", Description: "서비스 제공 지점", Example: "강남점"},
-			{Key: "{금액}", Label: "금액", Description: "결제 또는 청구 금액", Example: "50,000"},
-			{Key: "{전화번호}", Label: "전화번호", Description: "고객 전화번호", Example: "010-1234-5678"},
-			{Key: "{이메일}", Label: "이메일", Description: "고객 이메일", Example: "customer@example.com"},
-			{Key: "{주소}", Label: "주소", Description: "고객 주소", Example: "서울시 강남구"},
-			{Key: "{이벤트내용}", Label: "이벤트 내용", Description: "이벤트 상세 내용", Example: "20% 할인 쿠폰"},
-			{Key: "{담당자}", Label: "담당자", Description: "담당 직원 이름", Example: "김매니저"},
+		// 세션에서 선택된 지점 정보 가져오기
+		branchCode := middleware.GetSelectedBranch(r)
+
+		// DB에서 플레이스홀더 목록 조회 (지점별)
+		dbPlaceholders, err := database.GetPlaceholders(branchCode)
+		if err != nil {
+			log.Printf("플레이스홀더 조회 오류: %v", err)
+			http.Error(w, "플레이스홀더 조회 실패", http.StatusInternalServerError)
+			return
+		}
+
+		// DB 플레이스홀더를 핸들러 모델로 변환
+		placeholders := make([]Placeholder, len(dbPlaceholders))
+		for i, ph := range dbPlaceholders {
+			placeholders[i] = Placeholder{
+				Key:         ph.Key,
+				Label:       ph.Label,
+				Description: ph.Description,
+				Example:     ph.Example,
+			}
 		}
 
 		data := TemplateFormPageData{
@@ -267,7 +180,6 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 			ActiveMenu:   "message-templates",
 			Template:     template,
 			Placeholders: placeholders,
-			Categories:   []string{"예약", "결제", "마케팅", "공지", "기타"},
 			IsEdit:       true,
 		}
 
@@ -299,11 +211,32 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = r.URL.Query().Get("id") // TODO: DB 삭제 시 사용
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		log.Println("템플릿 ID가 제공되지 않음")
+		http.Redirect(w, r, "/message-templates?error=invalid_id", http.StatusSeeOther)
+		return
+	}
 
-	// TODO: 실제로는 DB에서 삭제
-	// database.DeleteMessageTemplate(id)
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		log.Printf("잘못된 템플릿 ID: %s\n", idStr)
+		http.Redirect(w, r, "/message-templates?error=invalid_id", http.StatusSeeOther)
+		return
+	}
 
+	// 세션에서 선택된 지점 정보 가져오기
+	branchCode := middleware.GetSelectedBranch(r)
+
+	// DB에서 템플릿 삭제 (지점별)
+	err = database.DeleteMessageTemplate(branchCode, id)
+	if err != nil {
+		log.Printf("템플릿 삭제 실패: %v\n", err)
+		http.Redirect(w, r, "/message-templates?error=delete_failed", http.StatusSeeOther)
+		return
+	}
+
+	log.Printf("템플릿 ID %d 삭제 성공\n", id)
 	http.Redirect(w, r, "/message-templates?success=delete", http.StatusSeeOther)
 }
 
@@ -314,13 +247,31 @@ func SetDefaultHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = r.URL.Query().Get("id") // TODO: DB 업데이트 시 사용
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		log.Println("템플릿 ID가 제공되지 않음")
+		http.Redirect(w, r, "/message-templates?error=invalid_id", http.StatusSeeOther)
+		return
+	}
 
-	// TODO: 실제로는 DB에서 업데이트
-	// 1. 모든 템플릿의 IsDefault를 false로 설정
-	// database.ClearAllDefaultTemplates()
-	// 2. 선택된 템플릿의 IsDefault를 true로 설정
-	// database.SetTemplateAsDefault(id)
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		log.Printf("잘못된 템플릿 ID: %s\n", idStr)
+		http.Redirect(w, r, "/message-templates?error=invalid_id", http.StatusSeeOther)
+		return
+	}
 
+	// 세션에서 선택된 지점 정보 가져오기
+	branchCode := middleware.GetSelectedBranch(r)
+
+	// DB를 통해 기본 템플릿 설정 (지점별)
+	err = database.SetDefaultMessageTemplate(branchCode, id)
+	if err != nil {
+		log.Printf("기본 템플릿 설정 실패: %v\n", err)
+		http.Redirect(w, r, "/message-templates?error=set_default_failed", http.StatusSeeOther)
+		return
+	}
+
+	log.Printf("템플릿 ID %d를 기본값으로 설정 성공\n", id)
 	http.Redirect(w, r, "/message-templates?success=default", http.StatusSeeOther)
 }

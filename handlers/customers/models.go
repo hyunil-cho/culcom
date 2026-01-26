@@ -1,5 +1,7 @@
 package customers
 
+import "backoffice/utils"
+
 // Customer - 고객 데이터 구조체
 type Customer struct {
 	ID           string
@@ -29,6 +31,7 @@ type PageData struct {
 	ActiveMenu      string
 	Customers       []Customer
 	DefaultTemplate string // 기본 템플릿 내용
+	Pagination      utils.Pagination
 }
 
 // DetailPageData - 고객 상세 페이지 데이터 구조체

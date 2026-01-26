@@ -2,9 +2,11 @@ package customers
 
 import (
 	"backoffice/handlers/errorhandler"
+	"backoffice/utils"
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -36,6 +38,15 @@ func getCustomerByID(id string) *Customer {
 
 // Handler - 고객 관리 페이지 핸들러
 func Handler(w http.ResponseWriter, r *http.Request) {
+	// 페이지 파라미터 가져오기
+	pageStr := r.URL.Query().Get("page")
+	currentPage := 1
+	if pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			currentPage = p
+		}
+	}
+
 	// URL에서 지점 파라미터 가져오기
 	branchFilter := r.URL.Query().Get("branch")
 
@@ -65,6 +76,19 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// 페이징 처리
+	itemsPerPage := 10
+	totalItems := len(filteredCustomers)
+	pagination := utils.CalculatePagination(currentPage, totalItems, itemsPerPage)
+
+	// 페이징에 따른 슬라이스 범위 계산
+	startIdx, endIdx := utils.GetSliceRange(pagination.CurrentPage, itemsPerPage, totalItems)
+
+	var customers []Customer
+	if startIdx < totalItems {
+		customers = filteredCustomers[startIdx:endIdx]
+	}
+
 	// TODO: 실제로는 DB에서 기본 템플릿을 조회해야 함
 	// 현재는 더미 데이터 사용
 	defaultTemplate := "[{고객명}]님, 안녕하세요.\n\n{날짜} {시간}에 방문 예약이 확정되었습니다.\n\n주소: {주소}\n담당자: {담당자}\n\n기타 문의사항이 있으시면 연락 주세요.\n감사합니다."
@@ -72,8 +96,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	data := PageData{
 		Title:           "고객 관리",
 		ActiveMenu:      "customers",
-		Customers:       filteredCustomers,
+		Customers:       customers,
 		DefaultTemplate: defaultTemplate,
+		Pagination:      pagination,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "customers/list.html", data); err != nil {
