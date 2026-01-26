@@ -15,7 +15,7 @@ body {
 
 /* 사이드바 */
 .sidebar {
-    width: 260px;
+    width: 150px;
     background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
     color: white;
     position: fixed;
@@ -73,7 +73,7 @@ body {
 /* 메인 래퍼 */
 .main-wrapper {
     flex: 1;
-    margin-left: 260px;
+    margin-left: 150px;
     display: flex;
     flex-direction: column;
 }
