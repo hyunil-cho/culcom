@@ -12,9 +12,14 @@ type Branch struct {
 
 // PageData - 지점 관리 페이지 데이터 구조체
 type PageData struct {
-	Title      string
-	ActiveMenu string
-	Branches   []Branch
+	Title          string
+	ActiveMenu     string
+	Branches       []Branch
+	SuccessMessage string
+	Pagination     interface{}
+	SearchType     string
+	SearchKeyword  string
+	SearchParams   string
 }
 
 // DetailPageData - 지점 상세 페이지 데이터 구조체

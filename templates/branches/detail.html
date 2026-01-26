@@ -48,10 +48,6 @@
     </div>
     <div class="detail-body">
         <div class="detail-row">
-            <div class="detail-label">지점코드</div>
-            <div class="detail-value">{{.Branch.ID}}</div>
-        </div>
-        <div class="detail-row">
             <div class="detail-label">지점명</div>
             <div class="detail-value"><strong>{{.Branch.Name}}</strong></div>
         </div>
@@ -60,59 +56,11 @@
             <div class="detail-value">{{.Branch.Alias}}</div>
         </div>
         <div class="detail-row">
-            <div class="detail-label">주소</div>
-            <div class="detail-value">{{.Branch.Address}}</div>
-        </div>
-        <div class="detail-row">
             <div class="detail-label">등록일</div>
             <div class="detail-value">{{.Branch.RegisterDate}}</div>
         </div>
     </div>
 </div>
-
-<!-- 추가 정보 섹션 -->
-<div class="content-grid">
-    <div class="content-card">
-        <div class="detail-header">
-            <h3>운영 정보</h3>
-        </div>
-        <div class="detail-body">
-            <div class="info-item">
-                <span class="info-label">소속 직원 수</span>
-                <span class="info-value">12명</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">월 평균 매출</span>
-                <span class="info-value">₩15,000,000</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">운영 상태</span>
-                <span class="info-value">정상 운영</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="content-card">
-        <div class="detail-header">
-            <h3>최근 활동</h3>
-        </div>
-        <div class="detail-body">
-            <div class="info-item">
-                <span class="info-label">최근 업데이트</span>
-                <span class="info-value">2026-01-20</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">이번 달 신규 고객</span>
-                <span class="info-value">45명</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">평균 방문 고객</span>
-                <span class="info-value">120명/일</span>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
     let branchIdToDelete = null;
 

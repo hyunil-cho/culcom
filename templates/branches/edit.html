@@ -20,6 +20,7 @@
 </div>
 
 <!-- 지점 수정 폼 -->
+<form method="POST" action="/branches/edit?id={{.Branch.ID}}" onsubmit="return validateForm()">
 <div class="content-card">
     <div class="form-header">
         <h2>기본 정보</h2>
@@ -32,18 +33,13 @@
 
         <div class="form-row">
             <label class="form-label">지점명 <span class="required">*</span></label>
-            <input type="text" class="form-input" value="{{.Branch.Name}}" placeholder="지점명을 입력하세요">
+            <input type="text" class="form-input" name="name" value="{{.Branch.Name}}" placeholder="지점명을 입력하세요" required>
         </div>
 
         <div class="form-row">
             <label class="form-label">별칭 <span class="required">*</span></label>
-            <input type="text" class="form-input" value="{{.Branch.Alias}}" placeholder="영문 별칭을 입력하세요">
+            <input type="text" class="form-input" name="alias" value="{{.Branch.Alias}}" placeholder="영문 별칭을 입력하세요" pattern="[a-zA-Z]+" required>
             <small class="form-hint">영문만 입력 가능합니다 (예: gangnam, hongdae)</small>
-        </div>
-
-        <div class="form-row">
-            <label class="form-label">주소 <span class="required">*</span></label>
-            <input type="text" class="form-input" value="{{.Branch.Address}}" placeholder="주소를 입력하세요">
         </div>
         <div class="form-row">
             <label class="form-label">등록일</label>
@@ -54,9 +50,27 @@
 
 <!-- 저장 버튼 -->
 <div class="form-actions">
-    <button class="btn-primary-large">💾 저장</button>
+    <button type="submit" class="btn-primary-large">💾 저장</button>
     <a href="/branches/detail?id={{.Branch.ID}}" class="btn-secondary-large">취소</a>
 </div>
+</form>
+
+<script>
+function validateForm() {
+    const aliasInput = document.querySelector('input[name="alias"]');
+    const aliasValue = aliasInput.value.trim();
+    
+    // 영문만 허용하는 정규식 검증
+    const englishOnlyRegex = /^[a-zA-Z]+$/;
+    if (!englishOnlyRegex.test(aliasValue)) {
+        alert('별칭은 영문만 입력 가능합니다.');
+        aliasInput.focus();
+        return false;
+    }
+    
+    return true;
+}
+</script>
         </main>
     </div>
 </body>

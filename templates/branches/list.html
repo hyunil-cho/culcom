@@ -17,20 +17,25 @@
 <!-- 검색 및 필터 -->
 <div class="content-card">
     <div class="search-section">
-        <div class="search-filters">
-            <div class="filter-group">
-                <label>검색어</label>
-                <input type="text" placeholder="지점명, 별칭, 주소" class="search-input">
+        <form method="GET" action="/branches">
+            <div class="search-filters">
+                <div class="filter-group" style="display: flex; gap: 10px; align-items: flex-end;">
+                    <div>
+                        <label>검색</label>
+                        <div style="display: flex; gap: 5px;">
+                            <select name="searchType" class="filter-input" style="width: 100px;">
+                                <option value="name" {{if eq .SearchType "name"}}selected{{end}}>지점명</option>
+                                <option value="alias" {{if eq .SearchType "alias"}}selected{{end}}>별칭</option>
+                            </select>
+                            <input type="text" name="searchKeyword" placeholder="검색어를 입력하세요" class="search-input" value="{{.SearchKeyword}}" style="min-width: 250px;">
+                        </div>
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="btn-search">🔍 검색</button>
+                </div>
             </div>
-            <div class="filter-group">
-                <label>등록일</label>
-                <input type="date" class="filter-input">
-            </div>
-            <div class="filter-actions">
-                <button class="btn-search">🔍 검색</button>
-                <button class="btn-reset">🔄 초기화</button>
-            </div>
-        </div>
+        </form>
         <div class="action-buttons">
             <a href="/branches/add" class="btn-primary">➕ 지점 추가</a>
         </div>
@@ -49,11 +54,8 @@
         <table class="data-table">
             <thead>
                 <tr>
-                    <th><input type="checkbox"></th>
-                    <th>지점코드</th>
                     <th>지점명</th>
                     <th>별칭</th>
-                    <th>주소</th>
                     <th>등록일</th>
                     <th>관리</th>
                 </tr>
@@ -61,11 +63,8 @@
             <tbody>
                 {{range .Branches}}
                 <tr>
-                    <td><input type="checkbox"></td>
-                    <td>{{.ID}}</td>
                     <td><strong>{{.Name}}</strong></td>
                     <td><span class="status-badge status-active">{{.Alias}}</span></td>
-                    <td>{{.Address}}</td>
                     <td>{{.RegisterDate}}</td>
                     <td>
                         <a href="/branches/detail?id={{.ID}}" class="btn-table-action">상세</a>
@@ -78,15 +77,84 @@
     </div>
 
     <!-- 페이지네이션 -->
-    <div class="pagination">
-        <button class="page-btn">◀</button>
-        <button class="page-btn active">1</button>
-        <button class="page-btn">2</button>
-        <button class="page-btn">▶</button>
+    {{if .Pagination}}
+    {{$searchParams := .SearchParams}}
+    {{with .Pagination}}
+    {{if gt .TotalPages 1}}
+    <div class="pagination-container">
+        <div class="pagination">
+            <!-- 이전 페이지 -->
+            {{if .HasPrev}}
+                <a href="?page={{printf "%d" (sub .CurrentPage 1)}}{{$searchParams}}" class="page-btn page-arrow">◀</a>
+            {{else}}
+                <span class="page-btn page-arrow disabled">◀</span>
+            {{end}}
+
+            <!-- 페이지 번호 -->
+            {{$currentPage := .CurrentPage}}
+            {{range .Pages}}
+                {{if eq . $currentPage}}
+                    <span class="page-btn active">{{.}}</span>
+                {{else}}
+                    <a href="?page={{.}}{{$searchParams}}" class="page-btn">{{.}}</a>
+                {{end}}
+            {{end}}
+
+            <!-- 다음 페이지 -->
+            {{if .HasNext}}
+                <a href="?page={{printf "%d" (add .CurrentPage 1)}}{{$searchParams}}" class="page-btn page-arrow">▶</a>
+            {{else}}
+                <span class="page-btn page-arrow disabled">▶</span>
+            {{end}}
+        </div>
+        
+        <div style="text-align: center; margin-top: 15px; color: #666; font-size: 14px;">
+            {{.CurrentPage}} / {{.TotalPages}} 페이지 (총 {{.TotalItems}}개)
+        </div>
     </div>
+    {{end}}
+    {{end}}
+    {{end}}
 </div>
         </main>
     </div>
+
+<!-- 성공 모달 -->
+<div id="successModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header" style="border-bottom: 2px solid #4caf50;">
+            <h3>✅ 성공</h3>
+        </div>
+        <div class="modal-body" style="padding: 2rem; text-align: center;">
+            <p style="font-size: 1.1rem; color: #333;">지점이 성공적으로 등록되었습니다.</p>
+        </div>
+        <div style="padding: 1rem 2rem; border-top: 1px solid #e0e0e0; display: flex; justify-content: center;">
+            <button class="btn-primary" onclick="closeSuccessModal()" style="padding: 0.75rem 2rem;">확인</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    {{if .SuccessMessage}}
+    // 서버에서 전달된 성공 메시지가 있으면 모달 표시
+    window.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('successModal').style.display = 'flex';
+        document.getElementById('successModal').querySelector('p').textContent = '{{.SuccessMessage}}';
+    });
+    {{end}}
+    
+    function closeSuccessModal() {
+        document.getElementById('successModal').style.display = 'none';
+    }
+    
+    // 모달 외부 클릭 시 닫기
+    window.onclick = function(event) {
+        const modal = document.getElementById('successModal');
+        if (event.target == modal) {
+            closeSuccessModal();
+        }
+    }
+</script>
 </body>
 </html>
 {{end}}

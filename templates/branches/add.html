@@ -24,43 +24,40 @@
     <div class="form-header">
         <h2>기본 정보</h2>
     </div>
-    <div class="form-body">
+    <form method="POST" action="/branches/add" class="form-body" onsubmit="return validateForm()">
         <div class="form-row">
             <label class="form-label">지점명 <span class="required">*</span></label>
-            <input type="text" class="form-input" placeholder="지점명을 입력하세요">
+            <input type="text" id="branchName" name="name" class="form-input" placeholder="지점명을 입력하세요" required>
         </div>
 
         <div class="form-row">
             <label class="form-label">별칭 <span class="required">*</span></label>
-            <input type="text" class="form-input" placeholder="영문 별칭을 입력하세요">
+            <input type="text" id="branchAlias" name="alias" class="form-input" placeholder="영문 별칭을 입력하세요" pattern="[a-zA-Z]+" required>
             <small class="form-hint">영문만 입력 가능합니다 (예: gangnam, hongdae)</small>
         </div>
-
-        <div class="form-row">
-            <label class="form-label">주소 <span class="required">*</span></label>
-            <input type="text" class="form-input" placeholder="주소를 입력하세요">
+        
+        <!-- 저장 버튼 -->
+        <div class="form-actions">
+            <button type="submit" class="btn-primary-large">💾 저장</button>
+            <a href="/branches" class="btn-secondary-large">취소</a>
         </div>
-    </div>
+    </form>
 </div>
 
-<!-- 추가 정보 -->
-<div class="content-card">
-    <div class="form-header">
-        <h2>추가 정보</h2>
-    </div>
-    <div class="form-body">
-        <div class="form-row">
-            <label class="form-label">메모</label>
-            <textarea class="form-textarea" rows="5" placeholder="메모를 입력하세요"></textarea>
-        </div>
-    </div>
-</div>
-
-<!-- 저장 버튼 -->
-<div class="form-actions">
-    <button class="btn-primary-large">💾 저장</button>
-    <a href="/branches" class="btn-secondary-large">취소</a>
-</div>
+<script>
+function validateForm() {
+    const branchAlias = document.getElementById('branchAlias').value.trim();
+    const englishOnlyRegex = /^[a-zA-Z]+$/;
+    
+    if (!englishOnlyRegex.test(branchAlias)) {
+        alert('별칭은 영문만 입력 가능합니다.');
+        document.getElementById('branchAlias').focus();
+        return false;
+    }
+    
+    return true;
+}
+</script>
         </main>
     </div>
 </body>

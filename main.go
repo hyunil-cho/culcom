@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backoffice/config"
 	"backoffice/handlers/branches"
 	"backoffice/handlers/customers"
 	"backoffice/handlers/errorhandler"
@@ -42,6 +43,9 @@ func init() {
 }
 
 func main() {
+	// 세션 초기화
+	config.InitSession()
+
 	// 커스텀 ServeMux 생성 (404 핸들러 설정을 위해)
 	mux := http.NewServeMux()
 
