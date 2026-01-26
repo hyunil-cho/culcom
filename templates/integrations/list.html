@@ -169,6 +169,90 @@
             color: white;
             border-color: #2196f3;
         }
+
+        /* 결과 모달 스타일 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .result-modal {
+            text-align: center;
+            padding: 40px 24px;
+        }
+
+        .result-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .result-icon.success {
+            color: #4caf50;
+        }
+
+        .result-icon.error {
+            color: #f44336;
+        }
+
+        .result-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .result-message {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            padding: 16px 24px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modal-btn-primary {
+            background: #2196f3;
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            background: #1976d2;
+        }
     </style>
 </head>
 <body>
@@ -178,12 +262,6 @@
         {{template "header" .}}
         
         <main class="content">
-<!-- 현재 선택된 지점 표시 -->
-<div style="background: #f8f9fa; border-left: 4px solid #2196f3; margin-bottom: 20px; padding: 12px 20px; border-radius: 6px;">
-    <span style="color: #666; font-size: 14px;">현재 관리 중인 지점:</span>
-    <strong style="color: #2196f3; font-size: 16px; margin-left: 8px;">{{.BranchName}} ({{.BranchCode}})</strong>
-</div>
-
 <!-- 페이지 헤더 -->
 <div class="page-header">
     <h1>외부 시스템 연동 관리</h1>
@@ -247,7 +325,76 @@
     {{end}}
 </div>
 
+<!-- 결과 모달 -->
+<div id="resultModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="result-modal">
+            <div class="result-icon" id="resultIcon">✅</div>
+            <div class="result-title" id="resultTitle">성공</div>
+            <div class="result-message" id="resultMessage">작업이 완료되었습니다.</div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-primary" onclick="closeResultModal()">확인</button>
+        </div>
+    </div>
+</div>
+
 <script>
+    // 결과 모달 열기/닫기
+    function showResultModal(success, message) {
+        const modal = document.getElementById('resultModal');
+        const icon = document.getElementById('resultIcon');
+        const title = document.getElementById('resultTitle');
+        const messageEl = document.getElementById('resultMessage');
+
+        if (success) {
+            icon.textContent = '✅';
+            icon.className = 'result-icon success';
+            title.textContent = '성공';
+        } else {
+            icon.textContent = '❌';
+            icon.className = 'result-icon error';
+            title.textContent = '실패';
+        }
+
+        messageEl.textContent = message;
+        modal.classList.add('show');
+    }
+
+    function closeResultModal() {
+        const modal = document.getElementById('resultModal');
+        modal.classList.remove('show');
+    }
+
+    // 페이지 로드 시 URL 쿼리 파라미터 확인하여 결과 모달 표시
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        if (urlParams.has('success')) {
+            const successType = urlParams.get('success');
+            if (successType === 'saved') {
+                showResultModal(true, 'SMS 연동 설정이 성공적으로 저장되었습니다.');
+            }
+            
+            // URL에서 쿼리 파라미터 제거
+            window.history.replaceState({}, '', window.location.pathname);
+        } else if (urlParams.has('error')) {
+            const errorType = urlParams.get('error');
+            let errorMessage = '설정 저장 중 오류가 발생했습니다.';
+            
+            if (errorType === 'required_fields') {
+                errorMessage = '모든 필수 항목을 입력해주세요.';
+            } else if (errorType === 'save_failed') {
+                errorMessage = '설정 저장 중 오류가 발생했습니다. 다시 시도해주세요.';
+            }
+            
+            showResultModal(false, errorMessage);
+            
+            // URL에서 쿼리 파라미터 제거
+            window.history.replaceState({}, '', window.location.pathname);
+        }
+    });
+
     function filterByCategory(category) {
         const cards = document.querySelectorAll('.integration-card');
         const buttons = document.querySelectorAll('.category-btn');

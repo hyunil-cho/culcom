@@ -46,6 +46,17 @@ func init() {
 }
 
 func main() {
+	// 환경 설정 초기화
+	if err := config.Init(); err != nil {
+		log.Fatalf("설정 초기화 실패: %v", err)
+	}
+
+	// 데이터베이스 연결 초기화 (아직 사용 안 함)
+	// if err := database.Init(); err != nil {
+	// 	log.Printf("데이터베이스 연결 실패: %v (계속 진행)", err)
+	// }
+	// defer database.Close()
+
 	// 세션 초기화
 	config.InitSession()
 
@@ -66,6 +77,7 @@ func main() {
 	mux.HandleFunc("/integrations/configure", middleware.RecoverFunc(integrations.ConfigureHandler))             // 연동 설정
 	mux.HandleFunc("/integrations/sms-config", middleware.RecoverFunc(integrations.SMSConfigHandler))            // SMS 연동 설정
 	mux.HandleFunc("/api/external/sms", middleware.RecoverFunc(integrations.SMSTestHandler))                     // SMS 테스트 발송 API
+	mux.HandleFunc("/api/sms/config", middleware.RecoverFunc(integrations.SMSConfigSaveHandler))                 // SMS 설정 저장 API
 	mux.HandleFunc("/message-templates", middleware.RecoverFunc(messagetemplates.Handler))                       // 메시지 템플릿 목록
 	mux.HandleFunc("/message-templates/add", middleware.RecoverFunc(messagetemplates.AddHandler))                // 메시지 템플릿 추가
 	mux.HandleFunc("/message-templates/edit", middleware.RecoverFunc(messagetemplates.EditHandler))              // 메시지 템플릿 수정

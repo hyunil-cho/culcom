@@ -18,8 +18,6 @@ type PageData struct {
 	Title      string
 	ActiveMenu string
 	Services   []IntegrationService
-	BranchCode string
-	BranchName string
 }
 
 // SMSConfig SMS 연동 설정 정보
@@ -42,7 +40,19 @@ type SMSConfigPageData struct {
 	Config     *SMSConfig // 기존 설정 정보 (있는 경우)
 }
 
+// SMSConfigSaveRequest SMS 설정 저장 요청
+type SMSConfigSaveRequest struct {
+	AccountID    string   `json:"account_id"`
+	Password     string   `json:"password"`
+	SenderPhones []string `json:"sender_phones"`
+	IsActive     bool     `json:"is_active"`
+}
 
+// SMSConfigSaveResponse SMS 설정 저장 응답
+type SMSConfigSaveResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
 
 // Templates 템플릿
 var Templates *template.Template

@@ -717,7 +717,7 @@
             <!-- 설정 폼 -->
             <div class="config-section">
                 <div class="config-section-title">⚙️ SMS 연동 설정</div>
-                <form id="smsConfigForm" method="POST" action="/integrations/sms-config">
+                <form id="smsConfigForm" method="POST" action="/api/sms/config" enctype="application/x-www-form-urlencoded">
                     <div class="form-group">
                         <label class="form-label">
                             계정 ID (사용자명)<span class="required">*</span>
@@ -767,7 +767,7 @@
                                 <div class="sender-phone-item" data-index="{{$index}}">
                                     <input 
                                         type="tel" 
-                                        name="sender_phones[]" 
+                                        name="sender_phones" 
                                         class="form-input sender-phone-input" 
                                         placeholder="01012345678 (하이픈 없이 입력)"
                                         value="{{$phone}}"
@@ -781,7 +781,7 @@
                                 <div class="sender-phone-item" data-index="0">
                                     <input 
                                         type="tel" 
-                                        name="sender_phones[]" 
+                                        name="sender_phones" 
                                         class="form-input sender-phone-input" 
                                         placeholder="01012345678 (하이픈 없이 입력)"
                                         pattern="[0-9]{10,11}"
@@ -792,7 +792,7 @@
                             {{end}}
                         </div>
                         <button type="button" class="btn-add-phone" onclick="addSenderPhone()">
-                            ➕ 발신번호 추가
+                            ➕발신번호 추가
                         </button>
                         <div class="form-help-text">
                             SMS 발송 시 사용할 발신번호를 입력하세요 (하이픈 없이 숫자만 입력)
@@ -808,6 +808,7 @@
                                 id="isActive" 
                                 name="is_active" 
                                 class="form-checkbox"
+                                value="true"
                                 {{if .Config}}{{if .Config.IsActive}}checked{{end}}{{else}}checked{{end}}
                             >
                             <label for="isActive" class="form-checkbox-label">
@@ -831,6 +832,43 @@
             </div>
 
         </main>
+    </div>
+
+    <!-- 설정 저장 확인 모달 -->
+    <div id="configConfirmModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>💾 설정 저장 확인</h2>
+                <button class="modal-close" onclick="closeConfigConfirmModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="test-message-info">
+                    <div class="info-item">
+                        <span class="info-label">🔐 계정 ID</span>
+                        <span class="info-value" id="confirmAccountId">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">🔑 비밀번호</span>
+                        <span class="info-value" id="confirmPassword">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">📱 발신번호</span>
+                        <span class="info-value" id="confirmSenderPhones">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">⚡ 상태</span>
+                        <span class="info-value" id="confirmIsActive">-</span>
+                    </div>
+                </div>
+                <div class="form-help-text" style="margin-top: 20px; text-align: center;">
+                    위 정보로 SMS 연동 설정을 저장하시겠습니까?
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeConfigConfirmModal()">취소</button>
+                <button class="modal-btn modal-btn-primary" onclick="saveConfigConfirm()">확인</button>
+            </div>
+        </div>
     </div>
 
     <!-- 발신번호 선택 모달 -->
@@ -1238,7 +1276,7 @@
             newItem.innerHTML = `
                 <input 
                     type="tel" 
-                    name="sender_phones[]" 
+                    name="sender_phones" 
                     class="form-input sender-phone-input" 
                     placeholder="01012345678 (하이픈 없이 입력)"
                     pattern="[0-9]{10,11}"
@@ -1270,7 +1308,7 @@
             const form = document.getElementById('smsConfigForm');
             const formData = new FormData(form);
             
-            const senderPhones = formData.getAll('sender_phones[]').filter(phone => phone.trim() !== '');
+            const senderPhones = formData.getAll('sender_phones').filter(phone => phone.trim() !== '');
             
             // 필수 필드 확인
             if (!formData.get('account_id') || !formData.get('password') || senderPhones.length === 0) {
@@ -1288,10 +1326,71 @@
             }
         }
 
-        // 폼 제출 전 확인
+        // 설정 저장 확인 모달 열기/닫기
+        function openConfigConfirmModal() {
+            const form = document.getElementById('smsConfigForm');
+            const formData = new FormData(form);
+            
+            const accountId = formData.get('account_id');
+            const password = formData.get('password');
+            const senderPhones = formData.getAll('sender_phones').filter(phone => phone.trim() !== '');
+            const isActive = formData.get('is_active') === 'on' || formData.get('is_active') === 'true';
+            
+            // 확인 모달에 정보 표시
+            document.getElementById('confirmAccountId').textContent = accountId;
+            document.getElementById('confirmPassword').textContent = '•'.repeat(password.length);
+            document.getElementById('confirmSenderPhones').textContent = senderPhones.join(', ');
+            document.getElementById('confirmIsActive').textContent = isActive ? '활성화' : '비활성화';
+            
+            const modal = document.getElementById('configConfirmModal');
+            modal.classList.add('show');
+        }
+
+        function closeConfigConfirmModal() {
+            const modal = document.getElementById('configConfirmModal');
+            modal.classList.remove('show');
+        }
+
+        // 설정 저장 확인 후 폼 제출
+        function saveConfigConfirm() {
+            closeConfigConfirmModal();
+            showLoadingModal();
+            
+            // 폼 제출
+            document.getElementById('smsConfigForm').submit();
+        }
+
+        // 폼 제출 전 확인 모달 표시
         document.getElementById('smsConfigForm').addEventListener('submit', function(e) {
-            if (!confirm('SMS 연동 설정을 저장하시겠습니까?')) {
-                e.preventDefault();
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const accountId = formData.get('account_id');
+            const password = formData.get('password');
+            const senderPhones = formData.getAll('sender_phones').filter(phone => phone.trim() !== '');
+            
+            // 필수 필드 확인
+            if (!accountId || !password || senderPhones.length === 0) {
+                alert('모든 필수 항목을 입력해주세요.');
+                return;
+            }
+            
+            // 발신번호 형식 검증
+            for (let phone of senderPhones) {
+                if (!/^[0-9]{10,11}$/.test(phone)) {
+                    alert('발신번호는 10~11자리 숫자만 입력 가능합니다.');
+                    return;
+                }
+            }
+            
+            // 확인 모달 표시
+            openConfigConfirmModal();
+        });
+
+        // 모달 외부 클릭 시 닫기
+        document.getElementById('configConfirmModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeConfigConfirmModal();
             }
         });
     </script>

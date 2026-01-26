@@ -60,8 +60,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		Title:      "외부 시스템 연동",
 		ActiveMenu: "integrations",
 		Services:   services,
-		BranchCode: branchCode,
-		BranchName: getBranchName(branchCode),
 	}
 
 	Templates.ExecuteTemplate(w, "integrations/list.html", data)
@@ -223,24 +221,56 @@ func SMSTestHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// SMSConfigSaveHandler SMS 설정 저장 API
+func SMSConfigSaveHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Form 데이터 파싱
+	if err := r.ParseForm(); err != nil {
+		log.Printf("Form 파싱 오류: %v", err)
+		http.Error(w, "잘못된 요청 형식입니다", http.StatusBadRequest)
+		return
+	}
+
+	// Form 데이터 추출
+	accountID := r.FormValue("account_id")
+	password := r.FormValue("password")
+	senderPhones := r.Form["sender_phones"]
+	isActive := r.FormValue("is_active") == "true" || r.FormValue("is_active") == "on"
+
+	// 요청 데이터 로깅
+	log.Println("=== SMS 설정 저장 요청 ===")
+	log.Printf("계정 ID: %s", accountID)
+	log.Printf("비밀번호: %s", maskPassword(password))
+	log.Printf("발신번호: %v", senderPhones)
+	log.Printf("활성화: %v", isActive)
+	log.Println("========================")
+
+	// 필수 필드 검증
+	if accountID == "" || password == "" || len(senderPhones) == 0 {
+		log.Println("필수 필드 누락")
+		http.Redirect(w, r, "/integrations?error=required_fields", http.StatusSeeOther)
+		return
+	}
+
+	// Database를 통해 설정 저장
+	if err := database.SaveSMSConfig(accountID, password, senderPhones, isActive); err != nil {
+		log.Printf("SMS 설정 저장 오류: %v", err)
+		http.Redirect(w, r, "/integrations?error=save_failed", http.StatusSeeOther)
+		return
+	}
+
+	// 성공 시 리다이렉트
+	http.Redirect(w, r, "/integrations?success=saved", http.StatusSeeOther)
+}
+
 // maskPassword 비밀번호 마스킹 (로깅용)
 func maskPassword(password string) string {
 	if len(password) <= 2 {
 		return "**"
 	}
 	return password[:2] + "****"
-}
-
-// getBranchName - 지점 코드를 한글 이름으로 변환
-func getBranchName(code string) string {
-	branchNames := map[string]string{
-		"gasan":   "가산",
-		"gangnam": "강남",
-		"hongdae": "홍대",
-		"sinchon": "신촌",
-	}
-	if name, ok := branchNames[code]; ok {
-		return name
-	}
-	return code
 }
