@@ -578,6 +578,71 @@
             font-weight: 600;
             color: #667eea;
         }
+
+        /* 로딩 모달 스타일 */
+        .loading-modal {
+            text-align: center;
+            padding: 40px 24px;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .loading-subtext {
+            font-size: 14px;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        /* 결과 모달 스타일 */
+        .result-modal {
+            text-align: center;
+            padding: 40px 24px;
+        }
+
+        .result-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .result-icon.success {
+            color: #4caf50;
+        }
+
+        .result-icon.error {
+            color: #f44336;
+        }
+
+        .result-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .result-message {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
     </style>
 </head>
 <body>
@@ -613,11 +678,10 @@
             <div class="info-box">
                 <div class="info-box-title">📌 SMS 연동 안내</div>
                 <div class="info-box-content">
-                    SMS 서비스 제공업체의 계정 정보를 등록하여 고객에게 문자 메시지를 발송할 수 있습니다.
+                    SMS 서비스 계정 정보를 등록하여 고객에게 문자 메시지를 발송할 수 있습니다.
                     <ul>
-                        <li>지원되는 SMS 제공업체: 알리고, 문자나라, 비즈톡, 카카오 알림톡</li>
-                        <li>각 제공업체의 계정 정보(ID, 비밀번호)가 필요합니다</li>
-                        <li>발신번호는 사전에 제공업체에 등록된 번호여야 합니다</li>
+                        <li>계정 정보(ID, 비밀번호)가 필요합니다</li>
+                        <li>발신번호는 사전에 등록된 번호여야 합니다</li>
                         <li>설정 후 테스트 발송을 통해 연동을 확인하세요</li>
                     </ul>
                 </div>
@@ -627,10 +691,6 @@
             {{if .Config}}
             <div class="config-section">
                 <div class="config-section-title">🔗 현재 연동 정보</div>
-                <div class="credential-item">
-                    <span class="credential-label">제공업체</span>
-                    <span class="credential-value">{{.Config.Provider}}</span>
-                </div>
                 <div class="credential-item">
                     <span class="credential-label">계정 ID</span>
                     <span class="credential-value">{{.Config.AccountID}}</span>
@@ -660,21 +720,6 @@
                 <form id="smsConfigForm" method="POST" action="/integrations/sms-config">
                     <div class="form-group">
                         <label class="form-label">
-                            SMS 제공업체<span class="required">*</span>
-                        </label>
-                        <select name="provider" class="form-select" required>
-                            <option value="">제공업체 선택</option>
-                            {{range .Providers}}
-                            <option value="{{.}}" {{if $.Config}}{{if eq $.Config.Provider .}}selected{{end}}{{end}}>{{.}}</option>
-                            {{end}}
-                        </select>
-                        <div class="form-help-text">
-                            문자 메시지를 발송할 SMS 제공업체를 선택하세요
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">
                             계정 ID (사용자명)<span class="required">*</span>
                         </label>
                         <input 
@@ -686,7 +731,7 @@
                             required
                         >
                         <div class="form-help-text">
-                            SMS 제공업체에서 발급받은 계정 ID 또는 사용자명을 입력하세요
+                            SMS 서비스에서 발급받은 계정 ID 또는 사용자명을 입력하세요
                         </div>
                     </div>
 
@@ -708,7 +753,7 @@
                             </button>
                         </div>
                         <div class="form-help-text">
-                            SMS 제공업체의 비밀번호 또는 API Key를 입력하세요 (보안을 위해 암호화되어 저장됩니다)
+                            SMS 서비스의 비밀번호 또는 API Key를 입력하세요 (보안을 위해 암호화되어 저장됩니다)
                         </div>
                     </div>
 
@@ -751,7 +796,7 @@
                         </button>
                         <div class="form-help-text">
                             SMS 발송 시 사용할 발신번호를 입력하세요 (하이픈 없이 숫자만 입력)
-                            <br>※ 발신번호는 SMS 제공업체에 사전 등록된 번호여야 합니다
+                            <br>※ 발신번호는 SMS 서비스에 사전 등록된 번호여야 합니다
                             <br>※ 여러 개의 발신번호를 등록할 수 있습니다
                         </div>
                     </div>
@@ -921,6 +966,31 @@
         </div>
     </div>
 
+    <!-- 로딩 모달 -->
+    <div id="loadingModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-body loading-modal">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">테스트 메시지 발송 중...</div>
+                <div class="loading-subtext">잠시만 기다려주세요</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 결과 모달 -->
+    <div id="resultModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-body result-modal">
+                <div class="result-icon" id="resultIcon">✅</div>
+                <div class="result-title" id="resultTitle">발송 성공</div>
+                <div class="result-message" id="resultMessage">테스트 메시지가 성공적으로 발송되었습니다.</div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-primary" onclick="closeResultModal()" style="width: 100%;">확인</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // URL에 success 파라미터가 있으면 성공 메시지 표시
         window.addEventListener('DOMContentLoaded', function() {
@@ -1029,6 +1099,43 @@
             modal.classList.remove('show');
         }
 
+        // 로딩 모달 열기/닫기
+        function showLoadingModal() {
+            const modal = document.getElementById('loadingModal');
+            modal.classList.add('show');
+        }
+
+        function closeLoadingModal() {
+            const modal = document.getElementById('loadingModal');
+            modal.classList.remove('show');
+        }
+
+        // 결과 모달 열기/닫기
+        function showResultModal(success, message) {
+            const modal = document.getElementById('resultModal');
+            const icon = document.getElementById('resultIcon');
+            const title = document.getElementById('resultTitle');
+            const messageEl = document.getElementById('resultMessage');
+
+            if (success) {
+                icon.textContent = '✅';
+                icon.className = 'result-icon success';
+                title.textContent = '발송 성공';
+            } else {
+                icon.textContent = '❌';
+                icon.className = 'result-icon error';
+                title.textContent = '발송 실패';
+            }
+
+            messageEl.textContent = message;
+            modal.classList.add('show');
+        }
+
+        function closeResultModal() {
+            const modal = document.getElementById('resultModal');
+            modal.classList.remove('show');
+        }
+
         // 글자 수 업데이트
         function updateCharCount() {
             const content = document.getElementById('messageContent').value;
@@ -1059,15 +1166,43 @@
                 return;
             }
 
-            closeTestMessageModal();
+            // 폼에서 계정 정보 가져오기
+            const form = document.getElementById('smsConfigForm');
+            const formData = new FormData(form);
+            const accountId = formData.get('account_id');
+            const password = formData.get('password');
 
-            // TODO: 실제 테스트 메시지 발송 API 호출
-            alert('📤 테스트 메시지를 발송합니다...\n발신번호: ' + selectedSenderPhone + '\n수신번호: ' + receiverPhone + '\n메시지: ' + messageContent.substring(0, 30) + (messageContent.length > 30 ? '...' : '') + '\n\n(실제 구현 시 API 호출 필요)');
-            
-            // 임시 응답 시뮬레이션
-            setTimeout(() => {
-                alert('✅ 테스트 메시지가 성공적으로 발송되었습니다!');
-            }, 1000);
+            // API 요청 데이터 준비
+            const requestData = {
+                account_id: accountId,
+                password: password,
+                sender_phone: selectedSenderPhone,
+                receiver_phone: receiverPhone,
+                message: messageContent
+            };
+
+            // 모달 닫고 로딩 모달 표시
+            closeTestMessageModal();
+            showLoadingModal();
+
+            // 서버로 테스트 발송 요청
+            fetch('/api/external/sms', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                closeLoadingModal();
+                showResultModal(data.success, data.message);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                closeLoadingModal();
+                showResultModal(false, '테스트 발송 중 오류가 발생했습니다.');
+            });
         }
 
         // 모달 외부 클릭 시 닫기
@@ -1138,7 +1273,7 @@
             const senderPhones = formData.getAll('sender_phones[]').filter(phone => phone.trim() !== '');
             
             // 필수 필드 확인
-            if (!formData.get('provider') || !formData.get('account_id') || !formData.get('password') || senderPhones.length === 0) {
+            if (!formData.get('account_id') || !formData.get('password') || senderPhones.length === 0) {
                 alert('모든 필수 항목을 입력해주세요.');
                 return;
             }

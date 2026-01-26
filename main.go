@@ -65,6 +65,7 @@ func main() {
 	mux.HandleFunc("/integrations", middleware.RecoverFunc(integrations.Handler))                                // 외부 시스템 연동
 	mux.HandleFunc("/integrations/configure", middleware.RecoverFunc(integrations.ConfigureHandler))             // 연동 설정
 	mux.HandleFunc("/integrations/sms-config", middleware.RecoverFunc(integrations.SMSConfigHandler))            // SMS 연동 설정
+	mux.HandleFunc("/api/external/sms", middleware.RecoverFunc(integrations.SMSTestHandler))                     // SMS 테스트 발송 API
 	mux.HandleFunc("/message-templates", middleware.RecoverFunc(messagetemplates.Handler))                       // 메시지 템플릿 목록
 	mux.HandleFunc("/message-templates/add", middleware.RecoverFunc(messagetemplates.AddHandler))                // 메시지 템플릿 추가
 	mux.HandleFunc("/message-templates/edit", middleware.RecoverFunc(messagetemplates.EditHandler))              // 메시지 템플릿 수정

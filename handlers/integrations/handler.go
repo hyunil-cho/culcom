@@ -1,8 +1,11 @@
 package integrations
 
 import (
+	"backoffice/config"
 	"backoffice/database"
 	"backoffice/middleware"
+	"backoffice/services/sms"
+	"encoding/json"
 	"log"
 	"net/http"
 )
@@ -109,23 +112,8 @@ func ConfigureHandler(w http.ResponseWriter, r *http.Request) {
 // SMSConfigHandler SMS 연동 설정 페이지
 func SMSConfigHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		// SMS 설정 조회 및 페이지 렌더링
 		// TODO: 실제로는 DB에서 기존 설정을 조회
 		var config *SMSConfig
-		// 임시로 더미 데이터 사용 (실제 구현 시 DB 조회)
-		hasConfig := true // DB에서 설정이 있는지 확인
-		if hasConfig {
-			config = &SMSConfig{
-				ID:           1,
-				Provider:     "알리고",
-				AccountID:    "testaccount",
-				Password:     "••••••••", // 보안상 마스킹
-				SenderPhones: []string{"01012345678", "01087654321", "0213334444"},
-				IsActive:     true,
-				CreatedAt:    "2024-01-10 10:30:00",
-				UpdatedAt:    "2024-01-20 15:45:00",
-			}
-		}
 
 		data := SMSConfigPageData{
 			Title:      "SMS 연동 설정",
@@ -136,16 +124,10 @@ func SMSConfigHandler(w http.ResponseWriter, r *http.Request) {
 				Description: "문자 메시지 발송 서비스",
 				Icon:        "💬",
 				Category:    "sms",
-				Status:      "active",
-				Connected:   config != nil && config.IsActive,
+				Status:      "not-configured",
+				Connected:   false,
 			},
 			Config: config,
-			Providers: []string{
-				"알리고",
-				"문자나라",
-				"비즈톡",
-				"카카오 알림톡",
-			},
 		}
 
 		Templates.ExecuteTemplate(w, "integrations/sms-config.html", data)
@@ -179,6 +161,74 @@ func SMSConfigHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+// SMSTestHandler SMS 테스트 발송 API
+func SMSTestHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// JSON 요청 파싱
+	var req sms.SmsSendRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		log.Printf("SMS 테스트 요청 파싱 오류: %v", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(sms.SmsSendResponse{
+			Success: false,
+			Message: "잘못된 요청 형식입니다",
+		})
+		return
+	}
+
+	// 요청 데이터 로깅
+	log.Println("=== SMS 테스트 발송 요청 ===")
+	log.Printf("환경: %s", config.GetEnvironment())
+	log.Printf("계정 ID: %s", req.AccountID)
+	log.Printf("비밀번호: %s", maskPassword(req.Password))
+	log.Printf("발신번호: %s", req.SenderPhone)
+	log.Printf("수신번호: %s", req.ReceiverPhone)
+	log.Printf("메시지: %s", req.Message)
+	log.Println("========================")
+
+	// SMS 발송 서비스 호출
+	sendReq := sms.SendRequest{
+		AccountID:     req.AccountID,
+		Password:      req.Password,
+		SenderPhone:   req.SenderPhone,
+		ReceiverPhone: req.ReceiverPhone,
+		Message:       req.Message,
+		Subject:       "테스트 메시지",
+	}
+
+	result, err := sms.Send(sendReq)
+	if err != nil {
+		log.Printf("SMS 발송 오류: %v", err)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(sms.SmsSendResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	// 응답 반환
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(sms.SmsSendResponse{
+		Success: result.Success,
+		Message: result.Message,
+	})
+}
+
+// maskPassword 비밀번호 마스킹 (로깅용)
+func maskPassword(password string) string {
+	if len(password) <= 2 {
+		return "**"
+	}
+	return password[:2] + "****"
 }
 
 // getBranchName - 지점 코드를 한글 이름으로 변환

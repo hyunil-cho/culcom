@@ -40,8 +40,9 @@ type SMSConfigPageData struct {
 	ActiveMenu string
 	Service    IntegrationService
 	Config     *SMSConfig // 기존 설정 정보 (있는 경우)
-	Providers  []string   // SMS 제공업체 목록
 }
+
+
 
 // Templates 템플릿
 var Templates *template.Template
