@@ -11,7 +11,6 @@
                 <option value="gangnam">강남</option>
                 <option value="hongdae">홍대</option>
                 <option value="sinchon">신촌</option>
-                <option value="">전체</option>
             </select>
         </div>
         <div class="user-info">
@@ -32,14 +31,14 @@ const branchNames = {
 };
 
 function changeBranch(branchCode) {
-    // localStorage에 영문 코드로 저장
+    // localStorage에 영문 코드로 저장 (클라이언트 측 복원용)
     if (branchCode === '') {
         localStorage.removeItem('selectedBranch');
     } else {
         localStorage.setItem('selectedBranch', branchCode);
     }
     
-    // 현재 URL에 지점 파라미터 추가하여 페이지 리로드
+    // 현재 URL에 지점 파라미터 추가하여 페이지 리로드 (서버에서 세션에 저장함)
     const currentUrl = new URL(window.location.href);
     
     if (branchCode === '') {

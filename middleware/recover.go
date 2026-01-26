@@ -33,6 +33,7 @@ func RecoverMiddleware(next http.Handler) http.Handler {
 }
 
 // RecoverFunc http.HandlerFunc를 래핑하는 헬퍼 함수
+// + 지점 세션 처리 미들웨어도 자동 적용
 func RecoverFunc(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
@@ -49,6 +50,7 @@ func RecoverFunc(handler http.HandlerFunc) http.HandlerFunc {
 			}
 		}()
 
-		handler(w, r)
+		// 지점 세션 처리 미들웨어 적용
+		BranchSession(handler)(w, r)
 	}
 }

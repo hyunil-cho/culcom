@@ -1,26 +1,65 @@
 package integrations
 
 import (
+	"backoffice/database"
+	"backoffice/middleware"
+	"log"
 	"net/http"
 	"strconv"
 )
 
 // Handler 연동 관리 목록 페이지
 func Handler(w http.ResponseWriter, r *http.Request) {
+	// 미들웨어에서 처리한 세션에서 지점 정보 가져오기
+	branchCode := middleware.GetSelectedBranch(r)
+
+	// DB에서 해당 지점의 모든 연동 상태 조회
+	integrationStatuses, err := database.GetAllIntegrationsByBranch(branchCode)
+	if err != nil {
+		log.Println("Database error:", err)
+		http.Redirect(w, r, "/error", http.StatusSeeOther)
+		return
+	}
+
+	// 연동 상태를 서비스 카드로 변환
+	var services []IntegrationService
+	for _, status := range integrationStatuses {
+		var serviceStatus string
+		if status.IsConnected {
+			serviceStatus = "active"
+		} else {
+			serviceStatus = "not-configured"
+		}
+
+		var serviceName, description, icon string
+		switch status.ServiceType {
+		case "sms":
+			serviceName = "SMS 서비스"
+			description = "문자 메시지 발송 서비스"
+			icon = "💬"
+		default:
+			serviceName = status.ServiceType
+			description = "외부 연동 서비스"
+			icon = "🔗"
+		}
+
+		services = append(services, IntegrationService{
+			ID:          status.ServiceType,
+			Name:        serviceName,
+			Description: description,
+			Icon:        icon,
+			Category:    status.ServiceType,
+			Status:      serviceStatus,
+			Connected:   status.IsConnected,
+		})
+	}
+
 	data := PageData{
 		Title:      "외부 시스템 연동",
 		ActiveMenu: "integrations",
-		Services: []IntegrationService{
-			{
-				ID:          "sms",
-				Name:        "SMS 서비스",
-				Description: "문자 메시지 발송 서비스",
-				Icon:        "💬",
-				Category:    "sms",
-				Status:      "active",
-				Connected:   true,
-			},
-		},
+		Services:   services,
+		BranchCode: branchCode,
+		BranchName: getBranchName(branchCode),
 	}
 
 	Templates.ExecuteTemplate(w, "integrations/list.html", data)
@@ -454,4 +493,18 @@ func MessageTemplateSetDefaultHandler(w http.ResponseWriter, r *http.Request) {
 	// database.SetTemplateAsDefault(id)
 
 	http.Redirect(w, r, "/message-templates?success=default", http.StatusSeeOther)
+}
+
+// getBranchName - 지점 코드를 한글 이름으로 변환
+func getBranchName(code string) string {
+	branchNames := map[string]string{
+		"gasan":   "가산",
+		"gangnam": "강남",
+		"hongdae": "홍대",
+		"sinchon": "신촌",
+	}
+	if name, ok := branchNames[code]; ok {
+		return name
+	}
+	return code
 }

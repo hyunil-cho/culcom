@@ -18,6 +18,8 @@ type PageData struct {
 	Title      string
 	ActiveMenu string
 	Services   []IntegrationService
+	BranchCode string
+	BranchName string
 }
 
 // SMSConfig SMS 연동 설정 정보

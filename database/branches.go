@@ -129,3 +129,22 @@ func GetAllBranches() ([]map[string]interface{}, error) {
 
 	return dummyBranches, nil
 }
+
+// GetFirstBranchAlias - 첫 번째 지점의 alias(코드)를 반환
+// 반환: 지점 alias, 에러
+func GetFirstBranchAlias() (string, error) {
+	// TODO: 실제 쿼리 구현
+	// 예시:
+	// query := `SELECT alias FROM branches ORDER BY created_at ASC LIMIT 1`
+	// var alias string
+	// err := QueryRow(query).Scan(&alias)
+	// if err != nil {
+	// 		return "", err
+	// }
+	// return alias, nil
+
+	log.Println("[DB 추상화] GetFirstBranchAlias 호출")
+
+	// 임시 더미 데이터: 첫 번째 지점의 alias 반환
+	return "gasan", nil
+}
