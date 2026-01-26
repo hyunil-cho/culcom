@@ -11,6 +11,7 @@ type Customer struct {
 	RegisterDate string
 	LastVisit    string
 	CallCount    int
+	Branch       string
 }
 
 // SalesHistory - 영업 히스토리 구조체

@@ -11,16 +11,16 @@ var Templates *template.Template
 
 // 더미 데이터 (실제로는 데이터베이스에서 가져와야 함)
 var dummyCustomers = []Customer{
-	{ID: "972337", Name: "이재범", Phone: "01000000000", Email: "example1@email.com", AdName: "네이버 검색광고", Status: "신규", RegisterDate: "2026-01-20 17:34", LastVisit: "2026-01-20 18:37", CallCount: 5},
-	{ID: "972181", Name: "김효은", Phone: "01056565656", Email: "example2@email.com", AdName: "구글 디스플레이", Status: "부재중", RegisterDate: "2026-01-20 20:25", LastVisit: "2026-01-20 18:48", CallCount: 3},
-	{ID: "972138", Name: "엠버", Phone: "01025588255", Email: "example3@email.com", AdName: "카카오 채널", Status: "예약완료", RegisterDate: "2026-01-20 20:15", LastVisit: "2026-01-20 18:39", CallCount: 8},
-	{ID: "971925", Name: "Jimi", Phone: "01085229988", Email: "example4@email.com", AdName: "페이스북 광고", Status: "신규", RegisterDate: "2026-01-20 17:58", LastVisit: "2026-01-26 18:48", CallCount: 2},
-	{ID: "971904", Name: "이선균", Phone: "01054220099", Email: "example5@email.com", AdName: "인스타 광고", Status: "전화상 안함", RegisterDate: "2026-01-19 21:00", LastVisit: "2026-01-20 18:44", CallCount: 12},
-	{ID: "971344", Name: "황성우", Phone: "01005696538", Email: "example6@email.com", AdName: "네이버 브랜드검색", Status: "예약완료", RegisterDate: "2026-01-17 20:14", LastVisit: "2026-01-20 18:50", CallCount: 7},
-	{ID: "970864", Name: "박성민", Phone: "01094423101", Email: "example7@email.com", AdName: "구글 검색광고", Status: "GG", RegisterDate: "2026-01-19 02:10", LastVisit: "2026-01-20 18:48", CallCount: 15},
-	{ID: "969802", Name: "김재혁", Phone: "01077709800", Email: "example8@email.com", AdName: "유튜브 광고", Status: "부재중", RegisterDate: "2026-01-19 02:02", LastVisit: "2026-01-20 18:49", CallCount: 4},
-	{ID: "969193", Name: "오정환", Phone: "01098739122", Email: "example9@email.com", AdName: "티빙 광고", Status: "신규", RegisterDate: "2026-01-18 18:27", LastVisit: "2026-01-20 18:48", CallCount: 9},
-	{ID: "967840", Name: "Jinoo Yu", Phone: "01053025799", Email: "example10@email.com", AdName: "네이버 검색광고", Status: "예약완료", RegisterDate: "2026-01-17 20:14", LastVisit: "2026-01-20 18:50", CallCount: 6},
+	{ID: "972337", Name: "이재범", Phone: "01000000000", Email: "example1@email.com", AdName: "네이버 검색광고", Status: "신규", RegisterDate: "2026-01-20 17:34", LastVisit: "2026-01-20 18:37", CallCount: 5, Branch: "gasan"},
+	{ID: "972181", Name: "김효은", Phone: "01056565656", Email: "example2@email.com", AdName: "구글 디스플레이", Status: "부재중", RegisterDate: "2026-01-20 20:25", LastVisit: "2026-01-20 18:48", CallCount: 3, Branch: "gangnam"},
+	{ID: "972138", Name: "엠버", Phone: "01025588255", Email: "example3@email.com", AdName: "카카오 채널", Status: "예약완료", RegisterDate: "2026-01-20 20:15", LastVisit: "2026-01-20 18:39", CallCount: 8, Branch: "gasan"},
+	{ID: "971925", Name: "Jimi", Phone: "01085229988", Email: "example4@email.com", AdName: "페이스북 광고", Status: "신규", RegisterDate: "2026-01-20 17:58", LastVisit: "2026-01-26 18:48", CallCount: 2, Branch: "hongdae"},
+	{ID: "971904", Name: "이선균", Phone: "01054220099", Email: "example5@email.com", AdName: "인스타 광고", Status: "전화상 안함", RegisterDate: "2026-01-19 21:00", LastVisit: "2026-01-20 18:44", CallCount: 12, Branch: "gasan"},
+	{ID: "971344", Name: "황성우", Phone: "01005696538", Email: "example6@email.com", AdName: "네이버 브랜드검색", Status: "예약완료", RegisterDate: "2026-01-17 20:14", LastVisit: "2026-01-20 18:50", CallCount: 7, Branch: "sinchon"},
+	{ID: "970864", Name: "박성민", Phone: "01094423101", Email: "example7@email.com", AdName: "구글 검색광고", Status: "GG", RegisterDate: "2026-01-19 02:10", LastVisit: "2026-01-20 18:48", CallCount: 15, Branch: "gangnam"},
+	{ID: "969802", Name: "김재혁", Phone: "01077709800", Email: "example8@email.com", AdName: "유튜브 광고", Status: "부재중", RegisterDate: "2026-01-19 02:02", LastVisit: "2026-01-20 18:49", CallCount: 4, Branch: "gasan"},
+	{ID: "969193", Name: "오정환", Phone: "01098739122", Email: "example9@email.com", AdName: "티빙 광고", Status: "신규", RegisterDate: "2026-01-18 18:27", LastVisit: "2026-01-20 18:48", CallCount: 9, Branch: "hongdae"},
+	{ID: "967840", Name: "Jinoo Yu", Phone: "01053025799", Email: "example10@email.com", AdName: "네이버 검색광고", Status: "예약완료", RegisterDate: "2026-01-17 20:14", LastVisit: "2026-01-20 18:50", CallCount: 6, Branch: "sinchon"},
 }
 
 // getCustomerByID - ID로 고객 조회
@@ -35,10 +35,27 @@ func getCustomerByID(id string) *Customer {
 
 // Handler - 고객 관리 페이지 핸들러
 func Handler(w http.ResponseWriter, r *http.Request) {
+	// URL에서 지점 파라미터 가져오기
+	branchFilter := r.URL.Query().Get("branch")
+
+	// 지점별 필터링
+	var filteredCustomers []Customer
+	if branchFilter == "" {
+		// 전체 고객 (필터 없음)
+		filteredCustomers = dummyCustomers
+	} else {
+		// 선택된 지점의 고객만 필터링
+		for _, customer := range dummyCustomers {
+			if customer.Branch == branchFilter {
+				filteredCustomers = append(filteredCustomers, customer)
+			}
+		}
+	}
+
 	data := PageData{
 		Title:      "고객 관리",
 		ActiveMenu: "customers",
-		Customers:  dummyCustomers,
+		Customers:  filteredCustomers,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "customers/list.html", data); err != nil {

@@ -4,6 +4,16 @@
         <h1>{{.Title}}</h1>
     </div>
     <div class="header-right">
+        <div class="branch-selector" style="margin-right: 2rem;">
+            <label style="margin-right: 0.5rem; color: #5a6c7d; font-size: 0.9rem;">지점 선택:</label>
+            <select id="branchSelect" onchange="changeBranch(this.value)" style="padding: 0.5rem 1rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; cursor: pointer; background: white;">
+                <option value="gasan" selected>가산</option>
+                <option value="gangnam">강남</option>
+                <option value="hongdae">홍대</option>
+                <option value="sinchon">신촌</option>
+                <option value="">전체</option>
+            </select>
+        </div>
         <div class="user-info">
             <span class="user-avatar">👤</span>
             <span class="user-name">관리자</span>
@@ -11,4 +21,75 @@
         </div>
     </div>
 </header>
+
+<script>
+// 영문 코드 -> 한글 이름 매핑
+const branchNames = {
+    'gasan': '가산',
+    'gangnam': '강남',
+    'hongdae': '홍대',
+    'sinchon': '신촌'
+};
+
+function changeBranch(branchCode) {
+    // localStorage에 영문 코드로 저장
+    if (branchCode === '') {
+        localStorage.removeItem('selectedBranch');
+    } else {
+        localStorage.setItem('selectedBranch', branchCode);
+    }
+    
+    // 현재 URL에 지점 파라미터 추가하여 페이지 리로드
+    const currentUrl = new URL(window.location.href);
+    
+    if (branchCode === '') {
+        currentUrl.searchParams.delete('branch');
+    } else {
+        currentUrl.searchParams.set('branch', branchCode);
+    }
+    
+    // 페이지 리로드
+    window.location.href = currentUrl.toString();
+}
+
+// 페이지 로드 시 저장된 지점 복원
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlBranch = urlParams.get('branch');
+    const savedBranch = localStorage.getItem('selectedBranch');
+    const branchSelect = document.getElementById('branchSelect');
+    const sidebarTitle = document.querySelector('.sidebar-header h2');
+    
+    // URL 파라미터가 있으면 우선 사용 (기본값은 영문 코드 'gasan')
+    let currentBranch = urlBranch || savedBranch || 'gasan';
+    
+    // URL과 localStorage 동기화
+    if (!urlBranch && savedBranch) {
+        // URL에 지점 파라미터 없으면 추가
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('branch', savedBranch);
+        window.history.replaceState({}, '', currentUrl.toString());
+        currentBranch = savedBranch;
+    } else if (urlBranch) {
+        // URL 파라미터로 localStorage 업데이트
+        localStorage.setItem('selectedBranch', urlBranch);
+        currentBranch = urlBranch;
+    }
+    
+    // 드롭다운 선택 상태 설정 (영문 코드)
+    if (branchSelect) {
+        branchSelect.value = currentBranch || '';
+    }
+    
+    // 사이드바 제목 업데이트 (한글 이름으로 표시)
+    if (sidebarTitle) {
+        if (currentBranch && currentBranch !== '') {
+            const branchDisplayName = branchNames[currentBranch] || currentBranch;
+            sidebarTitle.textContent = `🏢 ${branchDisplayName}-백오피스`;
+        } else {
+            sidebarTitle.textContent = '🏢 백오피스!!';
+        }
+    }
+});
+</script>
 {{end}}

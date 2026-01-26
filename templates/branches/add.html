@@ -40,14 +40,6 @@
             <label class="form-label">주소 <span class="required">*</span></label>
             <input type="text" class="form-input" placeholder="주소를 입력하세요">
         </div>
-
-        <div class="form-row">
-            <label class="form-label">대표자 <span class="required">*</span></label>
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="representativeInput" class="form-input" placeholder="대표자를 선택하세요" readonly>
-                <button type="button" class="btn-primary" onclick="openRepresentativeModal()">찾아보기</button>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -69,8 +61,6 @@
     <button class="btn-primary-large">💾 저장</button>
     <a href="/branches" class="btn-secondary-large">취소</a>
 </div>
-
-{{template "representative-modal" .}}
         </main>
     </div>
 </body>

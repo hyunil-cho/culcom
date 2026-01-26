@@ -1,7 +1,7 @@
 {{define "sidebar"}}
 <aside class="sidebar">
     <div class="sidebar-header">
-        <h2>🏢 백오피스!!</h2>
+        <h2 id="sidebarTitle">🏢 백오피스!!</h2>
     </div>
     <nav class="sidebar-nav">
         <a href="/dashboard" class="nav-item {{if eq .ActiveMenu "dashboard"}}active{{end}}">
@@ -26,4 +26,21 @@
         </a>
     </nav>
 </aside>
+
+<script>
+// 사이드바 메뉴 링크에 현재 지점 파라미터 추가
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentBranch = urlParams.get('branch') || localStorage.getItem('selectedBranch') || 'gasan';
+    
+    // 모든 네비게이션 링크에 지점 파라미터 추가 (영문 코드)
+    document.querySelectorAll('.sidebar-nav .nav-item').forEach(function(link) {
+        const href = link.getAttribute('href');
+        if (href && !href.includes('branch=') && currentBranch) {
+            const separator = href.includes('?') ? '&' : '?';
+            link.setAttribute('href', href + separator + 'branch=' + encodeURIComponent(currentBranch));
+        }
+    });
+});
+</script>
 {{end}}
