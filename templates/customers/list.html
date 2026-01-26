@@ -61,36 +61,58 @@
         <table class="data-table">
             <thead>
                 <tr>
-                    <th><input type="checkbox"></th>
-                    <th>응대</th>
                     <th>이름</th>
                     <th>전화번호</th>
+                    <th>CALLER</th>
+                    <th>TEXT</th>
+                    <th>인터뷰확정일시</th>
                     <th>광고명</th>
-                    <th>상태</th>
                     <th>요청일시</th>
                     <th>최근응대</th>
                     <th>전화횟수</th>
-                    <th>관리</th>
                 </tr>
             </thead>
             <tbody>
                 {{range .Customers}}
                 <tr>
-                    <td><input type="checkbox"></td>
-                    <td>
-                        <button class="btn-table-action" onclick="openResponseModal({{.ID}}, '{{.Name}}', '{{.Phone}}')">응대</button>
-                    </td>
                     <td><strong>{{.Name}}</strong></td>
                     <td>{{.Phone}}</td>
+                    <td>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; width: fit-content; margin: 0 auto;">
+                            <button type="button" class="caller-btn" onclick="selectCaller({{.ID}}, 'A')" data-customer-id="{{.ID}}" data-letter="A">A</button>
+                            <button type="button" class="caller-btn" onclick="selectCaller({{.ID}}, 'B')" data-customer-id="{{.ID}}" data-letter="B">B</button>
+                            <button type="button" class="caller-btn" onclick="selectCaller({{.ID}}, 'C')" data-customer-id="{{.ID}}" data-letter="C">C</button>
+                            <button type="button" class="caller-btn" onclick="selectCaller({{.ID}}, 'D')" data-customer-id="{{.ID}}" data-letter="D">D</button>
+                            <button type="button" class="caller-btn" onclick="selectCaller({{.ID}}, 'E')" data-customer-id="{{.ID}}" data-letter="E">E</button>
+                            <button type="button" class="caller-btn" onclick="selectCaller({{.ID}}, 'F')" data-customer-id="{{.ID}}" data-letter="F">F</button>
+                            <button type="button" class="caller-btn" onclick="selectCaller({{.ID}}, 'G')" data-customer-id="{{.ID}}" data-letter="G">G</button>
+                            <button type="button" class="caller-btn" onclick="selectCaller({{.ID}}, 'H')" data-customer-id="{{.ID}}" data-letter="H">H</button>
+                            <button type="button" class="caller-btn" onclick="selectCaller({{.ID}}, 'I')" data-customer-id="{{.ID}}" data-letter="I">I</button>
+                            <button type="button" class="caller-btn" onclick="selectCaller({{.ID}}, 'J')" data-customer-id="{{.ID}}" data-letter="J">J</button>
+                            <button type="button" class="caller-btn" onclick="selectCaller({{.ID}}, 'K')" data-customer-id="{{.ID}}" data-letter="K">K</button>
+                            <button type="button" class="caller-btn" onclick="selectCaller({{.ID}}, 'L')" data-customer-id="{{.ID}}" data-letter="L">L</button>
+                            <button type="button" class="caller-btn" onclick="selectCaller({{.ID}}, 'M')" data-customer-id="{{.ID}}" data-letter="M">M</button>
+                            <button type="button" class="caller-btn" onclick="selectCaller({{.ID}}, 'N')" data-customer-id="{{.ID}}" data-letter="N">N</button>
+                            <button type="button" class="caller-btn" onclick="selectCaller({{.ID}}, 'O')" data-customer-id="{{.ID}}" data-letter="O">O</button>
+                            <button type="button" class="caller-btn" onclick="selectCaller({{.ID}}, 'P')" data-customer-id="{{.ID}}" data-letter="P">P</button>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn-table-action" onclick="openTextModal({{.ID}}, '{{.Name}}', '{{.Phone}}')" style="padding: 0.4rem 0.8rem; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">💬 TEXT</button>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <input type="text" id="interview-{{.ID}}" class="interview-datetime" data-customer-name="{{.Name}}"
+                                   placeholder="ex)1월1일오후1시1분"
+                                   style="padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; width: 150px;">
+                            <button onclick="openInterviewConfirmModal({{.ID}})" 
+                                    style="padding: 0.4rem 0.7rem; background: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600; white-space: nowrap;">확정</button>
+                        </div>
+                    </td>
                     <td>{{.AdName}}</td>
-                    <td><span class="status-badge status-active">{{.Status}}</span></td>
                     <td>{{.RegisterDate}}</td>
                     <td>{{.LastVisit}}</td>
                     <td><strong>{{.CallCount}}회</strong></td>
-                    <td>
-                        <a href="/customers/detail?id={{.ID}}" class="btn-table-action">상세</a>
-                        <a href="/customers/edit?id={{.ID}}" class="btn-table-action">수정</a>
-                    </td>
                 </tr>
                 {{end}}
             </tbody>
@@ -106,6 +128,98 @@
         <button class="page-btn">4</button>
         <button class="page-btn">5</button>
         <button class="page-btn">▶</button>
+    </div>
+</div>
+
+<!-- 인터뷰 확정 확인 모달 -->
+<div id="interviewConfirmModal" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header" style="border-bottom: 2px solid #4a90e2;">
+            <h3>📅 인터뷰 확정 확인</h3>
+        </div>
+        <div class="modal-body" style="padding: 2rem;">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <div style="font-size: 1.1rem; color: #333; margin-bottom: 1rem;">
+                    <strong id="confirmCustomerName" style="color: #4a90e2; font-size: 1.3rem;"></strong>님의
+                </div>
+                <div style="font-size: 0.95rem; color: #666; margin-bottom: 0.5rem;">인터뷰 확정일시</div>
+                <div style="background: #f0f8ff; padding: 1rem; border-radius: 8px; border: 2px solid #4a90e2; margin-top: 1rem;">
+                    <div id="confirmDateTime" style="font-size: 1.2rem; font-weight: 600; color: #333;"></div>
+                </div>
+            </div>
+            <div style="text-align: center; color: #666; font-size: 0.95rem;">
+                위 일시로 확정하시겠습니까?
+            </div>
+        </div>
+        <div style="padding: 1rem 2rem; border-top: 1px solid #e0e0e0; display: flex; gap: 0.75rem;">
+            <button class="btn-secondary" onclick="cancelInterviewConfirm()" style="flex: 1; padding: 0.75rem; font-size: 1rem;">아니오</button>
+            <button class="btn-primary" onclick="confirmInterviewDateTime()" style="flex: 1; padding: 0.75rem; font-size: 1rem;">네</button>
+        </div>
+    </div>
+</div>
+
+<!-- 메시지 전송 모달 -->
+<div id="textModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h3>💬 메시지 전송</h3>
+            <span class="modal-close" onclick="closeTextModal()">&times;</span>
+        </div>
+        <div class="modal-body" style="padding: 1.5rem;">
+            <!-- 수신자 정보 -->
+            <div style="background: #f0f8ff; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #4a90e2;">
+                <div style="display: flex; gap: 2rem;">
+                    <div>
+                        <span style="font-size: 0.85rem; color: #666; display: block; margin-bottom: 0.3rem;">수신자</span>
+                        <span id="textModalCustomerName" style="font-weight: 600; font-size: 1rem; color: #333;">-</span>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.85rem; color: #666; display: block; margin-bottom: 0.3rem;">전화번호</span>
+                        <span id="textModalCustomerPhone" style="font-weight: 600; font-size: 1rem; color: #333;">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 입력 방식 선택 -->
+            <div style="margin-bottom: 1rem;">
+                <div style="display: flex; gap: 0.5rem;">
+                    <button onclick="selectTextInputMode('template')" id="textModeTemplateBtn" class="text-input-mode-btn" 
+                            style="flex: 1; padding: 0.75rem; border: 2px solid #4a90e2; background: #4a90e2; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+                        📋 템플릿 사용
+                    </button>
+                    <button onclick="selectTextInputMode('direct')" id="textModeDirectBtn" class="text-input-mode-btn" 
+                            style="flex: 1; padding: 0.75rem; border: 2px solid #ddd; background: white; color: #666; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+                        ✍️ 직접입력
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 템플릿 선택 -->
+            <div id="textTemplateSection" style="display: none; margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">템플릿 선택</label>
+                <select id="textMessageTemplate" class="form-input" onchange="loadTextTemplate()" style="width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                    <option value="">템플릿을 선택하세요</option>
+                    <option value="template1">방문 예약 확인</option>
+                    <option value="template2">상담 안내</option>
+                    <option value="template3">견적서 발송 안내</option>
+                    <option value="template4">부재중 재연락 안내</option>
+                </select>
+            </div>
+            
+            <!-- 메시지 내용 -->
+            <div style="margin-bottom: 0.75rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">메시지 내용</label>
+                <textarea id="textMessageContent" class="form-input" placeholder="메시지 내용을 입력하세요..." 
+                          style="width: 100%; min-height: 160px; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; resize: vertical;"></textarea>
+                <div style="text-align: right; margin-top: 0.5rem; font-size: 0.85rem; color: #999;">
+                    <span id="textMessageLength">0</span> / 2000자
+                </div>
+            </div>
+        </div>
+        <div style="padding: 0.75rem 1.5rem; border-top: 1px solid #e0e0e0; display: flex; justify-content: flex-end; gap: 0.75rem;">
+            <button class="btn-secondary" onclick="closeTextModal()" style="padding: 0.6rem 1.2rem;">닫기</button>
+            <button class="btn-primary" onclick="sendTextMessage()" style="padding: 0.6rem 1.2rem;">✉️ 전송</button>
+        </div>
     </div>
 </div>
 
@@ -711,7 +825,331 @@ function sendMessage() {
     }
 }
 
+function selectCaller(customerId, letter) {
+    // 해당 고객의 모든 버튼 선택 해제
+    const customerButtons = document.querySelectorAll(`.caller-btn[data-customer-id="${customerId}"]`);
+    customerButtons.forEach(btn => btn.classList.remove('selected'));
+    
+    // 클릭한 버튼 선택
+    event.target.classList.add('selected');
+    
+    console.log(`Customer ${customerId}: Selected caller ${letter}`);
+    
+    // TODO: 서버에 caller 정보 저장
+}
+
+// TEXT 모달 관련 변수
+let currentTextCustomerId = null;
+let currentTextCustomerName = '';
+let currentTextCustomerPhone = '';
+let currentTextInputMode = 'template';
+
+// TEXT 모달 열기
+function openTextModal(customerId, customerName, customerPhone) {
+    currentTextCustomerId = customerId;
+    currentTextCustomerName = customerName;
+    currentTextCustomerPhone = customerPhone;
+    
+    document.getElementById('textModalCustomerName').textContent = customerName;
+    document.getElementById('textModalCustomerPhone').textContent = customerPhone;
+    document.getElementById('textModal').style.display = 'flex';
+    
+    // 폼 초기화
+    document.getElementById('textMessageContent').value = '';
+    document.getElementById('textMessageLength').textContent = '0';
+    document.getElementById('textMessageTemplate').value = '';
+    selectTextInputMode('template');
+}
+
+// TEXT 모달 닫기
+function closeTextModal() {
+    document.getElementById('textModal').style.display = 'none';
+    currentTextCustomerId = null;
+    currentTextCustomerName = '';
+    currentTextCustomerPhone = '';
+}
+
+// TEXT 입력 방식 선택
+function selectTextInputMode(mode) {
+    currentTextInputMode = mode;
+    
+    const directBtn = document.getElementById('textModeDirectBtn');
+    const templateBtn = document.getElementById('textModeTemplateBtn');
+    const templateSection = document.getElementById('textTemplateSection');
+    const messageTextarea = document.getElementById('textMessageContent');
+    
+    if (mode === 'direct') {
+        directBtn.style.background = '#4a90e2';
+        directBtn.style.borderColor = '#4a90e2';
+        directBtn.style.color = 'white';
+        
+        templateBtn.style.background = 'white';
+        templateBtn.style.borderColor = '#ddd';
+        templateBtn.style.color = '#666';
+        
+        templateSection.style.display = 'none';
+        messageTextarea.value = '';
+        document.getElementById('textMessageLength').textContent = '0';
+    } else {
+        directBtn.style.background = 'white';
+        directBtn.style.borderColor = '#ddd';
+        directBtn.style.color = '#666';
+        
+        templateBtn.style.background = '#4a90e2';
+        templateBtn.style.borderColor = '#4a90e2';
+        templateBtn.style.color = 'white';
+        
+        templateSection.style.display = 'block';
+        messageTextarea.value = '';
+        document.getElementById('textMessageLength').textContent = '0';
+    }
+}
+
+// TEXT 템플릿 로드
+function loadTextTemplate() {
+    const selectedTemplate = document.getElementById('textMessageTemplate').value;
+    const messageTextarea = document.getElementById('textMessageContent');
+    
+    if (!selectedTemplate) {
+        messageTextarea.value = '';
+        document.getElementById('textMessageLength').textContent = '0';
+        return;
+    }
+    
+    const template = smsTemplates[selectedTemplate];
+    if (template) {
+        // 변수 치환
+        let content = template.content
+            .replace('{고객명}', currentTextCustomerName)
+            .replace('{날짜}', '2026-01-30')
+            .replace('{시간}', '14:00')
+            .replace('{주소}', '서울시 강남구 테헤란로 123')
+            .replace('{담당자}', '김영업');
+        
+        messageTextarea.value = content;
+        document.getElementById('textMessageLength').textContent = content.length;
+    }
+}
+
+// TEXT 메시지 전송
+function sendTextMessage() {
+    const message = document.getElementById('textMessageContent').value;
+    
+    if (!message.trim()) {
+        alert('메시지 내용을 입력해주세요.');
+        return;
+    }
+    
+    if (currentTextInputMode === 'template') {
+        const template = document.getElementById('textMessageTemplate').value;
+        if (!template) {
+            alert('템플릿을 선택해주세요.');
+            return;
+        }
+    }
+    
+    // TODO: 실제 메시지 전송 로직 구현
+    const messageData = {
+        customerId: currentTextCustomerId,
+        recipientName: currentTextCustomerName,
+        recipientPhone: currentTextCustomerPhone,
+        type: 'sms',
+        inputMode: currentTextInputMode,
+        message,
+        template: currentTextInputMode === 'template' ? document.getElementById('textMessageTemplate').value : null
+    };
+    
+    console.log('TEXT 메시지 전송:', messageData);
+    
+    if (confirm(`${currentTextCustomerName}님께 메시지를 전송하시겠습니까?`)) {
+        alert('메시지가 전송되었습니다.');
+        closeTextModal();
+    }
+}
+
+// TEXT 모달 외부 클릭 시 닫기
+window.onclick = function(event) {
+    const textModal = document.getElementById('textModal');
+    if (event.target == textModal) {
+        closeTextModal();
+    }
+    
+    const responseModal = document.getElementById('responseModal');
+    if (event.target == responseModal) {
+        closeResponseModal();
+    }
+}
+
+// TEXT 메시지 글자 수 카운트
+document.addEventListener('DOMContentLoaded', function() {
+    const textMessageTextarea = document.getElementById('textMessageContent');
+    if (textMessageTextarea) {
+        textMessageTextarea.addEventListener('input', function() {
+            const length = this.value.length;
+            document.getElementById('textMessageLength').textContent = length;
+        });
+    }
+});
+
+// 날짜 텍스트 파싱 함수
+function parseInterviewDateTime(text) {
+    // 예시: "1월1일오후1시1분", "1월 1일 오후 1시 1분", "1/1 오후1:1" 등
+    if (!text || text.trim() === '') {
+        return null;
+    }
+    
+    // 공백 제거
+    text = text.replace(/\s+/g, '');
+    
+    // 월 파싱
+    const monthMatch = text.match(/(\d+)월/);
+    if (!monthMatch) return null;
+    const month = parseInt(monthMatch[1]);
+    
+    // 일 파싱
+    const dayMatch = text.match(/월(\d+)일/);
+    if (!dayMatch) return null;
+    const day = parseInt(dayMatch[1]);
+    
+    // 오전/오후 파싱
+    const isPM = text.includes('오후') || text.includes('pm') || text.includes('PM');
+    
+    // 시 파싱
+    const hourMatch = text.match(/(?:오전|오후|am|pm|AM|PM)?(\d+)시/);
+    if (!hourMatch) return null;
+    let hour = parseInt(hourMatch[1]);
+    
+    // 12시간제 -> 24시간제 변환
+    if (isPM && hour !== 12) {
+        hour += 12;
+    } else if (!isPM && hour === 12) {
+        hour = 0;
+    }
+    
+    // 분 파싱
+    const minuteMatch = text.match(/시(\d+)분/);
+    const minute = minuteMatch ? parseInt(minuteMatch[1]) : 0;
+    
+    // 유효성 검사
+    if (month < 1 || month > 12) return null;
+    if (day < 1 || day > 31) return null;
+    if (hour < 0 || hour > 23) return null;
+    if (minute < 0 || minute > 59) return null;
+    
+    // 현재 연도 사용
+    const year = new Date().getFullYear();
+    
+    return {
+        year,
+        month,
+        day,
+        hour,
+        minute,
+        formatted: `${year}년 ${month}월 ${day}일 ${isPM ? '오후' : '오전'} ${isPM && hour > 12 ? hour - 12 : hour}시 ${minute}분`
+    };
+}
+
+// 인터뷰 확정일시 관련 변수
+let pendingInterviewCustomerId = null;
+let pendingInterviewDateTime = null;
+let pendingInterviewCustomerName = null;
+
+// 인터뷰 확정 모달 열기
+function openInterviewConfirmModal(customerId) {
+    const inputElement = document.getElementById(`interview-${customerId}`);
+    const dateTimeText = inputElement.value;
+    
+    if (!dateTimeText) {
+        alert('인터뷰 일시를 먼저 입력해주세요.');
+        return;
+    }
+    
+    // 날짜 형식 검증 및 파싱
+    const parsedDate = parseInterviewDateTime(dateTimeText);
+    if (!parsedDate) {
+        alert('올바른 날짜 형식이 아닙니다.\n\n예시: 1월1일오후1시1분\n      1월 15일 오전 10시 30분');
+        return;
+    }
+    
+    // 고객 이름 가져오기
+    const customerName = inputElement.getAttribute('data-customer-name');
+    
+    // 임시 저장
+    pendingInterviewCustomerId = customerId;
+    pendingInterviewDateTime = dateTimeText;
+    pendingInterviewCustomerName = customerName;
+    
+    // 확인 모달 표시
+    document.getElementById('confirmCustomerName').textContent = customerName;
+    document.getElementById('confirmDateTime').textContent = parsedDate.formatted;
+    document.getElementById('interviewConfirmModal').style.display = 'flex';
+}
+
+// 인터뷰 확정 취소
+function cancelInterviewConfirm() {
+    // 입력 필드 초기화
+    if (pendingInterviewCustomerId) {
+        document.getElementById(`interview-${pendingInterviewCustomerId}`).value = '';
+    }
+    
+    // 모달 닫기
+    document.getElementById('interviewConfirmModal').style.display = 'none';
+    
+    // 임시 데이터 초기화
+    pendingInterviewCustomerId = null;
+    pendingInterviewDateTime = null;
+    pendingInterviewCustomerName = null;
+}
+
+// 인터뷰 확정 완료
+function confirmInterviewDateTime() {
+    if (!pendingInterviewCustomerId || !pendingInterviewDateTime) {
+        return;
+    }
+    
+    // TODO: 실제로는 서버에 저장
+    console.log(`Customer ${pendingInterviewCustomerId} (${pendingInterviewCustomerName}): Interview confirmed at ${pendingInterviewDateTime}`);
+    
+    // 성공 메시지
+    alert(`${pendingInterviewCustomerName}님의 인터뷰 일시가 확정되었습니다.`);
+    
+    // 모달 닫기
+    document.getElementById('interviewConfirmModal').style.display = 'none';
+    
+    // 임시 데이터 초기화
+    pendingInterviewCustomerId = null;
+    pendingInterviewDateTime = null;
+    pendingInterviewCustomerName = null;
+}
+
 </script>
+
+<style>
+.caller-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid #ddd;
+    background: white;
+    color: #333;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.caller-btn:hover {
+    background: #f0f0f0;
+    border-color: #4a90e2;
+}
+
+.caller-btn.selected {
+    background: #4a90e2;
+    color: white;
+    border-color: #4a90e2;
+}
+</style>
 
         </main>
     </div>
