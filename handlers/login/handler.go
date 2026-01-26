@@ -1,6 +1,8 @@
 package login
 
 import (
+	"backoffice/config"
+	"backoffice/database"
 	"html/template"
 	"log"
 	"net/http"
@@ -15,6 +17,16 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	data := PageData{
 		Title: "로그인",
 		Error: "",
+	}
+
+	// 에러 파라미터 확인
+	errorParam := r.URL.Query().Get("error")
+	if errorParam == "login_failed" {
+		data.Error = "아이디 또는 비밀번호가 일치하지 않습니다."
+	} else if errorParam == "invalid_request" {
+		data.Error = "잘못된 요청입니다."
+	} else if errorParam == "unauthorized" {
+		data.Error = "로그인이 필요합니다. 로그인 후 이용해주세요."
 	}
 
 	if err := Templates.ExecuteTemplate(w, "auth/login.html", data); err != nil {
@@ -32,11 +44,60 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 폼 데이터 파싱
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "폼 데이터를 파싱할 수 없습니다", http.StatusBadRequest)
+		http.Redirect(w, r, "/?error=invalid_request", http.StatusSeeOther)
 		return
 	}
 
-	// TODO: 실제 인증 로직 구현 예정
-	// 현재는 바로 대시보드로 이동
-	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+
+	// DB 인증
+	authenticated := database.AuthenticateUser(username, password)
+
+	if authenticated {
+		// 세션에 사용자 ID 저장
+		session, err := config.SessionStore.Get(r, "user-session")
+		if err != nil {
+			log.Printf("세션 가져오기 실패: %v", err)
+			http.Redirect(w, r, "/?error=invalid_request", http.StatusSeeOther)
+			return
+		}
+
+		session.Values["user_id"] = username
+		session.Values["authenticated"] = true
+
+		if err := session.Save(r, w); err != nil {
+			log.Printf("세션 저장 실패: %v", err)
+			http.Redirect(w, r, "/?error=invalid_request", http.StatusSeeOther)
+			return
+		}
+
+		// 성공: 대시보드로 리다이렉트
+		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+	} else {
+		// 실패: 로그인 페이지로 리다이렉트하고 에러 메시지 표시
+		http.Redirect(w, r, "/?error=login_failed", http.StatusSeeOther)
+	}
+}
+
+// LogoutHandler - 로그아웃 처리 핸들러
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	// 세션 가져오기
+	session, err := config.SessionStore.Get(r, "user-session")
+	if err != nil {
+		log.Printf("세션 가져오기 실패: %v", err)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	// 세션 무효화 (MaxAge를 -1로 설정하면 즉시 삭제됨)
+	session.Options.MaxAge = -1
+
+	// 세션 저장 (실제로는 삭제)
+	if err := session.Save(r, w); err != nil {
+		log.Printf("세션 삭제 실패: %v", err)
+	}
+
+	// 로그인 페이지로 리다이렉트
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

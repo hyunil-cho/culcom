@@ -16,12 +16,52 @@
         <div class="user-info">
             <span class="user-avatar">👤</span>
             <span class="user-name">관리자</span>
-            <a href="/" class="logout-btn">로그아웃</a>
+            <a href="javascript:void(0);" class="logout-btn" onclick="showLogoutModal()">로그아웃</a>
         </div>
     </div>
 </header>
 
+<!-- 로그아웃 확인 모달 -->
+<div id="logoutModal" class="modal">
+    <div class="modal-content" style="max-width: 420px;">
+        <div class="modal-header">
+            <span class="modal-icon">🚪</span>
+            <h3>로그아웃 확인</h3>
+        </div>
+        <div class="modal-body">
+            <p>정말로 로그아웃 하시겠습니까?</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal-cancel" onclick="closeLogoutModal()">취소</button>
+            <button class="btn-modal-confirm" onclick="confirmLogout()">로그아웃</button>
+        </div>
+    </div>
+</div>
+
 <script>
+// 로그아웃 모달 표시
+function showLogoutModal() {
+    document.getElementById('logoutModal').style.display = 'flex';
+}
+
+// 로그아웃 모달 닫기
+function closeLogoutModal() {
+    document.getElementById('logoutModal').style.display = 'none';
+}
+
+// 로그아웃 확인
+function confirmLogout() {
+    window.location.href = '/logout';
+}
+
+// 모달 외부 클릭 시 닫기
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('logoutModal');
+    if (event.target === modal) {
+        closeLogoutModal();
+    }
+});
+
 // 영문 코드 -> 한글 이름 매핑
 const branchNames = {
     'gasan': '가산',
