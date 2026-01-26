@@ -36,7 +36,7 @@
             </div>
         </div>
         <div class="action-buttons">
-            <a href="/customers/add" class="btn-primary">➕ 고객 추가</a>
+            <a href="/customers/add" class="btn-primary">➕ 워크인 추가</a>
         </div>
     </div>
 </div>
@@ -434,7 +434,20 @@ function openResponseModal(customerId, customerName, customerPhone) {
     document.getElementById('responseTypeContent').innerHTML = '';
     document.getElementById('smsMessageContent').value = '';
     document.getElementById('messageTemplate').value = '';
-    selectInputMode('direct');
+    
+    // 기본 템플릿 로드 (서버에서 전달받은 기본 템플릿)
+    const defaultTemplate = `{{.DefaultTemplate}}`;
+    if (defaultTemplate) {
+        // 템플릿 모드로 전환
+        selectInputMode('template');
+        // 기본 템플릿 선택 (template1)
+        document.getElementById('messageTemplate').value = 'template1';
+        // 템플릿 내용 로드
+        document.getElementById('smsMessageContent').value = defaultTemplate.replace('{\uace0\uac1d\uba85}', customerName);
+        document.getElementById('messageLength').textContent = document.getElementById('smsMessageContent').value.length;
+    } else {
+        selectInputMode('direct');
+    }
 }
 
 function loadResponseHistory(customerId) {
@@ -876,6 +889,16 @@ function openTextModal(customerId, customerName, customerPhone) {
     document.getElementById('textMessageLength').textContent = '0';
     document.getElementById('textMessageTemplate').value = '';
     selectTextInputMode('template');
+    
+    // 기본 템플릿 로드 (서버에서 전달받은 기본 템플릿)
+    const defaultTemplate = `{{.DefaultTemplate}}`;
+    if (defaultTemplate) {
+        // 기본 템플릿 선택 (template1)
+        document.getElementById('textMessageTemplate').value = 'template1';
+        // 템플릿 내용 로드
+        document.getElementById('textMessageContent').value = defaultTemplate.replace('{\uace0\uac1d\uba85}', customerName);
+        document.getElementById('textMessageLength').textContent = document.getElementById('textMessageContent').value.length;
+    }
 }
 
 // TEXT 모달 닫기

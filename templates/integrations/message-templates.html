@@ -116,6 +116,21 @@
             font-weight: 600;
             color: #333;
             margin: 0 0 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .default-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #8b6914;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
         }
 
         .template-category {
@@ -233,6 +248,15 @@
             background: #45a049;
         }
 
+        .btn-set-default {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-set-default:hover {
+            background: #ffb300;
+        }
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -341,7 +365,10 @@
                     <div class="template-card {{if not .IsActive}}inactive{{end}}" data-category="{{.Category}}">
                         <div class="template-header">
                             <div>
-                                <h3 class="template-title">{{.Name}}</h3>
+                                <h3 class="template-title">
+                                    {{.Name}}
+                                    {{if .IsDefault}}<span class="default-badge">⭐ 기본</span>{{end}}
+                                </h3>
                                 <span class="template-category">{{.Category}}</span>
                             </div>
                         </div>
@@ -361,6 +388,11 @@
                         </div>
 
                         <div class="template-actions">
+                            {{if not .IsDefault}}
+                            <button class="btn-action btn-set-default" onclick="setAsDefault({{.ID}}, '{{.Name}}')">
+                                ⭐ 기본값 설정
+                            </button>
+                            {{end}}
                             <button class="btn-action btn-preview" onclick="previewTemplate({{.ID}})">
                                 👁️ 미리보기
                             </button>
@@ -439,6 +471,9 @@
             } else if (success === 'delete') {
                 successMessage.textContent = '✅ 템플릿이 성공적으로 삭제되었습니다.';
                 successMessage.classList.add('show');
+            } else if (success === 'default') {
+                successMessage.textContent = '⭐ 기본 템플릿이 성공적으로 설정되었습니다.';
+                successMessage.classList.add('show');
             }
             
             if (success) {
@@ -488,6 +523,18 @@
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = '/message-templates/delete?id=' + id;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        // 기본값으로 설정
+        function setAsDefault(id, name) {
+            if (confirm(`"${name}" 템플릿을 기본값으로 설정하시겠습니까?\n\n기존 기본값은 자동으로 해제됩니다.`)) {
+                // 폼 생성 및 제출
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/message-templates/set-default?id=' + id;
                 document.body.appendChild(form);
                 form.submit();
             }

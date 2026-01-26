@@ -163,6 +163,7 @@ func MessageTemplatesHandler(w http.ResponseWriter, r *http.Request) {
 			Content:     "{이름}님, {날짜} {시간}에 {지점명} 예약이 완료되었습니다.",
 			Description: "고객 예약 확인용 메시지",
 			IsActive:    true,
+			IsDefault:   true,
 			CreatedAt:   "2024-01-15 10:00:00",
 			UpdatedAt:   "2024-01-15 10:00:00",
 		},
@@ -173,6 +174,7 @@ func MessageTemplatesHandler(w http.ResponseWriter, r *http.Request) {
 			Content:     "{이름}님, {금액}원 결제가 완료되었습니다. 감사합니다.",
 			Description: "결제 완료 시 발송되는 메시지",
 			IsActive:    true,
+			IsDefault:   false,
 			CreatedAt:   "2024-01-16 14:30:00",
 			UpdatedAt:   "2024-01-16 14:30:00",
 		},
@@ -183,6 +185,7 @@ func MessageTemplatesHandler(w http.ResponseWriter, r *http.Request) {
 			Content:     "[{지점명}] {이름}님께 특별한 혜택을 드립니다. {이벤트내용}",
 			Description: "프로모션 및 이벤트 안내용",
 			IsActive:    false,
+			IsDefault:   false,
 			CreatedAt:   "2024-01-10 09:00:00",
 			UpdatedAt:   "2024-01-18 16:00:00",
 		},
@@ -193,6 +196,7 @@ func MessageTemplatesHandler(w http.ResponseWriter, r *http.Request) {
 			Content:     "{이름}님, 내일 {시간}에 {지점명} 예약이 있습니다.",
 			Description: "예약 하루 전 발송되는 알림",
 			IsActive:    true,
+			IsDefault:   false,
 			CreatedAt:   "2024-01-17 11:00:00",
 			UpdatedAt:   "2024-01-17 11:00:00",
 		},
@@ -203,6 +207,7 @@ func MessageTemplatesHandler(w http.ResponseWriter, r *http.Request) {
 			Content:     "{이름}님, {날짜} {시간} 예약이 취소되었습니다.",
 			Description: "예약 취소 시 발송되는 메시지",
 			IsActive:    true,
+			IsDefault:   false,
 			CreatedAt:   "2024-01-18 15:20:00",
 			UpdatedAt:   "2024-01-18 15:20:00",
 		},
@@ -213,6 +218,7 @@ func MessageTemplatesHandler(w http.ResponseWriter, r *http.Request) {
 			Content:     "{이름}님, 회원가입을 환영합니다! 첫 구매 시 10% 할인 혜택을 드립니다.",
 			Description: "신규 회원 가입 시 환영 메시지",
 			IsActive:    true,
+			IsDefault:   false,
 			CreatedAt:   "2024-01-19 09:30:00",
 			UpdatedAt:   "2024-01-19 09:30:00",
 		},
@@ -223,6 +229,7 @@ func MessageTemplatesHandler(w http.ResponseWriter, r *http.Request) {
 			Content:     "{이름}님, 생일을 진심으로 축하드립니다! 특별한 쿠폰을 선물로 드립니다.",
 			Description: "고객 생일 축하 메시지",
 			IsActive:    true,
+			IsDefault:   false,
 			CreatedAt:   "2024-01-20 10:00:00",
 			UpdatedAt:   "2024-01-20 10:00:00",
 		},
@@ -233,6 +240,7 @@ func MessageTemplatesHandler(w http.ResponseWriter, r *http.Request) {
 			Content:     "{이름}님, 결제 처리 중 오류가 발생했습니다. 다시 시도해주세요.",
 			Description: "결제 실패 시 안내 메시지",
 			IsActive:    true,
+			IsDefault:   false,
 			CreatedAt:   "2024-01-21 13:45:00",
 			UpdatedAt:   "2024-01-21 13:45:00",
 		},
@@ -428,4 +436,22 @@ func MessageTemplateDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	// database.DeleteMessageTemplate(id)
 
 	http.Redirect(w, r, "/message-templates?success=delete", http.StatusSeeOther)
+}
+
+// MessageTemplateSetDefaultHandler 메시지 템플릿 기본값 설정
+func MessageTemplateSetDefaultHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	_ = r.URL.Query().Get("id") // TODO: DB 업데이트 시 사용
+
+	// TODO: 실제로는 DB에서 업데이트
+	// 1. 모든 템플릿의 IsDefault를 false로 설정
+	// database.ClearAllDefaultTemplates()
+	// 2. 선택된 템플릿의 IsDefault를 true로 설정
+	// database.SetTemplateAsDefault(id)
+
+	http.Redirect(w, r, "/message-templates?success=default", http.StatusSeeOther)
 }

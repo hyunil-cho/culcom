@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"time"
 )
 
 var Templates *template.Template
@@ -12,9 +13,9 @@ var Templates *template.Template
 // 더미 데이터 (실제로는 데이터베이스에서 가져와야 함)
 var dummyCustomers = []Customer{
 	{ID: "972337", Name: "이재범", Phone: "01000000000", Email: "example1@email.com", AdName: "네이버 검색광고", Status: "신규", RegisterDate: "2026-01-20 17:34", LastVisit: "2026-01-20 18:37", CallCount: 5, Branch: "gasan"},
-	{ID: "972181", Name: "김효은", Phone: "01056565656", Email: "example2@email.com", AdName: "구글 디스플레이", Status: "부재중", RegisterDate: "2026-01-20 20:25", LastVisit: "2026-01-20 18:48", CallCount: 3, Branch: "gangnam"},
+	{ID: "972181", Name: "김효은", Phone: "01056565656", Email: "example2@email.com", AdName: "구글 디스플레이", Status: "부재중", RegisterDate: "2026-01-20 20:25", LastVisit: "2026-01-20 18:48", CallCount: 3, Branch: "gasan"},
 	{ID: "972138", Name: "엠버", Phone: "01025588255", Email: "example3@email.com", AdName: "카카오 채널", Status: "예약완료", RegisterDate: "2026-01-20 20:15", LastVisit: "2026-01-20 18:39", CallCount: 8, Branch: "gasan"},
-	{ID: "971925", Name: "Jimi", Phone: "01085229988", Email: "example4@email.com", AdName: "페이스북 광고", Status: "신규", RegisterDate: "2026-01-20 17:58", LastVisit: "2026-01-26 18:48", CallCount: 2, Branch: "hongdae"},
+	{ID: "971925", Name: "Jimi", Phone: "01085229988", Email: "example4@email.com", AdName: "페이스북 광고", Status: "신규", RegisterDate: "2026-01-20 17:58", LastVisit: "2026-01-26 18:48", CallCount: 2, Branch: "gasan"},
 	{ID: "971904", Name: "이선균", Phone: "01054220099", Email: "example5@email.com", AdName: "인스타 광고", Status: "전화상 안함", RegisterDate: "2026-01-19 21:00", LastVisit: "2026-01-20 18:44", CallCount: 12, Branch: "gasan"},
 	{ID: "971344", Name: "황성우", Phone: "01005696538", Email: "example6@email.com", AdName: "네이버 브랜드검색", Status: "예약완료", RegisterDate: "2026-01-17 20:14", LastVisit: "2026-01-20 18:50", CallCount: 7, Branch: "sinchon"},
 	{ID: "970864", Name: "박성민", Phone: "01094423101", Email: "example7@email.com", AdName: "구글 검색광고", Status: "GG", RegisterDate: "2026-01-19 02:10", LastVisit: "2026-01-20 18:48", CallCount: 15, Branch: "gangnam"},
@@ -52,10 +53,27 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// ID가 972337인 고객의 LastVisit를 현재시간 - 30분으로 동적 설정
+	now := time.Now()
+	thirtyMinutesAgo := now.Add(-30 * time.Minute)
+	lastVisitStr := thirtyMinutesAgo.Format("2006-01-02 15:04")
+
+	for i := range filteredCustomers {
+		if filteredCustomers[i].ID == "972337" {
+			filteredCustomers[i].LastVisit = lastVisitStr
+			break
+		}
+	}
+
+	// TODO: 실제로는 DB에서 기본 템플릿을 조회해야 함
+	// 현재는 더미 데이터 사용
+	defaultTemplate := "[{고객명}]님, 안녕하세요.\n\n{날짜} {시간}에 방문 예약이 확정되었습니다.\n\n주소: {주소}\n담당자: {담당자}\n\n기타 문의사항이 있으시면 연락 주세요.\n감사합니다."
+
 	data := PageData{
-		Title:      "고객 관리",
-		ActiveMenu: "customers",
-		Customers:  filteredCustomers,
+		Title:           "고객 관리",
+		ActiveMenu:      "customers",
+		Customers:       filteredCustomers,
+		DefaultTemplate: defaultTemplate,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "customers/list.html", data); err != nil {

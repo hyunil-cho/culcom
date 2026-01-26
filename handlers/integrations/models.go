@@ -49,6 +49,7 @@ type MessageTemplate struct {
 	Content     string // 메시지 내용 (플레이스홀더 포함)
 	Description string // 템플릿 설명
 	IsActive    bool   // 활성화 여부
+	IsDefault   bool   // 기본값 여부
 	CreatedAt   string // 생성일시
 	UpdatedAt   string // 수정일시
 }
