@@ -1,6 +1,7 @@
 package home
 
 import (
+	"backoffice/middleware"
 	"html/template"
 	"log"
 	"net/http"
@@ -50,10 +51,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := PageData{
-		Title:      "대시보드",
-		ActiveMenu: "dashboard",
-		AdminName:  "관리자",
-		Stats:      stats,
+		BasePageData: middleware.GetBasePageData(r),
+		Title:        "대시보드",
+		ActiveMenu:   "dashboard",
+		AdminName:    "관리자",
+		Stats:        stats,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "dashboard/home.html", data); err != nil {

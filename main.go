@@ -2,6 +2,7 @@ package main
 
 import (
 	"backoffice/config"
+	"backoffice/database"
 	"backoffice/handlers/branches"
 	"backoffice/handlers/customers"
 	"backoffice/handlers/errorhandler"
@@ -51,11 +52,11 @@ func main() {
 		log.Fatalf("설정 초기화 실패: %v", err)
 	}
 
-	// 데이터베이스 연결 초기화 (아직 사용 안 함)
-	// if err := database.Init(); err != nil {
-	// 	log.Printf("데이터베이스 연결 실패: %v (계속 진행)", err)
-	// }
-	// defer database.Close()
+	// 데이터베이스 연결 초기화
+	if err := database.Init(); err != nil {
+		log.Fatalf("데이터베이스 연결 실패: %v", err)
+	}
+	defer database.Close()
 
 	// 세션 초기화
 	config.InitSession()

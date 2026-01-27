@@ -4,6 +4,7 @@ import (
 	"backoffice/config"
 	"backoffice/database"
 	"backoffice/handlers/errorhandler"
+	"backoffice/middleware"
 	"backoffice/utils"
 	"fmt"
 	"html/template"
@@ -24,14 +25,31 @@ var dummyBranches = []Branch{
 	{ID: "BR005", Name: "부산점", Alias: "busan", Address: "부산시 해운대구 센텀중앙로 99", Representative: "최동욱", RegisterDate: "2025-05-05"},
 }
 
-// getBranchByID - ID로 지점 조회
+// getBranchByID - ID로 지점 조회 (DB에서)
 func getBranchByID(id string) *Branch {
-	for _, branch := range dummyBranches {
-		if branch.ID == id {
-			return &branch
-		}
+	// ID를 정수로 변환
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		log.Printf("Invalid ID format: %s", id)
+		return nil
 	}
-	return nil
+
+	// DB에서 지점 조회
+	branchData, err := database.GetBranchByID(idInt)
+	if err != nil {
+		log.Printf("getBranchByID error: %v", err)
+		return nil
+	}
+
+	// map을 Branch 구조체로 변환
+	branch := &Branch{
+		ID:           fmt.Sprintf("%v", branchData["id"]),
+		Name:         fmt.Sprintf("%v", branchData["name"]),
+		Alias:        fmt.Sprintf("%v", branchData["alias"]),
+		RegisterDate: fmt.Sprintf("%v", branchData["created_at"]),
+	}
+
+	return branch
 }
 
 // Handler - 지점 관리 페이지 핸들러
@@ -123,6 +141,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := PageData{
+		BasePageData:   middleware.GetBasePageData(r),
 		Title:          "지점 관리",
 		ActiveMenu:     "branches",
 		Branches:       branches,
@@ -154,9 +173,10 @@ func DetailHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := DetailPageData{
-		Title:      "지점 상세",
-		ActiveMenu: "branches",
-		Branch:     *branch,
+		BasePageData: middleware.GetBasePageData(r),
+		Title:        "지점 상세",
+		ActiveMenu:   "branches",
+		Branch:       *branch,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "branches/detail.html", data); err != nil {
@@ -182,9 +202,10 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		data := EditPageData{
-			Title:      "지점 수정",
-			ActiveMenu: "branches",
-			Branch:     *branch,
+			BasePageData: middleware.GetBasePageData(r),
+			Title:        "지점 수정",
+			ActiveMenu:   "branches",
+			Branch:       *branch,
 		}
 
 		if err := Templates.ExecuteTemplate(w, "branches/edit.html", data); err != nil {
@@ -227,6 +248,32 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// 세션의 지점 목록을 최신 정보로 업데이트
+		appSession, _ := config.SessionStore.Get(r, "app-session")
+		branchList, err := database.GetBranchesForSelect()
+		if err == nil && len(branchList) > 0 {
+			appSession.Values["branchList"] = branchList
+
+			// 현재 선택된 브랜치가 여전히 유효한지 확인
+			selectedBranch, _ := appSession.Values["selectedBranch"].(string)
+			branchExists := false
+			for _, branch := range branchList {
+				if branch["alias"] == selectedBranch {
+					branchExists = true
+					break
+				}
+			}
+
+			// 선택된 브랜치가 없으면 첫 번째 브랜치로 재설정
+			if !branchExists {
+				appSession.Values["selectedBranch"] = branchList[0]["alias"]
+				log.Printf("선택된 브랜치가 유효하지 않아 기본값으로 재설정: %s", branchList[0]["alias"])
+			}
+
+			appSession.Save(r, w)
+			log.Printf("지점 목록 세션 업데이트 완료: %d개", len(branchList))
+		}
+
 		// 세션에 플래시 메시지 저장
 		session, _ := config.SessionStore.Get(r, "flash-session")
 		session.AddFlash("지점이 성공적으로 수정되었습니다.", "success")
@@ -247,8 +294,9 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 	// GET 요청: 지점 추가 페이지 렌더링
 	if r.Method == http.MethodGet {
 		data := PageData{
-			Title:      "지점 추가",
-			ActiveMenu: "branches",
+			BasePageData: middleware.GetBasePageData(r),
+			Title:        "지점 추가",
+			ActiveMenu:   "branches",
 		}
 
 		if err := Templates.ExecuteTemplate(w, "branches/add.html", data); err != nil {
@@ -291,6 +339,32 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Printf("지점 추가 성공 - ID: %d", branchID)
+
+		// 세션의 지점 목록을 최신 정보로 업데이트
+		appSession, _ := config.SessionStore.Get(r, "app-session")
+		branchList, err := database.GetBranchesForSelect()
+		if err == nil && len(branchList) > 0 {
+			appSession.Values["branchList"] = branchList
+
+			// 현재 선택된 브랜치가 여전히 유효한지 확인
+			selectedBranch, _ := appSession.Values["selectedBranch"].(string)
+			branchExists := false
+			for _, branch := range branchList {
+				if branch["alias"] == selectedBranch {
+					branchExists = true
+					break
+				}
+			}
+
+			// 선택된 브랜치가 없으면 첫 번째 브랜치로 재설정
+			if !branchExists {
+				appSession.Values["selectedBranch"] = branchList[0]["alias"]
+				log.Printf("선택된 브랜치가 유효하지 않아 기본값으로 재설정: %s", branchList[0]["alias"])
+			}
+
+			appSession.Save(r, w)
+			log.Printf("지점 목록 세션 업데이트 완료: %d개", len(branchList))
+		}
 
 		// 세션에 플래시 메시지 저장
 		session, _ := config.SessionStore.Get(r, "flash-session")

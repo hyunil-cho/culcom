@@ -60,10 +60,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := TemplateListPageData{
-		Title:      "메시지 템플릿 관리",
-		ActiveMenu: "message-templates",
-		Templates:  templates,
-		Pagination: pagination,
+		BasePageData: middleware.GetBasePageData(r),
+		Title:        "메시지 템플릿 관리",
+		ActiveMenu:   "message-templates",
+		Templates:    templates,
+		Pagination:   pagination,
 	}
 
 	log.Println("Executing template: message-templates/list.html")
@@ -78,11 +79,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 // AddHandler 메시지 템플릿 추가 페이지
 func AddHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		// 세션에서 선택된 지점 정보 가져오기
-		branchCode := middleware.GetSelectedBranch(r)
-
-		// DB에서 플레이스홀더 목록 조회 (지점별)
-		dbPlaceholders, err := database.GetPlaceholders(branchCode)
+		// DB에서 플레이스홀더 목록 조회
+		dbPlaceholders, err := database.GetPlaceholders()
 		if err != nil {
 			log.Printf("플레이스홀더 조회 오류: %v", err)
 			http.Error(w, "플레이스홀더 조회 실패", http.StatusInternalServerError)
@@ -101,6 +99,7 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		data := TemplateFormPageData{
+			BasePageData: middleware.GetBasePageData(r),
 			Title:        "메시지 템플릿 추가",
 			ActiveMenu:   "message-templates",
 			Template:     nil,
@@ -153,11 +152,8 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 			UpdatedAt:   "2024-01-15 10:00:00",
 		}
 
-		// 세션에서 선택된 지점 정보 가져오기
-		branchCode := middleware.GetSelectedBranch(r)
-
-		// DB에서 플레이스홀더 목록 조회 (지점별)
-		dbPlaceholders, err := database.GetPlaceholders(branchCode)
+		// DB에서 플레이스홀더 목록 조회
+		dbPlaceholders, err := database.GetPlaceholders()
 		if err != nil {
 			log.Printf("플레이스홀더 조회 오류: %v", err)
 			http.Error(w, "플레이스홀더 조회 실패", http.StatusInternalServerError)
@@ -176,6 +172,7 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		data := TemplateFormPageData{
+			BasePageData: middleware.GetBasePageData(r),
 			Title:        "메시지 템플릿 수정",
 			ActiveMenu:   "message-templates",
 			Template:     template,

@@ -1,6 +1,9 @@
 package integrations
 
-import "html/template"
+import (
+	"backoffice/middleware"
+	"html/template"
+)
 
 // IntegrationService 연동 서비스 정보
 type IntegrationService struct {
@@ -15,6 +18,7 @@ type IntegrationService struct {
 
 // PageData 연동 관리 페이지 데이터
 type PageData struct {
+	middleware.BasePageData
 	Title      string
 	ActiveMenu string
 	Services   []IntegrationService
@@ -34,6 +38,7 @@ type SMSConfig struct {
 
 // SMSConfigPageData SMS 설정 페이지 데이터
 type SMSConfigPageData struct {
+	middleware.BasePageData
 	Title      string
 	ActiveMenu string
 	Service    IntegrationService

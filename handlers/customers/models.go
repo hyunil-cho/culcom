@@ -1,6 +1,9 @@
 package customers
 
-import "backoffice/utils"
+import (
+	"backoffice/middleware"
+	"backoffice/utils"
+)
 
 // Customer - 고객 데이터 구조체
 type Customer struct {
@@ -27,6 +30,7 @@ type SalesHistory struct {
 
 // PageData - 고객 관리 페이지 데이터 구조체
 type PageData struct {
+	middleware.BasePageData
 	Title           string
 	ActiveMenu      string
 	Customers       []Customer
@@ -36,6 +40,7 @@ type PageData struct {
 
 // DetailPageData - 고객 상세 페이지 데이터 구조체
 type DetailPageData struct {
+	middleware.BasePageData
 	Title        string
 	ActiveMenu   string
 	Customer     Customer
@@ -44,6 +49,7 @@ type DetailPageData struct {
 
 // EditPageData - 고객 수정 페이지 데이터 구조체
 type EditPageData struct {
+	middleware.BasePageData
 	Title      string
 	ActiveMenu string
 	Customer   Customer

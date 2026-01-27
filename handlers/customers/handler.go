@@ -2,6 +2,7 @@ package customers
 
 import (
 	"backoffice/handlers/errorhandler"
+	"backoffice/middleware"
 	"backoffice/utils"
 	"html/template"
 	"log"
@@ -94,6 +95,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	defaultTemplate := "[{고객명}]님, 안녕하세요.\n\n{날짜} {시간}에 방문 예약이 확정되었습니다.\n\n주소: {주소}\n담당자: {담당자}\n\n기타 문의사항이 있으시면 연락 주세요.\n감사합니다."
 
 	data := PageData{
+		BasePageData:    middleware.GetBasePageData(r),
 		Title:           "고객 관리",
 		ActiveMenu:      "customers",
 		Customers:       customers,
@@ -162,6 +164,7 @@ func DetailHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := DetailPageData{
+		BasePageData: middleware.GetBasePageData(r),
 		Title:        "고객 상세",
 		ActiveMenu:   "customers",
 		Customer:     *customer,
@@ -190,9 +193,10 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := EditPageData{
-		Title:      "고객 수정",
-		ActiveMenu: "customers",
-		Customer:   *customer,
+		BasePageData: middleware.GetBasePageData(r),
+		Title:        "고객 수정",
+		ActiveMenu:   "customers",
+		Customer:     *customer,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "customers/edit.html", data); err != nil {
@@ -204,8 +208,9 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 // AddHandler - 고객 추가 페이지 핸들러
 func AddHandler(w http.ResponseWriter, r *http.Request) {
 	data := PageData{
-		Title:      "고객 추가",
-		ActiveMenu: "customers",
+		BasePageData: middleware.GetBasePageData(r),
+		Title:        "고객 추가",
+		ActiveMenu:   "customers",
 	}
 
 	if err := Templates.ExecuteTemplate(w, "customers/add.html", data); err != nil {

@@ -57,9 +57,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := PageData{
-		Title:      "외부 시스템 연동",
-		ActiveMenu: "integrations",
-		Services:   services,
+		BasePageData: middleware.GetBasePageData(r),
+		Title:        "외부 시스템 연동",
+		ActiveMenu:   "integrations",
+		Services:     services,
 	}
 
 	Templates.ExecuteTemplate(w, "integrations/list.html", data)
@@ -114,8 +115,9 @@ func SMSConfigHandler(w http.ResponseWriter, r *http.Request) {
 		var config *SMSConfig
 
 		data := SMSConfigPageData{
-			Title:      "SMS 연동 설정",
-			ActiveMenu: "integrations",
+			BasePageData: middleware.GetBasePageData(r),
+			Title:        "SMS 연동 설정",
+			ActiveMenu:   "integrations",
 			Service: IntegrationService{
 				ID:          "sms",
 				Name:        "SMS 서비스",

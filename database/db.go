@@ -6,8 +6,8 @@ import (
 	"log"
 
 	"backoffice/config"
-	// 필요한 드라이버 import (사용할 때 주석 해제)
-	// _ "github.com/go-sql-driver/mysql"           // MySQL
+	// 필요한 드라이버 import
+	_ "github.com/go-sql-driver/mysql" // MySQL
 	// _ "github.com/lib/pq"                        // PostgreSQL
 	// _ "github.com/mattn/go-sqlite3"              // SQLite
 	// _ "github.com/denisenkom/go-mssqldb"         // SQL Server

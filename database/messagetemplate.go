@@ -237,8 +237,8 @@ func GetMessageTemplates(branchCode string) ([]MessageTemplate, error) {
 }
 
 // GetPlaceholders 플레이스홀더 목록 조회 (더미 데이터)
-func GetPlaceholders(branchCode string) ([]Placeholder, error) {
-	log.Printf("[Placeholder] GetPlaceholders 호출 - BranchCode: %s (더미 데이터 반환)\n", branchCode)
+func GetPlaceholders() ([]Placeholder, error) {
+	log.Println("[Placeholder] GetPlaceholders 호출 - 더미 데이터 반환")
 
 	placeholders := []Placeholder{
 		{Key: "{이름}", Label: "고객 이름", Description: "고객의 이름", Example: "홍길동"},

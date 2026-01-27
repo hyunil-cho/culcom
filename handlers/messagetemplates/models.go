@@ -1,6 +1,7 @@
 package messagetemplates
 
 import (
+	"backoffice/middleware"
 	"backoffice/utils"
 	"html/template"
 )
@@ -27,6 +28,7 @@ type Placeholder struct {
 
 // TemplateListPageData 템플릿 리스트 페이지 데이터
 type TemplateListPageData struct {
+	middleware.BasePageData
 	Title      string
 	ActiveMenu string
 	Templates  []MessageTemplate
@@ -35,6 +37,7 @@ type TemplateListPageData struct {
 
 // TemplateFormPageData 템플릿 추가/수정 페이지 데이터
 type TemplateFormPageData struct {
+	middleware.BasePageData
 	Title        string
 	ActiveMenu   string
 	Template     *MessageTemplate // 수정 시 기존 템플릿

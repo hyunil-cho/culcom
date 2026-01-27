@@ -7,10 +7,13 @@
         <div class="branch-selector" style="margin-right: 2rem;">
             <label style="margin-right: 0.5rem; color: #5a6c7d; font-size: 0.9rem;">지점 선택:</label>
             <select id="branchSelect" onchange="changeBranch(this.value)" style="padding: 0.5rem 1rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; cursor: pointer; background: white;">
-                <option value="gasan" selected>가산</option>
-                <option value="gangnam">강남</option>
-                <option value="hongdae">홍대</option>
-                <option value="sinchon">신촌</option>
+                {{if .BranchList}}
+                    {{range .BranchList}}
+                        <option value="{{.alias}}" {{if eq .alias $.SelectedBranch}}selected{{end}}>{{.name}}</option>
+                    {{end}}
+                {{else}}
+                    <option value="">지점 없음</option>
+                {{end}}
             </select>
         </div>
         <div class="user-info">

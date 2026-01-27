@@ -8,38 +8,47 @@ import (
 // 파라미터: name (지점명), alias (별칭)
 // 반환: 생성된 ID, 에러
 func InsertBranch(name, alias string) (int64, error) {
-	// TODO: 실제 쿼리 구현
-	// 예시:
-	// query := `INSERT INTO branches (name, alias, created_at) VALUES (?, ?, NOW())`
-	// result, err := Exec(query, name, alias)
-	// if err != nil {
-	// 	return 0, err
-	// }
-	// return result.LastInsertId()
+	query := `INSERT INTO branches (branchName, alias, createdDate, lastUpdateDate) 
+	          VALUES (?, ?, CURDATE(), CURDATE())`
 
-	log.Printf("[DB 추상화] InsertBranch 호출 - name: %s, alias: %s", name, alias)
+	result, err := DB.Exec(query, name, alias)
+	if err != nil {
+		log.Printf("InsertBranch error: %v", err)
+		return 0, err
+	}
 
-	// 임시로 성공 응답 (실제 구현 전까지)
-	return 1, nil
+	id, err := result.LastInsertId()
+	if err != nil {
+		log.Printf("InsertBranch get last insert id error: %v", err)
+		return 0, err
+	}
+
+	log.Printf("InsertBranch success - ID: %d, Name: %s, Alias: %s", id, name, alias)
+	return id, nil
 }
 
 // UpdateBranch - 지점 수정
 // 파라미터: id (지점 ID), name (지점명), alias (별칭)
 // 반환: 영향받은 행 수, 에러
 func UpdateBranch(id int, name, alias string) (int64, error) {
-	// TODO: 실제 쿼리 구현
-	// 예시:
-	// query := `UPDATE branches SET name = ?, alias = ?, updated_at = NOW() WHERE id = ?`
-	// result, err := Exec(query, name, alias, id)
-	// if err != nil {
-	// 	return 0, err
-	// }
-	// return result.RowsAffected()
+	query := `UPDATE branches 
+	          SET branchName = ?, alias = ?, lastUpdateDate = CURDATE() 
+	          WHERE seq = ?`
 
-	log.Printf("[DB 추상화] UpdateBranch 호출 - id: %d, name: %s, alias: %s", id, name, alias)
+	result, err := DB.Exec(query, name, alias, id)
+	if err != nil {
+		log.Printf("UpdateBranch error: %v", err)
+		return 0, err
+	}
 
-	// 임시로 성공 응답 (실제 구현 전까지)
-	return 1, nil
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("UpdateBranch get rows affected error: %v", err)
+		return 0, err
+	}
+
+	log.Printf("UpdateBranch success - ID: %d, Name: %s, Alias: %s, Rows: %d", id, name, alias, rowsAffected)
+	return rowsAffected, nil
 }
 
 // DeleteBranch - 지점 삭제
@@ -65,86 +74,124 @@ func DeleteBranch(id int) (int64, error) {
 // 파라미터: id (지점 ID)
 // 반환: 지점 정보 (map), 에러
 func GetBranchByID(id int) (map[string]interface{}, error) {
-	// TODO: 실제 쿼리 구현
-	// 예시:
-	// query := `SELECT id, name, alias, created_at FROM branches WHERE id = ?`
-	// row := QueryRow(query, id)
-	// var branch map[string]interface{}
-	// err := row.Scan(&branch["id"], &branch["name"], &branch["alias"], &branch["created_at"])
-	// return branch, err
+	query := `SELECT seq, branchName, alias, createdDate, lastUpdateDate 
+	          FROM branches 
+	          WHERE seq = ?`
 
-	log.Printf("[DB 추상화] GetBranchByID 호출 - id: %d", id)
+	var seq int
+	var branchName, alias string
+	var createdDate, lastUpdateDate string
 
-	// 임시로 더미 데이터 반환 (실제 구현 전까지)
-	return map[string]interface{}{
-		"id":    id,
-		"name":  "테스트 지점",
-		"alias": "test",
-	}, nil
+	err := DB.QueryRow(query, id).Scan(&seq, &branchName, &alias, &createdDate, &lastUpdateDate)
+	if err != nil {
+		log.Printf("GetBranchByID error: %v", err)
+		return nil, err
+	}
+
+	branch := map[string]interface{}{
+		"id":         seq,
+		"name":       branchName,
+		"alias":      alias,
+		"created_at": createdDate,
+		"updated_at": lastUpdateDate,
+	}
+
+	log.Printf("GetBranchByID success - ID: %d, Name: %s", seq, branchName)
+	return branch, nil
 }
 
 // GetAllBranches - 모든 지점 조회
 // 반환: 지점 목록, 에러
 func GetAllBranches() ([]map[string]interface{}, error) {
-	// TODO: 실제 쿼리 구현
-	// 예시:
-	// query := `SELECT id, name, alias, created_at FROM branches ORDER BY created_at DESC`
-	// rows, err := Query(query)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// defer rows.Close()
-	//
-	// var branches []map[string]interface{}
-	// for rows.Next() {
-	// 	var branch map[string]interface{}
-	// 	err := rows.Scan(&branch["id"], &branch["name"], &branch["alias"], &branch["created_at"])
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	branches = append(branches, branch)
-	// }
-	// return branches, nil
+	query := `SELECT seq, branchName, alias, createdDate, lastUpdateDate 
+	          FROM branches 
+	          ORDER BY createdDate DESC`
 
-	log.Println("[DB 추상화] GetAllBranches 호출")
+	rows, err := DB.Query(query)
+	if err != nil {
+		log.Printf("GetAllBranches query error: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
 
-	// 임시 더미 데이터 반환 (페이지네이션 테스트를 위해 더 많은 데이터)
-	dummyBranches := []map[string]interface{}{
-		{"id": 1, "name": "가산점", "alias": "gasan", "created_at": "2025-01-15 10:30:00"},
-		{"id": 2, "name": "강남점", "alias": "gangnam", "created_at": "2025-02-01 14:20:00"},
-		{"id": 3, "name": "홍대점", "alias": "hongdae", "created_at": "2025-02-10 09:15:00"},
-		{"id": 4, "name": "신촌점", "alias": "sinchon", "created_at": "2025-03-05 16:45:00"},
-		{"id": 5, "name": "판교점", "alias": "pangyo", "created_at": "2025-03-15 11:00:00"},
-		{"id": 6, "name": "부산점", "alias": "busan", "created_at": "2025-03-20 13:30:00"},
-		{"id": 7, "name": "대구점", "alias": "daegu", "created_at": "2025-04-01 09:00:00"},
-		{"id": 8, "name": "인천점", "alias": "incheon", "created_at": "2025-04-10 10:15:00"},
-		{"id": 9, "name": "광주점", "alias": "gwangju", "created_at": "2025-04-15 14:40:00"},
-		{"id": 10, "name": "대전점", "alias": "daejeon", "created_at": "2025-04-20 15:20:00"},
-		{"id": 11, "name": "수원점", "alias": "suwon", "created_at": "2025-05-01 11:10:00"},
-		{"id": 12, "name": "울산점", "alias": "ulsan", "created_at": "2025-05-05 12:00:00"},
-		{"id": 13, "name": "청주점", "alias": "cheongju", "created_at": "2025-05-10 13:25:00"},
-		{"id": 14, "name": "천안점", "alias": "cheonan", "created_at": "2025-05-15 14:50:00"},
-		{"id": 15, "name": "전주점", "alias": "jeonju", "created_at": "2025-05-20 16:00:00"},
+	var branches []map[string]interface{}
+	for rows.Next() {
+		var seq int
+		var branchName, alias string
+		var createdDate, lastUpdateDate string
+
+		err := rows.Scan(&seq, &branchName, &alias, &createdDate, &lastUpdateDate)
+		if err != nil {
+			log.Printf("GetAllBranches scan error: %v", err)
+			return nil, err
+		}
+
+		branch := map[string]interface{}{
+			"id":         seq,
+			"name":       branchName,
+			"alias":      alias,
+			"created_at": createdDate,
+			"updated_at": lastUpdateDate,
+		}
+		branches = append(branches, branch)
 	}
 
-	return dummyBranches, nil
+	if err = rows.Err(); err != nil {
+		log.Printf("GetAllBranches rows error: %v", err)
+		return nil, err
+	}
+
+	log.Printf("GetAllBranches: %d branches loaded", len(branches))
+	return branches, nil
 }
 
 // GetFirstBranchAlias - 첫 번째 지점의 alias(코드)를 반환
 // 반환: 지점 alias, 에러
 func GetFirstBranchAlias() (string, error) {
-	// TODO: 실제 쿼리 구현
-	// 예시:
-	// query := `SELECT alias FROM branches ORDER BY created_at ASC LIMIT 1`
-	// var alias string
-	// err := QueryRow(query).Scan(&alias)
-	// if err != nil {
-	// 		return "", err
-	// }
-	// return alias, nil
+	query := `SELECT alias FROM branches ORDER BY seq ASC LIMIT 1`
 
-	log.Println("[DB 추상화] GetFirstBranchAlias 호출")
+	var alias string
+	err := DB.QueryRow(query).Scan(&alias)
+	if err != nil {
+		log.Printf("GetFirstBranchAlias error: %v", err)
+		return "", err
+	}
 
-	// 임시 더미 데이터: 첫 번째 지점의 alias 반환
-	return "gasan", nil
+	log.Printf("GetFirstBranchAlias success - Alias: %s", alias)
+	return alias, nil
+}
+
+// GetBranchesForSelect - 헤더 선택박스용 지점 목록 조회 (간단한 형태)
+// 반환: [{alias, name}] 형태의 지점 목록
+func GetBranchesForSelect() ([]map[string]string, error) {
+	query := `SELECT alias, branchName FROM branches ORDER BY seq ASC`
+
+	rows, err := DB.Query(query)
+	if err != nil {
+		log.Printf("GetBranchesForSelect error: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var branches []map[string]string
+	for rows.Next() {
+		var alias, branchName string
+		if err := rows.Scan(&alias, &branchName); err != nil {
+			log.Printf("GetBranchesForSelect scan error: %v", err)
+			return nil, err
+		}
+
+		branches = append(branches, map[string]string{
+			"alias": alias,
+			"name":  branchName,
+		})
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Printf("GetBranchesForSelect rows error: %v", err)
+		return nil, err
+	}
+
+	log.Printf("GetBranchesForSelect: %d branches loaded", len(branches))
+	return branches, nil
 }
