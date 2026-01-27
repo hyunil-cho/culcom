@@ -2,7 +2,9 @@ package middleware
 
 import (
 	"backoffice/config"
+	"backoffice/database"
 	"context"
+	"log"
 	"net/http"
 )
 
@@ -24,7 +26,7 @@ type BasePageData struct {
 func GetBasePageData(r *http.Request) BasePageData {
 	branchList, _ := r.Context().Value(branchListKey).([]map[string]string)
 	selectedBranch, _ := r.Context().Value(selectedBranchKey).(string)
-	
+
 	return BasePageData{
 		BranchList:     branchList,
 		SelectedBranch: selectedBranch,
@@ -37,11 +39,11 @@ func InjectBranchData(next http.HandlerFunc) http.HandlerFunc {
 		// 세션에서 지점 정보 가져오기
 		branchList := GetBranchList(r)
 		selectedBranch := GetSelectedBranch(r)
-		
+
 		// context에 저장
 		ctx := context.WithValue(r.Context(), branchListKey, branchList)
 		ctx = context.WithValue(ctx, selectedBranchKey, selectedBranch)
-		
+
 		// 수정된 context로 다음 핸들러 호출
 		next(w, r.WithContext(ctx))
 	}
@@ -76,15 +78,14 @@ func GetSelectedBranch(r *http.Request) string {
 	return ""
 }
 
-// GetBranchList - 세션에 저장된 지점 목록을 가져오기 (로그인 시 저장됨)
+// GetBranchList - DB에서 지점 목록을 직접 가져오기 (매 요청마다 최신 데이터)
 func GetBranchList(r *http.Request) []map[string]string {
-	session, _ := config.SessionStore.Get(r, "app-session")
-
-	// 세션에서 지점 목록 가져오기
-	if branchList, ok := session.Values["branchList"].([]map[string]string); ok && len(branchList) > 0 {
-		return branchList
+	branchList, err := database.GetBranchesForSelect()
+	if err != nil {
+		log.Printf("[GetBranchList] DB 조회 실패: %v", err)
+		return []map[string]string{}
 	}
 
-	// 세션에 없으면 빈 리스트 반환 (로그인 하면 자동으로 설정됨)
-	return []map[string]string{}
+	log.Printf("[GetBranchList] DB에서 지점 목록 조회: %d개", len(branchList))
+	return branchList
 }

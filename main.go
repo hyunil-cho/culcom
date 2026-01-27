@@ -11,6 +11,7 @@ import (
 	"backoffice/handlers/login"
 	"backoffice/handlers/messagetemplates"
 	"backoffice/middleware"
+	"encoding/gob"
 	"html/template"
 	"log"
 	"net/http"
@@ -60,6 +61,10 @@ func main() {
 
 	// 세션 초기화
 	config.InitSession()
+
+	// gob 타입 등록 (세션에 복잡한 타입 저장을 위해)
+	gob.Register([]map[string]string{})
+	gob.Register(map[string]string{})
 
 	// 커스텀 ServeMux 생성 (404 핸들러 설정을 위해)
 	mux := http.NewServeMux()

@@ -248,36 +248,10 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// 세션의 지점 목록을 최신 정보로 업데이트
-		appSession, _ := config.SessionStore.Get(r, "app-session")
-		branchList, err := database.GetBranchesForSelect()
-		if err == nil && len(branchList) > 0 {
-			appSession.Values["branchList"] = branchList
-
-			// 현재 선택된 브랜치가 여전히 유효한지 확인
-			selectedBranch, _ := appSession.Values["selectedBranch"].(string)
-			branchExists := false
-			for _, branch := range branchList {
-				if branch["alias"] == selectedBranch {
-					branchExists = true
-					break
-				}
-			}
-
-			// 선택된 브랜치가 없으면 첫 번째 브랜치로 재설정
-			if !branchExists {
-				appSession.Values["selectedBranch"] = branchList[0]["alias"]
-				log.Printf("선택된 브랜치가 유효하지 않아 기본값으로 재설정: %s", branchList[0]["alias"])
-			}
-
-			appSession.Save(r, w)
-			log.Printf("지점 목록 세션 업데이트 완료: %d개", len(branchList))
-		}
-
 		// 세션에 플래시 메시지 저장
-		session, _ := config.SessionStore.Get(r, "flash-session")
-		session.AddFlash("지점이 성공적으로 수정되었습니다.", "success")
-		session.Save(r, w)
+		flashSession, _ := config.SessionStore.Get(r, "flash-session")
+		flashSession.AddFlash("지점이 성공적으로 수정되었습니다.", "success")
+		flashSession.Save(r, w)
 
 		// 성공 시 목록 페이지로 리다이렉트
 		http.Redirect(w, r, "/branches", http.StatusSeeOther)
@@ -340,36 +314,10 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 
 		log.Printf("지점 추가 성공 - ID: %d", branchID)
 
-		// 세션의 지점 목록을 최신 정보로 업데이트
-		appSession, _ := config.SessionStore.Get(r, "app-session")
-		branchList, err := database.GetBranchesForSelect()
-		if err == nil && len(branchList) > 0 {
-			appSession.Values["branchList"] = branchList
-
-			// 현재 선택된 브랜치가 여전히 유효한지 확인
-			selectedBranch, _ := appSession.Values["selectedBranch"].(string)
-			branchExists := false
-			for _, branch := range branchList {
-				if branch["alias"] == selectedBranch {
-					branchExists = true
-					break
-				}
-			}
-
-			// 선택된 브랜치가 없으면 첫 번째 브랜치로 재설정
-			if !branchExists {
-				appSession.Values["selectedBranch"] = branchList[0]["alias"]
-				log.Printf("선택된 브랜치가 유효하지 않아 기본값으로 재설정: %s", branchList[0]["alias"])
-			}
-
-			appSession.Save(r, w)
-			log.Printf("지점 목록 세션 업데이트 완료: %d개", len(branchList))
-		}
-
 		// 세션에 플래시 메시지 저장
-		session, _ := config.SessionStore.Get(r, "flash-session")
-		session.AddFlash("지점이 성공적으로 추가되었습니다.", "success")
-		session.Save(r, w)
+		flashSession, _ := config.SessionStore.Get(r, "flash-session")
+		flashSession.AddFlash("지점이 성공적으로 추가되었습니다.", "success")
+		flashSession.Save(r, w)
 
 		// 성공 시 목록 페이지로 리다이렉트
 		http.Redirect(w, r, "/branches", http.StatusSeeOther)
