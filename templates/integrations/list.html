@@ -300,7 +300,7 @@
         <p class="integration-description">{{.Description}}</p>
         
         <div class="integration-actions">
-            {{if .Connected}}
+            {{if eq .Status "active"}}
                 {{if eq .ID "sms"}}
                     <a href="/integrations/sms-config" class="btn-manage">⚙️ 관리</a>
                 {{else if eq .ID "message-templates"}}
@@ -311,6 +311,13 @@
                 {{if ne .ID "message-templates"}}
                 <button class="btn-disconnect" onclick="disconnectService('{{.ID}}', '{{.Name}}')">🔌 연결 해제</button>
                 {{end}}
+            {{else if eq .Status "inactive"}}
+                {{if eq .ID "sms"}}
+                    <a href="/integrations/sms-config" class="btn-manage">⚙️ 설정</a>
+                {{else}}
+                    <a href="/integrations/manage?id={{.ID}}" class="btn-manage">⚙️ 설정</a>
+                {{end}}
+                <button class="btn-configure" onclick="activateService('{{.ID}}', '{{.Name}}')">✅ 활성화</button>
             {{else}}
                 {{if eq .ID "sms"}}
                     <a href="/integrations/sms-config" class="btn-configure">🔗 연동하기</a>
@@ -415,9 +422,56 @@
 
     function disconnectService(id, name) {
         if (confirm(`${name} 연동을 해제하시겠습니까?`)) {
-            // TODO: 실제 연동 해제 API 호출
-            alert('연동이 해제되었습니다.');
-            location.reload();
+            fetch('/api/integrations/disconnect', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    service_id: id
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('연결이 해제되었습니다.');
+                    location.reload();
+                } else {
+                    alert('연결 해제 실패: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('연결 해제 중 오류가 발생했습니다.');
+            });
+        }
+    }
+
+    function activateService(id, name) {
+        if (confirm(`${name} 연동을 활성화하시겠습니까?`)) {
+            // TODO: 실제 활성화 API 호출
+            fetch('/api/integrations/activate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    service_id: id
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('활성화되었습니다.');
+                    location.reload();
+                } else {
+                    alert('활성화 실패: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('활성화 중 오류가 발생했습니다.');
+            });
         }
     }
 </script>

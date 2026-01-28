@@ -81,9 +81,12 @@ func main() {
 	mux.HandleFunc("/branches/add", middleware.RequireAuthRecover(branches.AddHandler))                                 // 지점 추가
 	mux.HandleFunc("/integrations", middleware.RequireAuthRecover(integrations.Handler))                                // 외부 시스템 연동
 	mux.HandleFunc("/integrations/configure", middleware.RequireAuthRecover(integrations.ConfigureHandler))             // 연동 설정
+	mux.HandleFunc("/integrations/manage", middleware.RequireAuthRecover(integrations.ConfigureHandler))                // 연동 관리 (설정과 동일)
 	mux.HandleFunc("/integrations/sms-config", middleware.RequireAuthRecover(integrations.SMSConfigHandler))            // SMS 연동 설정
 	mux.HandleFunc("/api/external/sms", middleware.RequireAuthRecover(integrations.SMSTestHandler))                     // SMS 테스트 발송 API
 	mux.HandleFunc("/api/sms/config", middleware.RequireAuthRecover(integrations.SMSConfigSaveHandler))                 // SMS 설정 저장 API
+	mux.HandleFunc("/api/integrations/activate", middleware.RequireAuthRecover(integrations.ActivateHandler))           // 연동 활성화 API
+	mux.HandleFunc("/api/integrations/disconnect", middleware.RequireAuthRecover(integrations.DisconnectHandler))       // 연동 해제 API
 	mux.HandleFunc("/message-templates", middleware.RequireAuthRecover(messagetemplates.Handler))                       // 메시지 템플릿 목록
 	mux.HandleFunc("/message-templates/add", middleware.RequireAuthRecover(messagetemplates.AddHandler))                // 메시지 템플릿 추가
 	mux.HandleFunc("/message-templates/edit", middleware.RequireAuthRecover(messagetemplates.EditHandler))              // 메시지 템플릿 수정

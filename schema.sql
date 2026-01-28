@@ -189,7 +189,11 @@ CREATE TABLE `mymunja_callback_number` (
 -- ============================================
 
 -- 외부 서비스 타입 코드
-INSERT INTO `external_service_type` (`code_name`) VALUES ('mymunja');
+INSERT INTO `external_service_type` (`seq`, `code_name`) VALUES (1, 'SMS');
+
+-- 외부 연동 서비스
+INSERT INTO `third_party_services` (`name`, `description`, `code_seq`) VALUES 
+('마이문자', '마이문자 연동 서비스', 1);
 
 -- 플레이스홀더
 INSERT INTO `placeholders` (`name`, `comment`, `examples`, `value`) VALUES
