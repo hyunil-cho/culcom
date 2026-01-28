@@ -523,14 +523,14 @@ func CheckSMSIntegrationHandler(w http.ResponseWriter, r *http.Request) {
 	if !status.HasConfig {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "SMS 연동이 설정되지 않았습니다.\n연동 관리 페이지에서 SMS 서비스를 먼저 연동해주세요."}`))
+		w.Write([]byte(`{"success": false, "error": "SMS 연동이 설정되지 않았습니다.\n연동 관리 페이지에서 마이문자 서비스를 먼저 연동해주세요."}`))
 		return
 	}
 
 	if !status.IsConnected {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "SMS 연동이 비활성화 상태입니다.\n연동 관리 페이지에서 활성화해주세요."}`))
+		w.Write([]byte(`{"success": false, "error": "마이문자 연동이 비활성화 상태입니다.\n연동 관리 페이지에서 마이문자를 활성화해주세요."}`))
 		return
 	}
 
@@ -574,8 +574,12 @@ func GetSMSSenderNumbersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// JSON 응답 생성
-	response := `{"success": true, "senderPhones": [`
+	// JSON 응답 생성 (활성화 상태도 포함)
+	isActiveStr := "false"
+	if config.IsActive {
+		isActiveStr = "true"
+	}
+	response := `{"success": true, "isActive": ` + isActiveStr + `, "senderPhones": [`
 	for i, phone := range config.SenderPhones {
 		if i > 0 {
 			response += ","
@@ -657,6 +661,14 @@ func SendSMSHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"success": false, "error": "SMS 설정이 등록되지 않았습니다."}`))
+		return
+	}
+
+	// 활성화 상태 확인
+	if !smsConfig.IsActive {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"success": false, "error": "마이문자 연동이 비활성화 상태입니다.\n연동 관리 페이지에서 마이문자를 활성화해주세요."}`))
 		return
 	}
 

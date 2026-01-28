@@ -1178,10 +1178,28 @@ async function loadSenderPhones() {
         
         const result = await response.json();
         
-        // 기존 옵션 제거 (첫 번째 옵션 제외)
+        // 기존 옵션 제거
         senderSelect.innerHTML = '<option value="">발신번호를 선택하세요</option>';
         
         if (result.success && result.senderPhones && result.senderPhones.length > 0) {
+            // 비활성화 상태이면 경고 메시지 표시
+            if (result.isActive === false) {
+                const warningOption = document.createElement('option');
+                warningOption.value = '';
+                warningOption.textContent = '⚠️ 마이문자 연동이 비활성화 상태입니다';
+                warningOption.disabled = true;
+                warningOption.style.color = '#ff6b6b';
+                warningOption.style.fontWeight = 'bold';
+                senderSelect.appendChild(warningOption);
+                
+                // 구분선
+                const separatorOption = document.createElement('option');
+                separatorOption.value = '';
+                separatorOption.textContent = '─────────────────────';
+                separatorOption.disabled = true;
+                senderSelect.appendChild(separatorOption);
+            }
+            
             result.senderPhones.forEach((phone, index) => {
                 const option = document.createElement('option');
                 option.value = phone;

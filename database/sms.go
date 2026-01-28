@@ -1,6 +1,7 @@
 package database
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 )
@@ -61,7 +62,8 @@ func GetSMSConfig(branchCode string) (*SMSConfig, error) {
 	// 4단계: SMS 설정 조회
 	var configSeq int
 	var accountID, password string
-	var createdAt, updatedAt string
+	var createdAt sql.NullString
+	var updatedAt sql.NullString
 	configQuery := `
 		SELECT seq, mymunja_id, mymunja_password, 
 		       DATE_FORMAT(createdDate, '%Y-%m-%d') as createdDate,
@@ -73,6 +75,15 @@ func GetSMSConfig(branchCode string) (*SMSConfig, error) {
 	if err != nil {
 		log.Printf("GetSMSConfig - config not found: %v", err)
 		return nil, nil
+	}
+	
+	// NullString을 일반 string으로 변환
+	var createdAtStr, updatedAtStr string
+	if createdAt.Valid {
+		createdAtStr = createdAt.String
+	}
+	if updatedAt.Valid {
+		updatedAtStr = updatedAt.String
 	}
 
 	// 5단계: 발신번호 조회
@@ -100,8 +111,8 @@ func GetSMSConfig(branchCode string) (*SMSConfig, error) {
 		Password:     password,
 		SenderPhones: senderPhones,
 		IsActive:     isActive,
-		CreatedAt:    createdAt,
-		UpdatedAt:    updatedAt,
+		CreatedAt:    createdAtStr,
+		UpdatedAt:    updatedAtStr,
 	}
 
 	log.Printf("GetSMSConfig 완료 - 발신번호 수: %d", len(senderPhones))
