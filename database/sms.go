@@ -19,8 +19,93 @@ type SMSConfig struct {
 // GetSMSConfig SMS 설정 조회
 func GetSMSConfig(branchCode string) (*SMSConfig, error) {
 	log.Printf("=== SMS 설정 조회 - BranchCode: %s ===", branchCode)
-	log.Println("현재 DB 연동 전 - 빈 설정 반환")
-	return nil, nil
+
+	// 1단계: 지점 seq 조회
+	var branchSeq int
+	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
+	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
+	if err != nil {
+		log.Printf("GetSMSConfig - branch not found: %v", err)
+		return nil, err
+	}
+
+	// 2단계: SMS 서비스 seq 조회
+	var serviceSeq int
+	serviceQuery := `
+		SELECT tps.seq
+		FROM third_party_services tps
+		LEFT JOIN external_service_type est ON tps.code_seq = est.seq
+		WHERE est.code_name = 'SMS'
+		LIMIT 1
+	`
+	err = DB.QueryRow(serviceQuery).Scan(&serviceSeq)
+	if err != nil {
+		log.Printf("GetSMSConfig - service not found: %v", err)
+		return nil, err
+	}
+
+	// 3단계: 매핑 조회
+	var mappingSeq int
+	var isActive bool
+	mappingQuery := `
+		SELECT mapping_seq, is_active 
+		FROM ` + "`branch-third-party-mapping`" + `
+		WHERE branch_id = ? AND third_party_id = ?
+	`
+	err = DB.QueryRow(mappingQuery, branchSeq, serviceSeq).Scan(&mappingSeq, &isActive)
+	if err != nil {
+		log.Printf("GetSMSConfig - mapping not found: %v", err)
+		return nil, nil // 설정이 없으면 nil 반환
+	}
+
+	// 4단계: SMS 설정 조회
+	var configSeq int
+	var accountID, password string
+	var createdAt, updatedAt string
+	configQuery := `
+		SELECT seq, mymunja_id, mymunja_password, 
+		       DATE_FORMAT(createdDate, '%Y-%m-%d') as createdDate,
+		       DATE_FORMAT(lastUpdateDate, '%Y-%m-%d') as lastUpdateDate
+		FROM mymunja_config_info 
+		WHERE mapping_id = ?
+	`
+	err = DB.QueryRow(configQuery, mappingSeq).Scan(&configSeq, &accountID, &password, &createdAt, &updatedAt)
+	if err != nil {
+		log.Printf("GetSMSConfig - config not found: %v", err)
+		return nil, nil
+	}
+
+	// 5단계: 발신번호 조회
+	var senderPhones []string
+	phoneQuery := `SELECT number FROM mymunja_callback_number WHERE config_id = ?`
+	rows, err := DB.Query(phoneQuery, configSeq)
+	if err != nil {
+		log.Printf("GetSMSConfig - phone query error: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var phone string
+		if err := rows.Scan(&phone); err != nil {
+			log.Printf("GetSMSConfig - phone scan error: %v", err)
+			continue
+		}
+		senderPhones = append(senderPhones, phone)
+	}
+
+	config := &SMSConfig{
+		ID:           configSeq,
+		AccountID:    accountID,
+		Password:     password,
+		SenderPhones: senderPhones,
+		IsActive:     isActive,
+		CreatedAt:    createdAt,
+		UpdatedAt:    updatedAt,
+	}
+
+	log.Printf("GetSMSConfig 완료 - 발신번호 수: %d", len(senderPhones))
+	return config, nil
 }
 
 // SaveSMSConfig SMS 설정 저장 (INSERT 또는 UPDATE)

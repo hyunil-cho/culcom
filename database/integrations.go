@@ -57,12 +57,14 @@ func GetIntegrationStatus(branchCode, serviceType string) (*IntegrationStatus, e
 	`
 
 	err = DB.QueryRow(mappingQuery, branchSeq, serviceSeq).Scan(&isActive)
+	hasConfig := (err == nil) // 레코드가 존재하면 설정이 있음
 	isConnected := (err == nil && isActive)
 
 	status := &IntegrationStatus{
 		BranchCode:  branchCode,
 		ServiceType: serviceType,
 		IsConnected: isConnected,
+		HasConfig:   hasConfig,
 		ConfigData: map[string]interface{}{
 			"service_id":   serviceSeq,
 			"service_name": serviceName,
@@ -70,7 +72,7 @@ func GetIntegrationStatus(branchCode, serviceType string) (*IntegrationStatus, e
 		},
 	}
 
-	log.Printf("[DB] GetIntegrationStatus 완료 - Connected: %v", isConnected)
+	log.Printf("[DB] GetIntegrationStatus 완료 - HasConfig: %v, Connected: %v", hasConfig, isConnected)
 	return status, nil
 }
 

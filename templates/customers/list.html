@@ -310,6 +310,14 @@
                 </select>
             </div>
             
+            <!-- 발신번호 선택 -->
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">발신번호</label>
+                <select id="textSenderPhone" class="form-input" style="width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                    <option value="">발신번호를 선택하세요</option>
+                </select>
+            </div>
+            
             <!-- 메시지 내용 -->
             <div style="margin-bottom: 0.75rem;">
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">메시지 내용</label>
@@ -1130,7 +1138,7 @@ let currentTextCustomerPhone = '';
 let currentTextInputMode = 'template';
 
 // TEXT 모달 열기
-function openTextModal(customerId, customerName, customerPhone) {
+async function openTextModal(customerId, customerName, customerPhone) {
     currentTextCustomerId = customerId;
     currentTextCustomerName = customerName;
     currentTextCustomerPhone = customerPhone;
@@ -1143,6 +1151,9 @@ function openTextModal(customerId, customerName, customerPhone) {
     document.getElementById('textMessageContent').value = '';
     document.getElementById('textMessageLength').textContent = '0';
     
+    // 발신번호 로드
+    await loadSenderPhones();
+    
     // 템플릿 모드로 시작
     selectTextInputMode('template');
     
@@ -1150,6 +1161,42 @@ function openTextModal(customerId, customerName, customerPhone) {
     const selectElement = document.getElementById('textMessageTemplate');
     if (selectElement.value && messageTemplates[parseInt(selectElement.value)]) {
         loadTextTemplate();
+    }
+}
+
+// 발신번호 로드
+async function loadSenderPhones() {
+    const senderSelect = document.getElementById('textSenderPhone');
+    
+    try {
+        const response = await fetch('/api/customers/sms-senders', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const result = await response.json();
+        
+        // 기존 옵션 제거 (첫 번째 옵션 제외)
+        senderSelect.innerHTML = '<option value="">발신번호를 선택하세요</option>';
+        
+        if (result.success && result.senderPhones && result.senderPhones.length > 0) {
+            result.senderPhones.forEach((phone, index) => {
+                const option = document.createElement('option');
+                option.value = phone;
+                option.textContent = phone;
+                if (index === 0) {
+                    option.selected = true; // 첫 번째 번호를 기본 선택
+                }
+                senderSelect.appendChild(option);
+            });
+        } else {
+            senderSelect.innerHTML = '<option value="">등록된 발신번호가 없습니다</option>';
+        }
+    } catch (error) {
+        console.error('발신번호 로드 오류:', error);
+        senderSelect.innerHTML = '<option value="">발신번호를 불러올 수 없습니다</option>';
     }
 }
 
@@ -1257,11 +1304,17 @@ function loadTextTemplate() {
 }
 
 // TEXT 메시지 전송
-function sendTextMessage() {
+async function sendTextMessage() {
     const message = document.getElementById('textMessageContent').value;
+    const senderPhone = document.getElementById('textSenderPhone').value;
     
     if (!message.trim()) {
         alert('메시지 내용을 입력해주세요.');
+        return;
+    }
+    
+    if (!senderPhone) {
+        alert('발신번호를 선택해주세요.');
         return;
     }
     
@@ -1273,22 +1326,59 @@ function sendTextMessage() {
         }
     }
     
-    // TODO: 실제 메시지 전송 로직 구현
-    const messageData = {
-        customerId: currentTextCustomerId,
-        recipientName: currentTextCustomerName,
-        recipientPhone: currentTextCustomerPhone,
-        type: 'sms',
-        inputMode: currentTextInputMode,
-        message,
-        template: currentTextInputMode === 'template' ? document.getElementById('textMessageTemplate').value : null
-    };
+    // 1단계: SMS 연동 상태 확인
+    try {
+        const checkResponse = await fetch('/api/customers/check-sms', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const checkResult = await checkResponse.json();
+        
+        if (!checkResult.success) {
+            alert('❌ SMS 전송 실패\n\n' + checkResult.error);
+            return;
+        }
+    } catch (error) {
+        console.error('SMS 연동 상태 확인 오류:', error);
+        alert('SMS 연동 상태를 확인할 수 없습니다.\n잠시 후 다시 시도해주세요.');
+        return;
+    }
     
-    console.log('TEXT 메시지 전송:', messageData);
+    // 2단계: 전송 확인
+    if (!confirm(`${currentTextCustomerName}님께 메시지를 전송하시겠습니까?`)) {
+        return;
+    }
     
-    if (confirm(`${currentTextCustomerName}님께 메시지를 전송하시겠습니까?`)) {
-        alert('메시지가 전송되었습니다.');
+    // 3단계: 실제 메시지 전송
+    try {
+        const formData = new FormData();
+        formData.append('customer_seq', currentTextCustomerId);
+        formData.append('sender_phone', senderPhone);
+        formData.append('receiver_phone', currentTextCustomerPhone);
+        formData.append('message', message);
+        
+        const sendResponse = await fetch('/api/customers/send-sms', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const sendResult = await sendResponse.json();
+        
+        if (!sendResult.success) {
+            alert('❌ SMS 전송 실패\n\n' + sendResult.error);
+            return;
+        }
+        
+        // 전송 성공
+        alert('✅ 메시지가 성공적으로 전송되었습니다.');
         closeTextModal();
+        
+    } catch (error) {
+        console.error('SMS 전송 오류:', error);
+        alert('SMS 전송 중 오류가 발생했습니다.\n잠시 후 다시 시도해주세요.');
     }
 }
 
