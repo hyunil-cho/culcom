@@ -75,6 +75,10 @@ func main() {
 	mux.HandleFunc("/customers/detail", middleware.RequireAuthRecover(customers.DetailHandler))                         // 고객 상세
 	mux.HandleFunc("/customers/edit", middleware.RequireAuthRecover(customers.EditHandler))                             // 고객 수정
 	mux.HandleFunc("/customers/add", middleware.RequireAuthRecover(customers.AddHandler))                               // 고객 추가
+	mux.HandleFunc("/api/customers/comment", middleware.RequireAuthRecover(customers.UpdateCommentHandler))             // 고객 코멘트 업데이트
+	mux.HandleFunc("/api/customers/increment-call", middleware.RequireAuthRecover(customers.IncrementCallCountHandler)) // 고객 통화 횟수 증가
+	mux.HandleFunc("/api/customers/reservation", middleware.RequireAuthRecover(customers.CreateReservationHandler))     // 예약 정보 생성
+	mux.HandleFunc("/api/customers/update-name", middleware.RequireAuthRecover(customers.UpdateCustomerNameHandler))    // 고객 이름 업데이트
 	mux.HandleFunc("/branches", middleware.RequireAuthRecover(branches.Handler))                                        // 지점 관리
 	mux.HandleFunc("/branches/detail", middleware.RequireAuthRecover(branches.DetailHandler))                           // 지점 상세
 	mux.HandleFunc("/branches/edit", middleware.RequireAuthRecover(branches.EditHandler))                               // 지점 수정

@@ -33,8 +33,8 @@ CREATE TABLE `customers` (
   `phone_number` varchar(20) NOT NULL,
   `comment` varchar(200) DEFAULT NULL,
   `commercial_name` varchar(100) DEFAULT NULL,
-  `createdDate` date NOT NULL DEFAULT curdate() COMMENT '고객 추가 일자',
-  `lastUpdateDate` date NOT NULL DEFAULT curdate() COMMENT '고객 수정 일자',
+  `createdDate` datetime NOT NULL DEFAULT current_timestamp() COMMENT '고객 추가 일시',
+  `lastUpdateDate` datetime DEFAULT NULL ON UPDATE current_timestamp() COMMENT '고객 수정 일시',
   `call_count` int(10) unsigned DEFAULT 0,
   PRIMARY KEY (`seq`),
   KEY `customers_branch_seq_IDX` (`branch_seq`) USING BTREE,
@@ -106,6 +106,7 @@ CREATE TABLE `message_templates` (
 
 CREATE TABLE `reservation_info` (
   `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `branch_seq` int(10) unsigned NOT NULL COMMENT '소속 지점',
   `createdDate` date NOT NULL DEFAULT curdate() COMMENT '예약 추가 일자',
   `lastUpdateDate` date NOT NULL DEFAULT curdate() COMMENT '예약 수정 일자',
   `caller` varchar(2) NOT NULL COMMENT '호출자 구분',
@@ -113,9 +114,11 @@ CREATE TABLE `reservation_info` (
   `user_seq` int(10) unsigned NOT NULL,
   `customer_id` int(10) unsigned NOT NULL,
   PRIMARY KEY (`seq`),
+  KEY `reservation_info_branch_seq_IDX` (`branch_seq`) USING BTREE,
   KEY `reservation_info_user_info_FK` (`user_seq`),
   KEY `reservation_info_customers_FK` (`customer_id`),
   KEY `reservation_info_interview_date_IDX` (`interview_date`) USING BTREE,
+  CONSTRAINT `reservation_info_branches_FK` FOREIGN KEY (`branch_seq`) REFERENCES `branches` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `reservation_info_customers_FK` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `reservation_info_user_info_FK` FOREIGN KEY (`user_seq`) REFERENCES `user_info` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='예약 정보';
@@ -207,3 +210,10 @@ INSERT INTO `placeholders` (`name`, `comment`, `examples`, `value`) VALUES
 -- 관리자 계정 (root/root - 평문 저장, 테스트용)
 INSERT INTO `user_info` (`branch_seq`, `user_id`, `user_password`) VALUES
 (NULL, 'root', 'root');
+
+ALTER TABLE customers 
+MODIFY COLUMN createdDate datetime NOT NULL DEFAULT current_timestamp() COMMENT '고객 추가 일시',
+MODIFY COLUMN lastUpdateDate datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT '고객 수정 일시';
+
+ALTER TABLE customers 
+MODIFY COLUMN lastUpdateDate datetime DEFAULT NULL ON UPDATE current_timestamp() COMMENT '고객 수정 일시';

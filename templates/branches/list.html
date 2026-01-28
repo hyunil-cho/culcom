@@ -14,28 +14,9 @@
         {{template "header" .}}
         
         <main class="content">
-<!-- 검색 및 필터 -->
+<!-- 상단 액션 버튼 -->
 <div class="content-card">
     <div class="search-section">
-        <form method="GET" action="/branches">
-            <div class="search-filters">
-                <div class="filter-group" style="display: flex; gap: 10px; align-items: flex-end;">
-                    <div>
-                        <label>검색</label>
-                        <div style="display: flex; gap: 5px;">
-                            <select name="searchType" class="filter-input" style="width: 100px;">
-                                <option value="name" {{if eq .SearchType "name"}}selected{{end}}>지점명</option>
-                                <option value="alias" {{if eq .SearchType "alias"}}selected{{end}}>별칭</option>
-                            </select>
-                            <input type="text" name="searchKeyword" placeholder="검색어를 입력하세요" class="search-input" value="{{.SearchKeyword}}" style="min-width: 250px;">
-                        </div>
-                    </div>
-                </div>
-                <div class="filter-actions">
-                    <button type="submit" class="btn-search">🔍 검색</button>
-                </div>
-            </div>
-        </form>
         <div class="action-buttons">
             <a href="/branches/add" class="btn-primary">➕ 지점 추가</a>
         </div>

@@ -38,7 +38,7 @@ func GetMessageTemplates(branchCode string) ([]MessageTemplate, error) {
 		return nil, err
 	}
 
-	// 2단계: 해당 지점의 메시지 템플릿 조회
+	// 2단계: 해당 지점의 메시지 템플릿 조회 (활성화된 것만)
 	query := `
 		SELECT 
 			seq,
@@ -50,7 +50,7 @@ func GetMessageTemplates(branchCode string) ([]MessageTemplate, error) {
 			createdDate,
 			lastUpdateDate
 		FROM message_templates
-		WHERE branch_seq = ?
+		WHERE branch_seq = ? AND is_active = 1
 		ORDER BY is_default DESC, lastUpdateDate DESC
 	`
 

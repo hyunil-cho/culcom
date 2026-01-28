@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 var Templates *template.Template
@@ -54,12 +55,19 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		filter = "new"
 	}
 
+	// 검색 파라미터 가져오기
+	searchType := r.URL.Query().Get("searchType")
+	if searchType == "" {
+		searchType = "name"
+	}
+	searchKeyword := r.URL.Query().Get("searchKeyword")
+
 	// 세션에서 선택된 지점 정보 가져오기
 	branchCode := middleware.GetSelectedBranch(r)
 
 	// 페이징을 위한 전체 고객 수 조회
 	itemsPerPage := 10
-	totalItems, err := database.GetCustomersCountByBranch(branchCode, filter)
+	totalItems, err := database.GetCustomersCountByBranch(branchCode, filter, searchType, searchKeyword)
 	if err != nil {
 		log.Printf("고객 수 조회 오류: %v", err)
 		http.Error(w, "고객 수 조회 실패", http.StatusInternalServerError)
@@ -70,7 +78,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	pagination := utils.CalculatePagination(currentPage, totalItems, itemsPerPage)
 
 	// DB에서 현재 페이지의 고객 목록만 조회
-	dbCustomers, err := database.GetCustomersByBranch(branchCode, filter, currentPage, itemsPerPage)
+	dbCustomers, err := database.GetCustomersByBranch(branchCode, filter, searchType, searchKeyword, currentPage, itemsPerPage)
 	if err != nil {
 		log.Printf("고객 목록 조회 오류: %v", err)
 		http.Error(w, "고객 목록 조회 실패", http.StatusInternalServerError)
@@ -80,35 +88,57 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	// DB 고객을 핸들러 모델로 변환
 	var customers []Customer
 	for _, dbCust := range dbCustomers {
+		lastVisit := "-"
+		if dbCust.LastUpdateDate != nil {
+			lastVisit = *dbCust.LastUpdateDate
+		}
+
 		customer := Customer{
 			ID:           strconv.Itoa(dbCust.Seq),
 			Name:         dbCust.Name,
 			Phone:        dbCust.PhoneNumber,
 			CallCount:    dbCust.CallCount,
 			RegisterDate: dbCust.CreatedDate,
-			LastVisit:    dbCust.LastUpdateDate,
+			LastVisit:    lastVisit,
 			Status:       "신규", // TODO: 상태 로직 추가 필요
 			Email:        "-",
 			AdName:       "-",
+			Comment:      "",
 		}
 		if dbCust.Comment != nil {
-			customer.Email = *dbCust.Comment // 임시로 comment를 email 필드에 표시
+			customer.Comment = *dbCust.Comment
 		}
 		customers = append(customers, customer)
 	}
 
-	// TODO: 실제로는 DB에서 기본 템플릿을 조회해야 함
-	// 현재는 더미 데이터 사용
-	defaultTemplate := "[{고객명}]님, 안녕하세요.\n\n{날짜} {시간}에 방문 예약이 확정되었습니다.\n\n주소: {주소}\n담당자: {담당자}\n\n기타 문의사항이 있으시면 연락 주세요.\n감사합니다."
+	// 메시지 템플릿 조회
+	messageTemplates, err := database.GetMessageTemplates(branchCode)
+	if err != nil {
+		log.Printf("메시지 템플릿 조회 오류: %v", err)
+		// 에러가 발생해도 빈 배열로 처리하여 계속 진행
+		messageTemplates = []database.MessageTemplate{}
+	}
+
+	// 기본 템플릿 찾기
+	defaultTemplate := ""
+	for _, tmpl := range messageTemplates {
+		if tmpl.IsDefault {
+			defaultTemplate = tmpl.Content
+			break
+		}
+	}
 
 	data := PageData{
-		BasePageData:    middleware.GetBasePageData(r),
-		Title:           "고객 관리",
-		ActiveMenu:      "customers",
-		Customers:       customers,
-		DefaultTemplate: defaultTemplate,
-		Pagination:      pagination,
-		CurrentFilter:   filter,
+		BasePageData:     middleware.GetBasePageData(r),
+		Title:            "고객 관리",
+		ActiveMenu:       "customers",
+		Customers:        customers,
+		DefaultTemplate:  defaultTemplate,
+		MessageTemplates: messageTemplates,
+		Pagination:       pagination,
+		CurrentFilter:    filter,
+		SearchType:       searchType,
+		SearchKeyword:    searchKeyword,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "customers/list.html", data); err != nil {
@@ -289,4 +319,173 @@ func isValidPhoneNumber(phone string) bool {
 		}
 	}
 	return true
+}
+
+// UpdateCommentHandler - 고객 코멘트 업데이트 핸들러
+func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 요청 파라미터 가져오기
+	customerSeqStr := r.FormValue("customer_seq")
+	comment := r.FormValue("comment")
+
+	// 파라미터 검증
+	customerSeq, err := strconv.Atoi(customerSeqStr)
+	if err != nil || customerSeq <= 0 {
+		log.Printf("잘못된 customer_seq: %s", customerSeqStr)
+		http.Error(w, "Invalid customer ID", http.StatusBadRequest)
+		return
+	}
+
+	// 코멘트 업데이트
+	err = database.UpdateCustomerComment(customerSeq, comment)
+	if err != nil {
+		log.Printf("코멘트 업데이트 오류: %v", err)
+		http.Error(w, "Failed to update comment", http.StatusInternalServerError)
+		return
+	}
+
+	// 성공 응답
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"success": true, "comment": "` + comment + `"}`))
+}
+
+// IncrementCallCountHandler - 고객 통화 횟수 증가 핸들러
+func IncrementCallCountHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 요청 파라미터 가져오기
+	customerSeqStr := r.FormValue("customer_seq")
+
+	// 파라미터 검증
+	customerSeq, err := strconv.Atoi(customerSeqStr)
+	if err != nil || customerSeq <= 0 {
+		log.Printf("잘못된 customer_seq: %s", customerSeqStr)
+		http.Error(w, "Invalid customer ID", http.StatusBadRequest)
+		return
+	}
+
+	// 통화 횟수 증가
+	callCount, lastUpdateDate, err := database.IncrementCallCount(customerSeq)
+	if err != nil {
+		log.Printf("통화 횟수 증가 오류: %v", err)
+		http.Error(w, "Failed to increment call count", http.StatusInternalServerError)
+		return
+	}
+
+	// 성공 응답
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"success": true, "call_count": ` + strconv.Itoa(callCount) + `, "last_update_date": "` + lastUpdateDate + `"}`))
+}
+
+// CreateReservationHandler - 예약 정보 생성 핸들러
+func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 세션에서 선택된 지점 정보 가져오기
+	branchCode := middleware.GetSelectedBranch(r)
+
+	// 요청 파라미터 가져오기
+	customerSeqStr := r.FormValue("customer_seq")
+	caller := r.FormValue("caller")
+	interviewDateStr := r.FormValue("interview_date")
+
+	// 파라미터 검증
+	customerSeq, err := strconv.Atoi(customerSeqStr)
+	if err != nil || customerSeq <= 0 {
+		log.Printf("잘못된 customer_seq: %s", customerSeqStr)
+		http.Error(w, "Invalid customer ID", http.StatusBadRequest)
+		return
+	}
+
+	if caller == "" {
+		log.Println("caller가 비어있음")
+		http.Error(w, "Caller is required", http.StatusBadRequest)
+		return
+	}
+
+	// 날짜 파싱 (클라이언트에서 ISO 8601 형식으로 보낼 예정: 2026-01-29T14:30:00)
+	interviewDate, err := time.Parse("2006-01-02T15:04:05", interviewDateStr)
+	if err != nil {
+		log.Printf("날짜 파싱 오류: %v, 입력값: %s", err, interviewDateStr)
+		http.Error(w, "Invalid date format", http.StatusBadRequest)
+		return
+	}
+
+	// 세션에서 사용자 정보 가져오기 (현재는 임시로 1로 설정)
+	// TODO: 실제 세션에서 user_seq 가져오기
+	userSeq := 1
+
+	// branchCode로 branchSeq 조회
+	var branchSeq int
+	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
+	err = database.DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
+	if err != nil {
+		log.Printf("지점 조회 오류: %v", err)
+		http.Error(w, "Branch not found", http.StatusInternalServerError)
+		return
+	}
+
+	// 예약 정보 저장
+	reservationID, err := database.CreateReservation(branchSeq, customerSeq, userSeq, caller, interviewDate)
+	if err != nil {
+		log.Printf("예약 생성 오류: %v", err)
+		http.Error(w, "Failed to create reservation", http.StatusInternalServerError)
+		return
+	}
+
+	// 성공 응답
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"success": true, "reservation_id": ` + strconv.FormatInt(reservationID, 10) + `}`))
+}
+
+// UpdateCustomerNameHandler - 고객 이름 업데이트 핸들러
+func UpdateCustomerNameHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 요청 파라미터 가져오기
+	customerSeqStr := r.FormValue("customer_seq")
+	name := r.FormValue("name")
+
+	// 파라미터 검증
+	customerSeq, err := strconv.Atoi(customerSeqStr)
+	if err != nil || customerSeq <= 0 {
+		log.Printf("잘못된 customer_seq: %s", customerSeqStr)
+		http.Error(w, "Invalid customer ID", http.StatusBadRequest)
+		return
+	}
+
+	if name == "" {
+		log.Println("이름이 비어있음")
+		http.Error(w, "Name is required", http.StatusBadRequest)
+		return
+	}
+
+	// 이름 업데이트
+	err = database.UpdateCustomerName(customerSeq, name)
+	if err != nil {
+		log.Printf("이름 업데이트 오류: %v", err)
+		http.Error(w, "Failed to update name", http.StatusInternalServerError)
+		return
+	}
+
+	// 성공 응답
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"success": true}`))
 }

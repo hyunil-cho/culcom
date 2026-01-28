@@ -20,24 +20,30 @@
 <!-- 검색 및 필터 -->
 <div class="content-card">
     <div class="search-section">
-        <div class="search-filters" style="gap: 0.5rem;">
-            <div style="display: flex; gap: 0; flex: 1; max-width: 650px;">
-                <div class="filter-group" style="min-width: auto; margin: 0;">
-                    <label>검색 조건</label>
-                    <select class="filter-select" style="width: 100px;">
-                        <option value="name">이름</option>
-                        <option value="phone">전화번호</option>
-                    </select>
+        <form method="GET" action="/customers">
+            <div class="search-filters" style="gap: 0.5rem;">
+                <div style="display: flex; gap: 0; flex: 1; max-width: 650px;">
+                    <div class="filter-group" style="min-width: auto; margin: 0;">
+                        <label>검색 조건</label>
+                        <select name="searchType" class="filter-select" style="width: 100px;">
+                            <option value="name" {{if eq .SearchType "name"}}selected{{end}}>이름</option>
+                            <option value="phone" {{if eq .SearchType "phone"}}selected{{end}}>전화번호</option>
+                        </select>
+                    </div>
+                    <div class="filter-group" style="flex: 1; margin: 0;">
+                        <label>검색어</label>
+                        <input type="text" name="searchKeyword" placeholder="검색어를 입력하세요" class="search-input" value="{{.SearchKeyword}}">
+                    </div>
                 </div>
-                <div class="filter-group" style="flex: 1; margin: 0;">
-                    <label>검색어</label>
-                    <input type="text" placeholder="검색어를 입력하세요" class="search-input">
+                <input type="hidden" name="filter" value="{{.CurrentFilter}}">
+                <div class="filter-actions">
+                    <button type="submit" class="btn-search">🔍 검색</button>
+                    {{if .SearchKeyword}}
+                    <a href="/customers?filter={{.CurrentFilter}}" class="btn-secondary" style="padding: 0.6rem 1.2rem; text-decoration: none;">초기화</a>
+                    {{end}}
                 </div>
             </div>
-            <div class="filter-actions">
-                <button class="btn-search">🔍 검색</button>
-            </div>
-        </div>
+        </form>
         <div class="action-buttons">
             <a href="/customers/add" class="btn-primary">➕ 워크인 추가</a>
         </div>
@@ -47,6 +53,10 @@
 <!-- 고객 테이블 -->
 <div class="content-card">
     <div class="table-header">
+        <button id="editModeBtn" onclick="toggleEditMode()" 
+                style="padding: 0.6rem 1.5rem; border: 2px solid #667eea; background: white; color: #667eea; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
+            수정
+        </button>
         <div style="display: flex; gap: 0.5rem; margin-left: auto;">
             <button class="customer-filter-btn {{if eq .CurrentFilter "new"}}active{{end}}" onclick="filterCustomers('new')" data-filter="new" 
                     style="padding: 0.6rem 1.5rem; border: 2px solid {{if eq .CurrentFilter "new"}}#4a90e2{{else}}#ddd{{end}}; background: {{if eq .CurrentFilter "new"}}#4a90e2{{else}}white{{end}}; color: {{if eq .CurrentFilter "new"}}white{{else}}#666{{end}}; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
@@ -78,16 +88,31 @@
             <tbody>
                 {{range .Customers}}
                 <tr data-last-visit="{{.LastVisit}}" data-customer-id="{{.ID}}">
-                    <td><strong>{{.Name}}</strong></td>
                     <td>
-                        <div style="display: flex; gap: 0.3rem; align-items: center;">
-                            <input type="text" id="comment-{{.ID}}" placeholder="코멘트 입력" 
-                                   style="padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; width: 150px;">
-                            <button onclick="saveComment({{.ID}})" 
-                                    style="padding: 0.4rem 0.7rem; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">등록</button>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <strong class="customer-name-display" data-customer-id="{{.ID}}">{{.Name}}</strong>
+                            <input type="text" class="customer-name-input" id="name-input-{{.ID}}" value="{{.Name}}" 
+                                   style="display: none; padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; font-weight: 600;">
+                            <button class="confirm-name-btn" onclick="confirmNameChange({{.ID}})" 
+                                    style="display: none; padding: 0.4rem 0.7rem; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">확정</button>
                         </div>
                     </td>
-                    <td id="phone-{{.ID}}" class="phone-hidden">
+                    <td>
+                        <div style="display: flex; flex-direction: column; gap: 0.3rem; align-items: flex-start;">
+                            <!-- 저장된 코멘트 표시 -->
+                            <div id="comment-display-{{.ID}}" style="padding: 0.4rem 0.6rem; background: #f8f9fa; border-radius: 4px; font-size: 0.85rem; min-height: 24px; width: 100%; text-align: left; {{if .Comment}}display: block;{{else}}display: none;{{end}}">
+                                <span style="color: #333;">{{.Comment}}</span>
+                            </div>
+                            <!-- 코멘트 입력 -->
+                            <div style="display: flex; gap: 0.3rem; align-items: center; width: 100%;">
+                                <input type="text" id="comment-{{.ID}}" placeholder="코멘트 입력" value="{{.Comment}}"
+                                       style="padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; flex: 1;">
+                                <button onclick="saveComment({{.ID}})" 
+                                        style="padding: 0.4rem 0.7rem; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">등록</button>
+                            </div>
+                        </div>
+                    </td>
+                    <td id="phone-{{.ID}}" class="phone-hidden" style="text-align: center;">
                         <span class="phone-number">{{.Phone}}</span>
                     </td>
                     <td>
@@ -124,8 +149,8 @@
                     </td>
                     <td>{{.AdName}}</td>
                     <td>{{.RegisterDate}}</td>
-                    <td>{{.LastVisit}}</td>
-                    <td><strong>{{.CallCount}}회</strong></td>
+                    <td id="last-visit-{{.ID}}">{{if .LastVisit}}{{.LastVisit}}{{else}}-{{end}}</td>
+                    <td><strong id="call-count-{{.ID}}">{{.CallCount}}회</strong></td>
                 </tr>
                 {{end}}
             </tbody>
@@ -153,6 +178,61 @@
         {{else}}
         <button class="page-btn" disabled style="opacity: 0.3; cursor: not-allowed;">▶</button>
         {{end}}
+    </div>
+</div>
+
+<!-- 이름 변경 확인 모달 -->
+<div id="nameChangeConfirmModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header" style="border-bottom: 2px solid #10b981;">
+            <h3>✏️ 고객 이름 변경 확인</h3>
+        </div>
+        <div class="modal-body" style="padding: 2rem;">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <div style="font-size: 1rem; color: #666; margin-bottom: 1rem;">현재 이름</div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                    <div id="oldCustomerName" style="font-size: 1.2rem; font-weight: 600; color: #333;"></div>
+                </div>
+                <div style="font-size: 1rem; color: #666; margin-bottom: 1rem;">변경할 이름</div>
+                <div style="background: #d1fae5; padding: 1rem; border-radius: 8px; border: 2px solid #10b981;">
+                    <div id="newCustomerName" style="font-size: 1.2rem; font-weight: 600; color: #10b981;"></div>
+                </div>
+            </div>
+            <div style="text-align: center; color: #666; font-size: 0.95rem;">
+                이름을 변경하시겠습니까?
+            </div>
+        </div>
+        <div style="padding: 1rem 2rem; border-top: 1px solid #e0e0e0; display: flex; gap: 0.75rem;">
+            <button class="btn-secondary" onclick="cancelNameChange()" style="flex: 1; padding: 0.75rem; font-size: 1rem;">취소</button>
+            <button class="btn-primary" onclick="updateCustomerName()" style="flex: 1; padding: 0.75rem; font-size: 1rem; background: #10b981;">확인</button>
+        </div>
+    </div>
+</div>
+
+<!-- CALLER 선택 확인 모달 -->
+<div id="callerConfirmModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header" style="border-bottom: 2px solid #667eea;">
+            <h3>🔤 CALLER 선택 확인</h3>
+        </div>
+        <div class="modal-body" style="padding: 2rem;">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <div style="font-size: 1.1rem; color: #333; margin-bottom: 1rem;">
+                    <strong id="callerCustomerName" style="color: #667eea; font-size: 1.3rem;"></strong>님의
+                </div>
+                <div style="font-size: 0.95rem; color: #666; margin-bottom: 0.5rem;">선택한 CALLER</div>
+                <div style="background: #f5f3ff; padding: 1.5rem; border-radius: 8px; border: 2px solid #667eea; margin-top: 1rem;">
+                    <div id="callerLetter" style="font-size: 2rem; font-weight: 700; color: #667eea;"></div>
+                </div>
+            </div>
+            <div style="text-align: center; color: #666; font-size: 0.95rem;">
+                이 CALLER로 선택하시겠습니까?
+            </div>
+        </div>
+        <div style="padding: 1rem 2rem; border-top: 1px solid #e0e0e0; display: flex; gap: 0.75rem;">
+            <button class="btn-secondary" onclick="cancelCallerConfirm()" style="flex: 1; padding: 0.75rem; font-size: 1rem;">취소</button>
+            <button class="btn-primary" onclick="confirmCallerSelection()" style="flex: 1; padding: 0.75rem; font-size: 1rem; background: #667eea;">확인</button>
+        </div>
     </div>
 </div>
 
@@ -224,10 +304,9 @@
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">템플릿 선택</label>
                 <select id="textMessageTemplate" class="form-input" onchange="loadTextTemplate()" style="width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
                     <option value="">템플릿을 선택하세요</option>
-                    <option value="template1">방문 예약 확인</option>
-                    <option value="template2">상담 안내</option>
-                    <option value="template3">견적서 발송 안내</option>
-                    <option value="template4">부재중 재연락 안내</option>
+                    {{range .MessageTemplates}}
+                    <option value="{{.ID}}" {{if .IsDefault}}selected{{end}}>{{.Name}}</option>
+                    {{end}}
                 </select>
             </div>
             
@@ -439,25 +518,19 @@ let currentInputMode = 'direct';
 let currentCustomerName = '';
 let currentCustomerPhone = '';
 
-// 템플릿 데이터
-const smsTemplates = {
-    template1: {
-        title: '방문 예약 확인',
-        content: '[{고객명}]님, 안녕하세요.\n\n{날짜} {시간}에 방문 예약이 확정되었습니다.\n\n주소: {주소}\n담당자: {담당자}\n\n기타 문의사항이 있으시면 연락 주세요.\n감사합니다.'
-    },
-    template2: {
-        title: '상담 안내',
-        content: '[{고객명}]님, 안녕하세요.\n\n문의하신 내용에 대해 상담을 도와드리고자 합니다.\n\n상담 가능 시간:\n평일 09:00 ~ 18:00\n\n편하신 시간에 연락 주시면 성심껏 상담해 드리겠습니다.\n감사합니다.'
-    },
-    template3: {
-        title: '견적서 발송 안내',
-        content: '[{고객명}]님, 안녕하세요.\n\n요청하신 견적서를 발송해 드립니다.\n\n견적 내용을 확인하시고 궁금하신 사항이 있으시면 언제든지 연락 주세요.\n\n빠른 시일 내에 긍정적인 답변 부탁드립니다.\n감사합니다.'
-    },
-    template4: {
-        title: '부재중 재연락 안내',
-        content: '[{고객명}]님, 안녕하세요.\n\n연락 드렸으나 통화가 어려워 문자 남깁니다.\n\n편하신 시간에 회신 주시면 상담 도와드리겠습니다.\n\n감사합니다.'
+// DB에서 불러온 메시지 템플릿
+const messageTemplates = {
+    {{range $index, $template := .MessageTemplates}}
+    {{if $index}},{{end}}
+    {{$template.ID}}: {
+        id: {{$template.ID}},
+        name: `{{$template.Name}}`,
+        content: `{{$template.Content}}`,
+        isDefault: {{$template.IsDefault}}
     }
+    {{end}}
 };
+
 
 function openResponseModal(customerId, customerName, customerPhone) {
     currentCustomerId = customerId;
@@ -502,111 +575,6 @@ function openResponseModal(customerId, customerName, customerPhone) {
     }
 }
 
-function loadResponseHistory(customerId) {
-    // TODO: 실제로는 서버에서 데이터를 가져와야 함
-    // 더미 데이터
-    const dummyHistory = [
-        {
-            date: '2026-01-24 14:30',
-            agent: '김영업',
-            type: '전화상담',
-            content: '제품 A에 대한 상세 문의. 가격과 배송 기간에 대해 안내함.',
-            comment: '재방문 의사 있음'
-        },
-        {
-            date: '2026-01-23 10:15',
-            agent: '박차장',
-            type: '방문예약',
-            appointmentDate: '2026-01-30',
-            appointmentTime: '14:00',
-            comment: '본사 방문 예약 완료'
-        },
-        {
-            date: '2026-01-26 18:45',
-            agent: '이대리',
-            type: '부재중',
-            comment: '연락 안됨. 내일 오전 재시도 예정'
-        },
-        {
-            date: '2026-01-20 09:20',
-            agent: '김영업',
-            type: '전화상담',
-            content: '신규 고객 상담. 제품 라인업 전반에 대해 설명함.',
-            comment: '관심도 높음'
-        },
-        {
-            date: '2026-01-19 11:30',
-            agent: '최과장',
-            type: '부재중',
-            comment: '통화 불가'
-        }
-    ];
-    
-    const historyDiv = document.getElementById('responseHistory');
-    const countSpan = document.getElementById('responseHistoryCount');
-    
-    if (dummyHistory.length === 0) {
-        historyDiv.innerHTML = `
-            <div class="empty-message" style="text-align: center; color: #999; padding: 3rem 0;">
-                <p>응대 이력이 없습니다.</p>
-            </div>
-        `;
-        countSpan.textContent = '총 0건';
-        return;
-    }
-    
-    countSpan.textContent = `총 ${dummyHistory.length}건`;
-    
-    let historyHTML = '<div style="display: flex; flex-direction: column; gap: 1rem;">';
-    
-    dummyHistory.forEach((item, index) => {
-        let typeColor = '#666';
-        let typeIcon = '📝';
-        let detailHTML = '';
-        
-        if (item.type === '전화상담') {
-            typeColor = '#4a90e2';
-            typeIcon = '📞';
-            if (item.content) {
-                detailHTML = `<div style="margin-top: 0.5rem; color: #555; font-size: 0.9rem;">${item.content}</div>`;
-            }
-        } else if (item.type === '방문예약') {
-            typeColor = '#ffa500';
-            typeIcon = '📅';
-            detailHTML = `<div style="margin-top: 0.5rem; background: #fff9e6; padding: 0.5rem; border-radius: 4px; font-size: 0.9rem;">
-                <strong>예약일시:</strong> ${item.appointmentDate} ${item.appointmentTime}
-            </div>`;
-        } else if (item.type === '부재중') {
-            typeColor = '#fc8181';
-            typeIcon = '📵';
-        } else if (item.type === '상담거절') {
-            typeColor = '#999';
-            typeIcon = '❌';
-        } else if (item.type === '기타') {
-            typeColor = '#9f7aea';
-            typeIcon = '📝';
-        }
-        
-        historyHTML += `
-            <div style="background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid ${typeColor}; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
-                    <div>
-                        <span style="font-weight: 600; color: ${typeColor}; font-size: 0.95rem;">${typeIcon} ${item.type}</span>
-                        <span style="color: #999; font-size: 0.85rem; margin-left: 0.5rem;">담당: ${item.agent}</span>
-                    </div>
-                    <span style="color: #999; font-size: 0.85rem; white-space: nowrap;">${item.date}</span>
-                </div>
-                ${detailHTML}
-                ${item.comment ? `<div style="margin-top: 0.5rem; padding: 0.5rem; background: #f8f9fa; border-radius: 4px; font-size: 0.85rem; color: #666;">
-                    💬 ${item.comment}
-                </div>` : ''}
-            </div>
-        `;
-    });
-    
-    historyHTML += '</div>';
-    historyDiv.innerHTML = historyHTML;
-}
 
 function closeResponseModal() {
     document.getElementById('responseModal').style.display = 'none';
@@ -900,13 +868,200 @@ function sendMessage() {
     }
 }
 
+// CALLER 선택 관련 변수
+let pendingCallerSelection = {
+    customerId: null,
+    customerName: '',
+    letter: '',
+    buttonElement: null
+};
+
+// 고객별 선택된 CALLER 저장 (customerId -> letter 매핑)
+const customerCallerMap = {};
+
+// 수정 모드 상태
+let isEditMode = false;
+let pendingNameChange = {
+    customerId: null,
+    oldName: '',
+    newName: ''
+};
+
+// 수정 모드 토글
+function toggleEditMode() {
+    isEditMode = !isEditMode;
+    const editBtn = document.getElementById('editModeBtn');
+    
+    if (isEditMode) {
+        // 수정 모드 활성화
+        editBtn.style.background = '#667eea';
+        editBtn.style.color = 'white';
+        editBtn.textContent = '수정 취소';
+        
+        // 모든 이름을 input으로 변경
+        document.querySelectorAll('.customer-name-display').forEach(el => {
+            el.style.display = 'none';
+        });
+        document.querySelectorAll('.customer-name-input').forEach(el => {
+            el.style.display = 'block';
+        });
+        document.querySelectorAll('.confirm-name-btn').forEach(el => {
+            el.style.display = 'block';
+        });
+    } else {
+        // 수정 모드 비활성화
+        editBtn.style.background = 'white';
+        editBtn.style.color = '#667eea';
+        editBtn.textContent = '수정';
+        
+        // input을 다시 텍스트로 변경
+        document.querySelectorAll('.customer-name-display').forEach(el => {
+            el.style.display = 'block';
+        });
+        document.querySelectorAll('.customer-name-input').forEach(el => {
+            el.style.display = 'none';
+            // 원래 값으로 복원
+            const customerId = el.id.replace('name-input-', '');
+            const displayEl = document.querySelector(`.customer-name-display[data-customer-id="${customerId}"]`);
+            if (displayEl) {
+                el.value = displayEl.textContent;
+            }
+        });
+        document.querySelectorAll('.confirm-name-btn').forEach(el => {
+            el.style.display = 'none';
+        });
+    }
+}
+
+// 이름 변경 확정 (모달 표시)
+function confirmNameChange(customerId) {
+    const inputEl = document.getElementById(`name-input-${customerId}`);
+    const displayEl = document.querySelector(`.customer-name-display[data-customer-id="${customerId}"]`);
+    
+    const oldName = displayEl.textContent;
+    const newName = inputEl.value.trim();
+    
+    if (!newName) {
+        alert('이름을 입력해주세요.');
+        return;
+    }
+    
+    if (oldName === newName) {
+        alert('변경된 내용이 없습니다.');
+        return;
+    }
+    
+    // 모달에 정보 표시
+    pendingNameChange = {
+        customerId: customerId,
+        oldName: oldName,
+        newName: newName
+    };
+    
+    document.getElementById('oldCustomerName').textContent = oldName;
+    document.getElementById('newCustomerName').textContent = newName;
+    document.getElementById('nameChangeConfirmModal').style.display = 'flex';
+}
+
+// 이름 변경 취소
+function cancelNameChange() {
+    document.getElementById('nameChangeConfirmModal').style.display = 'none';
+    pendingNameChange = {
+        customerId: null,
+        oldName: '',
+        newName: ''
+    };
+}
+
+// 이름 변경 실행
+function updateCustomerName() {
+    const { customerId, newName } = pendingNameChange;
+    
+    if (!customerId || !newName) {
+        return;
+    }
+    
+    // 서버에 저장
+    const formData = new FormData();
+    formData.append('customer_seq', customerId);
+    formData.append('name', newName);
+    
+    fetch('/api/customers/update-name', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // UI 업데이트
+            const displayEl = document.querySelector(`.customer-name-display[data-customer-id="${customerId}"]`);
+            const inputEl = document.getElementById(`name-input-${customerId}`);
+            
+            if (displayEl) {
+                displayEl.textContent = newName;
+            }
+            if (inputEl) {
+                inputEl.value = newName;
+            }
+            
+            alert('고객 이름이 변경되었습니다.');
+            
+            // 모달 닫기
+            document.getElementById('nameChangeConfirmModal').style.display = 'none';
+            
+            // 초기화
+            pendingNameChange = {
+                customerId: null,
+                oldName: '',
+                newName: ''
+            };
+        } else {
+            alert('이름 변경에 실패했습니다.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('이름 변경 중 오류가 발생했습니다.');
+    });
+}
+
+
 function selectCaller(customerId, letter) {
+    // 고객 이름 가져오기
+    const customerRow = document.querySelector(`tr[data-customer-id="${customerId}"]`);
+    const customerName = customerRow ? customerRow.querySelector('td strong').textContent : '';
+    
+    // 선택 정보 저장
+    pendingCallerSelection = {
+        customerId: customerId,
+        customerName: customerName,
+        letter: letter,
+        buttonElement: event.target
+    };
+    
+    // 모달에 정보 표시
+    document.getElementById('callerCustomerName').textContent = customerName;
+    document.getElementById('callerLetter').textContent = letter;
+    
+    // 모달 열기
+    document.getElementById('callerConfirmModal').style.display = 'flex';
+}
+
+// CALLER 선택 확인
+function confirmCallerSelection() {
+    const { customerId, letter, buttonElement } = pendingCallerSelection;
+    
+    // 고객별 CALLER 정보 저장
+    customerCallerMap[customerId] = letter;
+    
     // 해당 고객의 모든 버튼 선택 해제
     const customerButtons = document.querySelectorAll(`.caller-btn[data-customer-id="${customerId}"]`);
     customerButtons.forEach(btn => btn.classList.remove('selected'));
     
     // 클릭한 버튼 선택
-    event.target.classList.add('selected');
+    if (buttonElement) {
+        buttonElement.classList.add('selected');
+    }
     
     // 전화번호 표시
     const phoneCell = document.getElementById(`phone-${customerId}`);
@@ -917,7 +1072,55 @@ function selectCaller(customerId, letter) {
     
     console.log(`Customer ${customerId}: Selected caller ${letter}`);
     
-    // TODO: 서버에 caller 정보 저장
+    // 서버에 call_count 증가 요청
+    const formData = new FormData();
+    formData.append('customer_seq', customerId);
+    
+    fetch('/api/customers/increment-call', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // UI에서 call_count 업데이트
+            const callCountElement = document.getElementById(`call-count-${customerId}`);
+            if (callCountElement) {
+                callCountElement.textContent = `${data.call_count}회`;
+            }
+            
+            // UI에서 최근응대 시간 업데이트
+            const lastVisitElement = document.getElementById(`last-visit-${customerId}`);
+            if (lastVisitElement && data.last_update_date) {
+                lastVisitElement.textContent = data.last_update_date;
+            }
+            
+            console.log(`Call count updated: ${data.call_count}, Last update: ${data.last_update_date}`);
+        } else {
+            console.error('Failed to increment call count');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('통화 횟수 업데이트 중 오류가 발생했습니다.');
+    });
+    
+    // 모달 닫기
+    document.getElementById('callerConfirmModal').style.display = 'none';
+}
+
+// CALLER 선택 취소
+function cancelCallerConfirm() {
+    // 모달 닫기
+    document.getElementById('callerConfirmModal').style.display = 'none';
+    
+    // 선택 정보 초기화
+    pendingCallerSelection = {
+        customerId: null,
+        customerName: '',
+        letter: '',
+        buttonElement: null
+    };
 }
 
 // TEXT 모달 관련 변수
@@ -939,17 +1142,14 @@ function openTextModal(customerId, customerName, customerPhone) {
     // 폼 초기화
     document.getElementById('textMessageContent').value = '';
     document.getElementById('textMessageLength').textContent = '0';
-    document.getElementById('textMessageTemplate').value = '';
+    
+    // 템플릿 모드로 시작
     selectTextInputMode('template');
     
-    // 기본 템플릿 로드 (서버에서 전달받은 기본 템플릿)
-    const defaultTemplate = `{{.DefaultTemplate}}`;
-    if (defaultTemplate) {
-        // 기본 템플릿 선택 (template1)
-        document.getElementById('textMessageTemplate').value = 'template1';
-        // 템플릿 내용 로드
-        document.getElementById('textMessageContent').value = defaultTemplate.replace('{\uace0\uac1d\uba85}', customerName);
-        document.getElementById('textMessageLength').textContent = document.getElementById('textMessageContent').value.length;
+    // 기본 템플릿이 이미 선택되어 있으면 자동으로 로드
+    const selectElement = document.getElementById('textMessageTemplate');
+    if (selectElement.value && messageTemplates[parseInt(selectElement.value)]) {
+        loadTextTemplate();
     }
 }
 
@@ -992,31 +1192,64 @@ function selectTextInputMode(mode) {
         templateBtn.style.color = 'white';
         
         templateSection.style.display = 'block';
-        messageTextarea.value = '';
-        document.getElementById('textMessageLength').textContent = '0';
+        
+        // 기본 템플릿이 선택되어 있으면 자동으로 로드
+        const selectElement = document.getElementById('textMessageTemplate');
+        if (selectElement.value) {
+            loadTextTemplate();
+        } else {
+            messageTextarea.value = '';
+            document.getElementById('textMessageLength').textContent = '0';
+        }
     }
 }
 
 // TEXT 템플릿 로드
 function loadTextTemplate() {
-    const selectedTemplate = document.getElementById('textMessageTemplate').value;
+    const selectElement = document.getElementById('textMessageTemplate');
     const messageTextarea = document.getElementById('textMessageContent');
     
-    if (!selectedTemplate) {
+    if (!selectElement.value) {
         messageTextarea.value = '';
         document.getElementById('textMessageLength').textContent = '0';
         return;
     }
     
-    const template = smsTemplates[selectedTemplate];
-    if (template) {
-        // 변수 치환
+    // messageTemplates 객체에서 템플릿 내용 가져오기
+    const templateId = parseInt(selectElement.value);
+    const template = messageTemplates[templateId];
+    
+    if (template && template.content) {
+        // 현재 날짜/시간 정보 생성
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        
+        const currentDate = `${year}-${month}-${day}`; // 2026-01-30
+        const currentTime = `${hours}:${minutes}`; // 14:30
+        const currentDateTime = `${year}-${month}-${day} ${hours}:${minutes}`; // 2026-01-30 14:30
+        const currentDateKor = `${year}년 ${parseInt(month)}월 ${parseInt(day)}일`; // 2026년 1월 30일
+        
+        // 헤더에서 선택된 지점명 가져오기
+        const branchSelect = document.getElementById('branchSelect');
+        const branchName = branchSelect ? branchSelect.options[branchSelect.selectedIndex].text : '지점';
+        
         let content = template.content
-            .replace('{고객명}', currentTextCustomerName)
-            .replace('{날짜}', '2026-01-30')
-            .replace('{시간}', '14:00')
-            .replace('{주소}', '서울시 강남구 테헤란로 123')
-            .replace('{담당자}', '김영업');
+            // 이스케이프 시퀀스를 실제 문자로 변환
+            .replace(/\\r\\n/g, '\n')
+            .replace(/\\n/g, '\n')
+            .replace(/\\r/g, '\r')
+            .replace(/\\t/g, '\t')
+            // 플레이스홀더 치환
+            .replace(/\{\{고객명\}\}/g, currentTextCustomerName || '고객')
+            .replace(/\{\{전화번호\}\}/g, currentTextCustomerPhone || '')
+            .replace(/\{\{지점명\}\}/g, branchName)
+            .replace(/\{\{현재날짜시간\}\}/g, currentDateTime)
+            .replace(/\{\{현재시간\}\}/g, currentTime)
+            .replace(/\{\{현재날짜\}\}/g, currentDate)
         
         messageTextarea.value = content;
         document.getElementById('textMessageLength').textContent = content.length;
@@ -1199,24 +1432,60 @@ function confirmInterviewDateTime() {
         return;
     }
     
-    // TODO: 실제로는 서버에 저장
-    console.log(`Customer ${pendingInterviewCustomerId} (${pendingInterviewCustomerName}): Interview confirmed at ${pendingInterviewDateTime}`);
+    // CALLER 확인
+    const caller = customerCallerMap[pendingInterviewCustomerId];
+    if (!caller) {
+        alert('CALLER를 먼저 선택해주세요.');
+        return;
+    }
     
-    // 성공 메시지
-    alert(`${pendingInterviewCustomerName}님의 인터뷰 일시가 확정되었습니다.`);
+    // 날짜 파싱
+    const parsedDate = parseInterviewDateTime(pendingInterviewDateTime);
+    if (!parsedDate) {
+        alert('올바른 날짜 형식이 아닙니다.');
+        return;
+    }
     
-    // 모달 닫기
-    document.getElementById('interviewConfirmModal').style.display = 'none';
+    // Date 객체 생성 후 ISO 8601 형식으로 변환 (2026-01-29T14:30:00)
+    const dateObj = new Date(parsedDate.year, parsedDate.month - 1, parsedDate.day, parsedDate.hour, parsedDate.minute, 0);
+    const isoDateTime = dateObj.toISOString().slice(0, 19);
     
-    // 임시 데이터 초기화
-    pendingInterviewCustomerId = null;
-    pendingInterviewDateTime = null;
-    pendingInterviewCustomerName = null;
+    // 서버에 저장
+    const formData = new FormData();
+    formData.append('customer_seq', pendingInterviewCustomerId);
+    formData.append('caller', caller);
+    formData.append('interview_date', isoDateTime);
+    
+    fetch('/api/customers/reservation', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`${pendingInterviewCustomerName}님의 인터뷰 일시가 확정되었습니다.`);
+            
+            // 모달 닫기
+            document.getElementById('interviewConfirmModal').style.display = 'none';
+            
+            // 임시 데이터 초기화
+            pendingInterviewCustomerId = null;
+            pendingInterviewDateTime = null;
+            pendingInterviewCustomerName = null;
+        } else {
+            alert('예약 저장에 실패했습니다.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('예약 저장 중 오류가 발생했습니다.');
+    });
 }
 
 // 코멘트 저장
 function saveComment(customerId) {
     const commentInput = document.getElementById(`comment-${customerId}`);
+    const commentDisplay = document.getElementById(`comment-display-${customerId}`);
     const comment = commentInput.value.trim();
     
     if (!comment) {
@@ -1224,13 +1493,31 @@ function saveComment(customerId) {
         return;
     }
     
-    // TODO: 실제로는 서버에 저장
-    console.log(`Customer ${customerId}: Comment saved - "${comment}"`);
+    // 서버에 저장
+    const formData = new FormData();
+    formData.append('customer_seq', customerId);
+    formData.append('comment', comment);
     
-    alert('코멘트가 등록되었습니다.');
-    
-    // 입력 필드 초기화 (선택사항)
-    // commentInput.value = '';
+    fetch('/api/customers/comment', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 저장된 코멘트를 표시
+            commentDisplay.querySelector('span').textContent = comment;
+            commentDisplay.style.display = 'block';
+            alert('코멘트가 등록되었습니다.');
+        } else {
+            alert('코멘트 저장에 실패했습니다.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('코멘트 저장 중 오류가 발생했습니다.');
+    });
+
 }
 
 // 최근 응대 시간 체크
@@ -1366,15 +1653,30 @@ document.addEventListener('DOMContentLoaded', function() {
 let currentFilter = 'new';
 
 function filterCustomers(filterType) {
-    // 필터 파라미터와 함께 페이지 리로드
-    window.location.href = `/customers?filter=${filterType}`;
+    // 필터 파라미터와 검색 파라미터 유지하면서 페이지 리로드
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchType = urlParams.get('searchType') || '';
+    const searchKeyword = urlParams.get('searchKeyword') || '';
+    
+    let url = `/customers?filter=${filterType}`;
+    if (searchType) url += `&searchType=${searchType}`;
+    if (searchKeyword) url += `&searchKeyword=${encodeURIComponent(searchKeyword)}`;
+    
+    window.location.href = url;
 }
 
 // 페이지 이동
 function goToPage(page) {
     const urlParams = new URLSearchParams(window.location.search);
     const currentFilter = urlParams.get('filter') || 'new';
-    window.location.href = `/customers?filter=${currentFilter}&page=${page}`;
+    const searchType = urlParams.get('searchType') || '';
+    const searchKeyword = urlParams.get('searchKeyword') || '';
+    
+    let url = `/customers?filter=${currentFilter}&page=${page}`;
+    if (searchType) url += `&searchType=${searchType}`;
+    if (searchKeyword) url += `&searchKeyword=${encodeURIComponent(searchKeyword)}`;
+    
+    window.location.href = url;
 }
 
 </script>
@@ -1412,6 +1714,8 @@ function goToPage(page) {
 .phone-hidden::before {
     content: '***-****-****';
     color: #999;
+    display: block;
+    text-align: center;
 }
 
 .phone-visible .phone-number {
