@@ -43,7 +43,7 @@ func Init() error {
 	default:
 		return fmt.Errorf("지원하지 않는 데이터베이스 드라이버: %s", cfg.Driver)
 	}
-
+	fmt.Printf("dsn %s", dsn)
 	var err error
 	DB, err = sql.Open(cfg.Driver, dsn)
 	if err != nil {
