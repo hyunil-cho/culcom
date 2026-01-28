@@ -1,6 +1,7 @@
 package customers
 
 import (
+	"backoffice/config"
 	"backoffice/database"
 	"backoffice/handlers/errorhandler"
 	"backoffice/middleware"
@@ -425,9 +426,20 @@ func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 세션에서 사용자 정보 가져오기 (현재는 임시로 1로 설정)
-	// TODO: 실제 세션에서 user_seq 가져오기
-	userSeq := 1
+	// 세션에서 사용자 정보 가져오기
+	session, err := config.SessionStore.Get(r, "user-session")
+	if err != nil {
+		log.Printf("세션 조회 오류: %v", err)
+		http.Error(w, "Session error", http.StatusInternalServerError)
+		return
+	}
+
+	userSeq, ok := session.Values["user_seq"].(int)
+	if !ok || userSeq <= 0 {
+		log.Println("세션에서 user_seq를 찾을 수 없음")
+		http.Error(w, "User not found in session", http.StatusUnauthorized)
+		return
+	}
 
 	// branchCode로 branchSeq 조회
 	var branchSeq int

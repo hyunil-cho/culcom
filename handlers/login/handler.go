@@ -52,10 +52,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 
 	// DB 인증
-	authenticated := database.AuthenticateUser(username, password)
+	authenticated, userSeq := database.AuthenticateUser(username, password)
 
 	if authenticated {
-		// 세션에 사용자 ID 저장
+		// 세션에 사용자 ID와 Seq 저장
 		session, err := config.SessionStore.Get(r, "user-session")
 		if err != nil {
 			log.Printf("세션 가져오기 실패: %v", err)
@@ -64,6 +64,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		session.Values["user_id"] = username
+		session.Values["user_seq"] = userSeq
 		session.Values["authenticated"] = true
 
 		if err := session.Save(r, w); err != nil {

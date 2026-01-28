@@ -15,7 +15,8 @@ type User struct {
 
 // AuthenticateUser - 사용자 인증 (DB 기반, 평문 비밀번호)
 // user_id로 사용자를 조회하고 평문으로 비밀번호 검증
-func AuthenticateUser(username, password string) bool {
+// 반환: (인증 성공 여부, 사용자 seq)
+func AuthenticateUser(username, password string) (bool, int) {
 	log.Printf("Authentication attempt - Username: %s", username)
 
 	// DB에서 사용자 정보 조회
@@ -37,15 +38,15 @@ func AuthenticateUser(username, password string) bool {
 		} else {
 			log.Printf("Authentication error - Database query failed: %v", err)
 		}
-		return false
+		return false, 0
 	}
 
 	// 평문 비밀번호 비교 (테스트용)
 	if user.UserPassword != password {
 		log.Printf("Authentication failed - Invalid password for user: %s", username)
-		return false
+		return false, 0
 	}
 
-	log.Printf("Authentication successful for user: %s", username)
-	return true
+	log.Printf("Authentication successful for user: %s (seq: %d)", username, user.Seq)
+	return true, user.Seq
 }
