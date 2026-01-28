@@ -20,13 +20,31 @@ type IntegrationStatus struct {
 func GetIntegrationStatus(branchCode, serviceType string) (*IntegrationStatus, error) {
 	log.Printf("[DB] GetIntegrationStatus 호출 - branchCode: %s, serviceType: %s", branchCode, serviceType)
 
+	// 지점 코드가 없으면 빈 상태 반환
+	if branchCode == "" {
+		log.Printf("GetIntegrationStatus - branchCode is empty")
+		return &IntegrationStatus{
+			BranchCode:  branchCode,
+			ServiceType: serviceType,
+			IsConnected: false,
+			HasConfig:   false,
+			ConfigData:  map[string]interface{}{},
+		}, nil
+	}
+
 	// 1단계: 지점 seq 조회
 	var branchSeq int
 	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
 	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
 	if err != nil {
 		log.Printf("GetIntegrationStatus - branch not found: %v", err)
-		return nil, err
+		return &IntegrationStatus{
+			BranchCode:  branchCode,
+			ServiceType: serviceType,
+			IsConnected: false,
+			HasConfig:   false,
+			ConfigData:  map[string]interface{}{},
+		}, nil
 	}
 
 	// 2단계: 서비스 타입으로 외부 서비스 조회
@@ -82,13 +100,31 @@ func GetIntegrationStatus(branchCode, serviceType string) (*IntegrationStatus, e
 func GetIntegrationStatusByServiceID(branchCode string, serviceID int) (*IntegrationStatus, error) {
 	log.Printf("[DB] GetIntegrationStatusByServiceID 호출 - branchCode: %s, serviceID: %d", branchCode, serviceID)
 
+	// 지점 코드가 없으면 빈 상태 반환
+	if branchCode == "" {
+		log.Printf("GetIntegrationStatusByServiceID - branchCode is empty")
+		return &IntegrationStatus{
+			BranchCode:  branchCode,
+			ServiceType: "unknown",
+			IsConnected: false,
+			HasConfig:   false,
+			ConfigData:  map[string]interface{}{},
+		}, nil
+	}
+
 	// 1단계: 지점 seq 조회
 	var branchSeq int
 	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
 	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
 	if err != nil {
 		log.Printf("GetIntegrationStatusByServiceID - branch not found: %v", err)
-		return nil, err
+		return &IntegrationStatus{
+			BranchCode:  branchCode,
+			ServiceType: "unknown",
+			IsConnected: false,
+			HasConfig:   false,
+			ConfigData:  map[string]interface{}{},
+		}, nil
 	}
 
 	// 2단계: 서비스 ID로 외부 서비스 조회
@@ -149,13 +185,19 @@ func GetIntegrationStatusByServiceID(branchCode string, serviceID int) (*Integra
 func GetAllIntegrationsByBranch(branchCode string) ([]IntegrationStatus, error) {
 	log.Printf("[DB] GetAllIntegrationsByBranch 호출 - branchCode: %s", branchCode)
 
+	// 지점 코드가 없으면 빈 배열 반환
+	if branchCode == "" {
+		log.Printf("GetAllIntegrationsByBranch - branchCode is empty")
+		return []IntegrationStatus{}, nil
+	}
+
 	// 1단계: 지점 seq 조회
 	var branchSeq int
 	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
 	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
 	if err != nil {
 		log.Printf("GetAllIntegrationsByBranch - branch not found: %v", err)
-		return nil, err
+		return []IntegrationStatus{}, nil // 지점이 없으면 빈 배열 반환 (에러 아님)
 	}
 
 	// 2단계: 모든 외부 서비스 목록 조회

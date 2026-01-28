@@ -29,13 +29,19 @@ type Placeholder struct {
 func GetMessageTemplates(branchCode string) ([]MessageTemplate, error) {
 	log.Printf("[MessageTemplate] GetMessageTemplates 호출 - BranchCode: %s\n", branchCode)
 
+	// 지점 코드가 없으면 빈 배열 반환
+	if branchCode == "" {
+		log.Printf("GetMessageTemplates - branchCode is empty")
+		return []MessageTemplate{}, nil
+	}
+
 	// 1단계: 지점 seq 조회
 	var branchSeq int
 	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
 	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
 	if err != nil {
 		log.Printf("GetMessageTemplates - branch not found: %v", err)
-		return nil, err
+		return []MessageTemplate{}, nil // 지점이 없으면 빈 배열 반환 (에러 아님)
 	}
 
 	// 2단계: 해당 지점의 메시지 템플릿 조회 (활성화된 것만)

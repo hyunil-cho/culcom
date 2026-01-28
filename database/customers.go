@@ -67,13 +67,19 @@ type CustomerInfo struct {
 func GetCustomersCountByBranch(branchCode, filter, searchType, searchKeyword string) (int, error) {
 	log.Printf("[Customer] GetCustomersCountByBranch 호출 - BranchCode: %s, Filter: %s, SearchType: %s, SearchKeyword: %s\n", branchCode, filter, searchType, searchKeyword)
 
+	// 지점 코드가 없으면 0 반환
+	if branchCode == "" {
+		log.Printf("GetCustomersCountByBranch - branchCode is empty")
+		return 0, nil
+	}
+
 	// 1단계: 지점 seq 조회
 	var branchSeq int
 	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
 	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
 	if err != nil {
 		log.Printf("GetCustomersCountByBranch - branch not found: %v", err)
-		return 0, err
+		return 0, nil // 지점이 없으면 0 반환 (에러 아님)
 	}
 
 	// 2단계: 고객 수 조회
@@ -113,13 +119,19 @@ func GetCustomersCountByBranch(branchCode, filter, searchType, searchKeyword str
 func GetCustomersByBranch(branchCode, filter, searchType, searchKeyword string, page, itemsPerPage int) ([]CustomerInfo, error) {
 	log.Printf("[Customer] GetCustomersByBranch 호출 - BranchCode: %s, Filter: %s, SearchType: %s, SearchKeyword: %s, Page: %d, ItemsPerPage: %d\n", branchCode, filter, searchType, searchKeyword, page, itemsPerPage)
 
+	// 지점 코드가 없으면 빈 배열 반환
+	if branchCode == "" {
+		log.Printf("GetCustomersByBranch - branchCode is empty")
+		return []CustomerInfo{}, nil
+	}
+
 	// 1단계: 지점 seq 조회
 	var branchSeq int
 	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
 	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
 	if err != nil {
 		log.Printf("GetCustomersByBranch - branch not found: %v", err)
-		return nil, err
+		return []CustomerInfo{}, nil // 지점이 없으면 빈 배열 반환 (에러 아님)
 	}
 
 	// 2단계: 고객 목록 조회
