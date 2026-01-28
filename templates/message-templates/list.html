@@ -247,6 +247,13 @@
             background: #ffb300;
         }
 
+        .templates-grid:has(.empty-state) {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+        }
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -451,6 +458,18 @@
                 successMessage.classList.add('show');
             } else if (success === 'default') {
                 successMessage.textContent = '⭐ 기본 템플릿이 성공적으로 설정되었습니다.';
+                successMessage.classList.add('show');
+            } else if (error === 'add') {
+                successMessage.textContent = '❌ 템플릿 추가에 실패했습니다.';
+                successMessage.style.background = '#ffebee';
+                successMessage.style.borderColor = '#f44336';
+                successMessage.style.color = '#c62828';
+                successMessage.classList.add('show');
+            } else if (error === 'edit') {
+                successMessage.textContent = '❌ 템플릿 수정에 실패했습니다.';
+                successMessage.style.background = '#ffebee';
+                successMessage.style.borderColor = '#f44336';
+                successMessage.style.color = '#c62828';
                 successMessage.classList.add('show');
             } else if (error === 'invalid_id') {
                 successMessage.textContent = '❌ 잘못된 템플릿 ID입니다.';

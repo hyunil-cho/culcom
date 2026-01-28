@@ -14,6 +14,9 @@
         {{template "header" .}}
         
         <main class="content">
+<!-- 성공 메시지 -->
+<div id="successMessage" class="success-message" style="display: none; background: #e8f5e9; border: 1px solid #4caf50; color: #2e7d32; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; font-weight: 500;"></div>
+
 <!-- 검색 및 필터 -->
 <div class="content-card">
     <div class="search-section">
@@ -45,12 +48,12 @@
 <div class="content-card">
     <div class="table-header">
         <div style="display: flex; gap: 0.5rem; margin-left: auto;">
-            <button class="customer-filter-btn active" onclick="filterCustomers('new')" data-filter="new" 
-                    style="padding: 0.6rem 1.5rem; border: 2px solid #4a90e2; background: #4a90e2; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
+            <button class="customer-filter-btn {{if eq .CurrentFilter "new"}}active{{end}}" onclick="filterCustomers('new')" data-filter="new" 
+                    style="padding: 0.6rem 1.5rem; border: 2px solid {{if eq .CurrentFilter "new"}}#4a90e2{{else}}#ddd{{end}}; background: {{if eq .CurrentFilter "new"}}#4a90e2{{else}}white{{end}}; color: {{if eq .CurrentFilter "new"}}white{{else}}#666{{end}}; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
                 신규
             </button>
-            <button class="customer-filter-btn" onclick="filterCustomers('all')" data-filter="all" 
-                    style="padding: 0.6rem 1.5rem; border: 2px solid #ddd; background: white; color: #666; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
+            <button class="customer-filter-btn {{if eq .CurrentFilter "all"}}active{{end}}" onclick="filterCustomers('all')" data-filter="all" 
+                    style="padding: 0.6rem 1.5rem; border: 2px solid {{if eq .CurrentFilter "all"}}#4a90e2{{else}}#ddd{{end}}; background: {{if eq .CurrentFilter "all"}}#4a90e2{{else}}white{{end}}; color: {{if eq .CurrentFilter "all"}}white{{else}}#666{{end}}; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
                 전체
             </button>
         </div>
@@ -131,13 +134,25 @@
 
     <!-- 페이지네이션 -->
     <div class="pagination">
-        <button class="page-btn">◀</button>
-        <button class="page-btn active">1</button>
-        <button class="page-btn">2</button>
-        <button class="page-btn">3</button>
-        <button class="page-btn">4</button>
-        <button class="page-btn">5</button>
-        <button class="page-btn">▶</button>
+        {{if .Pagination.HasPrev}}
+        <button class="page-btn" onclick="goToPage({{sub .Pagination.CurrentPage 1}})">◀</button>
+        {{else}}
+        <button class="page-btn" disabled style="opacity: 0.3; cursor: not-allowed;">◀</button>
+        {{end}}
+        
+        {{range .Pagination.Pages}}
+        {{if eq . $.Pagination.CurrentPage}}
+        <button class="page-btn active">{{.}}</button>
+        {{else}}
+        <button class="page-btn" onclick="goToPage({{.}})">{{.}}</button>
+        {{end}}
+        {{end}}
+        
+        {{if .Pagination.HasNext}}
+        <button class="page-btn" onclick="goToPage({{add .Pagination.CurrentPage 1}})">▶</button>
+        {{else}}
+        <button class="page-btn" disabled style="opacity: 0.3; cursor: not-allowed;">▶</button>
+        {{end}}
     </div>
 </div>
 
@@ -381,6 +396,43 @@
 </div>
 
 <script>
+// URL 파라미터로 성공/에러 메시지 표시
+window.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const error = urlParams.get('error');
+    const successMessage = document.getElementById('successMessage');
+    
+    if (success === 'add') {
+        successMessage.textContent = '✅ 새 고객이 성공적으로 추가되었습니다.';
+        successMessage.style.display = 'block';
+        successMessage.style.background = '#e8f5e9';
+        successMessage.style.borderColor = '#4caf50';
+        successMessage.style.color = '#2e7d32';
+        setTimeout(() => {
+            successMessage.style.display = 'none';
+        }, 3000);
+    } else if (error === 'add') {
+        successMessage.textContent = '❌ 고객 추가에 실패했습니다.';
+        successMessage.style.display = 'block';
+        successMessage.style.background = '#ffebee';
+        successMessage.style.borderColor = '#f44336';
+        successMessage.style.color = '#c62828';
+        setTimeout(() => {
+            successMessage.style.display = 'none';
+        }, 3000);
+    } else if (error === 'invalid_phone') {
+        successMessage.textContent = '❌ 전화번호는 010으로 시작하는 11자리 숫자여야 합니다.';
+        successMessage.style.display = 'block';
+        successMessage.style.background = '#ffebee';
+        successMessage.style.borderColor = '#f44336';
+        successMessage.style.color = '#c62828';
+        setTimeout(() => {
+            successMessage.style.display = 'none';
+        }, 3000);
+    }
+});
+
 let currentCustomerId = null;
 let currentCustomerAbsentCount = 0;
 let currentInputMode = 'direct';
@@ -1314,30 +1366,15 @@ document.addEventListener('DOMContentLoaded', function() {
 let currentFilter = 'new';
 
 function filterCustomers(filterType) {
-    currentFilter = filterType;
-    
-    // 모든 필터 버튼 비활성화
-    document.querySelectorAll('.customer-filter-btn').forEach(btn => {
-        btn.style.background = 'white';
-        btn.style.borderColor = '#ddd';
-        btn.style.color = '#666';
-        btn.classList.remove('active');
-    });
-    
-    // 선택된 버튼 활성화
-    const activeBtn = document.querySelector(`[data-filter="${filterType}"]`);
-    if (activeBtn) {
-        activeBtn.style.background = '#4a90e2';
-        activeBtn.style.borderColor = '#4a90e2';
-        activeBtn.style.color = 'white';
-        activeBtn.classList.add('active');
-    }
-    
-    // TODO: 실제로는 서버에서 필터링된 데이터를 가져와야 함
-    console.log(`고객 필터 변경: ${filterType}`);
-    
-    // 여기서 페이지를 다시 로드하거나 AJAX로 데이터를 가져올 수 있습니다
-    // 예: window.location.href = `/customers?filter=${filterType}`;
+    // 필터 파라미터와 함께 페이지 리로드
+    window.location.href = `/customers?filter=${filterType}`;
+}
+
+// 페이지 이동
+function goToPage(page) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentFilter = urlParams.get('filter') || 'new';
+    window.location.href = `/customers?filter=${currentFilter}&page=${page}`;
 }
 
 </script>

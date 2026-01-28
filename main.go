@@ -79,6 +79,7 @@ func main() {
 	mux.HandleFunc("/branches/detail", middleware.RequireAuthRecover(branches.DetailHandler))                           // 지점 상세
 	mux.HandleFunc("/branches/edit", middleware.RequireAuthRecover(branches.EditHandler))                               // 지점 수정
 	mux.HandleFunc("/branches/add", middleware.RequireAuthRecover(branches.AddHandler))                                 // 지점 추가
+	mux.HandleFunc("/branches/delete", middleware.RequireAuthRecover(branches.DeleteHandler))                           // 지점 삭제
 	mux.HandleFunc("/integrations", middleware.RequireAuthRecover(integrations.Handler))                                // 외부 시스템 연동
 	mux.HandleFunc("/integrations/configure", middleware.RequireAuthRecover(integrations.ConfigureHandler))             // 연동 설정
 	mux.HandleFunc("/integrations/manage", middleware.RequireAuthRecover(integrations.ConfigureHandler))                // 연동 관리 (설정과 동일)

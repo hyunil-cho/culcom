@@ -36,6 +36,7 @@ type PageData struct {
 	Customers       []Customer
 	DefaultTemplate string // 기본 템플릿 내용
 	Pagination      utils.Pagination
+	CurrentFilter   string // 현재 적용된 필터 (new/all)
 }
 
 // DetailPageData - 고객 상세 페이지 데이터 구조체

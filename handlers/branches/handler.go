@@ -329,6 +329,54 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/error", http.StatusSeeOther)
 }
 
+// DeleteHandler - 지점 삭제 핸들러
+func DeleteHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		log.Printf("허용되지 않은 HTTP 메서드: %s", r.Method)
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// ID 파라미터 가져오기
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		log.Println("지점 ID가 제공되지 않음")
+		http.Redirect(w, r, "/branches?error=invalid_id", http.StatusSeeOther)
+		return
+	}
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		log.Printf("잘못된 지점 ID: %s", idStr)
+		http.Redirect(w, r, "/branches?error=invalid_id", http.StatusSeeOther)
+		return
+	}
+
+	// DB에서 지점 삭제
+	rowsAffected, err := database.DeleteBranch(id)
+	if err != nil {
+		log.Printf("지점 삭제 오류: %v", err)
+		http.Redirect(w, r, "/branches?error=delete_failed", http.StatusSeeOther)
+		return
+	}
+
+	if rowsAffected == 0 {
+		log.Printf("삭제할 지점을 찾을 수 없음 - ID: %d", id)
+		http.Redirect(w, r, "/branches?error=not_found", http.StatusSeeOther)
+		return
+	}
+
+	log.Printf("지점 삭제 성공 - ID: %d", id)
+
+	// 세션에 플래시 메시지 저장
+	flashSession, _ := config.SessionStore.Get(r, "flash-session")
+	flashSession.AddFlash("지점이 성공적으로 삭제되었습니다.", "success")
+	flashSession.Save(r, w)
+
+	// 목록 페이지로 리다이렉트
+	http.Redirect(w, r, "/branches", http.StatusSeeOther)
+}
+
 // containsIgnoreCase - 대소문자 구분 없이 문자열 포함 여부 확인
 func containsIgnoreCase(str, substr string) bool {
 	return strings.Contains(strings.ToLower(str), strings.ToLower(substr))

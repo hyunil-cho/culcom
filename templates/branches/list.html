@@ -69,6 +69,7 @@
                     <td>
                         <a href="/branches/detail?id={{.ID}}" class="btn-table-action">상세</a>
                         <a href="/branches/edit?id={{.ID}}" class="btn-table-action">수정</a>
+                        <button class="btn-table-action" onclick="confirmDelete('{{.ID}}', '{{.Name}}')" style="background: #f44336; color: white;">삭제</button>
                     </td>
                 </tr>
                 {{end}}
@@ -134,7 +135,28 @@
     </div>
 </div>
 
+<!-- 삭제 확인 모달 -->
+<div id="deleteModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header" style="border-bottom: 2px solid #f44336;">
+            <h3>⚠️ 삭제 확인</h3>
+        </div>
+        <div class="modal-body" style="padding: 2rem; text-align: center;">
+            <p style="font-size: 1.1rem; color: #333; margin-bottom: 1rem;">
+                <strong id="deleteBranchName"></strong> 지점을 삭제하시겠습니까?
+            </p>
+            <p style="color: #f44336; font-size: 0.9rem;">이 작업은 되돌릴 수 없습니다.</p>
+        </div>
+        <div style="padding: 1rem 2rem; border-top: 1px solid #e0e0e0; display: flex; justify-content: center; gap: 10px;">
+            <button class="btn-secondary" onclick="closeDeleteModal()" style="padding: 0.75rem 2rem;">취소</button>
+            <button class="btn-primary" onclick="deleteBranch()" style="padding: 0.75rem 2rem; background: #f44336;">삭제</button>
+        </div>
+    </div>
+</div>
+
 <script>
+    let deleteTargetId = null;
+
     {{if .SuccessMessage}}
     // 서버에서 전달된 성공 메시지가 있으면 모달 표시
     window.addEventListener('DOMContentLoaded', function() {
@@ -146,12 +168,37 @@
     function closeSuccessModal() {
         document.getElementById('successModal').style.display = 'none';
     }
+
+    function confirmDelete(branchId, branchName) {
+        deleteTargetId = branchId;
+        document.getElementById('deleteBranchName').textContent = branchName;
+        document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        deleteTargetId = null;
+        document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    function deleteBranch() {
+        if (!deleteTargetId) return;
+        
+        // 폼 생성 및 제출
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/branches/delete?id=' + deleteTargetId;
+        document.body.appendChild(form);
+        form.submit();
+    }
     
     // 모달 외부 클릭 시 닫기
     window.onclick = function(event) {
-        const modal = document.getElementById('successModal');
-        if (event.target == modal) {
+        const successModal = document.getElementById('successModal');
+        const deleteModal = document.getElementById('deleteModal');
+        if (event.target == successModal) {
             closeSuccessModal();
+        } else if (event.target == deleteModal) {
+            closeDeleteModal();
         }
     }
 </script>

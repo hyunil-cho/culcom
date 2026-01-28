@@ -119,15 +119,22 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// TODO: 실제로는 DB에 저장
-		// template := MessageTemplate{
-		// 	Name:        r.FormValue("name"),
-		// 	Category:    r.FormValue("category"),
-		// 	Content:     r.FormValue("content"),
-		// 	Description: r.FormValue("description"),
-		// 	IsActive:    r.FormValue("is_active") == "on",
-		// }
-		// database.SaveMessageTemplate(&template)
+		// 세션에서 선택된 지점 정보 가져오기
+		branchCode := middleware.GetSelectedBranch(r)
+
+		// 폼 데이터
+		name := r.FormValue("name")
+		content := r.FormValue("content")
+		description := r.FormValue("description")
+		isActive := r.FormValue("is_active") == "on"
+
+		// DB에 저장
+		err = database.SaveMessageTemplate(branchCode, name, content, description, isActive)
+		if err != nil {
+			log.Printf("템플릿 저장 오류: %v", err)
+			http.Redirect(w, r, "/message-templates?error=add", http.StatusSeeOther)
+			return
+		}
 
 		http.Redirect(w, r, "/message-templates?success=add", http.StatusSeeOther)
 		return
@@ -138,18 +145,31 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 
 // EditHandler 메시지 템플릿 수정 페이지
 func EditHandler(w http.ResponseWriter, r *http.Request) {
-	_ = r.URL.Query().Get("id") // TODO: DB 조회 시 사용
+	idStr := r.URL.Query().Get("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Redirect(w, r, "/message-templates?error=invalid_id", http.StatusSeeOther)
+		return
+	}
 
 	if r.Method == http.MethodGet {
-		// TODO: 실제로는 DB에서 템플릿 조회
+		// DB에서 템플릿 조회
+		dbTemplate, err := database.GetMessageTemplateByID(id)
+		if err != nil {
+			log.Printf("템플릿 조회 오류: %v", err)
+			http.Redirect(w, r, "/message-templates?error=invalid_id", http.StatusSeeOther)
+			return
+		}
+
+		// DB 템플릿을 핸들러 모델로 변환
 		template := &MessageTemplate{
-			ID:          1,
-			Name:        "예약 확인 메시지",
-			Content:     "{이름}님, {날짜} {시간}에 {지점명} 예약이 완료되었습니다.",
-			Description: "고객 예약 확인용 메시지",
-			IsActive:    true,
-			CreatedAt:   "2024-01-15 10:00:00",
-			UpdatedAt:   "2024-01-15 10:00:00",
+			ID:          dbTemplate.ID,
+			Name:        dbTemplate.Name,
+			Content:     dbTemplate.Content,
+			Description: dbTemplate.Description,
+			IsActive:    dbTemplate.IsActive,
+			CreatedAt:   dbTemplate.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt:   dbTemplate.UpdatedAt.Format("2006-01-02 15:04:05"),
 		}
 
 		// DB에서 플레이스홀더 목록 조회
@@ -191,8 +211,22 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// TODO: 실제로는 DB 업데이트
-		// database.UpdateMessageTemplate(id, template)
+		// 세션에서 선택된 지점 정보 가져오기
+		branchCode := middleware.GetSelectedBranch(r)
+
+		// 폼 데이터
+		name := r.FormValue("name")
+		content := r.FormValue("content")
+		description := r.FormValue("description")
+		isActive := r.FormValue("is_active") == "on"
+
+		// DB 업데이트
+		err = database.UpdateMessageTemplate(branchCode, id, name, content, description, isActive)
+		if err != nil {
+			log.Printf("템플릿 수정 오류: %v", err)
+			http.Redirect(w, r, "/message-templates?error=edit", http.StatusSeeOther)
+			return
+		}
 
 		http.Redirect(w, r, "/message-templates?success=edit", http.StatusSeeOther)
 		return

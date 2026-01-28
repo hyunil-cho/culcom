@@ -55,19 +55,22 @@ func UpdateBranch(id int, name, alias string) (int64, error) {
 // 파라미터: id (지점 ID)
 // 반환: 영향받은 행 수, 에러
 func DeleteBranch(id int) (int64, error) {
-	// TODO: 실제 쿼리 구현
-	// 예시:
-	// query := `DELETE FROM branches WHERE id = ?`
-	// result, err := Exec(query, id)
-	// if err != nil {
-	// 	return 0, err
-	// }
-	// return result.RowsAffected()
+	query := `DELETE FROM branches WHERE seq = ?`
 
-	log.Printf("[DB 추상화] DeleteBranch 호출 - id: %d", id)
+	result, err := DB.Exec(query, id)
+	if err != nil {
+		log.Printf("DeleteBranch error: %v", err)
+		return 0, err
+	}
 
-	// 임시로 성공 응답 (실제 구현 전까지)
-	return 1, nil
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("DeleteBranch get rows affected error: %v", err)
+		return 0, err
+	}
+
+	log.Printf("DeleteBranch success - ID: %d, Rows: %d", id, rowsAffected)
+	return rowsAffected, nil
 }
 
 // GetBranchByID - ID로 지점 조회

@@ -19,7 +19,6 @@
     <a href="/branches" class="btn-back">← 목록으로</a>
     <div class="action-group">
         <a href="/branches/edit?id={{.Branch.ID}}" class="btn-primary">✏️ 수정</a>
-        <button class="btn-danger" onclick="showDeleteModal('{{.Branch.Name}}', '{{.Branch.ID}}')">🗑️ 삭제</button>
     </div>
 </div>
 
@@ -52,10 +51,6 @@
             <div class="detail-value"><strong>{{.Branch.Name}}</strong></div>
         </div>
         <div class="detail-row">
-            <div class="detail-label">별칭</div>
-            <div class="detail-value">{{.Branch.Alias}}</div>
-        </div>
-        <div class="detail-row">
             <div class="detail-label">등록일</div>
             <div class="detail-value">{{.Branch.RegisterDate}}</div>
         </div>
@@ -63,24 +58,6 @@
 </div>
 <script>
     let branchIdToDelete = null;
-
-    function showDeleteModal(branchName, branchId) {
-        branchIdToDelete = branchId;
-        document.getElementById('branchNameToDelete').textContent = branchName;
-        document.getElementById('deleteModal').style.display = 'flex';
-    }
-
-    function closeDeleteModal() {
-        document.getElementById('deleteModal').style.display = 'none';
-        branchIdToDelete = null;
-    }
-
-    function confirmDelete() {
-        if (branchIdToDelete) {
-            alert('삭제 기능은 아직 구현되지 않았습니다.');
-            closeDeleteModal();
-        }
-    }
 
     window.onclick = function(event) {
         const modal = document.getElementById('deleteModal');

@@ -1,6 +1,7 @@
 package customers
 
 import (
+	"backoffice/database"
 	"backoffice/handlers/errorhandler"
 	"backoffice/middleware"
 	"backoffice/utils"
@@ -8,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 var Templates *template.Template
@@ -48,46 +48,53 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// URL에서 지점 파라미터 가져오기
-	branchFilter := r.URL.Query().Get("branch")
-
-	// 지점별 필터링
-	var filteredCustomers []Customer
-	if branchFilter == "" {
-		// 전체 고객 (필터 없음)
-		filteredCustomers = dummyCustomers
-	} else {
-		// 선택된 지점의 고객만 필터링
-		for _, customer := range dummyCustomers {
-			if customer.Branch == branchFilter {
-				filteredCustomers = append(filteredCustomers, customer)
-			}
-		}
+	// 필터 파라미터 가져오기 (기본값: "new")
+	filter := r.URL.Query().Get("filter")
+	if filter == "" {
+		filter = "new"
 	}
 
-	// ID가 972337인 고객의 LastVisit를 현재시간 - 30분으로 동적 설정
-	now := time.Now()
-	thirtyMinutesAgo := now.Add(-30 * time.Minute)
-	lastVisitStr := thirtyMinutesAgo.Format("2006-01-02 15:04")
+	// 세션에서 선택된 지점 정보 가져오기
+	branchCode := middleware.GetSelectedBranch(r)
 
-	for i := range filteredCustomers {
-		if filteredCustomers[i].ID == "972337" {
-			filteredCustomers[i].LastVisit = lastVisitStr
-			break
-		}
-	}
-
-	// 페이징 처리
+	// 페이징을 위한 전체 고객 수 조회
 	itemsPerPage := 10
-	totalItems := len(filteredCustomers)
+	totalItems, err := database.GetCustomersCountByBranch(branchCode, filter)
+	if err != nil {
+		log.Printf("고객 수 조회 오류: %v", err)
+		http.Error(w, "고객 수 조회 실패", http.StatusInternalServerError)
+		return
+	}
+
+	// 페이징 정보 계산
 	pagination := utils.CalculatePagination(currentPage, totalItems, itemsPerPage)
 
-	// 페이징에 따른 슬라이스 범위 계산
-	startIdx, endIdx := utils.GetSliceRange(pagination.CurrentPage, itemsPerPage, totalItems)
+	// DB에서 현재 페이지의 고객 목록만 조회
+	dbCustomers, err := database.GetCustomersByBranch(branchCode, filter, currentPage, itemsPerPage)
+	if err != nil {
+		log.Printf("고객 목록 조회 오류: %v", err)
+		http.Error(w, "고객 목록 조회 실패", http.StatusInternalServerError)
+		return
+	}
 
+	// DB 고객을 핸들러 모델로 변환
 	var customers []Customer
-	if startIdx < totalItems {
-		customers = filteredCustomers[startIdx:endIdx]
+	for _, dbCust := range dbCustomers {
+		customer := Customer{
+			ID:           strconv.Itoa(dbCust.Seq),
+			Name:         dbCust.Name,
+			Phone:        dbCust.PhoneNumber,
+			CallCount:    dbCust.CallCount,
+			RegisterDate: dbCust.CreatedDate,
+			LastVisit:    dbCust.LastUpdateDate,
+			Status:       "신규", // TODO: 상태 로직 추가 필요
+			Email:        "-",
+			AdName:       "-",
+		}
+		if dbCust.Comment != nil {
+			customer.Email = *dbCust.Comment // 임시로 comment를 email 필드에 표시
+		}
+		customers = append(customers, customer)
 	}
 
 	// TODO: 실제로는 DB에서 기본 템플릿을 조회해야 함
@@ -101,6 +108,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		Customers:       customers,
 		DefaultTemplate: defaultTemplate,
 		Pagination:      pagination,
+		CurrentFilter:   filter,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "customers/list.html", data); err != nil {
@@ -205,16 +213,80 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// AddHandler - 고객 추가 페이지 핸들러
+// AddHandler - 워크인 고객 추가 페이지 핸들러
 func AddHandler(w http.ResponseWriter, r *http.Request) {
-	data := PageData{
-		BasePageData: middleware.GetBasePageData(r),
-		Title:        "고객 추가",
-		ActiveMenu:   "customers",
+	if r.Method == http.MethodGet {
+		data := PageData{
+			BasePageData: middleware.GetBasePageData(r),
+			Title:        "워크인 고객 추가",
+			ActiveMenu:   "customers",
+		}
+
+		if err := Templates.ExecuteTemplate(w, "customers/add.html", data); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.Println("Template error:", err)
+		}
+		return
 	}
 
-	if err := Templates.ExecuteTemplate(w, "customers/add.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Println("Template error:", err)
+	if r.Method == http.MethodPost {
+		// 폼 데이터 추출
+		err := r.ParseForm()
+		if err != nil {
+			http.Error(w, "잘못된 요청입니다", http.StatusBadRequest)
+			return
+		}
+
+		// 세션에서 선택된 지점 정보 가져오기
+		branchCode := middleware.GetSelectedBranch(r)
+
+		// 폼 데이터
+		name := r.FormValue("name")
+		phoneNumber := r.FormValue("phone_number")
+		comment := r.FormValue("comment")
+
+		// 유효성 검사
+		if name == "" || phoneNumber == "" {
+			log.Println("고객 추가 실패: 필수 필드 누락")
+			http.Redirect(w, r, "/customers?error=add", http.StatusSeeOther)
+			return
+		}
+
+		// 전화번호 형식 검증 (010으로 시작하는 11자리 숫자)
+		if !isValidPhoneNumber(phoneNumber) {
+			log.Printf("고객 추가 실패: 잘못된 전화번호 형식 - %s", phoneNumber)
+			http.Redirect(w, r, "/customers?error=invalid_phone", http.StatusSeeOther)
+			return
+		}
+
+		// DB에 저장
+		_, err = database.InsertCustomer(branchCode, name, phoneNumber, comment)
+		if err != nil {
+			log.Printf("고객 저장 오류: %v", err)
+			http.Redirect(w, r, "/customers?error=add", http.StatusSeeOther)
+			return
+		}
+
+		log.Printf("고객 추가 성공 - Name: %s, Phone: %s", name, phoneNumber)
+		http.Redirect(w, r, "/customers?success=add", http.StatusSeeOther)
+		return
 	}
+
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+// isValidPhoneNumber - 전화번호 형식 검증 (010으로 시작하는 11자리 숫자)
+func isValidPhoneNumber(phone string) bool {
+	if len(phone) != 11 {
+		return false
+	}
+	if phone[0:3] != "010" {
+		return false
+	}
+	for _, c := range phone {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }
