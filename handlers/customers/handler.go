@@ -5,9 +5,7 @@ import (
 	"backoffice/database"
 	"backoffice/handlers/errorhandler"
 	"backoffice/middleware"
-	"backoffice/services/sms"
 	"backoffice/utils"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -145,74 +143,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := Templates.ExecuteTemplate(w, "customers/list.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Println("Template error:", err)
-	}
-}
-
-// DetailHandler - 고객 상세 페이지 핸들러
-func DetailHandler(w http.ResponseWriter, r *http.Request) {
-	// URL에서 ID 추출 (예: /customers/detail?id=972337)
-	id := r.URL.Query().Get("id")
-	if id == "" {
-		http.Redirect(w, r, "/customers", http.StatusSeeOther)
-		return
-	}
-
-	customer := getCustomerByID(id)
-	if customer == nil {
-		errorhandler.Handler404(w, r)
-		return
-	}
-
-	// 샘플 영업 히스토리 데이터
-	sampleHistory := []SalesHistory{
-		{
-			Date:    "2026-01-24",
-			Agent:   "김영업",
-			Content: "제품 문의 전화 상담",
-			Detail:  "A 제품에 대한 상세 사양 및 가격 문의. 대량 구매 가능성 있음.",
-			Comment: "재방문 예정",
-		},
-		{
-			Date:    "2026-01-22",
-			Agent:   "박차장",
-			Content: "제안서 발표 미팅",
-			Detail:  "본사 방문하여 신규 프로젝트 제안서 발표 진행. 긍정적인 반응.",
-			Comment: "긍정적 반응, 다음 주 후속 미팅",
-		},
-		{
-			Date:    "2026-01-20",
-			Agent:   "김영업",
-			Content: "견적서 발송",
-			Detail:  "요청하신 제품 견적서 이메일로 발송 완료.",
-			Comment: "검토 중",
-		},
-		{
-			Date:    "2026-01-18",
-			Agent:   "이대리",
-			Content: "고객사 방문 상담",
-			Detail:  "제품 데모 시연 및 도입 관련 상담 진행.",
-			Comment: "데모 만족, 견적 요청",
-		},
-		{
-			Date:    "2026-01-15",
-			Agent:   "최과장",
-			Content: "이메일 문의 응대",
-			Detail:  "제품 브로슈어 및 기술 스펙 자료 전달.",
-			Comment: "자료 검토 후 연락 예정",
-		},
-	}
-
-	data := DetailPageData{
-		BasePageData: middleware.GetBasePageData(r),
-		Title:        "고객 상세",
-		ActiveMenu:   "customers",
-		Customer:     *customer,
-		SalesHistory: sampleHistory,
-	}
-
-	if err := Templates.ExecuteTemplate(w, "customers/detail.html", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Println("Template error:", err)
 	}
@@ -600,121 +530,6 @@ func GetSMSSenderNumbersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	response += `]}`
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(response))
-}
-
-// SendSMSHandler - SMS 메시지 전송 핸들러
-func SendSMSHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// 세션에서 선택된 지점 정보 가져오기
-	branchCode := middleware.GetSelectedBranch(r)
-	if branchCode == "" {
-		log.Println("지점 정보 없음")
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "지점 정보가 없습니다."}`))
-		return
-	}
-
-	// 요청 파라미터 가져오기
-	customerSeqStr := r.FormValue("customer_seq")
-	senderPhone := r.FormValue("sender_phone")
-	receiverPhone := r.FormValue("receiver_phone")
-	message := r.FormValue("message")
-
-	// 파라미터 검증
-	customerSeq, err := strconv.Atoi(customerSeqStr)
-	if err != nil || customerSeq <= 0 {
-		log.Printf("잘못된 customer_seq: %s", customerSeqStr)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "잘못된 고객 정보입니다."}`))
-		return
-	}
-
-	if senderPhone == "" {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "발신번호를 입력해주세요."}`))
-		return
-	}
-
-	if receiverPhone == "" {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "수신번호가 없습니다."}`))
-		return
-	}
-
-	if message == "" {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "메시지 내용을 입력해주세요."}`))
-		return
-	}
-
-	// SMS 설정 조회
-	smsConfig, err := database.GetSMSConfig(branchCode)
-	if err != nil {
-		log.Printf("SMS 설정 조회 오류: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "SMS 설정을 조회할 수 없습니다."}`))
-		return
-	}
-
-	if smsConfig == nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "SMS 설정이 등록되지 않았습니다."}`))
-		return
-	}
-
-	// 활성화 상태 확인
-	if !smsConfig.IsActive {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "마이문자 연동이 비활성화 상태입니다.\n연동 관리 페이지에서 마이문자를 활성화해주세요."}`))
-		return
-	}
-
-	// SMS 전송
-	sendReq := sms.SendRequest{
-		AccountID:     smsConfig.AccountID,
-		Password:      smsConfig.Password,
-		SenderPhone:   senderPhone,
-		ReceiverPhone: receiverPhone,
-		Message:       message,
-	}
-
-	sendResp, err := sms.Send(sendReq)
-	if err != nil {
-		log.Printf("SMS 전송 오류: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "SMS 전송 중 오류가 발생했습니다."}`))
-		return
-	}
-
-	if !sendResp.Success {
-		log.Printf("SMS 전송 실패: %s (코드: %s)", sendResp.Message, sendResp.Code)
-		errorMsg := fmt.Sprintf("SMS 전송 실패: %s", sendResp.Message)
-		response := fmt.Sprintf(`{"success": false, "error": %q}`, errorMsg)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(response))
-		return
-	}
-
-	// 성공 응답
-	log.Printf("SMS 전송 성공 - 고객 ID: %d, 수신번호: %s", customerSeq, receiverPhone)
-	response := fmt.Sprintf(`{"success": true, "message": "메시지가 성공적으로 전송되었습니다.", "nums": %q, "cols": %q}`, sendResp.Nums, sendResp.Cols)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(response))

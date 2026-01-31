@@ -208,8 +208,8 @@ INSERT INTO `placeholders` (`name`, `comment`, `examples`, `value`) VALUES
 ('{{현재날짜시간}}', '현재 날짜와 시각', '2026-01-27 14:30', 'system.current_datetime');
 
 -- 관리자 계정 (root/root - 평문 저장, 테스트용)
-INSERT INTO `user_info` (`branch_seq`, `user_id`, `user_password`) VALUES
-(NULL, 'root', 'root');
+INSERT INTO `user_info` ('seq',`branch_seq`, `user_id`, `user_password`) VALUES
+(1, NULL, 'root', 'root');
 
 ALTER TABLE customers 
 MODIFY COLUMN createdDate datetime NOT NULL DEFAULT current_timestamp() COMMENT '고객 추가 일시',

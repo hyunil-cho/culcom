@@ -1408,7 +1408,7 @@ async function sendTextMessage() {
         formData.append('receiver_phone', currentTextCustomerPhone);
         formData.append('message', message);
         
-        const sendResponse = await fetch('/api/customers/send-sms', {
+        const sendResponse = await fetch('/api/service/sms', {
             method: 'POST',
             body: formData
         });
@@ -1612,10 +1612,23 @@ function confirmInterviewDateTime() {
             // 모달 닫기
             document.getElementById('interviewConfirmModal').style.display = 'none';
             
+            // 고객 정보 저장 (SMS 모달용)
+            const savedCustomerId = pendingInterviewCustomerId;
+            const savedCustomerName = pendingInterviewCustomerName;
+            
+            // 고객 전화번호 가져오기
+            const customerRow = document.querySelector(`tr[data-customer-id="${savedCustomerId}"]`);
+            let savedCustomerPhone = '';
+            if (customerRow) {
+                const phoneCell = customerRow.querySelector(`#phone-${savedCustomerId} .phone-number`);
+                if (phoneCell) {
+                    savedCustomerPhone = phoneCell.textContent.trim();
+                }
+            }
+            
             // 신규고객 페이지인 경우 해당 행 제거
             const currentFilter = '{{.CurrentFilter}}';
             if (currentFilter === 'new') {
-                const customerRow = document.querySelector(`tr[data-customer-id="${pendingInterviewCustomerId}"]`);
                 if (customerRow) {
                     // 즉시 제거
                     customerRow.remove();
@@ -1632,6 +1645,11 @@ function confirmInterviewDateTime() {
             pendingInterviewCustomerId = null;
             pendingInterviewDateTime = null;
             pendingInterviewCustomerName = null;
+            
+            // SMS 모달 자동 열기
+            if (savedCustomerPhone) {
+                openTextModal(savedCustomerId, savedCustomerName, savedCustomerPhone);
+            }
         } else {
             alert('예약 저장에 실패했습니다.');
         }

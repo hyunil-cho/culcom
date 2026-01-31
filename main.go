@@ -10,6 +10,7 @@ import (
 	"backoffice/handlers/integrations"
 	"backoffice/handlers/login"
 	"backoffice/handlers/messagetemplates"
+	"backoffice/handlers/services"
 	"backoffice/middleware"
 	"encoding/gob"
 	"html/template"
@@ -72,7 +73,6 @@ func main() {
 	// 라우트 설정 (인증 필요한 라우트는 RequireAuthRecover 미들웨어 적용)
 	mux.HandleFunc("/dashboard", middleware.RequireAuthRecover(home.Handler))                                           // 대시보드
 	mux.HandleFunc("/customers", middleware.RequireAuthRecover(customers.Handler))                                      // 고객 관리
-	mux.HandleFunc("/customers/detail", middleware.RequireAuthRecover(customers.DetailHandler))                         // 고객 상세
 	mux.HandleFunc("/customers/edit", middleware.RequireAuthRecover(customers.EditHandler))                             // 고객 수정
 	mux.HandleFunc("/customers/add", middleware.RequireAuthRecover(customers.AddHandler))                               // 고객 추가
 	mux.HandleFunc("/api/customers/comment", middleware.RequireAuthRecover(customers.UpdateCommentHandler))             // 고객 코멘트 업데이트
@@ -81,7 +81,7 @@ func main() {
 	mux.HandleFunc("/api/customers/update-name", middleware.RequireAuthRecover(customers.UpdateCustomerNameHandler))    // 고객 이름 업데이트
 	mux.HandleFunc("/api/customers/check-sms", middleware.RequireAuthRecover(customers.CheckSMSIntegrationHandler))     // SMS 연동 상태 확인
 	mux.HandleFunc("/api/customers/sms-senders", middleware.RequireAuthRecover(customers.GetSMSSenderNumbersHandler))   // SMS 발신번호 목록 조회
-	mux.HandleFunc("/api/customers/send-sms", middleware.RequireAuthRecover(customers.SendSMSHandler))                  // SMS 메시지 전송
+	mux.HandleFunc("/api/service/sms", middleware.RequireAuthRecover(services.SendSMSHandler))                          // SMS 메시지 전송
 	mux.HandleFunc("/branches", middleware.RequireAuthRecover(branches.Handler))                                        // 지점 관리
 	mux.HandleFunc("/branches/detail", middleware.RequireAuthRecover(branches.DetailHandler))                           // 지점 상세
 	mux.HandleFunc("/branches/edit", middleware.RequireAuthRecover(branches.EditHandler))                               // 지점 수정
