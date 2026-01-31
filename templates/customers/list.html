@@ -989,6 +989,14 @@ function updateCustomerName() {
         return;
     }
     
+    // 버튼 비활성화 (중복 클릭 방지)
+    const confirmBtn = event.target;
+    const originalText = confirmBtn.textContent;
+    confirmBtn.disabled = true;
+    confirmBtn.style.opacity = '0.6';
+    confirmBtn.style.cursor = 'not-allowed';
+    confirmBtn.textContent = '처리중...';
+    
     // 서버에 저장
     const formData = new FormData();
     formData.append('customer_seq', customerId);
@@ -1030,6 +1038,13 @@ function updateCustomerName() {
     .catch(error => {
         console.error('Error:', error);
         alert('이름 변경 중 오류가 발생했습니다.');
+    })
+    .finally(() => {
+        // 버튼 재활성화
+        confirmBtn.disabled = false;
+        confirmBtn.style.opacity = '1';
+        confirmBtn.style.cursor = 'pointer';
+        confirmBtn.textContent = originalText;
     });
 }
 
@@ -1058,6 +1073,14 @@ function selectCaller(customerId, letter) {
 // CALLER 선택 확인
 function confirmCallerSelection() {
     const { customerId, letter, buttonElement } = pendingCallerSelection;
+    
+    // 버튼 비활성화 (중복 클릭 방지)
+    const confirmBtn = event.target;
+    const originalText = confirmBtn.textContent;
+    confirmBtn.disabled = true;
+    confirmBtn.style.opacity = '0.6';
+    confirmBtn.style.cursor = 'not-allowed';
+    confirmBtn.textContent = '처리중...';
     
     // 고객별 CALLER 정보 저장
     customerCallerMap[customerId] = letter;
@@ -1111,6 +1134,13 @@ function confirmCallerSelection() {
     .catch(error => {
         console.error('Error:', error);
         alert('통화 횟수 업데이트 중 오류가 발생했습니다.');
+    })
+    .finally(() => {
+        // 버튼 재활성화
+        confirmBtn.disabled = false;
+        confirmBtn.style.opacity = '1';
+        confirmBtn.style.cursor = 'pointer';
+        confirmBtn.textContent = originalText;
     });
     
     // 모달 닫기
@@ -1520,11 +1550,6 @@ function openInterviewConfirmModal(customerId) {
 
 // 인터뷰 확정 취소
 function cancelInterviewConfirm() {
-    // 입력 필드 초기화
-    if (pendingInterviewCustomerId) {
-        document.getElementById(`interview-${pendingInterviewCustomerId}`).value = '';
-    }
-    
     // 모달 닫기
     document.getElementById('interviewConfirmModal').style.display = 'none';
     
@@ -1554,6 +1579,14 @@ function confirmInterviewDateTime() {
         return;
     }
     
+    // 버튼 비활성화 (중복 클릭 방지)
+    const confirmBtn = event.target;
+    const originalText = confirmBtn.textContent;
+    confirmBtn.disabled = true;
+    confirmBtn.style.opacity = '0.6';
+    confirmBtn.style.cursor = 'not-allowed';
+    confirmBtn.textContent = '처리중...';
+    
     // Date 객체 생성 후 ISO 8601 형식으로 변환 (2026-01-29T14:30:00)
     const dateObj = new Date(parsedDate.year, parsedDate.month - 1, parsedDate.day, parsedDate.hour, parsedDate.minute, 0);
     const isoDateTime = dateObj.toISOString().slice(0, 19);
@@ -1573,8 +1606,27 @@ function confirmInterviewDateTime() {
         if (data.success) {
             alert(`${pendingInterviewCustomerName}님의 인터뷰 일시가 확정되었습니다.`);
             
+            // 입력 필드 초기화 (확정 완료 후에만)
+            document.getElementById(`interview-${pendingInterviewCustomerId}`).value = '';
+            
             // 모달 닫기
             document.getElementById('interviewConfirmModal').style.display = 'none';
+            
+            // 신규고객 페이지인 경우 해당 행 제거
+            const currentFilter = '{{.CurrentFilter}}';
+            if (currentFilter === 'new') {
+                const customerRow = document.querySelector(`tr[data-customer-id="${pendingInterviewCustomerId}"]`);
+                if (customerRow) {
+                    // 즉시 제거
+                    customerRow.remove();
+                    
+                    // 테이블이 비어있으면 안내 메시지 표시
+                    const tbody = document.querySelector('.data-table tbody');
+                    if (tbody && tbody.children.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 2rem; color: #999;">고객이 없습니다.</td></tr>';
+                    }
+                }
+            }
             
             // 임시 데이터 초기화
             pendingInterviewCustomerId = null;
@@ -1587,6 +1639,13 @@ function confirmInterviewDateTime() {
     .catch(error => {
         console.error('Error:', error);
         alert('예약 저장 중 오류가 발생했습니다.');
+    })
+    .finally(() => {
+        // 버튼 재활성화
+        confirmBtn.disabled = false;
+        confirmBtn.style.opacity = '1';
+        confirmBtn.style.cursor = 'pointer';
+        confirmBtn.textContent = originalText;
     });
 }
 

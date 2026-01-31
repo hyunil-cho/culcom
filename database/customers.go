@@ -89,6 +89,9 @@ func GetCustomersCountByBranch(branchCode, filter, searchType, searchKeyword str
 	// 필터에 따라 조건 추가
 	if filter == "new" {
 		query += ` AND call_count < 5`
+		// 예약이 확정된 고객 제외
+		query += ` AND seq NOT IN (SELECT customer_id FROM reservation_info WHERE branch_seq = ?)`
+		args = append(args, branchSeq)
 	}
 
 	// 검색 조건 추가
@@ -153,6 +156,9 @@ func GetCustomersByBranch(branchCode, filter, searchType, searchKeyword string, 
 	// 필터에 따라 조건 추가
 	if filter == "new" {
 		query += ` AND call_count < 5`
+		// 예약이 확정된 고객 제외
+		query += ` AND seq NOT IN (SELECT customer_id FROM reservation_info WHERE branch_seq = ?)`
+		args = append(args, branchSeq)
 	}
 
 	// 검색 조건 추가
