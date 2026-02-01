@@ -40,6 +40,14 @@ func SMSTestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 요청 데이터 검증
+	err = ValidateSMSRequest(req.AccountID, req.Password, req.SenderPhone, req.ReceiverPhone, req.Message)
+	if err != nil {
+		log.Printf("SMS 요청 검증 실패: %v", err)
+		utils.JSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	// 요청 데이터 로깅
 	log.Println("=== SMS 테스트 발송 요청 ===")
 	log.Printf("환경: %s", config.GetEnvironment())
@@ -102,11 +110,10 @@ func ActivateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 서비스 ID를 정수로 변환
-	var serviceID int
-	_, err = fmt.Sscanf(req.ServiceID, "%d", &serviceID)
+	serviceID, err := ValidateServiceID(req.ServiceID)
 	if err != nil {
-		log.Printf("유효하지 않은 서비스 ID: %s", req.ServiceID)
-		utils.JSONError(w, http.StatusBadRequest, "유효하지 않은 서비스 ID입니다")
+		log.Printf("서비스 ID 검증 실패: %v", err)
+		utils.JSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -156,11 +163,10 @@ func DisconnectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 서비스 ID를 정수로 변환
-	var serviceID int
-	_, err = fmt.Sscanf(req.ServiceID, "%d", &serviceID)
+	serviceID, err := ValidateServiceID(req.ServiceID)
 	if err != nil {
-		log.Printf("유효하지 않은 서비스 ID: %s", req.ServiceID)
-		utils.JSONError(w, http.StatusBadRequest, "유효하지 않은 서비스 ID입니다")
+		log.Printf("서비스 ID 검증 실패: %v", err)
+		utils.JSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -214,6 +220,14 @@ func CreateCalendarEventHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 요청 데이터 검증
+	err = ValidateCalendarEventRequest(req.CustomerName, req.PhoneNumber, req.InterviewDate, req.Duration)
+	if err != nil {
+		log.Printf("CreateCalendarEvent - 요청 검증 실패: %v", err)
+		utils.JSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	// 세션에서 지점 정보 가져오기
 	branchSeq := middleware.GetSelectedBranch(r)
 
@@ -235,8 +249,9 @@ func CreateCalendarEventHandler(w http.ResponseWriter, r *http.Request) {
 // CreateCalendarEvent 구글 캘린더 이벤트 생성 (재사용 가능한 함수)
 func CreateCalendarEvent(branchSeq int, req CreateCalendarEventRequest) (string, error) {
 	// 필수 필드 검증
-	if req.CustomerName == "" || req.PhoneNumber == "" || req.InterviewDate == "" {
-		return "", fmt.Errorf("필수 필드가 누락되었습니다")
+	err := ValidateCalendarEventRequest(req.CustomerName, req.PhoneNumber, req.InterviewDate, req.Duration)
+	if err != nil {
+		return "", err
 	}
 
 	// 소요시간 기본값 설정

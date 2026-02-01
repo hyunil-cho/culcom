@@ -139,16 +139,10 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		comment := r.FormValue("comment")
 
 		// 유효성 검사
-		if name == "" || phoneNumber == "" {
-			log.Println("고객 추가 실패: 필수 필드 누락")
+		err = ValidateAddCustomerForm(name, phoneNumber)
+		if err != nil {
+			log.Printf("고객 추가 실패: %v", err)
 			http.Redirect(w, r, "/customers?error=add", http.StatusSeeOther)
-			return
-		}
-
-		// 전화번호 형식 검증 (010으로 시작하는 11자리 숫자)
-		if !utils.IsValidPhoneNumber(phoneNumber) {
-			log.Printf("고객 추가 실패: 잘못된 전화번호 형식 - %s", phoneNumber)
-			http.Redirect(w, r, "/customers?error=invalid_phone", http.StatusSeeOther)
 			return
 		}
 

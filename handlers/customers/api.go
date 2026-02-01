@@ -8,8 +8,6 @@ import (
 	"backoffice/utils"
 	"log"
 	"net/http"
-	"strconv"
-	"time"
 )
 
 // UpdateCommentHandler - 고객 코멘트 업데이트 핸들러 (REST API)
@@ -24,9 +22,9 @@ func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	comment := r.FormValue("comment")
 
 	// 파라미터 검증
-	customerSeq, err := strconv.Atoi(customerSeqStr)
-	if err != nil || customerSeq <= 0 {
-		log.Printf("잘못된 customer_seq: %s", customerSeqStr)
+	customerSeq, err := ValidateCustomerSeq(customerSeqStr)
+	if err != nil {
+		log.Printf("customer_seq 검증 실패: %v", err)
 		http.Error(w, "Invalid customer ID", http.StatusBadRequest)
 		return
 	}
@@ -57,9 +55,9 @@ func IncrementCallCountHandler(w http.ResponseWriter, r *http.Request) {
 	customerSeqStr := r.FormValue("customer_seq")
 
 	// 파라미터 검증
-	customerSeq, err := strconv.Atoi(customerSeqStr)
-	if err != nil || customerSeq <= 0 {
-		log.Printf("잘못된 customer_seq: %s", customerSeqStr)
+	customerSeq, err := ValidateCustomerSeq(customerSeqStr)
+	if err != nil {
+		log.Printf("customer_seq 검증 실패: %v", err)
 		http.Error(w, "Invalid customer ID", http.StatusBadRequest)
 		return
 	}
@@ -96,26 +94,13 @@ func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 	interviewDateStr := r.FormValue("interview_date")
 
 	// 파라미터 검증
-	customerSeq, err := strconv.Atoi(customerSeqStr)
-	if err != nil || customerSeq <= 0 {
-		log.Printf("잘못된 customer_seq: %s", customerSeqStr)
-		http.Error(w, "Invalid customer ID", http.StatusBadRequest)
-		return
-	}
-
-	if caller == "" {
-		log.Println("caller가 비어있음")
-		http.Error(w, "Caller is required", http.StatusBadRequest)
-		return
-	}
-
-	// 날짜 파싱 (클라이언트에서 ISO 8601 형식으로 보낼 예정: 2026-01-29T14:30:00)
-	interviewDate, err := time.Parse("2006-01-02T15:04:05", interviewDateStr)
+	customerSeq, callerValue, interviewDate, err := ValidateReservationParams(customerSeqStr, caller, interviewDateStr)
 	if err != nil {
-		log.Printf("날짜 파싱 오류: %v, 입력값: %s", err, interviewDateStr)
-		http.Error(w, "Invalid date format", http.StatusBadRequest)
+		log.Printf("예약 파라미터 검증 실패: %v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	caller = callerValue // validated caller
 
 	// 세션에서 사용자 정보 가져오기
 	session, err := config.SessionStore.Get(r, "user-session")
@@ -125,9 +110,9 @@ func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userSeq, ok := session.Values["user_seq"].(int)
-	if !ok || userSeq <= 0 {
-		log.Println("세션에서 user_seq를 찾을 수 없음")
+	userSeq, err := ValidateUserSeqFromSession(session.Values["user_seq"])
+	if err != nil {
+		log.Printf("세션 검증 실패: %v", err)
 		http.Error(w, "User not found in session", http.StatusUnauthorized)
 		return
 	}
@@ -210,15 +195,16 @@ func UpdateCustomerNameHandler(w http.ResponseWriter, r *http.Request) {
 	name := r.FormValue("name")
 
 	// 파라미터 검증
-	customerSeq, err := strconv.Atoi(customerSeqStr)
-	if err != nil || customerSeq <= 0 {
-		log.Printf("잘못된 customer_seq: %s", customerSeqStr)
+	customerSeq, err := ValidateCustomerSeq(customerSeqStr)
+	if err != nil {
+		log.Printf("customer_seq 검증 실패: %v", err)
 		http.Error(w, "Invalid customer ID", http.StatusBadRequest)
 		return
 	}
 
-	if name == "" {
-		log.Println("이름이 비어있음")
+	err = ValidateCustomerName(name)
+	if err != nil {
+		log.Printf("이름 검증 실패: %v", err)
 		http.Error(w, "Name is required", http.StatusBadRequest)
 		return
 	}
