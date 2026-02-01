@@ -117,11 +117,11 @@ func ActivateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 세션에서 선택된 지점 정보 가져오기
-	branchCode := middleware.GetSelectedBranch(r)
+	// 세션에서 선택된 지점 정보 가져오기 (seq)
+	branchSeq := middleware.GetSelectedBranch(r)
 
 	// Database를 통해 활성화
-	if err := database.ActivateIntegration(branchCode, serviceID); err != nil {
+	if err := database.ActivateIntegration(branchSeq, serviceID); err != nil {
 		log.Printf("활성화 오류: %v", err)
 		utils.JSONError(w, http.StatusInternalServerError, "활성화 중 오류가 발생했습니다")
 		return
@@ -151,8 +151,8 @@ func DisconnectHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 구글 캘린더는 별도 해제 로직 사용
 	if req.ServiceID == "calendar" {
-		branchCode := middleware.GetSelectedBranch(r)
-		err := database.DisconnectCalendar(branchCode)
+		branchSeq := middleware.GetSelectedBranch(r)
+		err := database.DisconnectCalendar(branchSeq)
 		if err != nil {
 			log.Printf("DisconnectHandler - calendar disconnect error: %v", err)
 			utils.JSONError(w, http.StatusInternalServerError, "연동 해제 중 오류가 발생했습니다")
@@ -170,11 +170,11 @@ func DisconnectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 세션에서 선택된 지점 정보 가져오기
-	branchCode := middleware.GetSelectedBranch(r)
+	// 세션에서 선택된 지점 정보 가져오기 (seq)
+	branchSeq := middleware.GetSelectedBranch(r)
 
 	// Database를 통해 비활성화
-	if err := database.DeactivateIntegration(branchCode, serviceID); err != nil {
+	if err := database.DeactivateIntegration(branchSeq, serviceID); err != nil {
 		log.Printf("비활성화 오류: %v", err)
 		utils.JSONError(w, http.StatusInternalServerError, "비활성화 중 오류가 발생했습니다")
 		return
@@ -191,10 +191,10 @@ func DisconnectCalendarHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	branchCode := middleware.GetSelectedBranch(r)
+	branchSeq := middleware.GetSelectedBranch(r)
 
 	// DB에서 토큰 정보 삭제
-	err := database.DisconnectCalendar(branchCode)
+	err := database.DisconnectCalendar(branchSeq)
 	if err != nil {
 		log.Printf("DisconnectCalendarHandler - DB error: %v", err)
 		utils.JSONError(w, http.StatusInternalServerError, "연동 해제 중 오류가 발생했습니다")

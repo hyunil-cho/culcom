@@ -85,8 +85,8 @@ func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 세션에서 선택된 지점 정보 가져오기
-	branchCode := middleware.GetSelectedBranch(r)
+	// 세션에서 선택된 지점 정보 가져오기 (seq)
+	branchSeq := middleware.GetSelectedBranch(r)
 
 	// 요청 파라미터 가져오기
 	customerSeqStr := r.FormValue("customer_seq")
@@ -117,16 +117,6 @@ func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// branchCode로 branchSeq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err = database.DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("지점 조회 오류: %v", err)
-		http.Error(w, "Branch not found", http.StatusInternalServerError)
-		return
-	}
-
 	// 예약 정보 저장
 	reservationID, err := database.CreateReservation(branchSeq, customerSeq, userSeq, caller, interviewDate)
 	if err != nil {
@@ -146,7 +136,7 @@ func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 구글 캘린더 이벤트 생성 시도
 	var calendarLink string
-	calendarService, err := integrations.GetCalendarService(branchCode)
+	calendarService, err := integrations.GetCalendarService(branchSeq)
 	if err == nil && calendarService != nil {
 		// 캘린더가 연동되어 있으면 이벤트 생성
 		eventReq := integrations.CreateCalendarEventRequest{
@@ -158,7 +148,7 @@ func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// 캘린더 이벤트 생성
-		link, eventErr := integrations.CreateCalendarEvent(branchCode, eventReq)
+		link, eventErr := integrations.CreateCalendarEvent(branchSeq, eventReq)
 		if eventErr != nil {
 			log.Printf("캘린더 이벤트 생성 실패: %v", eventErr)
 			// 캘린더 생성 실패해도 예약은 성공으로 처리
@@ -228,16 +218,16 @@ func CheckSMSIntegrationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 세션에서 선택된 지점 정보 가져오기
-	branchCode := middleware.GetSelectedBranch(r)
-	if branchCode == 0 {
+	// 세션에서 선택된 지점 정보 가져오기 (seq)
+	branchSeq := middleware.GetSelectedBranch(r)
+	if branchSeq == 0 {
 		log.Println("지점 정보 없음")
 		utils.JSONError(w, http.StatusUnauthorized, "지점 정보가 없습니다.")
 		return
 	}
 
 	// SMS 연동 상태 조회
-	status, err := database.GetIntegrationStatus(branchCode, "sms")
+	status, err := database.GetIntegrationStatus(branchSeq, "sms")
 	if err != nil {
 		log.Printf("SMS 연동 상태 조회 오류: %v", err)
 		utils.JSONError(w, http.StatusInternalServerError, "SMS 연동 정보를 확인할 수 없습니다.")
@@ -266,16 +256,16 @@ func GetSMSSenderNumbersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 세션에서 선택된 지점 정보 가져오기
-	branchCode := middleware.GetSelectedBranch(r)
-	if branchCode == 0 {
+	// 세션에서 선택된 지점 정보 가져오기 (seq)
+	branchSeq := middleware.GetSelectedBranch(r)
+	if branchSeq == 0 {
 		log.Println("지점 정보 없음")
 		utils.JSONError(w, http.StatusUnauthorized, "지점 정보가 없습니다.")
 		return
 	}
 
 	// SMS 설정 조회
-	config, err := database.GetSMSConfig(branchCode)
+	config, err := database.GetSMSConfig(branchSeq)
 	if err != nil {
 		log.Printf("SMS 설정 조회 오류: %v", err)
 		utils.JSONError(w, http.StatusInternalServerError, "SMS 설정을 조회할 수 없습니다.")
