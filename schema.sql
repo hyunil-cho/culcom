@@ -33,6 +33,7 @@ CREATE TABLE `customers` (
   `phone_number` varchar(20) NOT NULL,
   `comment` varchar(200) DEFAULT NULL,
   `commercial_name` varchar(100) DEFAULT NULL,
+  `ad_source` varchar(100) DEFAULT NULL COMMENT '광고 출처',
   `createdDate` datetime NOT NULL DEFAULT current_timestamp() COMMENT '고객 추가 일시',
   `lastUpdateDate` datetime DEFAULT NULL ON UPDATE current_timestamp() COMMENT '고객 수정 일시',
   `call_count` int(10) unsigned DEFAULT 0,

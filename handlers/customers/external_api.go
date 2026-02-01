@@ -10,12 +10,13 @@ import (
 
 // ExternalCustomerRequest 외부 고객 등록 요청 구조체
 type ExternalCustomerRequest struct {
-	Name     string `json:"name"`
-	Phone    string `json:"phone"`
-	Location string `json:"location"`
-	Job      string `json:"job"`
-	Reading  string `json:"reading"`
-	Language int    `json:"language"`
+	Name       string `json:"name"`
+	Phone      string `json:"phone"`
+	Location   string `json:"location"`
+	Job        string `json:"job"`
+	AdName     string `json:"adname"`
+	AdPlatform string `json:"adplatform"`
+	Language   int    `json:"language"`
 }
 
 // ExternalRegisterCustomerHandler godoc
@@ -48,12 +49,13 @@ func ExternalRegisterCustomerHandler(w http.ResponseWriter, r *http.Request) {
 	// Query parameter에서 데이터 추출
 	query := r.URL.Query()
 	req := ExternalCustomerRequest{
-		Name:     query.Get("name"),
-		Phone:    query.Get("phone"),
-		Location: query.Get("location"),
-		Job:      query.Get("job"),
-		Reading:  query.Get("reading"),
-		Language: 0,
+		Name:       query.Get("name"),
+		Phone:      query.Get("phone"),
+		Location:   query.Get("location"),
+		Job:        query.Get("job"),
+		AdName:     query.Get("reading"),
+		AdPlatform: query.Get("writing"),
+		Language:   0,
 	}
 
 	log.Printf("req object is : %s", fmt.Sprintf("%+v", req))
@@ -68,12 +70,13 @@ func ExternalRegisterCustomerHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 요청 데이터 로깅
 	log.Printf("요청 데이터:")
-	log.Printf("  - 이름: %s", req.Name)
-	log.Printf("  - 전화번호: %s", req.Phone)
-	log.Printf("  - 위치: %s", req.Location)
-	log.Printf("  - 직업: %s", req.Job)
-	log.Printf("  - 독서: %s", req.Reading)
-	log.Printf("  - 언어: %d", req.Language)
+	log.Printf("  - Name: %s", req.Name)
+	log.Printf("  - Phone: %s", req.Phone)
+	log.Printf("  - Location: %s", req.Location)
+	log.Printf("  - Job: %s", req.Job)
+	log.Printf("  - AdPlatform: %s", req.AdPlatform)
+	log.Printf("  - AdName: %s", req.AdName)
+	log.Printf("  - Language: %d", req.Language)
 	log.Println("==============================")
 
 	// 1단계: location으로 branch_seq 조회
@@ -86,7 +89,7 @@ func ExternalRegisterCustomerHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("지점 조회 성공: branch_seq=%d", branchSeq)
 
 	// 2단계: customers 테이블에 고객 등록
-	customerSeq, err := database.InsertExternalCustomer(branchSeq, req.Name, req.Phone, req.Job, req.Reading)
+	customerSeq, err := database.InsertExternalCustomer(branchSeq, req.Name, req.Phone, req.Job, req.AdPlatform, req.AdName)
 	if err != nil {
 		log.Printf("고객 등록 실패: %v", err)
 		utils.JSONError(w, http.StatusInternalServerError, "고객 등록에 실패했습니다")
