@@ -52,7 +52,7 @@ func ExternalRegisterCustomerHandler(w http.ResponseWriter, r *http.Request) {
 		Reading:  query.Get("reading"),
 		Language: 0,
 	}
-	
+
 	// language는 숫자이므로 변환
 	if langStr := query.Get("language"); langStr != "" {
 		var lang int
