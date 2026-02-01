@@ -11,8 +11,8 @@ type Customer struct {
 	ID              string
 	Name            string
 	Phone           string
-	Email           string
 	AdName          string
+	AdSource        string
 	Status          string
 	RegisterDate    string
 	LastContactDate string

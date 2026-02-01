@@ -81,6 +81,7 @@
                     <th>TEXT</th>
                     <th>인터뷰확정일시</th>
                     <th>광고명</th>
+                    <th>광고 출처</th>
                     <th>요청일시</th>
                     <th>최근응대</th>
                     <th>전화횟수</th>
@@ -149,6 +150,7 @@
                         </div>
                     </td>
                     <td>{{.AdName}}</td>
+                    <td>{{if .AdSource}}{{.AdSource}}{{else}}-{{end}}</td>
                     <td>{{.RegisterDate}}</td>
                     <td id="last-visit-{{.ID}}">{{if .LastContactDate}}{{.LastContactDate}}{{else}}-{{end}}</td>
                     <td><strong id="call-count-{{.ID}}">{{.CallCount}}회</strong></td>

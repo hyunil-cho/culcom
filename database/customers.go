@@ -47,6 +47,7 @@ type CustomerInfo struct {
 	PhoneNumber    string
 	Comment        *string
 	CommercialName *string
+	AdSource       *string
 	CallCount      int
 	CreatedDate    string
 	LastUpdateDate *string
@@ -118,6 +119,7 @@ func GetCustomersByBranch(branchSeq int, filter, searchType, searchKeyword strin
 			phone_number,
 			comment,
 			commercial_name,
+			ad_source,
 			call_count,
 			DATE_FORMAT(createdDate, '%Y-%m-%d %H:%i') as createdDate,
 			DATE_FORMAT(lastUpdateDate, '%Y-%m-%d %H:%i') as lastUpdateDate
@@ -168,6 +170,7 @@ func GetCustomersByBranch(branchSeq int, filter, searchType, searchKeyword strin
 			&customer.PhoneNumber,
 			&customer.Comment,
 			&customer.CommercialName,
+			&customer.AdSource,
 			&customer.CallCount,
 			&customer.CreatedDate,
 			&customer.LastUpdateDate,

@@ -52,6 +52,21 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			LastContactDate = *dbCust.LastUpdateDate
 		}
 
+		adName := ""
+		if dbCust.CommercialName != nil {
+			adName = *dbCust.CommercialName
+		}
+
+		adSource := ""
+		if dbCust.AdSource != nil {
+			adSource = *dbCust.AdSource
+		}
+
+		comment := ""
+		if dbCust.Comment != nil {
+			comment = *dbCust.Comment
+		}
+
 		customer := Customer{
 			ID:              strconv.Itoa(dbCust.Seq),
 			Name:            dbCust.Name,
@@ -59,13 +74,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			CallCount:       dbCust.CallCount,
 			RegisterDate:    dbCust.CreatedDate,
 			LastContactDate: LastContactDate,
-			Status:          "신규", // TODO: 상태 로직 추가 필요
-			Email:           "-",
-			AdName:          "-",
-			Comment:         "",
-		}
-		if dbCust.Comment != nil {
-			customer.Comment = *dbCust.Comment
+			AdName:          adName,
+			AdSource:        adSource,
+			Comment:         comment,
 		}
 		customers = append(customers, customer)
 	}

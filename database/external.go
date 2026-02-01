@@ -1,7 +1,6 @@
 package database
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -33,26 +32,13 @@ func InsertExternalCustomer(branchSeq int, name, phone, job, adPlatform, adName 
 		return -1
 	}, phone)
 
-	// 추가 정보를 JSON 형식으로 저장
-	additionalInfo := map[string]interface{}{
-		"job":         job,
-		"ad_platform": adPlatform,
-		"ad_name":     adName,
-	}
-
-	infoJSON, err := json.Marshal(additionalInfo)
-	if err != nil {
-		log.Printf("InsertExternalCustomer - JSON 변환 실패: %v", err)
-		return 0, fmt.Errorf("고객 정보 처리에 실패했습니다")
-	}
-
 	// 고객 등록
 	query := `
-		INSERT INTO customers (branch_seq, name, phone_number, comment, commercial_name, ad_source, call_count)
-		VALUES (?, ?, ?, ?, ?, ?, 0)
+		INSERT INTO customers (branch_seq, name, phone_number, commercial_name, ad_source, call_count)
+		VALUES (?, ?, ?, ?, ?, 0)
 	`
 
-	result, err := DB.Exec(query, branchSeq, name, cleanPhone, string(infoJSON), adName, adPlatform)
+	result, err := DB.Exec(query, branchSeq, name, cleanPhone, adName, adPlatform)
 	if err != nil {
 		log.Printf("InsertExternalCustomer - 고객 등록 실패: %v", err)
 		return 0, fmt.Errorf("고객 등록에 실패했습니다")
