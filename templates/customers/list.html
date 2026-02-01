@@ -149,7 +149,7 @@
                     </td>
                     <td>{{.AdName}}</td>
                     <td>{{.RegisterDate}}</td>
-                    <td id="last-visit-{{.ID}}">{{if .LastVisit}}{{.LastVisit}}{{else}}-{{end}}</td>
+                    <td id="last-visit-{{.ID}}">{{if .LastContactDate}}{{.LastContactDate}}{{else}}-{{end}}</td>
                     <td><strong id="call-count-{{.ID}}">{{.CallCount}}회</strong></td>
                 </tr>
                 {{end}}
