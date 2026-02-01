@@ -2,7 +2,7 @@ package customers
 
 import (
 	"backoffice/utils"
-	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -35,7 +35,6 @@ func ExternalRegisterCustomerHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("요청 URL: %s", r.URL.String())
 	log.Printf("클라이언트 IP: %s", r.RemoteAddr)
 	log.Printf("User-Agent: %s", r.UserAgent())
-	log.Printf("Content-Type: %s", r.Header.Get("Content-Type"))
 
 	if r.Method != http.MethodGet {
 		log.Printf("잘못된 메소드 요청: %s", r.Method)
@@ -43,13 +42,23 @@ func ExternalRegisterCustomerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// JSON 요청 파싱
-	var req ExternalCustomerRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		log.Printf("요청 파싱 오류: %v", err)
-		utils.JSONError(w, http.StatusBadRequest, "잘못된 요청 형식입니다")
-		return
+	// Query parameter에서 데이터 추출
+	query := r.URL.Query()
+	req := ExternalCustomerRequest{
+		Name:     query.Get("name"),
+		Phone:    query.Get("phone"),
+		Location: query.Get("location"),
+		Job:      query.Get("job"),
+		Reading:  query.Get("reading"),
+		Language: 0,
+	}
+	
+	// language는 숫자이므로 변환
+	if langStr := query.Get("language"); langStr != "" {
+		var lang int
+		if _, err := fmt.Sscanf(langStr, "%d", &lang); err == nil {
+			req.Language = lang
+		}
 	}
 
 	// 요청 데이터 로깅
