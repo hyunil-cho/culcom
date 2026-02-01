@@ -37,7 +37,7 @@ func ExternalRegisterCustomerHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("User-Agent: %s", r.UserAgent())
 	log.Printf("Content-Type: %s", r.Header.Get("Content-Type"))
 
-	if r.Method != http.MethodPost {
+	if r.Method != http.MethodGet {
 		log.Printf("잘못된 메소드 요청: %s", r.Method)
 		utils.JSONError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
