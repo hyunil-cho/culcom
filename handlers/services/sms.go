@@ -120,3 +120,54 @@ func SendSMSHandler(w http.ResponseWriter, r *http.Request) {
 		"cols":    sendResp.Cols,
 	})
 }
+
+// GetReservationSMSConfigHandler godoc
+// @Summary      예약 SMS 설정 조회
+// @Description  예약 확정 시 사용할 SMS 설정 정보를 조회합니다
+// @Tags         services
+// @Produce      json
+// @Success      200  {object}  map[string]interface{}  "성공"
+// @Failure      400  {string}  string  "설정 없음"
+// @Failure      401  {string}  string  "인증 실패"
+// @Failure      500  {string}  string  "서버 오류"
+// @Security     SessionAuth
+// @Router       /service/reservation-sms-config [get]
+func GetReservationSMSConfigHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 세션에서 선택된 지점 정보 가져오기
+	branchSeq := middleware.GetSelectedBranch(r)
+	if branchSeq == 0 {
+		log.Println("지점 정보 없음")
+		utils.JSONError(w, http.StatusUnauthorized, "지점 정보가 없습니다")
+		return
+	}
+
+	// 예약 SMS 설정 조회
+	config, err := database.GetReservationSMSConfig(branchSeq)
+	if err != nil || config == nil {
+		log.Printf("예약 SMS 설정 없음: %v", err)
+		utils.JSONError(w, http.StatusBadRequest, "예약 SMS 설정이 없습니다")
+		return
+	}
+
+	// 메시지 템플릿 조회
+	template, err := database.GetMessageTemplateByID(config.TemplateSeq)
+	if err != nil || template == nil {
+		log.Printf("메시지 템플릿 조회 실패: %v", err)
+		utils.JSONError(w, http.StatusInternalServerError, "메시지 템플릿을 찾을 수 없습니다")
+		return
+	}
+
+	// 응답 반환
+	utils.JSONSuccess(w, map[string]interface{}{
+		"template_seq":     config.TemplateSeq,
+		"template_name":    config.TemplateName,
+		"template_content": template.Content,
+		"sender_number":    config.SenderNumber,
+		"auto_send":        config.AutoSend,
+	})
+}

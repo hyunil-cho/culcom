@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}} - 백오피스</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/template-utils.js"></script>
 </head>
 <body>
     {{template "sidebar" .}}
@@ -808,15 +809,16 @@ function loadTemplate() {
         return;
     }
     
-    const template = smsTemplates[selectedTemplate];
+    const template = messageTemplates[selectedTemplate];
     if (template) {
-        // 변수 치환
-        let content = template.content
-            .replace('{고객명}', currentCustomerName)
-            .replace('{날짜}', '2026-01-30')
-            .replace('{시간}', '14:00')
-            .replace('{주소}', '서울시 강남구 테헤란로 123')
-            .replace('{담당자}', '김영업');
+        // 템플릿 변수 치환 (구버전 호환)
+        const content = replaceTemplateLegacy(template.content, {
+            customerName: currentCustomerName,
+            date: '2026-01-30',
+            time: '14:00',
+            address: '서울시 강남구 테헤란로 123',
+            assignedTo: '김영업'
+        });
         
         // 메시지 내용에 적용
         messageTextarea.value = content;
@@ -1315,36 +1317,11 @@ function loadTextTemplate() {
     const template = messageTemplates[templateId];
     
     if (template && template.content) {
-        // 현재 날짜/시간 정보 생성
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        
-        const currentDate = `${year}-${month}-${day}`; // 2026-01-30
-        const currentTime = `${hours}:${minutes}`; // 14:30
-        const currentDateTime = `${year}-${month}-${day} ${hours}:${minutes}`; // 2026-01-30 14:30
-        const currentDateKor = `${year}년 ${parseInt(month)}월 ${parseInt(day)}일`; // 2026년 1월 30일
-        
-        // 헤더에서 선택된 지점명 가져오기
-        const branchSelect = document.getElementById('branchSelect');
-        const branchName = branchSelect ? branchSelect.options[branchSelect.selectedIndex].text : '지점';
-        
-        let content = template.content
-            // 이스케이프 시퀀스를 실제 문자로 변환
-            .replace(/\\r\\n/g, '\n')
-            .replace(/\\n/g, '\n')
-            .replace(/\\r/g, '\r')
-            .replace(/\\t/g, '\t')
-            // 플레이스홀더 치환
-            .replace(/\{\{고객명\}\}/g, currentTextCustomerName || '고객')
-            .replace(/\{\{전화번호\}\}/g, currentTextCustomerPhone || '')
-            .replace(/\{\{지점명\}\}/g, branchName)
-            .replace(/\{\{현재날짜시간\}\}/g, currentDateTime)
-            .replace(/\{\{현재시간\}\}/g, currentTime)
-            .replace(/\{\{현재날짜\}\}/g, currentDate)
+        // 템플릿 변수 치환
+        const content = replaceTemplateVariables(template.content, {
+            customerName: currentTextCustomerName,
+            phoneNumber: currentTextCustomerPhone
+        });
         
         messageTextarea.value = content;
         document.getElementById('textMessageLength').textContent = content.length;
@@ -1591,7 +1568,7 @@ function confirmInterviewDateTime() {
     const dateObj = new Date(parsedDate.year, parsedDate.month - 1, parsedDate.day, parsedDate.hour, parsedDate.minute, 0);
     const isoDateTime = dateObj.toISOString().slice(0, 19);
     
-    // 서버에 저장
+    // 1단계: 예약 생성
     const formData = new FormData();
     formData.append('customer_seq', pendingInterviewCustomerId);
     formData.append('caller', caller);
@@ -1602,25 +1579,14 @@ function confirmInterviewDateTime() {
         body: formData
     })
     .then(response => response.json())
-    .then(data => {
+    .then(async (data) => {
         if (data.success) {
-            // 캘린더 링크가 있으면 새 탭으로 열기
-            if (data.calendar_link) {
-                window.open(data.calendar_link, '_blank');
-                alert(`${pendingInterviewCustomerName}님의 인터뷰 일시가 확정되고\n구글 캘린더에 추가되었습니다.`);
-            } else {
-                alert(`${pendingInterviewCustomerName}님의 인터뷰 일시가 확정되었습니다.`);
-            }
-            
-            // 입력 필드 초기화 (확정 완료 후에만)
-            document.getElementById(`interview-${pendingInterviewCustomerId}`).value = '';
-            
-            // 모달 닫기
-            document.getElementById('interviewConfirmModal').style.display = 'none';
-            
-            // 고객 정보 저장 (SMS 모달용)
             const savedCustomerId = pendingInterviewCustomerId;
             const savedCustomerName = pendingInterviewCustomerName;
+            const savedInterviewDate = data.interview_date;
+            
+            // 1단계 완료: 예약 생성 성공
+            alert(`✅ ${savedCustomerName}님의 예약이 성공적으로 생성되었습니다.`);
             
             // 고객 전화번호 가져오기
             const customerRow = document.querySelector(`tr[data-customer-id="${savedCustomerId}"]`);
@@ -1632,11 +1598,85 @@ function confirmInterviewDateTime() {
                 }
             }
             
+            // 2단계: 구글 캘린더 이벤트 생성
+            alert('📅 구글 캘린더에 일정 추가를 시도합니다...');
+            
+            let calendarLink = null;
+            try {
+                const calendarResponse = await fetch('/api/calendar/create-event', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        customer_name: savedCustomerName,
+                        phone_number: savedCustomerPhone,
+                        interview_date: savedInterviewDate,
+                        comment: '',
+                        duration: 60
+                    })
+                });
+                
+                const calendarData = await calendarResponse.json();
+                if (calendarData.success && calendarData.link) {
+                    calendarLink = calendarData.link;
+                    alert('✅ 구글 캘린더에 일정이 추가되었습니다.\n새 탭에서 캘린더를 확인하세요.');
+                    // 새 탭으로 캘린더 열기
+                    window.open(calendarLink, '_blank');
+                } else if (calendarData.message) {
+                    alert('❌ 캘린더 일정 추가 실패\n\n' + calendarData.message);
+                }
+            } catch (error) {
+                alert('❌ 캘린더 일정 추가 중 오류 발생\n\n' + error.message);
+            }
+            
+            // 3단계: SMS 설정 조회 및 발송
+            try {
+                const smsConfigResponse = await fetch('/api/service/reservation-sms-config');
+                const smsConfig = await smsConfigResponse.json();
+                
+                if (smsConfig.success && smsConfig.auto_send) {
+                    alert('💬 예약 확정 SMS 발송을 시도합니다...');
+                    
+                    // 템플릿 변수 치환
+                    const message = replaceTemplateVariables(smsConfig.template_content, {
+                        customerName: savedCustomerName,
+                        reservationDate: savedInterviewDate
+                    });
+                    
+                    // SMS 발송
+                    const smsFormData = new FormData();
+                    smsFormData.append('customer_seq', savedCustomerId);
+                    smsFormData.append('sender_phone', smsConfig.sender_number);
+                    smsFormData.append('receiver_phone', savedCustomerPhone);
+                    smsFormData.append('message', message);
+                    
+                    const smsResponse = await fetch('/api/service/sms', {
+                        method: 'POST',
+                        body: smsFormData
+                    });
+                    
+                    const smsResult = await smsResponse.json();
+                    if (smsResult.success) {
+                        alert('✅ 예약 확정 SMS가 성공적으로 발송되었습니다.');
+                    } else if (smsResult.message) {
+                        alert('❌ SMS 발송 실패\n\n' + smsResult.message);
+                    }
+                }
+            } catch (error) {
+                alert('❌ SMS 발송 중 오류 발생\n\n' + error.message);
+            }
+            
+            // 입력 필드 초기화
+            document.getElementById(`interview-${pendingInterviewCustomerId}`).value = '';
+            
+            // 모달 닫기
+            document.getElementById('interviewConfirmModal').style.display = 'none';
+            
             // 신규고객 페이지인 경우 해당 행 제거
             const currentFilter = '{{.CurrentFilter}}';
             if (currentFilter === 'new') {
                 if (customerRow) {
-                    // 즉시 제거
                     customerRow.remove();
                     
                     // 테이블이 비어있으면 안내 메시지 표시
@@ -1651,11 +1691,6 @@ function confirmInterviewDateTime() {
             pendingInterviewCustomerId = null;
             pendingInterviewDateTime = null;
             pendingInterviewCustomerName = null;
-            
-            // SMS 모달 자동 열기
-            if (savedCustomerPhone) {
-                openTextModal(savedCustomerId, savedCustomerName, savedCustomerPhone);
-            }
         } else {
             alert('예약 저장에 실패했습니다.');
         }
