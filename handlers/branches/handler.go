@@ -57,13 +57,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 페이지 번호 가져오기 (기본값: 1)
-	pageStr := r.URL.Query().Get("page")
-	currentPage := 1
-	if pageStr != "" {
-		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
-			currentPage = p
-		}
-	}
+	currentPage := utils.GetCurrentPageFromRequest(r)
 
 	// DB에서 지점 목록 조회
 	branchesData, err := database.GetAllBranches()

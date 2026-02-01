@@ -1,5 +1,10 @@
 package utils
 
+import (
+	"net/http"
+	"strconv"
+)
+
 // Pagination 페이징 정보 구조체
 type Pagination struct {
 	CurrentPage  int
@@ -77,4 +82,16 @@ func GetSliceRange(currentPage, itemsPerPage, totalItems int) (startIdx, endIdx 
 	}
 
 	return startIdx, endIdx
+}
+
+// GetCurrentPageFromRequest - HTTP 요청에서 현재 페이지 번호를 가져옵니다 (기본값: 1)
+func GetCurrentPageFromRequest(r *http.Request) int {
+	pageStr := r.URL.Query().Get("page")
+	currentPage := 1
+	if pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			currentPage = p
+		}
+	}
+	return currentPage
 }

@@ -19,13 +19,7 @@ var Templates *template.Template
 // Handler - 고객 관리 페이지 핸들러
 func Handler(w http.ResponseWriter, r *http.Request) {
 	// 페이지 파라미터 가져오기
-	pageStr := r.URL.Query().Get("page")
-	currentPage := 1
-	if pageStr != "" {
-		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
-			currentPage = p
-		}
-	}
+	currentPage := utils.GetCurrentPageFromRequest(r)
 
 	// 필터 파라미터 가져오기 (기본값: "new")
 	filter := r.URL.Query().Get("filter")

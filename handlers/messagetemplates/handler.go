@@ -12,13 +12,7 @@ import (
 // Handler 메시지 템플릿 목록 페이지
 func Handler(w http.ResponseWriter, r *http.Request) {
 	// 페이지 파라미터 가져오기
-	pageStr := r.URL.Query().Get("page")
-	currentPage := 1
-	if pageStr != "" {
-		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
-			currentPage = p
-		}
-	}
+	currentPage := utils.GetCurrentPageFromRequest(r)
 
 	// 세션에서 선택된 지점 정보 가져오기
 	branchCode := middleware.GetSelectedBranch(r)
