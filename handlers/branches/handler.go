@@ -48,13 +48,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	successMessage := utils.GetFlashMessage(w, r, "success")
 
 	// 검색 파라미터 가져오기
-	searchType := r.URL.Query().Get("searchType")
-	searchKeyword := r.URL.Query().Get("searchKeyword")
-
-	// 검색 타입 기본값 설정
-	if searchType == "" {
-		searchType = "name"
-	}
+	searchParams := utils.GetSearchParams(r)
 
 	// 페이지 번호 가져오기 (기본값: 1)
 	currentPage := utils.GetCurrentPageFromRequest(r)
@@ -81,15 +75,15 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	// 검색 필터링 적용
 	var filteredBranches []Branch
-	if searchKeyword != "" {
+	if searchParams.SearchKeyword != "" {
 		for _, branch := range allBranches {
-			switch searchType {
+			switch searchParams.SearchType {
 			case "name":
-				if containsIgnoreCase(branch.Name, searchKeyword) {
+				if containsIgnoreCase(branch.Name, searchParams.SearchKeyword) {
 					filteredBranches = append(filteredBranches, branch)
 				}
 			case "alias":
-				if containsIgnoreCase(branch.Alias, searchKeyword) {
+				if containsIgnoreCase(branch.Alias, searchParams.SearchKeyword) {
 					filteredBranches = append(filteredBranches, branch)
 				}
 			}
@@ -109,12 +103,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		branches = allBranches[startIdx:endIdx]
 	}
 
-	// 페이지네이션 URL에 검색 조건 유지
-	searchParams := ""
-	if searchKeyword != "" {
-		searchParams = fmt.Sprintf("&searchType=%s&searchKeyword=%s", searchType, searchKeyword)
-	}
-
 	data := PageData{
 		BasePageData:   middleware.GetBasePageData(r),
 		Title:          "지점 관리",
@@ -122,9 +110,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		Branches:       branches,
 		SuccessMessage: successMessage,
 		Pagination:     pagination,
-		SearchType:     searchType,
-		SearchKeyword:  searchKeyword,
-		SearchParams:   searchParams,
+		SearchType:     searchParams.SearchType,
+		SearchKeyword:  searchParams.SearchKeyword,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "branches/list.html", data); err != nil {

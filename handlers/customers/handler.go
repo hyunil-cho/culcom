@@ -21,25 +21,16 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	// 페이지 파라미터 가져오기
 	currentPage := utils.GetCurrentPageFromRequest(r)
 
-	// 필터 파라미터 가져오기 (기본값: "new")
-	filter := r.URL.Query().Get("filter")
-	if filter == "" {
-		filter = "new"
-	}
-
 	// 검색 파라미터 가져오기
-	searchType := r.URL.Query().Get("searchType")
-	if searchType == "" {
-		searchType = "name"
-	}
-	searchKeyword := r.URL.Query().Get("searchKeyword")
+	searchParams := utils.GetSearchParams(r)
+	filter := utils.GetQueryParam(r, "filter", "new")
 
 	// 세션에서 선택된 지점 정보 가져오기
 	branchCode := middleware.GetSelectedBranch(r)
 
 	// 페이징을 위한 전체 고객 수 조회
 	itemsPerPage := 10
-	totalItems, err := database.GetCustomersCountByBranch(branchCode, filter, searchType, searchKeyword)
+	totalItems, err := database.GetCustomersCountByBranch(branchCode, filter, searchParams.SearchType, searchParams.SearchKeyword)
 	if err != nil {
 		log.Printf("고객 수 조회 오류: %v", err)
 		http.Error(w, "고객 수 조회 실패", http.StatusInternalServerError)
@@ -50,7 +41,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	pagination := utils.CalculatePagination(currentPage, totalItems, itemsPerPage)
 
 	// DB에서 현재 페이지의 고객 목록만 조회
-	dbCustomers, err := database.GetCustomersByBranch(branchCode, filter, searchType, searchKeyword, currentPage, itemsPerPage)
+	dbCustomers, err := database.GetCustomersByBranch(branchCode, filter, searchParams.SearchType, searchParams.SearchKeyword, currentPage, itemsPerPage)
 	if err != nil {
 		log.Printf("고객 목록 조회 오류: %v", err)
 		http.Error(w, "고객 목록 조회 실패", http.StatusInternalServerError)
@@ -109,8 +100,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		MessageTemplates: messageTemplates,
 		Pagination:       pagination,
 		CurrentFilter:    filter,
-		SearchType:       searchType,
-		SearchKeyword:    searchKeyword,
+		SearchType:       searchParams.SearchType,
+		SearchKeyword:    searchParams.SearchKeyword,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "customers/list.html", data); err != nil {
