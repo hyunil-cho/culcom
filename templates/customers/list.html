@@ -87,7 +87,7 @@
             </thead>
             <tbody>
                 {{range .Customers}}
-                <tr data-last-visit="{{.LastVisit}}" data-customer-id="{{.ID}}">
+                <tr data-last-visit="{{.LastContactDate}}" data-customer-id="{{.ID}}">
                     <td>
                         <div style="display: flex; gap: 0.5rem; align-items: center;">
                             <strong class="customer-name-display" data-customer-id="{{.ID}}">{{.Name}}</strong>

@@ -26,11 +26,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	filter := utils.GetQueryParam(r, "filter", "new")
 
 	// 세션에서 선택된 지점 정보 가져오기
-	branchSeq := middleware.GetSelectedBranch(r)
+	branchCode := middleware.GetSelectedBranch(r)
 
 	// 페이징을 위한 전체 고객 수 조회
 	itemsPerPage := 10
-	totalItems, err := database.GetCustomersCountByBranch(branchSeq, filter, searchParams.SearchType, searchParams.SearchKeyword)
+	totalItems, err := database.GetCustomersCountByBranch(branchCode, filter, searchParams.SearchType, searchParams.SearchKeyword)
 	if err != nil {
 		log.Printf("고객 수 조회 오류: %v", err)
 		http.Error(w, "고객 수 조회 실패", http.StatusInternalServerError)
@@ -41,7 +41,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	pagination := utils.CalculatePagination(currentPage, totalItems, itemsPerPage)
 
 	// DB에서 현재 페이지의 고객 목록만 조회
-	dbCustomers, err := database.GetCustomersByBranch(branchSeq, filter, searchParams.SearchType, searchParams.SearchKeyword, currentPage, itemsPerPage)
+	dbCustomers, err := database.GetCustomersByBranch(branchCode, filter, searchParams.SearchType, searchParams.SearchKeyword, currentPage, itemsPerPage)
 	if err != nil {
 		log.Printf("고객 목록 조회 오류: %v", err)
 		http.Error(w, "고객 목록 조회 실패", http.StatusInternalServerError)
@@ -51,22 +51,22 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	// DB 고객을 핸들러 모델로 변환
 	var customers []Customer
 	for _, dbCust := range dbCustomers {
-		lastVisit := "-"
+		LastContactDate := "-"
 		if dbCust.LastUpdateDate != nil {
-			lastVisit = *dbCust.LastUpdateDate
+			LastContactDate = *dbCust.LastUpdateDate
 		}
 
 		customer := Customer{
-			ID:           strconv.Itoa(dbCust.Seq),
-			Name:         dbCust.Name,
-			Phone:        dbCust.PhoneNumber,
-			CallCount:    dbCust.CallCount,
-			RegisterDate: dbCust.CreatedDate,
-			LastVisit:    lastVisit,
-			Status:       "신규", // TODO: 상태 로직 추가 필요
-			Email:        "-",
-			AdName:       "-",
-			Comment:      "",
+			ID:              strconv.Itoa(dbCust.Seq),
+			Name:            dbCust.Name,
+			Phone:           dbCust.PhoneNumber,
+			CallCount:       dbCust.CallCount,
+			RegisterDate:    dbCust.CreatedDate,
+			LastContactDate: LastContactDate,
+			Status:          "신규", // TODO: 상태 로직 추가 필요
+			Email:           "-",
+			AdName:          "-",
+			Comment:         "",
 		}
 		if dbCust.Comment != nil {
 			customer.Comment = *dbCust.Comment
@@ -75,7 +75,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 메시지 템플릿 조회
-	messageTemplates, err := database.GetMessageTemplates(branchSeq)
+	messageTemplates, err := database.GetMessageTemplates(branchCode)
 	if err != nil {
 		log.Printf("메시지 템플릿 조회 오류: %v", err)
 		// 에러가 발생해도 빈 배열로 처리하여 계속 진행
@@ -135,7 +135,7 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// 세션에서 선택된 지점 정보 가져오기
-		branchSeq := middleware.GetSelectedBranch(r)
+		branchCode := middleware.GetSelectedBranch(r)
 
 		// 폼 데이터
 		name := r.FormValue("name")
@@ -157,7 +157,7 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// DB에 저장
-		_, err = database.InsertCustomer(branchSeq, name, phoneNumber, comment)
+		_, err = database.InsertCustomer(branchCode, name, phoneNumber, comment)
 		if err != nil {
 			log.Printf("고객 저장 오류: %v", err)
 			http.Redirect(w, r, "/customers?error=add", http.StatusSeeOther)
@@ -245,7 +245,7 @@ func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 세션에서 선택된 지점 정보 가져오기
-	branchSeq := middleware.GetSelectedBranch(r)
+	branchCode := middleware.GetSelectedBranch(r)
 
 	// 요청 파라미터 가져오기
 	customerSeqStr := r.FormValue("customer_seq")
@@ -289,7 +289,17 @@ func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 예약 정보 저장 (branchSeq가 이제 seq임)
+	// branchCode로 branchSeq 조회
+	var branchSeq int
+	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
+	err = database.DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
+	if err != nil {
+		log.Printf("지점 조회 오류: %v", err)
+		http.Error(w, "Branch not found", http.StatusInternalServerError)
+		return
+	}
+
+	// 예약 정보 저장
 	reservationID, err := database.CreateReservation(branchSeq, customerSeq, userSeq, caller, interviewDate)
 	if err != nil {
 		log.Printf("예약 생성 오류: %v", err)
@@ -308,7 +318,7 @@ func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 구글 캘린더 이벤트 생성 시도
 	var calendarLink string
-	calendarService, err := integrations.GetCalendarService(branchSeq)
+	calendarService, err := integrations.GetCalendarService(branchCode)
 	if err == nil && calendarService != nil {
 		// 캘린더가 연동되어 있으면 이벤트 생성
 		eventReq := integrations.CreateCalendarEventRequest{
@@ -320,7 +330,7 @@ func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// 캘린더 이벤트 생성
-		link, eventErr := integrations.CreateCalendarEvent(branchSeq, eventReq)
+		link, eventErr := integrations.CreateCalendarEvent(branchCode, eventReq)
 		if eventErr != nil {
 			log.Printf("캘린더 이벤트 생성 실패: %v", eventErr)
 			// 캘린더 생성 실패해도 예약은 성공으로 처리
@@ -395,8 +405,8 @@ func CheckSMSIntegrationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 세션에서 선택된 지점 정보 가져오기
-	branchSeq := middleware.GetSelectedBranch(r)
-	if branchSeq == 0 {
+	branchCode := middleware.GetSelectedBranch(r)
+	if branchCode == 0 {
 		log.Println("지점 정보 없음")
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -405,7 +415,7 @@ func CheckSMSIntegrationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// SMS 연동 상태 조회
-	status, err := database.GetIntegrationStatus(branchSeq, "sms")
+	status, err := database.GetIntegrationStatus(branchCode, "sms")
 	if err != nil {
 		log.Printf("SMS 연동 상태 조회 오류: %v", err)
 		w.Header().Set("Content-Type", "application/json")
@@ -443,8 +453,8 @@ func GetSMSSenderNumbersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 세션에서 선택된 지점 정보 가져오기
-	branchSeq := middleware.GetSelectedBranch(r)
-	if branchSeq == 0 {
+	branchCode := middleware.GetSelectedBranch(r)
+	if branchCode == 0 {
 		log.Println("지점 정보 없음")
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -453,7 +463,7 @@ func GetSMSSenderNumbersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// SMS 설정 조회
-	config, err := database.GetSMSConfig(branchSeq)
+	config, err := database.GetSMSConfig(branchCode)
 	if err != nil {
 		log.Printf("SMS 설정 조회 오류: %v", err)
 		w.Header().Set("Content-Type", "application/json")
