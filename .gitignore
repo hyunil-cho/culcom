@@ -18,10 +18,7 @@ coverage.*
 profile.cov
 
 # 환경 설정 파일
-.env.dev
-.env.local
-.env.*.local
-
+.env.*
 # 데이터베이스 파일
 *.db
 data/
