@@ -44,12 +44,19 @@ type SMSConfig struct {
 	MaxLength   int
 }
 
+// GoogleOAuthConfig - Google OAuth 설정 구조체
+type GoogleOAuthConfig struct {
+	ClientID     string
+	ClientSecret string
+}
+
 // Config - 전체 설정 구조체
 type Config struct {
-	Env    Environment
-	DB     DBConfig
-	Server ServerConfig
-	SMS    SMSConfig
+	Env         Environment
+	DB          DBConfig
+	Server      ServerConfig
+	SMS         SMSConfig
+	GoogleOAuth GoogleOAuthConfig
 }
 
 var currentConfig *Config
@@ -91,6 +98,10 @@ func Init() error {
 			SMSEndpoint: getEnv("SMS_ENDPOINT", "/send/sms"),
 			LMSEndpoint: getEnv("LMS_ENDPOINT", "/send/lms"),
 			MaxLength:   getEnvAsInt("SMS_MAX_LENGTH", 90),
+		},
+		GoogleOAuth: GoogleOAuthConfig{
+			ClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
+			ClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
 		},
 	}
 

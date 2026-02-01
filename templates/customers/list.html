@@ -1604,7 +1604,13 @@ function confirmInterviewDateTime() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert(`${pendingInterviewCustomerName}님의 인터뷰 일시가 확정되었습니다.`);
+            // 캘린더 링크가 있으면 새 탭으로 열기
+            if (data.calendar_link) {
+                window.open(data.calendar_link, '_blank');
+                alert(`${pendingInterviewCustomerName}님의 인터뷰 일시가 확정되고\n구글 캘린더에 추가되었습니다.`);
+            } else {
+                alert(`${pendingInterviewCustomerName}님의 인터뷰 일시가 확정되었습니다.`);
+            }
             
             // 입력 필드 초기화 (확정 완료 후에만)
             document.getElementById(`interview-${pendingInterviewCustomerId}`).value = '';

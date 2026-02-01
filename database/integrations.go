@@ -453,3 +453,195 @@ func GetMymunjaConfig(branchCode string, serviceID int) (*MymunjaConfig, error) 
 	log.Printf("[DB] GetMymunjaConfig 완료 - ID: %s, 회신번호: %d개", mymunjaID, len(callbackNumbers))
 	return config, nil
 }
+
+// CalendarConfig - 구글 캘린더 설정 구조체
+type CalendarConfig struct {
+	Seq            int
+	BranchSeq      int
+	AccessToken    string
+	RefreshToken   string
+	TokenExpiry    string // datetime 문자열
+	ConnectedEmail string
+	IsActive       bool
+}
+
+// GetCalendarConfig - 지점의 구글 캘린더 설정 조회
+func GetCalendarConfig(branchCode string) (*CalendarConfig, error) {
+	log.Printf("[DB] GetCalendarConfig 호출 - branchCode: %s", branchCode)
+
+	// 1단계: 지점 seq 조회
+	var branchSeq int
+	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
+	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
+	if err != nil {
+		log.Printf("GetCalendarConfig - branch not found: %v", err)
+		return nil, err
+	}
+
+	// 2단계: calendar_config 조회
+	var config CalendarConfig
+	configQuery := `
+		SELECT seq, branch_seq,
+		       COALESCE(access_token, ''), COALESCE(refresh_token, ''),
+		       COALESCE(token_expiry, ''), COALESCE(connected_email, ''),
+		       is_active
+		FROM calendar_config
+		WHERE branch_seq = ?
+	`
+	err = DB.QueryRow(configQuery, branchSeq).Scan(
+		&config.Seq, &config.BranchSeq,
+		&config.AccessToken, &config.RefreshToken, &config.TokenExpiry,
+		&config.ConnectedEmail, &config.IsActive,
+	)
+	if err != nil {
+		log.Printf("GetCalendarConfig - config not found: %v", err)
+		return nil, err
+	}
+
+	log.Printf("[DB] GetCalendarConfig 완료 - Email: %s, Active: %v", config.ConnectedEmail, config.IsActive)
+	return &config, nil
+}
+
+// SaveCalendarTokens - OAuth 인증 후 토큰 정보 저장
+func SaveCalendarTokens(branchCode, accessToken, refreshToken, tokenExpiry, email string) error {
+	log.Printf("[DB] SaveCalendarTokens 호출 - branchCode: %s, email: %s", branchCode, email)
+
+	// 1단계: 지점 seq 조회
+	var branchSeq int
+	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
+	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
+	if err != nil {
+		log.Printf("SaveCalendarTokens - branch not found: %v", err)
+		return err
+	}
+
+	// 2단계: 기존 설정 확인 (UPSERT)
+	var existingSeq int
+	checkQuery := `SELECT seq FROM calendar_config WHERE branch_seq = ?`
+	err = DB.QueryRow(checkQuery, branchSeq).Scan(&existingSeq)
+
+	if err != nil {
+		// 레코드가 없으면 INSERT
+		insertQuery := `
+			INSERT INTO calendar_config (branch_seq, access_token, refresh_token, token_expiry, connected_email, is_active)
+			VALUES (?, ?, ?, ?, ?, 1)
+		`
+		_, err = DB.Exec(insertQuery, branchSeq, accessToken, refreshToken, tokenExpiry, email)
+		if err != nil {
+			log.Printf("SaveCalendarTokens - insert error: %v", err)
+			return err
+		}
+		log.Printf("[DB] SaveCalendarTokens - 신규 생성 완료")
+	} else {
+		// 레코드가 있으면 UPDATE
+		updateQuery := `
+			UPDATE calendar_config 
+			SET access_token = ?, refresh_token = ?, token_expiry = ?, 
+			    connected_email = ?, is_active = 1
+			WHERE seq = ?
+		`
+		_, err = DB.Exec(updateQuery, accessToken, refreshToken, tokenExpiry, email, existingSeq)
+		if err != nil {
+			log.Printf("SaveCalendarTokens - update error: %v", err)
+			return err
+		}
+		log.Printf("[DB] SaveCalendarTokens - 업데이트 완료")
+	}
+
+	return nil
+}
+
+// DisconnectCalendar - 구글 캘린더 연동 해제
+func DisconnectCalendar(branchCode string) error {
+	log.Printf("[DB] DisconnectCalendar 호출 - branchCode: %s", branchCode)
+
+	// 1단계: 지점 seq 조회
+	var branchSeq int
+	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
+	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
+	if err != nil {
+		log.Printf("DisconnectCalendar - branch not found: %v", err)
+		return err
+	}
+
+	// 2단계: 토큰 정보 삭제 및 비활성화
+	updateQuery := `
+		UPDATE calendar_config 
+		SET access_token = NULL, refresh_token = NULL, token_expiry = NULL,
+		    connected_email = NULL, is_active = 0
+		WHERE branch_seq = ?
+	`
+	_, err = DB.Exec(updateQuery, branchSeq)
+	if err != nil {
+		log.Printf("DisconnectCalendar - update error: %v", err)
+		return err
+	}
+
+	log.Printf("[DB] DisconnectCalendar 완료")
+	return nil
+}
+
+// GetSMSSenderNumbers SMS 발신번호 목록 조회
+func GetSMSSenderNumbers(branchCode string) ([]string, error) {
+	log.Printf("[DB] GetSMSSenderNumbers 호출 - branchCode: %s", branchCode)
+
+	// 지점 seq 조회
+	var branchSeq int
+	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
+	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
+	if err != nil {
+		log.Printf("GetSMSSenderNumbers - branch not found: %v", err)
+		return []string{}, err
+	}
+
+	log.Printf("[DB] GetSMSSenderNumbers - branchSeq: %d", branchSeq)
+
+	// mymunja_config_info 확인
+	var configCount int
+	countQuery := `
+		SELECT COUNT(*) 
+		FROM mymunja_config_info mci
+		INNER JOIN ` + "`branch-third-party-mapping`" + ` btpm ON mci.mapping_id = btpm.mapping_seq
+		WHERE btpm.branch_id = ?
+	`
+	DB.QueryRow(countQuery, branchSeq).Scan(&configCount)
+	log.Printf("[DB] GetSMSSenderNumbers - mymunja_config_info 레코드 수: %d", configCount)
+
+	// mymunja_callback_number 전체 확인
+	var callbackCount int
+	DB.QueryRow(`SELECT COUNT(*) FROM mymunja_callback_number`).Scan(&callbackCount)
+	log.Printf("[DB] GetSMSSenderNumbers - mymunja_callback_number 전체 레코드 수: %d", callbackCount)
+
+	// 발신번호 목록 조회
+	query := `
+		SELECT mcn.number
+		FROM mymunja_callback_number mcn
+		INNER JOIN mymunja_config_info mci ON mcn.config_id = mci.seq
+		INNER JOIN ` + "`branch-third-party-mapping`" + ` btpm ON mci.mapping_id = btpm.mapping_seq
+		WHERE btpm.branch_id = ?
+		ORDER BY mcn.number
+	`
+
+	log.Printf("[DB] GetSMSSenderNumbers - 쿼리 실행: %s", query)
+
+	rows, err := DB.Query(query, branchSeq)
+	if err != nil {
+		log.Printf("GetSMSSenderNumbers - query error: %v", err)
+		return []string{}, err
+	}
+	defer rows.Close()
+
+	var numbers []string
+	for rows.Next() {
+		var number string
+		if err := rows.Scan(&number); err != nil {
+			log.Printf("GetSMSSenderNumbers - scan error: %v", err)
+			continue
+		}
+		numbers = append(numbers, number)
+		log.Printf("[DB] GetSMSSenderNumbers - 발신번호 추가: %s", number)
+	}
+
+	log.Printf("[DB] GetSMSSenderNumbers 완료 - %d개 조회", len(numbers))
+	return numbers, nil
+}

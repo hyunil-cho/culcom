@@ -1,0 +1,105 @@
+{{define "settings/main.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - 백오피스</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .settings-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .setting-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 24px;
+            transition: all 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .setting-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            border-color: #4285f4;
+        }
+
+        .setting-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .setting-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .setting-description {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .page-header {
+            margin-bottom: 32px;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    {{template "sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+            <div class="settings-container">
+                <div class="page-header">
+                    <h1>⚙️ 설정</h1>
+                    <p>백오피스의 다양한 설정을 관리합니다</p>
+                </div>
+
+                <div class="settings-grid">
+                    <!-- 예약 확정 SMS 설정 -->
+                    <a href="/settings/reservation-sms" class="setting-card">
+                        <div class="setting-icon">💬</div>
+                        <div class="setting-title">예약 확정 시 문자 발송</div>
+                        <div class="setting-description">
+                            예약 확정 시 자동으로 발송되는 문자 메시지의 템플릿과 발신번호를 설정합니다.
+                        </div>
+                    </a>
+
+                    <!-- 추가 설정은 여기에 -->
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
+{{end}}

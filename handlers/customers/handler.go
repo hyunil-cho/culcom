@@ -4,8 +4,10 @@ import (
 	"backoffice/config"
 	"backoffice/database"
 	"backoffice/handlers/errorhandler"
+	"backoffice/handlers/integrations"
 	"backoffice/middleware"
 	"backoffice/utils"
+	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
@@ -389,10 +391,55 @@ func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 고객 정보 조회 (캘린더 이벤트 생성용)
+	var customerName, phoneNumber, comment string
+	customerQuery := `SELECT name, phone_number, COALESCE(comment, '') FROM customers WHERE seq = ?`
+	err = database.DB.QueryRow(customerQuery, customerSeq).Scan(&customerName, &phoneNumber, &comment)
+	if err != nil {
+		log.Printf("고객 정보 조회 오류: %v", err)
+		// 고객 정보 조회 실패해도 예약은 생성되었으므로 계속 진행
+	}
+
+	// 구글 캘린더 이벤트 생성 시도
+	var calendarLink string
+	calendarService, err := integrations.GetCalendarService(branchCode)
+	if err == nil && calendarService != nil {
+		// 캘린더가 연동되어 있으면 이벤트 생성
+		eventReq := integrations.CreateCalendarEventRequest{
+			CustomerName:  customerName,
+			PhoneNumber:   phoneNumber,
+			InterviewDate: interviewDate.Format("2006-01-02 15:04:05"),
+			Comment:       comment,
+			Duration:      60, // 기본 60분
+		}
+
+		// 캘린더 이벤트 생성
+		link, eventErr := integrations.CreateCalendarEvent(branchCode, eventReq)
+		if eventErr != nil {
+			log.Printf("캘린더 이벤트 생성 실패: %v", eventErr)
+			// 캘린더 생성 실패해도 예약은 성공으로 처리
+		} else {
+			calendarLink = link
+			log.Printf("캘린더 이벤트 생성 완료: %s", link)
+		}
+	} else {
+		log.Printf("캘린더 연동 안됨 또는 오류: %v", err)
+	}
+
 	// 성공 응답
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"success": true, "reservation_id": ` + strconv.FormatInt(reservationID, 10) + `}`))
+	response := map[string]interface{}{
+		"success":        true,
+		"reservation_id": reservationID,
+	}
+	if calendarLink != "" {
+		response["calendar_link"] = calendarLink
+		response["message"] = "예약이 생성되고 구글 캘린더에 추가되었습니다"
+	} else {
+		response["message"] = "예약이 생성되었습니다"
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 // UpdateCustomerNameHandler - 고객 이름 업데이트 핸들러

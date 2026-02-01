@@ -1,0 +1,290 @@
+{{define "settings/reservation-sms-config.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - 백오피스</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .config-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .config-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-label .required {
+            color: #dc3545;
+            margin-left: 4px;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #4285f4;
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-check input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .form-check label {
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #f5f5f5;
+            border-color: #bbb;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #4caf50;
+        }
+
+        .alert-error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef5350;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 24px;
+        }
+
+        .info-box-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #1976d2;
+            margin-bottom: 8px;
+        }
+
+        .info-box-content {
+            font-size: 13px;
+            color: #0d47a1;
+            line-height: 1.6;
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .page-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    {{template "sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+            <div class="config-container">
+                <!-- 뒤로가기 -->
+                <a href="/settings" class="btn-secondary" style="margin-bottom: 20px;">← 설정으로 돌아가기</a>
+
+                <div class="page-header">
+                    <h1>💬 예약 확정 시 문자 발송 설정</h1>
+                    <p>예약 확정 시 자동으로 발송되는 문자 메시지를 설정합니다</p>
+                </div>
+
+                <!-- 성공/에러 메시지 -->
+                <div id="messageBox"></div>
+
+                <div class="info-box">
+                    <div class="info-box-title">📌 안내사항</div>
+                    <div class="info-box-content">
+                        이 설정을 활성화하면 고객의 예약이 확정될 때 자동으로 문자 메시지가 발송됩니다.
+                        발송되는 메시지는 선택한 템플릿의 내용을 사용하며, 고객 정보는 자동으로 치환됩니다.
+                    </div>
+                </div>
+
+                <div class="config-card">
+                    <form method="POST" action="/settings/reservation-sms">
+                        <!-- 템플릿 선택 -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                메시지 템플릿<span class="required">*</span>
+                            </label>
+                            <select name="template_seq" class="form-select" required>
+                                <option value="">템플릿을 선택하세요</option>
+                                {{range .Templates}}
+                                <option value="{{.ID}}" {{if $.Config}}{{if eq $.Config.TemplateSeq .ID}}selected{{end}}{{end}}>
+                                    {{.Name}}
+                                </option>
+                                {{end}}
+                            </select>
+                        </div>
+
+                        <!-- 발신번호 선택 -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                발신번호<span class="required">*</span>
+                            </label>
+                            <select name="sender_number" class="form-select" required>
+                                <option value="">발신번호를 선택하세요</option>
+                                {{range .SenderNumbers}}
+                                <option value="{{.}}" {{if $.Config}}{{if eq $.Config.SenderNumber .}}selected{{end}}{{end}}>
+                                    {{.}}
+                                </option>
+                                {{end}}
+                            </select>
+                        </div>
+
+                        <!-- 자동 발송 활성화 -->
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input type="checkbox" name="auto_send" id="auto_send" 
+                                    {{if .Config}}{{if .Config.AutoSend}}checked{{end}}{{end}}>
+                                <label for="auto_send">예약 확정 시 자동으로 문자 발송</label>
+                            </div>
+                        </div>
+
+                        <!-- 버튼 -->
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">저장</button>
+                            <a href="/settings" class="btn btn-secondary">취소</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // URL 파라미터에서 성공/실패 메시지 확인
+        const urlParams = new URLSearchParams(window.location.search);
+        const messageBox = document.getElementById('messageBox');
+
+        if (urlParams.has('success')) {
+            const success = urlParams.get('success');
+            if (success === 'saved') {
+                messageBox.innerHTML = '<div class="alert alert-success">설정이 성공적으로 저장되었습니다.</div>';
+                messageBox.style.display = 'block';
+                
+                // URL에서 파라미터 제거
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                // 3초 후 메시지 자동 제거
+                setTimeout(() => {
+                    messageBox.style.display = 'none';
+                    messageBox.innerHTML = '';
+                }, 3000);
+            }
+        }
+        
+        if (urlParams.has('error')) {
+            const error = urlParams.get('error');
+            let errorMessage = '설정 저장 중 오류가 발생했습니다.';
+            
+            if (error === 'required') {
+                errorMessage = '필수 항목을 모두 입력해주세요.';
+            } else if (error === 'save_failed') {
+                errorMessage = '설정 저장에 실패했습니다. 다시 시도해주세요.';
+            }
+            
+            messageBox.innerHTML = '<div class="alert alert-danger">' + errorMessage + '</div>';
+            messageBox.style.display = 'block';
+            
+            // URL에서 파라미터 제거
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    </script>
+</body>
+</html>
+{{end}}
