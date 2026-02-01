@@ -4,6 +4,7 @@ import (
 	"backoffice/database"
 	"backoffice/middleware"
 	"backoffice/services/sms"
+	"backoffice/utils"
 	"fmt"
 	"log"
 	"net/http"
@@ -21,9 +22,7 @@ func SendSMSHandler(w http.ResponseWriter, r *http.Request) {
 	branchSeq := middleware.GetSelectedBranch(r)
 	if branchSeq == 0 {
 		log.Println("지점 정보 없음")
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "지점 정보가 없습니다."}`))
+		utils.JSONError(w, http.StatusUnauthorized, "지점 정보가 없습니다.")
 		return
 	}
 
@@ -37,30 +36,22 @@ func SendSMSHandler(w http.ResponseWriter, r *http.Request) {
 	customerSeq, err := strconv.Atoi(customerSeqStr)
 	if err != nil || customerSeq <= 0 {
 		log.Printf("잘못된 customer_seq: %s", customerSeqStr)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "잘못된 고객 정보입니다."}`))
+		utils.JSONError(w, http.StatusBadRequest, "잘못된 고객 정보입니다.")
 		return
 	}
 
 	if senderPhone == "" {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "발신번호를 입력해주세요."}`))
+		utils.JSONError(w, http.StatusBadRequest, "발신번호를 입력해주세요.")
 		return
 	}
 
 	if receiverPhone == "" {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "수신번호가 없습니다."}`))
+		utils.JSONError(w, http.StatusBadRequest, "수신번호가 없습니다.")
 		return
 	}
 
 	if message == "" {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "메시지 내용을 입력해주세요."}`))
+		utils.JSONError(w, http.StatusBadRequest, "메시지 내용을 입력해주세요.")
 		return
 	}
 
@@ -68,24 +59,18 @@ func SendSMSHandler(w http.ResponseWriter, r *http.Request) {
 	smsConfig, err := database.GetSMSConfig(branchSeq)
 	if err != nil {
 		log.Printf("SMS 설정 조회 오류: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "SMS 설정을 조회할 수 없습니다."}`))
+		utils.JSONError(w, http.StatusInternalServerError, "SMS 설정을 조회할 수 없습니다.")
 		return
 	}
 
 	if smsConfig == nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "SMS 설정이 등록되지 않았습니다."}`))
+		utils.JSONError(w, http.StatusBadRequest, "SMS 설정이 등록되지 않았습니다.")
 		return
 	}
 
 	// 활성화 상태 확인
 	if !smsConfig.IsActive {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "마이문자 연동이 비활성화 상태입니다.\n연동 관리 페이지에서 마이문자를 활성화해주세요."}`))
+		utils.JSONError(w, http.StatusBadRequest, "마이문자 연동이 비활성화 상태입니다.\n연동 관리 페이지에서 마이문자를 활성화해주세요.")
 		return
 	}
 
@@ -101,26 +86,22 @@ func SendSMSHandler(w http.ResponseWriter, r *http.Request) {
 	sendResp, err := sms.Send(sendReq)
 	if err != nil {
 		log.Printf("SMS 전송 오류: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "SMS 전송 중 오류가 발생했습니다."}`))
+		utils.JSONError(w, http.StatusInternalServerError, "SMS 전송 중 오류가 발생했습니다.")
 		return
 	}
 
 	if !sendResp.Success {
 		log.Printf("SMS 전송 실패: %s (코드: %s)", sendResp.Message, sendResp.Code)
 		errorMsg := fmt.Sprintf("SMS 전송 실패: %s", sendResp.Message)
-		response := fmt.Sprintf(`{"success": false, "error": %q}`, errorMsg)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(response))
+		utils.JSONError(w, http.StatusInternalServerError, errorMsg)
 		return
 	}
 
 	// 성공 응답
 	log.Printf("SMS 전송 성공 - 고객 ID: %d, 수신번호: %s", customerSeq, receiverPhone)
-	response := fmt.Sprintf(`{"success": true, "message": "메시지가 성공적으로 전송되었습니다.", "nums": %q, "cols": %q}`, sendResp.Nums, sendResp.Cols)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(response))
+	utils.JSONSuccess(w, map[string]interface{}{
+		"message": "메시지가 성공적으로 전송되었습니다.",
+		"nums":    sendResp.Nums,
+		"cols":    sendResp.Cols,
+	})
 }

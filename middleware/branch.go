@@ -83,6 +83,7 @@ func GetSelectedBranch(r *http.Request) int {
 		// string을 int로 변환
 		var seq int
 		if _, err := fmt.Sscanf(branchSeq, "%d", &seq); err == nil {
+			log.Printf("선택된 지점 seq: %d", seq)
 			return seq
 		}
 	}

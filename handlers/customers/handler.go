@@ -6,7 +6,6 @@ import (
 	"backoffice/handlers/integrations"
 	"backoffice/middleware"
 	"backoffice/utils"
-	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
@@ -200,9 +199,10 @@ func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 성공 응답
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"success": true, "comment": "` + comment + `"}`))
+	utils.JSONSuccess(w, map[string]interface{}{
+		"success": true,
+		"comment": comment,
+	})
 }
 
 // IncrementCallCountHandler - 고객 통화 횟수 증가 핸들러
@@ -232,9 +232,11 @@ func IncrementCallCountHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 성공 응답
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"success": true, "call_count": ` + strconv.Itoa(callCount) + `, "last_update_date": "` + lastUpdateDate + `"}`))
+	utils.JSONSuccess(w, map[string]interface{}{
+		"success":          true,
+		"call_count":       callCount,
+		"last_update_date": lastUpdateDate,
+	})
 }
 
 // CreateReservationHandler - 예약 정보 생성 핸들러
@@ -343,10 +345,7 @@ func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 성공 응답
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	response := map[string]interface{}{
-		"success":        true,
 		"reservation_id": reservationID,
 	}
 	if calendarLink != "" {
@@ -355,7 +354,7 @@ func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		response["message"] = "예약이 생성되었습니다"
 	}
-	json.NewEncoder(w).Encode(response)
+	utils.JSONSuccess(w, response)
 }
 
 // UpdateCustomerNameHandler - 고객 이름 업데이트 핸들러
@@ -392,9 +391,7 @@ func UpdateCustomerNameHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 성공 응답
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"success": true}`))
+	utils.JSONSuccess(w, map[string]interface{}{"success": true})
 }
 
 // CheckSMSIntegrationHandler - SMS 연동 상태 확인 핸들러
@@ -408,9 +405,7 @@ func CheckSMSIntegrationHandler(w http.ResponseWriter, r *http.Request) {
 	branchCode := middleware.GetSelectedBranch(r)
 	if branchCode == 0 {
 		log.Println("지점 정보 없음")
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "지점 정보가 없습니다."}`))
+		utils.JSONError(w, http.StatusUnauthorized, "지점 정보가 없습니다.")
 		return
 	}
 
@@ -418,31 +413,23 @@ func CheckSMSIntegrationHandler(w http.ResponseWriter, r *http.Request) {
 	status, err := database.GetIntegrationStatus(branchCode, "sms")
 	if err != nil {
 		log.Printf("SMS 연동 상태 조회 오류: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "SMS 연동 정보를 확인할 수 없습니다."}`))
+		utils.JSONError(w, http.StatusInternalServerError, "SMS 연동 정보를 확인할 수 없습니다.")
 		return
 	}
 
 	// 연동 상태 확인
 	if !status.HasConfig {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "SMS 연동이 설정되지 않았습니다.\n연동 관리 페이지에서 마이문자 서비스를 먼저 연동해주세요."}`))
+		utils.JSONError(w, http.StatusBadRequest, "SMS 연동이 설정되지 않았습니다.\n연동 관리 페이지에서 마이문자 서비스를 먼저 연동해주세요.")
 		return
 	}
 
 	if !status.IsConnected {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "마이문자 연동이 비활성화 상태입니다.\n연동 관리 페이지에서 마이문자를 활성화해주세요."}`))
+		utils.JSONError(w, http.StatusBadRequest, "마이문자 연동이 비활성화 상태입니다.\n연동 관리 페이지에서 마이문자를 활성화해주세요.")
 		return
 	}
 
 	// 연동 상태 정상
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"success": true, "message": "SMS 연동이 정상적으로 설정되어 있습니다."}`))
+	utils.JSONSuccessMessage(w, "SMS 연동이 정상적으로 설정되어 있습니다.")
 }
 
 // GetSMSSenderNumbersHandler - SMS 발신번호 목록 조회 핸들러
@@ -456,9 +443,7 @@ func GetSMSSenderNumbersHandler(w http.ResponseWriter, r *http.Request) {
 	branchCode := middleware.GetSelectedBranch(r)
 	if branchCode == 0 {
 		log.Println("지점 정보 없음")
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "지점 정보가 없습니다."}`))
+		utils.JSONError(w, http.StatusUnauthorized, "지점 정보가 없습니다.")
 		return
 	}
 
@@ -466,34 +451,18 @@ func GetSMSSenderNumbersHandler(w http.ResponseWriter, r *http.Request) {
 	config, err := database.GetSMSConfig(branchCode)
 	if err != nil {
 		log.Printf("SMS 설정 조회 오류: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "SMS 설정을 조회할 수 없습니다."}`))
+		utils.JSONError(w, http.StatusInternalServerError, "SMS 설정을 조회할 수 없습니다.")
 		return
 	}
 
 	if config == nil || len(config.SenderPhones) == 0 {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": false, "error": "등록된 발신번호가 없습니다."}`))
+		utils.JSONError(w, http.StatusBadRequest, "등록된 발신번호가 없습니다.")
 		return
 	}
 
 	// JSON 응답 생성 (활성화 상태도 포함)
-	isActiveStr := "false"
-	if config.IsActive {
-		isActiveStr = "true"
-	}
-	response := `{"success": true, "isActive": ` + isActiveStr + `, "senderPhones": [`
-	for i, phone := range config.SenderPhones {
-		if i > 0 {
-			response += ","
-		}
-		response += `"` + phone + `"`
-	}
-	response += `]}`
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(response))
+	utils.JSONSuccess(w, map[string]interface{}{
+		"isActive":     config.IsActive,
+		"senderPhones": config.SenderPhones,
+	})
 }

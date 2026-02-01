@@ -5,6 +5,7 @@ import (
 	"backoffice/database"
 	"backoffice/middleware"
 	"backoffice/services/sms"
+	"backoffice/utils"
 	"context"
 	"crypto/rand"
 	"encoding/base64"
@@ -258,12 +259,7 @@ func SMSTestHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		log.Printf("SMS 테스트 요청 파싱 오류: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(sms.SmsSendResponse{
-			Success: false,
-			Message: "잘못된 요청 형식입니다",
-		})
+		utils.JSONError(w, http.StatusBadRequest, "잘못된 요청 형식입니다")
 		return
 	}
 
@@ -290,20 +286,18 @@ func SMSTestHandler(w http.ResponseWriter, r *http.Request) {
 	result, err := sms.Send(sendReq)
 	if err != nil {
 		log.Printf("SMS 발송 오류: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(sms.SmsSendResponse{
-			Success: false,
-			Message: err.Error(),
-		})
+		utils.JSONError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	// 응답 반환
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(sms.SmsSendResponse{
-		Success: result.Success,
-		Message: result.Message,
-	})
+	if result.Success {
+		utils.JSONSuccess(w, map[string]interface{}{
+			"message": result.Message,
+		})
+	} else {
+		utils.JSONError(w, http.StatusInternalServerError, result.Message)
+	}
 }
 
 // SMSConfigSaveHandler SMS 설정 저장 API
@@ -369,19 +363,13 @@ func ActivateHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		log.Printf("활성화 요청 파싱 오류: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": false,
-			"message": "잘못된 요청 형식입니다",
-		})
+		utils.JSONError(w, http.StatusBadRequest, "잘못된 요청 형식입니다")
 		return
 	}
 
 	// 구글 캘린더는 OAuth 연동 페이지로 리다이렉트
 	if req.ServiceID == "calendar" {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.JSONResponse(w, http.StatusOK, map[string]interface{}{
 			"success":  false,
 			"message":  "구글 캘린더는 연동 설정 페이지에서 OAuth 인증을 진행해주세요",
 			"redirect": "/integrations/calendar-config",
@@ -394,12 +382,7 @@ func ActivateHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = fmt.Sscanf(req.ServiceID, "%d", &serviceID)
 	if err != nil {
 		log.Printf("유효하지 않은 서비스 ID: %s", req.ServiceID)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": false,
-			"message": "유효하지 않은 서비스 ID입니다",
-		})
+		utils.JSONError(w, http.StatusBadRequest, "유효하지 않은 서비스 ID입니다")
 		return
 	}
 
@@ -409,21 +392,12 @@ func ActivateHandler(w http.ResponseWriter, r *http.Request) {
 	// Database를 통해 활성화
 	if err := database.ActivateIntegration(branchCode, serviceID); err != nil {
 		log.Printf("활성화 오류: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": false,
-			"message": "활성화 중 오류가 발생했습니다",
-		})
+		utils.JSONError(w, http.StatusInternalServerError, "활성화 중 오류가 발생했습니다")
 		return
 	}
 
 	// 성공 응답
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"success": true,
-		"message": "활성화되었습니다",
-	})
+	utils.JSONSuccessMessage(w, "활성화되었습니다")
 }
 
 // DisconnectHandler 연동 해제 (비활성화) API
@@ -440,12 +414,7 @@ func DisconnectHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		log.Printf("연결 해제 요청 파싱 오류: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": false,
-			"message": "잘못된 요청 형식입니다",
-		})
+		utils.JSONError(w, http.StatusBadRequest, "잘못된 요청 형식입니다")
 		return
 	}
 
@@ -455,19 +424,10 @@ func DisconnectHandler(w http.ResponseWriter, r *http.Request) {
 		err := database.DisconnectCalendar(branchCode)
 		if err != nil {
 			log.Printf("DisconnectHandler - calendar disconnect error: %v", err)
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]interface{}{
-				"success": false,
-				"message": "연동 해제 중 오류가 발생했습니다",
-			})
+			utils.JSONError(w, http.StatusInternalServerError, "연동 해제 중 오류가 발생했습니다")
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": true,
-			"message": "구글 캘린더 연동이 해제되었습니다",
-		})
+		utils.JSONSuccessMessage(w, "구글 캘린더 연동이 해제되었습니다")
 		return
 	}
 
@@ -476,12 +436,7 @@ func DisconnectHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = fmt.Sscanf(req.ServiceID, "%d", &serviceID)
 	if err != nil {
 		log.Printf("유효하지 않은 서비스 ID: %s", req.ServiceID)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": false,
-			"message": "유효하지 않은 서비스 ID입니다",
-		})
+		utils.JSONError(w, http.StatusBadRequest, "유효하지 않은 서비스 ID입니다")
 		return
 	}
 
@@ -491,21 +446,12 @@ func DisconnectHandler(w http.ResponseWriter, r *http.Request) {
 	// Database를 통해 비활성화
 	if err := database.DeactivateIntegration(branchCode, serviceID); err != nil {
 		log.Printf("비활성화 오류: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": false,
-			"message": "비활성화 중 오류가 발생했습니다",
-		})
+		utils.JSONError(w, http.StatusInternalServerError, "비활성화 중 오류가 발생했습니다")
 		return
 	}
 
 	// 성공 응답
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"success": true,
-		"message": "연결이 해제되었습니다",
-	})
+	utils.JSONSuccessMessage(w, "연결이 해제되었습니다")
 }
 
 // maskPassword 비밀번호 마스킹 (로깅용)
@@ -676,20 +622,11 @@ func DisconnectCalendarHandler(w http.ResponseWriter, r *http.Request) {
 	err := database.DisconnectCalendar(branchCode)
 	if err != nil {
 		log.Printf("DisconnectCalendarHandler - DB error: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": false,
-			"message": "연동 해제 중 오류가 발생했습니다",
-		})
+		utils.JSONError(w, http.StatusInternalServerError, "연동 해제 중 오류가 발생했습니다")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"success": true,
-		"message": "구글 캘린더 연동이 해제되었습니다",
-	})
+	utils.JSONSuccessMessage(w, "구글 캘린더 연동이 해제되었습니다")
 }
 
 // generateStateToken CSRF 방지용 state 토큰 생성
@@ -778,12 +715,7 @@ func CreateCalendarEventHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		log.Printf("CreateCalendarEvent - 요청 파싱 오류: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": false,
-			"message": "잘못된 요청 형식입니다",
-		})
+		utils.JSONError(w, http.StatusBadRequest, "잘못된 요청 형식입니다")
 		return
 	}
 
@@ -794,19 +726,12 @@ func CreateCalendarEventHandler(w http.ResponseWriter, r *http.Request) {
 	link, err := CreateCalendarEvent(branchSeq, req)
 	if err != nil {
 		log.Printf("CreateCalendarEvent - 오류: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": false,
-			"message": err.Error(),
-		})
+		utils.JSONError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	// 성공 응답
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"success": true,
+	utils.JSONSuccess(w, map[string]interface{}{
 		"message": "캘린더 이벤트가 생성되었습니다",
 		"link":    link,
 	})
