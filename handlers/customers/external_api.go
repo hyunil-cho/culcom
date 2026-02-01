@@ -1,6 +1,7 @@
 package customers
 
 import (
+	"backoffice/database"
 	"backoffice/utils"
 	"fmt"
 	"log"
@@ -75,9 +76,29 @@ func ExternalRegisterCustomerHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("  - 언어: %d", req.Language)
 	log.Println("==============================")
 
+	// 1단계: location으로 branch_seq 조회
+	branchSeq, err := database.GetBranchSeqByLocation(req.Location)
+	if err != nil {
+		log.Printf("지점 조회 실패: %v", err)
+		utils.JSONError(w, http.StatusBadRequest, "해당 위치의 지점을 찾을 수 없습니다")
+		return
+	}
+	log.Printf("지점 조회 성공: branch_seq=%d", branchSeq)
+
+	// 2단계: customers 테이블에 고객 등록
+	customerSeq, err := database.InsertExternalCustomer(branchSeq, req.Name, req.Phone, req.Job, req.Reading)
+	if err != nil {
+		log.Printf("고객 등록 실패: %v", err)
+		utils.JSONError(w, http.StatusInternalServerError, "고객 등록에 실패했습니다")
+		return
+	}
+	log.Printf("고객 등록 성공: customer_seq=%d", customerSeq)
+
 	// 성공 응답
 	utils.JSONSuccess(w, map[string]interface{}{
-		"message": "고객이 성공적으로 등록되었습니다",
+		"message":      "고객이 성공적으로 등록되었습니다",
+		"customer_seq": customerSeq,
+		"branch_seq":   branchSeq,
 	})
 }
 
