@@ -1,7 +1,5 @@
 package utils
 
-import "fmt"
-
 // ValidationError 검증 오류 타입
 type ValidationError struct {
 	Message string
