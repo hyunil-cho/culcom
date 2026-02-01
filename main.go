@@ -105,7 +105,7 @@ func main() {
 	mux.HandleFunc("/api/customers/update-name", middleware.RequireAuthRecover(customers.UpdateCustomerNameHandler))              // 고객 이름 업데이트
 	mux.HandleFunc("/api/customers/check-sms", middleware.RequireAuthRecover(customers.CheckSMSIntegrationHandler))               // SMS 연동 상태 확인
 	mux.HandleFunc("/api/customers/sms-senders", middleware.RequireAuthRecover(customers.GetSMSSenderNumbersHandler))             // SMS 발신번호 목록 조회
-	mux.HandleFunc("/api/external/customers", middleware.RecoverFunc(customers.ExternalRegisterCustomerHandler))                  // 외부 고객 등록 API (인증 불필요)
+	mux.HandleFunc("/api/external/customers", customers.ExternalRegisterCustomerHandler)                                          // 외부 고객 등록 API (인증 불필요)
 	mux.HandleFunc("/api/service/sms", middleware.RequireAuthRecover(services.SendSMSHandler))                                    // SMS 메시지 전송
 	mux.HandleFunc("/api/service/reservation-sms-config", middleware.RequireAuthRecover(services.GetReservationSMSConfigHandler)) // 예약 SMS 설정 조회
 	mux.HandleFunc("/branches", middleware.RequireAuthRecover(branches.Handler))                                                  // 지점 관리
