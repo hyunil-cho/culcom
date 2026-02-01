@@ -15,16 +15,16 @@ type IntegrationStatus struct {
 }
 
 // GetIntegrationStatus - 특정 지점의 특정 서비스 연동 상태 조회
-// 파라미터: branchCode (지점 코드), serviceType (서비스 타입: sms, email 등)
+// 파라미터: branchSeq (지점 seq), serviceType (서비스 타입: sms, email 등)
 // 반환: 연동 상태, 에러
-func GetIntegrationStatus(branchCode, serviceType string) (*IntegrationStatus, error) {
-	log.Printf("[DB] GetIntegrationStatus 호출 - branchCode: %s, serviceType: %s", branchCode, serviceType)
+func GetIntegrationStatus(branchSeq int, serviceType string) (*IntegrationStatus, error) {
+	log.Printf("[DB] GetIntegrationStatus 호출 - branchSeq: %d, serviceType: %s", branchSeq, serviceType)
 
-	// 지점 코드가 없으면 빈 상태 반환
-	if branchCode == "" {
-		log.Printf("GetIntegrationStatus - branchCode is empty")
+	// 지점 seq가 0이면 빈 상태 반환
+	if branchSeq == 0 {
+		log.Printf("GetIntegrationStatus - branchSeq is 0")
 		return &IntegrationStatus{
-			BranchCode:  branchCode,
+			BranchCode:  "",
 			ServiceType: serviceType,
 			IsConnected: false,
 			HasConfig:   false,
@@ -32,22 +32,7 @@ func GetIntegrationStatus(branchCode, serviceType string) (*IntegrationStatus, e
 		}, nil
 	}
 
-	// 1단계: 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("GetIntegrationStatus - branch not found: %v", err)
-		return &IntegrationStatus{
-			BranchCode:  branchCode,
-			ServiceType: serviceType,
-			IsConnected: false,
-			HasConfig:   false,
-			ConfigData:  map[string]interface{}{},
-		}, nil
-	}
-
-	// 2단계: 서비스 타입으로 외부 서비스 조회
+	// 서비스 타입으로 외부 서비스 조회
 	var serviceSeq int
 	var serviceName, description string
 	serviceQuery := `
@@ -60,7 +45,7 @@ func GetIntegrationStatus(branchCode, serviceType string) (*IntegrationStatus, e
 		WHERE est.code_name = ?
 	`
 
-	err = DB.QueryRow(serviceQuery, serviceType).Scan(&serviceSeq, &serviceName, &description)
+	err := DB.QueryRow(serviceQuery, serviceType).Scan(&serviceSeq, &serviceName, &description)
 	if err != nil {
 		log.Printf("GetIntegrationStatus - service not found: %v", err)
 		return nil, err
@@ -79,7 +64,7 @@ func GetIntegrationStatus(branchCode, serviceType string) (*IntegrationStatus, e
 	isConnected := (err == nil && isActive)
 
 	status := &IntegrationStatus{
-		BranchCode:  branchCode,
+		BranchCode:  "",
 		ServiceType: serviceType,
 		IsConnected: isConnected,
 		HasConfig:   hasConfig,
@@ -95,16 +80,16 @@ func GetIntegrationStatus(branchCode, serviceType string) (*IntegrationStatus, e
 }
 
 // GetIntegrationStatusByServiceID - 서비스 ID로 연동 상태 조회
-// 파라미터: branchCode (지점 코드), serviceID (서비스 ID)
+// 파라미터: branchSeq (지점 seq), serviceID (서비스 ID)
 // 반환: 연동 상태, 에러
-func GetIntegrationStatusByServiceID(branchCode string, serviceID int) (*IntegrationStatus, error) {
-	log.Printf("[DB] GetIntegrationStatusByServiceID 호출 - branchCode: %s, serviceID: %d", branchCode, serviceID)
+func GetIntegrationStatusByServiceID(branchSeq, serviceID int) (*IntegrationStatus, error) {
+	log.Printf("[DB] GetIntegrationStatusByServiceID 호출 - branchSeq: %d, serviceID: %d", branchSeq, serviceID)
 
-	// 지점 코드가 없으면 빈 상태 반환
-	if branchCode == "" {
-		log.Printf("GetIntegrationStatusByServiceID - branchCode is empty")
+	// 지점 seq가 0이면 빈 상태 반환
+	if branchSeq == 0 {
+		log.Printf("GetIntegrationStatusByServiceID - branchSeq is 0")
 		return &IntegrationStatus{
-			BranchCode:  branchCode,
+			BranchCode:  "",
 			ServiceType: "unknown",
 			IsConnected: false,
 			HasConfig:   false,
@@ -112,22 +97,7 @@ func GetIntegrationStatusByServiceID(branchCode string, serviceID int) (*Integra
 		}, nil
 	}
 
-	// 1단계: 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("GetIntegrationStatusByServiceID - branch not found: %v", err)
-		return &IntegrationStatus{
-			BranchCode:  branchCode,
-			ServiceType: "unknown",
-			IsConnected: false,
-			HasConfig:   false,
-			ConfigData:  map[string]interface{}{},
-		}, nil
-	}
-
-	// 2단계: 서비스 ID로 외부 서비스 조회
+	// 서비스 ID로 외부 서비스 조회
 	var serviceName, description string
 	var codeNamePtr *string
 	serviceQuery := `
@@ -140,7 +110,7 @@ func GetIntegrationStatusByServiceID(branchCode string, serviceID int) (*Integra
 		WHERE tps.seq = ?
 	`
 
-	err = DB.QueryRow(serviceQuery, serviceID).Scan(&serviceName, &description, &codeNamePtr)
+	err := DB.QueryRow(serviceQuery, serviceID).Scan(&serviceName, &description, &codeNamePtr)
 	if err != nil {
 		log.Printf("GetIntegrationStatusByServiceID - service not found: %v", err)
 		return nil, err
@@ -164,7 +134,7 @@ func GetIntegrationStatusByServiceID(branchCode string, serviceID int) (*Integra
 	isConnected := (err == nil && isActive)
 
 	status := &IntegrationStatus{
-		BranchCode:  branchCode,
+		BranchCode:  "",
 		ServiceType: codeName,
 		IsConnected: isConnected,
 		HasConfig:   hasConfig,
@@ -180,27 +150,18 @@ func GetIntegrationStatusByServiceID(branchCode string, serviceID int) (*Integra
 }
 
 // GetAllIntegrationsByBranch - 특정 지점의 모든 서비스 연동 상태 조회
-// 파라미터: branchCode (지점 코드)
+// 파라미터: branchSeq (지점 seq)
 // 반환: 연동 상태 목록, 에러
-func GetAllIntegrationsByBranch(branchCode string) ([]IntegrationStatus, error) {
-	log.Printf("[DB] GetAllIntegrationsByBranch 호출 - branchCode: %s", branchCode)
+func GetAllIntegrationsByBranch(branchSeq int) ([]IntegrationStatus, error) {
+	log.Printf("[DB] GetAllIntegrationsByBranch 호출 - branchSeq: %d", branchSeq)
 
-	// 지점 코드가 없으면 빈 배열 반환
-	if branchCode == "" {
-		log.Printf("GetAllIntegrationsByBranch - branchCode is empty")
+	// 지점 seq가 0이면 빈 배열 반환
+	if branchSeq == 0 {
+		log.Printf("GetAllIntegrationsByBranch - branchSeq is 0")
 		return []IntegrationStatus{}, nil
 	}
 
-	// 1단계: 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("GetAllIntegrationsByBranch - branch not found: %v", err)
-		return []IntegrationStatus{}, nil // 지점이 없으면 빈 배열 반환 (에러 아님)
-	}
-
-	// 2단계: 모든 외부 서비스 목록 조회
+	// 모든 외부 서비스 목록 조회
 	servicesQuery := `
 		SELECT 
 			tps.seq,
@@ -249,7 +210,7 @@ func GetAllIntegrationsByBranch(branchCode string) ([]IntegrationStatus, error) 
 		isConnected := (err == nil && isActive)
 
 		statuses = append(statuses, IntegrationStatus{
-			BranchCode:  branchCode,
+			BranchCode:  "",
 			ServiceType: codeName,
 			IsConnected: isConnected,
 			HasConfig:   hasConfig,
@@ -292,21 +253,12 @@ func UpdateIntegrationStatus(branchCode, serviceType string, isConnected bool, c
 }
 
 // ActivateIntegration - 연동 활성화
-// 파라미터: branchCode (지점 코드), serviceID (서비스 ID)
+// 파라미터: branchSeq (지점 seq), serviceID (서비스 ID)
 // 반환: 에러
-func ActivateIntegration(branchCode string, serviceID int) error {
-	log.Printf("[DB] ActivateIntegration 호출 - branchCode: %s, serviceID: %d", branchCode, serviceID)
+func ActivateIntegration(branchSeq, serviceID int) error {
+	log.Printf("[DB] ActivateIntegration 호출 - branchSeq: %d, serviceID: %d", branchSeq, serviceID)
 
-	// 1단계: 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("ActivateIntegration - branch not found: %v", err)
-		return err
-	}
-
-	// 2단계: branch-third-party-mapping의 is_active를 true로 업데이트
+	// branch-third-party-mapping의 is_active를 true로 업데이트
 	updateQuery := `
 		UPDATE ` + "`branch-third-party-mapping`" + `
 		SET is_active = 1, lastUpdateDate = CURDATE()
@@ -329,21 +281,12 @@ func ActivateIntegration(branchCode string, serviceID int) error {
 }
 
 // DeactivateIntegration - 연동 비활성화 (연결 해제)
-// 파라미터: branchCode (지점 코드), serviceID (서비스 ID)
+// 파라미터: branchSeq (지점 seq), serviceID (서비스 ID)
 // 반환: 에러
-func DeactivateIntegration(branchCode string, serviceID int) error {
-	log.Printf("[DB] DeactivateIntegration 호출 - branchCode: %s, serviceID: %d", branchCode, serviceID)
+func DeactivateIntegration(branchSeq, serviceID int) error {
+	log.Printf("[DB] DeactivateIntegration 호출 - branchSeq: %d, serviceID: %d", branchSeq, serviceID)
 
-	// 1단계: 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("DeactivateIntegration - branch not found: %v", err)
-		return err
-	}
-
-	// 2단계: branch-third-party-mapping의 is_active를 false로 업데이트
+	// branch-third-party-mapping의 is_active를 false로 업데이트
 	updateQuery := `
 		UPDATE ` + "`branch-third-party-mapping`" + `
 		SET is_active = 0, lastUpdateDate = CURDATE()
@@ -376,21 +319,12 @@ type MymunjaConfig struct {
 }
 
 // GetMymunjaConfig - 특정 지점과 서비스의 마이문자 설정 조회
-// 파라미터: branchCode (지점 코드), serviceID (서비스 ID)
+// 파라미터: branchSeq (지점 seq), serviceID (서비스 ID)
 // 반환: 마이문자 설정 정보, 에러
-func GetMymunjaConfig(branchCode string, serviceID int) (*MymunjaConfig, error) {
-	log.Printf("[DB] GetMymunjaConfig 호출 - branchCode: %s, serviceID: %d", branchCode, serviceID)
+func GetMymunjaConfig(branchSeq, serviceID int) (*MymunjaConfig, error) {
+	log.Printf("[DB] GetMymunjaConfig 호출 - branchSeq: %d, serviceID: %d", branchSeq, serviceID)
 
-	// 1단계: 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("GetMymunjaConfig - branch not found: %v", err)
-		return nil, err
-	}
-
-	// 2단계: branch-third-party-mapping 조회
+	// branch-third-party-mapping 조회
 	var mappingSeq int
 	var isActive bool
 	mappingQuery := `
@@ -398,7 +332,7 @@ func GetMymunjaConfig(branchCode string, serviceID int) (*MymunjaConfig, error) 
 		FROM ` + "`branch-third-party-mapping`" + `
 		WHERE branch_id = ? AND third_party_id = ?
 	`
-	err = DB.QueryRow(mappingQuery, branchSeq, serviceID).Scan(&mappingSeq, &isActive)
+	err := DB.QueryRow(mappingQuery, branchSeq, serviceID).Scan(&mappingSeq, &isActive)
 	if err != nil {
 		log.Printf("GetMymunjaConfig - mapping not found: %v", err)
 		return nil, err
@@ -466,19 +400,10 @@ type CalendarConfig struct {
 }
 
 // GetCalendarConfig - 지점의 구글 캘린더 설정 조회
-func GetCalendarConfig(branchCode string) (*CalendarConfig, error) {
-	log.Printf("[DB] GetCalendarConfig 호출 - branchCode: %s", branchCode)
+func GetCalendarConfig(branchSeq int) (*CalendarConfig, error) {
+	log.Printf("[DB] GetCalendarConfig 호출 - branchSeq: %d", branchSeq)
 
-	// 1단계: 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("GetCalendarConfig - branch not found: %v", err)
-		return nil, err
-	}
-
-	// 2단계: calendar_config 조회
+	// calendar_config 조회
 	var config CalendarConfig
 	configQuery := `
 		SELECT seq, branch_seq,
@@ -488,7 +413,7 @@ func GetCalendarConfig(branchCode string) (*CalendarConfig, error) {
 		FROM calendar_config
 		WHERE branch_seq = ?
 	`
-	err = DB.QueryRow(configQuery, branchSeq).Scan(
+	err := DB.QueryRow(configQuery, branchSeq).Scan(
 		&config.Seq, &config.BranchSeq,
 		&config.AccessToken, &config.RefreshToken, &config.TokenExpiry,
 		&config.ConnectedEmail, &config.IsActive,
@@ -503,22 +428,13 @@ func GetCalendarConfig(branchCode string) (*CalendarConfig, error) {
 }
 
 // SaveCalendarTokens - OAuth 인증 후 토큰 정보 저장
-func SaveCalendarTokens(branchCode, accessToken, refreshToken, tokenExpiry, email string) error {
-	log.Printf("[DB] SaveCalendarTokens 호출 - branchCode: %s, email: %s", branchCode, email)
+func SaveCalendarTokens(branchSeq int, accessToken, refreshToken, tokenExpiry, email string) error {
+	log.Printf("[DB] SaveCalendarTokens 호출 - branchSeq: %d, email: %s", branchSeq, email)
 
-	// 1단계: 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("SaveCalendarTokens - branch not found: %v", err)
-		return err
-	}
-
-	// 2단계: 기존 설정 확인 (UPSERT)
+	// 기존 설정 확인 (UPSERT)
 	var existingSeq int
 	checkQuery := `SELECT seq FROM calendar_config WHERE branch_seq = ?`
-	err = DB.QueryRow(checkQuery, branchSeq).Scan(&existingSeq)
+	err := DB.QueryRow(checkQuery, branchSeq).Scan(&existingSeq)
 
 	if err != nil {
 		// 레코드가 없으면 INSERT
@@ -552,26 +468,17 @@ func SaveCalendarTokens(branchCode, accessToken, refreshToken, tokenExpiry, emai
 }
 
 // DisconnectCalendar - 구글 캘린더 연동 해제
-func DisconnectCalendar(branchCode string) error {
-	log.Printf("[DB] DisconnectCalendar 호출 - branchCode: %s", branchCode)
+func DisconnectCalendar(branchSeq int) error {
+	log.Printf("[DB] DisconnectCalendar 호출 - branchSeq: %d", branchSeq)
 
-	// 1단계: 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("DisconnectCalendar - branch not found: %v", err)
-		return err
-	}
-
-	// 2단계: 토큰 정보 삭제 및 비활성화
+	// 토큰 정보 삭제 및 비활성화
 	updateQuery := `
 		UPDATE calendar_config 
 		SET access_token = NULL, refresh_token = NULL, token_expiry = NULL,
 		    connected_email = NULL, is_active = 0
 		WHERE branch_seq = ?
 	`
-	_, err = DB.Exec(updateQuery, branchSeq)
+	_, err := DB.Exec(updateQuery, branchSeq)
 	if err != nil {
 		log.Printf("DisconnectCalendar - update error: %v", err)
 		return err
@@ -582,19 +489,8 @@ func DisconnectCalendar(branchCode string) error {
 }
 
 // GetSMSSenderNumbers SMS 발신번호 목록 조회
-func GetSMSSenderNumbers(branchCode string) ([]string, error) {
-	log.Printf("[DB] GetSMSSenderNumbers 호출 - branchCode: %s", branchCode)
-
-	// 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("GetSMSSenderNumbers - branch not found: %v", err)
-		return []string{}, err
-	}
-
-	log.Printf("[DB] GetSMSSenderNumbers - branchSeq: %d", branchSeq)
+func GetSMSSenderNumbers(branchSeq int) ([]string, error) {
+	log.Printf("[DB] GetSMSSenderNumbers 호출 - branchSeq: %d", branchSeq)
 
 	// mymunja_config_info 확인
 	var configCount int

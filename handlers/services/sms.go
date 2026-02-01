@@ -18,8 +18,8 @@ func SendSMSHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 세션에서 선택된 지점 정보 가져오기
-	branchCode := middleware.GetSelectedBranch(r)
-	if branchCode == "" {
+	branchSeq := middleware.GetSelectedBranch(r)
+	if branchSeq == 0 {
 		log.Println("지점 정보 없음")
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -65,7 +65,7 @@ func SendSMSHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// SMS 설정 조회
-	smsConfig, err := database.GetSMSConfig(branchCode)
+	smsConfig, err := database.GetSMSConfig(branchSeq)
 	if err != nil {
 		log.Printf("SMS 설정 조회 오류: %v", err)
 		w.Header().Set("Content-Type", "application/json")

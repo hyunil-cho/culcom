@@ -26,25 +26,16 @@ type Placeholder struct {
 }
 
 // GetMessageTemplates 메시지 템플릿 목록 조회
-func GetMessageTemplates(branchCode string) ([]MessageTemplate, error) {
-	log.Printf("[MessageTemplate] GetMessageTemplates 호출 - BranchCode: %s\n", branchCode)
+func GetMessageTemplates(branchSeq int) ([]MessageTemplate, error) {
+	log.Printf("[MessageTemplate] GetMessageTemplates 호출 - BranchSeq: %d\n", branchSeq)
 
-	// 지점 코드가 없으면 빈 배열 반환
-	if branchCode == "" {
-		log.Printf("GetMessageTemplates - branchCode is empty")
+	// 지점 seq가 0이면 빈 배열 반환
+	if branchSeq == 0 {
+		log.Printf("GetMessageTemplates - branchSeq is 0")
 		return []MessageTemplate{}, nil
 	}
 
-	// 1단계: 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("GetMessageTemplates - branch not found: %v", err)
-		return []MessageTemplate{}, nil // 지점이 없으면 빈 배열 반환 (에러 아님)
-	}
-
-	// 2단계: 해당 지점의 메시지 템플릿 조회 (활성화된 것만)
+	// 해당 지점의 메시지 템플릿 조회 (활성화된 것만)
 	query := `
 		SELECT 
 			seq,
@@ -223,21 +214,12 @@ func GetMessageTemplateByID(id int) (*MessageTemplate, error) {
 }
 
 // SaveMessageTemplate 메시지 템플릿 저장
-func SaveMessageTemplate(branchCode, name, content, description string, isActive bool) error {
-	log.Printf("[MessageTemplate] SaveMessageTemplate 호출 - BranchCode: %s, Name: %s, IsActive: %v\n", branchCode, name, isActive)
+func SaveMessageTemplate(branchSeq int, name, content, description string, isActive bool) error {
+	log.Printf("[MessageTemplate] SaveMessageTemplate 호출 - BranchSeq: %d, Name: %s, IsActive: %v\n", branchSeq, name, isActive)
 	log.Printf("[MessageTemplate] Content: %s\n", content)
 	log.Printf("[MessageTemplate] Description: %s\n", description)
 
-	// 1단계: 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("SaveMessageTemplate - branch not found: %v", err)
-		return err
-	}
-
-	// 2단계: 메시지 템플릿 INSERT
+	// 메시지 템플릿 INSERT
 	query := `
 		INSERT INTO message_templates 
 			(template_name, message_context, description, is_active, branch_seq, is_default)
@@ -256,24 +238,15 @@ func SaveMessageTemplate(branchCode, name, content, description string, isActive
 }
 
 // UpdateMessageTemplate 메시지 템플릿 수정
-func UpdateMessageTemplate(branchCode string, id int, name, content, description string, isActive bool) error {
-	log.Printf("[MessageTemplate] UpdateMessageTemplate 호출 - BranchCode: %s, ID: %d, Name: %s, IsActive: %v\n", branchCode, id, name, isActive)
+func UpdateMessageTemplate(branchSeq, id int, name, content, description string, isActive bool) error {
+	log.Printf("[MessageTemplate] UpdateMessageTemplate 호출 - BranchSeq: %d, ID: %d, Name: %s, IsActive: %v\n", branchSeq, id, name, isActive)
 	log.Printf("[MessageTemplate] Content: %s\n", content)
 	log.Printf("[MessageTemplate] Description: %s\n", description)
 
-	// 1단계: 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("UpdateMessageTemplate - branch not found: %v", err)
-		return err
-	}
-
-	// 2단계: 해당 템플릿이 해당 지점 소유인지 확인
+	// 해당 템플릿이 해당 지점 소유인지 확인
 	var existingBranchSeq int
 	checkQuery := `SELECT branch_seq FROM message_templates WHERE seq = ?`
-	err = DB.QueryRow(checkQuery, id).Scan(&existingBranchSeq)
+	err := DB.QueryRow(checkQuery, id).Scan(&existingBranchSeq)
 	if err != nil {
 		log.Printf("UpdateMessageTemplate - template not found: %v", err)
 		return err
@@ -307,22 +280,13 @@ func UpdateMessageTemplate(branchCode string, id int, name, content, description
 }
 
 // DeleteMessageTemplate 메시지 템플릿 삭제
-func DeleteMessageTemplate(branchCode string, id int) error {
-	log.Printf("[MessageTemplate] DeleteMessageTemplate 호출 - BranchCode: %s, ID: %d\n", branchCode, id)
+func DeleteMessageTemplate(branchSeq, id int) error {
+	log.Printf("[MessageTemplate] DeleteMessageTemplate 호출 - BranchSeq: %d, ID: %d\n", branchSeq, id)
 
-	// 1단계: 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("DeleteMessageTemplate - branch not found: %v", err)
-		return err
-	}
-
-	// 2단계: 해당 템플릿이 해당 지점 소유인지 확인
+	// 해당 템플릿이 해당 지점 소유인지 확인
 	var existingBranchSeq int
 	checkQuery := `SELECT branch_seq FROM message_templates WHERE seq = ?`
-	err = DB.QueryRow(checkQuery, id).Scan(&existingBranchSeq)
+	err := DB.QueryRow(checkQuery, id).Scan(&existingBranchSeq)
 	if err != nil {
 		log.Printf("DeleteMessageTemplate - template not found: %v", err)
 		return err
@@ -347,22 +311,13 @@ func DeleteMessageTemplate(branchCode string, id int) error {
 }
 
 // SetDefaultMessageTemplate 기본 템플릿 설정
-func SetDefaultMessageTemplate(branchCode string, id int) error {
-	log.Printf("[MessageTemplate] SetDefaultMessageTemplate 호출 - BranchCode: %s, ID: %d\n", branchCode, id)
+func SetDefaultMessageTemplate(branchSeq, id int) error {
+	log.Printf("[MessageTemplate] SetDefaultMessageTemplate 호출 - BranchSeq: %d, ID: %d\n", branchSeq, id)
 
-	// 1단계: 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("SetDefaultMessageTemplate - branch not found: %v", err)
-		return err
-	}
-
-	// 2단계: 해당 템플릿이 해당 지점 소유인지 확인
+	// 해당 템플릿이 해당 지점 소유인지 확인
 	var existingBranchSeq int
 	checkQuery := `SELECT branch_seq FROM message_templates WHERE seq = ?`
-	err = DB.QueryRow(checkQuery, id).Scan(&existingBranchSeq)
+	err := DB.QueryRow(checkQuery, id).Scan(&existingBranchSeq)
 	if err != nil {
 		log.Printf("SetDefaultMessageTemplate - template not found: %v", err)
 		return err

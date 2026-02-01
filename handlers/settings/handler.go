@@ -12,13 +12,13 @@ var Templates *template.Template
 
 // Handler 설정 메인 페이지
 func Handler(w http.ResponseWriter, r *http.Request) {
-	branchCode := middleware.GetSelectedBranch(r)
+	branchAlias := middleware.GetSelectedBranchAlias(r)
 
 	data := PageData{
 		BasePageData: middleware.GetBasePageData(r),
 		Title:        "설정",
 		ActiveMenu:   "settings",
-		BranchCode:   branchCode,
+		BranchCode:   branchAlias,
 	}
 
 	Templates.ExecuteTemplate(w, "settings/main.html", data)
@@ -26,25 +26,25 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 // ReservationSMSConfigHandler 예약 확정 시 기본 문자 발송 설정 페이지
 func ReservationSMSConfigHandler(w http.ResponseWriter, r *http.Request) {
-	branchCode := middleware.GetSelectedBranch(r)
+	branchSeq := middleware.GetSelectedBranch(r)
 
 	if r.Method == http.MethodGet {
 		// 메시지 템플릿 목록 조회
-		templates, err := database.GetMessageTemplates(branchCode)
+		templates, err := database.GetMessageTemplates(branchSeq)
 		if err != nil {
 			log.Printf("템플릿 조회 오류: %v", err)
 			templates = []database.MessageTemplate{}
 		}
 
 		// SMS 발신번호 목록 조회
-		senderNumbers, err := database.GetSMSSenderNumbers(branchCode)
+		senderNumbers, err := database.GetSMSSenderNumbers(branchSeq)
 		if err != nil {
 			log.Printf("발신번호 조회 오류: %v", err)
 			senderNumbers = []string{}
 		}
 
 		// 현재 설정 조회
-		config, err := database.GetReservationSMSConfig(branchCode)
+		config, err := database.GetReservationSMSConfig(branchSeq)
 		if err != nil {
 			log.Printf("설정 조회: 저장된 설정이 없습니다 (신규 설정)")
 			config = nil
@@ -90,7 +90,7 @@ func ReservationSMSConfigHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// DB에 저장
-		err = database.SaveReservationSMSConfig(branchCode, templateSeq, senderNumber, autoSend)
+		err = database.SaveReservationSMSConfig(branchSeq, templateSeq, senderNumber, autoSend)
 		if err != nil {
 			log.Printf("설정 저장 오류: %v", err)
 			http.Redirect(w, r, "/settings/reservation-sms?error=save_failed", http.StatusSeeOther)

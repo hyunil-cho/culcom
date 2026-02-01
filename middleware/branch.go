@@ -4,6 +4,7 @@ import (
 	"backoffice/config"
 	"backoffice/database"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -29,7 +30,7 @@ func GetBasePageData(r *http.Request) BasePageData {
 
 	return BasePageData{
 		BranchList:     branchList,
-		SelectedBranch: selectedBranch,
+		SelectedBranch: selectedBranch, // 헤더 표시용 alias
 	}
 }
 
@@ -38,11 +39,11 @@ func InjectBranchData(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// 세션에서 지점 정보 가져오기
 		branchList := GetBranchList(r)
-		selectedBranch := GetSelectedBranch(r)
+		selectedBranchAlias := GetSelectedBranchAlias(r) // 헤더 표시용 alias
 
 		// context에 저장
 		ctx := context.WithValue(r.Context(), branchListKey, branchList)
-		ctx = context.WithValue(ctx, selectedBranchKey, selectedBranch)
+		ctx = context.WithValue(ctx, selectedBranchKey, selectedBranchAlias)
 
 		// 수정된 context로 다음 핸들러 호출
 		next(w, r.WithContext(ctx))
@@ -52,14 +53,22 @@ func InjectBranchData(next http.HandlerFunc) http.HandlerFunc {
 // BranchSession - URL 파라미터로 전달된 지점 정보를 세션에 저장하는 미들웨어
 func BranchSession(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// URL 파라미터에서 branch 값 확인
+		// URL 파라미터에서 branch 값 확인 (alias로 전달됨)
 		branchParam := r.URL.Query().Get("branch")
 
 		if branchParam != "" {
-			// 세션에 지점 정보 저장
-			session, _ := config.SessionStore.Get(r, "app-session")
-			session.Values["selectedBranch"] = branchParam
-			session.Save(r, w)
+			// alias로 seq를 찾아서 저장
+			branchList := GetBranchList(r)
+			for _, branch := range branchList {
+				if branch["alias"] == branchParam {
+					// 세션에 seq 저장
+					session, _ := config.SessionStore.Get(r, "app-session")
+					session.Values["selectedBranch"] = branch["seq"]
+					session.Save(r, w)
+					log.Printf("지점 변경: %s (seq: %s)", branchParam, branch["seq"])
+					break
+				}
+			}
 		}
 
 		// 다음 핸들러 호출
@@ -67,14 +76,36 @@ func BranchSession(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// GetSelectedBranch - 세션에서 선택된 지점 코드를 가져오는 헬퍼 함수
-func GetSelectedBranch(r *http.Request) string {
+// GetSelectedBranch - 세션에서 선택된 지점 코드(seq)를 가져오는 헬퍼 함수
+func GetSelectedBranch(r *http.Request) int {
 	session, _ := config.SessionStore.Get(r, "app-session")
-	if branch, ok := session.Values["selectedBranch"].(string); ok && branch != "" {
-		return branch
+	if branchSeq, ok := session.Values["selectedBranch"].(string); ok && branchSeq != "" {
+		// string을 int로 변환
+		var seq int
+		if _, err := fmt.Sscanf(branchSeq, "%d", &seq); err == nil {
+			return seq
+		}
 	}
 
-	// 세션에 없으면 빈 문자열 반환 (로그인 하면 자동으로 설정됨)
+	// 세션에 없으면 0 반환 (로그인 하면 자동으로 설정됨)
+	return 0
+}
+
+// GetSelectedBranchAlias - 세션에서 선택된 지점의 alias를 가져오는 헬퍼 함수 (헤더 표시용)
+func GetSelectedBranchAlias(r *http.Request) string {
+	branchSeq := GetSelectedBranch(r)
+	if branchSeq == 0 {
+		return ""
+	}
+
+	// branchList에서 해당 seq의 alias 찾기
+	branchList := GetBranchList(r)
+	for _, branch := range branchList {
+		if branch["seq"] == fmt.Sprintf("%d", branchSeq) {
+			return branch["alias"]
+		}
+	}
+
 	return ""
 }
 

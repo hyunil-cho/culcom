@@ -45,17 +45,8 @@ type ReservationSMSConfig struct {
 }
 
 // GetReservationSMSConfig 예약 SMS 설정 조회
-func GetReservationSMSConfig(branchCode string) (*ReservationSMSConfig, error) {
-	log.Printf("[DB] GetReservationSMSConfig 호출 - branchCode: %s", branchCode)
-
-	// 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("GetReservationSMSConfig - branch not found: %v", err)
-		return nil, err
-	}
+func GetReservationSMSConfig(branchSeq int) (*ReservationSMSConfig, error) {
+	log.Printf("[DB] GetReservationSMSConfig 호출 - branchSeq: %d", branchSeq)
 
 	// 설정 조회
 	var config ReservationSMSConfig
@@ -66,7 +57,7 @@ func GetReservationSMSConfig(branchCode string) (*ReservationSMSConfig, error) {
 		LEFT JOIN message_templates mt ON rs.template_seq = mt.seq
 		WHERE rs.branch_seq = ?
 	`
-	err = DB.QueryRow(query, branchSeq).Scan(
+	err := DB.QueryRow(query, branchSeq).Scan(
 		&config.Seq, &config.BranchSeq, &config.TemplateSeq,
 		&config.TemplateName, &config.SenderNumber, &config.AutoSend,
 	)
@@ -80,22 +71,13 @@ func GetReservationSMSConfig(branchCode string) (*ReservationSMSConfig, error) {
 }
 
 // SaveReservationSMSConfig 예약 SMS 설정 저장
-func SaveReservationSMSConfig(branchCode, templateSeq, senderNumber string, autoSend bool) error {
-	log.Printf("[DB] SaveReservationSMSConfig 호출 - branchCode: %s", branchCode)
-
-	// 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("SaveReservationSMSConfig - branch not found: %v", err)
-		return err
-	}
+func SaveReservationSMSConfig(branchSeq int, templateSeq, senderNumber string, autoSend bool) error {
+	log.Printf("[DB] SaveReservationSMSConfig 호출 - branchSeq: %d", branchSeq)
 
 	// 기존 설정 확인
 	var existingSeq int
 	checkQuery := `SELECT seq FROM reservation_sms_config WHERE branch_seq = ?`
-	err = DB.QueryRow(checkQuery, branchSeq).Scan(&existingSeq)
+	err := DB.QueryRow(checkQuery, branchSeq).Scan(&existingSeq)
 
 	if err != nil {
 		// INSERT

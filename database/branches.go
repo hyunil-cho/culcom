@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"log"
 )
 
@@ -165,9 +166,9 @@ func GetFirstBranchAlias() (string, error) {
 }
 
 // GetBranchesForSelect - 헤더 선택박스용 지점 목록 조회 (간단한 형태)
-// 반환: [{alias, name}] 형태의 지점 목록
+// 반환: [{seq, alias, name}] 형태의 지점 목록
 func GetBranchesForSelect() ([]map[string]string, error) {
-	query := `SELECT alias, branchName FROM branches ORDER BY seq ASC`
+	query := `SELECT seq, alias, branchName FROM branches ORDER BY seq ASC`
 
 	rows, err := DB.Query(query)
 	if err != nil {
@@ -178,13 +179,15 @@ func GetBranchesForSelect() ([]map[string]string, error) {
 
 	var branches []map[string]string
 	for rows.Next() {
+		var seq int
 		var alias, branchName string
-		if err := rows.Scan(&alias, &branchName); err != nil {
+		if err := rows.Scan(&seq, &alias, &branchName); err != nil {
 			log.Printf("GetBranchesForSelect scan error: %v", err)
 			return nil, err
 		}
 
 		branches = append(branches, map[string]string{
+			"seq":   fmt.Sprintf("%d", seq),
 			"alias": alias,
 			"name":  branchName,
 		})

@@ -592,8 +592,8 @@ func CalendarCallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	branchCode, ok := session.Values["branch_code"].(string)
-	if !ok {
+	branchSeq := middleware.GetSelectedBranch(r)
+	if branchSeq == 0 {
 		http.Error(w, "세션에서 지점 정보를 찾을 수 없습니다", http.StatusBadRequest)
 		return
 	}
@@ -652,7 +652,7 @@ func CalendarCallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 토큰을 DB에 저장
 	tokenExpiry := token.Expiry.Format("2006-01-02 15:04:05")
-	err = database.SaveCalendarTokens(branchCode, token.AccessToken, token.RefreshToken, tokenExpiry, userInfo.Email)
+	err = database.SaveCalendarTokens(branchSeq, token.AccessToken, token.RefreshToken, tokenExpiry, userInfo.Email)
 	if err != nil {
 		log.Printf("CalendarCallbackHandler - save tokens error: %v", err)
 		http.Error(w, "토큰 저장 중 오류가 발생했습니다", http.StatusInternalServerError)
@@ -700,9 +700,9 @@ func generateStateToken() string {
 }
 
 // GetCalendarService 구글 캘린더 API 서비스 생성
-func GetCalendarService(branchCode string) (*calendar.Service, error) {
+func GetCalendarService(branchSeq int) (*calendar.Service, error) {
 	// DB에서 토큰 정보 조회
-	calConfig, err := database.GetCalendarConfig(branchCode)
+	calConfig, err := database.GetCalendarConfig(branchSeq)
 	if err != nil || calConfig == nil {
 		return nil, fmt.Errorf("calendar config not found")
 	}
@@ -788,10 +788,10 @@ func CreateCalendarEventHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 세션에서 지점 정보 가져오기
-	branchCode := middleware.GetSelectedBranch(r)
+	branchSeq := middleware.GetSelectedBranch(r)
 
 	// 캘린더 이벤트 생성
-	link, err := CreateCalendarEvent(branchCode, req)
+	link, err := CreateCalendarEvent(branchSeq, req)
 	if err != nil {
 		log.Printf("CreateCalendarEvent - 오류: %v", err)
 		w.Header().Set("Content-Type", "application/json")
@@ -813,7 +813,7 @@ func CreateCalendarEventHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // CreateCalendarEvent 구글 캘린더 이벤트 생성 (재사용 가능한 함수)
-func CreateCalendarEvent(branchCode string, req CreateCalendarEventRequest) (string, error) {
+func CreateCalendarEvent(branchSeq int, req CreateCalendarEventRequest) (string, error) {
 	// 필수 필드 검증
 	if req.CustomerName == "" || req.PhoneNumber == "" || req.InterviewDate == "" {
 		return "", fmt.Errorf("필수 필드가 누락되었습니다")
@@ -825,7 +825,7 @@ func CreateCalendarEvent(branchCode string, req CreateCalendarEventRequest) (str
 	}
 
 	// 구글 캘린더 서비스 생성
-	service, err := GetCalendarService(branchCode)
+	service, err := GetCalendarService(branchSeq)
 	if err != nil {
 		return "", fmt.Errorf("구글 캘린더가 연동되지 않았습니다")
 	}

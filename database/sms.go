@@ -18,19 +18,10 @@ type SMSConfig struct {
 }
 
 // GetSMSConfig SMS 설정 조회
-func GetSMSConfig(branchCode string) (*SMSConfig, error) {
-	log.Printf("=== SMS 설정 조회 - BranchCode: %s ===", branchCode)
+func GetSMSConfig(branchSeq int) (*SMSConfig, error) {
+	log.Printf("=== SMS 설정 조회 - BranchSeq: %d ===", branchSeq)
 
-	// 1단계: 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("GetSMSConfig - branch not found: %v", err)
-		return nil, err
-	}
-
-	// 2단계: SMS 서비스 seq 조회
+	// SMS 서비스 seq 조회
 	var serviceSeq int
 	serviceQuery := `
 		SELECT tps.seq
@@ -39,7 +30,7 @@ func GetSMSConfig(branchCode string) (*SMSConfig, error) {
 		WHERE est.code_name = 'SMS'
 		LIMIT 1
 	`
-	err = DB.QueryRow(serviceQuery).Scan(&serviceSeq)
+	err := DB.QueryRow(serviceQuery).Scan(&serviceSeq)
 	if err != nil {
 		log.Printf("GetSMSConfig - service not found: %v", err)
 		return nil, err
@@ -120,24 +111,15 @@ func GetSMSConfig(branchCode string) (*SMSConfig, error) {
 }
 
 // SaveSMSConfig SMS 설정 저장 (INSERT 또는 UPDATE)
-func SaveSMSConfig(branchCode, accountID, password string, senderPhones []string, isActive bool) error {
+func SaveSMSConfig(branchSeq int, accountID, password string, senderPhones []string, isActive bool) error {
 	log.Println("=== SMS 설정 저장 ===")
-	log.Printf("지점 코드: %s", branchCode)
+	log.Printf("지점 seq: %d", branchSeq)
 	log.Printf("계정 ID: %s", accountID)
 	log.Printf("비밀번호: %s", maskSMSPassword(password))
 	log.Printf("발신번호: %v", senderPhones)
 	log.Printf("활성화: %v", isActive)
 
-	// 1단계: 지점 seq 조회
-	var branchSeq int
-	branchQuery := `SELECT seq FROM branches WHERE alias = ?`
-	err := DB.QueryRow(branchQuery, branchCode).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("SaveSMSConfig - branch not found: %v", err)
-		return err
-	}
-
-	// 2단계: 마이문자 서비스 seq 조회 (code_name = 'SMS')
+	// 마이문자 서비스 seq 조회 (code_name = 'SMS')
 	var serviceSeq int
 	serviceQuery := `
 		SELECT tps.seq
@@ -146,7 +128,7 @@ func SaveSMSConfig(branchCode, accountID, password string, senderPhones []string
 		WHERE est.code_name = 'SMS'
 		LIMIT 1
 	`
-	err = DB.QueryRow(serviceQuery).Scan(&serviceSeq)
+	err := DB.QueryRow(serviceQuery).Scan(&serviceSeq)
 	if err != nil {
 		log.Printf("SaveSMSConfig - service not found: %v", err)
 		return err

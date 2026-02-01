@@ -79,10 +79,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		if err == nil && len(branchList) > 0 {
 			// 전체 지점 목록 저장
 			appSession.Values["branchList"] = branchList
-			// 첫 번째 지점을 기본값으로 설정
-			appSession.Values["selectedBranch"] = branchList[0]["alias"]
-			appSession.Save(r, w)
-			log.Printf("로그인 시 지점 목록 저장: %d개, 기본 지점: %s", len(branchList), branchList[0]["alias"])
+		// 첫 번째 지점을 기본값으로 설정 (seq 저장)
+		appSession.Values["selectedBranch"] = branchList[0]["seq"]
+		appSession.Save(r, w)
+		log.Printf("로그인 시 지점 목록 저장: %d개, 기본 지점 seq: %s", len(branchList), branchList[0]["seq"])
 		} else {
 			log.Printf("지점 목록 조회 실패: %v", err)
 		}
