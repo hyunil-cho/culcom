@@ -10,7 +10,20 @@ import (
 	"net/http"
 )
 
-// UpdateCommentHandler - 고객 코멘트 업데이트 핸들러 (REST API)
+// UpdateCommentHandler godoc
+// @Summary      고객 코멘트 업데이트
+// @Description  고객의 코멘트를 업데이트합니다
+// @Tags         customers
+// @Accept       x-www-form-urlencoded
+// @Produce      json
+// @Param        customer_seq  formData  string  true  "고객 시퀀스"
+// @Param        comment       formData  string  true  "코멘트"
+// @Success      200  {object}  map[string]interface{}  "성공"
+// @Failure      400  {string}  string  "잘못된 요청"
+// @Failure      401  {string}  string  "인증 실패"
+// @Failure      500  {string}  string  "서버 오류"
+// @Security     SessionAuth
+// @Router       /customers/comment [post]
 func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -44,7 +57,18 @@ func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// IncrementCallCountHandler - 고객 통화 횟수 증가 핸들러 (REST API)
+// IncrementCallCountHandler godoc
+// @Summary      고객 통화 횟수 증가
+// @Description  고객의 통화 횟수를 1 증가시킵니다
+// @Tags         customers
+// @Accept       x-www-form-urlencoded
+// @Produce      json
+// @Param        customer_seq  formData  string  true  "고객 시퀀스"
+// @Success      200  {object}  map[string]interface{}  "성공"
+// @Failure      400  {string}  string  "잘못된 요청"
+// @Failure      500  {string}  string  "서버 오류"
+// @Security     SessionAuth
+// @Router       /customers/increment-call [post]
 func IncrementCallCountHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -78,7 +102,21 @@ func IncrementCallCountHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// CreateReservationHandler - 예약 정보 생성 핸들러 (REST API)
+// CreateReservationHandler godoc
+// @Summary      예약 정보 생성
+// @Description  새로운 예약 정보를 생성하고 구글 캘린더에 이벤트를 추가합니다
+// @Tags         customers
+// @Accept       x-www-form-urlencoded
+// @Produce      json
+// @Param        customer_seq    formData  string  true  "고객 시퀀스"
+// @Param        caller          formData  string  true  "발신자"
+// @Param        interview_date  formData  string  true  "인터뷰 일시 (2006-01-02T15:04:05)"
+// @Success      200  {object}  map[string]interface{}  "성공"
+// @Failure      400  {string}  string  "잘못된 요청"
+// @Failure      401  {string}  string  "인증 실패"
+// @Failure      500  {string}  string  "서버 오류"
+// @Security     SessionAuth
+// @Router       /customers/reservation [post]
 func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -173,7 +211,19 @@ func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 	utils.JSONSuccess(w, response)
 }
 
-// UpdateCustomerNameHandler - 고객 이름 업데이트 핸들러 (REST API)
+// UpdateCustomerNameHandler godoc
+// @Summary      고객 이름 업데이트
+// @Description  고객의 이름을 업데이트합니다
+// @Tags         customers
+// @Accept       x-www-form-urlencoded
+// @Produce      json
+// @Param        customer_seq  formData  string  true  "고객 시퀀스"
+// @Param        name          formData  string  true  "고객 이름"
+// @Success      200  {object}  map[string]interface{}  "성공"
+// @Failure      400  {string}  string  "잘못된 요청"
+// @Failure      500  {string}  string  "서버 오류"
+// @Security     SessionAuth
+// @Router       /customers/update-name [post]
 func UpdateCustomerNameHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -211,7 +261,17 @@ func UpdateCustomerNameHandler(w http.ResponseWriter, r *http.Request) {
 	utils.JSONSuccess(w, map[string]interface{}{"success": true})
 }
 
-// CheckSMSIntegrationHandler - SMS 연동 상태 확인 핸들러 (REST API)
+// CheckSMSIntegrationHandler godoc
+// @Summary      SMS 연동 상태 확인
+// @Description  현재 지점의 SMS 연동 상태를 확인합니다
+// @Tags         customers
+// @Produce      json
+// @Success      200  {object}  map[string]interface{}  "성공"
+// @Failure      400  {string}  string  "연동 안됨"
+// @Failure      401  {string}  string  "인증 실패"
+// @Failure      500  {string}  string  "서버 오류"
+// @Security     SessionAuth
+// @Router       /customers/check-sms [get]
 func CheckSMSIntegrationHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -249,7 +309,17 @@ func CheckSMSIntegrationHandler(w http.ResponseWriter, r *http.Request) {
 	utils.JSONSuccessMessage(w, "SMS 연동이 정상적으로 설정되어 있습니다.")
 }
 
-// GetSMSSenderNumbersHandler - SMS 발신번호 목록 조회 핸들러 (REST API)
+// GetSMSSenderNumbersHandler godoc
+// @Summary      SMS 발신번호 목록 조회
+// @Description  현재 지점의 SMS 발신번호 목록을 조회합니다
+// @Tags         customers
+// @Produce      json
+// @Success      200  {object}  map[string]interface{}  "성공"
+// @Failure      400  {string}  string  "발신번호 없음"
+// @Failure      401  {string}  string  "인증 실패"
+// @Failure      500  {string}  string  "서버 오류"
+// @Security     SessionAuth
+// @Router       /customers/sms-senders [get]
 func GetSMSSenderNumbersHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

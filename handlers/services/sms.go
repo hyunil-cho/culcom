@@ -11,7 +11,22 @@ import (
 	"strconv"
 )
 
-// SendSMSHandler - SMS 메시지 전송 핸들러
+// SendSMSHandler godoc
+// @Summary      SMS 메시지 전송
+// @Description  고객에게 SMS 메시지를 전송하고 이력을 저장합니다
+// @Tags         services
+// @Accept       x-www-form-urlencoded
+// @Produce      json
+// @Param        customer_seq    formData  string  true  "고객 시퀀스"
+// @Param        sender_phone    formData  string  true  "발신번호"
+// @Param        receiver_phone  formData  string  true  "수신번호"
+// @Param        message         formData  string  true  "메시지 내용"
+// @Success      200  {object}  map[string]interface{}  "성공"
+// @Failure      400  {string}  string  "잘못된 요청"
+// @Failure      401  {string}  string  "인증 실패"
+// @Failure      500  {string}  string  "서버 오류"
+// @Security     SessionAuth
+// @Router       /service/sms [post]
 func SendSMSHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

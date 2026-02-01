@@ -24,7 +24,18 @@ type CreateCalendarEventRequest struct {
 	Duration      int    `json:"duration"`       // 소요시간 (분, 기본값 60분)
 }
 
-// SMSTestHandler SMS 테스트 발송 API (REST API)
+// SMSTestHandler godoc
+// @Summary      SMS 테스트 발송
+// @Description  SMS 테스트 메시지를 발송합니다
+// @Tags         integrations
+// @Accept       json
+// @Produce      json
+// @Param        request  body      object  true  "SMS 발송 정보"
+// @Success      200      {object}  map[string]interface{}  "성공"
+// @Failure      400      {string}  string  "잘못된 요청"
+// @Failure      500      {string}  string  "서버 오류"
+// @Security     SessionAuth
+// @Router       /external/sms [post]
 func SMSTestHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -85,7 +96,18 @@ func SMSTestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// ActivateHandler 연동 활성화 API (REST API)
+// ActivateHandler godoc
+// @Summary      연동 활성화
+// @Description  특정 서비스의 연동을 활성화합니다
+// @Tags         integrations
+// @Accept       json
+// @Produce      json
+// @Param        request  body      object  true  "service_id"
+// @Success      200      {string}  string  "활성화되었습니다"
+// @Failure      400      {string}  string  "잘못된 요청"
+// @Failure      500      {string}  string  "서버 오류"
+// @Security     SessionAuth
+// @Router       /integrations/activate [post]
 func ActivateHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -131,7 +153,18 @@ func ActivateHandler(w http.ResponseWriter, r *http.Request) {
 	utils.JSONSuccessMessage(w, "활성화되었습니다")
 }
 
-// DisconnectHandler 연동 해제 (비활성화) API (REST API)
+// DisconnectHandler godoc
+// @Summary      연동 해제
+// @Description  특정 서비스의 연동을 해제(비활성화)합니다
+// @Tags         integrations
+// @Accept       json
+// @Produce      json
+// @Param        request  body      object  true  "service_id"
+// @Success      200      {string}  string  "연결이 해제되었습니다"
+// @Failure      400      {string}  string  "잘못된 요청"
+// @Failure      500      {string}  string  "서버 오류"
+// @Security     SessionAuth
+// @Router       /integrations/disconnect [post]
 func DisconnectHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -184,7 +217,15 @@ func DisconnectHandler(w http.ResponseWriter, r *http.Request) {
 	utils.JSONSuccessMessage(w, "연결이 해제되었습니다")
 }
 
-// DisconnectCalendarHandler 구글 캘린더 연동 해제 (REST API)
+// DisconnectCalendarHandler godoc
+// @Summary      구글 캘린더 연동 해제
+// @Description  구글 캘린더의 연동을 해제하고 토큰을 삭제합니다
+// @Tags         integrations
+// @Produce      json
+// @Success      200  {string}  string  "구글 캘린더 연동이 해제되었습니다"
+// @Failure      500  {string}  string  "서버 오류"
+// @Security     SessionAuth
+// @Router       /calendar/disconnect [post]
 func DisconnectCalendarHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -204,7 +245,18 @@ func DisconnectCalendarHandler(w http.ResponseWriter, r *http.Request) {
 	utils.JSONSuccessMessage(w, "구글 캘린더 연동이 해제되었습니다")
 }
 
-// CreateCalendarEventHandler 구글 캘린더에 이벤트 생성 API (REST API)
+// CreateCalendarEventHandler godoc
+// @Summary      구글 캘린더 이벤트 생성
+// @Description  구글 캘린더에 새로운 이벤트를 생성합니다
+// @Tags         integrations
+// @Accept       json
+// @Produce      json
+// @Param        request  body      CreateCalendarEventRequest  true  "캘린더 이벤트 정보"
+// @Success      200      {object}  map[string]interface{}  "성공"
+// @Failure      400      {string}  string  "잘못된 요청"
+// @Failure      500      {string}  string  "서버 오류"
+// @Security     SessionAuth
+// @Router       /calendar/create-event [post]
 func CreateCalendarEventHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

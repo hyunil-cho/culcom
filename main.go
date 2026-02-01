@@ -17,7 +17,28 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+
+	httpSwagger "github.com/swaggo/http-swagger"
+	_ "backoffice/docs" // Swagger docs
 )
+
+// @title           Culcom Backoffice API
+// @version         1.0
+// @description     컬컴 백오피스 REST API 문서
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.email  support@culcom.com
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:8080
+// @BasePath  /api
+
+// @securityDefinitions.apikey SessionAuth
+// @in cookie
+// @name user-session
 
 func init() {
 	// 커스텀 템플릿 함수 정의
@@ -115,6 +136,9 @@ func main() {
 
 	// 정적 파일 서빙 (CSS, JS, 이미지 등)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
+	// Swagger UI
+	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 
 	// 루트 및 404 핸들러를 포함한 핸들러 래퍼 생성
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
