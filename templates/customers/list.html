@@ -264,6 +264,22 @@
     </div>
 </div>
 
+<!-- 예약 결과 모달 -->
+<div id="reservationResultModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header" id="resultModalHeader" style="border-bottom: 2px solid #10b981;">
+            <h3 id="resultModalTitle">✅ 예약 완료</h3>
+        </div>
+        <div class="modal-body" style="padding: 2rem; text-align: center;">
+            <div id="resultModalContent" style="font-size: 1rem; color: #333;">
+            </div>
+        </div>
+        <div style="padding: 1rem 2rem; border-top: 1px solid #e0e0e0; text-align: center;">
+            <button class="btn-primary" id="resultModalBtn" onclick="closeReservationResultModal()" style="padding: 0.75rem 2rem; font-size: 1rem; background: #10b981;">확인</button>
+        </div>
+    </div>
+</div>
+
 <!-- 메시지 전송 모달 -->
 <div id="textModal" class="modal">
     <div class="modal-content" style="max-width: 600px;">
@@ -554,46 +570,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-
-// 메시지 전송
-function sendMessage() {
-    const message = document.getElementById('smsMessageContent').value;
-    const recipientName = currentCustomerName;
-    const recipientPhone = currentCustomerPhone;
-    
-    if (!message.trim()) {
-        alert('메시지 내용을 입력해주세요.');   
-        return;
-    }
-    
-    if (currentInputMode === 'template') {
-        const template = document.getElementById('messageTemplate').value;
-        if (!template) {
-            alert('템플릿을 선택해주세요.');
-            return;
-        }
-    }
-    
-    // TODO: 실제 메시지 전송 로직 구현
-    const messageData = {
-        customerId: currentCustomerId,
-        recipientName,
-        recipientPhone,
-        type: 'sms',
-        inputMode: currentInputMode,
-        message,
-        template: currentInputMode === 'template' ? document.getElementById('messageTemplate').value : null
-    };
-    
-    console.log('SMS 전송 데이터:', messageData);
-    
-    if (confirm(`${recipientName}님께 SMS 메시지를 전송하시겠습니까?`)) {
-        alert('메시지가 전송되었습니다.');
-        document.getElementById('smsMessageContent').value = '';
-        document.getElementById('messageLength').textContent = '0';
-        document.getElementById('messageTemplate').value = '';
-    }
-}
 
 // CALLER 선택 관련 변수
 let pendingCallerSelection = {
@@ -1242,6 +1218,76 @@ function openInterviewConfirmModal(customerId) {
     document.getElementById('interviewConfirmModal').style.display = 'flex';
 }
 
+// 예약 결과 모달 표시
+function showReservationResultModal(isSuccess, customerName, message) {
+    const modal = document.getElementById('reservationResultModal');
+    const header = document.getElementById('resultModalHeader');
+    const title = document.getElementById('resultModalTitle');
+    const content = document.getElementById('resultModalContent');
+    const btn = document.getElementById('resultModalBtn');
+    
+    if (isSuccess) {
+        // 성공 스타일
+        header.style.borderBottomColor = '#10b981';
+        title.textContent = '✅ 예약 완료';
+        btn.style.background = '#10b981';
+        content.innerHTML = `
+            <div style="font-size: 1.1rem; color: #333; margin-bottom: 1rem;">
+                <strong style="color: #10b981; font-size: 1.3rem;">${customerName}</strong>님의
+            </div>
+            <div style="font-size: 1rem; color: #666;">
+                ${message || '예약이 성공적으로 생성되었습니다.'}
+            </div>
+        `;
+    } else {
+        // 실패 스타일
+        header.style.borderBottomColor = '#f44336';
+        title.textContent = '❌ 예약 실패';
+        btn.style.background = '#f44336';
+        content.innerHTML = `
+            <div style="font-size: 1.1rem; color: #333; margin-bottom: 1rem;">
+                <strong style="color: #f44336; font-size: 1.3rem;">${customerName}</strong>님의
+            </div>
+            <div style="font-size: 1rem; color: #666;">
+                예약 생성에 실패했습니다.
+            </div>
+            ${message ? `<div style="margin-top: 1rem; padding: 0.75rem; background: #ffebee; border-radius: 4px; font-size: 0.9rem; color: #c62828;">
+                ${message}
+            </div>` : ''}
+        `;
+    }
+    
+    modal.style.display = 'flex';
+}
+
+// 예약 결과 모달 닫기
+function closeReservationResultModal() {
+    document.getElementById('reservationResultModal').style.display = 'none';
+    
+    // 성공한 경우에만 행 제거 처리
+    if (pendingInterviewCustomerId) {
+        // 신규고객 페이지인 경우 해당 행 제거
+        const currentFilter = '{{.CurrentFilter}}';
+        if (currentFilter === 'new') {
+            const customerRow = document.querySelector(`tr[data-customer-id="${pendingInterviewCustomerId}"]`);
+            if (customerRow) {
+                customerRow.remove();
+                
+                // 테이블이 비어있으면 안내 메시지 표시
+                const tbody = document.querySelector('.data-table tbody');
+                if (tbody && tbody.children.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 2rem; color: #999;">고객이 없습니다.</td></tr>';
+                }
+            }
+        }
+        
+        // 임시 데이터 초기화
+        pendingInterviewCustomerId = null;
+        pendingInterviewDateTime = null;
+        pendingInterviewCustomerName = null;
+    }
+}
+
 // 인터뷰 확정 취소
 function cancelInterviewConfirm() {
     // 모달 닫기
@@ -1290,126 +1336,51 @@ function confirmInterviewDateTime() {
     formData.append('customer_seq', pendingInterviewCustomerId);
     formData.append('caller', caller);
     formData.append('interview_date', isoDateTime);
+
+    console.log('Reservation Form Data:', {
+        customer_seq: pendingInterviewCustomerId,
+        caller: caller,
+        interview_date: isoDateTime
+    });
     
     fetch('/api/customers/reservation', {
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
-    .then(async (data) => {
-        if (data.success) {
-            const savedCustomerId = pendingInterviewCustomerId;
-            const savedCustomerName = pendingInterviewCustomerName;
-            const savedInterviewDate = data.interview_date;
-            
-            // 1단계 완료: 예약 생성 성공
-            alert(`✅ ${savedCustomerName}님의 예약이 성공적으로 생성되었습니다.`);
-            
-            // 고객 전화번호 가져오기
-            const customerRow = document.querySelector(`tr[data-customer-id="${savedCustomerId}"]`);
-            let savedCustomerPhone = '';
-            if (customerRow) {
-                const phoneCell = customerRow.querySelector(`#phone-${savedCustomerId} .phone-number`);
-                if (phoneCell) {
-                    savedCustomerPhone = phoneCell.textContent.trim();
-                }
-            }
-            
-            // 2단계: 구글 캘린더 이벤트 생성
-            alert('📅 구글 캘린더에 일정 추가를 시도합니다...');
-            
-            let calendarLink = null;
-            try {
-                const calendarResponse = await fetch('/api/calendar/create-event', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        customer_name: savedCustomerName,
-                        phone_number: savedCustomerPhone,
-                        interview_date: savedInterviewDate,
-                        comment: '',
-                        duration: 60
-                    })
-                });
-                
-                const calendarData = await calendarResponse.json();
-                if (calendarData.success && calendarData.link) {
-                    calendarLink = calendarData.link;
-                    alert('✅ 구글 캘린더에 일정이 추가되었습니다.\n새 탭에서 캘린더를 확인하세요.');
-                    // 새 탭으로 캘린더 열기
-                    window.open(calendarLink, '_blank');
-                } else if (calendarData.message) {
-                    alert('❌ 캘린더 일정 추가 실패\n\n' + calendarData.message);
-                }
-            } catch (error) {
-                alert('❌ 캘린더 일정 추가 중 오류 발생\n\n' + error.message);
-            }
-            
-            // 3단계: SMS 설정 조회 및 발송
-            try {
-                const smsConfigResponse = await fetch('/api/service/reservation-sms-config');
-                const smsConfig = await smsConfigResponse.json();
-                
-                if (smsConfig.success && smsConfig.auto_send) {
-                    alert('💬 예약 확정 SMS 발송을 시도합니다...');
-                    
-                    // 템플릿 변수 치환
-                    const message = replaceTemplateVariables(smsConfig.template_content, {
-                        customerName: savedCustomerName,
-                        reservationDate: savedInterviewDate
-                    });
-                    
-                    // SMS 발송
-                    const smsFormData = new FormData();
-                    smsFormData.append('customer_seq', savedCustomerId);
-                    smsFormData.append('sender_phone', smsConfig.sender_number);
-                    smsFormData.append('receiver_phone', savedCustomerPhone);
-                    smsFormData.append('message', message);
-                    
-                    const smsResponse = await fetch('/api/service/sms', {
-                        method: 'POST',
-                        body: smsFormData
-                    });
-                    
-                    const smsResult = await smsResponse.json();
-                    if (smsResult.success) {
-                        alert('✅ 예약 확정 SMS가 성공적으로 발송되었습니다.');
-                    } else if (smsResult.message) {
-                        alert('❌ SMS 발송 실패\n\n' + smsResult.message);
-                    }
-                }
-            } catch (error) {
-                alert('❌ SMS 발송 중 오류 발생\n\n' + error.message);
-            }
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
+        // status 코드로 성공 여부 판단 (200-299는 성공)
+        if (response.ok) {
+            return response.json().then(data => ({ success: true, data: data }));
+        } else {
+            return response.json().then(data => ({ success: false, data: data }));
+        }
+    })
+    .then(result => {
+        console.log('Result:', result);
+        
+        if (result.success) {
+            console.log('Reservation created successfully');
             
             // 입력 필드 초기화
             document.getElementById(`interview-${pendingInterviewCustomerId}`).value = '';
             
-            // 모달 닫기
+            // 확인 모달 닫기
             document.getElementById('interviewConfirmModal').style.display = 'none';
             
-            // 신규고객 페이지인 경우 해당 행 제거
-            const currentFilter = '{{.CurrentFilter}}';
-            if (currentFilter === 'new') {
-                if (customerRow) {
-                    customerRow.remove();
-                    
-                    // 테이블이 비어있으면 안내 메시지 표시
-                    const tbody = document.querySelector('.data-table tbody');
-                    if (tbody && tbody.children.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 2rem; color: #999;">고객이 없습니다.</td></tr>';
-                    }
-                }
-            }
-            
-            // 임시 데이터 초기화
-            pendingInterviewCustomerId = null;
-            pendingInterviewDateTime = null;
-            pendingInterviewCustomerName = null;
+            // 성공 모달 표시
+            showReservationResultModal(true, pendingInterviewCustomerName);
         } else {
-            alert('예약 저장에 실패했습니다.');
+            console.log('Reservation failed');
+            const errorMsg = result.data.error || result.data.message || '알 수 없는 오류';
+            
+            // 확인 모달 닫기
+            document.getElementById('interviewConfirmModal').style.display = 'none';
+            
+            // 실패 모달 표시
+            showReservationResultModal(false, pendingInterviewCustomerName, errorMsg);
         }
     })
     .catch(error => {
