@@ -42,6 +42,8 @@ func ExternalRegisterCustomerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Print("요청 파라미터 추출 중...")
+
 	// Query parameter에서 데이터 추출
 	query := r.URL.Query()
 	req := ExternalCustomerRequest{
@@ -52,6 +54,8 @@ func ExternalRegisterCustomerHandler(w http.ResponseWriter, r *http.Request) {
 		Reading:  query.Get("reading"),
 		Language: 0,
 	}
+
+	log.Printf("req object is : %s", fmt.Sprintf("%+v", req))
 
 	// language는 숫자이므로 변환
 	if langStr := query.Get("language"); langStr != "" {
