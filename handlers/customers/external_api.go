@@ -29,7 +29,16 @@ type ExternalCustomerRequest struct {
 // @Failure      500      {string}  string  "서버 오류"
 // @Router       /external/customers [post]
 func ExternalRegisterCustomerHandler(w http.ResponseWriter, r *http.Request) {
+	// 요청 정보 로깅
+	log.Println("=== 외부 고객 등록 API 호출 ===")
+	log.Printf("요청 메소드: %s", r.Method)
+	log.Printf("요청 URL: %s", r.URL.String())
+	log.Printf("클라이언트 IP: %s", r.RemoteAddr)
+	log.Printf("User-Agent: %s", r.UserAgent())
+	log.Printf("Content-Type: %s", r.Header.Get("Content-Type"))
+
 	if r.Method != http.MethodPost {
+		log.Printf("잘못된 메소드 요청: %s", r.Method)
 		utils.JSONError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
@@ -38,20 +47,20 @@ func ExternalRegisterCustomerHandler(w http.ResponseWriter, r *http.Request) {
 	var req ExternalCustomerRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		log.Printf("외부 고객 등록 - 요청 파싱 오류: %v", err)
+		log.Printf("요청 파싱 오류: %v", err)
 		utils.JSONError(w, http.StatusBadRequest, "잘못된 요청 형식입니다")
 		return
 	}
 
-	// 요청 로깅
-	log.Printf("=== 외부 고객 등록 요청 ===")
-	log.Printf("이름: %s", req.Name)
-	log.Printf("전화번호: %s", req.Phone)
-	log.Printf("위치: %s", req.Location)
-	log.Printf("직업: %s", req.Job)
-	log.Printf("독서: %s", req.Reading)
-	log.Printf("언어: %d", req.Language)
-	log.Println("========================")
+	// 요청 데이터 로깅
+	log.Printf("요청 데이터:")
+	log.Printf("  - 이름: %s", req.Name)
+	log.Printf("  - 전화번호: %s", req.Phone)
+	log.Printf("  - 위치: %s", req.Location)
+	log.Printf("  - 직업: %s", req.Job)
+	log.Printf("  - 독서: %s", req.Reading)
+	log.Printf("  - 언어: %d", req.Language)
+	log.Println("==============================")
 
 	// 성공 응답
 	utils.JSONSuccess(w, map[string]interface{}{
