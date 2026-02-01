@@ -101,7 +101,7 @@ func IsProduction() bool {
 // IsMockMode - Mock 모드 여부 (local 또는 test 환경)
 func IsMockMode() bool {
 	env := GetEnvironment()
-	return env == Local || env == Test
+	return env == Test
 }
 
 // GetDBConfig - 환경변수에서 DB 설정 가져오기
