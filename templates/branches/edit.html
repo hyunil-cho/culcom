@@ -37,8 +37,8 @@
         </div>
 
         <div class="form-row">
-            <label class="form-label">별칭 <span class="required">*</span></label>
-            <input type="text" class="form-input" name="alias" value="{{.Branch.Alias}}" placeholder="영문 별칭을 입력하세요" pattern="[a-zA-Z]+" required>
+            <label class="form-label">영문 코드 <span class="required">*</span></label>
+            <input type="text" class="form-input" name="alias" value="{{.Branch.Alias}}" placeholder="영문 코드를 입력하세요" pattern="[a-zA-Z]+" required>
             <small class="form-hint">영문만 입력 가능합니다 (예: gangnam, hongdae)</small>
         </div>
         <div class="form-row">
@@ -63,7 +63,7 @@ function validateForm() {
     // 영문만 허용하는 정규식 검증
     const englishOnlyRegex = /^[a-zA-Z]+$/;
     if (!englishOnlyRegex.test(aliasValue)) {
-        alert('별칭은 영문만 입력 가능합니다.');
+        alert('영문코드는 영문만 입력 가능합니다.');
         aliasInput.focus();
         return false;
     }

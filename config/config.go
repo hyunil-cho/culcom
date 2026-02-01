@@ -37,9 +37,12 @@ func Init() error {
 		Env: env,
 		DB:  GetDBConfig(),
 		Server: ServerConfig{
-			Port:     getEnv("SERVER_PORT", "8080"),
-			LogLevel: getEnv("LOG_LEVEL", "info"),
-			Debug:    getEnv("DEBUG", "false") == "true",
+			Port:        getEnv("SERVER_PORT", "8080"),
+			LogLevel:    getEnv("LOG_LEVEL", "info"),
+			Debug:       getEnv("DEBUG", "false") == "true",
+			TLSEnabled:  getEnv("TLS_ENABLED", "false") == "true",
+			TLSCertFile: getEnv("TLS_CERT_FILE", "./certs/server.crt"),
+			TLSKeyFile:  getEnv("TLS_KEY_FILE", "./certs/server.key"),
 		},
 		SMS: SMSConfig{
 			APIBaseURL:  getEnv("SMS_API_BASE_URL", "https://api.example.com"),

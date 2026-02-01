@@ -159,10 +159,22 @@ func main() {
 		mux.ServeHTTP(w, r)
 	})
 
-	// 서버 시작
-	port := ":8080"
-	log.Printf("서버 시작: http://localhost%s", port)
-	if err := http.ListenAndServe(port, handler); err != nil {
-		log.Fatal(err)
+	// 서버 설정 가져오기
+	cfg := config.GetConfig()
+	port := ":" + cfg.Server.Port
+
+	// TLS 활성화 여부에 따라 서버 시작
+	if cfg.Server.TLSEnabled {
+		log.Printf("HTTPS 서버 시작: https://localhost%s", port)
+		log.Printf("인증서: %s", cfg.Server.TLSCertFile)
+		log.Printf("개인키: %s", cfg.Server.TLSKeyFile)
+		if err := http.ListenAndServeTLS(port, cfg.Server.TLSCertFile, cfg.Server.TLSKeyFile, handler); err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		log.Printf("HTTP 서버 시작: http://localhost%s", port)
+		if err := http.ListenAndServe(port, handler); err != nil {
+			log.Fatal(err)
+		}
 	}
 }

@@ -24,9 +24,12 @@ type DBConfig struct {
 
 // ServerConfig - 서버 설정 구조체
 type ServerConfig struct {
-	Port     string
-	LogLevel string
-	Debug    bool
+	Port        string
+	LogLevel    string
+	Debug       bool
+	TLSEnabled  bool
+	TLSCertFile string
+	TLSKeyFile  string
 }
 
 // SMSConfig - SMS API 설정 구조체
