@@ -1,7 +1,6 @@
 package branches
 
 import (
-	"backoffice/config"
 	"backoffice/database"
 	"backoffice/handlers/errorhandler"
 	"backoffice/middleware"
@@ -15,15 +14,6 @@ import (
 )
 
 var Templates *template.Template
-
-// 더미 데이터 (실제로는 데이터베이스에서 가져와야 함)
-var dummyBranches = []Branch{
-	{ID: "BR001", Name: "강남점", Alias: "gangnam", Address: "서울시 강남구 테헤란로 123", Representative: "김철수", RegisterDate: "2025-01-01"},
-	{ID: "BR002", Name: "홍대점", Alias: "hongdae", Address: "서울시 마포구 홍익로 45", Representative: "이영희", RegisterDate: "2025-02-15"},
-	{ID: "BR003", Name: "신촌점", Alias: "sinchon", Address: "서울시 서대문구 신촌로 78", Representative: "박민수", RegisterDate: "2025-03-10"},
-	{ID: "BR004", Name: "판교점", Alias: "pangyo", Address: "경기도 성남시 분당구 판교역로 234", Representative: "정수진", RegisterDate: "2025-04-20"},
-	{ID: "BR005", Name: "부산점", Alias: "busan", Address: "부산시 해운대구 센텀중앙로 99", Representative: "최동욱", RegisterDate: "2025-05-05"},
-}
 
 // getBranchByID - ID로 지점 조회 (DB에서)
 func getBranchByID(id string) *Branch {
@@ -55,16 +45,7 @@ func getBranchByID(id string) *Branch {
 // Handler - 지점 관리 페이지 핸들러
 func Handler(w http.ResponseWriter, r *http.Request) {
 	// 세션에서 플래시 메시지 읽기
-	session, _ := config.SessionStore.Get(r, "flash-session")
-	flashes := session.Flashes("success")
-	session.Save(r, w) // 플래시는 한 번 읽으면 자동 삭제됨
-
-	var successMessage string
-	if len(flashes) > 0 {
-		if msg, ok := flashes[0].(string); ok {
-			successMessage = msg
-		}
-	}
+	successMessage := utils.GetFlashMessage(w, r, "success")
 
 	// 검색 파라미터 가져오기
 	searchType := r.URL.Query().Get("searchType")
@@ -249,9 +230,7 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// 세션에 플래시 메시지 저장
-		flashSession, _ := config.SessionStore.Get(r, "flash-session")
-		flashSession.AddFlash("지점이 성공적으로 수정되었습니다.", "success")
-		flashSession.Save(r, w)
+		utils.SetFlashMessage(w, r, "success", "지점이 성공적으로 수정되었습니다.")
 
 		// 성공 시 목록 페이지로 리다이렉트
 		http.Redirect(w, r, "/branches", http.StatusSeeOther)
@@ -315,9 +294,7 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("지점 추가 성공 - ID: %d", branchID)
 
 		// 세션에 플래시 메시지 저장
-		flashSession, _ := config.SessionStore.Get(r, "flash-session")
-		flashSession.AddFlash("지점이 성공적으로 추가되었습니다.", "success")
-		flashSession.Save(r, w)
+		utils.SetFlashMessage(w, r, "success", "지점이 성공적으로 추가되었습니다.")
 
 		// 성공 시 목록 페이지로 리다이렉트
 		http.Redirect(w, r, "/branches", http.StatusSeeOther)
@@ -369,9 +346,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("지점 삭제 성공 - ID: %d", id)
 
 	// 세션에 플래시 메시지 저장
-	flashSession, _ := config.SessionStore.Get(r, "flash-session")
-	flashSession.AddFlash("지점이 성공적으로 삭제되었습니다.", "success")
-	flashSession.Save(r, w)
+	utils.SetFlashMessage(w, r, "success", "지점이 성공적으로 삭제되었습니다.")
 
 	// 목록 페이지로 리다이렉트
 	http.Redirect(w, r, "/branches", http.StatusSeeOther)

@@ -76,7 +76,6 @@ func main() {
 	// 라우트 설정 (인증 필요한 라우트는 RequireAuthRecover 미들웨어 적용)
 	mux.HandleFunc("/dashboard", middleware.RequireAuthRecover(home.Handler))                                            // 대시보드
 	mux.HandleFunc("/customers", middleware.RequireAuthRecover(customers.Handler))                                       // 고객 관리
-	mux.HandleFunc("/customers/edit", middleware.RequireAuthRecover(customers.EditHandler))                              // 고객 수정
 	mux.HandleFunc("/customers/add", middleware.RequireAuthRecover(customers.AddHandler))                                // 고객 추가
 	mux.HandleFunc("/api/customers/comment", middleware.RequireAuthRecover(customers.UpdateCommentHandler))              // 고객 코멘트 업데이트
 	mux.HandleFunc("/api/customers/increment-call", middleware.RequireAuthRecover(customers.IncrementCallCountHandler))  // 고객 통화 횟수 증가

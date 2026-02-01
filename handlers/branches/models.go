@@ -6,12 +6,10 @@ import (
 
 // Branch - 지점 데이터 구조체
 type Branch struct {
-	ID             string
-	Name           string
-	Alias          string
-	Address        string
-	Representative string
-	RegisterDate   string
+	ID           string
+	Name         string
+	Alias        string
+	RegisterDate string
 }
 
 // PageData - 지점 관리 페이지 데이터 구조체
