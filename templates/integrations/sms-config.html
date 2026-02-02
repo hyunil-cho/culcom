@@ -1205,7 +1205,6 @@
                 },
                 body: JSON.stringify(requestData)
             })
-            .then(response => response.json())
             .then(response => {
                 json = response.json();
                 if(response.ok){
