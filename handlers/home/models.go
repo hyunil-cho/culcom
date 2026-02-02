@@ -1,6 +1,9 @@
 package home
 
-import "backoffice/middleware"
+import (
+	"backoffice/database"
+	"backoffice/middleware"
+)
 
 // StatCard - 통계 카드 데이터
 type StatCard struct {
@@ -13,8 +16,10 @@ type StatCard struct {
 // PageData - 홈페이지 데이터 구조체
 type PageData struct {
 	middleware.BasePageData
-	Title      string
-	ActiveMenu string
-	AdminName  string
-	Stats      []StatCard
+	Title          string
+	ActiveMenu     string
+	AdminName      string
+	Stats          []StatCard
+	DailyStats     []database.DailyCustomerStats
+	DailyStatsJSON string
 }

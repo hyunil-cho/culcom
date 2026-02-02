@@ -37,14 +37,20 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 // LoginHandler - 로그인 처리 핸들러 (POST)
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	// GET 요청이면 로그인 페이지 표시
+	if r.Method == http.MethodGet {
+		Handler(w, r)
+		return
+	}
+
 	if r.Method != http.MethodPost {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 
 	// 폼 데이터 파싱
 	if err := r.ParseForm(); err != nil {
-		http.Redirect(w, r, "/?error=invalid_request", http.StatusSeeOther)
+		http.Redirect(w, r, "/login?error=invalid_request", http.StatusSeeOther)
 		return
 	}
 
@@ -59,7 +65,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		session, err := config.SessionStore.Get(r, "user-session")
 		if err != nil {
 			log.Printf("세션 가져오기 실패: %v", err)
-			http.Redirect(w, r, "/?error=invalid_request", http.StatusSeeOther)
+			http.Redirect(w, r, "/login?error=invalid_request", http.StatusSeeOther)
 			return
 		}
 
@@ -69,7 +75,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err := session.Save(r, w); err != nil {
 			log.Printf("세션 저장 실패: %v", err)
-			http.Redirect(w, r, "/?error=invalid_request", http.StatusSeeOther)
+			http.Redirect(w, r, "/login?error=invalid_request", http.StatusSeeOther)
 			return
 		}
 
@@ -89,7 +95,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 	} else {
 		// 실패: 로그인 페이지로 리다이렉트하고 에러 메시지 표시
-		http.Redirect(w, r, "/?error=login_failed", http.StatusSeeOther)
+		http.Redirect(w, r, "/login?error=login_failed", http.StatusSeeOther)
 	}
 }
 
@@ -99,7 +105,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	session, err := config.SessionStore.Get(r, "user-session")
 	if err != nil {
 		log.Printf("세션 가져오기 실패: %v", err)
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 
@@ -112,5 +118,5 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 로그인 페이지로 리다이렉트
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

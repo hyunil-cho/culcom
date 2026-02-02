@@ -10,6 +10,7 @@ import (
 	"backoffice/handlers/integrations"
 	"backoffice/handlers/login"
 	"backoffice/handlers/messagetemplates"
+	"backoffice/handlers/public"
 	"backoffice/handlers/services"
 	"backoffice/handlers/settings"
 	"backoffice/middleware"
@@ -61,6 +62,7 @@ func init() {
 	templates = template.Must(templates.ParseGlob("templates/message-templates/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/settings/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/auth/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/public/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/error.html"))
 
 	home.Templates = templates
@@ -71,6 +73,7 @@ func init() {
 	messagetemplates.Templates = templates
 	settings.Templates = templates
 	errorhandler.Templates = templates
+	public.Templates = templates
 }
 
 func main() {
@@ -94,6 +97,11 @@ func main() {
 
 	// 커스텀 ServeMux 생성 (404 핸들러 설정을 위해)
 	mux := http.NewServeMux()
+
+	// 공개 라우트 (인증 불필요)
+	mux.HandleFunc("/privacy", middleware.RecoverFunc(public.PrivacyHandler)) // 개인정보처리방침
+	mux.HandleFunc("/terms", middleware.RecoverFunc(public.TermsHandler))     // 이용약관
+	mux.HandleFunc("/login", middleware.RecoverFunc(login.LoginHandler))      // 로그인 처리
 
 	// 라우트 설정 (인증 필요한 라우트는 RequireAuthRecover 미들웨어 적용)
 	mux.HandleFunc("/dashboard", middleware.RequireAuthRecover(home.Handler))                                                     // 대시보드
@@ -133,7 +141,6 @@ func main() {
 	mux.HandleFunc("/message-templates/set-default", middleware.RequireAuthRecover(messagetemplates.SetDefaultHandler))           // 메시지 템플릿 기본값 설정
 	mux.HandleFunc("/settings", middleware.RequireAuthRecover(settings.Handler))                                                  // 설정 메인 페이지
 	mux.HandleFunc("/settings/reservation-sms", middleware.RequireAuthRecover(settings.ReservationSMSConfigHandler))              // 예약 SMS 설정
-	mux.HandleFunc("/login", middleware.RecoverFunc(login.LoginHandler))                                                          // 로그인 처리 (인증 불필요)
 	mux.HandleFunc("/logout", middleware.RequireAuthRecover(login.LogoutHandler))                                                 // 로그아웃 처리
 	mux.HandleFunc("/error", middleware.RecoverFunc(errorhandler.Handler404))                                                     // 에러 페이지
 
@@ -143,21 +150,14 @@ func main() {
 	// Swagger UI
 	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 
-	// 루트 및 404 핸들러를 포함한 핸들러 래퍼 생성
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 루트 경로는 로그인 페이지로
+	// 루트 경로 핸들러 (정확히 "/" 경로만 처리)
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
-			middleware.RecoverFunc(login.Handler)(w, r)
-			return
-		}
-
-		// 등록된 패턴과 매칭되는지 확인
-		if _, pattern := mux.Handler(r); pattern == "" {
-			// 매칭되는 패턴이 없으면 404
+			middleware.RecoverFunc(public.LandingHandler)(w, r)
+		} else {
+			// "/" 이외의 경로는 404
 			errorhandler.Handler404(w, r)
-			return
 		}
-		mux.ServeHTTP(w, r)
 	})
 
 	// 서버 설정 가져오기
@@ -169,12 +169,12 @@ func main() {
 		log.Printf("HTTPS 서버 시작: https://localhost%s", port)
 		log.Printf("인증서: %s", cfg.Server.TLSCertFile)
 		log.Printf("개인키: %s", cfg.Server.TLSKeyFile)
-		if err := http.ListenAndServeTLS(port, cfg.Server.TLSCertFile, cfg.Server.TLSKeyFile, handler); err != nil {
+		if err := http.ListenAndServeTLS(port, cfg.Server.TLSCertFile, cfg.Server.TLSKeyFile, mux); err != nil {
 			log.Fatal(err)
 		}
 	} else {
 		log.Printf("HTTP 서버 시작: http://localhost%s", port)
-		if err := http.ListenAndServe(port, handler); err != nil {
+		if err := http.ListenAndServe(port, mux); err != nil {
 			log.Fatal(err)
 		}
 	}

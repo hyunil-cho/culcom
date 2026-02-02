@@ -3,6 +3,7 @@ package home
 import (
 	"backoffice/database"
 	"backoffice/middleware"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
@@ -102,12 +103,28 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		Color: "#f39c12",
 	})
 
+	// 5. 최근 7일간 일별 고객 통계 조회
+	dailyStats, err := database.GetDailyCustomerStats(branchSeq, 7)
+	if err != nil {
+		log.Printf("Handler - GetDailyCustomerStats error: %v", err)
+		dailyStats = []database.DailyCustomerStats{}
+	}
+
+	// JSON으로 변환 (템플릿에서 JavaScript로 사용)
+	dailyStatsJSON, err := json.Marshal(dailyStats)
+	if err != nil {
+		log.Printf("Handler - JSON marshal error: %v", err)
+		dailyStatsJSON = []byte("[]")
+	}
+
 	data := PageData{
-		BasePageData: middleware.GetBasePageData(r),
-		Title:        "대시보드",
-		ActiveMenu:   "dashboard",
-		AdminName:    "관리자",
-		Stats:        stats,
+		BasePageData:   middleware.GetBasePageData(r),
+		Title:          "대시보드",
+		ActiveMenu:     "dashboard",
+		AdminName:      "관리자",
+		Stats:          stats,
+		DailyStats:     dailyStats,
+		DailyStatsJSON: string(dailyStatsJSON),
 	}
 
 	if err := Templates.ExecuteTemplate(w, "dashboard/home.html", data); err != nil {

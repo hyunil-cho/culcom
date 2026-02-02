@@ -31,47 +31,135 @@
 <div class="content-grid">
     <div class="content-card">
         <div class="card-header">
-            <h3>최근 활동</h3>
+            <h3>📈 최근 7일 예약자 추이</h3>
         </div>
         <div class="card-body">
-            <div class="activity-item">
-                <div class="activity-icon">✅</div>
-                <div class="activity-details">
-                    <div class="activity-title">새로운 주문이 접수되었습니다</div>
-                    <div class="activity-time">5분 전</div>
-                </div>
-            </div>
-            <div class="activity-item">
-                <div class="activity-icon">👤</div>
-                <div class="activity-details">
-                    <div class="activity-title">새로운 사용자가 가입했습니다</div>
-                    <div class="activity-time">15분 전</div>
-                </div>
-            </div>
-            <div class="activity-item">
-                <div class="activity-icon">📦</div>
-                <div class="activity-details">
-                    <div class="activity-title">상품 재고가 업데이트되었습니다</div>
-                    <div class="activity-time">1시간 전</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="content-card">
-        <div class="card-header">
-            <h3>빠른 작업</h3>
-        </div>
-        <div class="card-body">
-            <div class="quick-actions">
-                <button class="action-btn">➕ 사용자 추가</button>
-                <button class="action-btn">📦 상품 등록</button>
-                <button class="action-btn">📊 보고서 생성</button>
-                <button class="action-btn">⚙️ 설정 변경</button>
-            </div>
+            <canvas id="dailyStatsChart" style="max-height: 300px;"></canvas>
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+// 일별 통계 데이터
+let dailyStatsData = [];
+try {
+    const rawData = '{{.DailyStatsJSON}}';
+    dailyStatsData = JSON.parse(rawData);
+    if (!Array.isArray(dailyStatsData)) {
+        console.warn('dailyStatsData is not an array:', dailyStatsData);
+        dailyStatsData = [];
+    }
+    console.log('📊 일별 통계 데이터:', dailyStatsData);
+} catch (e) {
+    console.error('Failed to parse dailyStatsData:', e);
+    dailyStatsData = [];
+}
+
+// Chart.js 그래프 생성
+const ctx = document.getElementById('dailyStatsChart');
+if (ctx && dailyStatsData.length > 0) {
+    // 데이터 가공
+    const labels = dailyStatsData.map(item => {
+        const date = new Date(item.date);
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        return `${month}/${day}`;
+    });
+    
+    const customerCounts = dailyStatsData.map(item => item.count);
+    const reservationCounts = dailyStatsData.map(item => item.reservationCount);
+    
+    console.log('📅 날짜 라벨:', labels);
+    console.log('👥 예약자 수:', customerCounts);
+    console.log('✅ 예약 확정자 수:', reservationCounts);
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '예약자 수',
+                    data: customerCounts,
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#3498db',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 6
+                },
+                {
+                    label: '예약 확정자 수',
+                    data: reservationCounts,
+                    borderColor: '#2ecc71',
+                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#2ecc71',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label || '';
+                            const value = context.parsed.y;
+                            return label + ': ' + value + '명';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(value) {
+                            return value + '명';
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
+            }
+        }
+    });
+} else if (ctx && dailyStatsData.length === 0) {
+    // 데이터가 없을 경우 메시지 표시
+    ctx.parentElement.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #999;">최근 7일간 예약 데이터가 없습니다.</div>';
+}
+</script>
         </main>
     </div>
 </body>
