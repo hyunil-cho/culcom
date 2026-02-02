@@ -105,6 +105,7 @@ func main() {
 
 	// 라우트 설정 (인증 필요한 라우트는 RequireAuthRecover 미들웨어 적용)
 	mux.HandleFunc("/dashboard", middleware.RequireAuthRecover(home.Handler))                                                     // 대시보드
+	mux.HandleFunc("/api/dashboard/caller-stats", middleware.RequireAuthRecover(home.GetCallerStatsAPI))                          // CALLER별 통계 API
 	mux.HandleFunc("/customers", middleware.RequireAuthRecover(customers.Handler))                                                // 고객 관리
 	mux.HandleFunc("/customers/add", middleware.RequireAuthRecover(customers.AddHandler))                                         // 고객 추가
 	mux.HandleFunc("/api/customers/comment", middleware.RequireAuthRecover(customers.UpdateCommentHandler))                       // 고객 코멘트 업데이트
@@ -113,6 +114,7 @@ func main() {
 	mux.HandleFunc("/api/customers/update-name", middleware.RequireAuthRecover(customers.UpdateCustomerNameHandler))              // 고객 이름 업데이트
 	mux.HandleFunc("/api/customers/check-sms", middleware.RequireAuthRecover(customers.CheckSMSIntegrationHandler))               // SMS 연동 상태 확인
 	mux.HandleFunc("/api/customers/sms-senders", middleware.RequireAuthRecover(customers.GetSMSSenderNumbersHandler))             // SMS 발신번호 목록 조회
+	mux.HandleFunc("/api/customers/select-caller", middleware.RequireAuthRecover(customers.SelectCallerHandler))                  // CALLER 선택 API
 	mux.HandleFunc("/api/external/customers", customers.ExternalRegisterCustomerHandler)                                          // 외부 고객 등록 API (인증 불필요)
 	mux.HandleFunc("/api/service/sms", middleware.RequireAuthRecover(services.SendSMSHandler))                                    // SMS 메시지 전송
 	mux.HandleFunc("/api/service/reservation-sms-config", middleware.RequireAuthRecover(services.GetReservationSMSConfigHandler)) // 예약 SMS 설정 조회
@@ -125,14 +127,10 @@ func main() {
 	mux.HandleFunc("/integrations/configure", middleware.RequireAuthRecover(integrations.ConfigureHandler))                       // 연동 설정
 	mux.HandleFunc("/integrations/manage", middleware.RequireAuthRecover(integrations.ConfigureHandler))                          // 연동 관리 (설정과 동일)
 	mux.HandleFunc("/integrations/sms-config", middleware.RequireAuthRecover(integrations.SMSConfigHandler))                      // SMS 연동 설정
-	mux.HandleFunc("/integrations/calendar-config", middleware.RequireAuthRecover(integrations.CalendarConfigHandler))            // 구글 캘린더 연동 설정
 	mux.HandleFunc("/api/external/sms", middleware.RequireAuthRecover(integrations.SMSTestHandler))                               // SMS 테스트 발송 API
 	mux.HandleFunc("/api/sms/config", middleware.RequireAuthRecover(integrations.SMSConfigSaveHandler))                           // SMS 설정 저장 API
 	mux.HandleFunc("/api/integrations/activate", middleware.RequireAuthRecover(integrations.ActivateHandler))                     // 연동 활성화 API
 	mux.HandleFunc("/api/integrations/disconnect", middleware.RequireAuthRecover(integrations.DisconnectHandler))                 // 연동 해제 API
-	mux.HandleFunc("/api/calendar/auth", middleware.RequireAuthRecover(integrations.CalendarAuthHandler))                         // 구글 캘린더 OAuth 인증 시작
-	mux.HandleFunc("/api/calendar/callback", integrations.CalendarCallbackHandler)                                                // 구글 캘린더 OAuth 콜백 (인증 불필요)
-	mux.HandleFunc("/api/calendar/disconnect", middleware.RequireAuthRecover(integrations.DisconnectCalendarHandler))             // 구글 캘린더 연동 해제 API
 	mux.HandleFunc("/api/calendar/create-event", middleware.RequireAuthRecover(integrations.CreateCalendarEventHandler))          // 구글 캘린더 이벤트 생성 API
 	mux.HandleFunc("/message-templates", middleware.RequireAuthRecover(messagetemplates.Handler))                                 // 메시지 템플릿 목록
 	mux.HandleFunc("/message-templates/add", middleware.RequireAuthRecover(messagetemplates.AddHandler))                          // 메시지 템플릿 추가

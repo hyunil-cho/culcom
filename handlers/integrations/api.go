@@ -10,9 +10,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
-
-	"google.golang.org/api/calendar/v3"
 )
 
 // CreateCalendarEventRequest 캘린더 이벤트 생성 요청 구조체
@@ -300,7 +299,7 @@ func CreateCalendarEventHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// CreateCalendarEvent 구글 캘린더 이벤트 생성 (재사용 가능한 함수)
+// CreateCalendarEvent 구글 캘린더 이벤트 생성 URL 반환 (OAuth 없이)
 func CreateCalendarEvent(branchSeq int, req CreateCalendarEventRequest) (string, error) {
 	// 필수 필드 검증
 	err := ValidateCalendarEventRequest(req.CustomerName, req.PhoneNumber, req.InterviewDate, req.Duration)
@@ -313,12 +312,6 @@ func CreateCalendarEvent(branchSeq int, req CreateCalendarEventRequest) (string,
 		req.Duration = 60 // 기본 60분
 	}
 
-	// 구글 캘린더 서비스 생성
-	service, err := GetCalendarService(branchSeq)
-	if err != nil {
-		return "", fmt.Errorf("구글 캘린더가 연동되지 않았습니다")
-	}
-
 	// 인터뷰 일시 파싱
 	interviewTime, err := time.Parse("2006-01-02 15:04:05", req.InterviewDate)
 	if err != nil {
@@ -329,31 +322,31 @@ func CreateCalendarEvent(branchSeq int, req CreateCalendarEventRequest) (string,
 	endTime := interviewTime.Add(time.Duration(req.Duration) * time.Minute)
 
 	// 이벤트 설명 구성
-	description := fmt.Sprintf("고객명: %s\n전화번호: %s", req.CustomerName, req.PhoneNumber)
+	description := fmt.Sprintf("고객명: %s\\n전화번호: %s", req.CustomerName, req.PhoneNumber)
 	if req.Comment != "" {
-		description += fmt.Sprintf("\n메모: %s", req.Comment)
+		description += fmt.Sprintf("\\n메모: %s", req.Comment)
 	}
 
-	// 구글 캘린더 이벤트 생성
-	event := &calendar.Event{
-		Summary:     fmt.Sprintf("상담 예약 - %s", req.CustomerName),
-		Description: description,
-		Start: &calendar.EventDateTime{
-			DateTime: interviewTime.Format(time.RFC3339),
-			TimeZone: "Asia/Seoul",
-		},
-		End: &calendar.EventDateTime{
-			DateTime: endTime.Format(time.RFC3339),
-			TimeZone: "Asia/Seoul",
-		},
-	}
+	// Google Calendar "Add to Calendar" URL 생성
+	// 형식: https://calendar.google.com/calendar/render?action=TEMPLATE&text=TITLE&dates=START/END&details=DESCRIPTION
 
-	// 이벤트 생성 API 호출
-	createdEvent, err := service.Events.Insert("primary", event).Do()
-	if err != nil {
-		return "", fmt.Errorf("캘린더 이벤트 생성 중 오류가 발생했습니다: %v", err)
-	}
+	// 시간 형식: YYYYMMDDTHHMMSSZ (UTC)
+	startTimeStr := interviewTime.UTC().Format("20060102T150405Z")
+	endTimeStr := endTime.UTC().Format("20060102T150405Z")
 
-	log.Printf("CreateCalendarEvent - 이벤트 생성 완료: %s", createdEvent.Id)
-	return createdEvent.HtmlLink, nil
+	// URL 인코딩
+	title := url.QueryEscape(fmt.Sprintf("상담 예약 - %s", req.CustomerName))
+	details := url.QueryEscape(description)
+
+	// Google Calendar URL 생성
+	calendarURL := fmt.Sprintf(
+		"https://calendar.google.com/calendar/render?action=TEMPLATE&text=%s&dates=%s/%s&details=%s",
+		title,
+		startTimeStr,
+		endTimeStr,
+		details,
+	)
+
+	log.Printf("[Calendar] 캘린더 URL 생성 완료: %s", calendarURL)
+	return calendarURL, nil
 }

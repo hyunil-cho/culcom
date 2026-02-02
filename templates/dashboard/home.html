@@ -37,7 +37,110 @@
             <canvas id="dailyStatsChart" style="max-height: 300px;"></canvas>
         </div>
     </div>
+
+    <div class="content-card">
+        <div class="card-header">
+            <h3>📞 CALLER별 예약 확정 비율</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; gap: 10px;">
+                    <button class="period-btn active" data-period="day">일간</button>
+                    <button class="period-btn" data-period="week">주간</button>
+                    <button class="period-btn" data-period="month">월간</button>
+                </div>
+                <div id="periodDateRange" style="font-size: 14px; color: #666; padding: 5px 0;">
+                    기간: <span id="dateRangeText">-</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="callerStatsContainer">
+                <div style="text-align: center; padding: 40px; color: #999;">
+                    데이터를 불러오는 중...
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.period-btn {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    background: white;
+    color: #666;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.period-btn:hover {
+    background: #f5f5f5;
+}
+
+.period-btn.active {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.caller-stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.caller-stats-table th,
+.caller-stats-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.caller-stats-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+}
+
+.caller-stats-table tr:hover {
+    background: #f8f9fa;
+}
+
+.rate-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.rate-progress {
+    flex: 1;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.rate-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3498db, #2ecc71);
+    transition: width 0.3s ease;
+}
+
+.rate-text {
+    font-weight: 600;
+    color: #3498db;
+    min-width: 60px;
+    text-align: right;
+}
+</style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
@@ -159,6 +262,138 @@ if (ctx && dailyStatsData.length > 0) {
     // 데이터가 없을 경우 메시지 표시
     ctx.parentElement.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #999;">최근 7일간 예약 데이터가 없습니다.</div>';
 }
+
+// CALLER별 통계 관리
+let currentPeriod = 'day';
+
+// 날짜 포맷 함수 (YYYY-MM-DD)
+function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// 기간별 날짜 범위 계산 및 표시
+function updateDateRange(period) {
+    const today = new Date();
+    const dateRangeElement = document.getElementById('dateRangeText');
+    
+    let dateText = '';
+    
+    switch(period) {
+        case 'day':
+            dateText = formatDate(today);
+            break;
+        case 'week':
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - 6);
+            dateText = `${formatDate(weekStart)} ~ ${formatDate(today)}`;
+            break;
+        case 'month':
+            const monthStart = new Date(today);
+            monthStart.setDate(today.getDate() - 29);
+            dateText = `${formatDate(monthStart)} ~ ${formatDate(today)}`;
+            break;
+    }
+    
+    dateRangeElement.textContent = dateText;
+}
+
+// CALLER별 통계 로드 함수
+async function loadCallerStats(period) {
+    const container = document.getElementById('callerStatsContainer');
+    
+    try {
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">데이터를 불러오는 중...</div>';
+        
+        const response = await fetch(`/api/dashboard/caller-stats?period=${period}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch caller stats');
+        }
+        
+        const callerStats = await response.json();
+        console.log('📞 CALLER별 통계:', callerStats);
+        
+        if (!callerStats || callerStats.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">해당 기간에 데이터가 없습니다.</div>';
+            return;
+        }
+        
+        // 테이블 생성
+        let tableHTML = `
+            <table class="caller-stats-table">
+                <thead>
+                    <tr>
+                        <th>CALLER</th>
+                        <th>선택 횟수</th>
+                        <th>예약 확정 수</th>
+                        <th>확정 비율</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        callerStats.forEach(stat => {
+            tableHTML += `
+                <tr>
+                    <td><strong>${stat.Caller || 'N/A'}</strong></td>
+                    <td>${stat.SelectionCount || 0}회</td>
+                    <td>${stat.ReservationConfirm}명</td>
+                    <td>
+                        <div class="rate-bar">
+                            <div class="rate-progress">
+                                <div class="rate-fill" style="width: ${stat.ConfirmRate}%"></div>
+                            </div>
+                            <span class="rate-text">${stat.ConfirmRate.toFixed(1)}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tableHTML += `
+                </tbody>
+            </table>
+        `;
+        
+        container.innerHTML = tableHTML;
+        
+    } catch (error) {
+        console.error('Error loading caller stats:', error);
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #e74c3c;">데이터를 불러오는데 실패했습니다.</div>';
+    }
+}
+
+// 기간 버튼 클릭 이벤트
+document.querySelectorAll('.period-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        // 모든 버튼의 active 클래스 제거
+        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+        
+        // 클릭된 버튼에 active 클래스 추가
+        this.classList.add('active');
+        
+        // 선택된 기간으로 통계 로드
+        const period = this.dataset.period;
+        currentPeriod = period;
+        
+        // 날짜 범위 업데이트
+        updateDateRange(period);
+        
+        // 통계 데이터 로드
+        loadCallerStats(period);
+    });
+});
+
+// 페이지 로드 시 초기 데이터 로드
+document.addEventListener('DOMContentLoaded', function() {
+    // 초기 날짜 범위 표시
+    updateDateRange(currentPeriod);
+    // 초기 데이터 로드
+    loadCallerStats(currentPeriod);
+});
+
 </script>
         </main>
     </div>

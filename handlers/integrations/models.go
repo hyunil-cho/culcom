@@ -59,28 +59,5 @@ type SMSConfigSaveResponse struct {
 	Message string `json:"message"`
 }
 
-// CalendarConfig 구글 캘린더 연동 설정 정보
-type CalendarConfig struct {
-	ClientID       string // OAuth 2.0 클라이언트 ID
-	ClientSecret   string // OAuth 2.0 클라이언트 보안 비밀번호
-	AccessToken    string // 액세스 토큰
-	RefreshToken   string // 리프레시 토큰
-	ConnectedEmail string // 연동된 구글 계정 이메일
-	IsActive       bool   // 활성화 여부
-	CreatedAt      string // 생성일시
-	UpdatedAt      string // 수정일시
-}
-
-// CalendarConfigPageData 구글 캘린더 설정 페이지 데이터
-type CalendarConfigPageData struct {
-	middleware.BasePageData
-	Title          string
-	ActiveMenu     string
-	IsActive       bool
-	ConnectedEmail string
-	SuccessMessage string
-	ErrorMessage   string
-}
-
 // Templates 템플릿
 var Templates *template.Template

@@ -322,3 +322,43 @@ func GetSMSSenderNumbersHandler(w http.ResponseWriter, r *http.Request) {
 		"senderPhones": config.SenderPhones,
 	})
 }
+
+// SelectCallerHandler - CALLER 선택 API
+func SelectCallerHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 요청 파라미터 가져오기
+	customerSeqStr := r.FormValue("customer_seq")
+	caller := r.FormValue("caller")
+	branchSeq := middleware.GetSelectedBranch(r)
+
+	// 파라미터 검증
+	customerSeq, err := ValidateCustomerSeq(customerSeqStr)
+	if err != nil {
+		log.Printf("customer_seq 검증 실패: %v", err)
+		utils.JSONError(w, http.StatusBadRequest, "Invalid customer ID")
+		return
+	}
+
+	if caller == "" {
+		utils.JSONError(w, http.StatusBadRequest, "Caller is required")
+		return
+	}
+
+	// CALLER 선택 이력 저장
+	err = database.InsertCallerSelection(customerSeq, branchSeq, caller)
+	if err != nil {
+		log.Printf("CALLER 선택 이력 저장 오류: %v", err)
+		utils.JSONError(w, http.StatusInternalServerError, "Failed to record caller selection")
+		return
+	}
+
+	log.Printf("CALLER 선택 완료 - CustomerSeq: %d, Caller: %s", customerSeq, caller)
+	utils.JSONSuccess(w, map[string]interface{}{
+		"message": "CALLER 선택이 기록되었습니다",
+	})
+}
+

@@ -276,7 +276,6 @@
     <button class="category-btn" onclick="filterByCategory('storage')">☁️ 스토리지</button>
     <button class="category-btn" onclick="filterByCategory('payment')">💳 결제</button>
     <button class="category-btn" onclick="filterByCategory('collaboration')">💼 협업</button>
-    <button class="category-btn" onclick="filterByCategory('calendar')">📅 캘린더</button>
 </div>
 
 <!-- 연동 서비스 그리드 -->
@@ -304,8 +303,6 @@
             {{if eq .Status "active"}}
                 {{if eq .ID "sms"}}
                     <a href="/integrations/sms-config" class="btn-manage">⚙️ 관리</a>
-                {{else if eq .ID "calendar"}}
-                    <a href="/integrations/calendar-config" class="btn-manage">⚙️ 관리</a>
                 {{else if eq .ID "message-templates"}}
                     <a href="/integrations/message-templates" class="btn-manage">📝 관리</a>
                 {{else}}
@@ -317,8 +314,6 @@
             {{else if eq .Status "inactive"}}
                 {{if eq .ID "sms"}}
                     <a href="/integrations/sms-config" class="btn-manage">⚙️ 설정</a>
-                {{else if eq .ID "calendar"}}
-                    <a href="/integrations/calendar-config" class="btn-manage">⚙️ 설정</a>
                 {{else}}
                     <a href="/integrations/manage?id={{.ID}}" class="btn-manage">⚙️ 설정</a>
                 {{end}}
@@ -326,8 +321,6 @@
             {{else}}
                 {{if eq .ID "sms"}}
                     <a href="/integrations/sms-config" class="btn-configure">🔗 연동하기</a>
-                {{else if eq .ID "calendar"}}
-                    <a href="/integrations/calendar-config" class="btn-configure">🔗 연동하기</a>
                 {{else if eq .ID "message-templates"}}
                     <a href="/integrations/message-templates" class="btn-configure">📝 시작하기</a>
                 {{else}}

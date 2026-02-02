@@ -132,3 +132,36 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Template error:", err)
 	}
 }
+
+// GetCallerStatsAPI - CALLER별 통계 API
+func GetCallerStatsAPI(w http.ResponseWriter, r *http.Request) {
+	branchSeq := middleware.GetSelectedBranch(r)
+	period := r.URL.Query().Get("period")
+
+	// period 기본값 설정
+	if period == "" {
+		period = "day"
+	}
+
+	// period 유효성 검사
+	if period != "day" && period != "week" && period != "month" {
+		http.Error(w, "Invalid period parameter", http.StatusBadRequest)
+		return
+	}
+
+	// CALLER별 통계 조회
+	callerStats, err := database.GetCallerStats(branchSeq, period)
+	if err != nil {
+		log.Printf("GetCallerStatsAPI - error: %v", err)
+		http.Error(w, "Failed to get caller stats", http.StatusInternalServerError)
+		return
+	}
+
+	// JSON 응답
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(callerStats); err != nil {
+		log.Printf("GetCallerStatsAPI - JSON encode error: %v", err)
+		http.Error(w, "Failed to encode JSON", http.StatusInternalServerError)
+		return
+	}
+}

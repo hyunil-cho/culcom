@@ -800,6 +800,27 @@ function confirmCallerSelection() {
     
     console.log(`Customer ${customerId}: Selected caller ${letter}`);
     
+    // CALLER 선택 이력 저장
+    const callerFormData = new FormData();
+    callerFormData.append('customer_seq', customerId);
+    callerFormData.append('caller', letter);
+    
+    fetch('/api/customers/select-caller', {
+        method: 'POST',
+        body: callerFormData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log(`Caller selection recorded: ${letter} for customer ${customerId}`);
+        } else {
+            console.error('Failed to record caller selection');
+        }
+    })
+    .catch(error => {
+        console.error('Caller selection error:', error);
+    });
+    
     // 서버에 call_count 증가 요청
     const formData = new FormData();
     formData.append('customer_seq', customerId);
@@ -1462,23 +1483,24 @@ async function sendCalendarEvent(reservationData) {
         
         if (eventResponse.ok) {
             const eventResult = await eventResponse.json();
-            console.log('✅ 캘린더 이벤트 생성 성공:', eventResult);
+            console.log('✅ 캘린더 URL 생성 성공:', eventResult);
             
-            // 이벤트 URL이 있으면 새 탭에서 열기
+            // 캘린더 URL이 있으면 새 탭에서 열기
             if (eventResult.link) {
                 window.open(eventResult.link, '_blank');
+                // 성공 메시지 표시 (선택사항)
+                console.log('📅 구글 캘린더 페이지가 열렸습니다. 일정 정보가 미리 채워져 있습니다.');
             }
         } else {
             const eventError = await eventResponse.json();
-            console.error('캘린더 이벤트 생성 실패:', eventError);
+            console.error('캘린더 URL 생성 실패:', eventError);
             
-            // 실패 시 모달로 표시
-            const errorMsg = eventError.error || eventError.message || '캘린더 이벤트 생성에 실패했습니다.';
-            showReservationResultModal(false, pendingInterviewCustomerName, `캘린더 이벤트 생성 실패: ${errorMsg}`);
+            // 실패 시 경고 (치명적이지 않으므로 모달은 표시하지 않음)
+            console.warn('⚠️ 캘린더 URL 생성 실패:', eventError.error || eventError.message);
         }
     } catch (error) {
-        console.error('캘린더 이벤트 생성 중 오류:', error);
-        showReservationResultModal(false, pendingInterviewCustomerName, `캘린더 이벤트 생성 중 오류 발생: ${error.message}`);
+        console.error('캘린더 URL 생성 중 오류:', error);
+        console.warn('⚠️ 캘린더 연동이 실패했지만 예약은 정상적으로 생성되었습니다.');
     }
 }
 
