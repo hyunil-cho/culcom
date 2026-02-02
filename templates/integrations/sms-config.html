@@ -1206,9 +1206,15 @@
                 body: JSON.stringify(requestData)
             })
             .then(response => response.json())
-            .then(data => {
-                closeLoadingModal();
-                showResultModal(data.success, data.message);
+            .then(response => {
+                json = response.json();
+                if(response.ok){
+                    closeLoadingModal();
+                    showResultModal(true, json.message);
+                }else{
+                    closeLoadingModal();
+                    showResultModal(false, json.message);
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
