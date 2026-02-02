@@ -903,12 +903,29 @@ async function loadSenderPhones() {
             }
         });
         
-        const result = await response.json();
+        console.log('발신번호 API Status:', response.status); // 디버깅용
         
         // 기존 옵션 제거
         senderSelect.innerHTML = '<option value="">발신번호를 선택하세요</option>';
         
-        if (result.success && result.senderPhones && result.senderPhones.length > 0) {
+        // HTTP status code로 성공 여부 판단
+        if (!response.ok) {
+            const result = await response.json();
+            const errorMsg = result.error || result.message || '발신번호를 불러올 수 없습니다';
+            console.warn('발신번호 로드 실패 (Status: ' + response.status + '):', errorMsg);
+            const errorOption = document.createElement('option');
+            errorOption.value = '';
+            errorOption.textContent = errorMsg;
+            errorOption.style.color = '#ff6b6b';
+            senderSelect.appendChild(errorOption);
+            return;
+        }
+        
+        // 성공 시 JSON 파싱
+        const result = await response.json();
+        console.log('발신번호 API 응답:', result);
+        
+        if (result.senderPhones && result.senderPhones.length > 0) {
             // 비활성화 상태이면 경고 메시지 표시
             if (result.isActive === false) {
                 const warningOption = document.createElement('option');
@@ -936,12 +953,17 @@ async function loadSenderPhones() {
                 }
                 senderSelect.appendChild(option);
             });
+            console.log(`발신번호 ${result.senderPhones.length}개 로드 완료`);
         } else {
-            senderSelect.innerHTML = '<option value="">등록된 발신번호가 없습니다</option>';
+            const errorOption = document.createElement('option');
+            errorOption.value = '';
+            errorOption.textContent = '등록된 발신번호가 없습니다';
+            errorOption.style.color = '#ff6b6b';
+            senderSelect.appendChild(errorOption);
         }
     } catch (error) {
         console.error('발신번호 로드 오류:', error);
-        senderSelect.innerHTML = '<option value="">발신번호를 불러올 수 없습니다</option>';
+        senderSelect.innerHTML = '<option value="" style="color: #ff6b6b;">발신번호를 불러올 수 없습니다. 네트워크를 확인해주세요.</option>';
     }
 }
 
@@ -1055,10 +1077,12 @@ async function sendTextMessage() {
             }
         });
         
-        const checkResult = await checkResponse.json();
+        console.log('SMS 연동 상태 확인 Status:', checkResponse.status); // 디버깅용
         
-        if (!checkResult.success) {
-            alert('❌ SMS 전송 실패\n\n' + checkResult.error);
+        if (!checkResponse.ok) {
+            const checkResult = await checkResponse.json();
+            const errorMsg = checkResult.error || checkResult.message || 'SMS 연동 상태를 확인할 수 없습니다.';
+            alert('❌ SMS 전송 실패\n\n' + errorMsg);
             return;
         }
     } catch (error) {
@@ -1085,12 +1109,17 @@ async function sendTextMessage() {
             body: formData
         });
         
-        const sendResult = await sendResponse.json();
+        console.log('SMS 전송 Status:', sendResponse.status); // 디버깅용
         
-        if (!sendResult.success) {
-            alert('❌ SMS 전송 실패\n\n' + sendResult.error);
+        if (!sendResponse.ok) {
+            const sendResult = await sendResponse.json();
+            const errorMsg = sendResult.error || sendResult.message || 'SMS 전송에 실패했습니다.';
+            alert('❌ SMS 전송 실패\n\n' + errorMsg);
             return;
         }
+        
+        const sendResult = await sendResponse.json();
+        console.log('SMS 전송 결과:', sendResult); // 디버깅용
         
         // 전송 성공
         alert('✅ 메시지가 성공적으로 전송되었습니다.');
@@ -1509,12 +1538,14 @@ async function sendReservationSMS(reservationData) {
             body: smsFormData
         });
         
+        console.log('예약 SMS 발송 Status:', smsResponse.status); // 디버깅용
+        
         if (smsResponse.ok) {
             const smsResult = await smsResponse.json();
             console.log('✅ SMS 발송 성공:', smsResult);
         } else {
             const smsError = await smsResponse.json();
-            console.error('SMS 발송 실패:', smsError);
+            console.error('SMS 발송 실패 (Status: ' + smsResponse.status + '):', smsError);
             
             // 실패 시 모달로 표시
             const errorMsg = smsError.error || smsError.message || 'SMS 발송에 실패했습니다.';

@@ -90,6 +90,8 @@ func SMSTestHandler(w http.ResponseWriter, r *http.Request) {
 	if result.Success {
 		utils.JSONSuccess(w, map[string]interface{}{
 			"message": result.Message,
+			"nums":    result.Nums,
+			"cols":    result.Cols,
 		})
 	} else {
 		utils.JSONError(w, http.StatusInternalServerError, result.Message)

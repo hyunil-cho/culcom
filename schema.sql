@@ -167,6 +167,7 @@ CREATE TABLE `mymunja_config_info` (
   `mapping_id` int(10) unsigned NOT NULL,
   `mymunja_id` varchar(200) NOT NULL,
   `mymunja_password` varchar(100) NOT NULL,
+  `remaining_count` int(10) unsigned DEFAULT 0 COMMENT 'SMS 잔여건수',
   PRIMARY KEY (`seq`),
   UNIQUE KEY `mymunja_config_info_mapping_id_unique` (`mapping_id`),
   KEY `mymunja_config_info_branch_third_party_mapping_FK` (`mapping_id`),

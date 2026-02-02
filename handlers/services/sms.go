@@ -112,6 +112,17 @@ func SendSMSHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("SMS 전송 성공: %s (코드: %s)", sendResp.Message, sendResp.Code)
+
+	// SMS 전송 성공 후 잔여건수 업데이트
+	if sendResp.Cols != "" {
+		err = sms.UpdateRemainingCount(branchSeq, sendResp.Nums)
+		if err != nil {
+			log.Printf("SMS 잔여건수 업데이트 실패: %v", err)
+			// 업데이트 실패해도 SMS는 성공했으므로 계속 진행
+		}
+	}
+
 	// 성공 응답
 	log.Printf("SMS 전송 성공 - 고객 ID: %d, 수신번호: %s", customerSeq, receiverPhone)
 	utils.JSONSuccess(w, map[string]interface{}{

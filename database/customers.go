@@ -14,7 +14,7 @@ func InsertCustomer(branchSeq int, name, phoneNumber, comment string) (int64, er
 	query := `
 		INSERT INTO customers 
 			(branch_seq, name, phone_number, comment, commercial_name, createdDate, call_count)
-		VALUES (?, ?, ?, ?, '워크인', NOW(), 0)
+		VALUES (?, ?, ?, ?, 'walk_in', NOW(), 0)
 	`
 
 	var commentVal interface{}
@@ -248,4 +248,114 @@ func UpdateCustomerName(customerSeq int, name string) error {
 
 	log.Printf("[Customer] 이름 업데이트 완료 - CustomerSeq: %d, Name: %s\n", customerSeq, name)
 	return nil
+}
+
+// GetTodayTotalCustomers - 금일 총 예약자 수 조회 (지점별)
+// 파라미터: branchSeq (지점 seq, 0이면 전체 지점)
+// 반환: 금일 생성된 고객 수, 에러
+func GetTodayTotalCustomers(branchSeq int) (int, error) {
+	log.Printf("[Customer] GetTodayTotalCustomers 호출 - BranchSeq: %d\n", branchSeq)
+
+	query := `SELECT COUNT(*) FROM customers WHERE DATE(createdDate) = CURDATE()`
+	args := []interface{}{}
+
+	if branchSeq > 0 {
+		query += ` AND branch_seq = ?`
+		args = append(args, branchSeq)
+	}
+
+	var count int
+	err := DB.QueryRow(query, args...).Scan(&count)
+	if err != nil {
+		log.Printf("GetTodayTotalCustomers - query error: %v", err)
+		return 0, err
+	}
+
+	log.Printf("[Customer] GetTodayTotalCustomers 완료 - Count: %d\n", count)
+	return count, nil
+}
+
+// AdSourceStats - ad_source별 통계 구조체
+type AdSourceStats struct {
+	AdSource string
+	Count    int
+}
+
+// GetTodayCustomersByAdSource - 금일 ad_source별 고객 수 조회
+// 파라미터: branchSeq (지점 seq, 0이면 전체 지점)
+// 반환: ad_source별 고객 수 목록, 에러
+func GetTodayCustomersByAdSource(branchSeq int) ([]AdSourceStats, error) {
+	log.Printf("[Customer] GetTodayCustomersByAdSource 호출 - BranchSeq: %d\n", branchSeq)
+
+	query := `
+		SELECT 
+			COALESCE(ad_source, '미지정') as ad_source,
+			COUNT(*) as count
+		FROM customers 
+		WHERE DATE(createdDate) = CURDATE()
+	`
+	args := []interface{}{}
+
+	if branchSeq > 0 {
+		query += ` AND branch_seq = ?`
+		args = append(args, branchSeq)
+	}
+
+	query += ` GROUP BY ad_source ORDER BY count DESC`
+
+	rows, err := DB.Query(query, args...)
+	if err != nil {
+		log.Printf("GetTodayCustomersByAdSource - query error: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stats []AdSourceStats
+	for rows.Next() {
+		var stat AdSourceStats
+		err := rows.Scan(&stat.AdSource, &stat.Count)
+		if err != nil {
+			log.Printf("GetTodayCustomersByAdSource - scan error: %v", err)
+			continue
+		}
+		stats = append(stats, stat)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Printf("GetTodayCustomersByAdSource - rows error: %v", err)
+		return nil, err
+	}
+
+	log.Printf("[Customer] GetTodayCustomersByAdSource 완료 - %d개 ad_source\n", len(stats))
+	return stats, nil
+}
+
+// GetTodayWalkInCustomers - 금일 walk_in 고객 수 조회
+// 파라미터: branchSeq (지점 seq, 0이면 전체 지점)
+// 반환: walk_in 고객 수, 에러
+func GetTodayWalkInCustomers(branchSeq int) (int, error) {
+	log.Printf("[Customer] GetTodayWalkInCustomers 호출 - BranchSeq: %d\n", branchSeq)
+
+	query := `
+		SELECT COUNT(*) 
+		FROM customers 
+		WHERE DATE(createdDate) = CURDATE() 
+		AND ad_source = 'walk_in'
+	`
+	args := []interface{}{}
+
+	if branchSeq > 0 {
+		query += ` AND branch_seq = ?`
+		args = append(args, branchSeq)
+	}
+
+	var count int
+	err := DB.QueryRow(query, args...).Scan(&count)
+	if err != nil {
+		log.Printf("GetTodayWalkInCustomers - query error: %v", err)
+		return 0, err
+	}
+
+	log.Printf("[Customer] GetTodayWalkInCustomers 완료 - Count: %d\n", count)
+	return count, nil
 }

@@ -1,7 +1,9 @@
 package home
 
 import (
+	"backoffice/database"
 	"backoffice/middleware"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -13,42 +15,92 @@ var Templates *template.Template
 
 // Handler - 홈페이지 핸들러
 func Handler(w http.ResponseWriter, r *http.Request) {
-	// URL에서 지점 파라미터 가져오기 (영문 코드)
-	branchFilter := r.URL.Query().Get("branch")
+	// 현재 로그인한 사용자의 지점 정보 가져오기
+	branchSeq := middleware.GetSelectedBranch(r)
 
-	// 영문 코드 -> 한글 이름 매핑
-	branchNames := map[string]string{
-		"gasan":   "가산",
-		"gangnam": "강남",
-		"hongdae": "홍대",
-		"sinchon": "신촌",
+	// 1. 금일 총 예약자 수 조회
+	totalCustomers, err := database.GetTodayTotalCustomers(branchSeq)
+	if err != nil {
+		log.Printf("Handler - GetTodayTotalCustomers error: %v", err)
+		totalCustomers = 0
 	}
 
-	// 지점별로 다른 통계 표시 (실제로는 데이터베이스에서 가져와야 함)
+	// 2. 금일 walk_in 고객 수 조회
+	walkInCustomers, err := database.GetTodayWalkInCustomers(branchSeq)
+	if err != nil {
+		log.Printf("Handler - GetTodayWalkInCustomers error: %v", err)
+		walkInCustomers = 0
+	}
+
+	// 3. ad_source별 통계 조회
+	adSourceStats, err := database.GetTodayCustomersByAdSource(branchSeq)
+	if err != nil {
+		log.Printf("Handler - GetTodayCustomersByAdSource error: %v", err)
+		adSourceStats = []database.AdSourceStats{}
+	}
+
+	// 4. SMS 잔여건수 조회
+	var smsRemaining int
+	if branchSeq > 0 {
+		smsRemaining, _ = database.GetSMSRemainingCount(branchSeq)
+	}
+
+	// 통계 카드 생성
 	var stats []StatCard
 
-	if branchFilter == "" {
-		// 전체 지점 통계
-		stats = []StatCard{
-			{Title: "금일 총 예약자", Value: "1,234", Icon: "👥", Color: "#3498db"},
-			{Title: "카카오싱크 예약", Value: "456", Icon: "📊", Color: "#2ecc71"},
-			{Title: "워크인 회원", Value: "23", Icon: "⏰", Color: "#e74c3c"},
-			{Title: "잔여 SMS 메시지", Value: "345/2000", Icon: "💰", Color: "#f39c12"},
+	// 금일 총 예약자
+	stats = append(stats, StatCard{
+		Title: "금일 총 예약자",
+		Value: fmt.Sprintf("%d명", totalCustomers),
+		Icon:  "👥",
+		Color: "#3498db",
+	})
+
+	// walk_in 고객
+	stats = append(stats, StatCard{
+		Title: "워크인 회원",
+		Value: fmt.Sprintf("%d명", walkInCustomers),
+		Icon:  "🚶",
+		Color: "#e74c3c",
+	})
+
+	// ad_source별 통계 (상위 2개만 표시)
+	for i, adStat := range adSourceStats {
+		if i >= 2 {
+			break
 		}
-	} else {
-		// 선택된 지점 통계 (더미 데이터)
-		// TODO: 실제로는 데이터베이스에서 지점별 통계를 가져와야 함
-		branchDisplayName := branchNames[branchFilter]
-		if branchDisplayName == "" {
-			branchDisplayName = branchFilter
+		// ad_source 이름을 한글로 변환
+		adSourceName := adStat.AdSource
+		if adSourceName == "kakao_sync" {
+			adSourceName = "카카오싱크"
+		} else if adSourceName == "walk_in" {
+			adSourceName = "워크인"
+		} else {
+			adSourceName = "기타"
 		}
-		stats = []StatCard{
-			{Title: "금일 총 예약자 (" + branchDisplayName + ")", Value: "234", Icon: "👥", Color: "#3498db"},
-			{Title: "카카오싱크 예약", Value: "89", Icon: "📊", Color: "#2ecc71"},
-			{Title: "워크인 회원", Value: "12", Icon: "⏰", Color: "#e74c3c"},
-			{Title: "잔여 SMS 메시지", Value: "345/2000", Icon: "💰", Color: "#f39c12"},
+
+		icon := "📊"
+		color := "#2ecc71"
+		if i == 1 {
+			icon = "📈"
+			color = "#9b59b6"
 		}
+
+		stats = append(stats, StatCard{
+			Title: fmt.Sprintf("%s 예약", adSourceName),
+			Value: fmt.Sprintf("%d명", adStat.Count),
+			Icon:  icon,
+			Color: color,
+		})
 	}
+
+	// SMS 잔여건수 카드 추가
+	stats = append(stats, StatCard{
+		Title: "잔여 SMS 메시지",
+		Value: fmt.Sprintf("%d건", smsRemaining),
+		Icon:  "💬",
+		Color: "#f39c12",
+	})
 
 	data := PageData{
 		BasePageData: middleware.GetBasePageData(r),

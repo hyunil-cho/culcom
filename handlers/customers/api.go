@@ -302,10 +302,19 @@ func GetSMSSenderNumbersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if config == nil || len(config.SenderPhones) == 0 {
-		utils.JSONError(w, http.StatusBadRequest, "등록된 발신번호가 없습니다.")
+	if config == nil {
+		log.Printf("SMS 설정이 없음 - BranchSeq: %d", branchSeq)
+		utils.JSONError(w, http.StatusBadRequest, "SMS 연동 설정이 없습니다. 연동 관리 페이지에서 마이문자를 설정해주세요.")
 		return
 	}
+
+	if len(config.SenderPhones) == 0 {
+		log.Printf("발신번호가 등록되지 않음 - BranchSeq: %d", branchSeq)
+		utils.JSONError(w, http.StatusBadRequest, "등록된 발신번호가 없습니다. 연동 관리 페이지에서 발신번호를 등록해주세요.")
+		return
+	}
+
+	log.Printf("발신번호 조회 성공 - BranchSeq: %d, Count: %d, Active: %v", branchSeq, len(config.SenderPhones), config.IsActive)
 
 	// JSON 응답 생성 (활성화 상태도 포함)
 	utils.JSONSuccess(w, map[string]interface{}{

@@ -2,12 +2,14 @@ package sms
 
 import (
 	"backoffice/config"
+	"backoffice/database"
 	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -124,6 +126,8 @@ func Send(req SendRequest) (*SendResponse, error) {
 	formData.Set("remote_callback", req.SenderPhone)
 	formData.Set("remote_msg", req.Message) // url.Values가 자동으로 URL 인코딩
 
+	log.Printf("SMS API 요청 - 수신번호: %s, 발신번호: %s, 메시지: %s",
+		req.ReceiverPhone, req.SenderPhone, req.Message)
 	// HTTPS 클라이언트 생성
 	client := &http.Client{
 		Timeout: 30 * time.Second,
@@ -201,4 +205,18 @@ func Send(req SendRequest) (*SendResponse, error) {
 		Nums:    apiResp.Nums,
 		Cols:    apiResp.Cols,
 	}, nil
+}
+
+// UpdateRemainingCount SMS 발송 후 잔여건수 업데이트
+// branchSeq: 지점 seq, cols: API 응답의 잔여건수
+func UpdateRemainingCount(branchSeq int, cols string) error {
+	// cols를 정수로 변환
+	remainingCount, err := strconv.Atoi(cols)
+	if err != nil {
+		log.Printf("UpdateRemainingCount - cols 변환 실패: %v", err)
+		return err
+	}
+
+	// 데이터베이스 업데이트
+	return database.UpdateRemainingCount(branchSeq, remainingCount)
 }
