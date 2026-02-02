@@ -698,9 +698,7 @@
                 <div class="credential-item">
                     <span class="credential-label">발신번호</span>
                     <span class="credential-value">
-                        {{range $index, $phone := .Config.SenderPhones}}
-                            {{if $index}}, {{end}}{{$phone}}
-                        {{end}}
+                        {{if .Config.SenderPhones}}{{index .Config.SenderPhones 0}}{{else}}-{{end}}
                     </span>
                 </div>
                 <div class="credential-item">
@@ -762,43 +760,18 @@
                         <label class="form-label">
                             발신번호<span class="required">*</span>
                         </label>
-                        <div id="senderPhonesContainer">
-                            {{if .Config}}
-                                {{range $index, $phone := .Config.SenderPhones}}
-                                <div class="sender-phone-item" data-index="{{$index}}">
-                                    <input 
-                                        type="tel" 
-                                        name="sender_phones" 
-                                        class="form-input sender-phone-input" 
-                                        placeholder="01012345678 (하이픈 없이 입력)"
-                                        value="{{$phone}}"
-                                        pattern="[0-9]{10,11}"
-                                        required
-                                    >
-                                    <button type="button" class="btn-remove-phone" onclick="removeSenderPhone(this)">✕</button>
-                                </div>
-                                {{end}}
-                            {{else}}
-                                <div class="sender-phone-item" data-index="0">
-                                    <input 
-                                        type="tel" 
-                                        name="sender_phones" 
-                                        class="form-input sender-phone-input" 
-                                        placeholder="01012345678 (하이픈 없이 입력)"
-                                        pattern="[0-9]{10,11}"
-                                        required
-                                    >
-                                    <button type="button" class="btn-remove-phone" onclick="removeSenderPhone(this)">✕</button>
-                                </div>
-                            {{end}}
-                        </div>
-                        <button type="button" class="btn-add-phone" onclick="addSenderPhone()">
-                            ➕발신번호 추가
-                        </button>
+                        <input 
+                            type="tel" 
+                            name="sender_phones" 
+                            class="form-input" 
+                            placeholder="01012345678 (하이픈 없이 입력)"
+                            value="{{if .Config}}{{if .Config.SenderPhones}}{{index .Config.SenderPhones 0}}{{end}}{{end}}"
+                            pattern="[0-9]{10,11}"
+                            required
+                        >
                         <div class="form-help-text">
                             SMS 발송 시 사용할 발신번호를 입력하세요 (하이픈 없이 숫자만 입력)
                             <br>※ 발신번호는 SMS 서비스에 사전 등록된 번호여야 합니다
-                            <br>※ 여러 개의 발신번호를 등록할 수 있습니다
                         </div>
                     </div>
 
@@ -1265,66 +1238,27 @@
             }
         });
 
-        // 발신번호 추가
-        function addSenderPhone() {
-            const container = document.getElementById('senderPhonesContainer');
-            const items = container.querySelectorAll('.sender-phone-item');
-            const newIndex = items.length;
-            
-            const newItem = document.createElement('div');
-            newItem.className = 'sender-phone-item';
-            newItem.setAttribute('data-index', newIndex);
-            newItem.innerHTML = `
-                <input 
-                    type="tel" 
-                    name="sender_phones" 
-                    class="form-input sender-phone-input" 
-                    placeholder="01012345678 (하이픈 없이 입력)"
-                    pattern="[0-9]{10,11}"
-                    required
-                >
-                <button type="button" class="btn-remove-phone" onclick="removeSenderPhone(this)">✕</button>
-            `;
-            
-            container.appendChild(newItem);
-        }
-
-        // 발신번호 제거
-        function removeSenderPhone(button) {
-            const container = document.getElementById('senderPhonesContainer');
-            const items = container.querySelectorAll('.sender-phone-item');
-            
-            // 최소 1개는 남겨야 함
-            if (items.length <= 1) {
-                alert('최소 1개의 발신번호는 필요합니다.');
-                return;
-            }
-            
-            const item = button.parentElement;
-            item.remove();
-        }
-        
         // 테스트 메시지 발송
         function sendTestMessage() {
             const form = document.getElementById('smsConfigForm');
             const formData = new FormData(form);
             
-            const senderPhones = formData.getAll('sender_phones').filter(phone => phone.trim() !== '');
+            const senderPhone = formData.get('sender_phones')?.trim();
             
             // 필수 필드 확인
-            if (!formData.get('account_id') || !formData.get('password') || senderPhones.length === 0) {
+            if (!formData.get('account_id') || !formData.get('password') || !senderPhone) {
                 alert('모든 필수 항목을 입력해주세요.');
                 return;
             }
 
-            // 발신번호가 1개면 바로 테스트 메시지 모달로, 여러 개면 발신번호 선택 모달로
-            if (senderPhones.length === 1) {
-                selectedSenderPhone = senderPhones[0];
-                openTestMessageModal();
-            } else {
-                // 모달로 발신번호 선택
-                openSenderModal(senderPhones);
+            // 발신번호 형식 검증
+            if (!/^[0-9]{10,11}$/.test(senderPhone)) {
+                alert('발신번호는 10~11자리 숫자만 입력 가능합니다.');
+                return;
             }
+
+            selectedSenderPhone = senderPhone;
+            openTestMessageModal();
         }
 
         // 설정 저장 확인 모달 열기/닫기
@@ -1334,13 +1268,13 @@
             
             const accountId = formData.get('account_id');
             const password = formData.get('password');
-            const senderPhones = formData.getAll('sender_phones').filter(phone => phone.trim() !== '');
+            const senderPhone = formData.get('sender_phones')?.trim();
             const isActive = formData.get('is_active') === 'on' || formData.get('is_active') === 'true';
             
             // 확인 모달에 정보 표시
             document.getElementById('confirmAccountId').textContent = accountId;
             document.getElementById('confirmPassword').textContent = '•'.repeat(password.length);
-            document.getElementById('confirmSenderPhones').textContent = senderPhones.join(', ');
+            document.getElementById('confirmSenderPhones').textContent = senderPhone || '-';
             document.getElementById('confirmIsActive').textContent = isActive ? '활성화' : '비활성화';
             
             const modal = document.getElementById('configConfirmModal');
@@ -1368,20 +1302,18 @@
             const formData = new FormData(this);
             const accountId = formData.get('account_id');
             const password = formData.get('password');
-            const senderPhones = formData.getAll('sender_phones').filter(phone => phone.trim() !== '');
+            const senderPhone = formData.get('sender_phones')?.trim();
             
             // 필수 필드 확인
-            if (!accountId || !password || senderPhones.length === 0) {
+            if (!accountId || !password || !senderPhone) {
                 alert('모든 필수 항목을 입력해주세요.');
                 return;
             }
             
             // 발신번호 형식 검증
-            for (let phone of senderPhones) {
-                if (!/^[0-9]{10,11}$/.test(phone)) {
-                    alert('발신번호는 10~11자리 숫자만 입력 가능합니다.');
-                    return;
-                }
+            if (!/^[0-9]{10,11}$/.test(senderPhone)) {
+                alert('발신번호는 10~11자리 숫자만 입력 가능합니다.');
+                return;
             }
             
             // 확인 모달 표시

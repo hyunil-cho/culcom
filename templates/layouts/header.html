@@ -65,14 +65,6 @@ window.addEventListener('click', function(event) {
     }
 });
 
-// 영문 코드 -> 한글 이름 매핑
-const branchNames = {
-    'gasan': '가산',
-    'gangnam': '강남',
-    'hongdae': '홍대',
-    'sinchon': '신촌'
-};
-
 function changeBranch(branchCode) {
     // localStorage에 영문 코드로 저장 (클라이언트 측 복원용)
     if (branchCode === '') {
@@ -123,11 +115,11 @@ document.addEventListener('DOMContentLoaded', function() {
         branchSelect.value = currentBranch || '';
     }
     
-    // 사이드바 제목 업데이트 (한글 이름으로 표시)
+    // 사이드바 제목 업데이트 (서버에서 전달받은 한글 이름 사용)
     if (sidebarTitle) {
-        if (currentBranch && currentBranch !== '') {
-            const branchDisplayName = branchNames[currentBranch] || currentBranch;
-            sidebarTitle.textContent = `🏢 ${branchDisplayName}-백오피스`;
+        const branchName = '{{.SelectedBranchName}}';
+        if (branchName && branchName !== '') {
+            sidebarTitle.textContent = `🏢 ${branchName}-백오피스`;
         } else {
             sidebarTitle.textContent = '🏢 백오피스!!';
         }

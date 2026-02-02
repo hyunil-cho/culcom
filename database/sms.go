@@ -53,16 +53,17 @@ func GetSMSConfig(branchSeq int) (*SMSConfig, error) {
 	// 4단계: SMS 설정 조회
 	var configSeq int
 	var accountID, password string
+	var callbackNumber sql.NullString
 	var createdAt sql.NullString
 	var updatedAt sql.NullString
 	configQuery := `
-		SELECT seq, mymunja_id, mymunja_password,
+		SELECT seq, mymunja_id, mymunja_password, callback_number,
 		       DATE_FORMAT(createdDate, '%Y-%m-%d') as createdDate,
 		       DATE_FORMAT(lastUpdateDate, '%Y-%m-%d') as lastUpdateDate
 		FROM mymunja_config_info 
 		WHERE mapping_id = ?
 	`
-	err = DB.QueryRow(configQuery, mappingSeq).Scan(&configSeq, &accountID, &password, &createdAt, &updatedAt)
+	err = DB.QueryRow(configQuery, mappingSeq).Scan(&configSeq, &accountID, &password, &callbackNumber, &createdAt, &updatedAt)
 	if err != nil {
 		log.Printf("GetSMSConfig - config not found: %v", err)
 		return nil, nil
@@ -77,23 +78,10 @@ func GetSMSConfig(branchSeq int) (*SMSConfig, error) {
 		updatedAtStr = updatedAt.String
 	}
 
-	// 5단계: 발신번호 조회
+	// 발신번호 배열로 변환 (하나만)
 	var senderPhones []string
-	phoneQuery := `SELECT number FROM mymunja_callback_number WHERE config_id = ?`
-	rows, err := DB.Query(phoneQuery, configSeq)
-	if err != nil {
-		log.Printf("GetSMSConfig - phone query error: %v", err)
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var phone string
-		if err := rows.Scan(&phone); err != nil {
-			log.Printf("GetSMSConfig - phone scan error: %v", err)
-			continue
-		}
-		senderPhones = append(senderPhones, phone)
+	if callbackNumber.Valid && callbackNumber.String != "" {
+		senderPhones = append(senderPhones, callbackNumber.String)
 	}
 
 	config := &SMSConfig{
@@ -188,13 +176,19 @@ func SaveSMSConfig(branchSeq int, accountID, password string, senderPhones []str
 	configQuery := `SELECT seq FROM mymunja_config_info WHERE mapping_id = ?`
 	configErr := tx.QueryRow(configQuery, mappingSeq).Scan(&configSeq)
 
+	// 발신번호는 하나만 저장
+	var callbackNumber string
+	if len(senderPhones) > 0 {
+		callbackNumber = senderPhones[0]
+	}
+
 	if configErr != nil {
 		// 설정이 없으면 생성
 		insertConfigQuery := `
-			INSERT INTO mymunja_config_info (mapping_id, mymunja_id, mymunja_password)
-			VALUES (?, ?, ?)
+			INSERT INTO mymunja_config_info (mapping_id, mymunja_id, mymunja_password, callback_number)
+			VALUES (?, ?, ?, ?)
 		`
-		result, execErr := tx.Exec(insertConfigQuery, mappingSeq, accountID, password)
+		result, execErr := tx.Exec(insertConfigQuery, mappingSeq, accountID, password, callbackNumber)
 		if execErr != nil {
 			log.Printf("SaveSMSConfig - insert config error: %v", execErr)
 			err = execErr
@@ -207,10 +201,10 @@ func SaveSMSConfig(branchSeq int, accountID, password string, senderPhones []str
 		// 설정이 있으면 업데이트
 		updateConfigQuery := `
 			UPDATE mymunja_config_info
-			SET mymunja_id = ?, mymunja_password = ?
+			SET mymunja_id = ?, mymunja_password = ?, callback_number = ?
 			WHERE seq = ?
 		`
-		result, execErr := tx.Exec(updateConfigQuery, accountID, password, configSeq)
+		result, execErr := tx.Exec(updateConfigQuery, accountID, password, callbackNumber, configSeq)
 		if execErr != nil {
 			log.Printf("SaveSMSConfig - update config error: %v", execErr)
 			err = execErr
@@ -227,32 +221,7 @@ func SaveSMSConfig(branchSeq int, accountID, password string, senderPhones []str
 		return err
 	}
 
-	// 5단계: 기존 회신번호 삭제
-	deleteCallbackQuery := `DELETE FROM mymunja_callback_number WHERE config_id = ?`
-	_, execErr := tx.Exec(deleteCallbackQuery, configSeq)
-	if execErr != nil {
-		log.Printf("SaveSMSConfig - delete callbacks error: %v", execErr)
-		err = execErr
-		return err
-	}
-	log.Printf("SaveSMSConfig - deleted existing callbacks for config: %d", configSeq)
-
-	// 6단계: 새 회신번호 삽입
-	insertCallbackQuery := `
-		INSERT INTO mymunja_callback_number (config_id, number, createdDate, lastUpdateDate)
-		VALUES (?, ?, CURDATE(), CURDATE())
-	`
-	for _, phone := range senderPhones {
-		if phone != "" {
-			_, execErr := tx.Exec(insertCallbackQuery, configSeq, phone)
-			if execErr != nil {
-				log.Printf("SaveSMSConfig - insert callback error: %v (configSeq: %d, phone: %s)", execErr, configSeq, phone)
-				err = execErr
-				return err
-			}
-			log.Printf("SaveSMSConfig - inserted callback: %s for config: %d", phone, configSeq)
-		}
-	}
+	log.Printf("SaveSMSConfig - callback_number saved: %s for config: %d", callbackNumber, configSeq)
 
 	// 트랜잭션 커밋
 	if err = tx.Commit(); err != nil {

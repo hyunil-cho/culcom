@@ -1,6 +1,7 @@
 package database
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 )
@@ -341,38 +342,22 @@ func GetMymunjaConfig(branchSeq, serviceID int) (*MymunjaConfig, error) {
 	// 3단계: mymunja_config_info 조회
 	var configSeq int
 	var mymunjaID, mymunjaPassword string
+	var callbackNumber sql.NullString
 	configQuery := `
-		SELECT seq, mymunja_id, mymunja_password
+		SELECT seq, mymunja_id, mymunja_password, callback_number
 		FROM mymunja_config_info
 		WHERE mapping_id = ?
 	`
-	err = DB.QueryRow(configQuery, mappingSeq).Scan(&configSeq, &mymunjaID, &mymunjaPassword)
+	err = DB.QueryRow(configQuery, mappingSeq).Scan(&configSeq, &mymunjaID, &mymunjaPassword, &callbackNumber)
 	if err != nil {
 		log.Printf("GetMymunjaConfig - config not found: %v", err)
 		return nil, err
 	}
 
-	// 4단계: mymunja_callback_number 조회
+	// 발신번호 배열로 변환
 	var callbackNumbers []string
-	callbackQuery := `
-		SELECT number
-		FROM mymunja_callback_number
-		WHERE config_id = ?
-	`
-	rows, err := DB.Query(callbackQuery, configSeq)
-	if err != nil {
-		log.Printf("GetMymunjaConfig - callback query error: %v", err)
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var number string
-		if err := rows.Scan(&number); err != nil {
-			log.Printf("GetMymunjaConfig - callback scan error: %v", err)
-			continue
-		}
-		callbackNumbers = append(callbackNumbers, number)
+	if callbackNumber.Valid && callbackNumber.String != "" {
+		callbackNumbers = append(callbackNumbers, callbackNumber.String)
 	}
 
 	config := &MymunjaConfig{
@@ -492,30 +477,12 @@ func DisconnectCalendar(branchSeq int) error {
 func GetSMSSenderNumbers(branchSeq int) ([]string, error) {
 	log.Printf("[DB] GetSMSSenderNumbers 호출 - branchSeq: %d", branchSeq)
 
-	// mymunja_config_info 확인
-	var configCount int
-	countQuery := `
-		SELECT COUNT(*) 
+	// 발신번호 목록 조회 (callback_number 필드에서)
+	query := `
+		SELECT mci.callback_number
 		FROM mymunja_config_info mci
 		INNER JOIN ` + "`branch-third-party-mapping`" + ` btpm ON mci.mapping_id = btpm.mapping_seq
-		WHERE btpm.branch_id = ?
-	`
-	DB.QueryRow(countQuery, branchSeq).Scan(&configCount)
-	log.Printf("[DB] GetSMSSenderNumbers - mymunja_config_info 레코드 수: %d", configCount)
-
-	// mymunja_callback_number 전체 확인
-	var callbackCount int
-	DB.QueryRow(`SELECT COUNT(*) FROM mymunja_callback_number`).Scan(&callbackCount)
-	log.Printf("[DB] GetSMSSenderNumbers - mymunja_callback_number 전체 레코드 수: %d", callbackCount)
-
-	// 발신번호 목록 조회
-	query := `
-		SELECT mcn.number
-		FROM mymunja_callback_number mcn
-		INNER JOIN mymunja_config_info mci ON mcn.config_id = mci.seq
-		INNER JOIN ` + "`branch-third-party-mapping`" + ` btpm ON mci.mapping_id = btpm.mapping_seq
-		WHERE btpm.branch_id = ?
-		ORDER BY mcn.number
+		WHERE btpm.branch_id = ? AND mci.callback_number IS NOT NULL AND mci.callback_number != ''
 	`
 
 	log.Printf("[DB] GetSMSSenderNumbers - 쿼리 실행: %s", query)

@@ -1,6 +1,5 @@
 -- culcom.branches definition
 
-DROP TABLE IF EXISTS `mymunja_callback_number`;
 DROP TABLE IF EXISTS `mymunja_config_info`;
 DROP TABLE IF EXISTS `branch-third-party-mapping`;
 DROP TABLE IF EXISTS `reservation_info`;
@@ -167,26 +166,13 @@ CREATE TABLE `mymunja_config_info` (
   `mapping_id` int(10) unsigned NOT NULL,
   `mymunja_id` varchar(200) NOT NULL,
   `mymunja_password` varchar(100) NOT NULL,
+  `callback_number` varchar(20) DEFAULT NULL COMMENT '발신번호 (하나만)',
   `remaining_count` int(10) unsigned DEFAULT 0 COMMENT 'SMS 잔여건수',
   PRIMARY KEY (`seq`),
   UNIQUE KEY `mymunja_config_info_mapping_id_unique` (`mapping_id`),
   KEY `mymunja_config_info_branch_third_party_mapping_FK` (`mapping_id`),
   CONSTRAINT `mymunja_config_info_branch_third_party_mapping_FK` FOREIGN KEY (`mapping_id`) REFERENCES `branch-third-party-mapping` (`mapping_seq`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='마이문자 연동 설정';
-
-
--- culcom.mymunja_callback_number definition
-
-CREATE TABLE `mymunja_callback_number` (
-  `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `config_id` int(10) unsigned NOT NULL,
-  `number` varchar(20) NOT NULL,
-  `createdDate` date NOT NULL DEFAULT curdate() COMMENT '회신번호 추가 일자',
-  `lastUpdateDate` date NOT NULL DEFAULT curdate() COMMENT '회신번호 수정 일자',
-  PRIMARY KEY (`seq`),
-  KEY `mymunja_callback_number_config_id_IDX` (`config_id`) USING BTREE,
-  CONSTRAINT `mymunja_callback_number_mymunja_config_info_FK` FOREIGN KEY (`config_id`) REFERENCES `mymunja_config_info` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='마이문자 회신번호';
 
 
 -- culcom.reservation_sms_config definition

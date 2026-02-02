@@ -19,18 +19,21 @@ const (
 
 // BasePageData - 모든 페이지에 공통으로 필요한 데이터
 type BasePageData struct {
-	BranchList     []map[string]string
-	SelectedBranch string
+	BranchList         []map[string]string
+	SelectedBranch     string // alias
+	SelectedBranchName string // 한글 이름
 }
 
 // GetBasePageData - context에서 공통 데이터를 가져오는 헬퍼 함수
 func GetBasePageData(r *http.Request) BasePageData {
 	branchList, _ := r.Context().Value(branchListKey).([]map[string]string)
 	selectedBranch, _ := r.Context().Value(selectedBranchKey).(string)
+	selectedBranchName, _ := r.Context().Value(contextKey("selectedBranchName")).(string)
 
 	return BasePageData{
-		BranchList:     branchList,
-		SelectedBranch: selectedBranch, // 헤더 표시용 alias
+		BranchList:         branchList,
+		SelectedBranch:     selectedBranch, // 헤더 표시용 alias
+		SelectedBranchName: selectedBranchName, // 한글 이름
 	}
 }
 
@@ -40,10 +43,12 @@ func InjectBranchData(next http.HandlerFunc) http.HandlerFunc {
 		// 세션에서 지점 정보 가져오기
 		branchList := GetBranchList(r)
 		selectedBranchAlias := GetSelectedBranchAlias(r) // 헤더 표시용 alias
+		selectedBranchName := GetSelectedBranchName(r)   // 한글 이름
 
 		// context에 저장
 		ctx := context.WithValue(r.Context(), branchListKey, branchList)
 		ctx = context.WithValue(ctx, selectedBranchKey, selectedBranchAlias)
+		ctx = context.WithValue(ctx, contextKey("selectedBranchName"), selectedBranchName)
 
 		// 수정된 context로 다음 핸들러 호출
 		next(w, r.WithContext(ctx))
@@ -104,6 +109,24 @@ func GetSelectedBranchAlias(r *http.Request) string {
 	for _, branch := range branchList {
 		if branch["seq"] == fmt.Sprintf("%d", branchSeq) {
 			return branch["alias"]
+		}
+	}
+
+	return ""
+}
+
+// GetSelectedBranchName - 세션에서 선택된 지점의 한글 이름을 가져오는 헬퍼 함수
+func GetSelectedBranchName(r *http.Request) string {
+	branchSeq := GetSelectedBranch(r)
+	if branchSeq == 0 {
+		return ""
+	}
+
+	// branchList에서 해당 seq의 name 찾기
+	branchList := GetBranchList(r)
+	for _, branch := range branchList {
+		if branch["seq"] == fmt.Sprintf("%d", branchSeq) {
+			return branch["name"]
 		}
 	}
 
