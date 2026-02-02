@@ -189,24 +189,6 @@ CREATE TABLE `mymunja_callback_number` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='마이문자 회신번호';
 
 
--- culcom.calendar_config definition
-
-CREATE TABLE `calendar_config` (
-  `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `branch_seq` int(10) unsigned NOT NULL COMMENT '소속 지점',
-  `access_token` text DEFAULT NULL COMMENT 'Google API Access Token',
-  `refresh_token` text DEFAULT NULL COMMENT 'Google API Refresh Token',
-  `token_expiry` datetime DEFAULT NULL COMMENT 'Access Token 만료 시간',
-  `connected_email` varchar(200) DEFAULT NULL COMMENT '연동된 구글 계정 이메일',
-  `is_active` tinyint(1) NOT NULL DEFAULT 0 COMMENT '연동 활성화 여부',
-  `createdDate` datetime NOT NULL DEFAULT current_timestamp() COMMENT '설정 생성 일시',
-  `lastUpdateDate` datetime DEFAULT NULL ON UPDATE current_timestamp() COMMENT '설정 수정 일시',
-  PRIMARY KEY (`seq`),
-  UNIQUE KEY `calendar_config_branch_seq_unique` (`branch_seq`),
-  KEY `calendar_config_branch_seq_IDX` (`branch_seq`) USING BTREE,
-  CONSTRAINT `calendar_config_branches_FK` FOREIGN KEY (`branch_seq`) REFERENCES `branches` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='구글 캘린더 연동 설정';
-
 -- culcom.reservation_sms_config definition
 
 CREATE TABLE `reservation_sms_config` (

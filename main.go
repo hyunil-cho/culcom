@@ -10,7 +10,6 @@ import (
 	"backoffice/handlers/integrations"
 	"backoffice/handlers/login"
 	"backoffice/handlers/messagetemplates"
-	"backoffice/handlers/public"
 	"backoffice/handlers/services"
 	"backoffice/handlers/settings"
 	"backoffice/middleware"
@@ -62,7 +61,6 @@ func init() {
 	templates = template.Must(templates.ParseGlob("templates/message-templates/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/settings/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/auth/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/public/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/error.html"))
 
 	home.Templates = templates
@@ -73,7 +71,6 @@ func init() {
 	messagetemplates.Templates = templates
 	settings.Templates = templates
 	errorhandler.Templates = templates
-	public.Templates = templates
 }
 
 func main() {
@@ -99,9 +96,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	// 공개 라우트 (인증 불필요)
-	mux.HandleFunc("/privacy", middleware.RecoverFunc(public.PrivacyHandler)) // 개인정보처리방침
-	mux.HandleFunc("/terms", middleware.RecoverFunc(public.TermsHandler))     // 이용약관
-	mux.HandleFunc("/login", middleware.RecoverFunc(login.LoginHandler))      // 로그인 처리
+	mux.HandleFunc("/login", middleware.RecoverFunc(login.LoginHandler)) // 로그인 처리
 
 	// 라우트 설정 (인증 필요한 라우트는 RequireAuthRecover 미들웨어 적용)
 	mux.HandleFunc("/dashboard", middleware.RequireAuthRecover(home.Handler))                                                     // 대시보드
@@ -148,14 +143,24 @@ func main() {
 	// Swagger UI
 	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 
-	// 루트 경로 핸들러 (정확히 "/" 경로만 처리)
+	// 루트 경로 핸들러 (세션 유무에 따른 리다이렉트)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
-			middleware.RecoverFunc(public.LandingHandler)(w, r)
-		} else {
+		if r.URL.Path != "/" {
 			// "/" 이외의 경로는 404
 			errorhandler.Handler404(w, r)
+			return
 		}
+
+		// 세션 확인
+		session, err := config.SessionStore.Get(r, "user-session")
+		if err != nil || session.Values["user_id"] == nil {
+			// 세션이 없으면 로그인 페이지로
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		// 세션이 있으면 대시보드로
+		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 	})
 
 	// 서버 설정 가져오기

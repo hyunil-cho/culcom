@@ -13,8 +13,8 @@ func InsertCustomer(branchSeq int, name, phoneNumber, comment string) (int64, er
 	// 고객 INSERT
 	query := `
 		INSERT INTO customers 
-			(branch_seq, name, phone_number, comment, commercial_name, createdDate, call_count)
-		VALUES (?, ?, ?, ?, 'walk_in', NOW(), 0)
+			(branch_seq, name, phone_number, comment, commercial_name, ad_source, createdDate, call_count)
+		VALUES (?, ?, ?, ?, '-', 'walk_in', NOW(), 0)
 	`
 
 	var commentVal interface{}
@@ -591,4 +591,3 @@ func GetCallerSelectionCount(branchSeq int, caller, period string) (int, error) 
 	log.Printf("[Customer] GetCallerSelectionCount 완료 - Count: %d\n", count)
 	return count, nil
 }
-

@@ -112,7 +112,7 @@ func SendSMSHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("SMS 전송 성공: %s (코드: %s)", sendResp.Message, sendResp.Code)
+	log.Printf("SMS 전송 성공: %s (코드: %s) ", sendResp.Message, sendResp.Code)
 
 	// SMS 전송 성공 후 잔여건수 업데이트
 	if sendResp.Cols != "" {

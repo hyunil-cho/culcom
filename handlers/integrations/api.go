@@ -16,11 +16,15 @@ import (
 
 // CreateCalendarEventRequest 캘린더 이벤트 생성 요청 구조체
 type CreateCalendarEventRequest struct {
-	CustomerName  string `json:"customer_name"`  // 고객 이름
-	PhoneNumber   string `json:"phone_number"`   // 전화번호
-	InterviewDate string `json:"interview_date"` // 인터뷰 일시 (YYYY-MM-DD HH:MM:SS)
-	Comment       string `json:"comment"`        // 코멘트
-	Duration      int    `json:"duration"`       // 소요시간 (분, 기본값 60분)
+	CustomerName   string `json:"customer_name"`   // 고객 이름
+	PhoneNumber    string `json:"phone_number"`    // 전화번호
+	InterviewDate  string `json:"interview_date"`  // 인터뷰 일시 (YYYY-MM-DD HH:MM:SS)
+	Comment        string `json:"comment"`         // 코멘트
+	Duration       int    `json:"duration"`        // 소요시간 (분, 기본값 60분)
+	Caller         string `json:"caller"`          // CALLER (A-P)
+	CallCount      int    `json:"call_count"`      // 전화 횟수
+	CommercialName string `json:"commercial_name"` // 광고명
+	AdSource       string `json:"ad_source"`       // 광고 출처
 }
 
 // SMSTestHandler godoc
@@ -321,10 +325,40 @@ func CreateCalendarEvent(branchSeq int, req CreateCalendarEventRequest) (string,
 	// 종료 시간 계산
 	endTime := interviewTime.Add(time.Duration(req.Duration) * time.Minute)
 
+	// 지점 alias 조회
+	branchAlias := ""
+	if branchSeq > 0 {
+		branches, err := database.GetBranchesForSelect()
+		if err == nil {
+			for _, branch := range branches {
+				if branch["seq"] == fmt.Sprintf("%d", branchSeq) {
+					branchAlias = branch["alias"]
+					break
+				}
+			}
+		}
+	}
+
 	// 이벤트 설명 구성
-	description := fmt.Sprintf("고객명: %s\\n전화번호: %s", req.CustomerName, req.PhoneNumber)
+	description := ""
+
+	// 광고명 및 광고 출처
+	if req.CommercialName != "" {
+		description += fmt.Sprintf("광고명: %s", req.CommercialName)
+	}
+	if req.AdSource != "" {
+		if description != "" {
+			description += "\n"
+		}
+		description += fmt.Sprintf("광고 출처: %s", req.AdSource)
+	}
+
+	// 코멘트
 	if req.Comment != "" {
-		description += fmt.Sprintf("\\n메모: %s", req.Comment)
+		if description != "" {
+			description += "\n\n"
+		}
+		description += req.Comment
 	}
 
 	// Google Calendar "Add to Calendar" URL 생성
@@ -334,17 +368,28 @@ func CreateCalendarEvent(branchSeq int, req CreateCalendarEventRequest) (string,
 	startTimeStr := interviewTime.UTC().Format("20060102T150405Z")
 	endTimeStr := endTime.UTC().Format("20060102T150405Z")
 
-	// URL 인코딩
-	title := url.QueryEscape(fmt.Sprintf("상담 예약 - %s", req.CustomerName))
+	// 예약 확정일 (일만 추출)
+	reservationDay := time.Now().Format("02")
+
+	// 타이틀 생성: (일 참석) CALLER+통화횟수 고객명 전화번호
+	// 예: (01 참석) H1 김미영 01099321967
+	callerInfo := fmt.Sprintf("%s%d", req.Caller, req.CallCount)
+	if req.Caller == "" {
+		callerInfo = "" // CALLER 정보가 없으면 생략
+	}
+	titleText := fmt.Sprintf("(%s 참석) %s %s %s", reservationDay, callerInfo, req.CustomerName, req.PhoneNumber)
+	title := url.QueryEscape(titleText)
 	details := url.QueryEscape(description)
+	location := url.QueryEscape(branchAlias)
 
 	// Google Calendar URL 생성
 	calendarURL := fmt.Sprintf(
-		"https://calendar.google.com/calendar/render?action=TEMPLATE&text=%s&dates=%s/%s&details=%s",
+		"https://calendar.google.com/calendar/render?action=TEMPLATE&text=%s&dates=%s/%s&details=%s&location=%s",
 		title,
 		startTimeStr,
 		endTimeStr,
 		details,
+		location,
 	)
 
 	log.Printf("[Calendar] 캘린더 URL 생성 완료: %s", calendarURL)

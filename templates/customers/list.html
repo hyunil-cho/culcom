@@ -809,12 +809,11 @@ function confirmCallerSelection() {
         method: 'POST',
         body: callerFormData
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
+    .then(response => {
+        if (response.ok) {
             console.log(`Caller selection recorded: ${letter} for customer ${customerId}`);
         } else {
-            console.error('Failed to record caller selection');
+            alert('Failed to record caller selection on server.'+response.json());
         }
     })
     .catch(error => {
@@ -1457,10 +1456,49 @@ async function sendCalendarEvent(reservationData) {
         // 고객 전화번호 가져오기
         const customerRow = document.querySelector(`tr[data-customer-id="${pendingInterviewCustomerId}"]`);
         let customerPhone = '';
+        let caller = '';
+        let callCount = 0;
+        let commercialName = '';
+        let adSource = '';
+        let comment = '';
+        
         if (customerRow) {
             const phoneCell = customerRow.querySelector(`#phone-${pendingInterviewCustomerId} .phone-number`);
             if (phoneCell) {
                 customerPhone = phoneCell.textContent.trim();
+            }
+            
+            // CALLER 정보 가져오기 (선택된 버튼)
+            const selectedCallerBtn = customerRow.querySelector(`.caller-btn.selected`);
+            if (selectedCallerBtn) {
+                caller = selectedCallerBtn.dataset.letter || selectedCallerBtn.textContent.trim();
+            }
+            
+            // 전화 횟수 가져오기
+            const callCountElement = customerRow.querySelector(`#call-count-${pendingInterviewCustomerId}`);
+            if (callCountElement) {
+                const callCountText = callCountElement.textContent.trim();
+                callCount = parseInt(callCountText.replace('회', '')) || 0;
+            }
+            
+            // 광고명 가져오기 (테이블의 "광고명" 컬럼)
+            const cells = customerRow.querySelectorAll('td');
+            if (cells.length > 6) {
+                commercialName = cells[6].textContent.trim();
+            }
+            
+            // 광고 출처 가져오기 (테이블의 "광고 출처" 컬럼)
+            if (cells.length > 7) {
+                adSource = cells[7].textContent.trim();
+                if (adSource === '-') {
+                    adSource = '';
+                }
+            }
+            
+            // 코멘트 가져오기
+            const commentDisplay = customerRow.querySelector(`#comment-display-${pendingInterviewCustomerId}`);
+            if (commentDisplay) {
+                comment = commentDisplay.textContent.trim();
             }
         }
         
@@ -1469,8 +1507,12 @@ async function sendCalendarEvent(reservationData) {
             customer_name: pendingInterviewCustomerName,
             phone_number: customerPhone,
             interview_date: reservationData.interview_date,
-            comment: '',
-            duration: 60
+            comment: comment,
+            duration: 60,
+            caller: caller,
+            call_count: callCount,
+            commercial_name: commercialName,
+            ad_source: adSource
         };
         
         const eventResponse = await fetch('/api/calendar/create-event', {
