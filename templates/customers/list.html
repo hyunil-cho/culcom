@@ -26,14 +26,18 @@
                 <div style="display: flex; gap: 0; flex: 1; max-width: 650px;">
                     <div class="filter-group" style="min-width: auto; margin: 0;">
                         <label>검색 조건</label>
-                        <select name="searchType" class="filter-select" style="width: 100px;">
+                        <select name="searchType" class="filter-select" style="width: 120px;" onchange="toggleSearchInput(this.value)">
                             <option value="name" {{if eq .SearchType "name"}}selected{{end}}>이름</option>
                             <option value="phone" {{if eq .SearchType "phone"}}selected{{end}}>전화번호</option>
+                            <option value="register_date" {{if eq .SearchType "register_date"}}selected{{end}}>지원일시</option>
+                            <option value="contact_date" {{if eq .SearchType "contact_date"}}selected{{end}}>회신일시</option>
+                            <option value="reservation_date" {{if eq .SearchType "reservation_date"}}selected{{end}}>예약일자</option>
                         </select>
                     </div>
                     <div class="filter-group" style="flex: 1; margin: 0;">
                         <label>검색어</label>
-                        <input type="text" name="searchKeyword" placeholder="검색어를 입력하세요" class="search-input" value="{{.SearchKeyword}}">
+                        <input type="text" id="searchKeywordText" {{if not (or (eq .SearchType "register_date") (eq .SearchType "contact_date") (eq .SearchType "reservation_date"))}}name="searchKeyword"{{end}} placeholder="검색어를 입력하세요" class="search-input" value="{{if not (or (eq .SearchType "register_date") (eq .SearchType "contact_date") (eq .SearchType "reservation_date"))}}{{.SearchKeyword}}{{end}}" style="{{if or (eq .SearchType "register_date") (eq .SearchType "contact_date") (eq .SearchType "reservation_date")}}display: none;{{end}}">
+                        <input type="date" id="searchKeywordDate" {{if or (eq .SearchType "register_date") (eq .SearchType "contact_date") (eq .SearchType "reservation_date")}}name="searchKeyword"{{end}} class="search-input" value="{{if or (eq .SearchType "register_date") (eq .SearchType "contact_date") (eq .SearchType "reservation_date")}}{{.SearchKeyword}}{{end}}" style="{{if not (or (eq .SearchType "register_date") (eq .SearchType "contact_date") (eq .SearchType "reservation_date"))}}display: none;{{end}}">
                     </div>
                 </div>
                 <input type="hidden" name="filter" value="{{.CurrentFilter}}">
@@ -54,6 +58,11 @@
 <!-- 고객 테이블 -->
 <div class="content-card">
     <div class="table-header">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <span style="font-size: 1rem; font-weight: 600; color: #333;">
+                전체 <span style="color: #4a90e2; font-size: 1.2rem;">{{.TotalCount}}</span>명
+            </span>
+        </div>
         <div style="display: flex; gap: 0.5rem; margin-left: auto;">
             <button class="customer-filter-btn {{if eq .CurrentFilter "new"}}active{{end}}" onclick="filterCustomers('new')" data-filter="new" 
                     style="padding: 0.6rem 1.5rem; border: 2px solid {{if eq .CurrentFilter "new"}}#4a90e2{{else}}#ddd{{end}}; background: {{if eq .CurrentFilter "new"}}#4a90e2{{else}}white{{end}}; color: {{if eq .CurrentFilter "new"}}white{{else}}#666{{end}}; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
@@ -1677,6 +1686,24 @@ function goToPage(page) {
     if (searchKeyword) url += `&searchKeyword=${encodeURIComponent(searchKeyword)}`;
     
     window.location.href = url;
+}
+
+// 검색 조건에 따라 입력 필드 전환
+function toggleSearchInput(searchType) {
+    const textInput = document.getElementById('searchKeywordText');
+    const dateInput = document.getElementById('searchKeywordDate');
+    
+    if (searchType === 'register_date' || searchType === 'contact_date' || searchType === 'reservation_date') {
+        textInput.style.display = 'none';
+        dateInput.style.display = 'block';
+        textInput.removeAttribute('name');
+        dateInput.setAttribute('name', 'searchKeyword');
+    } else {
+        textInput.style.display = 'block';
+        dateInput.style.display = 'none';
+        textInput.setAttribute('name', 'searchKeyword');
+        dateInput.removeAttribute('name');
+    }
 }
 
 </script>

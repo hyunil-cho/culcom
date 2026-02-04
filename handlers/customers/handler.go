@@ -109,6 +109,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		CurrentFilter:    filter,
 		SearchType:       searchParams.SearchType,
 		SearchKeyword:    searchParams.SearchKeyword,
+		TotalCount:       totalItems,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "customers/list.html", data); err != nil {

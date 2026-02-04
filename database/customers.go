@@ -85,6 +85,15 @@ func GetCustomersCountByBranch(branchSeq int, filter, searchType, searchKeyword 
 		} else if searchType == "phone" {
 			query += ` AND phone_number LIKE ?`
 			args = append(args, "%"+searchKeyword+"%")
+		} else if searchType == "register_date" {
+			query += ` AND DATE(createdDate) = ?`
+			args = append(args, searchKeyword)
+		} else if searchType == "contact_date" {
+			query += ` AND DATE(lastUpdateDate) = ?`
+			args = append(args, searchKeyword)
+		} else if searchType == "reservation_date" {
+			query += ` AND seq IN (SELECT customer_id FROM reservation_info WHERE DATE(interview_date) = ? AND branch_seq = ?)`
+			args = append(args, searchKeyword, branchSeq)
 		}
 	}
 
@@ -144,6 +153,15 @@ func GetCustomersByBranch(branchSeq int, filter, searchType, searchKeyword strin
 		} else if searchType == "phone" {
 			query += ` AND phone_number LIKE ?`
 			args = append(args, "%"+searchKeyword+"%")
+		} else if searchType == "register_date" {
+			query += ` AND DATE(createdDate) = ?`
+			args = append(args, searchKeyword)
+		} else if searchType == "contact_date" {
+			query += ` AND DATE(lastUpdateDate) = ?`
+			args = append(args, searchKeyword)
+		} else if searchType == "reservation_date" {
+			query += ` AND seq IN (SELECT customer_id FROM reservation_info WHERE DATE(interview_date) = ? AND branch_seq = ?)`
+			args = append(args, searchKeyword, branchSeq)
 		}
 	}
 

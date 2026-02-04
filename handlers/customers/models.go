@@ -33,4 +33,5 @@ type PageData struct {
 	CurrentFilter    string // 현재 적용된 필터 (new/all)
 	SearchType       string // 검색 타입 (name/phone)
 	SearchKeyword    string // 검색어
+	TotalCount       int    // 조건에 맞는 전체 고객 수
 }
