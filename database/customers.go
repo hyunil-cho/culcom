@@ -196,7 +196,7 @@ func GetCustomersByBranch(branchSeq int, filter, searchType, searchKeyword strin
 // 파라미터: customerSeq - 고객 seq, comment - 업데이트할 코멘트
 // 반환: 에러
 func UpdateCustomerComment(customerSeq int, comment string) error {
-	query := `UPDATE customers SET comment = ?, lastUpdateDate = NOW() WHERE seq = ?`
+	query := `UPDATE customers SET comment = ? WHERE seq = ?`
 
 	_, err := DB.Exec(query, comment, customerSeq)
 	if err != nil {
@@ -238,7 +238,7 @@ func IncrementCallCount(customerSeq int) (int, string, error) {
 // 파라미터: customerSeq - 고객 seq, name - 새 이름
 // 반환: 에러
 func UpdateCustomerName(customerSeq int, name string) error {
-	query := `UPDATE customers SET name = ?, lastUpdateDate = NOW() WHERE seq = ?`
+	query := `UPDATE customers SET name = ? WHERE seq = ?`
 
 	_, err := DB.Exec(query, name, customerSeq)
 	if err != nil {

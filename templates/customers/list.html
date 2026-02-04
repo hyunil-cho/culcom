@@ -70,6 +70,7 @@
         <table class="data-table">
             <thead>
                 <tr>
+                    <th>누적콜수</th>
                     <th>이름</th>
                     <th>코멘트</th>
                     <th>전화번호</th>
@@ -80,12 +81,12 @@
                     <th>지원경로</th>
                     <th>지원일시</th>
                     <th>회신일시</th>
-                    <th>누적콜수</th>
                 </tr>
             </thead>
             <tbody>
                 {{range .Customers}}
                 <tr data-last-visit="{{.LastContactDate}}" data-customer-id="{{.ID}}">
+                    <td><strong id="call-count-{{.ID}}">{{.CallCount}}회</strong></td>
                     <td>
                         <div style="display: flex; gap: 0.5rem; align-items: center;">
                             <input type="text" class="customer-name-input" id="name-input-{{.ID}}" value="{{.Name}}" data-original-name="{{.Name}}"
@@ -148,7 +149,6 @@
                     <td>{{if .AdSource}}{{.AdSource}}{{else}}-{{end}}</td>
                     <td>{{.RegisterDate}}</td>
                     <td id="last-visit-{{.ID}}">{{if .LastContactDate}}{{.LastContactDate}}{{else}}-{{end}}</td>
-                    <td><strong id="call-count-{{.ID}}">{{.CallCount}}회</strong></td>
                 </tr>
                 {{end}}
             </tbody>
@@ -760,9 +760,32 @@ function confirmCallerSelection() {
             const lastVisitElement = document.getElementById(`last-visit-${customerId}`);
             if (lastVisitElement && data.last_update_date) {
                 lastVisitElement.textContent = data.last_update_date;
+                
+                // 행의 data-last-visit 속성도 업데이트
+                const customerRow = document.querySelector(`tr[data-customer-id="${customerId}"]`);
+                if (customerRow) {
+                    customerRow.setAttribute('data-last-visit', data.last_update_date);
+                    // 보라색 강조 표시 추가
+                    customerRow.classList.add('recent-contact');
+                }
             }
             
             console.log(`Call count updated: ${data.call_count}, Last update: ${data.last_update_date}`);
+            
+            // 처리중 필터에서 call_count가 5 이상이면 행 제거
+            const currentFilter = '{{.CurrentFilter}}';
+            if (currentFilter === 'new' && data.call_count >= 5) {
+                const customerRow = document.querySelector(`tr[data-customer-id="${customerId}"]`);
+                if (customerRow) {
+                    customerRow.remove();
+                    
+                    // 테이블이 비어있으면 안내 메시지 표시
+                    const tbody = document.querySelector('.data-table tbody');
+                    if (tbody && tbody.children.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 2rem; color: #999;">고객이 없습니다.</td></tr>';
+                    }
+                }
+            }
         } else {
             console.error('Failed to increment call count');
         }
