@@ -54,10 +54,6 @@
 <!-- 고객 테이블 -->
 <div class="content-card">
     <div class="table-header">
-        <button id="editModeBtn" onclick="toggleEditMode()" 
-                style="padding: 0.6rem 1.5rem; border: 2px solid #667eea; background: white; color: #667eea; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
-            수정
-        </button>
         <div style="display: flex; gap: 0.5rem; margin-left: auto;">
             <button class="customer-filter-btn {{if eq .CurrentFilter "new"}}active{{end}}" onclick="filterCustomers('new')" data-filter="new" 
                     style="padding: 0.6rem 1.5rem; border: 2px solid {{if eq .CurrentFilter "new"}}#4a90e2{{else}}#ddd{{end}}; background: {{if eq .CurrentFilter "new"}}#4a90e2{{else}}white{{end}}; color: {{if eq .CurrentFilter "new"}}white{{else}}#666{{end}}; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
@@ -92,11 +88,10 @@
                 <tr data-last-visit="{{.LastContactDate}}" data-customer-id="{{.ID}}">
                     <td>
                         <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <strong class="customer-name-display" data-customer-id="{{.ID}}">{{.Name}}</strong>
-                            <input type="text" class="customer-name-input" id="name-input-{{.ID}}" value="{{.Name}}" 
-                                   style="display: none; padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; font-weight: 600;">
-                            <button class="confirm-name-btn" onclick="confirmNameChange({{.ID}})" 
-                                    style="display: none; padding: 0.4rem 0.7rem; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">확정</button>
+                            <input type="text" class="customer-name-input" id="name-input-{{.ID}}" value="{{.Name}}" data-original-name="{{.Name}}"
+                                   style="padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; font-weight: 600; width: 100px;">
+                            <button onclick="confirmNameChange({{.ID}})" 
+                                    style="padding: 0.4rem 0.7rem; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">수정</button>
                         </div>
                     </td>
                     <td>
@@ -592,58 +587,11 @@ let pendingNameChange = {
     newName: ''
 };
 
-// 수정 모드 토글
-function toggleEditMode() {
-    isEditMode = !isEditMode;
-    const editBtn = document.getElementById('editModeBtn');
-    
-    if (isEditMode) {
-        // 수정 모드 활성화
-        editBtn.style.background = '#667eea';
-        editBtn.style.color = 'white';
-        editBtn.textContent = '수정 취소';
-        
-        // 모든 이름을 input으로 변경
-        document.querySelectorAll('.customer-name-display').forEach(el => {
-            el.style.display = 'none';
-        });
-        document.querySelectorAll('.customer-name-input').forEach(el => {
-            el.style.display = 'block';
-        });
-        document.querySelectorAll('.confirm-name-btn').forEach(el => {
-            el.style.display = 'block';
-        });
-    } else {
-        // 수정 모드 비활성화
-        editBtn.style.background = 'white';
-        editBtn.style.color = '#667eea';
-        editBtn.textContent = '수정';
-        
-        // input을 다시 텍스트로 변경
-        document.querySelectorAll('.customer-name-display').forEach(el => {
-            el.style.display = 'block';
-        });
-        document.querySelectorAll('.customer-name-input').forEach(el => {
-            el.style.display = 'none';
-            // 원래 값으로 복원
-            const customerId = el.id.replace('name-input-', '');
-            const displayEl = document.querySelector(`.customer-name-display[data-customer-id="${customerId}"]`);
-            if (displayEl) {
-                el.value = displayEl.textContent;
-            }
-        });
-        document.querySelectorAll('.confirm-name-btn').forEach(el => {
-            el.style.display = 'none';
-        });
-    }
-}
-
-// 이름 변경 확정 (모달 표시)
+// 이름 변경 확정 (바로 실행)
 function confirmNameChange(customerId) {
     const inputEl = document.getElementById(`name-input-${customerId}`);
-    const displayEl = document.querySelector(`.customer-name-display[data-customer-id="${customerId}"]`);
     
-    const oldName = displayEl.textContent;
+    const oldName = inputEl.getAttribute('data-original-name');
     const newName = inputEl.value.trim();
     
     if (!newName) {
@@ -656,43 +604,18 @@ function confirmNameChange(customerId) {
         return;
     }
     
-    // 모달에 정보 표시
-    pendingNameChange = {
-        customerId: customerId,
-        oldName: oldName,
-        newName: newName
-    };
-    
-    document.getElementById('oldCustomerName').textContent = oldName;
-    document.getElementById('newCustomerName').textContent = newName;
-    document.getElementById('nameChangeConfirmModal').style.display = 'flex';
-}
-
-// 이름 변경 취소
-function cancelNameChange() {
-    document.getElementById('nameChangeConfirmModal').style.display = 'none';
-    pendingNameChange = {
-        customerId: null,
-        oldName: '',
-        newName: ''
-    };
-}
-
-// 이름 변경 실행
-function updateCustomerName() {
-    const { customerId, newName } = pendingNameChange;
-    
-    if (!customerId || !newName) {
+    // 확인
+    if (!confirm(`"${oldName}"에서 "${newName}"(으)로 변경하시겠습니까?`)) {
         return;
     }
     
     // 버튼 비활성화 (중복 클릭 방지)
-    const confirmBtn = event.target;
-    const originalText = confirmBtn.textContent;
-    confirmBtn.disabled = true;
-    confirmBtn.style.opacity = '0.6';
-    confirmBtn.style.cursor = 'not-allowed';
-    confirmBtn.textContent = '처리중...';
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    btn.style.cursor = 'not-allowed';
+    btn.textContent = '처리중...';
     
     // 서버에 저장
     const formData = new FormData();
@@ -703,48 +626,44 @@ function updateCustomerName() {
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
     .then(data => {
-        if (data.success) {
+        if (data.ok) {
             // UI 업데이트
-            const displayEl = document.querySelector(`.customer-name-display[data-customer-id="${customerId}"]`);
-            const inputEl = document.getElementById(`name-input-${customerId}`);
+            inputEl.value = newName;
+            inputEl.setAttribute('data-original-name', newName);
             
-            if (displayEl) {
-                displayEl.textContent = newName;
-            }
-            if (inputEl) {
-                inputEl.value = newName;
-            }
-            
-            alert('고객 이름이 변경되었습니다.');
-            
-            // 모달 닫기
-            document.getElementById('nameChangeConfirmModal').style.display = 'none';
-            
-            // 초기화
-            pendingNameChange = {
-                customerId: null,
-                oldName: '',
-                newName: ''
-            };
+            alert('✅ 고객 이름이 변경되었습니다.');
         } else {
-            alert('이름 변경에 실패했습니다.');
+            alert('❌ 이름 변경에 실패했습니다.');
+            // 원래 값으로 복원
+            inputEl.value = oldName;
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('이름 변경 중 오류가 발생했습니다.');
+        alert('❌ 이름 변경 중 오류가 발생했습니다.');
+        // 원래 값으로 복원
+        inputEl.value = oldName;
     })
     .finally(() => {
         // 버튼 재활성화
-        confirmBtn.disabled = false;
-        confirmBtn.style.opacity = '1';
-        confirmBtn.style.cursor = 'pointer';
-        confirmBtn.textContent = originalText;
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+        btn.textContent = originalText;
     });
 }
 
+
+// 이름 변경 취소
+function cancelNameChange() {
+    document.getElementById('nameChangeConfirmModal').style.display = 'none';
+    pendingNameChange = {
+        customerId: null,
+        oldName: '',
+        newName: ''
+    };
+}
 
 function selectCaller(customerId, letter) {
     // 고객 이름 가져오기
