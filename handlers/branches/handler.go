@@ -105,7 +105,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	data := PageData{
 		BasePageData:   middleware.GetBasePageData(r),
-		Title:          "지점 관리",
+		Title:          "지점 어드민",
 		ActiveMenu:     "branches",
 		Branches:       branches,
 		SuccessMessage: successMessage,

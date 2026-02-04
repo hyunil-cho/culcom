@@ -61,7 +61,7 @@
         <div style="display: flex; gap: 0.5rem; margin-left: auto;">
             <button class="customer-filter-btn {{if eq .CurrentFilter "new"}}active{{end}}" onclick="filterCustomers('new')" data-filter="new" 
                     style="padding: 0.6rem 1.5rem; border: 2px solid {{if eq .CurrentFilter "new"}}#4a90e2{{else}}#ddd{{end}}; background: {{if eq .CurrentFilter "new"}}#4a90e2{{else}}white{{end}}; color: {{if eq .CurrentFilter "new"}}white{{else}}#666{{end}}; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
-                신규
+                처리중
             </button>
             <button class="customer-filter-btn {{if eq .CurrentFilter "all"}}active{{end}}" onclick="filterCustomers('all')" data-filter="all" 
                     style="padding: 0.6rem 1.5rem; border: 2px solid {{if eq .CurrentFilter "all"}}#4a90e2{{else}}#ddd{{end}}; background: {{if eq .CurrentFilter "all"}}#4a90e2{{else}}white{{end}}; color: {{if eq .CurrentFilter "all"}}white{{else}}#666{{end}}; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
@@ -81,10 +81,10 @@
                     <th>TEXT</th>
                     <th>인터뷰확정일시</th>
                     <th>광고명</th>
-                    <th>광고 출처</th>
-                    <th>요청일시</th>
-                    <th>최근응대</th>
-                    <th>전화횟수</th>
+                    <th>지원경로</th>
+                    <th>지원일시</th>
+                    <th>회신일시</th>
+                    <th>누적콜수</th>
                 </tr>
             </thead>
             <tbody>
@@ -102,13 +102,13 @@
                     <td>
                         <div style="display: flex; flex-direction: column; gap: 0.3rem; align-items: flex-start;">
                             <!-- 저장된 코멘트 표시 -->
-                            <div id="comment-display-{{.ID}}" style="padding: 0.4rem 0.6rem; background: #f8f9fa; border-radius: 4px; font-size: 0.85rem; min-height: 24px; width: 100%; text-align: left; {{if .Comment}}display: block;{{else}}display: none;{{end}}">
+                            <div id="comment-display-{{.ID}}" style="padding: 0.4rem 0.6rem; background: #f8f9fa; border-radius: 4px; font-size: 0.85rem; min-height: 24px; width: 150px; text-align: left; {{if .Comment}}display: block;{{else}}display: none;{{end}}">
                                 <span style="color: #333;">{{.Comment}}</span>
                             </div>
                             <!-- 코멘트 입력 -->
                             <div style="display: flex; gap: 0.3rem; align-items: center; width: 100%;">
                                 <input type="text" id="comment-{{.ID}}" placeholder="코멘트 입력" value="{{.Comment}}"
-                                       style="padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; flex: 1;">
+                                       style="padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; width: 150px;">
                                 <button onclick="saveComment({{.ID}})" 
                                         style="padding: 0.4rem 0.7rem; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">등록</button>
                             </div>
