@@ -99,7 +99,7 @@
                     <td>
                         <div style="display: flex; gap: 0.5rem; align-items: center;">
                             <input type="text" class="customer-name-input" id="name-input-{{.ID}}" value="{{.Name}}" data-original-name="{{.Name}}"
-                                   style="padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; font-weight: 600; width: 100px;">
+                                   style="padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1.3rem; font-weight: 700; width: 100px;">
                             <button onclick="confirmNameChange({{.ID}})" 
                                     style="padding: 0.4rem 0.7rem; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">수정</button>
                         </div>
@@ -120,7 +120,7 @@
                         </div>
                     </td>
                     <td id="phone-{{.ID}}" class="phone-hidden" style="text-align: center;">
-                        <span class="phone-number">{{.Phone}}</span>
+                        <span class="phone-number" style="font-size: 1.3rem; font-weight: 700;">{{.Phone}}</span>
                     </td>
                     <td>
                         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; width: fit-content; margin: 0 auto;">

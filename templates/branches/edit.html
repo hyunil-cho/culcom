@@ -41,6 +41,17 @@
             <input type="text" class="form-input" name="alias" value="{{.Branch.Alias}}" placeholder="영문 코드를 입력하세요" pattern="[a-zA-Z]+" required>
             <small class="form-hint">영문만 입력 가능합니다 (예: gangnam, hongdae)</small>
         </div>
+
+        <div class="form-row">
+            <label class="form-label">주소</label>
+            <input type="text" class="form-input" name="address" value="{{.Branch.Address}}" placeholder="주소를 입력하세요">
+        </div>
+
+        <div class="form-row">
+            <label class="form-label">오시는 길</label>
+            <textarea class="form-input" name="directions" rows="4" placeholder="오시는 길 안내를 입력하세요">{{.Branch.Directions}}</textarea>
+        </div>
+
         <div class="form-row">
             <label class="form-label">등록일</label>
             <input type="text" class="form-input" value="{{.Branch.RegisterDate}}" disabled>

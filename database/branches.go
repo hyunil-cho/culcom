@@ -6,13 +6,13 @@ import (
 )
 
 // InsertBranch - 지점 추가
-// 파라미터: name (지점명), alias (별칭)
+// 파라미터: name (지점명), alias (별칭), address (주소), directions (오시는 길)
 // 반환: 생성된 ID, 에러
-func InsertBranch(name, alias string) (int64, error) {
-	query := `INSERT INTO branches (branchName, alias, createdDate, lastUpdateDate) 
-	          VALUES (?, ?, CURDATE(), CURDATE())`
+func InsertBranch(name, alias, address, directions string) (int64, error) {
+	query := `INSERT INTO branches (branchName, alias, address, directions, createdDate, lastUpdateDate) 
+	          VALUES (?, ?, ?, ?, CURDATE(), CURDATE())`
 
-	result, err := DB.Exec(query, name, alias)
+	result, err := DB.Exec(query, name, alias, address, directions)
 	if err != nil {
 		log.Printf("InsertBranch error: %v", err)
 		return 0, err
@@ -29,14 +29,14 @@ func InsertBranch(name, alias string) (int64, error) {
 }
 
 // UpdateBranch - 지점 수정
-// 파라미터: id (지점 ID), name (지점명), alias (별칭)
+// 파라미터: id (지점 ID), name (지점명), alias (별칭), address (주소), directions (오시는 길)
 // 반환: 영향받은 행 수, 에러
-func UpdateBranch(id int, name, alias string) (int64, error) {
+func UpdateBranch(id int, name, alias, address, directions string) (int64, error) {
 	query := `UPDATE branches 
-	          SET branchName = ?, alias = ?, lastUpdateDate = CURDATE() 
+	          SET branchName = ?, alias = ?, address = ?, directions = ?, lastUpdateDate = CURDATE() 
 	          WHERE seq = ?`
 
-	result, err := DB.Exec(query, name, alias, id)
+	result, err := DB.Exec(query, name, alias, address, directions, id)
 	if err != nil {
 		log.Printf("UpdateBranch error: %v", err)
 		return 0, err
@@ -78,15 +78,18 @@ func DeleteBranch(id int) (int64, error) {
 // 파라미터: id (지점 ID)
 // 반환: 지점 정보 (map), 에러
 func GetBranchByID(id int) (map[string]interface{}, error) {
-	query := `SELECT seq, branchName, alias, createdDate, lastUpdateDate 
+	query := `SELECT seq, branchName, alias, address, directions, 
+	          DATE_FORMAT(createdDate, '%Y-%m-%d') as createdDate, 
+	          DATE_FORMAT(lastUpdateDate, '%Y-%m-%d') as lastUpdateDate 
 	          FROM branches 
 	          WHERE seq = ?`
 
 	var seq int
 	var branchName, alias string
+	var address, directions *string
 	var createdDate, lastUpdateDate string
 
-	err := DB.QueryRow(query, id).Scan(&seq, &branchName, &alias, &createdDate, &lastUpdateDate)
+	err := DB.QueryRow(query, id).Scan(&seq, &branchName, &alias, &address, &directions, &createdDate, &lastUpdateDate)
 	if err != nil {
 		log.Printf("GetBranchByID error: %v", err)
 		return nil, err
@@ -96,6 +99,8 @@ func GetBranchByID(id int) (map[string]interface{}, error) {
 		"id":         seq,
 		"name":       branchName,
 		"alias":      alias,
+		"address":    address,
+		"directions": directions,
 		"created_at": createdDate,
 		"updated_at": lastUpdateDate,
 	}
@@ -107,7 +112,9 @@ func GetBranchByID(id int) (map[string]interface{}, error) {
 // GetAllBranches - 모든 지점 조회
 // 반환: 지점 목록, 에러
 func GetAllBranches() ([]map[string]interface{}, error) {
-	query := `SELECT seq, branchName, alias, createdDate, lastUpdateDate 
+	query := `SELECT seq, branchName, alias, address, directions, 
+	          DATE_FORMAT(createdDate, '%Y-%m-%d') as createdDate, 
+	          DATE_FORMAT(lastUpdateDate, '%Y-%m-%d') as lastUpdateDate 
 	          FROM branches 
 	          ORDER BY createdDate DESC`
 
@@ -122,9 +129,10 @@ func GetAllBranches() ([]map[string]interface{}, error) {
 	for rows.Next() {
 		var seq int
 		var branchName, alias string
+		var address, directions *string
 		var createdDate, lastUpdateDate string
 
-		err := rows.Scan(&seq, &branchName, &alias, &createdDate, &lastUpdateDate)
+		err := rows.Scan(&seq, &branchName, &alias, &address, &directions, &createdDate, &lastUpdateDate)
 		if err != nil {
 			log.Printf("GetAllBranches scan error: %v", err)
 			return nil, err
@@ -134,6 +142,8 @@ func GetAllBranches() ([]map[string]interface{}, error) {
 			"id":         seq,
 			"name":       branchName,
 			"alias":      alias,
+			"address":    address,
+			"directions": directions,
 			"created_at": createdDate,
 			"updated_at": lastUpdateDate,
 		}

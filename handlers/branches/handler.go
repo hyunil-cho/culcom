@@ -36,6 +36,8 @@ func getBranchByID(id string) *Branch {
 		ID:           fmt.Sprintf("%v", branchData["id"]),
 		Name:         fmt.Sprintf("%v", branchData["name"]),
 		Alias:        fmt.Sprintf("%v", branchData["alias"]),
+		Address:      utils.PointerToString(branchData["address"]),
+		Directions:   utils.PointerToString(branchData["directions"]),
 		RegisterDate: fmt.Sprintf("%v", branchData["created_at"]),
 	}
 
@@ -68,6 +70,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			ID:           fmt.Sprintf("%v", row["id"]),
 			Name:         fmt.Sprintf("%v", row["name"]),
 			Alias:        fmt.Sprintf("%v", row["alias"]),
+			Address:      utils.PointerToString(row["address"]),
+			Directions:   utils.PointerToString(row["directions"]),
 			RegisterDate: fmt.Sprintf("%v", row["created_at"]),
 		}
 		allBranches = append(allBranches, branch)
@@ -187,6 +191,8 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 
 		name := r.FormValue("name")
 		alias := r.FormValue("alias")
+		address := r.FormValue("address")
+		directions := r.FormValue("directions")
 
 		// 유효성 검증
 		if name == "" || alias == "" {
@@ -204,7 +210,7 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// 데이터베이스 업데이트
-		if _, err := database.UpdateBranch(idInt, name, alias); err != nil {
+		if _, err := database.UpdateBranch(idInt, name, alias, address, directions); err != nil {
 			log.Println("Database error:", err)
 			http.Redirect(w, r, "/error", http.StatusSeeOther)
 			return
@@ -253,6 +259,8 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		// 폼에서 값 추출
 		branchName := r.FormValue("name")
 		branchAlias := r.FormValue("alias")
+		address := r.FormValue("address")
+		directions := r.FormValue("directions")
 
 		// 값 검증
 		if branchName == "" || branchAlias == "" {
@@ -262,10 +270,10 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// 받은 값 로그 출력 (확인용)
-		log.Printf("지점 추가 요청 - 지점명: %s, Alias: %s", branchName, branchAlias)
+		log.Printf("지점 추가 요청 - 지점명: %s, Alias: %s, 주소: %s", branchName, branchAlias, address)
 
 		// DB에 지점 저장
-		branchID, err := database.InsertBranch(branchName, branchAlias)
+		branchID, err := database.InsertBranch(branchName, branchAlias, address, directions)
 		if err != nil {
 			log.Printf("지점 저장 오류: %v", err)
 			http.Redirect(w, r, "/error", http.StatusSeeOther)

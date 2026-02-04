@@ -15,6 +15,8 @@ CREATE TABLE `branches` (
   `seq` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '브렌치 식별자 정보',
   `branchName` varchar(50) NOT NULL COMMENT '브렌치 이름',
   `alias` varchar(50) NOT NULL COMMENT '브렌치 별명값',
+  `address` varchar(200) DEFAULT NULL COMMENT '지점 주소',
+  `directions` text DEFAULT NULL COMMENT '오시는 길',
   `createdDate` date NOT NULL DEFAULT curdate() COMMENT '지점 추가 일자',
   `lastUpdateDate` date NOT NULL DEFAULT curdate() COMMENT '지점 수정 일자',
   PRIMARY KEY (`seq`),
