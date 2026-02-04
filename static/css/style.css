@@ -15,7 +15,7 @@ body {
 
 /* 사이드바 */
 .sidebar {
-    width: 150px;
+    width: 200px;
     background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
     color: white;
     position: fixed;
@@ -76,7 +76,7 @@ body {
 /* 메인 래퍼 */
 .main-wrapper {
     flex: 1;
-    margin-left: 150px;
+    margin-left: 195px;
     display: flex;
     flex-direction: column;
 }
@@ -1103,11 +1103,11 @@ body {
 /* 반응형 */
 @media (max-width: 1024px) {
     .sidebar {
-        width: 220px;
+        width: 286px;
     }
     
     .main-wrapper {
-        margin-left: 220px;
+        margin-left: 286px;
     }
 }
 
