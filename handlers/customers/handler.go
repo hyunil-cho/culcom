@@ -154,7 +154,7 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		err = ValidateAddCustomerForm(name, phoneNumber)
 		if err != nil {
 			log.Printf("고객 추가 실패: %v", err)
-			http.Redirect(w, r, "/customers?error=add", http.StatusSeeOther)
+			http.Redirect(w, r, "/customers?filter=new&error=add", http.StatusSeeOther)
 			return
 		}
 
@@ -162,12 +162,12 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		_, err = database.InsertCustomer(branchCode, name, phoneNumber, comment)
 		if err != nil {
 			log.Printf("고객 저장 오류: %v", err)
-			http.Redirect(w, r, "/customers?error=add", http.StatusSeeOther)
+			http.Redirect(w, r, "/customers?filter=new&error=add", http.StatusSeeOther)
 			return
 		}
 
 		log.Printf("고객 추가 성공 - Name: %s, Phone: %s", name, phoneNumber)
-		http.Redirect(w, r, "/customers?success=add", http.StatusSeeOther)
+		http.Redirect(w, r, "/customers?filter=new&success=add", http.StatusSeeOther)
 		return
 	}
 

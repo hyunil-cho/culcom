@@ -12,13 +12,26 @@ func CreateReservation(branchSeq, customerSeq, userSeq int, caller string, inter
 	log.Printf("[Reservation] CreateReservation 호출 - BranchSeq: %d, CustomerSeq: %d, UserSeq: %d, Caller: %s, InterviewDate: %v\n",
 		branchSeq, customerSeq, userSeq, caller, interviewDate)
 
+	// 트랜잭션 시작
+	tx, err := DB.Begin()
+	if err != nil {
+		log.Printf("CreateReservation - transaction begin error: %v", err)
+		return 0, err
+	}
+	// defer tx.Rollback()은 다음과 같이 동작:
+	// - Commit 전 에러 발생 시: Rollback 실행
+	// - Commit 성공 시: Rollback은 no-op (무시됨)
+	// - Commit 실패 시: Rollback 실행
+	defer tx.Rollback()
+
+	// 1. 예약 정보 생성
 	query := `
 		INSERT INTO reservation_info 
 			(branch_seq, customer_id, user_seq, caller, interview_date, createdDate, lastUpdateDate)
 		VALUES (?, ?, ?, ?, ?, CURDATE(), CURDATE())
 	`
 
-	result, err := DB.Exec(query, branchSeq, customerSeq, userSeq, caller, interviewDate)
+	result, err := tx.Exec(query, branchSeq, customerSeq, userSeq, caller, interviewDate)
 	if err != nil {
 		log.Printf("CreateReservation - insert error: %v", err)
 		return 0, err
@@ -30,7 +43,21 @@ func CreateReservation(branchSeq, customerSeq, userSeq int, caller string, inter
 		return 0, err
 	}
 
-	log.Printf("[Reservation] CreateReservation 완료 - ID: %d\n", id)
+	// 2. 고객 상태를 '예약확정'으로 업데이트
+	updateQuery := `UPDATE customers SET status = '예약확정' WHERE seq = ?`
+	_, err = tx.Exec(updateQuery, customerSeq)
+	if err != nil {
+		log.Printf("CreateReservation - failed to update customer status: %v", err)
+		return 0, err
+	}
+
+	// 트랜잭션 커밋
+	if err = tx.Commit(); err != nil {
+		log.Printf("CreateReservation - transaction commit error: %v", err)
+		return 0, err
+	}
+
+	log.Printf("[Reservation] CreateReservation 완료 - ID: %d, 고객 상태: 예약확정\n", id)
 	return id, nil
 }
 

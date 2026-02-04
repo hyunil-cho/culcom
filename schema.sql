@@ -38,10 +38,12 @@ CREATE TABLE `customers` (
   `createdDate` datetime NOT NULL DEFAULT current_timestamp() COMMENT '고객 추가 일시',
   `lastUpdateDate` datetime DEFAULT NULL ON UPDATE current_timestamp() COMMENT '고객 수정 일시',
   `call_count` int(10) unsigned DEFAULT 0,
+  `status` ENUM('신규', '예약확정', '전화상거절', '진행중') NOT NULL DEFAULT '신규' COMMENT '고객 상태',
   PRIMARY KEY (`seq`),
   KEY `customers_branch_seq_IDX` (`branch_seq`) USING BTREE,
   KEY `customers_phone_number_IDX` (`phone_number`) USING BTREE,
   KEY `customers_name_IDX` (`name`) USING BTREE,
+  KEY `customers_status_IDX` (`status`) USING BTREE,
   CONSTRAINT `customers_branches_FK` FOREIGN KEY (`branch_seq`) REFERENCES `branches` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='고객 정보';
 
@@ -114,14 +116,14 @@ CREATE TABLE `reservation_info` (
   `caller` varchar(2) NOT NULL COMMENT '호출자 구분',
   `interview_date` datetime NOT NULL COMMENT '상담 일시',
   `user_seq` int(10) unsigned NOT NULL,
-  `customer_id` int(10) unsigned NOT NULL,
+  `customer_id` int(10) unsigned NULL COMMENT '고객 ID (삭제된 경우 NULL)',
   PRIMARY KEY (`seq`),
   KEY `reservation_info_branch_seq_IDX` (`branch_seq`) USING BTREE,
   KEY `reservation_info_user_info_FK` (`user_seq`),
   KEY `reservation_info_customers_FK` (`customer_id`),
   KEY `reservation_info_interview_date_IDX` (`interview_date`) USING BTREE,
   CONSTRAINT `reservation_info_branches_FK` FOREIGN KEY (`branch_seq`) REFERENCES `branches` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `reservation_info_customers_FK` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `reservation_info_customers_FK` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`seq`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `reservation_info_user_info_FK` FOREIGN KEY (`user_seq`) REFERENCES `user_info` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='예약 정보';
 

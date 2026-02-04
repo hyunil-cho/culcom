@@ -90,6 +90,7 @@
                     <th>지원경로</th>
                     <th>지원일시</th>
                     <th>회신일시</th>
+                    <th>삭제</th>
                 </tr>
             </thead>
             <tbody>
@@ -158,6 +159,14 @@
                     <td>{{if .AdSource}}{{.AdSource}}{{else}}-{{end}}</td>
                     <td>{{.RegisterDate}}</td>
                     <td id="last-visit-{{.ID}}">{{if .LastContactDate}}{{.LastContactDate}}{{else}}-{{end}}</td>
+                    <td>
+                        <button onclick="deleteCustomer({{.ID}}, '{{.Name}}')" 
+                                style="padding: 0.4rem 0.8rem; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: background 0.2s;"
+                                onmouseover="this.style.background='#d32f2f'" 
+                                onmouseout="this.style.background='#f44336'">
+                            🗑️ 삭제
+                        </button>
+                    </td>
                 </tr>
                 {{end}}
             </tbody>
@@ -1706,6 +1715,52 @@ function toggleSearchInput(searchType) {
         textInput.setAttribute('name', 'searchKeyword');
         dateInput.removeAttribute('name');
     }
+}
+
+// 고객 삭제
+function deleteCustomer(customerId, customerName) {
+    if (!confirm(`"${customerName}" 고객을 정말 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('customer_seq', customerId);
+    
+    fetch('/api/customers/delete', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('삭제 실패');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // 성공 메시지 표시
+        const successMessage = document.getElementById('successMessage');
+        successMessage.textContent = '✅ 고객이 성공적으로 삭제되었습니다.';
+        successMessage.style.display = 'block';
+        successMessage.style.background = '#e8f5e9';
+        successMessage.style.borderColor = '#4caf50';
+        successMessage.style.color = '#2e7d32';
+        
+        // 해당 행 제거
+        const row = document.querySelector(`tr[data-customer-id="${customerId}"]`);
+        if (row) {
+            row.remove();
+            // 전체 카운트 업데이트
+            const currentCount = parseInt(document.querySelector('.table-header span[style*="color: #4a90e2"]').textContent);
+            document.querySelector('.table-header span[style*="color: #4a90e2"]').textContent = currentCount - 1;
+        }
+        
+        setTimeout(() => {
+            successMessage.style.display = 'none';
+        }, 3000);
+    })
+    .catch(error => {
+        alert('고객 삭제에 실패했습니다: ' + error.message);
+    });
 }
 
 </script>

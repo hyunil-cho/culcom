@@ -49,8 +49,46 @@ type CustomerInfo struct {
 	CommercialName *string
 	AdSource       *string
 	CallCount      int
+	Status         string // 고객 상태: 신규, 예약확정, 전화상거절, 진행중
 	CreatedDate    string
 	LastUpdateDate *string
+}
+
+// buildCustomerFilterConditions - 고객 조회 시 WHERE 조건절 생성 (공통 함수)
+// 파라미터: branchSeq, filter, searchType, searchKeyword
+// 반환: WHERE 조건 문자열, args 배열
+func buildCustomerFilterConditions(branchSeq int, filter, searchType, searchKeyword string) (string, []interface{}) {
+	whereClause := ""
+	args := []interface{}{}
+
+	// 필터에 따라 조건 추가
+	if filter == "new" {
+		// '처리중' 필터: status가 '신규' 또는 '진행중'인 고객만 표시
+		whereClause += ` AND status IN ('신규', '진행중')`
+	}
+	// filter == "all"인 경우: 모든 상태의 고객 표시 (조건 추가 없음)
+
+	// 검색 조건 추가
+	if searchKeyword != "" {
+		if searchType == "name" {
+			whereClause += ` AND name LIKE ?`
+			args = append(args, "%"+searchKeyword+"%")
+		} else if searchType == "phone" {
+			whereClause += ` AND phone_number LIKE ?`
+			args = append(args, "%"+searchKeyword+"%")
+		} else if searchType == "register_date" {
+			whereClause += ` AND DATE(createdDate) = ?`
+			args = append(args, searchKeyword)
+		} else if searchType == "contact_date" {
+			whereClause += ` AND DATE(lastUpdateDate) = ?`
+			args = append(args, searchKeyword)
+		} else if searchType == "reservation_date" {
+			whereClause += ` AND seq IN (SELECT customer_id FROM reservation_info WHERE DATE(interview_date) = ? AND branch_seq = ?)`
+			args = append(args, searchKeyword, branchSeq)
+		}
+	}
+
+	return whereClause, args
 }
 
 // GetCustomersCountByBranch - 지점별 고객 수 조회
@@ -69,33 +107,10 @@ func GetCustomersCountByBranch(branchSeq int, filter, searchType, searchKeyword 
 	query := `SELECT COUNT(*) FROM customers WHERE branch_seq = ?`
 	args := []interface{}{branchSeq}
 
-	// 필터에 따라 조건 추가
-	if filter == "new" {
-		query += ` AND call_count < 5`
-		// 예약이 확정된 고객 제외
-		query += ` AND seq NOT IN (SELECT customer_id FROM reservation_info WHERE branch_seq = ?)`
-		args = append(args, branchSeq)
-	}
-
-	// 검색 조건 추가
-	if searchKeyword != "" {
-		if searchType == "name" {
-			query += ` AND name LIKE ?`
-			args = append(args, "%"+searchKeyword+"%")
-		} else if searchType == "phone" {
-			query += ` AND phone_number LIKE ?`
-			args = append(args, "%"+searchKeyword+"%")
-		} else if searchType == "register_date" {
-			query += ` AND DATE(createdDate) = ?`
-			args = append(args, searchKeyword)
-		} else if searchType == "contact_date" {
-			query += ` AND DATE(lastUpdateDate) = ?`
-			args = append(args, searchKeyword)
-		} else if searchType == "reservation_date" {
-			query += ` AND seq IN (SELECT customer_id FROM reservation_info WHERE DATE(interview_date) = ? AND branch_seq = ?)`
-			args = append(args, searchKeyword, branchSeq)
-		}
-	}
+	// 공통 필터 조건 추가
+	whereClause, filterArgs := buildCustomerFilterConditions(branchSeq, filter, searchType, searchKeyword)
+	query += whereClause
+	args = append(args, filterArgs...)
 
 	var count int
 	err := DB.QueryRow(query, args...).Scan(&count)
@@ -130,6 +145,7 @@ func GetCustomersByBranch(branchSeq int, filter, searchType, searchKeyword strin
 			commercial_name,
 			ad_source,
 			call_count,
+			status,
 			DATE_FORMAT(createdDate, '%Y-%m-%d %H:%i') as createdDate,
 			DATE_FORMAT(lastUpdateDate, '%Y-%m-%d %H:%i') as lastUpdateDate
 		FROM customers
@@ -137,33 +153,10 @@ func GetCustomersByBranch(branchSeq int, filter, searchType, searchKeyword strin
 	`
 	args := []interface{}{branchSeq}
 
-	// 필터에 따라 조건 추가
-	if filter == "new" {
-		query += ` AND call_count < 5`
-		// 예약이 확정된 고객 제외
-		query += ` AND seq NOT IN (SELECT customer_id FROM reservation_info WHERE branch_seq = ?)`
-		args = append(args, branchSeq)
-	}
-
-	// 검색 조건 추가
-	if searchKeyword != "" {
-		if searchType == "name" {
-			query += ` AND name LIKE ?`
-			args = append(args, "%"+searchKeyword+"%")
-		} else if searchType == "phone" {
-			query += ` AND phone_number LIKE ?`
-			args = append(args, "%"+searchKeyword+"%")
-		} else if searchType == "register_date" {
-			query += ` AND DATE(createdDate) = ?`
-			args = append(args, searchKeyword)
-		} else if searchType == "contact_date" {
-			query += ` AND DATE(lastUpdateDate) = ?`
-			args = append(args, searchKeyword)
-		} else if searchType == "reservation_date" {
-			query += ` AND seq IN (SELECT customer_id FROM reservation_info WHERE DATE(interview_date) = ? AND branch_seq = ?)`
-			args = append(args, searchKeyword, branchSeq)
-		}
-	}
+	// 공통 필터 조건 추가
+	whereClause, filterArgs := buildCustomerFilterConditions(branchSeq, filter, searchType, searchKeyword)
+	query += whereClause
+	args = append(args, filterArgs...)
 
 	query += ` ORDER BY createdDate DESC, seq DESC`
 
@@ -190,6 +183,7 @@ func GetCustomersByBranch(branchSeq int, filter, searchType, searchKeyword strin
 			&customer.CommercialName,
 			&customer.AdSource,
 			&customer.CallCount,
+			&customer.Status,
 			&customer.CreatedDate,
 			&customer.LastUpdateDate,
 		)
@@ -230,7 +224,18 @@ func UpdateCustomerComment(customerSeq int, comment string) error {
 // 파라미터: customerSeq - 고객 seq
 // 반환: 업데이트된 call_count, lastUpdateDate, 에러
 func IncrementCallCount(customerSeq int) (int, string, error) {
-	query := `UPDATE customers SET call_count = call_count + 1, lastUpdateDate = NOW() WHERE seq = ?`
+	// 단일 쿼리로 call_count 증가 및 상태 업데이트 (데드락 방지)
+	query := `
+		UPDATE customers 
+		SET 
+			call_count = call_count + 1,
+			lastUpdateDate = NOW(),
+			status = CASE 
+				WHEN call_count + 1 >= 5 THEN '콜수초과'
+				ELSE status
+			END
+		WHERE seq = ?
+	`
 
 	_, err := DB.Exec(query, customerSeq)
 	if err != nil {
@@ -246,6 +251,10 @@ func IncrementCallCount(customerSeq int) (int, string, error) {
 	if err != nil {
 		log.Printf("IncrementCallCount - select error: %v", err)
 		return 0, "", err
+	}
+
+	if callCount >= 5 {
+		log.Printf("[Customer] 콜 횟수 5회 초과 - 상태를 '콜수초과'로 변경 - CustomerSeq: %d\n", customerSeq)
 	}
 
 	log.Printf("[Customer] 통화 횟수 증가 완료 - CustomerSeq: %d, CallCount: %d, LastUpdate: %s\n", customerSeq, callCount, lastUpdateDate)
@@ -559,15 +568,51 @@ func GetCallerStats(branchSeq int, period string) ([]CallerStats, error) {
 func InsertCallerSelection(customerID, branchSeq int, caller string) error {
 	log.Printf("[Customer] InsertCallerSelection 호출 - CustomerID: %d, BranchSeq: %d, Caller: %s\n", customerID, branchSeq, caller)
 
+	// 트랜잭션 시작
+	tx, err := DB.Begin()
+	if err != nil {
+		log.Printf("InsertCallerSelection - transaction begin error: %v", err)
+		return err
+	}
+	defer tx.Rollback()
+
+	// 1. CALLER 선택 이력 저장
 	query := `
 		INSERT INTO caller_selection_history 
 			(customer_id, caller, branch_seq, selected_date)
 		VALUES (?, ?, ?, NOW())
 	`
 
-	_, err := DB.Exec(query, customerID, caller, branchSeq)
+	_, err = tx.Exec(query, customerID, caller, branchSeq)
 	if err != nil {
 		log.Printf("InsertCallerSelection - insert error: %v", err)
+		return err
+	}
+
+	// 2. 고객 상태를 '진행중'으로 업데이트
+	// 단, '예약확정', '전화상거절', '콜수초과' 상태는 변경하지 않음
+	updateQuery := `
+		UPDATE customers 
+		SET status = '진행중' 
+		WHERE seq = ? 
+		AND status NOT IN ('예약확정', '전화상거절', '콜수초과')
+	`
+	result, err := tx.Exec(updateQuery, customerID)
+	if err != nil {
+		log.Printf("InsertCallerSelection - failed to update customer status: %v", err)
+		return err
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		log.Printf("[Customer] InsertCallerSelection - 상태 변경 제외 (이미 확정된 상태) - CustomerID: %d\n", customerID)
+	} else {
+		log.Printf("[Customer] InsertCallerSelection - 상태를 '진행중'으로 변경 - CustomerID: %d\n", customerID)
+	}
+
+	// 트랜잭션 커밋
+	if err = tx.Commit(); err != nil {
+		log.Printf("InsertCallerSelection - transaction commit error: %v", err)
 		return err
 	}
 
@@ -608,4 +653,64 @@ func GetCallerSelectionCount(branchSeq int, caller, period string) (int, error) 
 
 	log.Printf("[Customer] GetCallerSelectionCount 완료 - Count: %d\n", count)
 	return count, nil
+}
+
+// DeleteCustomer - 고객 삭제
+// 파라미터: customerSeq (고객 seq)
+// 반환: 에러
+// 참고: reservation_info의 FK는 ON DELETE SET NULL로 설정되어 있어
+//
+//	고객 삭제 시 자동으로 customer_id가 NULL로 변경됨
+func DeleteCustomer(customerSeq int) error {
+	log.Printf("[Customer] DeleteCustomer 호출 - CustomerSeq: %d\n", customerSeq)
+
+	query := `DELETE FROM customers WHERE seq = ?`
+
+	result, err := DB.Exec(query, customerSeq)
+	if err != nil {
+		log.Printf("DeleteCustomer - delete error: %v", err)
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("DeleteCustomer - get rows affected error: %v", err)
+		return err
+	}
+
+	if rowsAffected == 0 {
+		log.Printf("DeleteCustomer - no rows affected (customer not found)")
+		return nil
+	}
+
+	log.Printf("[Customer] DeleteCustomer 완료 - Rows affected: %d\n", rowsAffected)
+	return nil
+}
+
+// UpdateCustomerStatus - 고객 상태 업데이트
+// 파라미터: customerSeq (고객 seq), status (상태: 신규, 예약확정, 전화상거절, 부재중)
+// 반환: 에러
+func UpdateCustomerStatus(customerSeq int, status string) error {
+	log.Printf("[Customer] UpdateCustomerStatus 호출 - CustomerSeq: %d, Status: %s\n", customerSeq, status)
+
+	query := `UPDATE customers SET status = ? WHERE seq = ?`
+
+	result, err := DB.Exec(query, status, customerSeq)
+	if err != nil {
+		log.Printf("UpdateCustomerStatus - update error: %v", err)
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("UpdateCustomerStatus - get rows affected error: %v", err)
+		return err
+	}
+
+	if rowsAffected == 0 {
+		log.Printf("UpdateCustomerStatus - no rows affected (customer not found)")
+	}
+
+	log.Printf("[Customer] UpdateCustomerStatus 완료 - Rows affected: %d\n", rowsAffected)
+	return nil
 }

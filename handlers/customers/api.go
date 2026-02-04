@@ -7,6 +7,7 @@ import (
 	"backoffice/utils"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 // UpdateCommentHandler godoc
@@ -362,3 +363,39 @@ func SelectCallerHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// DeleteCustomerHandler - 고객 삭제 API
+// DELETE /api/customers/delete
+func DeleteCustomerHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 고객 seq 추출
+	customerSeqStr := r.FormValue("customer_seq")
+	if customerSeqStr == "" {
+		log.Printf("customer_seq 누락")
+		utils.JSONError(w, http.StatusBadRequest, "customer_seq is required")
+		return
+	}
+
+	customerSeq, err := strconv.Atoi(customerSeqStr)
+	if err != nil {
+		log.Printf("customer_seq 변환 오류: %v", err)
+		utils.JSONError(w, http.StatusBadRequest, "Invalid customer_seq")
+		return
+	}
+
+	// 고객 삭제 (reservation_info는 FK constraint에 의해 자동으로 customer_id가 NULL로 변경됨)
+	err = database.DeleteCustomer(customerSeq)
+	if err != nil {
+		log.Printf("고객 삭제 오류: %v", err)
+		utils.JSONError(w, http.StatusInternalServerError, "Failed to delete customer")
+		return
+	}
+
+	log.Printf("고객 삭제 완료 - CustomerSeq: %d", customerSeq)
+	utils.JSONSuccess(w, map[string]interface{}{
+		"message": "고객이 삭제되었습니다",
+	})
+}
