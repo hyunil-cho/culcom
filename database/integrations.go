@@ -317,6 +317,7 @@ type MymunjaConfig struct {
 	MymunjaPassword string
 	CallbackNumbers []string
 	IsActive        bool
+	LastUpdateDate  string
 }
 
 // GetMymunjaConfig - 특정 지점과 서비스의 마이문자 설정 조회
@@ -343,12 +344,13 @@ func GetMymunjaConfig(branchSeq, serviceID int) (*MymunjaConfig, error) {
 	var configSeq int
 	var mymunjaID, mymunjaPassword string
 	var callbackNumber sql.NullString
+	var configLastUpdateDate sql.NullString
 	configQuery := `
-		SELECT seq, mymunja_id, mymunja_password, callback_number
+		SELECT seq, mymunja_id, mymunja_password, callback_number, lastUpdateDate
 		FROM mymunja_config_info
 		WHERE mapping_id = ?
 	`
-	err = DB.QueryRow(configQuery, mappingSeq).Scan(&configSeq, &mymunjaID, &mymunjaPassword, &callbackNumber)
+	err = DB.QueryRow(configQuery, mappingSeq).Scan(&configSeq, &mymunjaID, &mymunjaPassword, &callbackNumber, &configLastUpdateDate)
 	if err != nil {
 		log.Printf("GetMymunjaConfig - config not found: %v", err)
 		return nil, err
@@ -367,6 +369,7 @@ func GetMymunjaConfig(branchSeq, serviceID int) (*MymunjaConfig, error) {
 		MymunjaPassword: mymunjaPassword,
 		CallbackNumbers: callbackNumbers,
 		IsActive:        isActive,
+		LastUpdateDate:  configLastUpdateDate.String,
 	}
 
 	log.Printf("[DB] GetMymunjaConfig 완료 - ID: %s, 회신번호: %d개", mymunjaID, len(callbackNumbers))

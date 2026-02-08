@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}} - 백오피스</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/modal-utils.js"></script>
     <style>
         .config-container {
             max-width: 800px;
@@ -176,15 +177,12 @@
         <main class="content">
             <div class="config-container">
                 <!-- 뒤로가기 -->
-                <a href="/settings" class="btn-secondary" style="position: fixed; top: 120px; left: 160px; z-index: 1000; margin: 0;">← 설정으로 돌아가기</a>
+                <a href="/settings" class="btn-secondary" style="position: fixed; top: 120px; left: 220px; z-index: 1000; margin: 0;">← 설정으로 돌아가기</a>
 
                 <div class="page-header">
                     <h1>💬 예약 확정 시 문자 발송 설정</h1>
                     <p>예약 확정 시 자동으로 발송되는 문자 메시지를 설정합니다</p>
                 </div>
-
-                <!-- 성공/에러 메시지 -->
-                <div id="messageBox"></div>
 
                 <div class="info-box">
                     <div class="info-box-title">📌 안내사항</div>
@@ -249,22 +247,24 @@
     <script>
         // URL 파라미터에서 성공/실패 메시지 확인
         const urlParams = new URLSearchParams(window.location.search);
-        const messageBox = document.getElementById('messageBox');
 
         if (urlParams.has('success')) {
             const success = urlParams.get('success');
             if (success === 'saved') {
-                messageBox.innerHTML = '<div class="alert alert-success">설정이 성공적으로 저장되었습니다.</div>';
-                messageBox.style.display = 'block';
+                const modalId = 'success-modal-' + Date.now();
+                ModalManager.createAlert({
+                    id: modalId,
+                    title: '저장 완료',
+                    message: '✅ 설정이 성공적으로 저장되었습니다.',
+                    confirmText: '확인',
+                    onConfirm: () => {
+                        window.location.href = '/settings';
+                    }
+                });
+                ModalManager.show(modalId);
                 
                 // URL에서 파라미터 제거
                 window.history.replaceState({}, document.title, window.location.pathname);
-                
-                // 3초 후 메시지 자동 제거
-                setTimeout(() => {
-                    messageBox.style.display = 'none';
-                    messageBox.innerHTML = '';
-                }, 3000);
             }
         }
         
@@ -278,8 +278,14 @@
                 errorMessage = '설정 저장에 실패했습니다. 다시 시도해주세요.';
             }
             
-            messageBox.innerHTML = '<div class="alert alert-danger">' + errorMessage + '</div>';
-            messageBox.style.display = 'block';
+            const modalId = 'error-modal-' + Date.now();
+            ModalManager.createAlert({
+                id: modalId,
+                title: '오류',
+                message: '⚠️ ' + errorMessage,
+                confirmText: '확인'
+            });
+            ModalManager.show(modalId);
             
             // URL에서 파라미터 제거
             window.history.replaceState({}, document.title, window.location.pathname);

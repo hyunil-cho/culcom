@@ -24,46 +24,18 @@
     </div>
 </header>
 
-<!-- 로그아웃 확인 모달 -->
-<div id="logoutModal" class="modal">
-    <div class="modal-content" style="max-width: 420px;">
-        <div class="modal-header">
-            <span class="modal-icon">🚪</span>
-            <h3>로그아웃 확인</h3>
-        </div>
-        <div class="modal-body">
-            <p>정말로 로그아웃 하시겠습니까?</p>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-modal-cancel" onclick="closeLogoutModal()">취소</button>
-            <button class="btn-modal-confirm" onclick="confirmLogout()">로그아웃</button>
-        </div>
-    </div>
-</div>
-
 <script>
 // 로그아웃 모달 표시
 function showLogoutModal() {
-    document.getElementById('logoutModal').style.display = 'flex';
+    ModalManager.createConfirm({
+        title: '로그아웃 확인',
+        message: '정말로 로그아웃 하시겠습니까?',
+        icon: '🚪',
+        onConfirm: () => {
+            window.location.href = '/logout';
+        }
+    });
 }
-
-// 로그아웃 모달 닫기
-function closeLogoutModal() {
-    document.getElementById('logoutModal').style.display = 'none';
-}
-
-// 로그아웃 확인
-function confirmLogout() {
-    window.location.href = '/logout';
-}
-
-// 모달 외부 클릭 시 닫기
-window.addEventListener('click', function(event) {
-    const modal = document.getElementById('logoutModal');
-    if (event.target === modal) {
-        closeLogoutModal();
-    }
-});
 
 function changeBranch(branchCode) {
     // localStorage에 영문 코드로 저장 (클라이언트 측 복원용)

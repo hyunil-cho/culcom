@@ -141,6 +141,7 @@ func ConfigureHandler(w http.ResponseWriter, r *http.Request) {
 				Password:     mymunjaConfig.MymunjaPassword,
 				SenderPhones: mymunjaConfig.CallbackNumbers,
 				IsActive:     mymunjaConfig.IsActive,
+				UpdatedAt:    utils.FormatDateTime(mymunjaConfig.LastUpdateDate),
 			}
 			service.Status = "active"
 		} else {
@@ -157,61 +158,6 @@ func ConfigureHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	Templates.ExecuteTemplate(w, "integrations/sms-config.html", data)
-}
-
-// SMSConfigHandler SMS 연동 설정 페이지
-func SMSConfigHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
-		// TODO: 실제로는 DB에서 기존 설정을 조회
-		var config *SMSConfig
-
-		data := SMSConfigPageData{
-			BasePageData: middleware.GetBasePageData(r),
-			Title:        "SMS 연동 설정",
-			ActiveMenu:   "integrations",
-			Service: IntegrationService{
-				ID:          "sms",
-				Name:        "SMS 서비스",
-				Description: "문자 메시지 발송 서비스",
-				Icon:        "💬",
-				Category:    "sms",
-				Status:      "not-configured",
-				Connected:   false,
-			},
-			Config: config,
-		}
-
-		Templates.ExecuteTemplate(w, "integrations/sms-config.html", data)
-		return
-	}
-
-	if r.Method == http.MethodPost {
-		// SMS 설정 저장
-		err := r.ParseForm()
-		if err != nil {
-			http.Error(w, "잘못된 요청입니다", http.StatusBadRequest)
-			return
-		}
-
-		// 폼 데이터 추출
-		senderPhones := r.Form["sender_phones[]"]
-		_ = SMSConfig{
-			Provider:     r.FormValue("provider"),
-			AccountID:    r.FormValue("account_id"),
-			Password:     r.FormValue("password"),
-			SenderPhones: senderPhones,
-			IsActive:     r.FormValue("is_active") == "on",
-		}
-
-		// TODO: 실제로는 DB에 저장
-		// database.SaveSMSConfig(&config)
-
-		// 설정 저장 후 다시 설정 페이지로 리다이렉트
-		http.Redirect(w, r, "/integrations/sms-config?success=true", http.StatusSeeOther)
-		return
-	}
-
-	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 }
 
 // SMSConfigSaveHandler SMS 설정 저장 핸들러 (SSR - Form POST)

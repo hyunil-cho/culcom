@@ -83,20 +83,6 @@
 </style>
 
 <script>
-let selectedCaller = null;
-
-function selectCaller(letter) {
-    // 이전 선택 제거
-    const allButtons = document.querySelectorAll('.caller-btn');
-    allButtons.forEach(btn => btn.classList.remove('selected'));
-    
-    // 새로운 선택
-    event.target.classList.add('selected');
-    selectedCaller = letter;
-    
-    console.log('Selected caller:', letter);
-}
-
 // 전화번호 입력 검증
 const phoneInput = document.getElementById('phoneNumber');
 if (phoneInput) {

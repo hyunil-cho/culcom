@@ -333,48 +333,6 @@ const messageTemplates = {
 };
 
 
-function openResponseModal(customerId, customerName, customerPhone) {
-    currentCustomerId = customerId;
-    currentCustomerName = customerName;
-    currentCustomerPhone = customerPhone;
-    
-    document.getElementById('modalCustomerName').textContent = customerName;
-    document.getElementById('modalCustomerPhone').textContent = customerPhone;
-    
-    document.getElementById('responseModal').style.display = 'flex';
-    
-    // TODO: 실제로는 서버에서 해당 고객의 응대 이력을 가져와서 부재중 횟수를 계산
-    // 지금은 더미 데이터로 처리
-    currentCustomerAbsentCount = Math.floor(Math.random() * 5); // 0~4 사이의 랜덤 값
-    
-    // 응대 이력 로드
-    loadResponseHistory(customerId);
-    
-    // 오른쪽 탭 초기화
-    switchRightTab('history');
-    
-    // 폼 초기화
-    document.getElementById('assignedAgent').value = '';
-    document.getElementById('responseComment').value = '';
-    document.getElementById('smsMessageContent').value = '';
-    document.getElementById('messageTemplate').value = '';
-    
-    // 기본 템플릿 로드 (서버에서 전달받은 기본 템플릿)
-    const defaultTemplate = `{{.DefaultTemplate}}`;
-    if (defaultTemplate) {
-        // 템플릿 모드로 전환
-        selectInputMode('template');
-        // 기본 템플릿 선택 (template1)
-        document.getElementById('messageTemplate').value = 'template1';
-        // 템플릿 내용 로드
-        document.getElementById('smsMessageContent').value = defaultTemplate.replace('{\uace0\uac1d\uba85}', customerName);
-        document.getElementById('messageLength').textContent = document.getElementById('smsMessageContent').value.length;
-    } else {
-        selectInputMode('direct');
-    }
-}
-
-
 function closeResponseModal() {
     document.getElementById('responseModal').style.display = 'none';
     currentCustomerId = null;
@@ -1398,7 +1356,7 @@ function confirmInterviewDateTime() {
 async function sendCalendarEvent(reservationData) {
     try {
         // 고객 전화번호 가져오기
-        const customerRow = document.querySelector(`tr[data-customer-id="${pendingInterviewCustomerId}"]`);
+        const customerRow = document.querySelector(`3[data-customer-id="${pendingInterviewCustomerId}"]`);
         let customerPhone = '';
         let caller = '';
         let callCount = 0;

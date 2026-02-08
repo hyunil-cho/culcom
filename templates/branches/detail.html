@@ -13,72 +13,43 @@
     <div class="main-wrapper">
         {{template "header" .}}
         
-        <main class="content">
-<!-- 액션 버튼 -->
-<div class="detail-actions">
-    <a href="/branches" class="btn-back">← 목록으로</a>
-    <div class="action-group">
-        <a href="/branches/edit?id={{.Branch.ID}}" class="btn-primary">✏️ 수정</a>
+<main class="content">
+    <div class="detail-actions">
+        <a href="/branches" class="btn-back">← 목록으로</a>
+        <div class="action-group">
+            <a href="/branches/edit?id={{.Branch.ID}}" class="btn-primary">✏️ 수정</a>
+        </div>
     </div>
-</div>
 
-<!-- 삭제 확인 모달 -->
-<div id="deleteModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <span class="modal-icon">⚠️</span>
-            <h3>지점 삭제 확인</h3>
+    <!-- 지점 상세 정보 -->
+    <div class="content-card">
+        <div class="detail-header">
+            <h2>기본 정보</h2>
         </div>
-        <div class="modal-body">
-            <p>정말로 <strong id="branchNameToDelete"></strong> 지점을 삭제하시겠습니까?</p>
-            <p class="warning-text">⚠️ 이 작업은 되돌릴 수 없습니다.</p>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-modal-cancel" onclick="closeDeleteModal()">취소</button>
-            <button class="btn-modal-confirm" onclick="confirmDelete()">삭제</button>
-        </div>
-    </div>
-</div>
-
-<!-- 지점 상세 정보 -->
-<div class="content-card">
-    <div class="detail-header">
-        <h2>기본 정보</h2>
-    </div>
-    <div class="detail-body">
-        <div class="detail-row">
-            <div class="detail-label">지점명</div>
-            <div class="detail-value"><strong>{{.Branch.Name}}</strong></div>
-        </div>
-        <div class="detail-row">
-            <div class="detail-label">영문코드</div>
-            <div class="detail-value">{{.Branch.Alias}}</div>
-        </div>
-        <div class="detail-row">
-            <div class="detail-label">주소</div>
-            <div class="detail-value">{{.Branch.Address}}</div>
-        </div>
-        <div class="detail-row">
-            <div class="detail-label">오시는 길</div>
-            <div class="detail-value" style="white-space: pre-wrap;">{{.Branch.Directions}}</div>
-        </div>
-        <div class="detail-row">
-            <div class="detail-label">등록일</div>
-            <div class="detail-value">{{.Branch.RegisterDate}}</div>
+        <div class="detail-body">
+            <div class="detail-row">
+                <div class="detail-label">지점명</div>
+                <div class="detail-value"><strong>{{.Branch.Name}}</strong></div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">영문코드</div>
+                <div class="detail-value">{{.Branch.Alias}}</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">주소</div>
+                <div class="detail-value">{{.Branch.Address}}</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">오시는 길</div>
+                <div class="detail-value" style="white-space: pre-wrap;">{{.Branch.Directions}}</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">등록일</div>
+                <div class="detail-value">{{.Branch.RegisterDate}}</div>
+            </div>
         </div>
     </div>
-</div>
-<script>
-    let branchIdToDelete = null;
-
-    window.onclick = function(event) {
-        const modal = document.getElementById('deleteModal');
-        if (event.target === modal) {
-            closeDeleteModal();
-        }
-    }
-</script>
-        </main>
+</main>
     </div>
 </body>
 </html>

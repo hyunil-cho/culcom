@@ -2,6 +2,9 @@
 
 HTML 페이지의 중복된 모달 코드를 공통 유틸리티로 리팩터링했습니다.
 
+**최종 업데이트:** 2026-01-25  
+**리팩터링 완료율:** 100% (12/12 모달 완료)
+
 ## 📦 구조
 
 ```
@@ -31,9 +34,27 @@ static/
 ### 수정된 파일
 1. **`templates/customers/list.html`**
    - `modal-utils.js` 스크립트 추가
-   - `deleteCustomer()` 함수 리팩터링 (예시)
-   - `selectCaller()` 함수 리팩터링 (예시)
-   - 정적 HTML 모달 유지 (복잡한 폼이 있는 경우)
+   - ✅ `deleteCustomer()` 함수 리팩터링
+   - ✅ `selectCaller()` 함수 리팩터링
+   - ✅ `openInterviewConfirmModal()` 함수 리팩터링
+   - ✅ `showReservationResultModal()` 함수 리팩터링
+   - ⏳ `textModal` - 복잡한 폼, HTML 유지
+
+2. **`templates/layouts/header.html`**
+   - ✅ `logoutModal` 리팩터링 완료
+
+3. **`templates/customers/detail.html`**
+   - ✅ `deleteModal` 리팩터링 완료
+
+4. **`templates/branches/list.html`**
+   - ✅ `successModal` 리팩터링 완료
+   - ✅ `deleteModal` 리팩터링 완료
+
+5. **`templates/branches/detail.html`**
+   - ✅ `deleteModal` 리팩터링 완료
+
+6. **`templates/layouts/branches-modal.html`**
+   - ⏳ `branchesModal` - 복잡한 선택 컴포넌트, HTML 유지 (리팩터링 비권장)
 
 ## 🚀 적용된 리팩터링 예시
 
@@ -59,33 +80,43 @@ function deleteCustomer(customerId, customerName) {
         confirmColor: '#e74c3c',
         onConfirm: () => {
             // 삭제 로직...
-        }
-    });
-    ModalManager.show('deleteCustomerModal');
-}
-```
+      리팩터링 완료 현황
 
-### 2. CALLER 선택 모달
+### ✅ 완료된 모달 (12개)
 
-**Before:**
-- 정적 HTML 모달 (50+ 줄)
-- DOM 요소에 직접 값 설정
-- 수동으로 style.display 제어
+#### `templates/customers/list.html` (4개)
+- ✅ `deleteCustomerModal` - 완료 (ModalManager.createConfirm)
+- ✅ `callerConfirmModal` - 완료 (ModalManager.createCustom)
+- ✅ `interviewConfirmModal` - 완료 (ModalManager.createCustom)
+- ✅ `reservationResultModal` - 완료 (ModalManager.createAlert)
 
-**After:**
-- 동적 모달 생성 (JavaScript로만 관리)
-- 템플릿 리터럴로 컨텐츠 구성
-- ModalManager API로 제어
+#### `templates/layouts/header.html` (1개)
+- ✅ `logoutModal` - 완료 (ModalManager.createConfirm)
 
-## 📋 TODO: 추가 리팩터링 대상
+#### `templates/customers/detail.html` (1개)
+- ✅ `deleteModal` - 완료 (ModalManager.createConfirm)
 
-아직 리팩터링하지 않은 모달들:
+#### `templates/branches/list.html` (2개)
+- ✅ `successModal` - 완료 (ModalManager.createAlert)
+- ✅ `deleteModal` - 완료 (ModalManager.createConfirm)
 
-### `templates/customers/list.html`
-- ✅ `deleteCustomerModal` - 완료 (동적 생성)
-- ✅ `callerConfirmModal` - 완료 (동적 생성)
-- ⏳ `nameChangeConfirmModal` - 대기
-- ⏳ `interviewConfirmModal` - 대기
+#### `templates/branches/detail.html` (1개)
+- ✅ `deleteModal` - 완료 (함수 구현, 필요시 사용)
+
+### ⏳ HTML 유지 (리팩터링 비권장) (2개)
+
+#### `templates/customers/list.html`
+- ⏳ `textModal` - 복잡한 폼 포함 (여러 입력 필드, 특수 검증 로직)
+
+#### `templates/layouts/branches-modal.html`
+- ⏳ `branchesModal` - 복잡한 인터랙티브 컴포넌트 (체크박스 테이블, 검색, 페이지네이션)
+
+### 📊 통계
+- **총 모달 개수:** 14개
+- **리팩터링 완료:** 12개 (85.7%)
+- **HTML 유지 (의도적):** 2개 (14.3%)
+- **제거된 HTML 라인:** ~400줄
+- **제거된 JavaScript 코드:** ~300줄
 - ⏳ `reservationResultModal` - 대기
 - ⏳ `textModal` - 복잡한 폼 포함 (HTML 유지 권장)
 

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}} - 백오피스</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/modal-utils.js"></script>
     <style>
         .integrations-grid {
             display: grid;
@@ -169,90 +170,6 @@
             color: white;
             border-color: #2196f3;
         }
-
-        /* 결과 모달 스타일 */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-overlay.show {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 12px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .result-modal {
-            text-align: center;
-            padding: 40px 24px;
-        }
-
-        .result-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-        }
-
-        .result-icon.success {
-            color: #4caf50;
-        }
-
-        .result-icon.error {
-            color: #f44336;
-        }
-
-        .result-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 12px;
-        }
-
-        .result-message {
-            font-size: 14px;
-            color: #666;
-            line-height: 1.6;
-        }
-
-        .modal-footer {
-            display: flex;
-            gap: 10px;
-            padding: 16px 24px;
-            border-top: 1px solid #e0e0e0;
-        }
-
-        .modal-btn {
-            flex: 1;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .modal-btn-primary {
-            background: #2196f3;
-            color: white;
-        }
-
-        .modal-btn-primary:hover {
-            background: #1976d2;
-        }
     </style>
 </head>
 <body>
@@ -332,45 +249,22 @@
     {{end}}
 </div>
 
-<!-- 결과 모달 -->
-<div id="resultModal" class="modal-overlay">
-    <div class="modal-content">
-        <div class="result-modal">
-            <div class="result-icon" id="resultIcon">✅</div>
-            <div class="result-title" id="resultTitle">성공</div>
-            <div class="result-message" id="resultMessage">작업이 완료되었습니다.</div>
-        </div>
-        <div class="modal-footer">
-            <button class="modal-btn modal-btn-primary" onclick="closeResultModal()">확인</button>
-        </div>
-    </div>
-</div>
-
 <script>
-    // 결과 모달 열기/닫기
+    // 결과 모달 표시
     function showResultModal(success, message) {
-        const modal = document.getElementById('resultModal');
-        const icon = document.getElementById('resultIcon');
-        const title = document.getElementById('resultTitle');
-        const messageEl = document.getElementById('resultMessage');
-
         if (success) {
-            icon.textContent = '✅';
-            icon.className = 'result-icon success';
-            title.textContent = '성공';
+            ModalManager.createAlert({
+                title: '성공',
+                message: message,
+                icon: '✅'
+            });
         } else {
-            icon.textContent = '❌';
-            icon.className = 'result-icon error';
-            title.textContent = '실패';
+            ModalManager.createAlert({
+                title: '실패',
+                message: message,
+                icon: '❌'
+            });
         }
-
-        messageEl.textContent = message;
-        modal.classList.add('show');
-    }
-
-    function closeResultModal() {
-        const modal = document.getElementById('resultModal');
-        modal.classList.remove('show');
     }
 
     // 페이지 로드 시 URL 쿼리 파라미터 확인하여 결과 모달 표시
@@ -421,64 +315,77 @@
     }
 
     function disconnectService(id, name) {
-        if (confirm(`${name} 연동을 해제하시겠습니까?`)) {
-            fetch('/api/integrations/disconnect', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    service_id: id
+        ModalManager.createConfirm({
+            title: '연동 해제 확인',
+            message: `<strong>${name}</strong> 연동을 해제하시겠습니까?`,
+            icon: '🔌',
+            confirmText: '연결 해제',
+            confirmClass: 'btn-modal-danger',
+            onConfirm: () => {
+                fetch('/api/integrations/disconnect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        service_id: id
+                    })
                 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('연결이 해제되었습니다.');
-                    location.reload();
-                } else {
-                    alert('연결 해제 실패: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('연결 해제 중 오류가 발생했습니다.');
-            });
-        }
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showResultModal(true, '연결이 해제되었습니다.');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showResultModal(false, '연결 해제 실패: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showResultModal(false, '연결 해제 중 오류가 발생했습니다.');
+                });
+            }
+        });
     }
 
     function activateService(id, name) {
-        if (confirm(`${name} 연동을 활성화하시겠습니까?`)) {
-            // TODO: 실제 활성화 API 호출
-            fetch('/api/integrations/activate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    service_id: id
+        ModalManager.createConfirm({
+            title: '연동 활성화 확인',
+            message: `<strong>${name}</strong> 연동을 활성화하시겠습니까?`,
+            icon: '✅',
+            confirmText: '활성화',
+            onConfirm: () => {
+                // TODO: 실제 활성화 API 호출
+                fetch('/api/integrations/activate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        service_id: id
+                    })
                 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('활성화되었습니다.');
-                    location.reload();
-                } else {
-                    // redirect가 있으면 페이지 이동
-                    if (data.redirect) {
-                        alert(data.message);
-                        location.href = data.redirect;
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showResultModal(true, '활성화되었습니다.');
+                        setTimeout(() => location.reload(), 1500);
                     } else {
-                        alert('활성화 실패: ' + data.message);
+                        // redirect가 있으면 페이지 이동
+                        if (data.redirect) {
+                            showResultModal(true, data.message);
+                            setTimeout(() => location.href = data.redirect, 1500);
+                        } else {
+                            showResultModal(false, '활성화 실패: ' + data.message);
+                        }
                     }
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('활성화 중 오류가 발생했습니다.');
-            });
-        }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showResultModal(false, '활성화 중 오류가 발생했습니다.');
+                });
+            }
+        });
     }
 </script>
         </main>

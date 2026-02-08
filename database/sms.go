@@ -185,8 +185,8 @@ func SaveSMSConfig(branchSeq int, accountID, password string, senderPhones []str
 	if configErr != nil {
 		// 설정이 없으면 생성
 		insertConfigQuery := `
-			INSERT INTO mymunja_config_info (mapping_id, mymunja_id, mymunja_password, callback_number)
-			VALUES (?, ?, ?, ?)
+			INSERT INTO mymunja_config_info (mapping_id, mymunja_id, mymunja_password, callback_number, lastUpdateDate)
+			VALUES (?, ?, ?, ?, now())
 		`
 		result, execErr := tx.Exec(insertConfigQuery, mappingSeq, accountID, password, callbackNumber)
 		if execErr != nil {
@@ -201,7 +201,7 @@ func SaveSMSConfig(branchSeq int, accountID, password string, senderPhones []str
 		// 설정이 있으면 업데이트
 		updateConfigQuery := `
 			UPDATE mymunja_config_info
-			SET mymunja_id = ?, mymunja_password = ?, callback_number = ?
+			SET mymunja_id = ?, mymunja_password = ?, callback_number = ?, lastUpdateDate = now()
 			WHERE seq = ?
 		`
 		result, execErr := tx.Exec(updateConfigQuery, accountID, password, callbackNumber, configSeq)
