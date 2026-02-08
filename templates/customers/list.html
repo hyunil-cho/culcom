@@ -1877,7 +1877,7 @@ function deleteCustomer(customerId, customerName) {
             // 삭제 요청
             const formData = new FormData();
             formData.append('customer_seq', customerId);
-            
+            console.log('Deleting customer with ID:', customerId);
             fetch('/api/customers/delete', {
                 method: 'POST',
                 body: formData
@@ -1889,14 +1889,6 @@ function deleteCustomer(customerId, customerName) {
                 return response.json();
             })
             .then(data => {
-                // 성공 메시지 표시
-                const successMessage = document.getElementById('successMessage');
-                successMessage.textContent = '✅ 고객이 성공적으로 삭제되었습니다.';
-                successMessage.style.display = 'block';
-                successMessage.style.background = '#e8f5e9';
-                successMessage.style.borderColor = '#4caf50';
-                successMessage.style.color = '#2e7d32';
-                
                 // 해당 행 제거
                 const row = document.querySelector(`tr[data-customer-id="${customerId}"]`);
                 if (row) {
@@ -1906,9 +1898,14 @@ function deleteCustomer(customerId, customerName) {
                     document.querySelector('.table-header span[style*="color: #4a90e2"]').textContent = currentCount - 1;
                 }
                 
-                setTimeout(() => {
-                    successMessage.style.display = 'none';
-                }, 3000);
+                // 성공 메시지 표시
+                ModalManager.createAlert({
+                    id: 'deleteSuccessModal',
+                    title: '✅ 삭제 성공',
+                    message: `<strong>"${customerName}"</strong> 고객이 성공적으로 삭제되었습니다.`,
+                    confirmColor: '#4caf50'
+                });
+                ModalManager.show('deleteSuccessModal');
             })
             .catch(error => {
                 // 에러 알림 모달
