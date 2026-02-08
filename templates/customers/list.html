@@ -63,8 +63,9 @@
 <div class="content-card">
     <div class="search-section">
         <form method="GET" action="/customers">
-            <div class="search-filters" style="gap: 0.5rem;">
-                <div style="display: flex; gap: 0; flex: 1; max-width: 650px;">
+            <input type="hidden" name="filter" value="{{.CurrentFilter}}">
+            <div class="search-filters" style="gap: 0;">
+                <div style="display: flex; gap: 0; align-items: flex-end;">
                     <div class="filter-group" style="min-width: auto; margin: 0;">
                         <label>검색 조건</label>
                         <select name="searchType" class="filter-select" style="width: 120px;" onchange="toggleSearchInput(this.value)">
@@ -75,18 +76,17 @@
                             <option value="reservation_date" {{if eq .SearchType "reservation_date"}}selected{{end}}>예약일자</option>
                         </select>
                     </div>
-                    <div class="filter-group" style="flex: 1; margin: 0;">
+                    <div class="filter-group" style="flex: 1; margin: 0; max-width: 400px;">
                         <label>검색어</label>
                         <input type="text" id="searchKeywordText" {{if not (or (eq .SearchType "register_date") (eq .SearchType "contact_date") (eq .SearchType "reservation_date"))}}name="searchKeyword"{{end}} placeholder="검색어를 입력하세요" class="search-input" value="{{if not (or (eq .SearchType "register_date") (eq .SearchType "contact_date") (eq .SearchType "reservation_date"))}}{{.SearchKeyword}}{{end}}" style="{{if or (eq .SearchType "register_date") (eq .SearchType "contact_date") (eq .SearchType "reservation_date")}}display: none;{{end}}">
                         <input type="date" id="searchKeywordDate" {{if or (eq .SearchType "register_date") (eq .SearchType "contact_date") (eq .SearchType "reservation_date")}}name="searchKeyword"{{end}} class="search-input" value="{{if or (eq .SearchType "register_date") (eq .SearchType "contact_date") (eq .SearchType "reservation_date")}}{{.SearchKeyword}}{{end}}" style="{{if not (or (eq .SearchType "register_date") (eq .SearchType "contact_date") (eq .SearchType "reservation_date"))}}display: none;{{end}}">
                     </div>
-                </div>
-                <input type="hidden" name="filter" value="{{.CurrentFilter}}">
-                <div class="filter-actions">
-                    <button type="submit" class="btn-search">🔍 검색</button>
-                    {{if .SearchKeyword}}
-                    <a href="/customers?filter={{.CurrentFilter}}" class="btn-secondary" style="padding: 0.6rem 1.2rem; text-decoration: none;">초기화</a>
-                    {{end}}
+                    <div class="filter-actions" style="margin: 0;">
+                        <button type="submit" class="btn-search">🔍 검색</button>
+                        {{if .SearchKeyword}}
+                        <a href="/customers?filter={{.CurrentFilter}}" class="btn-secondary" style="padding: 0.6rem 1.2rem; text-decoration: none;">초기화</a>
+                        {{end}}
+                    </div>
                 </div>
             </div>
         </form>
