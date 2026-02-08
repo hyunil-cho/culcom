@@ -8,6 +8,56 @@
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="/static/js/template-utils.js"></script>
     <script src="/static/js/modal-utils.js"></script>
+        
+    <style>
+        .caller-btn {
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            border: 1px solid #ddd;
+            background: white;
+            color: #333;
+            font-size: 10px;
+            font-weight: 600;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .caller-btn:hover {
+            background: #f0f0f0;
+            border-color: #4a90e2;
+        }
+
+        .caller-btn.selected {
+            background: #4a90e2;
+            color: white;
+            border-color: #4a90e2;
+        }
+
+        .phone-hidden .phone-number {
+            visibility: hidden;
+        }
+
+        .phone-hidden::before {
+            content: '***-****-****';
+            color: #999;
+            display: block;
+            text-align: center;
+        }
+
+        .phone-visible .phone-number {
+            visibility: visible;
+        }
+
+        .recent-contact {
+            background-color: #f3e8ff !important;
+        }
+
+        .recent-contact:hover {
+            background-color: #e9d5ff !important;
+        }
+    </style>
 </head>
 <body>
     {{template "sidebar" .}}
@@ -16,9 +66,6 @@
         {{template "header" .}}
         
         <main class="content">
-<!-- 성공 메시지 -->
-<div id="successMessage" class="success-message" style="display: none; background: #e8f5e9; border: 1px solid #4caf50; color: #2e7d32; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; font-weight: 500;"></div>
-
 <!-- 검색 및 필터 -->
 <div class="content-card">
     <div class="search-section">
@@ -148,12 +195,18 @@
                         <button class="btn-table-action" onclick="openTextModal({{.ID}}, '{{.Name}}', '{{.Phone}}')" style="padding: 0.4rem 0.8rem; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">💬 TEXT</button>
                     </td>
                     <td>
-                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <div style="display: flex; gap: 0.3rem; align-items: center;">
                             <input type="text" id="interview-{{.ID}}" class="interview-datetime" data-customer-name="{{.Name}}"
                                    placeholder="ex)1월1일오후1시1분"
-                                   style="padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; width: 150px;">
+                                   style="padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; width: 143px;">
                             <button onclick="openInterviewConfirmModal({{.ID}})" 
-                                    style="padding: 0.4rem 0.7rem; background: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600; white-space: nowrap;">확정</button>
+                                    style="padding: 0.4rem 0.6rem; background: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">확정</button>
+                            <button onclick="markAsNoPhoneInterview({{.ID}}, '{{.Name}}')" 
+                                    style="padding: 0.4rem 0.6rem; background: #9333ea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; white-space: nowrap; transition: background 0.2s;"
+                                    onmouseover="this.style.background='#7e22ce'" 
+                                    onmouseout="this.style.background='#9333ea'">
+                                전화상 안함
+                            </button>
                         </div>
                     </td>
                     <td>{{.AdName}}</td>
@@ -245,7 +298,9 @@
                 <select id="textMessageTemplate" class="form-input" onchange="loadTextTemplate()" style="width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
                     <option value="">템플릿을 선택하세요</option>
                     {{range .MessageTemplates}}
-                    <option value="{{.ID}}" {{if .IsDefault}}selected{{end}}>{{.Name}}</option>
+                    <option value="{{.ID}}" 
+                            data-content="{{.Content}}" 
+                            {{if .IsDefault}}selected{{end}}>{{.Name}}</option>
                     {{end}}
                 </select>
             </div>
@@ -276,102 +331,46 @@
 </div>
 
 <script>
-// URL 파라미터로 성공/에러 메시지 표시
-window.addEventListener('DOMContentLoaded', function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const success = urlParams.get('success');
-    const error = urlParams.get('error');
-    const successMessage = document.getElementById('successMessage');
-    
-    if (success === 'add') {
-        successMessage.textContent = '✅ 새 고객이 성공적으로 추가되었습니다.';
-        successMessage.style.display = 'block';
-        successMessage.style.background = '#e8f5e9';
-        successMessage.style.borderColor = '#4caf50';
-        successMessage.style.color = '#2e7d32';
-        setTimeout(() => {
-            successMessage.style.display = 'none';
-        }, 3000);
-    } else if (error === 'add') {
-        successMessage.textContent = '❌ 고객 추가에 실패했습니다.';
-        successMessage.style.display = 'block';
-        successMessage.style.background = '#ffebee';
-        successMessage.style.borderColor = '#f44336';
-        successMessage.style.color = '#c62828';
-        setTimeout(() => {
-            successMessage.style.display = 'none';
-        }, 3000);
-    } else if (error === 'invalid_phone') {
-        successMessage.textContent = '❌ 전화번호는 010으로 시작하는 11자리 숫자여야 합니다.';
-        successMessage.style.display = 'block';
-        successMessage.style.background = '#ffebee';
-        successMessage.style.borderColor = '#f44336';
-        successMessage.style.color = '#c62828';
-        setTimeout(() => {
-            successMessage.style.display = 'none';
-        }, 3000);
-    }
-});
-
-let currentCustomerId = null;
-let currentCustomerAbsentCount = 0;
-let currentInputMode = 'direct';
-let currentCustomerName = '';
-let currentCustomerPhone = '';
-
-// DB에서 불러온 메시지 템플릿
-const messageTemplates = {
-    {{range $index, $template := .MessageTemplates}}
-    {{if $index}},{{end}}
-    {{$template.ID}}: {
-        id: {{$template.ID}},
-        name: `{{$template.Name}}`,
-        content: `{{$template.Content}}`,
-        isDefault: {{$template.IsDefault}}
-    }
-    {{end}}
+// ========== 전역 변수 선언 (모든 변수를 스크립트 최상단에 선언) ==========
+// CALLER 선택 관련 변수
+let pendingCallerSelection = {
+    customerId: null,
+    customerName: '',
+    letter: '',
+    buttonElement: null
 };
 
+// 고객별 선택된 CALLER 저장 (customerId -> letter 매핑)
+const customerCallerMap = {};
 
-function closeResponseModal() {
-    document.getElementById('responseModal').style.display = 'none';
-    currentCustomerId = null;
-}
+// 수정 모드 상태
+let isEditMode = false;
+let pendingNameChange = {
+    customerId: null,
+    oldName: '',
+    newName: ''
+};
 
+// 입력 모드 상태
+let currentInputMode = 'template';
 
-// 모달 외부 클릭 시 닫기
-window.onclick = function(event) {
-    const modal = document.getElementById('responseModal');
-    if (event.target == modal) {
-        closeResponseModal();
-    }
-}
+// TEXT 모달 관련 변수
+let currentTextCustomerId = null;
+let currentTextCustomerName = '';
+let currentTextCustomerPhone = '';
+let currentTextInputMode = 'template';
 
-// 오른쪽 탭 전환
-function switchRightTab(tabName) {
-    // 모든 탭 비활성화
-    document.querySelectorAll('.right-tab').forEach(tab => {
-        tab.style.color = '#666';
-        tab.style.borderBottomColor = 'transparent';
-        tab.style.background = 'none';
-    });
-    
-    // 모든 컨텐츠 숨기기
-    document.querySelectorAll('.right-tab-content').forEach(content => {
-        content.style.display = 'none';
-    });
-    
-    // 선택된 탭 활성화
-    if (tabName === 'history') {
-        document.getElementById('tabHistory').style.color = '#4a90e2';
-        document.getElementById('tabHistory').style.borderBottomColor = '#4a90e2';
-        document.getElementById('historyContent').style.display = 'block';
-    } else if (tabName === 'message') {
-        document.getElementById('tabMessage').style.color = '#4a90e2';
-        document.getElementById('tabMessage').style.borderBottomColor = '#4a90e2';
-        document.getElementById('messageContent').style.display = 'flex';
-    }
-}
+// 인터뷰 확정일시 관련 변수
+let pendingInterviewCustomerId = null;
+let pendingInterviewDateTime = null;
+let pendingInterviewCustomerName = null;
+
+// 고객 필터 현재 상태
+let currentFilter = 'new';
+
+// 메시지 템플릿 저장 (사용하지 않음 - data-content 속성 사용)
+const messageTemplates = {};
+// ========== 전역 변수 선언 끝 ==========
 
 // 입력 방식 선택
 function selectInputMode(mode) {
@@ -412,34 +411,6 @@ function selectInputMode(mode) {
     }
 }
 
-// 템플릿 로드
-function loadTemplate() {
-    const selectedTemplate = document.getElementById('messageTemplate').value;
-    const messageTextarea = document.getElementById('smsMessageContent');
-    
-    if (!selectedTemplate) {
-        messageTextarea.value = '';
-        document.getElementById('messageLength').textContent = '0';
-        return;
-    }
-    
-    const template = messageTemplates[selectedTemplate];
-    if (template) {
-        // 템플릿 변수 치환 (구버전 호환)
-        const content = replaceTemplateLegacy(template.content, {
-            customerName: currentCustomerName,
-            date: '2026-01-30',
-            time: '14:00',
-            address: '서울시 강남구 테헤란로 123',
-            assignedTo: '김영업'
-        });
-        
-        // 메시지 내용에 적용
-        messageTextarea.value = content;
-        document.getElementById('messageLength').textContent = content.length;
-    }
-}
-
 // 메시지 글자 수 카운트
 document.addEventListener('DOMContentLoaded', function() {
     const messageTextarea = document.getElementById('smsMessageContent');
@@ -451,26 +422,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-
-// CALLER 선택 관련 변수
-let pendingCallerSelection = {
-    customerId: null,
-    customerName: '',
-    letter: '',
-    buttonElement: null
-};
-
-// 고객별 선택된 CALLER 저장 (customerId -> letter 매핑)
-const customerCallerMap = {};
-
-// 수정 모드 상태
-let isEditMode = false;
-let pendingNameChange = {
-    customerId: null,
-    oldName: '',
-    newName: ''
-};
-
 // 이름 변경 확정 (바로 실행)
 function confirmNameChange(customerId) {
     const inputEl = document.getElementById(`name-input-${customerId}`);
@@ -479,27 +430,45 @@ function confirmNameChange(customerId) {
     const newName = inputEl.value.trim();
     
     if (!newName) {
-        alert('이름을 입력해주세요.');
+        ModalManager.createAlert({
+            id: 'nameEmptyAlert',
+            title: '⚠️ 입력 오류',
+            message: '이름을 입력해주세요.',
+            confirmText: '확인',
+            confirmColor: '#f44336'
+        });
+        ModalManager.show('nameEmptyAlert');
         return;
     }
     
     if (oldName === newName) {
-        alert('변경된 내용이 없습니다.');
+        ModalManager.createAlert({
+            id: 'nameNoChangeAlert',
+            title: 'ℹ️ 알림',
+            message: '변경된 내용이 없습니다.',
+            confirmText: '확인'
+        });
+        ModalManager.show('nameNoChangeAlert');
         return;
     }
     
     // 확인
-    if (!confirm(`"${oldName}"에서 "${newName}"(으)로 변경하시겠습니까?`)) {
-        return;
-    }
-    
-    // 버튼 비활성화 (중복 클릭 방지)
-    const btn = event.target;
-    const originalText = btn.textContent;
-    btn.disabled = true;
-    btn.style.opacity = '0.6';
-    btn.style.cursor = 'not-allowed';
-    btn.textContent = '처리중...';
+    ModalManager.createConfirm({
+        id: 'nameChangeConfirm',
+        title: '✏️ 이름 변경 확인',
+        message: `"${oldName}"에서 "${newName}"(으)로 변경하시겠습니까?`,
+        confirmText: '변경',
+        cancelText: '취소',
+        confirmColor: '#4a90e2',
+        onConfirm: () => {
+            performNameChange(customerId, oldName, newName, inputEl);
+        }
+    });
+    ModalManager.show('nameChangeConfirm');
+}
+
+// 실제 이름 변경 처리
+function performNameChange(customerId, oldName, newName, inputEl) {
     
     // 서버에 저장
     const formData = new FormData();
@@ -516,25 +485,39 @@ function confirmNameChange(customerId) {
             inputEl.value = newName;
             inputEl.setAttribute('data-original-name', newName);
             
-            alert('✅ 고객 이름이 변경되었습니다.');
+            ModalManager.createAlert({
+                id: 'nameChangeSuccess',
+                title: '✅ 변경 완료',
+                message: '고객 이름이 변경되었습니다.',
+                confirmText: '확인',
+                confirmColor: '#10b981'
+            });
+            ModalManager.show('nameChangeSuccess');
         } else {
-            alert('❌ 이름 변경에 실패했습니다.');
+            ModalManager.createAlert({
+                id: 'nameChangeFail',
+                title: '❌ 변경 실패',
+                message: '이름 변경에 실패했습니다.',
+                confirmText: '확인',
+                confirmColor: '#f44336'
+            });
+            ModalManager.show('nameChangeFail');
             // 원래 값으로 복원
             inputEl.value = oldName;
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('❌ 이름 변경 중 오류가 발생했습니다.');
+        ModalManager.createAlert({
+            id: 'nameChangeError',
+            title: '❌ 오류 발생',
+            message: '이름 변경 중 오류가 발생했습니다.',
+            confirmText: '확인',
+            confirmColor: '#f44336'
+        });
+        ModalManager.show('nameChangeError');
         // 원래 값으로 복원
         inputEl.value = oldName;
-    })
-    .finally(() => {
-        // 버튼 재활성화
-        btn.disabled = false;
-        btn.style.opacity = '1';
-        btn.style.cursor = 'pointer';
-        btn.textContent = originalText;
     });
 }
 
@@ -707,7 +690,14 @@ function confirmCallerSelection() {
     })
     .catch(error => {
         console.error('통화 처리 오류:', error);
-        alert('통화 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+        ModalManager.createAlert({
+            id: 'callerProcessError',
+            title: '❌ 처리 실패',
+            message: '통화 처리 중 오류가 발생했습니다.<br>다시 시도해주세요.',
+            confirmText: '확인',
+            confirmColor: '#f44336'
+        });
+        ModalManager.show('callerProcessError');
         
         // 실패 시 UI 상태 원복
         if (buttonElement) {
@@ -742,12 +732,6 @@ function cancelCallerConfirm() {
     };
 }
 
-// TEXT 모달 관련 변수
-let currentTextCustomerId = null;
-let currentTextCustomerName = '';
-let currentTextCustomerPhone = '';
-let currentTextInputMode = 'template';
-
 // TEXT 모달 열기
 async function openTextModal(customerId, customerName, customerPhone) {
     currentTextCustomerId = customerId;
@@ -770,8 +754,11 @@ async function openTextModal(customerId, customerName, customerPhone) {
     
     // 기본 템플릿이 이미 선택되어 있으면 자동으로 로드
     const selectElement = document.getElementById('textMessageTemplate');
-    if (selectElement.value && messageTemplates[parseInt(selectElement.value)]) {
-        loadTextTemplate();
+    if (selectElement.value) {
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        if (selectedOption && selectedOption.getAttribute('data-content')) {
+            loadTextTemplate();
+        }
     }
 }
 
@@ -913,13 +900,13 @@ function loadTextTemplate() {
         return;
     }
     
-    // messageTemplates 객체에서 템플릿 내용 가져오기
-    const templateId = parseInt(selectElement.value);
-    const template = messageTemplates[templateId];
+    // 선택된 option의 data-content 속성에서 템플릿 내용 가져오기
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const templateContent = selectedOption.getAttribute('data-content');
     
-    if (template && template.content) {
+    if (templateContent) {
         // 템플릿 변수 치환
-        const content = replaceTemplateVariables(template.content, {
+        const content = replaceTemplateVariables(templateContent, {
             customerName: currentTextCustomerName,
             phoneNumber: currentTextCustomerPhone
         });
@@ -935,19 +922,40 @@ async function sendTextMessage() {
     const senderPhone = document.getElementById('textSenderPhone').value;
     
     if (!message.trim()) {
-        alert('메시지 내용을 입력해주세요.');
+        ModalManager.createAlert({
+            id: 'textMessageEmpty',
+            title: '⚠️ 입력 오류',
+            message: '메시지 내용을 입력해주세요.',
+            confirmText: '확인',
+            confirmColor: '#f44336'
+        });
+        ModalManager.show('textMessageEmpty');
         return;
     }
     
     if (!senderPhone) {
-        alert('발신번호를 선택해주세요.');
+        ModalManager.createAlert({
+            id: 'senderPhoneEmpty',
+            title: '⚠️ 입력 오류',
+            message: '발신번호를 선택해주세요.',
+            confirmText: '확인',
+            confirmColor: '#f44336'
+        });
+        ModalManager.show('senderPhoneEmpty');
         return;
     }
     
     if (currentTextInputMode === 'template') {
         const template = document.getElementById('textMessageTemplate').value;
         if (!template) {
-            alert('템플릿을 선택해주세요.');
+            ModalManager.createAlert({
+                id: 'templateEmpty',
+                title: '⚠️ 선택 오류',
+                message: '템플릿을 선택해주세요.',
+                confirmText: '확인',
+                confirmColor: '#f44336'
+            });
+            ModalManager.show('templateEmpty');
             return;
         }
     }
@@ -966,12 +974,26 @@ async function sendTextMessage() {
         if (!checkResponse.ok) {
             const checkResult = await checkResponse.json();
             const errorMsg = checkResult.error || checkResult.message || 'SMS 연동 상태를 확인할 수 없습니다.';
-            alert('❌ SMS 전송 실패\n\n' + errorMsg);
+            ModalManager.createAlert({
+                id: 'smsCheckFail',
+                title: '❌ SMS 전송 실패',
+                message: errorMsg,
+                confirmText: '확인',
+                confirmColor: '#f44336'
+            });
+            ModalManager.show('smsCheckFail');
             return;
         }
     } catch (error) {
         console.error('SMS 연동 상태 확인 오류:', error);
-        alert('SMS 연동 상태를 확인할 수 없습니다.\n잠시 후 다시 시도해주세요.');
+        ModalManager.createAlert({
+            id: 'smsCheckError',
+            title: '❌ 연동 확인 실패',
+            message: 'SMS 연동 상태를 확인할 수 없습니다.<br>잠시 후 다시 시도해주세요.',
+            confirmText: '확인',
+            confirmColor: '#f44336'
+        });
+        ModalManager.show('smsCheckError');
         return;
     }
     
@@ -998,7 +1020,14 @@ async function sendTextMessage() {
         if (!sendResponse.ok) {
             const sendResult = await sendResponse.json();
             const errorMsg = sendResult.error || sendResult.message || 'SMS 전송에 실패했습니다.';
-            alert('❌ SMS 전송 실패\n\n' + errorMsg);
+            ModalManager.createAlert({
+                id: 'smsSendFail',
+                title: '❌ SMS 전송 실패',
+                message: errorMsg,
+                confirmText: '확인',
+                confirmColor: '#f44336'
+            });
+            ModalManager.show('smsSendFail');
             return;
         }
         
@@ -1006,12 +1035,28 @@ async function sendTextMessage() {
         console.log('SMS 전송 결과:', sendResult); // 디버깅용
         
         // 전송 성공
-        alert('✅ 메시지가 성공적으로 전송되었습니다.');
-        closeTextModal();
+        ModalManager.createAlert({
+            id: 'smsSendSuccess',
+            title: '✅ 전송 완료',
+            message: '메시지가 성공적으로 전송되었습니다.',
+            confirmText: '확인',
+            confirmColor: '#10b981',
+            onConfirm: () => {
+                closeTextModal();
+            }
+        });
+        ModalManager.show('smsSendSuccess');
         
     } catch (error) {
         console.error('SMS 전송 오류:', error);
-        alert('SMS 전송 중 오류가 발생했습니다.\n잠시 후 다시 시도해주세요.');
+        ModalManager.createAlert({
+            id: 'smsSendError',
+            title: '❌ 전송 오류',
+            message: 'SMS 전송 중 오류가 발생했습니다.<br>잠시 후 다시 시도해주세요.',
+            confirmText: '확인',
+            confirmColor: '#f44336'
+        });
+        ModalManager.show('smsSendError');
     }
 }
 
@@ -1097,25 +1142,35 @@ function parseInterviewDateTime(text) {
     };
 }
 
-// 인터뷰 확정일시 관련 변수
-let pendingInterviewCustomerId = null;
-let pendingInterviewDateTime = null;
-let pendingInterviewCustomerName = null;
-
 // 인터뷰 확정 모달 열기 (리팩터링: ModalManager 사용)
 function openInterviewConfirmModal(customerId) {
     const inputElement = document.getElementById(`interview-${customerId}`);
     const dateTimeText = inputElement.value;
     
     if (!dateTimeText) {
-        alert('인터뷰 일시를 먼저 입력해주세요.');
+        ModalManager.createAlert({
+            id: 'interviewDateEmpty',
+            title: '⚠️ 입력 오류',
+            message: '인터뷰 일시를 먼저 입력해주세요.',
+            confirmText: '확인',
+            confirmColor: '#f44336'
+        });
+        ModalManager.show('interviewDateEmpty');
         return;
     }
     
     // 날짜 형식 검증 및 파싱
     const parsedDate = parseInterviewDateTime(dateTimeText);
     if (!parsedDate) {
-        alert('올바른 날짜 형식이 아닙니다.\n\n예시: 1월1일오후1시1분\n      1월 15일 오전 10시 30분');
+        ModalManager.createAlert({
+            id: 'interviewDateInvalid',
+            title: '⚠️ 형식 오류',
+            message: '올바른 날짜 형식이 아닙니다.<br><br><strong>예시:</strong><br>• 1월1일오후1시1분<br>• 1월 15일 오전 10시 30분',
+            confirmText: '확인',
+            confirmColor: '#f44336',
+            maxWidth: '400px'
+        });
+        ModalManager.show('interviewDateInvalid');
         return;
     }
     
@@ -1241,6 +1296,102 @@ function closeReservationResultModal() {
     }
 }
 
+// 전화상 안함 처리
+function markAsNoPhoneInterview(customerId, customerName) {
+    // CALLER 확인
+    const caller = customerCallerMap[customerId];
+    if (!caller) {
+        ModalManager.createAlert({
+            id: 'callerNotSelectedForNoPhone',
+            title: '⚠️ 선택 오류',
+            message: 'CALLER를 먼저 선택해주세요.',
+            confirmText: '확인',
+            confirmColor: '#f44336'
+        });
+        ModalManager.show('callerNotSelectedForNoPhone');
+        return;
+    }
+    
+    // 확인 모달
+    ModalManager.createConfirm({
+        id: 'noPhoneInterviewConfirm',
+        title: '📵 전화상 안함 확인',
+        message: `<strong style="color: #9333ea; font-size: 1.1rem;">${customerName}</strong>님을<br><br>"<strong>전화상 안함</strong>"으로 처리하시겠습니까?<br><br><span style="color: #666; font-size: 0.9rem;">처리 후 목록에서 제거됩니다.</span>`,
+        confirmText: '처리',
+        cancelText: '취소',
+        confirmColor: '#9333ea',
+        onConfirm: () => {
+            performNoPhoneInterview(customerId, customerName, caller);
+        }
+    });
+    ModalManager.show('noPhoneInterviewConfirm');
+}
+
+// 전화상 안함 실제 처리
+function performNoPhoneInterview(customerId, customerName, caller) {
+    // 서버에 전화상 안함 처리 요청
+    const formData = new FormData();
+    formData.append('customer_seq', customerId);
+    formData.append('caller', caller);
+    formData.append('status', 'no_phone_interview'); // 전화상 안함 상태
+    
+    // call_count를 5 이상으로 업데이트하여 "처리중" 필터에서 제거
+    fetch('/api/customers/mark-no-phone-interview', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('전화상 안함 처리 실패');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            console.log(`전화상 안함 처리 완료 - Customer: ${customerId}`);
+            
+            // 성공 모달 표시
+            ModalManager.createAlert({
+                id: 'noPhoneInterviewSuccess',
+                title: '✅ 처리 완료',
+                message: `${customerName}님이 "전화상 안함"으로 처리되었습니다.`,
+                confirmText: '확인',
+                confirmColor: '#10b981',
+                onConfirm: () => {
+                    // 처리중 필터에서 행 제거
+                    const currentFilter = '{{.CurrentFilter}}';
+                    if (currentFilter === 'new') {
+                        const customerRow = document.querySelector(`tr[data-customer-id="${customerId}"]`);
+                        if (customerRow) {
+                            customerRow.remove();
+                            
+                            // 테이블이 비어있으면 안내 메시지 표시
+                            const tbody = document.querySelector('.data-table tbody');
+                            if (tbody && tbody.children.length === 0) {
+                                tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 2rem; color: #999;">고객이 없습니다.</td></tr>';
+                            }
+                        }
+                    }
+                }
+            });
+            ModalManager.show('noPhoneInterviewSuccess');
+        } else {
+            throw new Error(data.message || '전화상 안함 처리 실패');
+        }
+    })
+    .catch(error => {
+        console.error('전화상 안함 처리 오류:', error);
+        ModalManager.createAlert({
+            id: 'noPhoneInterviewError',
+            title: '❌ 처리 실패',
+            message: '전화상 안함 처리 중 오류가 발생했습니다.<br>다시 시도해주세요.',
+            confirmText: '확인',
+            confirmColor: '#f44336'
+        });
+        ModalManager.show('noPhoneInterviewError');
+    });
+}
+
 // 인터뷰 확정 취소 (호환성 유지)
 function cancelInterviewConfirm() {
     // 모달 닫기 (리팩터링: ModalManager 사용)
@@ -1261,14 +1412,28 @@ function confirmInterviewDateTime() {
     // CALLER 확인
     const caller = customerCallerMap[pendingInterviewCustomerId];
     if (!caller) {
-        alert('CALLER를 먼저 선택해주세요.');
+        ModalManager.createAlert({
+            id: 'callerNotSelected',
+            title: '⚠️ 선택 오류',
+            message: 'CALLER를 먼저 선택해주세요.',
+            confirmText: '확인',
+            confirmColor: '#f44336'
+        });
+        ModalManager.show('callerNotSelected');
         return;
     }
     
     // 날짜 파싱
     const parsedDate = parseInterviewDateTime(pendingInterviewDateTime);
     if (!parsedDate) {
-        alert('올바른 날짜 형식이 아닙니다.');
+        ModalManager.createAlert({
+            id: 'dateFormatInvalid',
+            title: '⚠️ 형식 오류',
+            message: '올바른 날짜 형식이 아닙니다.',
+            confirmText: '확인',
+            confirmColor: '#f44336'
+        });
+        ModalManager.show('dateFormatInvalid');
         return;
     }
     
@@ -1341,7 +1506,14 @@ function confirmInterviewDateTime() {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('예약 저장 중 오류가 발생했습니다.');
+        ModalManager.createAlert({
+            id: 'reservationSaveError',
+            title: '❌ 저장 오류',
+            message: '예약 저장 중 오류가 발생했습니다.',
+            confirmText: '확인',
+            confirmColor: '#f44336'
+        });
+        ModalManager.show('reservationSaveError');
     })
     .finally(() => {
         // 버튼 재활성화
@@ -1542,7 +1714,14 @@ function saveComment(customerId) {
     const comment = commentInput.value.trim();
     
     if (!comment) {
-        alert('코멘트를 입력해주세요.');
+        ModalManager.createAlert({
+            id: 'commentEmpty',
+            title: '⚠️ 입력 오류',
+            message: '코멘트를 입력해주세요.',
+            confirmText: '확인',
+            confirmColor: '#f44336'
+        });
+        ModalManager.show('commentEmpty');
         return;
     }
     
@@ -1563,14 +1742,35 @@ function saveComment(customerId) {
             commentDisplay.style.display = 'block';
             // 입력창 비우기
             commentInput.value = '';
-            alert('코멘트가 등록되었습니다.');
+            ModalManager.createAlert({
+                id: 'commentSaveSuccess',
+                title: '✅ 등록 완료',
+                message: '코멘트가 등록되었습니다.',
+                confirmText: '확인',
+                confirmColor: '#10b981'
+            });
+            ModalManager.show('commentSaveSuccess');
         } else {
-            alert('코멘트 저장에 실패했습니다.');
+            ModalManager.createAlert({
+                id: 'commentSaveFail',
+                title: '❌ 저장 실패',
+                message: '코멘트 저장에 실패했습니다.',
+                confirmText: '확인',
+                confirmColor: '#f44336'
+            });
+            ModalManager.show('commentSaveFail');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('코멘트 저장 중 오류가 발생했습니다.');
+        ModalManager.createAlert({
+            id: 'commentSaveError',
+            title: '❌ 저장 오류',
+            message: '코멘트 저장 중 오류가 발생했습니다.',
+            confirmText: '확인',
+            confirmColor: '#f44336'
+        });
+        ModalManager.show('commentSaveError');
     });
 
 }
@@ -1624,8 +1824,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // 고객 필터링
-let currentFilter = 'new';
-
 function filterCustomers(filterType) {
     // 필터 파라미터와 검색 파라미터 유지하면서 페이지 리로드
     const urlParams = new URLSearchParams(window.location.search);
@@ -1741,57 +1939,6 @@ function deleteCustomer(customerId, customerName) {
 
 
 </script>
-
-<style>
-.caller-btn {
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    border: 1px solid #ddd;
-    background: white;
-    color: #333;
-    font-size: 10px;
-    font-weight: 600;
-    border-radius: 2px;
-    cursor: pointer;
-    transition: all 0.15s;
-}
-
-.caller-btn:hover {
-    background: #f0f0f0;
-    border-color: #4a90e2;
-}
-
-.caller-btn.selected {
-    background: #4a90e2;
-    color: white;
-    border-color: #4a90e2;
-}
-
-.phone-hidden .phone-number {
-    visibility: hidden;
-}
-
-.phone-hidden::before {
-    content: '***-****-****';
-    color: #999;
-    display: block;
-    text-align: center;
-}
-
-.phone-visible .phone-number {
-    visibility: visible;
-}
-
-.recent-contact {
-    background-color: #f3e8ff !important;
-}
-
-.recent-contact:hover {
-    background-color: #e9d5ff !important;
-}
-</style>
-
         </main>
     </div>
 </body>

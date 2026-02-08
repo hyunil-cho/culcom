@@ -695,3 +695,60 @@ func UpdateCustomerStatus(customerSeq int, status string) error {
 	log.Printf("[Customer] UpdateCustomerStatus 완료 - Rows affected: %d\n", rowsAffected)
 	return nil
 }
+
+// MarkCustomerAsNoPhoneInterview - 고객을 '전화상안함' 상태로 변경하고 CALLER 이력 저장
+// CALLER 선택과 상태 변경, call_count 업데이트를 하나의 트랜잭션으로 처리
+func MarkCustomerAsNoPhoneInterview(customerID, branchSeq int, caller string) error {
+	log.Printf("[Customer] MarkCustomerAsNoPhoneInterview 호출 - CustomerID: %d, BranchSeq: %d, Caller: %s\n", customerID, branchSeq, caller)
+
+	// 트랜잭션 시작
+	tx, err := DB.Begin()
+	if err != nil {
+		log.Printf("MarkCustomerAsNoPhoneInterview - transaction begin error: %v", err)
+		return err
+	}
+	defer tx.Rollback()
+
+	// 1. CALLER 선택 이력 저장
+	historyQuery := `
+		INSERT INTO caller_selection_history 
+			(customer_id, caller, branch_seq, selected_date)
+		VALUES (?, ?, ?, NOW())
+	`
+	_, err = tx.Exec(historyQuery, customerID, caller, branchSeq)
+	if err != nil {
+		log.Printf("MarkCustomerAsNoPhoneInterview - insert history error: %v", err)
+		return err
+	}
+
+	// 2. 고객 상태를 '전화상안함'으로 변경하고 call_count를 5 이상으로 설정
+	// call_count를 5로 설정하여 "처리중" 필터에서 제외되도록 함
+	updateQuery := `
+		UPDATE customers 
+		SET 
+			status = '전화상거절',
+			call_count = GREATEST(call_count, 5),
+			lastUpdateDate = NOW()
+		WHERE seq = ?
+	`
+	result, err := tx.Exec(updateQuery, customerID)
+	if err != nil {
+		log.Printf("MarkCustomerAsNoPhoneInterview - update customer error: %v", err)
+		return err
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		log.Printf("MarkCustomerAsNoPhoneInterview - no rows affected for customer: %d", customerID)
+		return err
+	}
+
+	// 트랜잭션 커밋
+	if err = tx.Commit(); err != nil {
+		log.Printf("MarkCustomerAsNoPhoneInterview - transaction commit error: %v", err)
+		return err
+	}
+
+	log.Printf("[Customer] MarkCustomerAsNoPhoneInterview 완료 - CustomerSeq: %d, Status: 전화상안함\n", customerID)
+	return nil
+}

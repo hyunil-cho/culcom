@@ -269,3 +269,57 @@ func DeleteCustomerHandler(w http.ResponseWriter, r *http.Request) {
 		"message": "고객이 삭제되었습니다",
 	})
 }
+
+// MarkNoPhoneInterviewHandler godoc
+// @Summary      고객을 '전화상안함' 상태로 처리
+// @Description  고객의 상태를 '전화상안함'으로 변경하고 CALLER 이력을 저장합니다
+// @Tags         customers
+// @Accept       x-www-form-urlencoded
+// @Produce      json
+// @Param        customer_seq  formData  string  true  "고객 시퀀스"
+// @Param        caller        formData  string  true  "CALLER 문자 (A-Z)"
+// @Success      200  {object}  map[string]interface{}  "성공"
+// @Failure      400  {string}  string  "잘못된 요청"
+// @Failure      500  {string}  string  "서버 오류"
+// @Security     SessionAuth
+// @Router       /customers/mark-no-phone-interview [post]
+func MarkNoPhoneInterviewHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 요청 파라미터 가져오기
+	customerSeqStr := r.FormValue("customer_seq")
+	caller := r.FormValue("caller")
+	branchSeq := middleware.GetSelectedBranch(r)
+
+	// 파라미터 검증
+	customerSeq, err := ValidateCustomerSeq(customerSeqStr)
+	if err != nil {
+		log.Printf("customer_seq 검증 실패: %v", err)
+		utils.JSONError(w, http.StatusBadRequest, "Invalid customer ID")
+		return
+	}
+
+	if caller == "" {
+		utils.JSONError(w, http.StatusBadRequest, "Caller is required")
+		return
+	}
+
+	// 전화상안함 처리 (상태 변경 + CALLER 이력 저장 + call_count 업데이트)
+	err = database.MarkCustomerAsNoPhoneInterview(customerSeq, branchSeq, caller)
+	if err != nil {
+		log.Printf("전화상안함 처리 오류: %v", err)
+		utils.JSONError(w, http.StatusInternalServerError, "Failed to mark as no phone interview")
+		return
+	}
+
+	log.Printf("전화상안함 처리 완료 - CustomerSeq: %d, Caller: %s", customerSeq, caller)
+
+	// 성공 응답
+	utils.JSONSuccess(w, map[string]interface{}{
+		"success": true,
+		"message": "전화상안함으로 처리되었습니다",
+	})
+}
