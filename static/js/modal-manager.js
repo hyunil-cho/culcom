@@ -238,12 +238,6 @@ const ModalManager = {
         
         return modal;
     },
-            content: message,
-            buttons,
-            maxWidth,
-            headerColor: confirmColor
-        });
-    },
 
     /**
      * 커스텀 모달 생성 (자유로운 컨텐츠 + 버튼)
