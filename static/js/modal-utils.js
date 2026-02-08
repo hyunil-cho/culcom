@@ -176,7 +176,7 @@ const ModalManager = {
             }
         ];
 
-        return this.create({
+        const modal = this.create({
             id,
             title,
             content,
@@ -184,6 +184,11 @@ const ModalManager = {
             maxWidth,
             headerColor: confirmColor
         });
+        
+        // 모달 자동 표시
+        this.show(id);
+        
+        return modal;
     },
 
     /**
@@ -215,9 +220,24 @@ const ModalManager = {
             }
         ];
 
-        return this.create({
+        const modal = this.create({
             id,
             title,
+            content: `
+                <div style="text-align: center; color: #666; font-size: 0.95rem;">
+                    ${message}
+                </div>
+            `,
+            buttons,
+            maxWidth,
+            headerColor: confirmColor
+        });
+        
+        // 모달 자동 표시
+        this.show(id);
+        
+        return modal;
+    },
             content: message,
             buttons,
             maxWidth,
@@ -251,7 +271,7 @@ const ModalManager = {
             content = contentBuilder;
         }
 
-        return this.create({
+        const modal = this.create({
             id,
             title,
             content,
@@ -260,6 +280,11 @@ const ModalManager = {
             headerColor,
             showCloseButton
         });
+        
+        // 모달 자동 표시
+        this.show(id);
+        
+        return modal;
     },
 
     /**

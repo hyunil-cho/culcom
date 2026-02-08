@@ -69,12 +69,9 @@ function getBranchName() {
  * @returns {string} 담당자명
  */
 function getBranchManager() {
-    console.log('📞 getBranchManager called, window.branchInfo:', window.branchInfo);
     if (window.branchInfo && window.branchInfo.manager) {
-        console.log('✅ Manager found:', window.branchInfo.manager);
         return window.branchInfo.manager;
     }
-    console.log('❌ Manager not found');
     return '';
 }
 
@@ -83,12 +80,9 @@ function getBranchManager() {
  * @returns {string} 주소
  */
 function getBranchAddress() {
-    console.log('📍 getBranchAddress called, window.branchInfo:', window.branchInfo);
     if (window.branchInfo && window.branchInfo.address) {
-        console.log('✅ Address found:', window.branchInfo.address);
         return window.branchInfo.address;
     }
-    console.log('❌ Address not found');
     return '';
 }
 
@@ -97,12 +91,9 @@ function getBranchAddress() {
  * @returns {string} 오시는 길
  */
 function getBranchDirections() {
-    console.log('🗺️ getBranchDirections called, window.branchInfo:', window.branchInfo);
     if (window.branchInfo && window.branchInfo.directions) {
-        console.log('✅ Directions found:', window.branchInfo.directions);
         return window.branchInfo.directions;
     }
-    console.log('❌ Directions not found');
     return '';
 }
 
@@ -150,14 +141,6 @@ function replaceTemplateVariables(template, variables = {}) {
     const branchManager = getBranchManager();
     const branchAddress = getBranchAddress();
     const branchDirections = getBranchDirections();
-    
-    console.log('🔧 Template Variables Debug:', {
-        branchName,
-        branchManager,
-        branchAddress,
-        branchDirections,
-        branchInfo: window.branchInfo
-    });
     
     // 기본 변수 매핑
     const defaultVariables = {
