@@ -53,44 +53,7 @@
     </div>
 
     <!-- 페이지네이션 -->
-    {{if .Pagination}}
-    {{$searchParams := .SearchParams}}
-    {{with .Pagination}}
-    {{if gt .TotalPages 1}}
-    <div class="pagination-container">
-        <div class="pagination">
-            <!-- 이전 페이지 -->
-            {{if .HasPrev}}
-                <a href="?page={{printf "%d" (sub .CurrentPage 1)}}{{$searchParams}}" class="page-btn page-arrow">◀</a>
-            {{else}}
-                <span class="page-btn page-arrow disabled">◀</span>
-            {{end}}
-
-            <!-- 페이지 번호 -->
-            {{$currentPage := .CurrentPage}}
-            {{range .Pages}}
-                {{if eq . $currentPage}}
-                    <span class="page-btn active">{{.}}</span>
-                {{else}}
-                    <a href="?page={{.}}{{$searchParams}}" class="page-btn">{{.}}</a>
-                {{end}}
-            {{end}}
-
-            <!-- 다음 페이지 -->
-            {{if .HasNext}}
-                <a href="?page={{printf "%d" (add .CurrentPage 1)}}{{$searchParams}}" class="page-btn page-arrow">▶</a>
-            {{else}}
-                <span class="page-btn page-arrow disabled">▶</span>
-            {{end}}
-        </div>
-        
-        <div style="text-align: center; margin-top: 15px; color: #666; font-size: 14px;">
-            {{.CurrentPage}} / {{.TotalPages}} 페이지 (총 {{.TotalItems}}개)
-        </div>
-    </div>
-    {{end}}
-    {{end}}
-    {{end}}
+    <div id="pagination-root"></div>
 </div>
         </main>
     </div>
@@ -126,6 +89,18 @@
         });
         ModalManager.show(modalId);
     }
+
+    // 페이지네이션 렌더링
+    {{if .Pagination}}
+    initPaginationFromTemplate('#pagination-root', {
+        currentPage: {{.Pagination.CurrentPage}},
+        totalPages: {{.Pagination.TotalPages}},
+        totalItems: {{.Pagination.TotalItems}},
+        pages: [{{range $i, $p := .Pagination.Pages}}{{if $i}},{{end}}{{$p}}{{end}}],
+        hasPrev: {{.Pagination.HasPrev}},
+        hasNext: {{.Pagination.HasNext}}
+    });
+    {{end}}
 </script>
 </body>
 </html>

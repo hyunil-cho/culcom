@@ -221,27 +221,7 @@
     </div>
 
     <!-- 페이지네이션 -->
-    <div class="pagination">
-        {{if .Pagination.HasPrev}}
-        <button class="page-btn" onclick="goToPage({{sub .Pagination.CurrentPage 1}})">◀</button>
-        {{else}}
-        <button class="page-btn" disabled style="opacity: 0.3; cursor: not-allowed;">◀</button>
-        {{end}}
-        
-        {{range .Pagination.Pages}}
-        {{if eq . $.Pagination.CurrentPage}}
-        <button class="page-btn active">{{.}}</button>
-        {{else}}
-        <button class="page-btn" onclick="goToPage({{.}})">{{.}}</button>
-        {{end}}
-        {{end}}
-        
-        {{if .Pagination.HasNext}}
-        <button class="page-btn" onclick="goToPage({{add .Pagination.CurrentPage 1}})">▶</button>
-        {{else}}
-        <button class="page-btn" disabled style="opacity: 0.3; cursor: not-allowed;">▶</button>
-        {{end}}
-    </div>
+    <div id="pagination-root"></div>
 </div>
 
 <!-- 모달들은 JavaScript로 동적 생성 (modal-manager.js) -->
@@ -322,6 +302,8 @@
         </div>
     </div>
 </div>
+
+<!-- Pagination Utils -->
 
 <script>
 // ========== 전역 변수 선언 (모든 변수를 스크립트 최상단에 선언) ==========
@@ -1830,19 +1812,8 @@ function filterCustomers(filterType) {
     window.location.href = url;
 }
 
-// 페이지 이동
-function goToPage(page) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const currentFilter = urlParams.get('filter') || 'new';
-    const searchType = urlParams.get('searchType') || '';
-    const searchKeyword = urlParams.get('searchKeyword') || '';
-    
-    let url = `/customers?filter=${currentFilter}&page=${page}`;
-    if (searchType) url += `&searchType=${searchType}`;
-    if (searchKeyword) url += `&searchKeyword=${encodeURIComponent(searchKeyword)}`;
-    
-    window.location.href = url;
-}
+// 페이지 이동 (pagination-utils.js의 공통 함수 사용)
+// goToPage 함수는 pagination-utils.js에서 제공됨
 
 // 검색 조건에 따라 입력 필드 전환
 function toggleSearchInput(searchType) {
@@ -1927,6 +1898,17 @@ function deleteCustomer(customerId, customerName) {
     ModalManager.show('deleteCustomerModal');
 }
 
+// 페이지네이션 렌더링
+{{if .Pagination}}
+initPaginationFromTemplate('#pagination-root', {
+    currentPage: {{.Pagination.CurrentPage}},
+    totalPages: {{.Pagination.TotalPages}},
+    totalItems: {{.Pagination.TotalItems}},
+    pages: [{{range $i, $p := .Pagination.Pages}}{{if $i}},{{end}}{{$p}}{{end}}],
+    hasPrev: {{.Pagination.HasPrev}},
+    hasNext: {{.Pagination.HasNext}}
+});
+{{end}}
 
 </script>
         </main>
