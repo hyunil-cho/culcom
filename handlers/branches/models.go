@@ -9,6 +9,7 @@ type Branch struct {
 	ID           string
 	Name         string
 	Alias        string
+	Manager      string
 	Address      string
 	Directions   string
 	RegisterDate string

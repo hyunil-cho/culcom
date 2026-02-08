@@ -26,21 +26,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		totalCustomers = 0
 	}
 
-	// 2. 금일 walk_in 고객 수 조회
-	walkInCustomers, err := database.GetTodayWalkInCustomers(branchSeq)
-	if err != nil {
-		log.Printf("Handler - GetTodayWalkInCustomers error: %v", err)
-		walkInCustomers = 0
-	}
-
-	// 3. ad_source별 통계 조회
-	adSourceStats, err := database.GetTodayCustomersByAdSource(branchSeq)
-	if err != nil {
-		log.Printf("Handler - GetTodayCustomersByAdSource error: %v", err)
-		adSourceStats = []database.AdSourceStats{}
-	}
-
-	// 4. SMS 잔여건수 조회
+	// 2. SMS 잔여건수 조회
 	var smsRemaining int
 	if branchSeq > 0 {
 		smsRemaining, _ = database.GetSMSRemainingCount(branchSeq)
@@ -56,44 +42,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		Icon:  "👥",
 		Color: "#3498db",
 	})
-
-	// walk_in 고객
-	stats = append(stats, StatCard{
-		Title: "워크인 회원",
-		Value: fmt.Sprintf("%d명", walkInCustomers),
-		Icon:  "🚶",
-		Color: "#e74c3c",
-	})
-
-	// ad_source별 통계 (상위 2개만 표시)
-	for i, adStat := range adSourceStats {
-		if i >= 2 {
-			break
-		}
-		// ad_source 이름을 한글로 변환
-		adSourceName := adStat.AdSource
-		if adSourceName == "kakao_sync" {
-			adSourceName = "카카오싱크"
-		} else if adSourceName == "walk_in" {
-			adSourceName = "워크인"
-		} else {
-			adSourceName = "기타"
-		}
-
-		icon := "📊"
-		color := "#2ecc71"
-		if i == 1 {
-			icon = "📈"
-			color = "#9b59b6"
-		}
-
-		stats = append(stats, StatCard{
-			Title: fmt.Sprintf("%s 예약", adSourceName),
-			Value: fmt.Sprintf("%d명", adStat.Count),
-			Icon:  icon,
-			Color: color,
-		})
-	}
 
 	// SMS 잔여건수 카드 추가
 	stats = append(stats, StatCard{

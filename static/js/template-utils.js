@@ -55,8 +55,55 @@ function formatDateKorean(date, includeTime = true) {
  * @returns {string} 지점명
  */
 function getBranchName() {
+    // 전역 변수에서 먼저 가져오기
+    if (window.branchInfo && window.branchInfo.name) {
+        return window.branchInfo.name;
+    }
+    // fallback: select에서 가져오기
     const branchSelect = document.getElementById('branchSelect');
     return branchSelect ? branchSelect.options[branchSelect.selectedIndex].text : '지점';
+}
+
+/**
+ * 선택된 지점 담당자를 가져옵니다
+ * @returns {string} 담당자명
+ */
+function getBranchManager() {
+    console.log('📞 getBranchManager called, window.branchInfo:', window.branchInfo);
+    if (window.branchInfo && window.branchInfo.manager) {
+        console.log('✅ Manager found:', window.branchInfo.manager);
+        return window.branchInfo.manager;
+    }
+    console.log('❌ Manager not found');
+    return '';
+}
+
+/**
+ * 선택된 지점 주소를 가져옵니다
+ * @returns {string} 주소
+ */
+function getBranchAddress() {
+    console.log('📍 getBranchAddress called, window.branchInfo:', window.branchInfo);
+    if (window.branchInfo && window.branchInfo.address) {
+        console.log('✅ Address found:', window.branchInfo.address);
+        return window.branchInfo.address;
+    }
+    console.log('❌ Address not found');
+    return '';
+}
+
+/**
+ * 선택된 지점 오시는 길을 가져옵니다
+ * @returns {string} 오시는 길
+ */
+function getBranchDirections() {
+    console.log('🗺️ getBranchDirections called, window.branchInfo:', window.branchInfo);
+    if (window.branchInfo && window.branchInfo.directions) {
+        console.log('✅ Directions found:', window.branchInfo.directions);
+        return window.branchInfo.directions;
+    }
+    console.log('❌ Directions not found');
+    return '';
 }
 
 /**
@@ -98,8 +145,19 @@ function replaceTemplateVariables(template, variables = {}) {
     // 날짜/시간 정보 가져오기
     const dateInfo = getDateTimeInfo();
     
-    // 지점명 가져오기
+    // 지점 정보 가져오기
     const branchName = getBranchName();
+    const branchManager = getBranchManager();
+    const branchAddress = getBranchAddress();
+    const branchDirections = getBranchDirections();
+    
+    console.log('🔧 Template Variables Debug:', {
+        branchName,
+        branchManager,
+        branchAddress,
+        branchDirections,
+        branchInfo: window.branchInfo
+    });
     
     // 기본 변수 매핑
     const defaultVariables = {
@@ -114,7 +172,9 @@ function replaceTemplateVariables(template, variables = {}) {
         
         // 지점 정보
         '{{지점명}}': variables.branchName || branchName,
-        '{{주소}}': variables.address || '',
+        '{{지점주소}}': variables.address || branchAddress,
+        '{{지점담당자}}': variables.manager || branchManager,
+        '{{오시는길}}': variables.directions || branchDirections,
         
         // 날짜/시간
         '{{현재날짜시간}}': dateInfo.datetime,
@@ -158,8 +218,10 @@ function replaceTemplateVariablesForPreview(template) {
         phoneNumber: '010-1234-5678',
         reservationDate: dateInfo.datetimeKorean,
         reservationTime: '14:00',
-        branchName: '강남점',
-        address: '서울시 강남구 테헤란로 123',
+        branchName: getBranchName() || '강남점',
+        address: getBranchAddress() || '서울시 강남구 테헤란로 123',
+        manager: getBranchManager() || '홍길동',
+        directions: getBranchDirections() || '2호선 강남역 3번 출구 도보 5분',
         assignedTo: '김영업',
         memo: '특이사항 없음'
     };

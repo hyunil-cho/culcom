@@ -36,6 +36,7 @@ func getBranchByID(id string) *Branch {
 		ID:           fmt.Sprintf("%v", branchData["id"]),
 		Name:         fmt.Sprintf("%v", branchData["name"]),
 		Alias:        fmt.Sprintf("%v", branchData["alias"]),
+		Manager:      utils.PointerToString(branchData["manager"]),
 		Address:      utils.PointerToString(branchData["address"]),
 		Directions:   utils.PointerToString(branchData["directions"]),
 		RegisterDate: fmt.Sprintf("%v", branchData["created_at"]),
@@ -191,6 +192,7 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 
 		name := r.FormValue("name")
 		alias := r.FormValue("alias")
+		manager := r.FormValue("manager")
 		address := r.FormValue("address")
 		directions := r.FormValue("directions")
 
@@ -210,7 +212,7 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// 데이터베이스 업데이트
-		if _, err := database.UpdateBranch(idInt, name, alias, address, directions); err != nil {
+		if _, err := database.UpdateBranch(idInt, name, alias, manager, address, directions); err != nil {
 			log.Println("Database error:", err)
 			http.Redirect(w, r, "/error", http.StatusSeeOther)
 			return
@@ -259,6 +261,7 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		// 폼에서 값 추출
 		branchName := r.FormValue("name")
 		branchAlias := r.FormValue("alias")
+		manager := r.FormValue("manager")
 		address := r.FormValue("address")
 		directions := r.FormValue("directions")
 
@@ -270,10 +273,10 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// 받은 값 로그 출력 (확인용)
-		log.Printf("지점 추가 요청 - 지점명: %s, Alias: %s, 주소: %s", branchName, branchAlias, address)
+		log.Printf("지점 추가 요청 - 지점명: %s, Alias: %s, 담당자: %s, 주소: %s", branchName, branchAlias, manager, address)
 
 		// DB에 지점 저장
-		branchID, err := database.InsertBranch(branchName, branchAlias, address, directions)
+		branchID, err := database.InsertBranch(branchName, branchAlias, manager, address, directions)
 		if err != nil {
 			log.Printf("지점 저장 오류: %v", err)
 			http.Redirect(w, r, "/error", http.StatusSeeOther)

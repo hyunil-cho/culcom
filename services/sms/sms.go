@@ -105,16 +105,30 @@ func Send(req SendRequest) (*SendResponse, error) {
 	// 설정 로드
 	cfg := config.GetConfig()
 
+	// 메시지 바이트 길이 계산 (UTF-8 기준)
+	messageBytes := []byte(req.Message)
+	messageByteLength := len(messageBytes)
+
 	// 메시지 길이에 따라 SMS/LMS 엔드포인트 결정
-	messageLength := len(req.Message)
+	// SMS: 90바이트 이내, LMS: 2000바이트 이내
 	endpoint := cfg.SMS.APIBaseURL + cfg.SMS.SMSEndpoint
-	isLMS := messageLength > cfg.SMS.MaxLength
+	isLMS := messageByteLength > cfg.SMS.MaxLength
 
 	if isLMS {
 		endpoint = cfg.SMS.APIBaseURL + cfg.SMS.LMSEndpoint
-		log.Printf("LMS 발송 (메시지 길이: %d바이트)", messageLength)
+		log.Printf("LMS 발송 (메시지 바이트 길이: %d바이트, 문자 수: %d)", messageByteLength, len(req.Message))
+
+		// LMS 바이트 제한 체크 (2000바이트)
+		if messageByteLength > 2000 {
+			return nil, fmt.Errorf("LMS 메시지가 너무 깁니다 (최대 2000바이트, 현재 %d바이트)", messageByteLength)
+		}
 	} else {
-		log.Printf("SMS 발송 (메시지 길이: %d바이트)", messageLength)
+		log.Printf("SMS 발송 (메시지 바이트 길이: %d바이트, 문자 수: %d)", messageByteLength, len(req.Message))
+
+		// SMS 바이트 제한 체크 (90바이트)
+		if messageByteLength > 90 {
+			return nil, fmt.Errorf("SMS 메시지가 너무 깁니다 (최대 90바이트, 현재 %d바이트)", messageByteLength)
+		}
 	}
 
 	// API 요청 파라미터 구성
@@ -126,8 +140,18 @@ func Send(req SendRequest) (*SendResponse, error) {
 	formData.Set("remote_callback", req.SenderPhone)
 	formData.Set("remote_msg", req.Message) // url.Values가 자동으로 URL 인코딩
 
-	log.Printf("SMS API 요청 - 수신번호: %s, 발신번호: %s, 메시지: %s",
-		req.ReceiverPhone, req.SenderPhone, req.Message)
+	// LMS일 경우 제목 추가
+	if isLMS {
+		subject := req.Subject
+		if subject == "" {
+			subject = "안내 메시지" // 기본 제목
+		}
+		formData.Set("remote_subject", subject)
+		log.Printf("LMS 제목: %s", subject)
+	}
+
+	log.Printf("SMS API 요청 - 수신번호: %s, 발신번호: %s, 메시지 길이: %d바이트",
+		req.ReceiverPhone, req.SenderPhone, messageByteLength)
 	// HTTPS 클라이언트 생성
 	client := &http.Client{
 		Timeout: 30 * time.Second,

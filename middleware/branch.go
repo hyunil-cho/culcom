@@ -19,9 +19,12 @@ const (
 
 // BasePageData - 모든 페이지에 공통으로 필요한 데이터
 type BasePageData struct {
-	BranchList         []map[string]string
-	SelectedBranch     string // alias
-	SelectedBranchName string // 한글 이름
+	BranchList               []map[string]string
+	SelectedBranch           string // alias
+	SelectedBranchName       string // 한글 이름
+	SelectedBranchManager    string // 담당자
+	SelectedBranchAddress    string // 주소
+	SelectedBranchDirections string // 오시는 길
 }
 
 // GetBasePageData - context에서 공통 데이터를 가져오는 헬퍼 함수
@@ -29,11 +32,17 @@ func GetBasePageData(r *http.Request) BasePageData {
 	branchList, _ := r.Context().Value(branchListKey).([]map[string]string)
 	selectedBranch, _ := r.Context().Value(selectedBranchKey).(string)
 	selectedBranchName, _ := r.Context().Value(contextKey("selectedBranchName")).(string)
+	selectedBranchManager, _ := r.Context().Value(contextKey("selectedBranchManager")).(string)
+	selectedBranchAddress, _ := r.Context().Value(contextKey("selectedBranchAddress")).(string)
+	selectedBranchDirections, _ := r.Context().Value(contextKey("selectedBranchDirections")).(string)
 
 	return BasePageData{
-		BranchList:         branchList,
-		SelectedBranch:     selectedBranch, // 헤더 표시용 alias
-		SelectedBranchName: selectedBranchName, // 한글 이름
+		BranchList:               branchList,
+		SelectedBranch:           selectedBranch, // 헤더 표시용 alias
+		SelectedBranchName:       selectedBranchName, // 한글 이름
+		SelectedBranchManager:    selectedBranchManager, // 담당자
+		SelectedBranchAddress:    selectedBranchAddress, // 주소
+		SelectedBranchDirections: selectedBranchDirections, // 오시는 길
 	}
 }
 
@@ -42,13 +51,19 @@ func InjectBranchData(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// 세션에서 지점 정보 가져오기
 		branchList := GetBranchList(r)
-		selectedBranchAlias := GetSelectedBranchAlias(r) // 헤더 표시용 alias
-		selectedBranchName := GetSelectedBranchName(r)   // 한글 이름
+		selectedBranchAlias := GetSelectedBranchAlias(r)         // 헤더 표시용 alias
+		selectedBranchName := GetSelectedBranchName(r)           // 한글 이름
+		selectedBranchManager := GetSelectedBranchManager(r)     // 담당자
+		selectedBranchAddress := GetSelectedBranchAddress(r)     // 주소
+		selectedBranchDirections := GetSelectedBranchDirections(r) // 오시는 길
 
 		// context에 저장
 		ctx := context.WithValue(r.Context(), branchListKey, branchList)
 		ctx = context.WithValue(ctx, selectedBranchKey, selectedBranchAlias)
 		ctx = context.WithValue(ctx, contextKey("selectedBranchName"), selectedBranchName)
+		ctx = context.WithValue(ctx, contextKey("selectedBranchManager"), selectedBranchManager)
+		ctx = context.WithValue(ctx, contextKey("selectedBranchAddress"), selectedBranchAddress)
+		ctx = context.WithValue(ctx, contextKey("selectedBranchDirections"), selectedBranchDirections)
 
 		// 수정된 context로 다음 핸들러 호출
 		next(w, r.WithContext(ctx))
@@ -130,6 +145,72 @@ func GetSelectedBranchName(r *http.Request) string {
 		}
 	}
 
+	return ""
+}
+
+// GetSelectedBranchManager - 세션에서 선택된 지점의 담당자를 가져오는 헬퍼 함수
+func GetSelectedBranchManager(r *http.Request) string {
+	branchSeq := GetSelectedBranch(r)
+	if branchSeq == 0 {
+		log.Printf("[GetSelectedBranchManager] branchSeq is 0")
+		return ""
+	}
+
+	// branchList에서 해당 seq의 manager 찾기
+	branchList := GetBranchList(r)
+	for _, branch := range branchList {
+		if branch["seq"] == fmt.Sprintf("%d", branchSeq) {
+			manager := branch["manager"]
+			log.Printf("[GetSelectedBranchManager] Found manager for seq %d: '%s'", branchSeq, manager)
+			return manager
+		}
+	}
+
+	log.Printf("[GetSelectedBranchManager] Manager not found for seq %d", branchSeq)
+	return ""
+}
+
+// GetSelectedBranchAddress - 세션에서 선택된 지점의 주소를 가져오는 헬퍼 함수
+func GetSelectedBranchAddress(r *http.Request) string {
+	branchSeq := GetSelectedBranch(r)
+	if branchSeq == 0 {
+		log.Printf("[GetSelectedBranchAddress] branchSeq is 0")
+		return ""
+	}
+
+	// branchList에서 해당 seq의 address 찾기
+	branchList := GetBranchList(r)
+	for _, branch := range branchList {
+		if branch["seq"] == fmt.Sprintf("%d", branchSeq) {
+			address := branch["address"]
+			log.Printf("[GetSelectedBranchAddress] Found address for seq %d: '%s'", branchSeq, address)
+			return address
+		}
+	}
+
+	log.Printf("[GetSelectedBranchAddress] Address not found for seq %d", branchSeq)
+	return ""
+}
+
+// GetSelectedBranchDirections - 세션에서 선택된 지점의 오시는 길을 가져오는 헬퍼 함수
+func GetSelectedBranchDirections(r *http.Request) string {
+	branchSeq := GetSelectedBranch(r)
+	if branchSeq == 0 {
+		log.Printf("[GetSelectedBranchDirections] branchSeq is 0")
+		return ""
+	}
+
+	// branchList에서 해당 seq의 directions 찾기
+	branchList := GetBranchList(r)
+	for _, branch := range branchList {
+		if branch["seq"] == fmt.Sprintf("%d", branchSeq) {
+			directions := branch["directions"]
+			log.Printf("[GetSelectedBranchDirections] Found directions for seq %d: '%s'", branchSeq, directions)
+			return directions
+		}
+	}
+
+	log.Printf("[GetSelectedBranchDirections] Directions not found for seq %d", branchSeq)
 	return ""
 }
 

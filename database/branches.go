@@ -6,13 +6,13 @@ import (
 )
 
 // InsertBranch - 지점 추가
-// 파라미터: name (지점명), alias (별칭), address (주소), directions (오시는 길)
+// 파라미터: name (지점명), alias (별칭), manager (담당자), address (주소), directions (오시는 길)
 // 반환: 생성된 ID, 에러
-func InsertBranch(name, alias, address, directions string) (int64, error) {
-	query := `INSERT INTO branches (branchName, alias, address, directions, createdDate, lastUpdateDate) 
-	          VALUES (?, ?, ?, ?, CURDATE(), CURDATE())`
+func InsertBranch(name, alias, manager, address, directions string) (int64, error) {
+	query := `INSERT INTO branches (branchName, alias, branch_manager, address, directions, createdDate, lastUpdateDate) 
+	          VALUES (?, ?, ?, ?, ?, CURDATE(), CURDATE())`
 
-	result, err := DB.Exec(query, name, alias, address, directions)
+	result, err := DB.Exec(query, name, alias, manager, address, directions)
 	if err != nil {
 		log.Printf("InsertBranch error: %v", err)
 		return 0, err
@@ -24,19 +24,19 @@ func InsertBranch(name, alias, address, directions string) (int64, error) {
 		return 0, err
 	}
 
-	log.Printf("InsertBranch success - ID: %d, Name: %s, Alias: %s", id, name, alias)
+	log.Printf("InsertBranch success - ID: %d, Name: %s, Alias: %s, Manager: %s", id, name, alias, manager)
 	return id, nil
 }
 
 // UpdateBranch - 지점 수정
-// 파라미터: id (지점 ID), name (지점명), alias (별칭), address (주소), directions (오시는 길)
+// 파라미터: id (지점 ID), name (지점명), alias (별칭), manager (담당자), address (주소), directions (오시는 길)
 // 반환: 영향받은 행 수, 에러
-func UpdateBranch(id int, name, alias, address, directions string) (int64, error) {
+func UpdateBranch(id int, name, alias, manager, address, directions string) (int64, error) {
 	query := `UPDATE branches 
-	          SET branchName = ?, alias = ?, address = ?, directions = ?, lastUpdateDate = CURDATE() 
+	          SET branchName = ?, alias = ?, branch_manager = ?, address = ?, directions = ?, lastUpdateDate = CURDATE() 
 	          WHERE seq = ?`
 
-	result, err := DB.Exec(query, name, alias, address, directions, id)
+	result, err := DB.Exec(query, name, alias, manager, address, directions, id)
 	if err != nil {
 		log.Printf("UpdateBranch error: %v", err)
 		return 0, err
@@ -78,7 +78,7 @@ func DeleteBranch(id int) (int64, error) {
 // 파라미터: id (지점 ID)
 // 반환: 지점 정보 (map), 에러
 func GetBranchByID(id int) (map[string]interface{}, error) {
-	query := `SELECT seq, branchName, alias, address, directions, 
+	query := `SELECT seq, branchName, alias, branch_manager, address, directions, 
 	          DATE_FORMAT(createdDate, '%Y-%m-%d') as createdDate, 
 	          DATE_FORMAT(lastUpdateDate, '%Y-%m-%d') as lastUpdateDate 
 	          FROM branches 
@@ -86,10 +86,10 @@ func GetBranchByID(id int) (map[string]interface{}, error) {
 
 	var seq int
 	var branchName, alias string
-	var address, directions *string
+	var manager, address, directions *string
 	var createdDate, lastUpdateDate string
 
-	err := DB.QueryRow(query, id).Scan(&seq, &branchName, &alias, &address, &directions, &createdDate, &lastUpdateDate)
+	err := DB.QueryRow(query, id).Scan(&seq, &branchName, &alias, &manager, &address, &directions, &createdDate, &lastUpdateDate)
 	if err != nil {
 		log.Printf("GetBranchByID error: %v", err)
 		return nil, err
@@ -99,6 +99,7 @@ func GetBranchByID(id int) (map[string]interface{}, error) {
 		"id":         seq,
 		"name":       branchName,
 		"alias":      alias,
+		"manager":    manager,
 		"address":    address,
 		"directions": directions,
 		"created_at": createdDate,
@@ -112,7 +113,7 @@ func GetBranchByID(id int) (map[string]interface{}, error) {
 // GetAllBranches - 모든 지점 조회
 // 반환: 지점 목록, 에러
 func GetAllBranches() ([]map[string]interface{}, error) {
-	query := `SELECT seq, branchName, alias, address, directions, 
+	query := `SELECT seq, branchName, alias, branch_manager, address, directions, 
 	          DATE_FORMAT(createdDate, '%Y-%m-%d') as createdDate, 
 	          DATE_FORMAT(lastUpdateDate, '%Y-%m-%d') as lastUpdateDate 
 	          FROM branches 
@@ -129,10 +130,10 @@ func GetAllBranches() ([]map[string]interface{}, error) {
 	for rows.Next() {
 		var seq int
 		var branchName, alias string
-		var address, directions *string
+		var manager, address, directions *string
 		var createdDate, lastUpdateDate string
 
-		err := rows.Scan(&seq, &branchName, &alias, &address, &directions, &createdDate, &lastUpdateDate)
+		err := rows.Scan(&seq, &branchName, &alias, &manager, &address, &directions, &createdDate, &lastUpdateDate)
 		if err != nil {
 			log.Printf("GetAllBranches scan error: %v", err)
 			return nil, err
@@ -142,6 +143,7 @@ func GetAllBranches() ([]map[string]interface{}, error) {
 			"id":         seq,
 			"name":       branchName,
 			"alias":      alias,
+			"manager":    manager,
 			"address":    address,
 			"directions": directions,
 			"created_at": createdDate,
@@ -176,9 +178,9 @@ func GetFirstBranchAlias() (string, error) {
 }
 
 // GetBranchesForSelect - 헤더 선택박스용 지점 목록 조회 (간단한 형태)
-// 반환: [{seq, alias, name}] 형태의 지점 목록
+// 반환: [{seq, alias, name, manager, address, directions}] 형태의 지점 목록
 func GetBranchesForSelect() ([]map[string]string, error) {
-	query := `SELECT seq, alias, branchName FROM branches ORDER BY seq ASC`
+	query := `SELECT seq, alias, branchName, branch_manager, address, directions FROM branches ORDER BY seq ASC`
 
 	rows, err := DB.Query(query)
 	if err != nil {
@@ -191,15 +193,37 @@ func GetBranchesForSelect() ([]map[string]string, error) {
 	for rows.Next() {
 		var seq int
 		var alias, branchName string
-		if err := rows.Scan(&seq, &alias, &branchName); err != nil {
+		var manager, address, directions *string
+		if err := rows.Scan(&seq, &alias, &branchName, &manager, &address, &directions); err != nil {
 			log.Printf("GetBranchesForSelect scan error: %v", err)
 			return nil, err
 		}
 
+		managerStr := ""
+		if manager != nil {
+			managerStr = *manager
+		}
+
+		addressStr := ""
+		if address != nil {
+			addressStr = *address
+		}
+
+		directionsStr := ""
+		if directions != nil {
+			directionsStr = *directions
+		}
+
+		log.Printf("GetBranchesForSelect - Branch %d (%s): manager='%s', address='%s', directions='%s'", 
+			seq, alias, managerStr, addressStr, directionsStr)
+
 		branches = append(branches, map[string]string{
-			"seq":   fmt.Sprintf("%d", seq),
-			"alias": alias,
-			"name":  branchName,
+			"seq":        fmt.Sprintf("%d", seq),
+			"alias":      alias,
+			"name":       branchName,
+			"manager":    managerStr,
+			"address":    addressStr,
+			"directions": directionsStr,
 		})
 	}
 
