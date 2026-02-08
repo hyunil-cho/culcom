@@ -212,12 +212,13 @@ INSERT INTO `third_party_services` (`name`, `description`, `code_seq`) VALUES
 
 -- 플레이스홀더
 INSERT INTO `placeholders` (`name`, `comment`, `examples`, `value`) VALUES
-('{{고객명}}', '고객의 이름', '홍길동', 'customer.name'),
+('{{  고객명}}'  , '고객의 이름', '홍길동', 'customer.name'),
 ('{{전화번호}}', '고객의 전화번호', '010-1234-5678', 'customer.phone_number'),
 ('{{지점명}}', '소속 지점 이름', '강남지점', 'branch.name'),
 ('{{현재날짜}}', '오늘 날짜', '2026-01-27', 'system.current_date'),
 ('{{현재시간}}', '현재 시각', '14:30', 'system.current_time'),
-('{{현재날짜시간}}', '현재 날짜와 시각', '2026-01-27 14:30', 'system.current_datetime');
+('{{현재날짜시간}}', '현재 날짜와 시각', '2026-01-27 14:30', 'system.current_datetime'),
+('{{예약일자}}', '예약 확정 일시', '2026년 2월 15일 14:30', 'reservation.interview_date');
 
 -- 관리자 계정 (root/root - 평문 저장, 테스트용)
 INSERT INTO `user_info` ('seq',`branch_seq`, `user_id`, `user_password`) VALUES

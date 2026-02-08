@@ -141,7 +141,7 @@ func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 	customerSeqStr := r.FormValue("customer_seq")
 	caller := r.FormValue("caller")
 	interviewDateStr := r.FormValue("interview_date")
-
+	log.Printf("CreateReservationHandler 호출 - customer_seq: %s, caller: %s, interview_date: %s", customerSeqStr, caller, interviewDateStr)
 	// 파라미터 검증
 	customerSeq, callerValue, interviewDate, err := ValidateReservationParams(customerSeqStr, caller, interviewDateStr)
 	if err != nil {

@@ -499,12 +499,27 @@
             updatePreview();
         });
 
-        // 폼 제출 전 확인
+        // 폼 제출 전 확인 모달
         document.getElementById('templateForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // 일단 제출 중지
+            
+            const form = this;
             const action = {{if .IsEdit}}'수정'{{else}}'저장'{{end}};
-            if (!confirm(`템플릿을 ${action}하시겠습니까?`)) {
-                e.preventDefault();
-            }
+            const modalId = 'confirmSubmitModal';
+            
+            ModalManager.createConfirm({
+                id: modalId,
+                title: '💾 템플릿 ' + action,
+                message: `템플릿을 ${action}하시겠습니까?`,
+                confirmText: action,
+                cancelText: '취소',
+                confirmColor: '#667eea',
+                onConfirm: () => {
+                    // 실제 폼 제출
+                    form.submit();
+                }
+            });
+            ModalManager.show(modalId);
         });
     </script>
 </body>

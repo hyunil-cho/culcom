@@ -339,9 +339,6 @@
                 </a>
             </div>
 
-            <!-- 성공 메시지 -->
-            <div id="successMessage" class="success-message"></div>
-
             <!-- 템플릿 그리드 -->
             <div class="templates-grid" id="templatesGrid">
                 {{if .Templates}}
@@ -404,93 +401,117 @@
     <script src="/static/js/pagination-utils.js"></script>
 
     <script>
-        // URL 파라미터로 성공/에러 메시지 표시
+        // URL 파라미터로 성공/에러 메시지 모달 표시
         window.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
             const success = urlParams.get('success');
             const error = urlParams.get('error');
-            const successMessage = document.getElementById('successMessage');
+            
+            let modalId = '';
+            let title = '';
+            let message = '';
+            let confirmColor = '#4caf50';
             
             if (success === 'add') {
-                successMessage.textContent = '✅ 새 템플릿이 성공적으로 추가되었습니다.';
-                successMessage.classList.add('show');
+                modalId = 'successAddModal';
+                title = '✅ 추가 성공';
+                message = '새 템플릿이 성공적으로 추가되었습니다.';
             } else if (success === 'edit') {
-                successMessage.textContent = '✅ 템플릿이 성공적으로 수정되었습니다.';
-                successMessage.classList.add('show');
+                modalId = 'successEditModal';
+                title = '✅ 수정 성공';
+                message = '템플릿이 성공적으로 수정되었습니다.';
             } else if (success === 'delete') {
-                successMessage.textContent = '✅ 템플릿이 성공적으로 삭제되었습니다.';
-                successMessage.classList.add('show');
+                modalId = 'successDeleteModal';
+                title = '✅ 삭제 성공';
+                message = '템플릿이 성공적으로 삭제되었습니다.';
             } else if (success === 'default') {
-                successMessage.textContent = '⭐ 기본 템플릿이 성공적으로 설정되었습니다.';
-                successMessage.classList.add('show');
+                modalId = 'successDefaultModal';
+                title = '⭐ 설정 완료';
+                message = '기본 템플릿이 성공적으로 설정되었습니다.';
             } else if (error === 'add') {
-                successMessage.textContent = '❌ 템플릿 추가에 실패했습니다.';
-                successMessage.style.background = '#ffebee';
-                successMessage.style.borderColor = '#f44336';
-                successMessage.style.color = '#c62828';
-                successMessage.classList.add('show');
+                modalId = 'errorAddModal';
+                title = '❌ 추가 실패';
+                message = '템플릿 추가에 실패했습니다.';
+                confirmColor = '#f44336';
             } else if (error === 'edit') {
-                successMessage.textContent = '❌ 템플릿 수정에 실패했습니다.';
-                successMessage.style.background = '#ffebee';
-                successMessage.style.borderColor = '#f44336';
-                successMessage.style.color = '#c62828';
-                successMessage.classList.add('show');
+                modalId = 'errorEditModal';
+                title = '❌ 수정 실패';
+                message = '템플릿 수정에 실패했습니다.';
+                confirmColor = '#f44336';
             } else if (error === 'invalid_id') {
-                successMessage.textContent = '❌ 잘못된 템플릿 ID입니다.';
-                successMessage.style.background = '#ffebee';
-                successMessage.style.borderColor = '#f44336';
-                successMessage.style.color = '#c62828';
-                successMessage.classList.add('show');
+                modalId = 'errorInvalidIdModal';
+                title = '❌ 오류';
+                message = '잘못된 템플릿 ID입니다.';
+                confirmColor = '#f44336';
             } else if (error === 'set_default_failed') {
-                successMessage.textContent = '❌ 기본 템플릿 설정에 실패했습니다.';
-                successMessage.style.background = '#ffebee';
-                successMessage.style.borderColor = '#f44336';
-                successMessage.style.color = '#c62828';
-                successMessage.classList.add('show');
+                modalId = 'errorDefaultModal';
+                title = '❌ 설정 실패';
+                message = '기본 템플릿 설정에 실패했습니다.';
+                confirmColor = '#f44336';
             } else if (error === 'delete_failed') {
-                successMessage.textContent = '❌ 템플릿 삭제에 실패했습니다.';
-                successMessage.style.background = '#ffebee';
-                successMessage.style.borderColor = '#f44336';
-                successMessage.style.color = '#c62828';
-                successMessage.classList.add('show');
+                modalId = 'errorDeleteModal';
+                title = '❌ 삭제 실패';
+                message = '템플릿 삭제에 실패했습니다.';
+                confirmColor = '#f44336';
             }
             
-            if (success || error) {
-                setTimeout(function() {
-                    successMessage.classList.remove('show');
-                    // 스타일 초기화
-                    successMessage.style.background = '#e8f5e9';
-                    successMessage.style.borderColor = '#4caf50';
-                    successMessage.style.color = '#2e7d32';
-                }, 3000);
-                
-                // URL에서 파라미터 제거
-                window.history.replaceState({}, '', '/message-templates');
+            if (modalId) {
+                ModalManager.createAlert({
+                    id: modalId,
+                    title: title,
+                    message: message,
+                    confirmColor: confirmColor,
+                    onConfirm: () => {
+                        // 모달 확인 시 URL에서 파라미터 제거
+                        window.history.replaceState({}, '', '/message-templates');
+                    }
+                });
+                ModalManager.show(modalId);
             }
         });
 
         // 템플릿 삭제
         function deleteTemplate(id, name) {
-            if (confirm(`"${name}" 템플릿을 정말 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
-                // 폼 생성 및 제출
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '/message-templates/delete?id=' + id;
-                document.body.appendChild(form);
-                form.submit();
-            }
+            const modalId = 'deleteTemplateModal';
+            ModalManager.createConfirm({
+                id: modalId,
+                title: '🗑️ 템플릿 삭제',
+                message: `<strong>"${name}"</strong> 템플릿을 정말 삭제하시겠습니까?<br><br><span style="color: #e74c3c; font-weight: 600;">이 작업은 되돌릴 수 없습니다.</span>`,
+                confirmText: '삭제',
+                cancelText: '취소',
+                confirmColor: '#f44336',
+                onConfirm: () => {
+                    // 폼 생성 및 제출
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/message-templates/delete?id=' + id;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+            ModalManager.show(modalId);
         }
 
         // 기본값으로 설정
         function setAsDefault(id, name) {
-            if (confirm(`"${name}" 템플릿을 기본값으로 설정하시겠습니까?\n\n기존 기본값은 자동으로 해제됩니다.`)) {
-                // 폼 생성 및 제출
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '/message-templates/set-default?id=' + id;
-                document.body.appendChild(form);
-                form.submit();
-            }
+            const modalId = 'setDefaultModal';
+            ModalManager.createConfirm({
+                id: modalId,
+                title: '⭐ 기본 템플릿 설정',
+                message: `<strong>"${name}"</strong> 템플릿을 기본값으로 설정하시겠습니까?<br><br><span style="color: #666;">기존 기본값은 자동으로 해제됩니다.</span>`,
+                confirmText: '설정',
+                cancelText: '취소',
+                confirmColor: '#4caf50',
+                onConfirm: () => {
+                    // 폼 생성 및 제출
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/message-templates/set-default?id=' + id;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+            ModalManager.show(modalId);
         }
 
         // 페이지네이션 렌더링
