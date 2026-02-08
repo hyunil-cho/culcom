@@ -38,7 +38,7 @@ CREATE TABLE `customers` (
   `createdDate` datetime NOT NULL DEFAULT current_timestamp() COMMENT '고객 추가 일시',
   `lastUpdateDate` datetime DEFAULT NULL ON UPDATE current_timestamp() COMMENT '고객 수정 일시',
   `call_count` int(10) unsigned DEFAULT 0,
-  `status` ENUM('신규', '예약확정', '전화상거절', '진행중') NOT NULL DEFAULT '신규' COMMENT '고객 상태',
+  `status` ENUM('신규', '예약확정', '전화상거절', '진행중', '콜수초과') NOT NULL DEFAULT '신규' COMMENT '고객 상태',
   PRIMARY KEY (`seq`),
   KEY `customers_branch_seq_IDX` (`branch_seq`) USING BTREE,
   KEY `customers_phone_number_IDX` (`phone_number`) USING BTREE,

@@ -13,8 +13,8 @@ func InsertCustomer(branchSeq int, name, phoneNumber, comment string) (int64, er
 	// 고객 INSERT
 	query := `
 		INSERT INTO customers 
-			(branch_seq, name, phone_number, comment, commercial_name, ad_source, createdDate, call_count)
-		VALUES (?, ?, ?, ?, '-', 'walk_in', NOW(), 0)
+			(branch_seq, name, phone_number, comment, commercial_name, ad_source, createdDate, call_count, status)
+		VALUES (?, ?, ?, ?, '-', 'walk_in', NOW(), 0, '신규')
 	`
 
 	var commentVal interface{}
@@ -218,47 +218,6 @@ func UpdateCustomerComment(customerSeq int, comment string) error {
 
 	log.Printf("[Customer] 코멘트 업데이트 완료 - CustomerSeq: %d\n", customerSeq)
 	return nil
-}
-
-// IncrementCallCount - 고객 통화 횟수 증가
-// 파라미터: customerSeq - 고객 seq
-// 반환: 업데이트된 call_count, lastUpdateDate, 에러
-func IncrementCallCount(customerSeq int) (int, string, error) {
-	// 단일 쿼리로 call_count 증가 및 상태 업데이트 (데드락 방지)
-	query := `
-		UPDATE customers 
-		SET 
-			call_count = call_count + 1,
-			lastUpdateDate = NOW(),
-			status = CASE 
-				WHEN call_count + 1 >= 5 THEN '콜수초과'
-				ELSE status
-			END
-		WHERE seq = ?
-	`
-
-	_, err := DB.Exec(query, customerSeq)
-	if err != nil {
-		log.Printf("IncrementCallCount - update error: %v", err)
-		return 0, "", err
-	}
-
-	// 업데이트된 call_count와 lastUpdateDate 조회
-	var callCount int
-	var lastUpdateDate string
-	selectQuery := `SELECT call_count, DATE_FORMAT(lastUpdateDate, '%Y-%m-%d %H:%i') FROM customers WHERE seq = ?`
-	err = DB.QueryRow(selectQuery, customerSeq).Scan(&callCount, &lastUpdateDate)
-	if err != nil {
-		log.Printf("IncrementCallCount - select error: %v", err)
-		return 0, "", err
-	}
-
-	if callCount >= 5 {
-		log.Printf("[Customer] 콜 횟수 5회 초과 - 상태를 '콜수초과'로 변경 - CustomerSeq: %d\n", customerSeq)
-	}
-
-	log.Printf("[Customer] 통화 횟수 증가 완료 - CustomerSeq: %d, CallCount: %d, LastUpdate: %s\n", customerSeq, callCount, lastUpdateDate)
-	return callCount, lastUpdateDate, nil
 }
 
 // UpdateCustomerName - 고객 이름 업데이트
@@ -564,60 +523,82 @@ func GetCallerStats(branchSeq int, period string) ([]CallerStats, error) {
 	return stats, nil
 }
 
-// InsertCallerSelection - CALLER 선택 이력 추가
-func InsertCallerSelection(customerID, branchSeq int, caller string) error {
-	log.Printf("[Customer] InsertCallerSelection 호출 - CustomerID: %d, BranchSeq: %d, Caller: %s\n", customerID, branchSeq, caller)
+// ProcessCallWithCallerSelection - CALLER 선택 이력 추가 + 통화 횟수 증가 (트랜잭션)
+// caller 선택과 call_count 증가를 하나의 트랜잭션으로 처리
+func ProcessCallWithCallerSelection(customerID, branchSeq int, caller string) (int, string, error) {
+	log.Printf("[Customer] ProcessCallWithCallerSelection 호출 - CustomerID: %d, BranchSeq: %d, Caller: %s\n", customerID, branchSeq, caller)
 
 	// 트랜잭션 시작
 	tx, err := DB.Begin()
 	if err != nil {
-		log.Printf("InsertCallerSelection - transaction begin error: %v", err)
-		return err
+		log.Printf("ProcessCallWithCallerSelection - transaction begin error: %v", err)
+		return 0, "", err
 	}
 	defer tx.Rollback()
 
 	// 1. CALLER 선택 이력 저장
-	query := `
+	historyQuery := `
 		INSERT INTO caller_selection_history 
 			(customer_id, caller, branch_seq, selected_date)
 		VALUES (?, ?, ?, NOW())
 	`
-
-	_, err = tx.Exec(query, customerID, caller, branchSeq)
+	_, err = tx.Exec(historyQuery, customerID, caller, branchSeq)
 	if err != nil {
-		log.Printf("InsertCallerSelection - insert error: %v", err)
-		return err
+		log.Printf("ProcessCallWithCallerSelection - insert history error: %v", err)
+		return 0, "", err
 	}
 
-	// 2. 고객 상태를 '진행중'으로 업데이트
-	// 단, '예약확정', '전화상거절', '콜수초과' 상태는 변경하지 않음
+	// 2. 통화 횟수 증가 및 상태 업데이트
+	// - call_count 증가
+	// - lastUpdateDate 업데이트
+	// - call_count >= 5이면 상태를 '콜수초과'로 변경
+	// - call_count < 5이고 현재 상태가 특수 상태가 아니면 '진행중'으로 변경
 	updateQuery := `
 		UPDATE customers 
-		SET status = '진행중' 
-		WHERE seq = ? 
-		AND status NOT IN ('예약확정', '전화상거절', '콜수초과')
+		SET 
+			call_count = call_count + 1,
+			lastUpdateDate = NOW(),
+			status = CASE 
+				WHEN call_count + 1 >= 5 THEN '콜수초과'
+				WHEN status NOT IN ('예약확정', '전화상거절', '콜수초과') THEN '진행중'
+				ELSE status
+			END
+		WHERE seq = ?
 	`
 	result, err := tx.Exec(updateQuery, customerID)
 	if err != nil {
-		log.Printf("InsertCallerSelection - failed to update customer status: %v", err)
-		return err
+		log.Printf("ProcessCallWithCallerSelection - update customer error: %v", err)
+		return 0, "", err
 	}
 
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
-		log.Printf("[Customer] InsertCallerSelection - 상태 변경 제외 (이미 확정된 상태) - CustomerID: %d\n", customerID)
-	} else {
-		log.Printf("[Customer] InsertCallerSelection - 상태를 '진행중'으로 변경 - CustomerID: %d\n", customerID)
+		log.Printf("ProcessCallWithCallerSelection - no rows affected for customer: %d", customerID)
+		return 0, "", err
+	}
+
+	// 3. 업데이트된 call_count와 lastUpdateDate 조회
+	var callCount int
+	var lastUpdateDate string
+	selectQuery := `SELECT call_count, DATE_FORMAT(lastUpdateDate, '%Y-%m-%d %H:%i') FROM customers WHERE seq = ?`
+	err = tx.QueryRow(selectQuery, customerID).Scan(&callCount, &lastUpdateDate)
+	if err != nil {
+		log.Printf("ProcessCallWithCallerSelection - select error: %v", err)
+		return 0, "", err
 	}
 
 	// 트랜잭션 커밋
 	if err = tx.Commit(); err != nil {
-		log.Printf("InsertCallerSelection - transaction commit error: %v", err)
-		return err
+		log.Printf("ProcessCallWithCallerSelection - transaction commit error: %v", err)
+		return 0, "", err
 	}
 
-	log.Printf("[Customer] InsertCallerSelection 완료\n")
-	return nil
+	if callCount >= 5 {
+		log.Printf("[Customer] 콜 횟수 5회 초과 - 상태를 '콜수초과'로 변경 - CustomerSeq: %d\n", customerID)
+	}
+
+	log.Printf("[Customer] ProcessCallWithCallerSelection 완료 - CustomerSeq: %d, CallCount: %d, LastUpdate: %s\n", customerID, callCount, lastUpdateDate)
+	return callCount, lastUpdateDate, nil
 }
 
 // GetCallerSelectionCount - 기간별 CALLER 선택 횟수 조회

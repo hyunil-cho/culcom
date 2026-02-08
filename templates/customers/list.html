@@ -737,37 +737,25 @@ function confirmCallerSelection() {
     
     console.log(`Customer ${customerId}: Selected caller ${letter}`);
     
-    // CALLER 선택 이력 저장
-    const callerFormData = new FormData();
-    callerFormData.append('customer_seq', customerId);
-    callerFormData.append('caller', letter);
-    
-    fetch('/api/customers/select-caller', {
-        method: 'POST',
-        body: callerFormData
-    })
-    .then(response => {
-        if (response.ok) {
-            console.log(`Caller selection recorded: ${letter} for customer ${customerId}`);
-        } else {
-            alert('Failed to record caller selection on server.'+response.json());
-        }
-    })
-    .catch(error => {
-        console.error('Caller selection error:', error);
-    });
-    
-    // 서버에 call_count 증가 요청
+    // 통합 API 호출: CALLER 선택 이력 저장 + 통화 횟수 증가 (트랜잭션)
     const formData = new FormData();
     formData.append('customer_seq', customerId);
+    formData.append('caller', letter);
     
-    fetch('/api/customers/increment-call', {
+    fetch('/api/customers/process-call', {
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('통화 처리 실패');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
+            console.log(`통화 처리 완료 - Caller: ${letter}, CallCount: ${data.call_count}`);
+            
             // UI에서 call_count 업데이트
             const callCountElement = document.getElementById(`call-count-${customerId}`);
             if (callCountElement) {
@@ -788,8 +776,6 @@ function confirmCallerSelection() {
                 }
             }
             
-            console.log(`Call count updated: ${data.call_count}, Last update: ${data.last_update_date}`);
-            
             // 처리중 필터에서 call_count가 5 이상이면 행 제거
             const currentFilter = '{{.CurrentFilter}}';
             if (currentFilter === 'new' && data.call_count >= 5) {
@@ -804,13 +790,26 @@ function confirmCallerSelection() {
                     }
                 }
             }
+            
+            // 성공 시 모달 닫기
+            document.getElementById('callerConfirmModal').style.display = 'none';
         } else {
-            console.error('Failed to increment call count');
+            throw new Error(data.message || '통화 처리 실패');
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('통화 횟수 업데이트 중 오류가 발생했습니다.');
+        console.error('통화 처리 오류:', error);
+        alert('통화 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+        
+        // 실패 시 UI 상태 원복
+        if (buttonElement) {
+            buttonElement.classList.remove('selected');
+        }
+        const phoneCell = document.getElementById(`phone-${customerId}`);
+        if (phoneCell) {
+            phoneCell.classList.remove('phone-visible');
+            phoneCell.classList.add('phone-hidden');
+        }
     })
     .finally(() => {
         // 버튼 재활성화
@@ -819,9 +818,6 @@ function confirmCallerSelection() {
         confirmBtn.style.cursor = 'pointer';
         confirmBtn.textContent = originalText;
     });
-    
-    // 모달 닫기
-    document.getElementById('callerConfirmModal').style.display = 'none';
 }
 
 // CALLER 선택 취소

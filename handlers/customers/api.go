@@ -57,19 +57,20 @@ func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// IncrementCallCountHandler godoc
-// @Summary      고객 통화 횟수 증가
-// @Description  고객의 통화 횟수를 1 증가시킵니다
+// ProcessCallHandler godoc
+// @Summary      통화 처리 (CALLER 선택 + 통화 횟수 증가)
+// @Description  CALLER 선택 이력을 저장하고 통화 횟수를 증가시킵니다 (트랜잭션)
 // @Tags         customers
 // @Accept       x-www-form-urlencoded
 // @Produce      json
 // @Param        customer_seq  formData  string  true  "고객 시퀀스"
+// @Param        caller        formData  string  true  "CALLER 문자 (A-Z)"
 // @Success      200  {object}  map[string]interface{}  "성공"
 // @Failure      400  {string}  string  "잘못된 요청"
 // @Failure      500  {string}  string  "서버 오류"
 // @Security     SessionAuth
-// @Router       /customers/increment-call [post]
-func IncrementCallCountHandler(w http.ResponseWriter, r *http.Request) {
+// @Router       /customers/process-call [post]
+func ProcessCallHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -77,28 +78,38 @@ func IncrementCallCountHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 요청 파라미터 가져오기
 	customerSeqStr := r.FormValue("customer_seq")
+	caller := r.FormValue("caller")
+	branchSeq := middleware.GetSelectedBranch(r)
 
 	// 파라미터 검증
 	customerSeq, err := ValidateCustomerSeq(customerSeqStr)
 	if err != nil {
 		log.Printf("customer_seq 검증 실패: %v", err)
-		http.Error(w, "Invalid customer ID", http.StatusBadRequest)
+		utils.JSONError(w, http.StatusBadRequest, "Invalid customer ID")
 		return
 	}
 
-	// 통화 횟수 증가
-	callCount, lastUpdateDate, err := database.IncrementCallCount(customerSeq)
-	if err != nil {
-		log.Printf("통화 횟수 증가 오류: %v", err)
-		http.Error(w, "Failed to increment call count", http.StatusInternalServerError)
+	if caller == "" {
+		utils.JSONError(w, http.StatusBadRequest, "Caller is required")
 		return
 	}
+
+	// CALLER 선택 이력 저장 + 통화 횟수 증가 (트랜잭션)
+	callCount, lastUpdateDate, err := database.ProcessCallWithCallerSelection(customerSeq, branchSeq, caller)
+	if err != nil {
+		log.Printf("통화 처리 오류: %v", err)
+		utils.JSONError(w, http.StatusInternalServerError, "Failed to process call")
+		return
+	}
+
+	log.Printf("통화 처리 완료 - CustomerSeq: %d, Caller: %s, CallCount: %d", customerSeq, caller, callCount)
 
 	// 성공 응답
 	utils.JSONSuccess(w, map[string]interface{}{
 		"success":          true,
 		"call_count":       callCount,
 		"last_update_date": lastUpdateDate,
+		"message":          "통화 처리가 완료되었습니다",
 	})
 }
 
@@ -321,45 +332,6 @@ func GetSMSSenderNumbersHandler(w http.ResponseWriter, r *http.Request) {
 	utils.JSONSuccess(w, map[string]interface{}{
 		"isActive":     config.IsActive,
 		"senderPhones": config.SenderPhones,
-	})
-}
-
-// SelectCallerHandler - CALLER 선택 API
-func SelectCallerHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// 요청 파라미터 가져오기
-	customerSeqStr := r.FormValue("customer_seq")
-	caller := r.FormValue("caller")
-	branchSeq := middleware.GetSelectedBranch(r)
-
-	// 파라미터 검증
-	customerSeq, err := ValidateCustomerSeq(customerSeqStr)
-	if err != nil {
-		log.Printf("customer_seq 검증 실패: %v", err)
-		utils.JSONError(w, http.StatusBadRequest, "Invalid customer ID")
-		return
-	}
-
-	if caller == "" {
-		utils.JSONError(w, http.StatusBadRequest, "Caller is required")
-		return
-	}
-
-	// CALLER 선택 이력 저장
-	err = database.InsertCallerSelection(customerSeq, branchSeq, caller)
-	if err != nil {
-		log.Printf("CALLER 선택 이력 저장 오류: %v", err)
-		utils.JSONError(w, http.StatusInternalServerError, "Failed to record caller selection")
-		return
-	}
-
-	log.Printf("CALLER 선택 완료 - CustomerSeq: %d, Caller: %s", customerSeq, caller)
-	utils.JSONSuccess(w, map[string]interface{}{
-		"message": "CALLER 선택이 기록되었습니다",
 	})
 }
 

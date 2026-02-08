@@ -14,7 +14,20 @@ func JSONResponse(w http.ResponseWriter, statusCode int, data interface{}) error
 
 // JSONSuccess - 성공 응답을 작성하는 헬퍼 함수
 func JSONSuccess(w http.ResponseWriter, data interface{}) error {
-	return JSONResponse(w, http.StatusOK, data)
+	// data가 map[string]interface{} 타입인지 확인
+	if dataMap, ok := data.(map[string]interface{}); ok {
+		// success 키가 없으면 추가
+		if _, exists := dataMap["success"]; !exists {
+			dataMap["success"] = true
+		}
+		return JSONResponse(w, http.StatusOK, dataMap)
+	}
+	
+	// map이 아닌 경우, success 키와 함께 래핑
+	return JSONResponse(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"data":    data,
+	})
 }
 
 // JSONError - 에러 응답을 작성하는 헬퍼 함수
