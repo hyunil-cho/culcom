@@ -9,8 +9,8 @@ import (
 // 파라미터: branchSeq - 지점 seq, customerSeq - 고객 seq, userSeq - 사용자 seq, caller - 호출자 구분, interviewDate - 상담 일시
 // 반환: 생성된 예약 ID, 에러
 func CreateReservation(branchSeq, customerSeq, userSeq int, caller string, interviewDate time.Time) (int64, error) {
-	log.Printf("[Reservation] CreateReservation 호출 - BranchSeq: %d, CustomerSeq: %d, UserSeq: %d, Caller: %s, InterviewDate: %v\n",
-		branchSeq, customerSeq, userSeq, caller, interviewDate)
+	log.Printf("[Reservation] CreateReservation 호출 - BranchSeq: %d, CustomerSeq: %d, UserSeq: %d, Caller: %s, InterviewDate: %v (Location: %s)\n",
+		branchSeq, customerSeq, userSeq, caller, interviewDate, interviewDate.Location())
 
 	// 트랜잭션 시작
 	tx, err := DB.Begin()
@@ -24,6 +24,10 @@ func CreateReservation(branchSeq, customerSeq, userSeq int, caller string, inter
 	// - Commit 실패 시: Rollback 실행
 	defer tx.Rollback()
 
+	// 한국 시간대로 포맷팅 (time.Time을 직접 전달하면 UTC로 변환되므로)
+	interviewDateStr := interviewDate.Format("2006-01-02 15:04:05")
+	log.Printf("[Reservation] DB 저장용 날짜 문자열: %s\n", interviewDateStr)
+
 	// 1. 예약 정보 생성
 	query := `
 		INSERT INTO reservation_info 
@@ -31,7 +35,7 @@ func CreateReservation(branchSeq, customerSeq, userSeq int, caller string, inter
 		VALUES (?, ?, ?, ?, ?, CURDATE(), CURDATE())
 	`
 
-	result, err := tx.Exec(query, branchSeq, customerSeq, userSeq, caller, interviewDate)
+	result, err := tx.Exec(query, branchSeq, customerSeq, userSeq, caller, interviewDateStr)
 	if err != nil {
 		log.Printf("CreateReservation - insert error: %v", err)
 		return 0, err

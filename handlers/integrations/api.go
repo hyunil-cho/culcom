@@ -316,8 +316,14 @@ func CreateCalendarEvent(branchSeq int, req CreateCalendarEventRequest) (string,
 		req.Duration = 60 // 기본 60분
 	}
 
-	// 인터뷰 일시 파싱
-	interviewTime, err := time.Parse("2006-01-02 15:04:05", req.InterviewDate)
+	// 한국 시간대 로드
+	loc, err := time.LoadLocation("Asia/Seoul")
+	if err != nil {
+		return "", fmt.Errorf("시간대 로드 실패: %v", err)
+	}
+
+	// 인터뷰 일시 파싱 (한국 시간으로)
+	interviewTime, err := time.ParseInLocation("2006-01-02 15:04:05", req.InterviewDate, loc)
 	if err != nil {
 		return "", fmt.Errorf("날짜 형식이 올바르지 않습니다")
 	}
@@ -363,6 +369,10 @@ func CreateCalendarEvent(branchSeq int, req CreateCalendarEventRequest) (string,
 
 	// Google Calendar "Add to Calendar" URL 생성
 	// 형식: https://calendar.google.com/calendar/render?action=TEMPLATE&text=TITLE&dates=START/END&details=DESCRIPTION
+
+	// 디버깅 로그
+	log.Printf("[Calendar] 파싱된 인터뷰 시간 (한국): %s (Location: %s)", interviewTime.Format("2006-01-02 15:04:05"), interviewTime.Location())
+	log.Printf("[Calendar] UTC로 변환: %s", interviewTime.UTC().Format("2006-01-02 15:04:05"))
 
 	// 시간 형식: YYYYMMDDTHHMMSSZ (UTC)
 	startTimeStr := interviewTime.UTC().Format("20060102T150405Z")

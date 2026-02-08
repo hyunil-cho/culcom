@@ -50,8 +50,14 @@ func ValidateReservationParams(customerSeqStr, caller, interviewDateStr string) 
 		return 0, "", time.Time{}, fmt.Errorf("caller가 비어있음")
 	}
 
-	// 날짜 파싱 및 검증
-	interviewDate, err := time.Parse("2006-01-02T15:04:05", interviewDateStr)
+	// 한국 시간대 로드
+	loc, err := time.LoadLocation("Asia/Seoul")
+	if err != nil {
+		return 0, "", time.Time{}, fmt.Errorf("시간대 로드 실패: %v", err)
+	}
+
+	// 날짜 파싱 및 검증 (한국 시간으로)
+	interviewDate, err := time.ParseInLocation("2006-01-02T15:04:05", interviewDateStr, loc)
 	if err != nil {
 		return 0, "", time.Time{}, fmt.Errorf("날짜 파싱 오류: %v, 입력값: %s", err, interviewDateStr)
 	}

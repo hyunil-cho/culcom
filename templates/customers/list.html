@@ -1421,8 +1421,13 @@ function confirmInterviewDateTime() {
     confirmBtn.textContent = '처리중...';
     
     // Date 객체 생성 후 ISO 8601 형식으로 변환 (2026-01-29T14:30:00)
-    const dateObj = new Date(parsedDate.year, parsedDate.month - 1, parsedDate.day, parsedDate.hour, parsedDate.minute, 0);
-    const isoDateTime = dateObj.toISOString().slice(0, 19);
+    // toISOString()은 UTC로 변환하므로 사용하지 않고 직접 포맷팅
+    const year = parsedDate.year;
+    const month = String(parsedDate.month).padStart(2, '0');
+    const day = String(parsedDate.day).padStart(2, '0');
+    const hour = String(parsedDate.hour).padStart(2, '0');
+    const minute = String(parsedDate.minute).padStart(2, '0');
+    const isoDateTime = `${year}-${month}-${day}T${hour}:${minute}:00`;
     
     // 1단계: 예약 생성
     const formData = new FormData();
