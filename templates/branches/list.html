@@ -1,25 +1,6 @@
 {{define "branches/list.html"}}
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Title}} - 백오피스</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    
-    <script>
-    // 지점 정보 전역 변수 (페이지 로드 초기에 설정)
-    window.branchInfo = {
-        name: '{{.SelectedBranchName}}',
-        manager: '{{.SelectedBranchManager}}',
-        address: '{{.SelectedBranchAddress}}',
-        directions: '{{.SelectedBranchDirections}}'
-    };
-    console.log('🏢 Branches List - Branch Info Initialized:', window.branchInfo);
-    </script>
-    
-    <script src="/static/js/modal-manager.js"></script>
-</head>
 <body>
     {{template "sidebar" .}}
     

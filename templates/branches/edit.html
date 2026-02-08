@@ -1,12 +1,6 @@
 {{define "branches/edit.html"}}
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Title}} - 백오피스</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
 <body>
     {{template "sidebar" .}}
     
@@ -43,7 +37,7 @@
         </div>
 
         <div class="form-row">
-            <label class="form-label">담당자</label>
+            <label class="form-label">매니저</label>
             <input type="text" class="form-input" name="manager" value="{{.Branch.Manager}}" placeholder="담당자를 입력하세요">
         </div>
 

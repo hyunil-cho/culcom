@@ -1,12 +1,6 @@
 {{define "branches/detail.html"}}
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Title}} - 백오피스</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
 <body>
     {{template "sidebar" .}}
     
@@ -36,7 +30,7 @@
                 <div class="detail-value">{{.Branch.Alias}}</div>
             </div>
             <div class="detail-row">
-                <div class="detail-label">담당자</div>
+                <div class="detail-label">매니저</div>
                 <div class="detail-value">{{.Branch.Manager}}</div>
             </div>
             <div class="detail-row">
