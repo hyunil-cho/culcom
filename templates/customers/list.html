@@ -872,7 +872,7 @@ async function loadSenderPhones() {
     const senderSelect = document.getElementById('textSenderPhone');
     
     try {
-        const response = await fetch('/api/customers/sms-senders', {
+        const response = await fetch('/api/integrations/sms-senders', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -1046,7 +1046,7 @@ async function sendTextMessage() {
     
     // 1단계: SMS 연동 상태 확인
     try {
-        const checkResponse = await fetch('/api/customers/check-sms', {
+        const checkResponse = await fetch('/api/integrations/check-sms', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -1437,16 +1437,20 @@ async function sendCalendarEvent(reservationData) {
                 callCount = parseInt(callCountText.replace('회', '')) || 0;
             }
             
-            // 광고명 가져오기 (테이블의 "광고명" 컬럼)
+            // 광고명 가져오기 (테이블의 "광고명" 컬럼 - 인덱스 7)
             const cells = customerRow.querySelectorAll('td');
-            if (cells.length > 6) {
-                commercialName = cells[6].textContent.trim();
+            if (cells.length > 7) {
+                commercialName = cells[7].textContent.trim();
+                // 빈 값이나 '-'인 경우 빈 문자열로 처리
+                if (commercialName === '-' || commercialName === '') {
+                    commercialName = '';
+                }
             }
             
-            // 광고 출처 가져오기 (테이블의 "광고 출처" 컬럼)
-            if (cells.length > 7) {
-                adSource = cells[7].textContent.trim();
-                if (adSource === '-') {
+            // 광고 출처 가져오기 (테이블의 "지원경로" 컬럼 - 인덱스 8)
+            if (cells.length > 8) {
+                adSource = cells[8].textContent.trim();
+                if (adSource === '-' || adSource === '') {
                     adSource = '';
                 }
             }
@@ -1466,10 +1470,18 @@ async function sendCalendarEvent(reservationData) {
             comment: comment,
             duration: 60,
             caller: caller,
-            call_count: callCount,
-            commercial_name: commercialName,
-            ad_source: adSource
+            call_count: callCount
         };
+        
+        // 광고명이 있을 때만 추가
+        if (commercialName) {
+            eventData.commercial_name = commercialName;
+        }
+        
+        // 광고 출처가 있을 때만 추가
+        if (adSource) {
+            eventData.ad_source = adSource;
+        }
         
         const eventResponse = await fetch('/api/calendar/create-event', {
             method: 'POST',
