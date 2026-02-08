@@ -7,6 +7,7 @@
     <title>{{.Title}} - 백오피스</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="/static/js/template-utils.js"></script>
+    <script src="/static/js/modal-utils.js"></script>
 </head>
 <body>
     {{template "sidebar" .}}
@@ -197,103 +198,10 @@
     </div>
 </div>
 
-<!-- 이름 변경 확인 모달 -->
-<div id="nameChangeConfirmModal" class="modal">
-    <div class="modal-content" style="max-width: 400px;">
-        <div class="modal-header" style="border-bottom: 2px solid #10b981;">
-            <h3>✏️ 고객 이름 변경 확인</h3>
-        </div>
-        <div class="modal-body" style="padding: 2rem;">
-            <div style="text-align: center; margin-bottom: 1.5rem;">
-                <div style="font-size: 1rem; color: #666; margin-bottom: 1rem;">현재 이름</div>
-                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-                    <div id="oldCustomerName" style="font-size: 1.2rem; font-weight: 600; color: #333;"></div>
-                </div>
-                <div style="font-size: 1rem; color: #666; margin-bottom: 1rem;">변경할 이름</div>
-                <div style="background: #d1fae5; padding: 1rem; border-radius: 8px; border: 2px solid #10b981;">
-                    <div id="newCustomerName" style="font-size: 1.2rem; font-weight: 600; color: #10b981;"></div>
-                </div>
-            </div>
-            <div style="text-align: center; color: #666; font-size: 0.95rem;">
-                이름을 변경하시겠습니까?
-            </div>
-        </div>
-        <div style="padding: 1rem 2rem; border-top: 1px solid #e0e0e0; display: flex; gap: 0.75rem;">
-            <button class="btn-secondary" onclick="cancelNameChange()" style="flex: 1; padding: 0.75rem; font-size: 1rem;">취소</button>
-            <button class="btn-primary" onclick="updateCustomerName()" style="flex: 1; padding: 0.75rem; font-size: 1rem; background: #10b981;">확인</button>
-        </div>
-    </div>
-</div>
+<!-- 모달들은 JavaScript로 동적 생성 (modal-utils.js) -->
+<!-- 간단한 확인 모달: deleteCustomer, selectCaller 등에서 동적 생성 -->
 
-<!-- CALLER 선택 확인 모달 -->
-<div id="callerConfirmModal" class="modal">
-    <div class="modal-content" style="max-width: 400px;">
-        <div class="modal-header" style="border-bottom: 2px solid #667eea;">
-            <h3>🔤 CALLER 선택 확인</h3>
-        </div>
-        <div class="modal-body" style="padding: 2rem;">
-            <div style="text-align: center; margin-bottom: 1.5rem;">
-                <div style="font-size: 1.1rem; color: #333; margin-bottom: 1rem;">
-                    <strong id="callerCustomerName" style="color: #667eea; font-size: 1.3rem;"></strong>님의
-                </div>
-                <div style="font-size: 0.95rem; color: #666; margin-bottom: 0.5rem;">선택한 CALLER</div>
-                <div style="background: #f5f3ff; padding: 1.5rem; border-radius: 8px; border: 2px solid #667eea; margin-top: 1rem;">
-                    <div id="callerLetter" style="font-size: 2rem; font-weight: 700; color: #667eea;"></div>
-                </div>
-            </div>
-            <div style="text-align: center; color: #666; font-size: 0.95rem;">
-                이 CALLER로 선택하시겠습니까?
-            </div>
-        </div>
-        <div style="padding: 1rem 2rem; border-top: 1px solid #e0e0e0; display: flex; gap: 0.75rem;">
-            <button class="btn-secondary" onclick="cancelCallerConfirm()" style="flex: 1; padding: 0.75rem; font-size: 1rem;">취소</button>
-            <button class="btn-primary" onclick="confirmCallerSelection()" style="flex: 1; padding: 0.75rem; font-size: 1rem; background: #667eea;">확인</button>
-        </div>
-    </div>
-</div>
-
-<!-- 인터뷰 확정 확인 모달 -->
-<div id="interviewConfirmModal" class="modal">
-    <div class="modal-content" style="max-width: 450px;">
-        <div class="modal-header" style="border-bottom: 2px solid #4a90e2;">
-            <h3>📅 인터뷰 확정 확인</h3>
-        </div>
-        <div class="modal-body" style="padding: 2rem;">
-            <div style="text-align: center; margin-bottom: 1.5rem;">
-                <div style="font-size: 1.1rem; color: #333; margin-bottom: 1rem;">
-                    <strong id="confirmCustomerName" style="color: #4a90e2; font-size: 1.3rem;"></strong>님의
-                </div>
-                <div style="font-size: 0.95rem; color: #666; margin-bottom: 0.5rem;">인터뷰 확정일시</div>
-                <div style="background: #f0f8ff; padding: 1rem; border-radius: 8px; border: 2px solid #4a90e2; margin-top: 1rem;">
-                    <div id="confirmDateTime" style="font-size: 1.2rem; font-weight: 600; color: #333;"></div>
-                </div>
-            </div>
-            <div style="text-align: center; color: #666; font-size: 0.95rem;">
-                위 일시로 확정하시겠습니까?
-            </div>
-        </div>
-        <div style="padding: 1rem 2rem; border-top: 1px solid #e0e0e0; display: flex; gap: 0.75rem;">
-            <button class="btn-secondary" onclick="cancelInterviewConfirm()" style="flex: 1; padding: 0.75rem; font-size: 1rem;">아니오</button>
-            <button class="btn-primary" onclick="confirmInterviewDateTime()" style="flex: 1; padding: 0.75rem; font-size: 1rem;">네</button>
-        </div>
-    </div>
-</div>
-
-<!-- 예약 결과 모달 -->
-<div id="reservationResultModal" class="modal">
-    <div class="modal-content" style="max-width: 400px;">
-        <div class="modal-header" id="resultModalHeader" style="border-bottom: 2px solid #10b981;">
-            <h3 id="resultModalTitle">✅ 예약 완료</h3>
-        </div>
-        <div class="modal-body" style="padding: 2rem; text-align: center;">
-            <div id="resultModalContent" style="font-size: 1rem; color: #333;">
-            </div>
-        </div>
-        <div style="padding: 1rem 2rem; border-top: 1px solid #e0e0e0; text-align: center;">
-            <button class="btn-primary" id="resultModalBtn" onclick="closeReservationResultModal()" style="padding: 0.75rem 2rem; font-size: 1rem; background: #10b981;">확인</button>
-        </div>
-    </div>
-</div>
+<!-- TEXT 모달 (복잡한 폼이 있어 HTML 유지) -->
 
 <!-- 메시지 전송 모달 -->
 <div id="textModal" class="modal">
@@ -696,12 +604,54 @@ function selectCaller(customerId, letter) {
         buttonElement: event.target
     };
     
-    // 모달에 정보 표시
-    document.getElementById('callerCustomerName').textContent = customerName;
-    document.getElementById('callerLetter').textContent = letter;
+    // 동적 모달 생성 (리팩터링: ModalManager 사용)
+    ModalManager.createCustom({
+        id: 'callerConfirmModal',
+        title: '🔤 CALLER 선택 확인',
+        maxWidth: '400px',
+        headerColor: '#667eea',
+        contentBuilder: () => `
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <div style="font-size: 1.1rem; color: #333; margin-bottom: 1rem;">
+                    <strong style="color: #667eea; font-size: 1.3rem;">${customerName}</strong>님의
+                </div>
+                <div style="font-size: 0.95rem; color: #666; margin-bottom: 0.5rem;">선택한 CALLER</div>
+                <div style="background: #f5f3ff; padding: 1.5rem; border-radius: 8px; border: 2px solid #667eea; margin-top: 1rem;">
+                    <div style="font-size: 2rem; font-weight: 700; color: #667eea;">${letter}</div>
+                </div>
+            </div>
+            <div style="text-align: center; color: #666; font-size: 0.95rem;">
+                이 CALLER로 선택하시겠습니까?
+            </div>
+        `,
+        buttons: [
+            {
+                text: '취소',
+                class: 'btn-secondary',
+                onClick: () => {
+                    // 선택 정보 초기화
+                    pendingCallerSelection = {
+                        customerId: null,
+                        customerName: '',
+                        letter: '',
+                        buttonElement: null
+                    };
+                }
+            },
+            {
+                text: '확인',
+                class: 'btn-primary',
+                style: { background: '#667eea' },
+                closeOnClick: false, // 처리 완료 후 수동으로 닫기
+                onClick: (e) => {
+                    confirmCallerSelection(e);
+                }
+            }
+        ]
+    });
     
-    // 모달 열기
-    document.getElementById('callerConfirmModal').style.display = 'flex';
+    // 모달 표시
+    ModalManager.show('callerConfirmModal');
 }
 
 // CALLER 선택 확인
@@ -791,8 +741,8 @@ function confirmCallerSelection() {
                 }
             }
             
-            // 성공 시 모달 닫기
-            document.getElementById('callerConfirmModal').style.display = 'none';
+            // 성공 시 모달 닫기 (리팩터링: ModalManager 사용)
+            ModalManager.hide('callerConfirmModal');
         } else {
             throw new Error(data.message || '통화 처리 실패');
         }
@@ -820,10 +770,10 @@ function confirmCallerSelection() {
     });
 }
 
-// CALLER 선택 취소
+// CALLER 선택 취소 (호환성 유지)
 function cancelCallerConfirm() {
-    // 모달 닫기
-    document.getElementById('callerConfirmModal').style.display = 'none';
+    // 모달 닫기 (리팩터링: ModalManager 사용)
+    ModalManager.hide('callerConfirmModal');
     
     // 선택 정보 초기화
     pendingCallerSelection = {
@@ -1194,7 +1144,7 @@ let pendingInterviewCustomerId = null;
 let pendingInterviewDateTime = null;
 let pendingInterviewCustomerName = null;
 
-// 인터뷰 확정 모달 열기
+// 인터뷰 확정 모달 열기 (리팩터링: ModalManager 사용)
 function openInterviewConfirmModal(customerId) {
     const inputElement = document.getElementById(`interview-${customerId}`);
     const dateTimeText = inputElement.value;
@@ -1219,57 +1169,95 @@ function openInterviewConfirmModal(customerId) {
     pendingInterviewDateTime = dateTimeText;
     pendingInterviewCustomerName = customerName;
     
-    // 확인 모달 표시
-    document.getElementById('confirmCustomerName').textContent = customerName;
-    document.getElementById('confirmDateTime').textContent = parsedDate.formatted;
-    document.getElementById('interviewConfirmModal').style.display = 'flex';
+    // 동적 모달 생성
+    ModalManager.createCustom({
+        id: 'interviewConfirmModal',
+        title: '📅 인터뷰 확정 확인',
+        maxWidth: '450px',
+        headerColor: '#4a90e2',
+        contentBuilder: () => `
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <div style="font-size: 1.1rem; color: #333; margin-bottom: 1rem;">
+                    <strong style="color: #4a90e2; font-size: 1.3rem;">${customerName}</strong>님의
+                </div>
+                <div style="font-size: 0.95rem; color: #666; margin-bottom: 0.5rem;">인터뷰 확정일시</div>
+                <div style="background: #f0f8ff; padding: 1rem; border-radius: 8px; border: 2px solid #4a90e2; margin-top: 1rem;">
+                    <div style="font-size: 1.2rem; font-weight: 600; color: #333;">${parsedDate.formatted}</div>
+                </div>
+            </div>
+            <div style="text-align: center; color: #666; font-size: 0.95rem;">
+                위 일시로 확정하시겠습니까?
+            </div>
+        `,
+        buttons: [
+            {
+                text: '아니오',
+                class: 'btn-secondary',
+                onClick: () => {
+                    // 임시 데이터 초기화
+                    pendingInterviewCustomerId = null;
+                    pendingInterviewDateTime = null;
+                    pendingInterviewCustomerName = null;
+                }
+            },
+            {
+                text: '네',
+                class: 'btn-primary',
+                style: { background: '#4a90e2' },
+                closeOnClick: false, // 처리 완료 후 수동으로 닫기
+                onClick: (e) => {
+                    confirmInterviewDateTime(e);
+                }
+            }
+        ]
+    });
+    
+    // 모달 표시
+    ModalManager.show('interviewConfirmModal');
 }
 
-// 예약 결과 모달 표시
+// 예약 결과 모달 표시 (리팩터링: ModalManager 사용)
 function showReservationResultModal(isSuccess, customerName, message) {
-    const modal = document.getElementById('reservationResultModal');
-    const header = document.getElementById('resultModalHeader');
-    const title = document.getElementById('resultModalTitle');
-    const content = document.getElementById('resultModalContent');
-    const btn = document.getElementById('resultModalBtn');
+    const title = isSuccess ? '✅ 예약 완료' : '❌ 예약 실패';
+    const color = isSuccess ? '#10b981' : '#f44336';
     
-    if (isSuccess) {
-        // 성공 스타일
-        header.style.borderBottomColor = '#10b981';
-        title.textContent = '✅ 예약 완료';
-        btn.style.background = '#10b981';
-        content.innerHTML = `
-            <div style="font-size: 1.1rem; color: #333; margin-bottom: 1rem;">
-                <strong style="color: #10b981; font-size: 1.3rem;">${customerName}</strong>님의
-            </div>
-            <div style="font-size: 1rem; color: #666;">
-                ${message || '예약이 성공적으로 생성되었습니다.'}
-            </div>
-        `;
-    } else {
-        // 실패 스타일
-        header.style.borderBottomColor = '#f44336';
-        title.textContent = '❌ 예약 실패';
-        btn.style.background = '#f44336';
-        content.innerHTML = `
-            <div style="font-size: 1.1rem; color: #333; margin-bottom: 1rem;">
-                <strong style="color: #f44336; font-size: 1.3rem;">${customerName}</strong>님의
-            </div>
-            <div style="font-size: 1rem; color: #666;">
-                예약 생성에 실패했습니다.
-            </div>
-            ${message ? `<div style="margin-top: 1rem; padding: 0.75rem; background: #ffebee; border-radius: 4px; font-size: 0.9rem; color: #c62828;">
+    let contentHTML = `
+        <div style="font-size: 1.1rem; color: #333; margin-bottom: 1rem;">
+            <strong style="color: ${color}; font-size: 1.3rem;">${customerName}</strong>님의
+        </div>
+        <div style="font-size: 1rem; color: #666;">
+            ${isSuccess ? (message || '예약이 성공적으로 생성되었습니다.') : '예약 생성에 실패했습니다.'}
+        </div>
+    `;
+    
+    if (!isSuccess && message) {
+        contentHTML += `
+            <div style="margin-top: 1rem; padding: 0.75rem; background: #ffebee; border-radius: 4px; font-size: 0.9rem; color: #c62828;">
                 ${message}
-            </div>` : ''}
+            </div>
         `;
     }
     
-    modal.style.display = 'flex';
+    // 동적 모달 생성
+    ModalManager.createAlert({
+        id: 'reservationResultModal',
+        title: title,
+        message: contentHTML,
+        confirmText: '확인',
+        confirmColor: color,
+        maxWidth: '400px',
+        onConfirm: () => {
+            closeReservationResultModal();
+        }
+    });
+    
+    // 모달 표시
+    ModalManager.show('reservationResultModal');
 }
 
-// 예약 결과 모달 닫기
+// 예약 결과 모달 닫기 (리팩터링: ModalManager 사용)
 function closeReservationResultModal() {
-    document.getElementById('reservationResultModal').style.display = 'none';
+    ModalManager.hide('reservationResultModal');
     
     // 성공한 경우에만 행 제거 처리
     if (pendingInterviewCustomerId) {
@@ -1295,10 +1283,10 @@ function closeReservationResultModal() {
     }
 }
 
-// 인터뷰 확정 취소
+// 인터뷰 확정 취소 (호환성 유지)
 function cancelInterviewConfirm() {
-    // 모달 닫기
-    document.getElementById('interviewConfirmModal').style.display = 'none';
+    // 모달 닫기 (리팩터링: ModalManager 사용)
+    ModalManager.hide('interviewConfirmModal');
     
     // 임시 데이터 초기화
     pendingInterviewCustomerId = null;
@@ -1374,8 +1362,8 @@ function confirmInterviewDateTime() {
             // 입력 필드 초기화
             document.getElementById(`interview-${pendingInterviewCustomerId}`).value = '';
             
-            // 확인 모달 닫기
-            document.getElementById('interviewConfirmModal').style.display = 'none';
+            // 확인 모달 닫기 (리팩터링: ModalManager 사용)
+            ModalManager.hide('interviewConfirmModal');
             
             // 성공 모달 표시
             showReservationResultModal(true, pendingInterviewCustomerName);
@@ -1386,8 +1374,8 @@ function confirmInterviewDateTime() {
             console.log('Reservation failed');
             const errorMsg = result.data.error || result.data.message || '알 수 없는 오류';
             
-            // 확인 모달 닫기
-            document.getElementById('interviewConfirmModal').style.display = 'none';
+            // 확인 모달 닫기 (리팩터링: ModalManager 사용)
+            ModalManager.hide('interviewConfirmModal');
             
             // 실패 모달 표시
             showReservationResultModal(false, pendingInterviewCustomerName, errorMsg);
@@ -1725,51 +1713,74 @@ function toggleSearchInput(searchType) {
     }
 }
 
-// 고객 삭제
+// 고객 삭제 (리팩터링: ModalManager 사용)
 function deleteCustomer(customerId, customerName) {
-    if (!confirm(`"${customerName}" 고객을 정말 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
-        return;
-    }
-    
-    const formData = new FormData();
-    formData.append('customer_seq', customerId);
-    
-    fetch('/api/customers/delete', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('삭제 실패');
+    // 동적 모달 생성
+    ModalManager.createConfirm({
+        id: 'deleteCustomerModal',
+        title: '🗑️ 고객 삭제',
+        message: `<strong>"${customerName}"</strong> 고객을 정말 삭제하시겠습니까?<br><br><span style="color: #e74c3c; font-weight: 600;">이 작업은 되돌릴 수 없습니다.</span>`,
+        confirmText: '삭제',
+        cancelText: '취소',
+        confirmColor: '#e74c3c',
+        maxWidth: '450px',
+        onConfirm: () => {
+            // 삭제 요청
+            const formData = new FormData();
+            formData.append('customer_seq', customerId);
+            
+            fetch('/api/customers/delete', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('삭제 실패');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // 성공 메시지 표시
+                const successMessage = document.getElementById('successMessage');
+                successMessage.textContent = '✅ 고객이 성공적으로 삭제되었습니다.';
+                successMessage.style.display = 'block';
+                successMessage.style.background = '#e8f5e9';
+                successMessage.style.borderColor = '#4caf50';
+                successMessage.style.color = '#2e7d32';
+                
+                // 해당 행 제거
+                const row = document.querySelector(`tr[data-customer-id="${customerId}"]`);
+                if (row) {
+                    row.remove();
+                    // 전체 카운트 업데이트
+                    const currentCount = parseInt(document.querySelector('.table-header span[style*="color: #4a90e2"]').textContent);
+                    document.querySelector('.table-header span[style*="color: #4a90e2"]').textContent = currentCount - 1;
+                }
+                
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 3000);
+            })
+            .catch(error => {
+                // 에러 알림 모달
+                ModalManager.createAlert({
+                    id: 'deleteErrorModal',
+                    title: '❌ 삭제 실패',
+                    message: `고객 삭제에 실패했습니다: ${error.message}`,
+                    confirmColor: '#e74c3c'
+                });
+                ModalManager.show('deleteErrorModal');
+            });
+        },
+        onCancel: () => {
+            console.log('삭제 취소됨');
         }
-        return response.json();
-    })
-    .then(data => {
-        // 성공 메시지 표시
-        const successMessage = document.getElementById('successMessage');
-        successMessage.textContent = '✅ 고객이 성공적으로 삭제되었습니다.';
-        successMessage.style.display = 'block';
-        successMessage.style.background = '#e8f5e9';
-        successMessage.style.borderColor = '#4caf50';
-        successMessage.style.color = '#2e7d32';
-        
-        // 해당 행 제거
-        const row = document.querySelector(`tr[data-customer-id="${customerId}"]`);
-        if (row) {
-            row.remove();
-            // 전체 카운트 업데이트
-            const currentCount = parseInt(document.querySelector('.table-header span[style*="color: #4a90e2"]').textContent);
-            document.querySelector('.table-header span[style*="color: #4a90e2"]').textContent = currentCount - 1;
-        }
-        
-        setTimeout(() => {
-            successMessage.style.display = 'none';
-        }, 3000);
-    })
-    .catch(error => {
-        alert('고객 삭제에 실패했습니다: ' + error.message);
     });
+    
+    // 모달 표시
+    ModalManager.show('deleteCustomerModal');
 }
+
 
 </script>
 
