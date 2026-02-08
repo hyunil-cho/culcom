@@ -51,6 +51,21 @@ function formatDateKorean(date, includeTime = true) {
 }
 
 /**
+ * 한국어 시간 형식으로 포맷팅합니다
+ * @param {string|Date} date - 날짜 객체 또는 문자열
+ * @returns {string} 포맷된 시간 문자열 (예: "오후 2:30")
+ */
+function formatTimeKorean(date) {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    
+    return dateObj.toLocaleString('ko-KR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Seoul'
+    });
+}
+
+/**
  * 선택된 지점명을 가져옵니다
  * @returns {string} 지점명
  */
@@ -152,6 +167,7 @@ function replaceTemplateVariables(template, variables = {}) {
         '{{예약일시}}': variables.reservationDate || '',
         '{{예약날짜}}': variables.reservationDate ? formatDateKorean(variables.reservationDate, false) : '',
         '{{예약시간}}': variables.reservationTime || '',
+        '{{예약일자}}': variables.interviewDate || variables.reservationDate || '',
         
         // 지점 정보
         '{{지점명}}': variables.branchName || branchName,

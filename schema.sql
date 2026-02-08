@@ -218,7 +218,8 @@ INSERT INTO `placeholders` (`name`, `comment`, `examples`, `value`) VALUES
 ('{{현재날짜}}', '오늘 날짜', '2026-01-27', 'system.current_date'),
 ('{{현재시간}}', '현재 시각', '14:30', 'system.current_time'),
 ('{{현재날짜시간}}', '현재 날짜와 시각', '2026-01-27 14:30', 'system.current_datetime'),
-('{{예약일자}}', '예약 확정 일시', '2026년 2월 15일 14:30', 'reservation.interview_date');
+('{{예약일자}}', '예약 확정 일시', '2026년 2월 15일 14:30', 'reservation.interview_date'),
+('{{예약시간}}', '예약 확정 시간만', '오후 2:30', 'reservation.interview_time');
 
 -- 관리자 계정 (root/root - 평문 저장, 테스트용)
 INSERT INTO `user_info` ('seq',`branch_seq`, `user_id`, `user_password`) VALUES

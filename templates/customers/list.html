@@ -880,10 +880,27 @@ function loadTextTemplate() {
     const templateContent = selectedOption.getAttribute('data-content');
     
     if (templateContent) {
+        // 테이블에서 인터뷰 확정일시 가져오기
+        const interviewInput = document.getElementById(`interview-${currentTextCustomerId}`);
+        const interviewDate = interviewInput ? interviewInput.value : '';
+        
+        // 예약 시간만 추출 (interviewDate가 있을 때)
+        let reservationTime = '';
+        if (interviewDate) {
+            // "1월1일오후3시30분" 형식을 파싱해서 시간만 추출
+            const parsed = parseInterviewDateTime(interviewDate);
+            if (parsed) {
+                const dateObj = new Date(parsed.year, parsed.month - 1, parsed.day, parsed.hour, parsed.minute, 0);
+                reservationTime = formatTimeKorean(dateObj);
+            }
+        }
+        
         // 템플릿 변수 치환
         const content = replaceTemplateVariables(templateContent, {
             customerName: currentTextCustomerName,
-            phoneNumber: currentTextCustomerPhone
+            phoneNumber: currentTextCustomerPhone,
+            interviewDate: interviewDate,
+            reservationTime: reservationTime
         });
         
         messageTextarea.value = content;
@@ -1651,10 +1668,23 @@ async function sendReservationSMS(reservationData) {
         }
         
         // 2단계: 템플릿 변수 치환
+        // 서버 날짜 형식("2026-02-15 14:30:00")을 파싱
+        console.log('원본 날짜:', reservationData.interview_date);
+        // 공백을 T로 변경하여 ISO 형식으로 만들기
+        const isoDate = reservationData.interview_date.replace(' ', 'T');
+        const formattedDate = formatDateKorean(isoDate, true);
+        const formattedTime = formatTimeKorean(isoDate);
+        console.log('변환된 날짜:', formattedDate);
+        console.log('변환된 시간:', formattedTime);
+        
         const message = replaceTemplateVariables(smsConfig.template_content, {
             customerName: pendingInterviewCustomerName,
-            reservationDate: reservationData.interview_date
+            reservationDate: formattedDate,
+            interviewDate: formattedDate,
+            reservationTime: formattedTime
         });
+        
+        console.log('메시지 내용:', message);
         
         // 3단계: SMS 발송
         const smsFormData = new FormData();
