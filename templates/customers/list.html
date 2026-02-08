@@ -1540,7 +1540,7 @@ function confirmInterviewDateTime() {
 async function sendCalendarEvent(reservationData) {
     try {
         // 고객 전화번호 가져오기
-        const customerRow = document.querySelector(`3[data-customer-id="${pendingInterviewCustomerId}"]`);
+        const customerRow = document.querySelector(`tr[data-customer-id="${pendingInterviewCustomerId}"]`);
         let customerPhone = '';
         let caller = '';
         let callCount = 0;
