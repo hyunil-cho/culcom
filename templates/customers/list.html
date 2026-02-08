@@ -884,14 +884,14 @@ function loadTextTemplate() {
         const interviewInput = document.getElementById(`interview-${currentTextCustomerId}`);
         const interviewDate = interviewInput ? interviewInput.value : '';
         
-        // 예약 시간만 추출 (interviewDate가 있을 때)
+        // 예약 날짜와 시간 추출 (interviewDate가 있을 때)
         let reservationTime = '';
         if (interviewDate) {
-            // "1월1일오후3시30분" 형식을 파싱해서 시간만 추출
+            // "1월1일오후3시30분" 형식을 파싱해서 날짜+시간 형식으로
             const parsed = parseInterviewDateTime(interviewDate);
             if (parsed) {
                 const dateObj = new Date(parsed.year, parsed.month - 1, parsed.day, parsed.hour, parsed.minute, 0);
-                reservationTime = formatTimeKorean(dateObj);
+                reservationTime = formatDateKorean(dateObj, true);
             }
         }
         
@@ -1673,15 +1673,13 @@ async function sendReservationSMS(reservationData) {
         // 공백을 T로 변경하여 ISO 형식으로 만들기
         const isoDate = reservationData.interview_date.replace(' ', 'T');
         const formattedDate = formatDateKorean(isoDate, true);
-        const formattedTime = formatTimeKorean(isoDate);
-        console.log('변환된 날짜:', formattedDate);
-        console.log('변환된 시간:', formattedTime);
+        console.log('변환된 날짜 (날짜+시간):', formattedDate);
         
         const message = replaceTemplateVariables(smsConfig.template_content, {
             customerName: pendingInterviewCustomerName,
             reservationDate: formattedDate,
             interviewDate: formattedDate,
-            reservationTime: formattedTime
+            reservationTime: formattedDate
         });
         
         console.log('메시지 내용:', message);
