@@ -139,11 +139,18 @@
                 <tr data-last-visit="{{.LastContactDate}}" data-customer-id="{{.ID}}">
                     <td><strong id="call-count-{{.ID}}">{{.CallCount}}회</strong></td>
                     <td>
-                        <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <input type="text" class="customer-name-input" id="name-input-{{.ID}}" value="{{.Name}}" data-original-name="{{.Name}}"
-                                   style="padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1.3rem; font-weight: 700; width: 100px;">
-                            <button onclick="confirmNameChange({{.ID}})" 
-                                    style="padding: 0.4rem 0.7rem; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">수정</button>
+                        <div style="display: flex; flex-direction: column; gap: 0.3rem; align-items: flex-start;">
+                            <!-- 저장된 이름 표시 -->
+                            <div id="name-display-{{.ID}}" style="padding: 0.4rem 0.6rem; background: #f8f9fa; border-radius: 4px; font-size: 1.3rem; font-weight: 700; min-height: 24px; width: 150px; text-align: left;">
+                                <span style="color: #333;">{{.Name}}</span>
+                            </div>
+                            <!-- 이름 입력 -->
+                            <div style="display: flex; gap: 0.3rem; align-items: center; width: 100%;">
+                                <input type="text" class="customer-name-input" id="name-input-{{.ID}}" placeholder="이름 입력" value="" data-original-name="{{.Name}}"
+                                       style="padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; width: 150px;">
+                                <button onclick="confirmNameChange({{.ID}})" 
+                                        style="padding: 0.4rem 0.7rem; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">수정</button>
+                            </div>
                         </div>
                     </td>
                     <td>
@@ -457,8 +464,14 @@ function performNameChange(customerId, oldName, newName, inputEl) {
     .then(data => {
         if (data.ok) {
             // UI 업데이트
-            inputEl.value = newName;
+            inputEl.value = '';  // 입력 필드는 비우기
             inputEl.setAttribute('data-original-name', newName);
+            
+            // display 영역 업데이트
+            const displayEl = document.getElementById(`name-display-${customerId}`);
+            if (displayEl) {
+                displayEl.querySelector('span').textContent = newName;
+            }
             
             ModalManager.createAlert({
                 id: 'nameChangeSuccess',
