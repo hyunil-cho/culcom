@@ -40,10 +40,11 @@ type SMSConfig struct {
 	MaxLength   int
 }
 
-// GoogleOAuthConfig - Google OAuth 설정 구조체
-type GoogleOAuthConfig struct {
+// KakaoOAuthConfig - Kakao OAuth 설정 구조체
+type KakaoOAuthConfig struct {
 	ClientID     string
 	ClientSecret string
+	RedirectURI  string
 }
 
 // SessionConfig - 세션 설정 구조체
@@ -55,10 +56,10 @@ type SessionConfig struct {
 
 // Config - 전체 설정 구조체
 type Config struct {
-	Env         Environment
-	DB          DBConfig
-	Server      ServerConfig
-	SMS         SMSConfig
-	GoogleOAuth GoogleOAuthConfig
-	Session     SessionConfig
+	Env        Environment
+	DB         DBConfig
+	Server     ServerConfig
+	SMS        SMSConfig
+	KakaoOAuth KakaoOAuthConfig
+	Session    SessionConfig
 }

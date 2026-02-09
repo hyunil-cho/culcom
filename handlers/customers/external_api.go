@@ -89,7 +89,7 @@ func ExternalRegisterCustomerHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("지점 조회 성공: branch_seq=%d", branchSeq)
 
 	// 2단계: customers 테이블에 고객 등록
-	customerSeq, err := database.InsertExternalCustomer(branchSeq, req.Name, req.Phone, req.Job, req.AdPlatform, req.AdName)
+	customerSeq, err := database.InsertExternalCustomer(branchSeq, req.Name, req.Phone, req.AdPlatform, req.AdName)
 	if err != nil {
 		log.Printf("고객 등록 실패: %v", err)
 		utils.JSONError(w, http.StatusInternalServerError, "고객 등록에 실패했습니다")

@@ -50,9 +50,10 @@ func Init() error {
 			LMSEndpoint: getEnv("LMS_ENDPOINT", "/send/lms"),
 			MaxLength:   getEnvAsInt("SMS_MAX_LENGTH", 90),
 		},
-		GoogleOAuth: GoogleOAuthConfig{
-			ClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
-			ClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
+		KakaoOAuth: KakaoOAuthConfig{
+			ClientID:     getEnv("KAKAO_CLIENT_ID", ""),
+			ClientSecret: getEnv("KAKAO_CLIENT_SECRET", ""),
+			RedirectURI:  getEnv("KAKAO_REDIRECT_URI", "http://localhost:8080/ad/kakao/callback"),
 		},
 		Session: SessionConfig{
 			SecretKey: getEnv("SESSION_SECRET_KEY", "your-secret-key-change-this-in-production"),

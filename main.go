@@ -8,6 +8,7 @@ import (
 	"backoffice/handlers/errorhandler"
 	"backoffice/handlers/home"
 	"backoffice/handlers/integrations"
+	"backoffice/handlers/landing"
 	"backoffice/handlers/login"
 	"backoffice/handlers/messagetemplates"
 	"backoffice/handlers/services"
@@ -61,6 +62,7 @@ func init() {
 	templates = template.Must(templates.ParseGlob("templates/message-templates/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/settings/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/auth/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/landing/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/error.html"))
 
 	home.Templates = templates
@@ -71,6 +73,7 @@ func init() {
 	messagetemplates.Templates = templates
 	settings.Templates = templates
 	errorhandler.Templates = templates
+	landing.Templates = templates
 }
 
 func main() {
@@ -96,7 +99,12 @@ func main() {
 	mux := http.NewServeMux()
 
 	// 공개 라우트 (인증 불필요)
-	mux.HandleFunc("/login", middleware.RecoverFunc(login.LoginHandler)) // 로그인 처리
+	mux.HandleFunc("/login", middleware.RecoverFunc(login.LoginHandler))            // 로그인 처리
+	mux.HandleFunc("/ad", middleware.RecoverFunc(landing.Handler))                  // 광고용 랜딩 페이지
+	mux.HandleFunc("/ad/success", middleware.RecoverFunc(landing.SuccessHandler))   // 카카오 인증 성공 페이지
+	mux.HandleFunc("/ad/error", middleware.RecoverFunc(landing.ErrorHandler))       // 카카오 인증 실패 페이지
+	mux.HandleFunc("/ad/kakao/login", middleware.RecoverFunc(landing.KakaoLoginHandler))     // 카카오 로그인 시작
+	mux.HandleFunc("/ad/kakao/callback", middleware.RecoverFunc(landing.KakaoCallbackHandler)) // 카카오 OAuth 콜백
 
 	// 라우트 설정 (인증 필요한 라우트는 RequireAuthRecover 미들웨어 적용)
 	mux.HandleFunc("/dashboard", middleware.RequireAuthRecover(middleware.InjectBranchData(home.Handler)))                                                      // 대시보드

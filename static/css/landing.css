@@ -319,6 +319,147 @@ body {
     text-decoration: underline;
 }
 
+/* 광고 랜딩 페이지 - 문의하기 폼 */
+.landing-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(to right, #43e7fd 0%, #667eea 50%, #a85fb9 100%);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 배경 기하학적 패턴 */
+.landing-container::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    left: -10%;
+    width: 40%;
+    height: 60%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    clip-path: polygon(0 0, 100% 0, 80% 100%, 0% 80%);
+    opacity: 0.5;
+}
+
+.landing-card {
+    background: white;
+    border-radius: 20px;
+    padding: 4.9rem 2.8rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 420px;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+}
+
+.logo {
+    text-align: center;
+    margin-bottom: 1.4rem;
+}
+
+.logo h1 {
+    font-family: 'Brush Script MT', cursive, 'Segoe Script', cursive;
+    color: #dc3545;
+    font-size: 2.45rem;
+    font-weight: 700;
+    margin: 0;
+    font-style: italic;
+}
+
+.landing-title {
+    text-align: center;
+    margin-bottom: 2.8rem;
+}
+
+.landing-title h2 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #333;
+    margin: 0;
+}
+
+.form-group {
+    margin-bottom: 2.1rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 0.56rem;
+}
+
+.form-select {
+    width: 100%;
+    padding: 0.84rem;
+    font-size: 0.77rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: white;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    background-size: 8.4px;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.cta-section {
+    margin-bottom: 1.4rem;
+}
+
+.kakao-btn {
+    width: 100%;
+    padding: 0.91rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 21px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.kakao-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.kakao-btn:active {
+    transform: translateY(0);
+}
+
+.kakao-btn.active {
+    background: linear-gradient(135deg, #FEE500 0%, #FFA800 100%);
+    color: #3c1e1e;
+    box-shadow: 0 4px 15px rgba(255, 200, 0, 0.4);
+}
+
+.kakao-btn.active:hover {
+    box-shadow: 0 6px 20px rgba(255, 200, 0, 0.6);
+}
+
+.info-text {
+    text-align: center;
+    font-size: 0.875rem;
+    color: #999;
+    margin-top: 1rem;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
     .hero h1 {
@@ -349,5 +490,21 @@ body {
     
     .legal-page h1 {
         font-size: 2rem;
+    }
+    
+    .landing-container {
+        padding: 1rem;
+    }
+    
+    .landing-card {
+        padding: 1.4rem 1.05rem;
+    }
+    
+    .logo h1 {
+        font-size: 1.75rem;
+    }
+    
+    .landing-title h2 {
+        font-size: 0.84rem;
     }
 }

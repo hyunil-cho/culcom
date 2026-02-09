@@ -1,0 +1,228 @@
+{{define "landing/success.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스터디 지원 성공!</title>
+    <link rel="stylesheet" href="/static/css/landing.css">
+    <style>
+        .success-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(to bottom, #FFE5B4 0%, #FFF8DC 100%);
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .success-card {
+            background: white;
+            border-radius: 30px;
+            padding: 3rem 2.5rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .logo {
+            margin-bottom: 1.5rem;
+        }
+        
+        .logo h1 {
+            font-family: 'Brush Script MT', cursive, 'Segoe Script', cursive;
+            color: #dc3545;
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 0;
+            font-style: italic;
+        }
+        
+        .title-section {
+            margin-bottom: 2rem;
+        }
+        
+        .subtitle {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+        
+        .main-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #dc3545;
+            margin-bottom: 1.5rem;
+            text-shadow: 2px 2px 0px rgba(255,255,255,0.8);
+        }
+        
+        .character-section {
+            margin: 2rem 0;
+            position: relative;
+        }
+        
+        .character {
+            font-size: 6rem;
+            margin-bottom: 1rem;
+            animation: bounceIn 0.8s ease-out;
+        }
+        
+        .decorations {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-top: 1rem;
+        }
+        
+        .decoration-text {
+            font-size: 0.9rem;
+            font-style: italic;
+            color: #666;
+        }
+        
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1) rotate(10deg);
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+        
+        .message-box {
+            background: #FFF8DC;
+            border: 3px dashed #666;
+            border-radius: 15px;
+            padding: 2rem 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .message-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        
+        .user-name {
+            color: #dc3545;
+            font-weight: 800;
+        }
+        
+        .message-content {
+            font-size: 0.95rem;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .photos-section {
+            margin-top: 2rem;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .photo-placeholder {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+        
+        .btn-home {
+            display: inline-block;
+            padding: 1.2rem 3rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 2rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-home:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        @media (max-width: 768px) {
+            .success-card {
+                padding: 2rem 1.5rem;
+            }
+            
+            .logo h1 {
+                font-size: 2.5rem;
+            }
+            
+            .main-title {
+                font-size: 1.8rem;
+            }
+            
+            .character {
+                font-size: 4rem;
+            }
+            
+            .photos-section {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-card">
+            <div class="logo">
+                <h1>CulCom</h1>
+            </div>
+            
+            <div class="title-section">
+                <p class="subtitle">20년 된 컬컴 영어, 일어, 중국어</p>
+                <h1 class="main-title">스터디 지원 성공!</h1>
+            </div>
+            
+            <div class="character-section">
+                <div class="character">💗🐱</div>
+                <div class="decorations">
+                    <span class="decoration-text">Be cultured 💕</span>
+                    <span class="decoration-text">speak better ✨</span>
+                </div>
+            </div>
+            
+            <div class="message-box">
+                <p class="message-title">한 걸음 나아가셨군요 :D</p>
+                <p class="message-content">
+                    <span class="user-name">{{.CustomerName}}</span>님, 환영합니다!<br>
+                    스터디 안내 연락드릴게요!<br><br>
+                    교육청 인가받은, 16단계 레벨별 커리큘럼으로<br>
+                    영어, 일어, 중국어를 잘 갖춰서!
+                </p>
+            </div>
+            
+            <div class="photos-section">
+                <div class="photo-placeholder">📚</div>
+                <div class="photo-placeholder">🎓</div>
+                <div class="photo-placeholder">✨</div>
+            </div>
+            
+            <a href="/ad" class="btn-home">처음으로 돌아가기</a>
+        </div>
+    </div>
+</body>
+</html>
+{{end}}
