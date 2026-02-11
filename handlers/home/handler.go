@@ -26,10 +26,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		totalCustomers = 0
 	}
 
-	// 2. SMS 잔여건수 조회
-	var smsRemaining int
+	// 2. SMS와 LMS 잔여건수 각각 조회
+	var smsRemaining, lmsRemaining int
 	if branchSeq > 0 {
-		smsRemaining, _ = database.GetSMSRemainingCount(branchSeq)
+		smsRemaining, lmsRemaining, _ = database.GetSMSAndLMSRemainingCount(branchSeq)
 	}
 
 	// 통계 카드 생성
@@ -45,10 +45,18 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	// SMS 잔여건수 카드 추가
 	stats = append(stats, StatCard{
-		Title: "잔여 SMS 메시지",
+		Title: "SMS 잔여건수",
 		Value: fmt.Sprintf("%d건", smsRemaining),
 		Icon:  "💬",
-		Color: "#f39c12",
+		Color: "#3498db",
+	})
+
+	// LMS 잔여건수 카드 추가
+	stats = append(stats, StatCard{
+		Title: "LMS 잔여건수",
+		Value: fmt.Sprintf("%d건", lmsRemaining),
+		Icon:  "📧",
+		Color: "#9b59b6",
 	})
 
 	// 5. 최근 7일간 일별 고객 통계 조회

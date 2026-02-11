@@ -240,7 +240,6 @@ func UpdateCustomerName(customerSeq int, name string) error {
 // 파라미터: branchSeq (지점 seq, 0이면 전체 지점)
 // 반환: 금일 생성된 고객 수, 에러
 func GetTodayTotalCustomers(branchSeq int) (int, error) {
-	log.Printf("[Customer] GetTodayTotalCustomers 호출 - BranchSeq: %d\n", branchSeq)
 
 	query := `SELECT COUNT(*) FROM customers WHERE DATE(createdDate) = CURDATE()`
 	args := []interface{}{}
@@ -257,7 +256,6 @@ func GetTodayTotalCustomers(branchSeq int) (int, error) {
 		return 0, err
 	}
 
-	log.Printf("[Customer] GetTodayTotalCustomers 완료 - Count: %d\n", count)
 	return count, nil
 }
 
@@ -312,7 +310,6 @@ func GetTodayCustomersByAdSource(branchSeq int) ([]AdSourceStats, error) {
 		return nil, err
 	}
 
-	log.Printf("[Customer] GetTodayCustomersByAdSource 완료 - %d개 ad_source\n", len(stats))
 	return stats, nil
 }
 
@@ -357,7 +354,6 @@ type DailyCustomerStats struct {
 // 파라미터: branchSeq (지점 seq, 0이면 전체 지점), days (최근 며칠)
 // 반환: 일별 통계 리스트, 에러
 func GetDailyCustomerStats(branchSeq int, days int) ([]DailyCustomerStats, error) {
-	log.Printf("[Customer] GetDailyCustomerStats 호출 - BranchSeq: %d, Days: %d\n", branchSeq, days)
 
 	// 고객 통계와 예약 통계를 LEFT JOIN으로 결합
 	query := `
@@ -420,7 +416,6 @@ func GetDailyCustomerStats(branchSeq int, days int) ([]DailyCustomerStats, error
 			log.Printf("GetDailyCustomerStats - scan error: %v", err)
 			continue
 		}
-		log.Printf("  -> Date: %s, Count: %d, ReservationCount: %d", stat.Date, stat.Count, stat.ReservationCount)
 		stats = append(stats, stat)
 	}
 
@@ -429,7 +424,6 @@ func GetDailyCustomerStats(branchSeq int, days int) ([]DailyCustomerStats, error
 		return nil, err
 	}
 
-	log.Printf("[Customer] GetDailyCustomerStats 완료 - %d일 데이터\n", len(stats))
 	return stats, nil
 }
 
@@ -445,7 +439,6 @@ type CallerStats struct {
 // GetCallerStats - CALLER별 통계 조회 (일/주/월)
 // period: "day", "week", "month"
 func GetCallerStats(branchSeq int, period string) ([]CallerStats, error) {
-	log.Printf("[Customer] GetCallerStats 호출 - BranchSeq: %d, Period: %s\n", branchSeq, period)
 
 	var dateCondition string
 	switch period {
@@ -513,13 +506,9 @@ func GetCallerStats(branchSeq int, period string) ([]CallerStats, error) {
 			stat.ConfirmRate = 0
 		}
 
-		log.Printf("  -> Caller: %s, Total: %d, Confirm: %d, Selection: %d, Rate: %.2f%%",
-			stat.Caller, stat.TotalCustomers, stat.ReservationConfirm, stat.SelectionCount, stat.ConfirmRate)
 		stats = append(stats, stat)
 	}
 
-	// allCallers가 이미 A-P 순서로 정의되어 있으므로 정렬 불필요
-	log.Printf("[Customer] GetCallerStats 완료 - %d개 caller\n", len(stats))
 	return stats, nil
 }
 
@@ -597,14 +586,11 @@ func ProcessCallWithCallerSelection(customerID, branchSeq int, caller string) (i
 		log.Printf("[Customer] 콜 횟수 5회 초과 - 상태를 '콜수초과'로 변경 - CustomerSeq: %d\n", customerID)
 	}
 
-	log.Printf("[Customer] ProcessCallWithCallerSelection 완료 - CustomerSeq: %d, CallCount: %d, LastUpdate: %s\n", customerID, callCount, lastUpdateDate)
 	return callCount, lastUpdateDate, nil
 }
 
 // GetCallerSelectionCount - 기간별 CALLER 선택 횟수 조회
 func GetCallerSelectionCount(branchSeq int, caller, period string) (int, error) {
-	log.Printf("[Customer] GetCallerSelectionCount 호출 - BranchSeq: %d, Caller: %s, Period: %s\n", branchSeq, caller, period)
-
 	var dateCondition string
 	switch period {
 	case "day":
@@ -632,7 +618,6 @@ func GetCallerSelectionCount(branchSeq int, caller, period string) (int, error) 
 		return 0, err
 	}
 
-	log.Printf("[Customer] GetCallerSelectionCount 완료 - Count: %d\n", count)
 	return count, nil
 }
 

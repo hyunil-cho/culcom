@@ -3,6 +3,7 @@ package integrations
 import (
 	"backoffice/database"
 	"backoffice/middleware"
+	"backoffice/services/sms"
 	"backoffice/utils"
 	"fmt"
 	"log"
@@ -198,8 +199,27 @@ func SMSConfigSaveHandler(w http.ResponseWriter, r *http.Request) {
 	// 세션에서 선택된 지점 정보 가져오기
 	branchCode := middleware.GetSelectedBranch(r)
 
-	// Database를 통해 설정 저장 (지점별)
-	if err := database.SaveSMSConfig(branchCode, accountID, password, senderPhones, isActive); err != nil {
+	// 기존 설정 확인 (최초 생성 여부 판단)
+	existingConfig, err := database.GetSMSConfig(branchCode)
+	isNewConfig := (err != nil || existingConfig == nil)
+
+	// 최초 생성인 경우, 마이문자 API를 호출하여 SMS/LMS 잔여건수 조회
+	var remainingCountSMSPtr, remainingCountLMSPtr *int
+	if isNewConfig {
+		log.Println("최초 마이문자 연동 설정 - 잔여건수 조회 시작")
+		remainingCountSMS, remainingCountLMS, err := sms.CheckRemainingCount(accountID, password)
+		if err != nil {
+			log.Printf("잔여건수 조회 실패 (설정은 계속 저장됨): %v", err)
+			// 잔여건수 조회 실패해도 설정 자체는 진행
+		} else {
+			log.Printf("잔여건수 조회 완료 - SMS: %d, LMS: %d", remainingCountSMS, remainingCountLMS)
+			remainingCountSMSPtr = &remainingCountSMS
+			remainingCountLMSPtr = &remainingCountLMS
+		}
+	}
+
+	// Database를 통해 설정 저장 (지점별, SMS/LMS 잔여건수 포함)
+	if err := database.SaveSMSConfig(branchCode, accountID, password, senderPhones, isActive, remainingCountSMSPtr, remainingCountLMSPtr); err != nil {
 		log.Printf("SMS 설정 저장 오류: %v", err)
 		http.Redirect(w, r, "/integrations?error=save_failed", http.StatusSeeOther)
 		return

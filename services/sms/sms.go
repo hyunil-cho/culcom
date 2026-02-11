@@ -31,6 +31,7 @@ type SendResponse struct {
 	Code    string
 	Nums    string
 	Cols    string
+	MsgType string // "SMS" 또는 "LMS"
 }
 
 // APIResponse SMS API 응답 구조체
@@ -200,8 +201,8 @@ func Send(req SendRequest) (*SendResponse, error) {
 	apiResp := APIResponse{
 		Code: parts[0],
 		Msg:  parts[1],
-		Nums: parts[2],
-		Cols: parts[3],
+		Nums: parts[3],
+		Cols: parts[2],
 	}
 
 	// 추가 필드가 있으면 저장
@@ -222,18 +223,25 @@ func Send(req SendRequest) (*SendResponse, error) {
 	// code가 "0000"이면 성공
 	isSuccess := apiResp.Code == "0000"
 
+	// 메시지 타입 결정
+	msgType := "SMS"
+	if isLMS {
+		msgType = "LMS"
+	}
+
 	return &SendResponse{
 		Success: isSuccess,
 		Message: responseMessage,
 		Code:    apiResp.Code,
 		Nums:    apiResp.Nums,
 		Cols:    apiResp.Cols,
+		MsgType: msgType,
 	}, nil
 }
 
-// UpdateRemainingCount SMS 발송 후 잔여건수 업데이트
-// branchSeq: 지점 seq, cols: API 응답의 잔여건수
-func UpdateRemainingCount(branchSeq int, cols string) error {
+// UpdateRemainingCount SMS/LMS 발송 후 잔여건수 업데이트
+// branchSeq: 지점 seq, cols: API 응답의 잔여건수, msgType: "SMS" 또는 "LMS"
+func UpdateRemainingCount(branchSeq int, cols string, msgType string) error {
 	// cols를 정수로 변환
 	remainingCount, err := strconv.Atoi(cols)
 	if err != nil {
@@ -241,6 +249,108 @@ func UpdateRemainingCount(branchSeq int, cols string) error {
 		return err
 	}
 
-	// 데이터베이스 업데이트
-	return database.UpdateRemainingCount(branchSeq, remainingCount)
+	log.Printf("UpdateRemainingCount - Type: %s, Count: %d", msgType, remainingCount)
+
+	// 타입에 맞는 잔여건수만 업데이트
+	return database.UpdateRemainingCountByType(branchSeq, msgType, remainingCount)
+}
+
+// CheckRemainingCount 마이문자 API를 호출하여 SMS와 LMS 잔여건수 조회
+// accountID: 마이문자 계정 ID
+// password: 마이문자 비밀번호
+// 반환: SMS 잔여건수, LMS 잔여건수, 에러
+func CheckRemainingCount(accountID, password string) (int, int, error) {
+	// Mock 모드 체크
+	if config.IsMockMode() {
+		log.Println("[Mock Mode] 잔여건수 조회 없이 테스트 값 반환")
+		return 9999, 9999, nil
+	}
+
+	// 설정 로드
+	cfg := config.GetConfig()
+	endpoint := cfg.SMS.APIBaseURL + "/RemoteCheck.html"
+
+	log.Printf("마이문자 잔여건수 조회 API 요청 - AccountID: %s", accountID)
+
+	// SMS 잔여건수 조회 (remote_request="sms" 전송 → SMS 잔여건수 반환)
+	smsCount, err := checkRemainingCountByType(endpoint, accountID, password, "sms")
+	if err != nil {
+		return 0, 0, err
+	}
+
+	// LMS 잔여건수 조회 (remote_request="lms" 전송 → LMS 잔여건수 반환)
+	lmsCount, err := checkRemainingCountByType(endpoint, accountID, password, "lms")
+	if err != nil {
+		return 0, 0, err
+	}
+
+	log.Printf("마이문자 잔여건수 조회 완료 - SMS: %d, LMS: %d", smsCount, lmsCount)
+	return smsCount, lmsCount, nil
+}
+
+// checkRemainingCountByType 특정 타입의 잔여건수 조회
+// msgType에 따라 해당 타입의 잔여건수만 반환됨 (예: msgType="sms" → SMS 잔여건수, msgType="lms" → LMS 잔여건수)
+func checkRemainingCountByType(endpoint, accountID, password, msgType string) (int, error) {
+	// API 요청 파라미터 구성
+	formData := url.Values{}
+	formData.Set("remote_id", accountID)
+	formData.Set("remote_pass", password)
+	formData.Set("remote_request", msgType)
+
+	log.Printf("마이문자 %s 잔여건수 조회 - AccountID: %s", strings.ToUpper(msgType), accountID)
+
+	// HTTPS 클라이언트 생성
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: false,
+			},
+		},
+	}
+
+	// HTTP POST 요청
+	resp, err := client.Post(endpoint, "application/x-www-form-urlencoded", strings.NewReader(formData.Encode()))
+	if err != nil {
+		log.Printf("%s 잔여건수 조회 API 요청 오류: %v", strings.ToUpper(msgType), err)
+		return 0, fmt.Errorf("%s 잔여건수 조회 중 오류가 발생했습니다: %w", strings.ToUpper(msgType), err)
+	}
+	defer resp.Body.Close()
+
+	// 응답 읽기
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("%s 잔여건수 조회 API 응답 읽기 오류: %v", strings.ToUpper(msgType), err)
+		return 0, fmt.Errorf("%s 잔여건수 조회 응답 처리 중 오류가 발생했습니다: %w", strings.ToUpper(msgType), err)
+	}
+
+	responseText := strings.TrimSpace(string(body))
+	log.Printf("마이문자 %s 잔여건수 조회 API 응답 (Status: %d): %s", strings.ToUpper(msgType), resp.StatusCode, responseText)
+
+	// 응답 상태 코드 확인
+	if resp.StatusCode != http.StatusOK {
+		return 0, fmt.Errorf("%s 잔여건수 조회 실패 (HTTP %d): %s", strings.ToUpper(msgType), resp.StatusCode, responseText)
+	}
+
+	// 응답 형식: 결과코드|결과 메시지|잔여건수
+	parts := strings.Split(responseText, "|")
+	if len(parts) >= 3 {
+		resultCode := parts[0]
+		resultMsg := parts[1]
+		remainingCountStr := parts[2]
+
+		log.Printf("마이문자 %s 잔여건수 조회 결과 - 코드: %s, 메시지: %s, 잔여건수: %s", strings.ToUpper(msgType), resultCode, resultMsg, remainingCountStr)
+
+		// 잔여건수 추출 (세 번째 필드)
+		remainingCount, err := strconv.Atoi(remainingCountStr)
+		if err != nil {
+			log.Printf("%s 잔여건수 파싱 오류: %v", strings.ToUpper(msgType), err)
+			return 0, fmt.Errorf("%s 잔여건수 파싱 오류: %s", strings.ToUpper(msgType), responseText)
+		}
+		return remainingCount, nil
+	}
+
+	// 응답 형식이 올바르지 않은 경우
+	log.Printf("%s 잔여건수 조회 응답 형식 오류 (예상: 결과코드|결과메시지|잔여건수): %s", strings.ToUpper(msgType), responseText)
+	return 0, fmt.Errorf("%s 잔여건수 조회 응답 형식 오류: %s", strings.ToUpper(msgType), responseText)
 }

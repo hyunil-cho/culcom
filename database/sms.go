@@ -17,34 +17,55 @@ type SMSConfig struct {
 	UpdatedAt    string
 }
 
+// getSMSMappingSeq SMS 서비스 매핑 seq 조회 (공통 함수)
+func getSMSMappingSeq(branchSeq int) (int, error) {
+	var mappingSeq int
+	query := `
+		SELECT btpm.mapping_seq
+		FROM ` + "`branch-third-party-mapping`" + ` btpm
+		INNER JOIN third_party_services tps ON btpm.third_party_id = tps.seq
+		INNER JOIN external_service_type est ON tps.code_seq = est.seq
+		WHERE btpm.branch_id = ? AND est.code_name = 'SMS'
+		LIMIT 1
+	`
+	err := DB.QueryRow(query, branchSeq).Scan(&mappingSeq)
+	return mappingSeq, err
+}
+
+// getSMSMappingInfo SMS 서비스 매핑 정보 조회 (공통 함수)
+func getSMSMappingInfo(branchSeq int) (mappingSeq int, isActive bool, err error) {
+	query := `
+		SELECT btpm.mapping_seq, btpm.is_active
+		FROM ` + "`branch-third-party-mapping`" + ` btpm
+		INNER JOIN third_party_services tps ON btpm.third_party_id = tps.seq
+		INNER JOIN external_service_type est ON tps.code_seq = est.seq
+		WHERE btpm.branch_id = ? AND est.code_name = 'SMS'
+		LIMIT 1
+	`
+	err = DB.QueryRow(query, branchSeq).Scan(&mappingSeq, &isActive)
+	return
+}
+
+// getSMSServiceSeq SMS 서비스 seq 조회 (공통 함수)
+func getSMSServiceSeq() (int, error) {
+	var serviceSeq int
+	query := `
+		SELECT tps.seq
+		FROM third_party_services tps
+		INNER JOIN external_service_type est ON tps.code_seq = est.seq
+		WHERE est.code_name = 'SMS'
+		LIMIT 1
+	`
+	err := DB.QueryRow(query).Scan(&serviceSeq)
+	return serviceSeq, err
+}
+
 // GetSMSConfig SMS 설정 조회
 func GetSMSConfig(branchSeq int) (*SMSConfig, error) {
 	log.Printf("=== SMS 설정 조회 - BranchSeq: %d ===", branchSeq)
 
-	// SMS 서비스 seq 조회
-	var serviceSeq int
-	serviceQuery := `
-		SELECT tps.seq
-		FROM third_party_services tps
-		LEFT JOIN external_service_type est ON tps.code_seq = est.seq
-		WHERE est.code_name = 'SMS'
-		LIMIT 1
-	`
-	err := DB.QueryRow(serviceQuery).Scan(&serviceSeq)
-	if err != nil {
-		log.Printf("GetSMSConfig - service not found: %v", err)
-		return nil, err
-	}
-
-	// 3단계: 매핑 조회
-	var mappingSeq int
-	var isActive bool
-	mappingQuery := `
-		SELECT mapping_seq, is_active 
-		FROM ` + "`branch-third-party-mapping`" + `
-		WHERE branch_id = ? AND third_party_id = ?
-	`
-	err = DB.QueryRow(mappingQuery, branchSeq, serviceSeq).Scan(&mappingSeq, &isActive)
+	// SMS 서비스 매핑 조회
+	mappingSeq, isActive, err := getSMSMappingInfo(branchSeq)
 	if err != nil {
 		log.Printf("GetSMSConfig - mapping not found: %v", err)
 		return nil, nil // 설정이 없으면 nil 반환
@@ -99,27 +120,32 @@ func GetSMSConfig(branchSeq int) (*SMSConfig, error) {
 }
 
 // SaveSMSConfig SMS 설정 저장 (INSERT 또는 UPDATE)
-func SaveSMSConfig(branchSeq int, accountID, password string, senderPhones []string, isActive bool) error {
+func SaveSMSConfig(branchSeq int, accountID, password string, senderPhones []string, isActive bool, remainingCountSMS, remainingCountLMS *int) error {
 	log.Println("=== SMS 설정 저장 ===")
 	log.Printf("지점 seq: %d", branchSeq)
 	log.Printf("계정 ID: %s", accountID)
 	log.Printf("비밀번호: %s", maskSMSPassword(password))
 	log.Printf("발신번호: %v", senderPhones)
 	log.Printf("활성화: %v", isActive)
+	if remainingCountSMS != nil {
+		log.Printf("SMS 잔여건수: %d", *remainingCountSMS)
+	}
+	if remainingCountLMS != nil {
+		log.Printf("LMS 잔여건수: %d", *remainingCountLMS)
+	}
 
-	// 마이문자 서비스 seq 조회 (code_name = 'SMS')
+	// 기존 매핑 조회 (트랜잭션 전에)
+	mappingSeq, _, err := getSMSMappingInfo(branchSeq)
+	isNewMapping := err != nil
+
 	var serviceSeq int
-	serviceQuery := `
-		SELECT tps.seq
-		FROM third_party_services tps
-		LEFT JOIN external_service_type est ON tps.code_seq = est.seq
-		WHERE est.code_name = 'SMS'
-		LIMIT 1
-	`
-	err := DB.QueryRow(serviceQuery).Scan(&serviceSeq)
-	if err != nil {
-		log.Printf("SaveSMSConfig - service not found: %v", err)
-		return err
+	if isNewMapping {
+		// 매핑이 없으면 serviceSeq 조회
+		serviceSeq, err = getSMSServiceSeq()
+		if err != nil {
+			log.Printf("SaveSMSConfig - service not found: %v", err)
+			return err
+		}
 	}
 
 	// 트랜잭션 시작
@@ -135,14 +161,9 @@ func SaveSMSConfig(branchSeq int, accountID, password string, senderPhones []str
 		}
 	}()
 
-	// 3단계: branch-third-party-mapping 확인 및 생성/업데이트
-	var mappingSeq int
-	mappingQuery := `SELECT mapping_seq FROM ` + "`branch-third-party-mapping`" + `
-		WHERE branch_id = ? AND third_party_id = ?`
-	err = tx.QueryRow(mappingQuery, branchSeq, serviceSeq).Scan(&mappingSeq)
-
-	if err != nil {
-		// 매핑이 없으면 생성
+	// 3단계: branch-third-party-mapping 생성/업데이트
+	if isNewMapping {
+		// 매핑 생성
 		insertMappingQuery := `
 			INSERT INTO ` + "`branch-third-party-mapping`" + ` 
 			(branch_id, third_party_id, is_active, createdDate, lastUpdateDate)
@@ -182,13 +203,23 @@ func SaveSMSConfig(branchSeq int, accountID, password string, senderPhones []str
 		callbackNumber = senderPhones[0]
 	}
 
+	// 잔여건수 기본값 처리 (nil이면 0)
+	finalRemainingCountSMS := 0
+	if remainingCountSMS != nil {
+		finalRemainingCountSMS = *remainingCountSMS
+	}
+	finalRemainingCountLMS := 0
+	if remainingCountLMS != nil {
+		finalRemainingCountLMS = *remainingCountLMS
+	}
+
 	if configErr != nil {
 		// 설정이 없으면 생성
 		insertConfigQuery := `
-			INSERT INTO mymunja_config_info (mapping_id, mymunja_id, mymunja_password, callback_number, lastUpdateDate)
-			VALUES (?, ?, ?, ?, now())
+			INSERT INTO mymunja_config_info (mapping_id, mymunja_id, mymunja_password, callback_number, remaining_count_sms, remaining_count_lms, lastUpdateDate)
+			VALUES (?, ?, ?, ?, ?, ?, now())
 		`
-		result, execErr := tx.Exec(insertConfigQuery, mappingSeq, accountID, password, callbackNumber)
+		result, execErr := tx.Exec(insertConfigQuery, mappingSeq, accountID, password, callbackNumber, finalRemainingCountSMS, finalRemainingCountLMS)
 		if execErr != nil {
 			log.Printf("SaveSMSConfig - insert config error: %v", execErr)
 			err = execErr
@@ -201,10 +232,10 @@ func SaveSMSConfig(branchSeq int, accountID, password string, senderPhones []str
 		// 설정이 있으면 업데이트
 		updateConfigQuery := `
 			UPDATE mymunja_config_info
-			SET mymunja_id = ?, mymunja_password = ?, callback_number = ?, lastUpdateDate = now()
+			SET mymunja_id = ?, mymunja_password = ?, callback_number = ?, remaining_count_sms = ?, remaining_count_lms = ?, lastUpdateDate = now()
 			WHERE seq = ?
 		`
-		result, execErr := tx.Exec(updateConfigQuery, accountID, password, callbackNumber, configSeq)
+		result, execErr := tx.Exec(updateConfigQuery, accountID, password, callbackNumber, finalRemainingCountSMS, finalRemainingCountLMS, configSeq)
 		if execErr != nil {
 			log.Printf("SaveSMSConfig - update config error: %v", execErr)
 			err = execErr
@@ -247,97 +278,103 @@ func maskSMSPassword(password string) string {
 func GetSMSRemainingCount(branchSeq int) (int, error) {
 	log.Printf("[SMS] GetSMSRemainingCount - BranchSeq: %d", branchSeq)
 
-	// SMS 서비스 seq 조회
-	var serviceSeq int
-	serviceQuery := `
-		SELECT tps.seq
-		FROM third_party_services tps
-		LEFT JOIN external_service_type est ON tps.code_seq = est.seq
-		WHERE est.code_name = 'SMS'
-		LIMIT 1
-	`
-	err := DB.QueryRow(serviceQuery).Scan(&serviceSeq)
-	if err != nil {
-		log.Printf("GetSMSRemainingCount - service not found: %v", err)
-		return 0, err
-	}
-
-	// 매핑 seq 조회
-	var mappingSeq int
-	mappingQuery := `
-		SELECT mapping_seq 
-		FROM ` + "`branch-third-party-mapping`" + `
-		WHERE branch_id = ? AND third_party_id = ?
-	`
-	err = DB.QueryRow(mappingQuery, branchSeq, serviceSeq).Scan(&mappingSeq)
+	// SMS 서비스 매핑 조회
+	mappingSeq, err := getSMSMappingSeq(branchSeq)
 	if err != nil {
 		log.Printf("GetSMSRemainingCount - mapping not found: %v", err)
 		return 0, nil // 설정이 없으면 0 반환
 	}
 
-	// 잔여건수 조회
-	var remainingCount int
+	// 잔여건수 조회 (SMS + LMS 합계)
+	var remainingCountSMS, remainingCountLMS int
 	query := `
-		SELECT COALESCE(remaining_count, 0)
+		SELECT COALESCE(remaining_count_sms, 0), COALESCE(remaining_count_lms, 0)
 		FROM mymunja_config_info 
 		WHERE mapping_id = ?
 	`
-	err = DB.QueryRow(query, mappingSeq).Scan(&remainingCount)
+	err = DB.QueryRow(query, mappingSeq).Scan(&remainingCountSMS, &remainingCountLMS)
 	if err != nil {
 		log.Printf("GetSMSRemainingCount - query error: %v", err)
 		return 0, nil // 오류 시 0 반환
 	}
 
-	log.Printf("[SMS] GetSMSRemainingCount 완료 - Count: %d", remainingCount)
-	return remainingCount, nil
+	totalCount := remainingCountSMS + remainingCountLMS
+	log.Printf("[SMS] GetSMSRemainingCount 완료 - SMS: %d, LMS: %d, Total: %d", remainingCountSMS, remainingCountLMS, totalCount)
+	return totalCount, nil
 }
 
-// UpdateRemainingCount SMS 잔여건수 업데이트
-// branchSeq: 지점 seq, remainingCount: 남은 건수
-func UpdateRemainingCount(branchSeq int, remainingCount int) error {
-	log.Printf("[SMS] UpdateRemainingCount - BranchSeq: %d, RemainingCount: %d", branchSeq, remainingCount)
+// GetSMSAndLMSRemainingCount SMS와 LMS 잔여건수 각각 조회 (대시보드용)
+// branchSeq: 지점 seq
+// 반환: SMS 잔여건수, LMS 잔여건수, 에러
+func GetSMSAndLMSRemainingCount(branchSeq int) (int, int, error) {
+	log.Printf("[SMS] GetSMSAndLMSRemainingCount - BranchSeq: %d", branchSeq)
 
-	// SMS 서비스 seq 조회
-	var serviceSeq int
-	serviceQuery := `
-		SELECT tps.seq
-		FROM third_party_services tps
-		LEFT JOIN external_service_type est ON tps.code_seq = est.seq
-		WHERE est.code_name = 'SMS'
-		LIMIT 1
-	`
-	err := DB.QueryRow(serviceQuery).Scan(&serviceSeq)
+	// SMS 서비스 매핑 조회
+	mappingSeq, err := getSMSMappingSeq(branchSeq)
 	if err != nil {
-		log.Printf("UpdateRemainingCount - service not found: %v", err)
-		return err
+		log.Printf("GetSMSAndLMSRemainingCount - mapping not found: %v", err)
+		return 0, 0, nil // 설정이 없으면 0, 0 반환
 	}
 
-	// 매핑 seq 조회
-	var mappingSeq int
-	mappingQuery := `
-		SELECT mapping_seq 
-		FROM ` + "`branch-third-party-mapping`" + `
-		WHERE branch_id = ? AND third_party_id = ?
+	// SMS와 LMS 잔여건수 각각 조회
+	var remainingCountSMS, remainingCountLMS int
+	query := `
+		SELECT COALESCE(remaining_count_sms, 0), COALESCE(remaining_count_lms, 0)
+		FROM mymunja_config_info 
+		WHERE mapping_id = ?
 	`
-	err = DB.QueryRow(mappingQuery, branchSeq, serviceSeq).Scan(&mappingSeq)
+	err = DB.QueryRow(query, mappingSeq).Scan(&remainingCountSMS, &remainingCountLMS)
+	if err != nil {
+		log.Printf("GetSMSAndLMSRemainingCount - query error: %v", err)
+		return 0, 0, nil // 오류 시 0, 0 반환
+	}
+
+	log.Printf("[SMS] GetSMSAndLMSRemainingCount 완료 - SMS: %d, LMS: %d", remainingCountSMS, remainingCountLMS)
+	return remainingCountSMS, remainingCountLMS, nil
+}
+
+// UpdateRemainingCount SMS/LMS 잔여건수 업데이트
+// branchSeq: 지점 seq, msgType: "SMS", "LMS", "BOTH", remainingCount: 업데이트할 건수
+func UpdateRemainingCountByType(branchSeq int, msgType string, remainingCount int) error {
+	log.Printf("[SMS] UpdateRemainingCountByType - BranchSeq: %d, Type: %s, Count: %d", branchSeq, msgType, remainingCount)
+
+	// SMS 서비스 매핑 조회
+	mappingSeq, err := getSMSMappingSeq(branchSeq)
 	if err != nil {
 		log.Printf("UpdateRemainingCount - mapping not found: %v", err)
 		return err
 	}
 
-	// 잔여건수 업데이트
-	updateQuery := `
-		UPDATE mymunja_config_info 
-		SET remaining_count = ?
-		WHERE mapping_id = ?
-	`
-	result, err := DB.Exec(updateQuery, remainingCount, mappingSeq)
+	// 잔여건수 업데이트 (타입에 따라 선택적 업데이트)
+	var updateQuery string
+	var result sql.Result
+
+	switch msgType {
+	case "SMS":
+		// SMS만 업데이트
+		updateQuery = `
+			UPDATE mymunja_config_info 
+			SET remaining_count_sms = ?
+			WHERE mapping_id = ?
+		`
+		result, err = DB.Exec(updateQuery, remainingCount, mappingSeq)
+	case "LMS":
+		// LMS만 업데이트
+		updateQuery = `
+			UPDATE mymunja_config_info 
+			SET remaining_count_lms = ?
+			WHERE mapping_id = ?
+		`
+		result, err = DB.Exec(updateQuery, remainingCount, mappingSeq)
+	default:
+		return fmt.Errorf("지원하지 않는 메시지 타입: %s", msgType)
+	}
 	if err != nil {
-		log.Printf("UpdateRemainingCount - update error: %v", err)
+		log.Printf("UpdateRemainingCountByType - update error: %v", err)
 		return err
 	}
 
 	rowsAffected, _ := result.RowsAffected()
-	log.Printf("[SMS] UpdateRemainingCount 완료 - Rows affected: %d", rowsAffected)
+	log.Printf("[SMS] UpdateRemainingCountByType 완료 - Type: %s, Rows affected: %d", msgType, rowsAffected)
 	return nil
 }

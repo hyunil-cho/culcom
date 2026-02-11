@@ -116,9 +116,9 @@ func SendSMSHandler(w http.ResponseWriter, r *http.Request) {
 
 	// SMS 전송 성공 후 잔여건수 업데이트
 	if sendResp.Cols != "" {
-		err = sms.UpdateRemainingCount(branchSeq, sendResp.Nums)
+		err = sms.UpdateRemainingCount(branchSeq, sendResp.Cols, sendResp.MsgType)
 		if err != nil {
-			log.Printf("SMS 잔여건수 업데이트 실패: %v", err)
+			log.Printf("%s 잔여건수 업데이트 실패: %v", sendResp.MsgType, err)
 			// 업데이트 실패해도 SMS는 성공했으므로 계속 진행
 		}
 	}

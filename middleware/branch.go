@@ -38,10 +38,10 @@ func GetBasePageData(r *http.Request) BasePageData {
 
 	return BasePageData{
 		BranchList:               branchList,
-		SelectedBranch:           selectedBranch, // 헤더 표시용 alias
-		SelectedBranchName:       selectedBranchName, // 한글 이름
-		SelectedBranchManager:    selectedBranchManager, // 담당자
-		SelectedBranchAddress:    selectedBranchAddress, // 주소
+		SelectedBranch:           selectedBranch,           // 헤더 표시용 alias
+		SelectedBranchName:       selectedBranchName,       // 한글 이름
+		SelectedBranchManager:    selectedBranchManager,    // 담당자
+		SelectedBranchAddress:    selectedBranchAddress,    // 주소
 		SelectedBranchDirections: selectedBranchDirections, // 오시는 길
 	}
 }
@@ -51,10 +51,10 @@ func InjectBranchData(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// 세션에서 지점 정보 가져오기
 		branchList := GetBranchList(r)
-		selectedBranchAlias := GetSelectedBranchAlias(r)         // 헤더 표시용 alias
-		selectedBranchName := GetSelectedBranchName(r)           // 한글 이름
-		selectedBranchManager := GetSelectedBranchManager(r)     // 담당자
-		selectedBranchAddress := GetSelectedBranchAddress(r)     // 주소
+		selectedBranchAlias := GetSelectedBranchAlias(r)           // 헤더 표시용 alias
+		selectedBranchName := GetSelectedBranchName(r)             // 한글 이름
+		selectedBranchManager := GetSelectedBranchManager(r)       // 담당자
+		selectedBranchAddress := GetSelectedBranchAddress(r)       // 주소
 		selectedBranchDirections := GetSelectedBranchDirections(r) // 오시는 길
 
 		// context에 저장
@@ -103,7 +103,6 @@ func GetSelectedBranch(r *http.Request) int {
 		// string을 int로 변환
 		var seq int
 		if _, err := fmt.Sscanf(branchSeq, "%d", &seq); err == nil {
-			log.Printf("선택된 지점 seq: %d", seq)
 			return seq
 		}
 	}
@@ -152,7 +151,6 @@ func GetSelectedBranchName(r *http.Request) string {
 func GetSelectedBranchManager(r *http.Request) string {
 	branchSeq := GetSelectedBranch(r)
 	if branchSeq == 0 {
-		log.Printf("[GetSelectedBranchManager] branchSeq is 0")
 		return ""
 	}
 
@@ -161,12 +159,10 @@ func GetSelectedBranchManager(r *http.Request) string {
 	for _, branch := range branchList {
 		if branch["seq"] == fmt.Sprintf("%d", branchSeq) {
 			manager := branch["manager"]
-			log.Printf("[GetSelectedBranchManager] Found manager for seq %d: '%s'", branchSeq, manager)
 			return manager
 		}
 	}
 
-	log.Printf("[GetSelectedBranchManager] Manager not found for seq %d", branchSeq)
 	return ""
 }
 
@@ -174,7 +170,6 @@ func GetSelectedBranchManager(r *http.Request) string {
 func GetSelectedBranchAddress(r *http.Request) string {
 	branchSeq := GetSelectedBranch(r)
 	if branchSeq == 0 {
-		log.Printf("[GetSelectedBranchAddress] branchSeq is 0")
 		return ""
 	}
 
@@ -183,12 +178,10 @@ func GetSelectedBranchAddress(r *http.Request) string {
 	for _, branch := range branchList {
 		if branch["seq"] == fmt.Sprintf("%d", branchSeq) {
 			address := branch["address"]
-			log.Printf("[GetSelectedBranchAddress] Found address for seq %d: '%s'", branchSeq, address)
 			return address
 		}
 	}
 
-	log.Printf("[GetSelectedBranchAddress] Address not found for seq %d", branchSeq)
 	return ""
 }
 
@@ -196,7 +189,6 @@ func GetSelectedBranchAddress(r *http.Request) string {
 func GetSelectedBranchDirections(r *http.Request) string {
 	branchSeq := GetSelectedBranch(r)
 	if branchSeq == 0 {
-		log.Printf("[GetSelectedBranchDirections] branchSeq is 0")
 		return ""
 	}
 
@@ -205,12 +197,10 @@ func GetSelectedBranchDirections(r *http.Request) string {
 	for _, branch := range branchList {
 		if branch["seq"] == fmt.Sprintf("%d", branchSeq) {
 			directions := branch["directions"]
-			log.Printf("[GetSelectedBranchDirections] Found directions for seq %d: '%s'", branchSeq, directions)
 			return directions
 		}
 	}
 
-	log.Printf("[GetSelectedBranchDirections] Directions not found for seq %d", branchSeq)
 	return ""
 }
 
@@ -222,6 +212,5 @@ func GetBranchList(r *http.Request) []map[string]string {
 		return []map[string]string{}
 	}
 
-	log.Printf("[GetBranchList] DB에서 지점 목록 조회: %d개", len(branchList))
 	return branchList
 }

@@ -179,6 +179,7 @@ func GetFirstBranchAlias() (string, error) {
 
 // GetBranchesForSelect - 헤더 선택박스용 지점 목록 조회 (간단한 형태)
 // 반환: [{seq, alias, name, manager, address, directions}] 형태의 지점 목록
+// TODO :: cache 적용 필요
 func GetBranchesForSelect() ([]map[string]string, error) {
 	query := `SELECT seq, alias, branchName, branch_manager, address, directions FROM branches ORDER BY seq ASC`
 
@@ -214,9 +215,6 @@ func GetBranchesForSelect() ([]map[string]string, error) {
 			directionsStr = *directions
 		}
 
-		log.Printf("GetBranchesForSelect - Branch %d (%s): manager='%s', address='%s', directions='%s'", 
-			seq, alias, managerStr, addressStr, directionsStr)
-
 		branches = append(branches, map[string]string{
 			"seq":        fmt.Sprintf("%d", seq),
 			"alias":      alias,
@@ -232,6 +230,5 @@ func GetBranchesForSelect() ([]map[string]string, error) {
 		return nil, err
 	}
 
-	log.Printf("GetBranchesForSelect: %d branches loaded", len(branches))
 	return branches, nil
 }
