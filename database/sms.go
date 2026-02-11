@@ -203,18 +203,18 @@ func SaveSMSConfig(branchSeq int, accountID, password string, senderPhones []str
 		callbackNumber = senderPhones[0]
 	}
 
-	// 잔여건수 기본값 처리 (nil이면 0)
-	finalRemainingCountSMS := 0
-	if remainingCountSMS != nil {
-		finalRemainingCountSMS = *remainingCountSMS
-	}
-	finalRemainingCountLMS := 0
-	if remainingCountLMS != nil {
-		finalRemainingCountLMS = *remainingCountLMS
-	}
-
 	if configErr != nil {
 		// 설정이 없으면 생성
+		// 잔여건수 기본값 처리 (nil이면 0)
+		finalRemainingCountSMS := 0
+		if remainingCountSMS != nil {
+			finalRemainingCountSMS = *remainingCountSMS
+		}
+		finalRemainingCountLMS := 0
+		if remainingCountLMS != nil {
+			finalRemainingCountLMS = *remainingCountLMS
+		}
+
 		insertConfigQuery := `
 			INSERT INTO mymunja_config_info (mapping_id, mymunja_id, mymunja_password, callback_number, remaining_count_sms, remaining_count_lms, lastUpdateDate)
 			VALUES (?, ?, ?, ?, ?, ?, now())
@@ -229,13 +229,44 @@ func SaveSMSConfig(branchSeq int, accountID, password string, senderPhones []str
 		configSeq = int(id)
 		log.Printf("SaveSMSConfig - new config created: %d", configSeq)
 	} else {
-		// 설정이 있으면 업데이트
-		updateConfigQuery := `
-			UPDATE mymunja_config_info
-			SET mymunja_id = ?, mymunja_password = ?, callback_number = ?, remaining_count_sms = ?, remaining_count_lms = ?, lastUpdateDate = now()
-			WHERE seq = ?
-		`
-		result, execErr := tx.Exec(updateConfigQuery, accountID, password, callbackNumber, finalRemainingCountSMS, finalRemainingCountLMS, configSeq)
+		// 설정이 있으면 업데이트 (잔여건수는 nil인 경우 기존 값 유지)
+		var execErr error
+		var result sql.Result
+		
+		if remainingCountSMS != nil && remainingCountLMS != nil {
+			// 두 값 모두 업데이트
+			updateConfigQuery := `
+				UPDATE mymunja_config_info
+				SET mymunja_id = ?, mymunja_password = ?, callback_number = ?, remaining_count_sms = ?, remaining_count_lms = ?, lastUpdateDate = now()
+				WHERE seq = ?
+			`
+			result, execErr = tx.Exec(updateConfigQuery, accountID, password, callbackNumber, *remainingCountSMS, *remainingCountLMS, configSeq)
+		} else if remainingCountSMS != nil {
+			// SMS만 업데이트
+			updateConfigQuery := `
+				UPDATE mymunja_config_info
+				SET mymunja_id = ?, mymunja_password = ?, callback_number = ?, remaining_count_sms = ?, lastUpdateDate = now()
+				WHERE seq = ?
+			`
+			result, execErr = tx.Exec(updateConfigQuery, accountID, password, callbackNumber, *remainingCountSMS, configSeq)
+		} else if remainingCountLMS != nil {
+			// LMS만 업데이트
+			updateConfigQuery := `
+				UPDATE mymunja_config_info
+				SET mymunja_id = ?, mymunja_password = ?, callback_number = ?, remaining_count_lms = ?, lastUpdateDate = now()
+				WHERE seq = ?
+			`
+			result, execErr = tx.Exec(updateConfigQuery, accountID, password, callbackNumber, *remainingCountLMS, configSeq)
+		} else {
+			// 잔여건수는 업데이트하지 않음 (기존 값 유지)
+			updateConfigQuery := `
+				UPDATE mymunja_config_info
+				SET mymunja_id = ?, mymunja_password = ?, callback_number = ?, lastUpdateDate = now()
+				WHERE seq = ?
+			`
+			result, execErr = tx.Exec(updateConfigQuery, accountID, password, callbackNumber, configSeq)
+		}
+		
 		if execErr != nil {
 			log.Printf("SaveSMSConfig - update config error: %v", execErr)
 			err = execErr
