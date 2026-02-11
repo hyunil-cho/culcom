@@ -34,8 +34,8 @@ func InsertExternalCustomer(branchSeq int, name, phone, adPlatform, adName strin
 
 	// 고객 등록
 	query := `
-		INSERT INTO customers (branch_seq, name, phone_number, commercial_name, ad_source, call_count)
-		VALUES (?, ?, ?, ?, ?, 0)
+		INSERT INTO customers (branch_seq, name, phone_number, commercial_name, ad_source, call_count, status)
+		VALUES (?, ?, ?, ?, ?, 0, '신규')
 	`
 
 	result, err := DB.Exec(query, branchSeq, name, cleanPhone, adName, adPlatform)
