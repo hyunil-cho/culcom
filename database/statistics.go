@@ -120,3 +120,87 @@ func GetCallerSelectionCount(branchSeq int, caller, period string) (int, error) 
 
 	return count, nil
 }
+
+// DailyCustomerStats - 일별 고객 통계 구조체
+type DailyCustomerStats struct {
+	Date             string `json:"date"`             // 날짜 (YYYY-MM-DD)
+	Count            int    `json:"count"`            // 고객 수
+	ReservationCount int    `json:"reservationCount"` // 예약 확정자 수
+}
+
+// GetDailyCustomerStats - 최근 N일간의 일별 고객 통계 조회 (예약자 + 예약 확정자)
+// 파라미터: branchSeq (지점 seq, 0이면 전체 지점), days (최근 며칠)
+// 반환: 일별 통계 리스트, 에러
+func GetDailyCustomerStats(branchSeq int, days int) ([]DailyCustomerStats, error) {
+
+	// 고객 통계와 예약 통계를 LEFT JOIN으로 결합
+	query := `
+		SELECT 
+			dates.date,
+			COALESCE(c.count, 0) as customer_count,
+			COALESCE(r.count, 0) as reservation_count
+		FROM (
+			SELECT DATE_SUB(CURDATE(), INTERVAL n.n DAY) as date
+			FROM (
+				SELECT 0 as n UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6
+			) n
+			WHERE n.n < ?
+		) dates
+		LEFT JOIN (
+			SELECT DATE(createdDate) as date, COUNT(*) as count
+			FROM customers
+			WHERE DATE(createdDate) >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+	`
+	args := []interface{}{days, days - 1}
+
+	if branchSeq > 0 {
+		query += ` AND branch_seq = ?`
+		args = append(args, branchSeq)
+	}
+
+	query += `
+			GROUP BY DATE(createdDate)
+		) c ON dates.date = c.date
+		LEFT JOIN (
+			SELECT DATE(createdDate) as date, COUNT(*) as count
+			FROM reservation_info
+			WHERE DATE(createdDate) >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+	`
+
+	args = append(args, days-1)
+
+	if branchSeq > 0 {
+		query += ` AND branch_seq = ?`
+		args = append(args, branchSeq)
+	}
+
+	query += `
+			GROUP BY DATE(createdDate)
+		) r ON dates.date = r.date
+		ORDER BY dates.date ASC
+	`
+
+	rows, err := DB.Query(query, args...)
+	if err != nil {
+		log.Printf("GetDailyCustomerStats - query error: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	stats := []DailyCustomerStats{}
+	for rows.Next() {
+		var stat DailyCustomerStats
+		if err := rows.Scan(&stat.Date, &stat.Count, &stat.ReservationCount); err != nil {
+			log.Printf("GetDailyCustomerStats - scan error: %v", err)
+			continue
+		}
+		stats = append(stats, stat)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf("GetDailyCustomerStats - rows error: %v", err)
+		return nil, err
+	}
+
+	return stats, nil
+}
