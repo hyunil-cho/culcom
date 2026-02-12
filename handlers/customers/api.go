@@ -52,7 +52,6 @@ func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 성공 응답
 	utils.JSONSuccess(w, map[string]interface{}{
-		"success": true,
 		"comment": comment,
 	})
 }
@@ -106,7 +105,6 @@ func ProcessCallHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 성공 응답
 	utils.JSONSuccess(w, map[string]interface{}{
-		"success":          true,
 		"call_count":       callCount,
 		"last_update_date": lastUpdateDate,
 		"message":          "통화 처리가 완료되었습니다",

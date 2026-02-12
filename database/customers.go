@@ -95,7 +95,6 @@ func buildCustomerFilterConditions(branchSeq int, filter, searchType, searchKeyw
 // 파라미터: branchSeq (지점 seq), filter ("new": call_count < 5, "all": 전체), searchType (검색 타입), searchKeyword (검색어)
 // 반환: 고객 수, 에러
 func GetCustomersCountByBranch(branchSeq int, filter, searchType, searchKeyword string) (int, error) {
-	log.Printf("[Customer] GetCustomersCountByBranch 호출 - BranchSeq: %d, Filter: %s, SearchType: %s, SearchKeyword: %s\n", branchSeq, filter, searchType, searchKeyword)
 
 	// 지점 seq가 0이면 0 반환
 	if branchSeq == 0 {
@@ -119,7 +118,6 @@ func GetCustomersCountByBranch(branchSeq int, filter, searchType, searchKeyword 
 		return 0, err
 	}
 
-	log.Printf("[Customer] GetCustomersCountByBranch 완료 - Count: %d\n", count)
 	return count, nil
 }
 
@@ -127,7 +125,6 @@ func GetCustomersCountByBranch(branchSeq int, filter, searchType, searchKeyword 
 // 파라미터: branchSeq (지점 seq), filter ("new": call_count < 5, "all": 전체), searchType (검색 타입), searchKeyword (검색어), page (페이지 번호), itemsPerPage (페이지당 항목 수)
 // 반환: 고객 목록, 에러
 func GetCustomersByBranch(branchSeq int, filter, searchType, searchKeyword string, page, itemsPerPage int) ([]CustomerInfo, error) {
-	log.Printf("[Customer] GetCustomersByBranch 호출 - BranchSeq: %d, Filter: %s, SearchType: %s, SearchKeyword: %s, Page: %d, ItemsPerPage: %d\n", branchSeq, filter, searchType, searchKeyword, page, itemsPerPage)
 
 	// 지점 seq가 0이면 빈 배열 반환
 	if branchSeq == 0 {
@@ -200,7 +197,6 @@ func GetCustomersByBranch(branchSeq int, filter, searchType, searchKeyword strin
 		return nil, err
 	}
 
-	log.Printf("[Customer] GetCustomersByBranch 완료 - %d개 고객 조회\n", len(customers))
 	return customers, nil
 }
 
@@ -216,7 +212,6 @@ func UpdateCustomerComment(customerSeq int, comment string) error {
 		return err
 	}
 
-	log.Printf("[Customer] 코멘트 업데이트 완료 - CustomerSeq: %d\n", customerSeq)
 	return nil
 }
 
@@ -232,7 +227,6 @@ func UpdateCustomerName(customerSeq int, name string) error {
 		return err
 	}
 
-	log.Printf("[Customer] 이름 업데이트 완료 - CustomerSeq: %d, Name: %s\n", customerSeq, name)
 	return nil
 }
 
@@ -339,7 +333,6 @@ func GetTodayWalkInCustomers(branchSeq int) (int, error) {
 		return 0, err
 	}
 
-	log.Printf("[Customer] GetTodayWalkInCustomers 완료 - Count: %d\n", count)
 	return count, nil
 }
 
@@ -427,96 +420,9 @@ func GetDailyCustomerStats(branchSeq int, days int) ([]DailyCustomerStats, error
 	return stats, nil
 }
 
-// CallerStats - CALLER별 통계 구조체
-type CallerStats struct {
-	Caller             string
-	TotalCustomers     int
-	ReservationConfirm int
-	ConfirmRate        float64
-	SelectionCount     int // CALLER 선택 횟수
-}
-
-// GetCallerStats - CALLER별 통계 조회 (일/주/월)
-// period: "day", "week", "month"
-func GetCallerStats(branchSeq int, period string) ([]CallerStats, error) {
-
-	var dateCondition string
-	switch period {
-	case "day":
-		dateCondition = "DATE(r.createdDate) = CURDATE()"
-	case "week":
-		dateCondition = "r.createdDate >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)"
-	case "month":
-		dateCondition = "r.createdDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)"
-	default:
-		dateCondition = "DATE(r.createdDate) = CURDATE()"
-	}
-
-	// A부터 P까지 모든 CALLER 생성
-	allCallers := []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"}
-
-	// 각 caller별로 통계 조회
-	query := `
-		SELECT 
-			? as caller,
-			COALESCE(COUNT(DISTINCT c.seq), 0) as total_customers,
-			COALESCE(COUNT(DISTINCT CASE WHEN r.seq IS NOT NULL THEN r.seq END), 0) as reservation_confirm,
-			CASE 
-				WHEN COUNT(DISTINCT c.seq) > 0 THEN ROUND(COUNT(DISTINCT CASE WHEN r.seq IS NOT NULL THEN r.seq END) * 100.0 / COUNT(DISTINCT c.seq), 2)
-				ELSE 0
-			END as confirm_rate
-		FROM (SELECT 1) dummy
-		LEFT JOIN reservation_info r ON r.caller = ? AND ` + dateCondition
-
-	if branchSeq > 0 {
-		query += ` AND r.branch_seq = ?`
-	}
-
-	query += `
-		LEFT JOIN customers c ON r.customer_id = c.seq
-	`
-
-	stats := []CallerStats{}
-	for _, caller := range allCallers {
-		queryArgs := []interface{}{caller, caller}
-		if branchSeq > 0 {
-			queryArgs = append(queryArgs, branchSeq)
-		}
-
-		row := DB.QueryRow(query, queryArgs...)
-		var stat CallerStats
-		if err := row.Scan(&stat.Caller, &stat.TotalCustomers, &stat.ReservationConfirm, &stat.ConfirmRate); err != nil {
-			log.Printf("GetCallerStats - scan error for caller %s: %v", caller, err)
-			continue
-		}
-
-		// CALLER 선택 횟수 조회
-		selectionCount, err := GetCallerSelectionCount(branchSeq, caller, period)
-		if err != nil {
-			log.Printf("GetCallerStats - selection count error for caller %s: %v", caller, err)
-			selectionCount = 0
-		}
-		stat.SelectionCount = selectionCount
-
-		// 확정 비율을 선택 횟수 대비 예약 확정 수로 재계산
-		if selectionCount > 0 {
-			stat.ConfirmRate = float64(stat.ReservationConfirm) * 100.0 / float64(selectionCount)
-			stat.ConfirmRate = float64(int(stat.ConfirmRate*100)) / 100 // 소수점 둘째자리까지
-		} else {
-			stat.ConfirmRate = 0
-		}
-
-		stats = append(stats, stat)
-	}
-
-	return stats, nil
-}
-
 // ProcessCallWithCallerSelection - CALLER 선택 이력 추가 + 통화 횟수 증가 (트랜잭션)
 // caller 선택과 call_count 증가를 하나의 트랜잭션으로 처리
 func ProcessCallWithCallerSelection(customerID, branchSeq int, caller string) (int, string, error) {
-	log.Printf("[Customer] ProcessCallWithCallerSelection 호출 - CustomerID: %d, BranchSeq: %d, Caller: %s\n", customerID, branchSeq, caller)
-
 	// 트랜잭션 시작
 	tx, err := DB.Begin()
 	if err != nil {
@@ -587,38 +493,6 @@ func ProcessCallWithCallerSelection(customerID, branchSeq int, caller string) (i
 	}
 
 	return callCount, lastUpdateDate, nil
-}
-
-// GetCallerSelectionCount - 기간별 CALLER 선택 횟수 조회
-func GetCallerSelectionCount(branchSeq int, caller, period string) (int, error) {
-	var dateCondition string
-	switch period {
-	case "day":
-		dateCondition = "DATE(selected_date) = CURDATE()"
-	case "week":
-		dateCondition = "selected_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)"
-	case "month":
-		dateCondition = "selected_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)"
-	default:
-		dateCondition = "DATE(selected_date) = CURDATE()"
-	}
-
-	query := `SELECT COUNT(*) FROM caller_selection_history WHERE caller = ? AND ` + dateCondition
-
-	args := []interface{}{caller}
-	if branchSeq > 0 {
-		query += ` AND branch_seq = ?`
-		args = append(args, branchSeq)
-	}
-
-	var count int
-	err := DB.QueryRow(query, args...).Scan(&count)
-	if err != nil {
-		log.Printf("GetCallerSelectionCount - query error: %v", err)
-		return 0, err
-	}
-
-	return count, nil
 }
 
 // DeleteCustomer - 고객 삭제
