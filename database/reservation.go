@@ -18,10 +18,7 @@ func CreateReservation(branchSeq, customerSeq, userSeq int, caller string, inter
 		log.Printf("CreateReservation - transaction begin error: %v", err)
 		return 0, err
 	}
-	// defer tx.Rollback()은 다음과 같이 동작:
-	// - Commit 전 에러 발생 시: Rollback 실행
-	// - Commit 성공 시: Rollback은 no-op (무시됨)
-	// - Commit 실패 시: Rollback 실행
+
 	defer tx.Rollback()
 
 	// 한국 시간대로 포맷팅 (time.Time을 직접 전달하면 UTC로 변환되므로)

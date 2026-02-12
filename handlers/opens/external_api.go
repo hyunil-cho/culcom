@@ -1,4 +1,4 @@
-package customers
+package opens
 
 import (
 	"backoffice/database"

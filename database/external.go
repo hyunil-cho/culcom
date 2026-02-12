@@ -6,22 +6,6 @@ import (
 	"strings"
 )
 
-// GetBranchSeqByLocation location으로 branch_seq 조회
-func GetBranchSeqByLocation(location string) (int, error) {
-	var branchSeq int
-
-	// location을 alias로 매칭 (대소문자 구분 없이)
-	query := "SELECT seq FROM branches WHERE LOWER(alias) = LOWER(?)"
-
-	err := DB.QueryRow(query, location).Scan(&branchSeq)
-	if err != nil {
-		log.Printf("GetBranchSeqByLocation - 조회 실패: location=%s, error=%v", location, err)
-		return 0, fmt.Errorf("해당 위치의 지점을 찾을 수 없습니다: %s", location)
-	}
-
-	return branchSeq, nil
-}
-
 // InsertExternalCustomer 외부 API를 통한 고객 등록
 func InsertExternalCustomer(branchSeq int, name, phone, adPlatform, adName string) (int64, error) {
 	// 전화번호에서 숫자만 추출

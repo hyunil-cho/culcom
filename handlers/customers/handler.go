@@ -14,6 +14,9 @@ var Templates *template.Template
 
 // Handler - 고객 관리 페이지 핸들러 (SSR)
 func Handler(w http.ResponseWriter, r *http.Request) {
+	// 세션에서 플래시 메시지 읽기
+	successMessage := utils.GetFlashMessage(w, r, "success")
+
 	// 페이지 파라미터 가져오기
 	currentPage := utils.GetCurrentPageFromRequest(r)
 
@@ -105,6 +108,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		Customers:        customers,
 		DefaultTemplate:  defaultTemplate,
 		MessageTemplates: messageTemplates,
+		SuccessMessage:   successMessage,
 		Pagination:       pagination,
 		CurrentFilter:    filter,
 		SearchType:       searchParams.SearchType,
@@ -154,7 +158,7 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		err = ValidateAddCustomerForm(name, phoneNumber)
 		if err != nil {
 			log.Printf("고객 추가 실패: %v", err)
-			http.Redirect(w, r, "/customers/add?error=invalid_phone", http.StatusSeeOther)
+			http.Redirect(w, r, "/error", http.StatusSeeOther)
 			return
 		}
 
@@ -162,12 +166,17 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		_, err = database.InsertCustomer(branchCode, name, phoneNumber, comment)
 		if err != nil {
 			log.Printf("고객 저장 오류: %v", err)
-			http.Redirect(w, r, "/customers/add?error=add", http.StatusSeeOther)
+			http.Redirect(w, r, "/error", http.StatusSeeOther)
 			return
 		}
 
 		log.Printf("고객 추가 성공 - Name: %s, Phone: %s", name, phoneNumber)
-		http.Redirect(w, r, "/customers/add?success=add", http.StatusSeeOther)
+
+		// 세션에 플래시 메시지 저장
+		utils.SetFlashMessage(w, r, "success", "워크인 고객이 성공적으로 추가되었습니다.")
+
+		// 성공 시 목록 페이지로 리다이렉트
+		http.Redirect(w, r, "/customers", http.StatusSeeOther)
 		return
 	}
 

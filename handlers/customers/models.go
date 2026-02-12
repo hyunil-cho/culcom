@@ -29,6 +29,7 @@ type PageData struct {
 	Customers        []Customer
 	DefaultTemplate  string // 기본 템플릿 내용
 	MessageTemplates []database.MessageTemplate
+	SuccessMessage   string // 플래시 메시지
 	Pagination       utils.Pagination
 	CurrentFilter    string // 현재 적용된 필터 (new/all)
 	SearchType       string // 검색 타입 (name/phone)

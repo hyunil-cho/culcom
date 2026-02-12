@@ -101,13 +101,13 @@ func ProcessCallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("통화 처리 완료 - CustomerSeq: %d, Caller: %s, CallCount: %d", customerSeq, caller, callCount)
+	log.Printf("통화 횟수 증가 처리 완료 - CustomerSeq: %d, Caller: %s, CallCount: %d", customerSeq, caller, callCount)
 
 	// 성공 응답
 	utils.JSONSuccess(w, map[string]interface{}{
 		"call_count":       callCount,
 		"last_update_date": lastUpdateDate,
-		"message":          "통화 처리가 완료되었습니다",
+		"message":          "해당 고객에 대한 통화 횟수 증가가 완료되었습니다",
 	})
 }
 

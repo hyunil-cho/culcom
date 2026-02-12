@@ -161,22 +161,6 @@ func GetAllBranches() ([]map[string]interface{}, error) {
 	return branches, nil
 }
 
-// GetFirstBranchAlias - 첫 번째 지점의 alias(코드)를 반환
-// 반환: 지점 alias, 에러
-func GetFirstBranchAlias() (string, error) {
-	query := `SELECT alias FROM branches ORDER BY seq ASC LIMIT 1`
-
-	var alias string
-	err := DB.QueryRow(query).Scan(&alias)
-	if err != nil {
-		log.Printf("GetFirstBranchAlias error: %v", err)
-		return "", err
-	}
-
-	log.Printf("GetFirstBranchAlias success - Alias: %s", alias)
-	return alias, nil
-}
-
 // GetBranchesForSelect - 헤더 선택박스용 지점 목록 조회 (간단한 형태)
 // 반환: [{seq, alias, name, manager, address, directions}] 형태의 지점 목록
 // TODO :: cache 적용 필요
@@ -231,4 +215,20 @@ func GetBranchesForSelect() ([]map[string]string, error) {
 	}
 
 	return branches, nil
+}
+
+// GetBranchSeqByLocation location으로 branch_seq 조회
+func GetBranchSeqByLocation(location string) (int, error) {
+	var branchSeq int
+
+	// location을 alias로 매칭 (대소문자 구분 없이)
+	query := "SELECT seq FROM branches WHERE LOWER(alias) = LOWER(?)"
+
+	err := DB.QueryRow(query, location).Scan(&branchSeq)
+	if err != nil {
+		log.Printf("GetBranchSeqByLocation - 조회 실패: location=%s, error=%v", location, err)
+		return 0, fmt.Errorf("해당 위치의 지점을 찾을 수 없습니다: %s", location)
+	}
+
+	return branchSeq, nil
 }

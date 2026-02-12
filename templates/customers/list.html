@@ -313,6 +313,17 @@
 <!-- Pagination Utils -->
 
 <script>
+{{if .SuccessMessage}}
+// 서버에서 전달된 성공 메시지가 있으면 모달 표시
+window.addEventListener('DOMContentLoaded', function() {
+    ModalManager.createAlert({
+        title: '성공',
+        message: '{{.SuccessMessage}}',
+        icon: '✅'
+    });
+});
+{{end}}
+
 // ========== 전역 변수 선언 (모든 변수를 스크립트 최상단에 선언) ==========
 // CALLER 선택 관련 변수
 let pendingCallerSelection = {

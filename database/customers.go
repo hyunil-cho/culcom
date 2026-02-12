@@ -483,26 +483,11 @@ func MarkCustomerAsNoPhoneInterview(customerID, branchSeq int, caller string) er
 		return err
 	}
 	defer tx.Rollback()
-
-	// 1. CALLER 선택 이력 저장
-	historyQuery := `
-		INSERT INTO caller_selection_history 
-			(customer_id, caller, branch_seq, selected_date)
-		VALUES (?, ?, ?, NOW())
-	`
-	_, err = tx.Exec(historyQuery, customerID, caller, branchSeq)
-	if err != nil {
-		log.Printf("MarkCustomerAsNoPhoneInterview - insert history error: %v", err)
-		return err
-	}
-
-	// 2. 고객 상태를 '전화상안함'으로 변경하고 call_count를 5 이상으로 설정
-	// call_count를 5로 설정하여 "처리중" 필터에서 제외되도록 함
+	// 2. 고객 상태를 '전화상안함' 상태로 변경
 	updateQuery := `
 		UPDATE customers 
 		SET 
 			status = '전화상거절',
-			call_count = GREATEST(call_count, 5),
 			lastUpdateDate = NOW()
 		WHERE seq = ?
 	`
