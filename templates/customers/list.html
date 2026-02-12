@@ -419,7 +419,7 @@ function performNameChange(customerId, oldName, newName, inputEl) {
             ModalManager.createAlert({
                 id: 'nameChangeFail',
                 title: '❌ 변경 실패',
-                message: '이름 변경에 실패했습니다.',
+                message: '이름 변경에 실패했습니다. ${{data.error}}',
                 confirmText: '확인',
                 confirmColor: '#f44336'
             });

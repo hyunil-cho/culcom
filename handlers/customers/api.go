@@ -38,7 +38,7 @@ func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	customerSeq, err := ValidateCustomerSeq(customerSeqStr)
 	if err != nil {
 		log.Printf("customer_seq 검증 실패: %v", err)
-		http.Error(w, "Invalid customer ID", http.StatusBadRequest)
+		utils.JSONError(w, http.StatusBadRequest, "Invalid customer ID")
 		return
 	}
 
@@ -196,7 +196,7 @@ func CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 // @Router       /customers/update-name [post]
 func UpdateCustomerNameHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		utils.JSONError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
@@ -208,14 +208,14 @@ func UpdateCustomerNameHandler(w http.ResponseWriter, r *http.Request) {
 	customerSeq, err := ValidateCustomerSeq(customerSeqStr)
 	if err != nil {
 		log.Printf("customer_seq 검증 실패: %v", err)
-		http.Error(w, "Invalid customer ID", http.StatusBadRequest)
+		utils.JSONError(w, http.StatusBadRequest, "Invalid customer ID")
 		return
 	}
 
 	err = ValidateCustomerName(name)
 	if err != nil {
 		log.Printf("이름 검증 실패: %v", err)
-		http.Error(w, "Name is required", http.StatusBadRequest)
+		utils.JSONError(w, http.StatusBadRequest, "Name is required")
 		return
 	}
 
@@ -223,7 +223,7 @@ func UpdateCustomerNameHandler(w http.ResponseWriter, r *http.Request) {
 	err = database.UpdateCustomerName(customerSeq, name)
 	if err != nil {
 		log.Printf("이름 업데이트 오류: %v", err)
-		http.Error(w, "Failed to update name", http.StatusInternalServerError)
+		utils.JSONError(w, http.StatusInternalServerError, "Failed to update name : "+err.Error())
 		return
 	}
 
