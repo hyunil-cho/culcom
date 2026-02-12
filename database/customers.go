@@ -443,34 +443,6 @@ func DeleteCustomer(customerSeq int) error {
 	return nil
 }
 
-// UpdateCustomerStatus - 고객 상태 업데이트
-// 파라미터: customerSeq (고객 seq), status (상태: 신규, 예약확정, 전화상거절, 부재중)
-// 반환: 에러
-func UpdateCustomerStatus(customerSeq int, status string) error {
-	log.Printf("[Customer] UpdateCustomerStatus 호출 - CustomerSeq: %d, Status: %s\n", customerSeq, status)
-
-	query := `UPDATE customers SET status = ? WHERE seq = ?`
-
-	result, err := DB.Exec(query, status, customerSeq)
-	if err != nil {
-		log.Printf("UpdateCustomerStatus - update error: %v", err)
-		return err
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		log.Printf("UpdateCustomerStatus - get rows affected error: %v", err)
-		return err
-	}
-
-	if rowsAffected == 0 {
-		log.Printf("UpdateCustomerStatus - no rows affected (customer not found)")
-	}
-
-	log.Printf("[Customer] UpdateCustomerStatus 완료 - Rows affected: %d\n", rowsAffected)
-	return nil
-}
-
 // MarkCustomerAsNoPhoneInterview - 고객을 '전화상안함' 상태로 변경하고 CALLER 이력 저장
 // CALLER 선택과 상태 변경, call_count 업데이트를 하나의 트랜잭션으로 처리
 func MarkCustomerAsNoPhoneInterview(customerID, branchSeq int, caller string) error {
