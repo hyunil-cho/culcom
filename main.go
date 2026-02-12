@@ -123,6 +123,7 @@ func main() {
 	mux.HandleFunc("/api/external/customers", opens.ExternalRegisterCustomerHandler)                                                              // 외부 고객 등록 API (인증 불필요)
 	mux.HandleFunc("/api/service/sms", middleware.RequireAuthRecover(services.SendSMSHandler))                                                    // SMS 메시지 전송
 	mux.HandleFunc("/api/service/reservation-sms-config", middleware.RequireAuthRecover(services.GetReservationSMSConfigHandler))                 // 예약 SMS 설정 조회
+	mux.HandleFunc("/api/message-templates", middleware.RequireAuthRecover(messagetemplates.GetTemplatesAPI))                                     // 메시지 템플릿 목록 API
 	mux.HandleFunc("/branches", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.Handler)))                                     // 지점 관리
 	mux.HandleFunc("/branches/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.DetailHandler)))                        // 지점 상세
 	mux.HandleFunc("/branches/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.EditHandler)))                            // 지점 수정

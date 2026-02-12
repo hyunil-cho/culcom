@@ -300,3 +300,34 @@ func SetDefaultHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("템플릿 ID %d를 기본값으로 설정 성공\n", id)
 	http.Redirect(w, r, "/message-templates?success=default", http.StatusSeeOther)
 }
+
+// GetTemplatesAPI 메시지 템플릿 목록 API (JSON)
+func GetTemplatesAPI(w http.ResponseWriter, r *http.Request) {
+	// 세션에서 선택된 지점 정보 가져오기
+	branchCode := middleware.GetSelectedBranch(r)
+
+	// DB에서 템플릿 목록 조회 (지점별)
+	dbTemplates, err := database.GetMessageTemplates(branchCode)
+	if err != nil {
+		log.Printf("템플릿 조회 오류: %v", err)
+		utils.JSONError(w, http.StatusInternalServerError, "템플릿 조회에 실패했습니다")
+		return
+	}
+
+	// DB 템플릿을 JSON 응답 형식으로 변환
+	templates := make([]map[string]interface{}, len(dbTemplates))
+	for i, tmpl := range dbTemplates {
+		templates[i] = map[string]interface{}{
+			"id":          tmpl.ID,
+			"name":        tmpl.Name,
+			"content":     tmpl.Content,
+			"description": tmpl.Description,
+			"is_active":   tmpl.IsActive,
+			"is_default":  tmpl.IsDefault,
+		}
+	}
+
+	utils.JSONSuccess(w, map[string]interface{}{
+		"templates": templates,
+	})
+}

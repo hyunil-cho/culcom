@@ -84,36 +84,17 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		customers = append(customers, customer)
 	}
 
-	// 메시지 템플릿 조회
-	messageTemplates, err := database.GetMessageTemplates(branchCode)
-	if err != nil {
-		log.Printf("메시지 템플릿 조회 오류: %v", err)
-		// 에러가 발생해도 빈 배열로 처리하여 계속 진행
-		messageTemplates = []database.MessageTemplate{}
-	}
-
-	// 기본 템플릿 찾기
-	defaultTemplate := ""
-	for _, tmpl := range messageTemplates {
-		if tmpl.IsDefault {
-			defaultTemplate = tmpl.Content
-			break
-		}
-	}
-
 	data := PageData{
-		BasePageData:     middleware.GetBasePageData(r),
-		Title:            "지원자 회신 관리",
-		ActiveMenu:       "customers",
-		Customers:        customers,
-		DefaultTemplate:  defaultTemplate,
-		MessageTemplates: messageTemplates,
-		SuccessMessage:   successMessage,
-		Pagination:       pagination,
-		CurrentFilter:    filter,
-		SearchType:       searchParams.SearchType,
-		SearchKeyword:    searchParams.SearchKeyword,
-		TotalCount:       totalItems,
+		BasePageData:   middleware.GetBasePageData(r),
+		Title:          "지원자 회신 관리",
+		ActiveMenu:     "customers",
+		Customers:      customers,
+		SuccessMessage: successMessage,
+		Pagination:     pagination,
+		CurrentFilter:  filter,
+		SearchType:     searchParams.SearchType,
+		SearchKeyword:  searchParams.SearchKeyword,
+		TotalCount:     totalItems,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "customers/list.html", data); err != nil {

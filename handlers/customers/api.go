@@ -46,7 +46,7 @@ func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	err = database.UpdateCustomerComment(customerSeq, comment)
 	if err != nil {
 		log.Printf("코멘트 업데이트 오류: %v", err)
-		http.Error(w, "Failed to update comment", http.StatusInternalServerError)
+		utils.JSONError(w, http.StatusInternalServerError, "database failed: "+err.Error())
 		return
 	}
 
