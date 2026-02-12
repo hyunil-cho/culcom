@@ -371,7 +371,7 @@ func ProcessCallWithCallerSelection(customerID, branchSeq int, caller string) (i
 			lastUpdateDate = NOW(),
 			status = CASE 
 				WHEN call_count + 1 >= 5 THEN '콜수초과'
-				WHEN status NOT IN ('예약확정', '전화상거절', '콜수초과') THEN '진행중'
+				WHEN status = '신규' THEN '진행중'
 				ELSE status
 			END
 		WHERE seq = ?
