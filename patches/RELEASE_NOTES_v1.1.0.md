@@ -352,6 +352,29 @@ LEFT JOIN branch-third-party-mapping btpm
 
 ---
 
+### 메시지 템플릿 데이터 무결성 개선
+
+**문제:**
+- 비활성화된 메시지 템플릿을 기본 템플릿으로 설정할 수 있는 상태
+- 비활성 템플릿이 기본으로 설정된 경우, 예약 SMS 설정 페이지에서 사용할 수 없어 혼란 발생 가능
+
+**해결:**
+1. **데이터베이스 검증 추가** - [database/messagetemplate.go](database/messagetemplate.go)
+   - `SetDefaultMessageTemplate()` 함수에 `is_active` 상태 체크 추가
+   - 비활성 템플릿 설정 시도 시 에러 반환: "비활성화된 템플릿은 기본 템플릿으로 설정할 수 없습니다"
+
+2. **UI 버튼 조건부 렌더링** - [templates/message-templates/list.html](templates/message-templates/list.html)
+   - 비활성 템플릿에는 "기본 설정" 버튼을 표시하지 않음
+   - 조건: `{{if and (not .IsDefault) .IsActive}}`
+
+**개선 효과:**
+- ✅ 데이터 일관성 보장
+- ✅ 비활성 템플릿이 기본으로 설정되는 것을 원천 차단
+- ✅ 예약 SMS 설정 페이지에서 항상 유효한 템플릿만 표시
+- ✅ 관리자의 실수로 인한 오류 방지
+
+---
+
 ## ⚠️ Breaking Changes
 
 **없음** - 하위 호환성 유지
