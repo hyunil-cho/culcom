@@ -19,6 +19,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	// 현재 로그인한 사용자의 지점 정보 가져오기
 	branchSeq := middleware.GetSelectedBranch(r)
 
+	// 통계 카드 생성
+	var stats []StatCard
+
 	// 1. 금일 총 예약자 수 조회
 	totalCustomers, err := database.GetTodayTotalCustomers(branchSeq)
 	if err != nil {
@@ -26,14 +29,19 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		totalCustomers = 0
 	}
 
-	// 2. SMS와 LMS 잔여건수 각각 조회
-	var smsRemaining, lmsRemaining int
-	if branchSeq > 0 {
-		smsRemaining, lmsRemaining, _ = database.GetSMSAndLMSRemainingCount(branchSeq)
+	// 5. 최근 7일간 일별 고객 통계 조회
+	dailyStats, err := database.GetDailyCustomerStats(branchSeq, 7)
+	if err != nil {
+		log.Printf("Handler - GetDailyCustomerStats error: %v", err)
+		dailyStats = []database.DailyCustomerStats{}
 	}
 
-	// 통계 카드 생성
-	var stats []StatCard
+	// JSON으로 변환 (템플릿에서 JavaScript로 사용)
+	dailyStatsJSON, err := json.Marshal(dailyStats)
+	if err != nil {
+		log.Printf("Handler - JSON marshal error: %v", err)
+		dailyStatsJSON = []byte("[]")
+	}
 
 	// 금일 총 예약자
 	stats = append(stats, StatCard{
@@ -42,6 +50,12 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		Icon:  "👥",
 		Color: "#3498db",
 	})
+
+	// 2. SMS와 LMS 잔여건수 각각 조회
+	var smsRemaining, lmsRemaining int
+	if branchSeq > 0 {
+		smsRemaining, lmsRemaining, _ = database.GetSMSAndLMSRemainingCount(branchSeq)
+	}
 
 	// SMS 잔여건수 카드 추가
 	stats = append(stats, StatCard{
@@ -58,20 +72,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		Icon:  "📧",
 		Color: "#9b59b6",
 	})
-
-	// 5. 최근 7일간 일별 고객 통계 조회
-	dailyStats, err := database.GetDailyCustomerStats(branchSeq, 7)
-	if err != nil {
-		log.Printf("Handler - GetDailyCustomerStats error: %v", err)
-		dailyStats = []database.DailyCustomerStats{}
-	}
-
-	// JSON으로 변환 (템플릿에서 JavaScript로 사용)
-	dailyStatsJSON, err := json.Marshal(dailyStats)
-	if err != nil {
-		log.Printf("Handler - JSON marshal error: %v", err)
-		dailyStatsJSON = []byte("[]")
-	}
 
 	data := PageData{
 		BasePageData:   middleware.GetBasePageData(r),
