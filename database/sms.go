@@ -1,6 +1,7 @@
 package database
 
 import (
+	"backoffice/utils"
 	"database/sql"
 	"fmt"
 	"log"
@@ -124,7 +125,7 @@ func SaveSMSConfig(branchSeq int, accountID, password string, senderPhones []str
 	log.Println("=== SMS 설정 저장 ===")
 	log.Printf("지점 seq: %d", branchSeq)
 	log.Printf("계정 ID: %s", accountID)
-	log.Printf("비밀번호: %s", maskSMSPassword(password))
+	log.Printf("비밀번호: %s", utils.MaskPassword(password))
 	log.Printf("발신번호: %v", senderPhones)
 	log.Printf("활성화: %v", isActive)
 	if remainingCountSMS != nil {
@@ -134,18 +135,11 @@ func SaveSMSConfig(branchSeq int, accountID, password string, senderPhones []str
 		log.Printf("LMS 잔여건수: %d", *remainingCountLMS)
 	}
 
-	// 기존 매핑 조회 (트랜잭션 전에)
-	mappingSeq, _, err := getSMSMappingInfo(branchSeq)
-	isNewMapping := err != nil
-
-	var serviceSeq int
-	if isNewMapping {
-		// 매핑이 없으면 serviceSeq 조회
-		serviceSeq, err = getSMSServiceSeq()
-		if err != nil {
-			log.Printf("SaveSMSConfig - service not found: %v", err)
-			return err
-		}
+	// SMS 서비스 seq 조회
+	serviceSeq, err := getSMSServiceSeq()
+	if err != nil {
+		log.Printf("SaveSMSConfig - service not found: %v", err)
+		return err
 	}
 
 	// 트랜잭션 시작
@@ -161,129 +155,112 @@ func SaveSMSConfig(branchSeq int, accountID, password string, senderPhones []str
 		}
 	}()
 
-	// 3단계: branch-third-party-mapping 생성/업데이트
-	if isNewMapping {
-		// 매핑 생성
-		insertMappingQuery := `
-			INSERT INTO ` + "`branch-third-party-mapping`" + ` 
+	// 3단계: branch-third-party-mapping UPSERT (UNIQUE KEY: branch_id, third_party_id)
+	upsertMappingQuery := `
+		INSERT INTO ` + "`branch-third-party-mapping`" + ` 
 			(branch_id, third_party_id, is_active, createdDate, lastUpdateDate)
-			VALUES (?, ?, ?, CURDATE(), CURDATE())
-		`
-		result, err := tx.Exec(insertMappingQuery, branchSeq, serviceSeq, isActive)
-		if err != nil {
-			log.Printf("SaveSMSConfig - insert mapping error: %v", err)
-			return err
-		}
-		id, _ := result.LastInsertId()
-		mappingSeq = int(id)
-		log.Printf("SaveSMSConfig - new mapping created: %d", mappingSeq)
-	} else {
-		// 매핑이 있으면 업데이트
-		updateMappingQuery := `
-			UPDATE ` + "`branch-third-party-mapping`" + `
-			SET is_active = ?, lastUpdateDate = CURDATE()
-			WHERE mapping_seq = ?
-		`
-		_, err = tx.Exec(updateMappingQuery, isActive, mappingSeq)
-		if err != nil {
-			log.Printf("SaveSMSConfig - update mapping error: %v", err)
-			return err
-		}
-		log.Printf("SaveSMSConfig - mapping updated: %d", mappingSeq)
+		VALUES (?, ?, ?, CURDATE(), CURDATE())
+		ON DUPLICATE KEY UPDATE 
+			is_active = VALUES(is_active),
+			lastUpdateDate = CURDATE()
+	`
+	result, err := tx.Exec(upsertMappingQuery, branchSeq, serviceSeq, isActive)
+	if err != nil {
+		log.Printf("SaveSMSConfig - upsert mapping error: %v", err)
+		return err
 	}
 
-	// 4단계: mymunja_config_info 확인 및 생성/업데이트
-	var configSeq int
-	configQuery := `SELECT seq FROM mymunja_config_info WHERE mapping_id = ?`
-	configErr := tx.QueryRow(configQuery, mappingSeq).Scan(&configSeq)
+	// mapping_seq 조회 (INSERT된 경우 LastInsertId, UPDATE된 경우 기존 seq 조회)
+	var mappingSeq int
+	mappingSeq, err = getMappingSeqAfterUpsert(tx, branchSeq, serviceSeq, result)
+	if err != nil {
+		log.Printf("SaveSMSConfig - get mapping_seq error: %v", err)
+		return err
+	}
+	log.Printf("SaveSMSConfig - mapping_seq: %d", mappingSeq)
 
+	// 4단계: mymunja_config_info UPSERT (UNIQUE KEY: mapping_id)
 	// 발신번호는 하나만 저장
 	var callbackNumber string
 	if len(senderPhones) > 0 {
 		callbackNumber = senderPhones[0]
 	}
 
-	if configErr != nil {
-		// 설정이 없으면 생성
-		// 잔여건수 기본값 처리 (nil이면 0)
-		finalRemainingCountSMS := 0
-		if remainingCountSMS != nil {
-			finalRemainingCountSMS = *remainingCountSMS
-		}
-		finalRemainingCountLMS := 0
-		if remainingCountLMS != nil {
-			finalRemainingCountLMS = *remainingCountLMS
-		}
+	// 잔여건수 기본값 처리 (nil이면 기존 값 유지, INSERT 시에는 0)
+	finalRemainingCountSMS := 0
+	finalRemainingCountLMS := 0
+	if remainingCountSMS != nil {
+		finalRemainingCountSMS = *remainingCountSMS
+	}
+	if remainingCountLMS != nil {
+		finalRemainingCountLMS = *remainingCountLMS
+	}
 
-		insertConfigQuery := `
-			INSERT INTO mymunja_config_info (mapping_id, mymunja_id, mymunja_password, callback_number, remaining_count_sms, remaining_count_lms, lastUpdateDate)
-			VALUES (?, ?, ?, ?, ?, ?, now())
-		`
-		result, execErr := tx.Exec(insertConfigQuery, mappingSeq, accountID, password, callbackNumber, finalRemainingCountSMS, finalRemainingCountLMS)
-		if execErr != nil {
-			log.Printf("SaveSMSConfig - insert config error: %v", execErr)
-			err = execErr
-			return err
-		}
-		id, _ := result.LastInsertId()
-		configSeq = int(id)
-		log.Printf("SaveSMSConfig - new config created: %d", configSeq)
-	} else {
-		// 설정이 있으면 업데이트 (잔여건수는 nil인 경우 기존 값 유지)
-		var execErr error
-		var result sql.Result
-		
+	// mymunja_config_info UPSERT
+	var execErr error
+	if remainingCountSMS != nil || remainingCountLMS != nil {
+		// 잔여건수 업데이트 포함
 		if remainingCountSMS != nil && remainingCountLMS != nil {
-			// 두 값 모두 업데이트
-			updateConfigQuery := `
-				UPDATE mymunja_config_info
-				SET mymunja_id = ?, mymunja_password = ?, callback_number = ?, remaining_count_sms = ?, remaining_count_lms = ?, lastUpdateDate = now()
-				WHERE seq = ?
+			// 둘 다 업데이트
+			upsertConfigQuery := `
+				INSERT INTO mymunja_config_info (mapping_id, mymunja_id, mymunja_password, callback_number, remaining_count_sms, remaining_count_lms, lastUpdateDate)
+				VALUES (?, ?, ?, ?, ?, ?, now())
+				ON DUPLICATE KEY UPDATE 
+					mymunja_id = VALUES(mymunja_id),
+					mymunja_password = VALUES(mymunja_password),
+					callback_number = VALUES(callback_number),
+					remaining_count_sms = VALUES(remaining_count_sms),
+					remaining_count_lms = VALUES(remaining_count_lms),
+					lastUpdateDate = now()
 			`
-			result, execErr = tx.Exec(updateConfigQuery, accountID, password, callbackNumber, *remainingCountSMS, *remainingCountLMS, configSeq)
+			_, execErr = tx.Exec(upsertConfigQuery, mappingSeq, accountID, password, callbackNumber, finalRemainingCountSMS, finalRemainingCountLMS)
 		} else if remainingCountSMS != nil {
 			// SMS만 업데이트
-			updateConfigQuery := `
-				UPDATE mymunja_config_info
-				SET mymunja_id = ?, mymunja_password = ?, callback_number = ?, remaining_count_sms = ?, lastUpdateDate = now()
-				WHERE seq = ?
+			upsertConfigQuery := `
+				INSERT INTO mymunja_config_info (mapping_id, mymunja_id, mymunja_password, callback_number, remaining_count_sms, remaining_count_lms, lastUpdateDate)
+				VALUES (?, ?, ?, ?, ?, 0, now())
+				ON DUPLICATE KEY UPDATE 
+					mymunja_id = VALUES(mymunja_id),
+					mymunja_password = VALUES(mymunja_password),
+					callback_number = VALUES(callback_number),
+					remaining_count_sms = VALUES(remaining_count_sms),
+					lastUpdateDate = now()
 			`
-			result, execErr = tx.Exec(updateConfigQuery, accountID, password, callbackNumber, *remainingCountSMS, configSeq)
-		} else if remainingCountLMS != nil {
-			// LMS만 업데이트
-			updateConfigQuery := `
-				UPDATE mymunja_config_info
-				SET mymunja_id = ?, mymunja_password = ?, callback_number = ?, remaining_count_lms = ?, lastUpdateDate = now()
-				WHERE seq = ?
-			`
-			result, execErr = tx.Exec(updateConfigQuery, accountID, password, callbackNumber, *remainingCountLMS, configSeq)
+			_, execErr = tx.Exec(upsertConfigQuery, mappingSeq, accountID, password, callbackNumber, finalRemainingCountSMS)
 		} else {
-			// 잔여건수는 업데이트하지 않음 (기존 값 유지)
-			updateConfigQuery := `
-				UPDATE mymunja_config_info
-				SET mymunja_id = ?, mymunja_password = ?, callback_number = ?, lastUpdateDate = now()
-				WHERE seq = ?
+			// LMS만 업데이트
+			upsertConfigQuery := `
+				INSERT INTO mymunja_config_info (mapping_id, mymunja_id, mymunja_password, callback_number, remaining_count_sms, remaining_count_lms, lastUpdateDate)
+				VALUES (?, ?, ?, ?, 0, ?, now())
+				ON DUPLICATE KEY UPDATE 
+					mymunja_id = VALUES(mymunja_id),
+					mymunja_password = VALUES(mymunja_password),
+					callback_number = VALUES(callback_number),
+					remaining_count_lms = VALUES(remaining_count_lms),
+					lastUpdateDate = now()
 			`
-			result, execErr = tx.Exec(updateConfigQuery, accountID, password, callbackNumber, configSeq)
+			_, execErr = tx.Exec(upsertConfigQuery, mappingSeq, accountID, password, callbackNumber, finalRemainingCountLMS)
 		}
-		
-		if execErr != nil {
-			log.Printf("SaveSMSConfig - update config error: %v", execErr)
-			err = execErr
-			return err
-		}
-		rowsAffected, _ := result.RowsAffected()
-		log.Printf("SaveSMSConfig - config updated: %d, rows affected: %d", configSeq, rowsAffected)
+	} else {
+		// 잔여건수는 업데이트하지 않음 (기존 값 유지)
+		upsertConfigQuery := `
+			INSERT INTO mymunja_config_info (mapping_id, mymunja_id, mymunja_password, callback_number, remaining_count_sms, remaining_count_lms, lastUpdateDate)
+			VALUES (?, ?, ?, ?, 0, 0, now())
+			ON DUPLICATE KEY UPDATE 
+				mymunja_id = VALUES(mymunja_id),
+				mymunja_password = VALUES(mymunja_password),
+				callback_number = VALUES(callback_number),
+				lastUpdateDate = now()
+		`
+		_, execErr = tx.Exec(upsertConfigQuery, mappingSeq, accountID, password, callbackNumber)
 	}
 
-	// configSeq 유효성 검증
-	if configSeq == 0 {
-		log.Printf("SaveSMSConfig - invalid configSeq: %d", configSeq)
-		err = fmt.Errorf("invalid config sequence: %d", configSeq)
+	if execErr != nil {
+		log.Printf("SaveSMSConfig - upsert config error: %v", execErr)
+		err = execErr
 		return err
 	}
-
-	log.Printf("SaveSMSConfig - callback_number saved: %s for config: %d", callbackNumber, configSeq)
+	log.Printf("SaveSMSConfig - config upserted for mapping: %d", mappingSeq)
 
 	// 트랜잭션 커밋
 	if err = tx.Commit(); err != nil {
@@ -294,14 +271,6 @@ func SaveSMSConfig(branchSeq int, accountID, password string, senderPhones []str
 	log.Println("저장 완료")
 	log.Println("==================")
 	return nil
-}
-
-// maskSMSPassword 비밀번호 마스킹
-func maskSMSPassword(password string) string {
-	if len(password) <= 2 {
-		return "**"
-	}
-	return password[:2] + "****"
 }
 
 // GetSMSRemainingCount SMS 잔여건수 조회 (대시보드용)
@@ -408,4 +377,27 @@ func UpdateRemainingCountByType(branchSeq int, msgType string, remainingCount in
 	rowsAffected, _ := result.RowsAffected()
 	log.Printf("[SMS] UpdateRemainingCountByType 완료 - Type: %s, Rows affected: %d", msgType, rowsAffected)
 	return nil
+}
+
+// getMappingSeqAfterUpsert UPSERT 후 mapping_seq 조회
+func getMappingSeqAfterUpsert(tx *sql.Tx, branchSeq, serviceSeq int, result sql.Result) (int, error) {
+	// LastInsertId() 확인
+	lastID, err := result.LastInsertId()
+	if err == nil && lastID > 0 {
+		// INSERT된 경우
+		return int(lastID), nil
+	}
+
+	// UPDATE된 경우 - mapping_seq를 직접 조회
+	var mappingSeq int
+	query := `
+		SELECT mapping_seq 
+		FROM ` + "`branch-third-party-mapping`" + `
+		WHERE branch_id = ? AND third_party_id = ?
+	`
+	err = tx.QueryRow(query, branchSeq, serviceSeq).Scan(&mappingSeq)
+	if err != nil {
+		return 0, err
+	}
+	return mappingSeq, nil
 }

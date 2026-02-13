@@ -188,34 +188,6 @@ func DisconnectHandler(w http.ResponseWriter, r *http.Request) {
 	utils.JSONSuccessMessage(w, "연결이 해제되었습니다")
 }
 
-// DisconnectCalendarHandler godoc
-// @Summary      구글 캘린더 연동 해제
-// @Description  구글 캘린더의 연동을 해제하고 토큰을 삭제합니다
-// @Tags         integrations
-// @Produce      json
-// @Success      200  {string}  string  "구글 캘린더 연동이 해제되었습니다"
-// @Failure      500  {string}  string  "서버 오류"
-// @Security     SessionAuth
-// @Router       /calendar/disconnect [post]
-func DisconnectCalendarHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	branchSeq := middleware.GetSelectedBranch(r)
-
-	// DB에서 토큰 정보 삭제
-	err := database.DisconnectCalendar(branchSeq)
-	if err != nil {
-		log.Printf("DisconnectCalendarHandler - DB error: %v", err)
-		utils.JSONError(w, http.StatusInternalServerError, "연동 해제 중 오류가 발생했습니다")
-		return
-	}
-
-	utils.JSONSuccessMessage(w, "구글 캘린더 연동이 해제되었습니다")
-}
-
 // CreateCalendarEventHandler godoc
 // @Summary      구글 캘린더 이벤트 생성
 // @Description  구글 캘린더에 새로운 이벤트를 생성합니다
@@ -233,7 +205,6 @@ func CreateCalendarEventHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-
 	// JSON 요청 파싱
 	var req CreateCalendarEventRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
