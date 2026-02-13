@@ -75,6 +75,9 @@ func init() {
 	settings.Templates = templates
 	errorhandler.Templates = templates
 	landing.Templates = templates
+
+	// 개인정보 처리방침 템플릿 초기화
+	opens.InitPrivacyTemplate()
 }
 
 func main() {
@@ -82,12 +85,6 @@ func main() {
 	if err := config.Init(); err != nil {
 		log.Fatalf("설정 초기화 실패: %v", err)
 	}
-
-	// 버전 정보 초기화
-	config.InitVersion()
-	log.Println("===========================================")
-	log.Println(config.GetVersionString())
-	log.Println("===========================================")
 
 	// 데이터베이스 연결 초기화
 	if err := database.Init(); err != nil {
@@ -113,9 +110,7 @@ func main() {
 	mux.HandleFunc("/ad/kakao/login", middleware.RecoverFunc(landing.KakaoLoginHandler))       // 카카오 로그인 시작
 	mux.HandleFunc("/ad/kakao/callback", middleware.RecoverFunc(landing.KakaoCallbackHandler)) // 카카오 OAuth 콜백
 
-	// 시스템 API (인증 불필요)
-	mux.HandleFunc("/api/version", opens.VersionHandler) // 버전 정보 조회
-	mux.HandleFunc("/health", opens.HealthCheckHandler)  // 헬스 체크
+	mux.HandleFunc("/privacy", opens.PrivacyPolicyHandler) // 개인정보 처리방침
 
 	// 라우트 설정 (인증 필요한 라우트는 RequireAuthRecover 미들웨어 적용)
 	mux.HandleFunc("/dashboard", middleware.RequireAuthRecover(middleware.InjectBranchData(home.Handler)))                                        // 대시보드
