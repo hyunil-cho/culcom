@@ -116,13 +116,6 @@ func ActivateHandler(w http.ResponseWriter, r *http.Request) {
 		utils.JSONError(w, http.StatusBadRequest, "잘못된 요청 형식입니다")
 		return
 	}
-
-	// 구글 캘린더는 OAuth 연동 페이지로 리다이렉트
-	if req.ServiceID == "calendar" {
-		utils.JSONError(w, http.StatusBadRequest, "구글 캘린더는 연동 설정 페이지에서 OAuth 인증을 진행해주세요")
-		return
-	}
-
 	// 서비스 ID를 정수로 변환
 	serviceID, err := ValidateServiceID(req.ServiceID)
 	if err != nil {
@@ -173,20 +166,6 @@ func DisconnectHandler(w http.ResponseWriter, r *http.Request) {
 		utils.JSONError(w, http.StatusBadRequest, "잘못된 요청 형식입니다")
 		return
 	}
-
-	// 구글 캘린더는 별도 해제 로직 사용
-	if req.ServiceID == "calendar" {
-		branchSeq := middleware.GetSelectedBranch(r)
-		err := database.DisconnectCalendar(branchSeq)
-		if err != nil {
-			log.Printf("DisconnectHandler - calendar disconnect error: %v", err)
-			utils.JSONError(w, http.StatusInternalServerError, "연동 해제 중 오류가 발생했습니다")
-			return
-		}
-		utils.JSONSuccessMessage(w, "구글 캘린더 연동이 해제되었습니다")
-		return
-	}
-
 	// 서비스 ID를 정수로 변환
 	serviceID, err := ValidateServiceID(req.ServiceID)
 	if err != nil {
