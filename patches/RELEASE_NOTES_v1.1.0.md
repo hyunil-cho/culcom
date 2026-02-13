@@ -232,6 +232,126 @@ go build -ldflags "-X 'backoffice/config.Version=$VERSION' ..." -o culcom.exe
 
 ---
 
+## 🔧 데이터베이스 및 성능 개선
+
+### 1. 동시성 제어 개선 (Race Condition 방지)
+
+**문제:**
+- SELECT → INSERT/UPDATE 패턴으로 인한 Lost Update 위험
+- 동시 요청 시 데이터 정합성 문제 발생 가능
+
+**해결:**
+- MySQL `INSERT ... ON DUPLICATE KEY UPDATE` (UPSERT) 패턴 적용
+- Atomic 연산으로 트랜잭션 안정성 보장
+
+**적용된 함수:**
+
+#### `SaveCalendarTokens()` (database/integrations.go)
+```go
+// 변경 전: SELECT 후 INSERT/UPDATE 분기
+var existingSeq int
+err := DB.QueryRow(checkQuery, branchSeq).Scan(&existingSeq)
+if err != nil {
+    // INSERT
+} else {
+    // UPDATE
+}
+
+// 변경 후: UPSERT
+INSERT INTO calendar_config (...) VALUES (...)
+ON DUPLICATE KEY UPDATE 
+    access_token = VALUES(access_token),
+    ...
+```
+
+#### `SaveSMSConfig()` (database/sms.go)
+- branch-third-party-mapping 테이블: UPSERT 패턴 적용
+- mymunja_config_info 테이블: UPSERT 패턴 적용
+- 트랜잭션 내 쿼리 수 감소 (4개 → 2개)
+
+**전제 조건:**
+- `calendar_config.branch_seq`: UNIQUE KEY
+- `branch-third-party-mapping (branch_id, third_party_id)`: UNIQUE KEY ✅
+- `mymunja_config_info.mapping_id`: UNIQUE KEY ✅
+
+---
+
+### 2. N+1 쿼리 문제 해결
+
+**문제:**
+`GetAllIntegrationsByBranch()` 함수에서 N+1 쿼리 발생
+```go
+// 1. 모든 서비스 조회 (1 query)
+SELECT * FROM third_party_services
+
+// 2. 각 서비스마다 매핑 조회 (N queries)
+for each service {
+    SELECT is_active FROM branch-third-party-mapping WHERE ...
+}
+```
+
+**해결:**
+JOIN을 사용해 단일 쿼리로 통합
+```sql
+SELECT 
+    tps.seq, tps.name, tps.description, est.code_name, btpm.is_active
+FROM third_party_services tps
+LEFT JOIN external_service_type est ON tps.code_seq = est.seq
+LEFT JOIN branch-third-party-mapping btpm 
+    ON btpm.third_party_id = tps.seq AND btpm.branch_id = ?
+```
+
+**성능 개선:**
+- 서비스 10개 기준: **11번의 쿼리 → 1번의 쿼리**
+- 데이터베이스 왕복(round-trip) 최소화
+
+---
+
+## 🔨 코드 품질 개선
+
+### 1. 구조체 위치 정리
+
+**변경:**
+- `CreateCalendarEventRequest` 구조체를 [handlers/integrations/api.go](handlers/integrations/api.go)에서 [handlers/integrations/models.go](handlers/integrations/models.go)로 이동
+- API 핸들러와 데이터 모델 분리로 코드 구조 개선
+
+---
+
+### 2. 코드 중복 제거
+
+**제거된 함수:**
+- `maskSMSPassword()` (database/sms.go) ❌
+
+**통합:**
+- `utils.MaskPassword()` 사용 ✅
+- 비밀번호 마스킹 로직 일원화
+
+---
+
+## 📊 사용자 경험 개선
+
+### SMS 오류 메시지 개선
+
+**변경 전:**
+```
+전송 실패: 인증에러
+```
+
+**변경 후:**
+```
+전송 실패: 인증에러 (Code: 0002)
+```
+
+**개선 효과:**
+- SMS 발송 실패 시 정확한 오류 코드 제공
+- 고객 지원 및 디버깅 효율성 향상
+- 마이문자 API 오류 매핑 테이블 활용
+
+**적용 위치:**
+- [services/sms/sms.go](services/sms/sms.go) - `Send()` 함수
+
+---
+
 ## ⚠️ Breaking Changes
 
 **없음** - 하위 호환성 유지

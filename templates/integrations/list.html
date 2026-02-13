@@ -365,7 +365,7 @@
                 .then(data => {
                     if (data.success) {
                         showResultModal(true, '활성화되었습니다.');
-                        setTimeout(() => location.reload(), 1500);
+                        setTimeout(() => location.href = '/integrations', 1500);
                     } else {
                         // redirect가 있으면 페이지 이동
                         if (data.redirect) {
