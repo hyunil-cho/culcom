@@ -1251,8 +1251,9 @@ function openInterviewConfirmModal(customerId) {
         return;
     }
     
-    // 고객 이름 가져오기
-    const customerName = inputElement.getAttribute('data-customer-name');
+    // 고객 이름 가져오기 (Single Source of Truth: 화면에 표시된 값)
+    const displayEl = document.getElementById(`name-display-${customerId}`);
+    const customerName = displayEl ? displayEl.querySelector('span').textContent.trim() : '';
     
     // AppState에 임시 저장
     AppState.interview.pending = {
