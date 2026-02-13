@@ -146,7 +146,7 @@
                             </div>
                             <!-- 이름 입력 -->
                             <div style="display: flex; gap: 0.3rem; align-items: center; width: 100%;">
-                                <input type="text" class="customer-name-input" id="name-input-{{.ID}}" placeholder="이름 입력" value="" data-original-name="{{.Name}}"
+                                <input type="text" class="customer-name-input" id="name-input-{{.ID}}" placeholder="이름 입력" value=""
                                        style="padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; width: 150px;">
                                 <button onclick="confirmNameChange({{.ID}})" 
                                         style="padding: 0.4rem 0.7rem; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">수정</button>
@@ -192,7 +192,7 @@
                         </div>
                     </td>
                     <td>
-                        <button class="btn-table-action" onclick="openTextModal({{.ID}}, '{{.Name}}', '{{.Phone}}')" style="padding: 0.4rem 0.8rem; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">💬 TEXT</button>
+                        <button class="btn-table-action" onclick="openTextModal({{.ID}})" style="padding: 0.4rem 0.8rem; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">💬 TEXT</button>
                     </td>
                     <td>
                         <div style="display: flex; gap: 0.3rem; align-items: center;">
@@ -201,7 +201,7 @@
                                    style="padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; width: 143px;">
                             <button onclick="openInterviewConfirmModal({{.ID}})" 
                                     style="padding: 0.4rem 0.6rem; background: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">확정</button>
-                            <button onclick="markAsNoPhoneInterview({{.ID}}, '{{.Name}}')" 
+                            <button onclick="markAsNoPhoneInterview({{.ID}})" 
                                     style="padding: 0.4rem 0.6rem; background: #9333ea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; white-space: nowrap; transition: background 0.2s;"
                                     onmouseover="this.style.background='#7e22ce'" 
                                     onmouseout="this.style.background='#9333ea'">
@@ -214,7 +214,7 @@
                     <td>{{.RegisterDate}}</td>
                     <td id="last-visit-{{.ID}}">{{if .LastContactDate}}{{.LastContactDate}}{{else}}-{{end}}</td>
                     <td>
-                        <button onclick="deleteCustomer({{.ID}}, '{{.Name}}')" 
+                        <button onclick="deleteCustomer({{.ID}})" 
                                 style="padding: 0.4rem 0.8rem; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: background 0.2s;"
                                 onmouseover="this.style.background='#d32f2f'" 
                                 onmouseout="this.style.background='#f44336'">
@@ -342,7 +342,9 @@ document.addEventListener('DOMContentLoaded', function() {
 function confirmNameChange(customerId) {
     const inputEl = document.getElementById(`name-input-${customerId}`);
     
-    const oldName = inputEl.getAttribute('data-original-name');
+    // 현재 표시된 이름을 span 태그에서 가져오기
+    const displayEl = document.getElementById(`name-display-${customerId}`);
+    const oldName = displayEl ? displayEl.querySelector('span').textContent.trim() : '';
     const newName = inputEl.value.trim();
     
     if (!newName) {
@@ -399,14 +401,19 @@ function performNameChange(customerId, oldName, newName, inputEl) {
         if (data.ok) {
             // UI 업데이트
             inputEl.value = '';  // 입력 필드는 비우기
-            inputEl.setAttribute('data-original-name', newName);
             
-            // display 영역 업데이트
+            // display 영역 업데이트 (이것이 실제 현재 이름의 원천)
             const displayEl = document.getElementById(`name-display-${customerId}`);
             if (displayEl) {
                 displayEl.querySelector('span').textContent = newName;
             }
             
+            // 인터뷰 입력 필드의 data-customer-name 속성 업데이트
+            const interviewInput = document.getElementById(`interview-${customerId}`);
+            if (interviewInput) {
+                interviewInput.setAttribute('data-customer-name', newName);
+            }
+                      
             ModalManager.createAlert({
                 id: 'nameChangeSuccess',
                 title: '✅ 변경 완료',
@@ -419,7 +426,7 @@ function performNameChange(customerId, oldName, newName, inputEl) {
             ModalManager.createAlert({
                 id: 'nameChangeFail',
                 title: '❌ 변경 실패',
-                message: '이름 변경에 실패했습니다. ${{data.error}}',
+                message: '이름 변경에 실패했습니다. 서버 로그를 확인해주세요',
                 confirmText: '확인',
                 confirmColor: '#f44336'
             });
@@ -444,9 +451,9 @@ function performNameChange(customerId, oldName, newName, inputEl) {
 }
 
 function selectCaller(customerId, letter) {
-    // 고객 이름 가져오기
-    const customerRow = document.querySelector(`tr[data-customer-id="${customerId}"]`);
-    const customerName = customerRow ? customerRow.querySelector('td strong').textContent : '';
+    // 고객 이름 가져오기 (name-display의 span에서)
+    const displayEl = document.getElementById(`name-display-${customerId}`);
+    const customerName = displayEl ? displayEl.querySelector('span').textContent.trim() : '';
     
     // 선택 정보 저장 (AppState 사용)
     AppState.caller.pending = {
@@ -644,7 +651,14 @@ function cancelCallerConfirm() {
 }
 
 // TEXT 모달 열기
-async function openTextModal(customerId, customerName, customerPhone) {
+async function openTextModal(customerId) {
+    // 고객 정보를 동적으로 가져오기
+    const displayEl = document.getElementById(`name-display-${customerId}`);
+    const customerName = displayEl ? displayEl.querySelector('span').textContent.trim() : '';
+    
+    const phoneCell = document.getElementById(`phone-${customerId}`);
+    const customerPhone = phoneCell ? phoneCell.querySelector('.phone-number').textContent.trim() : '';
+    
     // AppState에 저장
     AppState.textModal = {
         customerId: customerId,
@@ -1364,7 +1378,11 @@ function closeReservationResultModal() {
 }
 
 // 전화상 안함 처리
-function markAsNoPhoneInterview(customerId, customerName) {
+function markAsNoPhoneInterview(customerId) {
+    // 고객 이름을 동적으로 가져오기
+    const displayEl = document.getElementById(`name-display-${customerId}`);
+    const customerName = displayEl ? displayEl.querySelector('span').textContent.trim() : '';
+    
     // CALLER 확인 (AppState 사용)
     const caller = AppState.caller.selectedMap[customerId];
     if (!caller) {
@@ -1857,7 +1875,77 @@ function saveComment(customerId) {
         });
         ModalManager.show('commentSaveError');
     });
+}
 
+// 고객 삭제
+function deleteCustomer(customerId) {
+    // 고객 이름을 동적으로 가져오기
+    const displayEl = document.getElementById(`name-display-${customerId}`);
+    const customerName = displayEl ? displayEl.querySelector('span').textContent.trim() : '';
+    
+    // 동적 모달 생성
+    ModalManager.createConfirm({
+        id: 'deleteCustomerConfirm',
+        title: '🗑️ 고객 삭제 확인',
+        message: `<strong style="color: #f44336; font-size: 1.1rem;">${customerName}</strong>님을<br><br>정말 삭제하시겠습니까?<br><br><span style="color: #666; font-size: 0.9rem;">이 작업은 되돌릴 수 없습니다.</span>`,
+        confirmText: '삭제',
+        cancelText: '취소',
+        confirmColor: '#f44336',
+        onConfirm: () => {
+            performDeleteCustomer(customerId, customerName);
+        }
+    });
+    ModalManager.show('deleteCustomerConfirm');
+}
+
+// 실제 고객 삭제 처리
+function performDeleteCustomer(customerId, customerName) {
+    fetch(`/api/customers/${customerId}`, {
+        method: 'DELETE'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('고객 삭제 실패');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // 성공 시 행 제거
+            const customerRow = document.querySelector(`tr[data-customer-id="${customerId}"]`);
+            if (customerRow) {
+                customerRow.remove();
+                
+                // 테이블이 비어있으면 안내 메시지 표시
+                const tbody = document.querySelector('.data-table tbody');
+                if (tbody && tbody.children.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 2rem; color: #999;">고객이 없습니다.</td></tr>';
+                }
+            }
+            
+            ModalManager.createAlert({
+                id: 'deleteCustomerSuccess',
+                title: '✅ 삭제 완료',
+                message: `${customerName}님이 삭제되었습니다.`,
+                confirmText: '확인',
+                confirmColor: '#10b981'
+            });
+            ModalManager.show('deleteCustomerSuccess');
+        } else {
+            throw new Error(data.message || '고객 삭제 실패');
+        }
+    })
+    .catch(error => {
+        console.error('고객 삭제 오류:', error);
+        ModalManager.createAlert({
+            id: 'deleteCustomerError',
+            title: '❌ 삭제 실패',
+            message: '고객 삭제 중 오류가 발생했습니다.<br>다시 시도해주세요.',
+            confirmText: '확인',
+            confirmColor: '#f44336'
+        });
+        ModalManager.show('deleteCustomerError');
+    });
 }
 
 // 최근 회신 시간을 체크하고, 현재로부터 1시간 이내라면 색을 변환
