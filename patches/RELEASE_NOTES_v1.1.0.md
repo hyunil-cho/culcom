@@ -133,6 +133,66 @@ onclick="deleteCustomer({{.ID}})"
 
 ---
 
+## 🎁 새로운 기능
+
+### 버전 관리 시스템 추가
+
+**추가된 파일:**
+- `VERSION` - 버전 번호 관리 파일
+- `config/version.go` - 버전 정보 관리 구조체 및 함수
+- `handlers/opens/version.go` - 버전 API 엔드포인트
+- `build.ps1` - PowerShell 빌드 스크립트
+- `build.sh` - Bash 빌드 스크립트
+- `BUILD.md` - 빌드 및 버전 관리 가이드
+
+**새로운 API 엔드포인트:**
+
+#### `GET /api/version`
+```json
+{
+  "version": "1.1.0",
+  "build_time": "2026-02-13 14:30:00",
+  "go_version": "go version go1.21.0 windows/amd64",
+  "git_commit": "a1b2c3d",
+  "environment": "prod"
+}
+```
+
+#### `GET /health`
+```json
+{
+  "status": "ok",
+  "version": "1.1.0",
+  "environment": "prod",
+  "timestamp": "2026-02-13 14:30:00"
+}
+```
+
+**실행 시 로그:**
+```
+===========================================
+Version: 1.1.0
+Build Time: 2026-02-13 14:30:00
+Git Commit: a1b2c3d
+Go Version: go version go1.21.0 windows/amd64
+Environment: prod
+===========================================
+```
+
+**빌드 방법:**
+```powershell
+# PowerShell
+.\build.ps1
+
+# 또는 수동 빌드
+$VERSION = Get-Content VERSION
+go build -ldflags "-X 'backoffice/config.Version=$VERSION' ..." -o culcom.exe
+```
+
+자세한 내용은 [BUILD.md](../BUILD.md)를 참고하세요.
+
+---
+
 ## ⚠️ Breaking Changes
 
 **없음** - 하위 호환성 유지

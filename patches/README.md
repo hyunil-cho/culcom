@@ -52,6 +52,45 @@ RELEASE_NOTES_v{major}.{minor}.{patch}.md
 ### 현재 버전
 **v1.1.0**
 
+### 버전 확인 방법
+
+1. **VERSION 파일**: 프로젝트 루트의 `VERSION` 파일 확인
+2. **실행 로그**: 애플리케이션 시작 시 콘솔에 버전 정보 출력
+3. **API 엔드포인트**: 
+   - `GET /api/version` - 상세 버전 정보
+   - `GET /health` - 헬스 체크 (간단한 버전 포함)
+
+자세한 버전 관리 및 빌드 방법은 [BUILD.md](../BUILD.md)를 참고하세요.
+
+---
+
+## 📦 빌드 및 배포
+
+### 빌드 스크립트 사용
+
+```powershell
+# PowerShell
+.\build.ps1
+```
+
+```bash
+# Linux/Mac
+chmod +x build.sh
+./build.sh
+```
+
+### 수동 빌드
+
+```bash
+# VERSION 파일의 버전 정보로 빌드
+go build -o culcom.exe
+
+# 상세 버전 정보를 포함한 빌드
+go build -ldflags "-X 'backoffice/config.Version=1.1.0' ..." -o culcom.exe
+```
+
+자세한 내용은 [BUILD.md](../BUILD.md)를 참고하세요.
+
 ---
 
 ## 📞 문의
