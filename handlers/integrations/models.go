@@ -59,5 +59,18 @@ type SMSConfigSaveResponse struct {
 	Message string `json:"message"`
 }
 
+// CreateCalendarEventRequest 캘린더 이벤트 생성 요청 구조체
+type CreateCalendarEventRequest struct {
+	CustomerName   string `json:"customer_name"`   // 고객 이름
+	PhoneNumber    string `json:"phone_number"`    // 전화번호
+	InterviewDate  string `json:"interview_date"`  // 인터뷰 일시 (YYYY-MM-DD HH:MM:SS)
+	Comment        string `json:"comment"`         // 코멘트
+	Duration       int    `json:"duration"`        // 소요시간 (분, 기본값 60분)
+	Caller         string `json:"caller"`          // CALLER (A-P)
+	CallCount      int    `json:"call_count"`      // 전화 횟수
+	CommercialName string `json:"commercial_name"` // 광고명
+	AdSource       string `json:"ad_source"`       // 광고 출처
+}
+
 // Templates 템플릿
 var Templates *template.Template

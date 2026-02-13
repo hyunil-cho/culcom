@@ -223,6 +223,11 @@ func Send(req SendRequest) (*SendResponse, error) {
 	// code가 "0000"이면 성공
 	isSuccess := apiResp.Code == "0000"
 
+	// 실패 시 응답 코드를 메시지에 포함
+	if !isSuccess {
+		responseMessage = fmt.Sprintf("%s (Code: %s)", responseMessage, apiResp.Code)
+	}
+
 	// 메시지 타입 결정
 	msgType := "SMS"
 	if isLMS {
