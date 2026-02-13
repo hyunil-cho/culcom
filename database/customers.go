@@ -4,17 +4,30 @@ import (
 	"log"
 )
 
-// InsertCustomer - 고객 추가
-// 파라미터: branchSeq (지점 seq), name (고객명), phoneNumber (전화번호), comment (메모)
+// CreateCustomer - 고객 추가 (통합 함수)
+// 파라미터: branchSeq (지점 seq, nil이면 미배정), name (고객명), phoneNumber (전화번호), comment (메모), commercialName (광고명, 빈 문자열이면 "-"), adSource (광고 출처, 빈 문자열이면 "walk_in")
 // 반환: 생성된 ID, 에러
-func InsertCustomer(branchSeq int, name, phoneNumber, comment string) (int64, error) {
-	log.Printf("[Customer] InsertCustomer 호출 - BranchSeq: %d, Name: %s, Phone: %s\n", branchSeq, name, phoneNumber)
+func CreateCustomer(branchSeq *int, name, phoneNumber, comment, commercialName, adSource string) (int64, error) {
+	// 로깅
+	if branchSeq != nil {
+		log.Printf("[Customer] CreateCustomer 호출 - BranchSeq: %d, Name: %s, Phone: %s, AdSource: %s\n", *branchSeq, name, phoneNumber, adSource)
+	} else {
+		log.Printf("[Customer] CreateCustomer 호출 - BranchSeq: NULL (미배정), Name: %s, Phone: %s, AdSource: %s\n", name, phoneNumber, adSource)
+	}
+
+	// 기본값 처리
+	if commercialName == "" {
+		commercialName = "-"
+	}
+	if adSource == "" {
+		adSource = "walk_in"
+	}
 
 	// 고객 INSERT
 	query := `
 		INSERT INTO customers 
 			(branch_seq, name, phone_number, comment, commercial_name, ad_source, createdDate, call_count, status)
-		VALUES (?, ?, ?, ?, '-', 'walk_in', NOW(), 0, '신규')
+		VALUES (?, ?, ?, ?, ?, ?, NOW(), 0, '신규')
 	`
 
 	var commentVal interface{}
@@ -24,20 +37,34 @@ func InsertCustomer(branchSeq int, name, phoneNumber, comment string) (int64, er
 		commentVal = comment
 	}
 
-	result, err := DB.Exec(query, branchSeq, name, phoneNumber, commentVal)
+	var branchSeqArg interface{}
+	if branchSeq == nil {
+		branchSeqArg = nil
+	} else {
+		branchSeqArg = *branchSeq
+	}
+
+	result, err := DB.Exec(query, branchSeqArg, name, phoneNumber, commentVal, commercialName, adSource)
 	if err != nil {
-		log.Printf("InsertCustomer - insert error: %v", err)
+		log.Printf("CreateCustomer - insert error: %v", err)
 		return 0, err
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		log.Printf("InsertCustomer - get last insert id error: %v", err)
+		log.Printf("CreateCustomer - get last insert id error: %v", err)
 		return 0, err
 	}
 
-	log.Printf("[Customer] InsertCustomer 완료 - ID: %d\n", id)
+	log.Printf("[Customer] CreateCustomer 완료 - ID: %d\n", id)
 	return id, nil
+}
+
+// InsertCustomer - 고객 추가 (워크인용 래퍼 함수 - 하위 호환성 유지)
+// 파라미터: branchSeq (지점 seq), name (고객명), phoneNumber (전화번호), comment (메모)
+// 반환: 생성된 ID, 에러
+func InsertCustomer(branchSeq int, name, phoneNumber, comment string) (int64, error) {
+	return CreateCustomer(&branchSeq, name, phoneNumber, comment, "", "")
 }
 
 // CustomerInfo - 고객 정보 구조체

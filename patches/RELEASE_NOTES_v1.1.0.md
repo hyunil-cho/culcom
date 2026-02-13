@@ -23,6 +23,15 @@
 - 고객 이름을 화면에 표시되는 `#name-display-{customerId}` 내부의 `<span>` 태그를 **단일 진실의 원천(Single Source of Truth)**으로 사용하도록 리팩토링
 - 모든 함수가 필요할 때마다 동적으로 최신 이름을 가져오도록 변경
 
+**영향받는 함수:**
+- `confirmNameChange()` - 이름 변경
+- `performNameChange()` - 이름 업데이트
+- `selectCaller()` - CALLER 선택
+- `openTextModal()` - 메시지 전송
+- `markAsNoPhoneInterview()` - 전화상 안함
+- `deleteCustomer()` - 고객 삭제
+- `openInterviewConfirmModal()` - 인터뷰 확정 모달 (예약)
+
 **영향받는 파일:**
 - `templates/customers/list.html`
 
@@ -352,6 +361,48 @@ LEFT JOIN branch-third-party-mapping btpm
 
 ---
 
+### 고객 생성 함수 통합 및 리팩토링
+
+**문제:**
+- `InsertCustomer`, `CreateCustomer`, `CreateCustomerWithNullableBranch` 함수가 거의 동일한 기능 수행
+- 코드 중복으로 인한 유지보수 어려움
+
+**해결:**
+- `CreateCustomer` 함수를 통합 함수로 리팩토링
+- `branch_seq`를 `*int` (포인터)로 받아 NULL 허용
+- `InsertCustomer`는 하위 호환성을 위한 래퍼 함수로 유지
+- `CreateCustomerWithNullableBranch` 제거 (중복)
+
+**변경 사항:**
+```go
+// 변경 전: 3개의 유사한 함수
+InsertCustomer(branchSeq int, ...)
+CreateCustomer(branchSeq int, ...)
+CreateCustomerWithNullableBranch(branchSeq *int, ...)
+
+// 변경 후: 1개의 통합 함수 + 래퍼
+CreateCustomer(branchSeq *int, name, phoneNumber, comment, commercialName, adSource string)
+InsertCustomer(branchSeq int, ...) // 래퍼 함수
+```
+
+**기능:**
+- `branchSeq = nil` → 지점 미배정 (상담신청 고객)
+- `commercialName = ""` → 기본값 "-"
+- `adSource = ""` → 기본값 "walk_in"
+
+**개선 효과:**
+- ✅ 코드 중복 제거 (약 60줄 감소)
+- ✅ 단일 책임 원칙 적용
+- ✅ 유지보수성 향상
+- ✅ 하위 호환성 유지
+
+**영향받는 파일:**
+- [database/customers.go](database/customers.go) - 함수 통합
+- [handlers/customers/handler.go](handlers/customers/handler.go) - 호출 변경
+- [handlers/consultation/handler.go](handlers/consultation/handler.go) - 호출 변경
+
+---
+
 ### 메시지 템플릿 데이터 무결성 개선
 
 **문제:**
@@ -372,6 +423,57 @@ LEFT JOIN branch-third-party-mapping btpm
 - ✅ 비활성 템플릿이 기본으로 설정되는 것을 원천 차단
 - ✅ 예약 SMS 설정 페이지에서 항상 유효한 템플릿만 표시
 - ✅ 관리자의 실수로 인한 오류 방지
+
+---
+
+### 고객 상담 신청 페이지 추가
+
+**신규 기능:**
+- 외부 고객용 상담 신청 페이지 추가
+- 이름과 전화번호만으로 간편 신청
+- 신청 완료 후 성공 페이지 표시
+
+**추가된 파일:**
+- [handlers/consultation/handler.go](handlers/consultation/handler.go) - 상담 신청 핸들러
+- [handlers/consultation/models.go](handlers/consultation/models.go) - 상담 신청 데이터 모델
+- [templates/consultation/register.html](templates/consultation/register.html) - 상담 신청 폼
+- [templates/consultation/success.html](templates/consultation/success.html) - 신청 완료 페이지
+- [database/customers.go](database/customers.go) - CreateCustomer 함수 추가
+
+**새로운 라우트:**
+- `GET /consultation/register` - 상담 신청 페이지
+- `POST /consultation/submit` - 상담 신청 처리
+- `GET /consultation/success` - 신청 완료 페이지
+
+**기능 상세:**
+1. **상담 신청 폼**
+   - 성함과 연락처 입력
+   - 전화번호 자동 하이픈 포맷팅
+   - 실시간 유효성 검사
+   - 모바일 반응형 디자인
+
+2. **데이터 처리**
+   - 전화번호 형식 검증 (10-11자리)
+   - 고객 정보를 customers 테이블에 저장
+   - ad_source: "상담신청"으로 자동 설정
+   - status: "신규"로 초기화
+
+3. **성공 페이지**
+   - 신청 완료 안내
+   - 고객 이름 표시
+   - "곧 상담 연락을 드리겠습니다" 메시지
+   - 다음 단계 안내
+
+**사용 시나리오:**
+- 웹사이트나 SNS 광고에서 링크 제공
+- 고객이 간편하게 상담 신청
+- 백오피스에서 신청 내역 확인 후 연락
+
+**개선 효과:**
+- ✅ 고객 접점 확대
+- ✅ 상담 신청 프로세스 간소화
+- ✅ 자동으로 고객 DB에 등록
+- ✅ 관리자가 즉시 확인 가능
 
 ---
 

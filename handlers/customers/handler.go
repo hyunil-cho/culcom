@@ -144,7 +144,7 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// DB에 저장
-		_, err = database.InsertCustomer(branchCode, name, phoneNumber, comment)
+		_, err = database.CreateCustomer(&branchCode, name, phoneNumber, comment, "", "")
 		if err != nil {
 			log.Printf("고객 저장 오류: %v", err)
 			http.Redirect(w, r, "/error", http.StatusSeeOther)
