@@ -162,18 +162,21 @@ func GetAllIntegrationsByBranch(branchSeq int) ([]IntegrationStatus, error) {
 		return []IntegrationStatus{}, nil
 	}
 
-	// 모든 외부 서비스 목록 조회
-	servicesQuery := `
+	// JOIN을 사용해 한 번의 쿼리로 모든 서비스와 매핑 정보 조회
+	query := `
 		SELECT 
 			tps.seq,
 			tps.name,
 			tps.description,
-			est.code_name
+			est.code_name,
+			btpm.is_active
 		FROM third_party_services tps
 		LEFT JOIN external_service_type est ON tps.code_seq = est.seq
+		LEFT JOIN ` + "`branch-third-party-mapping`" + ` btpm 
+			ON btpm.third_party_id = tps.seq AND btpm.branch_id = ?
 	`
 
-	rows, err := DB.Query(servicesQuery)
+	rows, err := DB.Query(query, branchSeq)
 	if err != nil {
 		log.Printf("GetAllIntegrationsByBranch - query error: %v", err)
 		return nil, err
@@ -186,8 +189,9 @@ func GetAllIntegrationsByBranch(branchSeq int) ([]IntegrationStatus, error) {
 		var serviceSeq int
 		var serviceName, description string
 		var codeNamePtr *string
+		var isActivePtr *bool // NULL 가능 (매핑이 없으면 NULL)
 
-		err := rows.Scan(&serviceSeq, &serviceName, &description, &codeNamePtr)
+		err := rows.Scan(&serviceSeq, &serviceName, &description, &codeNamePtr, &isActivePtr)
 		if err != nil {
 			log.Printf("GetAllIntegrationsByBranch - scan error: %v", err)
 			continue
@@ -198,17 +202,9 @@ func GetAllIntegrationsByBranch(branchSeq int) ([]IntegrationStatus, error) {
 			codeName = *codeNamePtr
 		}
 
-		// 3단계: 각 서비스별로 해당 지점의 연동 상태 확인
-		var isActive bool
-		mappingQuery := `
-			SELECT is_active 
-			FROM ` + "`branch-third-party-mapping`" + `
-			WHERE branch_id = ? AND third_party_id = ?
-		`
-
-		err = DB.QueryRow(mappingQuery, branchSeq, serviceSeq).Scan(&isActive)
-		hasConfig := (err == nil) // 매핑 레코드가 존재하면 설정이 있음
-		isConnected := (err == nil && isActive)
+		// is_active가 NULL이면 매핑이 없음, 아니면 매핑 존재
+		hasConfig := (isActivePtr != nil)
+		isConnected := (isActivePtr != nil && *isActivePtr)
 
 		statuses = append(statuses, IntegrationStatus{
 			BranchCode:  "",
@@ -228,29 +224,8 @@ func GetAllIntegrationsByBranch(branchSeq int) ([]IntegrationStatus, error) {
 		return nil, err
 	}
 
-	log.Printf("[DB] GetAllIntegrationsByBranch 완료 - %d개 서비스 조회", len(statuses))
+	log.Printf("[DB] GetAllIntegrationsByBranch 완료 - %d개 서비스 조회 (단일 쿼리)", len(statuses))
 	return statuses, nil
-}
-
-// UpdateIntegrationStatus - 연동 상태 업데이트
-// 파라미터: branchCode, serviceType, isConnected, configData
-// 반환: 영향받은 행 수, 에러
-func UpdateIntegrationStatus(branchCode, serviceType string, isConnected bool, configData map[string]interface{}) (int64, error) {
-	// TODO: 실제 쿼리 구현
-	// 예시:
-	// query := `INSERT INTO integrations (branch_code, service_type, is_connected, config_data, updated_at)
-	//           VALUES (?, ?, ?, ?, NOW())
-	//           ON DUPLICATE KEY UPDATE is_connected = ?, config_data = ?, updated_at = NOW()`
-	// result, err := Exec(query, branchCode, serviceType, isConnected, configData, isConnected, configData)
-	// if err != nil {
-	// 	return 0, err
-	// }
-	// return result.RowsAffected()
-
-	log.Printf("[DB 추상화] UpdateIntegrationStatus 호출 - branchCode: %s, serviceType: %s, isConnected: %v", branchCode, serviceType, isConnected)
-
-	// 임시로 성공 응답
-	return 1, nil
 }
 
 // ActivateIntegration - 연동 활성화
@@ -374,106 +349,6 @@ func GetMymunjaConfig(branchSeq, serviceID int) (*MymunjaConfig, error) {
 
 	log.Printf("[DB] GetMymunjaConfig 완료 - ID: %s, 회신번호: %d개", mymunjaID, len(callbackNumbers))
 	return config, nil
-}
-
-// CalendarConfig - 구글 캘린더 설정 구조체
-type CalendarConfig struct {
-	Seq            int
-	BranchSeq      int
-	AccessToken    string
-	RefreshToken   string
-	TokenExpiry    string // datetime 문자열
-	ConnectedEmail string
-	IsActive       bool
-}
-
-// GetCalendarConfig - 지점의 구글 캘린더 설정 조회
-func GetCalendarConfig(branchSeq int) (*CalendarConfig, error) {
-	log.Printf("[DB] GetCalendarConfig 호출 - branchSeq: %d", branchSeq)
-
-	// calendar_config 조회
-	var config CalendarConfig
-	configQuery := `
-		SELECT seq, branch_seq,
-		       COALESCE(access_token, ''), COALESCE(refresh_token, ''),
-		       COALESCE(token_expiry, ''), COALESCE(connected_email, ''),
-		       is_active
-		FROM calendar_config
-		WHERE branch_seq = ?
-	`
-	err := DB.QueryRow(configQuery, branchSeq).Scan(
-		&config.Seq, &config.BranchSeq,
-		&config.AccessToken, &config.RefreshToken, &config.TokenExpiry,
-		&config.ConnectedEmail, &config.IsActive,
-	)
-	if err != nil {
-		log.Printf("GetCalendarConfig - config not found: %v", err)
-		return nil, err
-	}
-
-	log.Printf("[DB] GetCalendarConfig 완료 - Email: %s, Active: %v", config.ConnectedEmail, config.IsActive)
-	return &config, nil
-}
-
-// SaveCalendarTokens - OAuth 인증 후 토큰 정보 저장
-func SaveCalendarTokens(branchSeq int, accessToken, refreshToken, tokenExpiry, email string) error {
-	log.Printf("[DB] SaveCalendarTokens 호출 - branchSeq: %d, email: %s", branchSeq, email)
-
-	// 기존 설정 확인 (UPSERT)
-	var existingSeq int
-	checkQuery := `SELECT seq FROM calendar_config WHERE branch_seq = ?`
-	err := DB.QueryRow(checkQuery, branchSeq).Scan(&existingSeq)
-
-	if err != nil {
-		// 레코드가 없으면 INSERT
-		insertQuery := `
-			INSERT INTO calendar_config (branch_seq, access_token, refresh_token, token_expiry, connected_email, is_active)
-			VALUES (?, ?, ?, ?, ?, 1)
-		`
-		_, err = DB.Exec(insertQuery, branchSeq, accessToken, refreshToken, tokenExpiry, email)
-		if err != nil {
-			log.Printf("SaveCalendarTokens - insert error: %v", err)
-			return err
-		}
-		log.Printf("[DB] SaveCalendarTokens - 신규 생성 완료")
-	} else {
-		// 레코드가 있으면 UPDATE
-		updateQuery := `
-			UPDATE calendar_config 
-			SET access_token = ?, refresh_token = ?, token_expiry = ?, 
-			    connected_email = ?, is_active = 1
-			WHERE seq = ?
-		`
-		_, err = DB.Exec(updateQuery, accessToken, refreshToken, tokenExpiry, email, existingSeq)
-		if err != nil {
-			log.Printf("SaveCalendarTokens - update error: %v", err)
-			return err
-		}
-		log.Printf("[DB] SaveCalendarTokens - 업데이트 완료")
-	}
-
-	return nil
-}
-
-// DisconnectCalendar - 구글 캘린더 연동 해제
-func DisconnectCalendar(branchSeq int) error {
-	log.Printf("[DB] DisconnectCalendar 호출 - branchSeq: %d", branchSeq)
-
-	// 토큰 정보 삭제 및 비활성화
-	updateQuery := `
-		UPDATE calendar_config 
-		SET access_token = NULL, refresh_token = NULL, token_expiry = NULL,
-		    connected_email = NULL, is_active = 0
-		WHERE branch_seq = ?
-	`
-	_, err := DB.Exec(updateQuery, branchSeq)
-	if err != nil {
-		log.Printf("DisconnectCalendar - update error: %v", err)
-		return err
-	}
-
-	log.Printf("[DB] DisconnectCalendar 완료")
-	return nil
 }
 
 // GetSMSSenderNumbers SMS 발신번호 목록 조회
