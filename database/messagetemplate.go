@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"log"
 	"time"
 )
@@ -26,8 +27,9 @@ type Placeholder struct {
 }
 
 // GetMessageTemplates 메시지 템플릿 목록 조회
-func GetMessageTemplates(branchSeq int) ([]MessageTemplate, error) {
-	log.Printf("[MessageTemplate] GetMessageTemplates 호출 - BranchSeq: %d\n", branchSeq)
+// includeInactive: true면 비활성화된 템플릿도 포함, false면 활성화된 템플릿만 조회
+func GetMessageTemplates(branchSeq int, includeInactive bool) ([]MessageTemplate, error) {
+	log.Printf("[MessageTemplate] GetMessageTemplates 호출 - BranchSeq: %d, IncludeInactive: %v\n", branchSeq, includeInactive)
 
 	// 지점 seq가 0이면 빈 배열 반환
 	if branchSeq == 0 {
@@ -35,7 +37,13 @@ func GetMessageTemplates(branchSeq int) ([]MessageTemplate, error) {
 		return []MessageTemplate{}, nil
 	}
 
-	// 해당 지점의 메시지 템플릿 조회 (활성화된 것만)
+	// 쿼리 조건 설정
+	whereClause := "WHERE branch_seq = ?"
+	if !includeInactive {
+		whereClause += " AND is_active = 1"
+	}
+
+	// 해당 지점의 메시지 템플릿 조회
 	query := `
 		SELECT 
 			seq,
@@ -47,7 +55,7 @@ func GetMessageTemplates(branchSeq int) ([]MessageTemplate, error) {
 			createdDate,
 			lastUpdateDate
 		FROM message_templates
-		WHERE branch_seq = ? AND is_active = 1
+		` + whereClause + `
 		ORDER BY is_default DESC, lastUpdateDate DESC
 	`
 
@@ -314,10 +322,11 @@ func DeleteMessageTemplate(branchSeq, id int) error {
 func SetDefaultMessageTemplate(branchSeq, id int) error {
 	log.Printf("[MessageTemplate] SetDefaultMessageTemplate 호출 - BranchSeq: %d, ID: %d\n", branchSeq, id)
 
-	// 해당 템플릿이 해당 지점 소유인지 확인
+	// 해당 템플릿이 해당 지점 소유인지 확인하고 활성화 상태 체크
 	var existingBranchSeq int
-	checkQuery := `SELECT branch_seq FROM message_templates WHERE seq = ?`
-	err := DB.QueryRow(checkQuery, id).Scan(&existingBranchSeq)
+	var isActive bool
+	checkQuery := `SELECT branch_seq, is_active FROM message_templates WHERE seq = ?`
+	err := DB.QueryRow(checkQuery, id).Scan(&existingBranchSeq, &isActive)
 	if err != nil {
 		log.Printf("SetDefaultMessageTemplate - template not found: %v", err)
 		return err
@@ -325,7 +334,12 @@ func SetDefaultMessageTemplate(branchSeq, id int) error {
 
 	if existingBranchSeq != branchSeq {
 		log.Printf("SetDefaultMessageTemplate - unauthorized: template belongs to different branch")
-		return err
+		return fmt.Errorf("해당 템플릿에 대한 권한이 없습니다")
+	}
+
+	if !isActive {
+		log.Printf("SetDefaultMessageTemplate - template is inactive: %d", id)
+		return fmt.Errorf("비활성화된 템플릿은 기본 템플릿으로 설정할 수 없습니다")
 	}
 
 	// 3단계: 트랜잭션 시작

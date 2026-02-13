@@ -29,8 +29,8 @@ func ReservationSMSConfigHandler(w http.ResponseWriter, r *http.Request) {
 	branchSeq := middleware.GetSelectedBranch(r)
 
 	if r.Method == http.MethodGet {
-		// 메시지 템플릿 목록 조회
-		templates, err := database.GetMessageTemplates(branchSeq)
+		// 메시지 템플릿 목록 조회 (활성화된 것만)
+		templates, err := database.GetMessageTemplates(branchSeq, false)
 		if err != nil {
 			log.Printf("템플릿 조회 오류: %v", err)
 			templates = []database.MessageTemplate{}

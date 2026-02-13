@@ -17,8 +17,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	// 세션에서 선택된 지점 정보 가져오기
 	branchCode := middleware.GetSelectedBranch(r)
 
-	// DB에서 템플릿 목록 조회 (지점별)
-	dbTemplates, err := database.GetMessageTemplates(branchCode)
+	// DB에서 템플릿 목록 조회 (지점별, 비활성화 포함)
+	dbTemplates, err := database.GetMessageTemplates(branchCode, true)
 	if err != nil {
 		log.Printf("템플릿 조회 오류: %v", err)
 		http.Error(w, "템플릿 조회 실패", http.StatusInternalServerError)
@@ -306,8 +306,8 @@ func GetTemplatesAPI(w http.ResponseWriter, r *http.Request) {
 	// 세션에서 선택된 지점 정보 가져오기
 	branchCode := middleware.GetSelectedBranch(r)
 
-	// DB에서 템플릿 목록 조회 (지점별)
-	dbTemplates, err := database.GetMessageTemplates(branchCode)
+	// DB에서 템플릿 목록 조회 (지점별, 활성화된 것만)
+	dbTemplates, err := database.GetMessageTemplates(branchCode, false)
 	if err != nil {
 		log.Printf("템플릿 조회 오류: %v", err)
 		utils.JSONError(w, http.StatusInternalServerError, "템플릿 조회에 실패했습니다")
