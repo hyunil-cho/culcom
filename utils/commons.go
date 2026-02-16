@@ -5,6 +5,19 @@ import (
 	"time"
 )
 
+// normalizeKoreanPhoneNumber 국제번호(82) → 국내번호(010 등)로 변환
+func NormalizeKoreanPhoneNumber(phone string) string {
+	// 82로 시작하고, 그 뒤에 10, 11, 16, 17, 18, 19 등으로 시작하는 번호만 변환
+	if len(phone) >= 2 && phone[:2] == "82" {
+		rest := phone[2:]
+		if len(rest) > 0 && rest[0] != '0' {
+			rest = "0" + rest
+		}
+		return rest
+	}
+	return phone
+}
+
 // MaskPassword 비밀번호 마스킹 헬퍼 함수 (로깅용)
 func MaskPassword(password string) string {
 	if len(password) <= 2 {
@@ -37,11 +50,11 @@ func FormatDateTime(dateStr string) string {
 	if dateStr == "" {
 		return ""
 	}
-	
+
 	if t, err := time.Parse(time.RFC3339, dateStr); err == nil {
 		return t.Format("2006-01-02 15:04:05")
 	}
-	
+
 	// 파싱 실패 시 원본 반환
 	return dateStr
 }

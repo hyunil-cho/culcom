@@ -3,6 +3,7 @@ package sms
 import (
 	"backoffice/config"
 	"backoffice/database"
+	"backoffice/utils"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -102,6 +103,10 @@ func Send(req SendRequest) (*SendResponse, error) {
 			Cols:    "9999",
 		}, nil
 	}
+
+	// 발신/수신 번호 정규화
+	req.SenderPhone = utils.NormalizeKoreanPhoneNumber(req.SenderPhone)
+	req.ReceiverPhone = utils.NormalizeKoreanPhoneNumber(req.ReceiverPhone)
 
 	// 설정 로드
 	cfg := config.GetConfig()
