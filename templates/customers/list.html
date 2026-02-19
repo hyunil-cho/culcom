@@ -196,7 +196,7 @@
                     </td>
                     <td>
                         <div style="display: flex; gap: 0.3rem; align-items: center;">
-                            <input type="text" id="interview-{{.ID}}" class="interview-datetime" data-customer-name="{{.Name}}"
+                            <input type="text" id="interview-{{.ID}}" class="interview-datetime"
                                    placeholder="ex)1월1일오후1시1분"
                                    style="padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; width: 143px;">
                             <button onclick="openInterviewConfirmModal({{.ID}})" 
@@ -245,6 +245,10 @@
 {{end}}
 // ========== 애플리케이션 상태 관리 (전역 변수를 객체로 그룹화) ==========
 const AppState = {
+    // 고객 데이터 (Single Source of Truth)
+    // customerId -> { name, phone, callCount, comment, lastContactDate, adName, adSource, registerDate }
+    customers: {},
+
     // CALLER 선택 관련
     caller: {
         pending: {
@@ -280,51 +284,39 @@ const AppState = {
             dateTime: null,
             customerName: null
         }
+    },
+
+    // 고객 데이터 조회 헬퍼
+    getCustomer(customerId) {
+        return this.customers[customerId] || null;
+    },
+
+    // 고객 데이터 업데이트 헬퍼
+    updateCustomer(customerId, updates) {
+        if (this.customers[customerId]) {
+            Object.assign(this.customers[customerId], updates);
+        }
+    },
+
+    // 고객 데이터 삭제 헬퍼
+    removeCustomer(customerId) {
+        delete this.customers[customerId];
+    },
+
+    // 고객 display 영역 업데이트 + AppState 동기화 공통 헬퍼
+    // field: 'name' | 'comment' 등 (id="{field}-display-{id}" 패턴에 매칭)
+    updateDisplay(customerId, field, value) {
+        const displayEl = document.getElementById(`${field}-display-${customerId}`);
+        if (displayEl) {
+            displayEl.querySelector('span').textContent = value;
+            if (value) {
+                displayEl.style.display = 'block';
+            }
+        }
+        this.updateCustomer(customerId, { [field]: value });
     }
 };
 
-// 하위 호환성을 위한 레거시 변수들 (점진적 마이그레이션)
-// 레거시 변수들은 AppState와 자동 동기화됨
-Object.defineProperty(window, 'pendingCallerSelection', {
-    get: () => AppState.caller.pending,
-    set: (value) => { AppState.caller.pending = value; }
-});
-const customerCallerMap = AppState.caller.selectedMap;
-
-Object.defineProperty(window, 'pendingNameChange', {
-    get: () => AppState.nameEdit.pending,
-    set: (value) => { AppState.nameEdit.pending = value; }
-});
-
-Object.defineProperty(window, 'currentTextCustomerId', {
-    get: () => AppState.textModal.customerId,
-    set: (value) => { AppState.textModal.customerId = value; }
-});
-Object.defineProperty(window, 'currentTextCustomerName', {
-    get: () => AppState.textModal.customerName,
-    set: (value) => { AppState.textModal.customerName = value; }
-});
-Object.defineProperty(window, 'currentTextCustomerPhone', {
-    get: () => AppState.textModal.customerPhone,
-    set: (value) => { AppState.textModal.customerPhone = value; }
-});
-Object.defineProperty(window, 'currentTextInputMode', {
-    get: () => AppState.textModal.inputMode,
-    set: (value) => { AppState.textModal.inputMode = value; }
-});
-
-Object.defineProperty(window, 'pendingInterviewCustomerId', {
-    get: () => AppState.interview.pending.customerId,
-    set: (value) => { AppState.interview.pending.customerId = value; }
-});
-Object.defineProperty(window, 'pendingInterviewDateTime', {
-    get: () => AppState.interview.pending.dateTime,
-    set: (value) => { AppState.interview.pending.dateTime = value; }
-});
-Object.defineProperty(window, 'pendingInterviewCustomerName', {
-    get: () => AppState.interview.pending.customerName,
-    set: (value) => { AppState.interview.pending.customerName = value; }
-});
 // ========== 전역 변수 선언 끝 ==========
 
 // 메시지 글자 수 카운트
@@ -342,9 +334,9 @@ document.addEventListener('DOMContentLoaded', function() {
 function confirmNameChange(customerId) {
     const inputEl = document.getElementById(`name-input-${customerId}`);
     
-    // 현재 표시된 이름을 span 태그에서 가져오기
-    const displayEl = document.getElementById(`name-display-${customerId}`);
-    const oldName = displayEl ? displayEl.querySelector('span').textContent.trim() : '';
+    // AppState에서 현재 이름 가져오기
+    const customer = AppState.getCustomer(customerId);
+    const oldName = customer ? customer.name : '';
     const newName = inputEl.value.trim();
     
     if (!newName) {
@@ -402,17 +394,8 @@ function performNameChange(customerId, oldName, newName, inputEl) {
             // UI 업데이트
             inputEl.value = '';  // 입력 필드는 비우기
             
-            // display 영역 업데이트 (이것이 실제 현재 이름의 원천)
-            const displayEl = document.getElementById(`name-display-${customerId}`);
-            if (displayEl) {
-                displayEl.querySelector('span').textContent = newName;
-            }
-            
-            // 인터뷰 입력 필드의 data-customer-name 속성 업데이트
-            const interviewInput = document.getElementById(`interview-${customerId}`);
-            if (interviewInput) {
-                interviewInput.setAttribute('data-customer-name', newName);
-            }
+            // display 영역 + AppState 업데이트
+            AppState.updateDisplay(customerId, 'name', newName);
                       
             ModalManager.createAlert({
                 id: 'nameChangeSuccess',
@@ -451,9 +434,9 @@ function performNameChange(customerId, oldName, newName, inputEl) {
 }
 
 function selectCaller(customerId, letter) {
-    // 고객 이름 가져오기 (name-display의 span에서)
-    const displayEl = document.getElementById(`name-display-${customerId}`);
-    const customerName = displayEl ? displayEl.querySelector('span').textContent.trim() : '';
+    // 고객 이름 가져오기 (AppState에서)
+    const customer = AppState.getCustomer(customerId);
+    const customerName = customer ? customer.name : '';
     
     // 선택 정보 저장 (AppState 사용)
     AppState.caller.pending = {
@@ -472,11 +455,11 @@ function selectCaller(customerId, letter) {
         contentBuilder: () => `
             <div style="text-align: center; margin-bottom: 1.5rem;">
                 <div style="font-size: 1.1rem; color: #333; margin-bottom: 1rem;">
-                    <strong style="color: #667eea; font-size: 1.3rem;">${customerName}</strong>님의
+                    <strong style="color: #667eea; font-size: 1.3rem;">${AppState.caller.pending.customerName}</strong>님의
                 </div>
                 <div style="font-size: 0.95rem; color: #666; margin-bottom: 0.5rem;">선택한 CALLER</div>
                 <div style="background: #f5f3ff; padding: 1.5rem; border-radius: 8px; border: 2px solid #667eea; margin-top: 1rem;">
-                    <div style="font-size: 2rem; font-weight: 700; color: #667eea;">${letter}</div>
+                    <div style="font-size: 2rem; font-weight: 700; color: #667eea;">${AppState.caller.pending.letter}</div>
                 </div>
             </div>
             <div style="text-align: center; color: #666; font-size: 0.95rem;">
@@ -571,10 +554,16 @@ function confirmCallerSelection() {
                 callCountElement.textContent = `${data.call_count}회`;
             }
             
+            // AppState 업데이트
+            AppState.updateCustomer(customerId, { callCount: data.call_count });
+            
             // UI에서 최근응대 시간 업데이트
             const lastVisitElement = document.getElementById(`last-visit-${customerId}`);
             if (lastVisitElement && data.last_update_date) {
                 lastVisitElement.textContent = data.last_update_date;
+                
+                // AppState 업데이트
+                AppState.updateCustomer(customerId, { lastContactDate: data.last_update_date });
                 
                 // 행의 data-last-visit 속성도 업데이트
                 const customerRow = document.querySelector(`tr[data-customer-id="${customerId}"]`);
@@ -591,6 +580,7 @@ function confirmCallerSelection() {
                 const customerRow = document.querySelector(`tr[data-customer-id="${customerId}"]`);
                 if (customerRow) {
                     customerRow.remove();
+                    AppState.removeCustomer(customerId); // AppState에서도 제거
                     
                     // 테이블이 비어있으면 안내 메시지 표시
                     const tbody = document.querySelector('.data-table tbody');
@@ -652,12 +642,10 @@ function cancelCallerConfirm() {
 
 // TEXT 모달 열기
 async function openTextModal(customerId) {
-    // 고객 정보를 동적으로 가져오기
-    const displayEl = document.getElementById(`name-display-${customerId}`);
-    const customerName = displayEl ? displayEl.querySelector('span').textContent.trim() : '';
-    
-    const phoneCell = document.getElementById(`phone-${customerId}`);
-    const customerPhone = phoneCell ? phoneCell.querySelector('.phone-number').textContent.trim() : '';
+    // 고객 정보를 AppState에서 가져오기
+    const customer = AppState.getCustomer(customerId);
+    const customerName = customer ? customer.name : '';
+    const customerPhone = customer ? customer.phone : '';
     
     // AppState에 저장
     AppState.textModal = {
@@ -1251,9 +1239,9 @@ function openInterviewConfirmModal(customerId) {
         return;
     }
     
-    // 고객 이름 가져오기 (Single Source of Truth: 화면에 표시된 값)
-    const displayEl = document.getElementById(`name-display-${customerId}`);
-    const customerName = displayEl ? displayEl.querySelector('span').textContent.trim() : '';
+    // 고객 이름 가져오기 (Single Source of Truth: AppState)
+    const customer = AppState.getCustomer(customerId);
+    const customerName = customer ? customer.name : '';
     
     // AppState에 임시 저장
     AppState.interview.pending = {
@@ -1355,13 +1343,14 @@ function closeReservationResultModal() {
     ModalManager.hide('reservationResultModal');
     
     // 성공한 경우에만 행 제거 처리
-    if (pendingInterviewCustomerId) {
+    if (AppState.interview.pending.customerId) {
         // 신규고객 페이지인 경우 해당 행 제거
         const currentFilter = '{{.CurrentFilter}}';
         if (currentFilter === 'new') {
-            const customerRow = document.querySelector(`tr[data-customer-id="${pendingInterviewCustomerId}"]`);
+            const customerRow = document.querySelector(`tr[data-customer-id="${AppState.interview.pending.customerId}"]`);
             if (customerRow) {
                 customerRow.remove();
+                AppState.removeCustomer(AppState.interview.pending.customerId); // AppState에서도 제거
                 
                 // 테이블이 비어있으면 안내 메시지 표시
                 const tbody = document.querySelector('.data-table tbody');
@@ -1372,17 +1361,19 @@ function closeReservationResultModal() {
         }
         
         // 임시 데이터 초기화
-        pendingInterviewCustomerId = null;
-        pendingInterviewDateTime = null;
-        pendingInterviewCustomerName = null;
+        AppState.interview.pending = {
+            customerId: null,
+            dateTime: null,
+            customerName: null
+        };
     }
 }
 
 // 전화상 안함 처리
 function markAsNoPhoneInterview(customerId) {
-    // 고객 이름을 동적으로 가져오기
-    const displayEl = document.getElementById(`name-display-${customerId}`);
-    const customerName = displayEl ? displayEl.querySelector('span').textContent.trim() : '';
+    // 고객 이름을 AppState에서 가져오기
+    const customer = AppState.getCustomer(customerId);
+    const customerName = customer ? customer.name : '';
     
     // CALLER 확인 (AppState 사용)
     const caller = AppState.caller.selectedMap[customerId];
@@ -1450,6 +1441,7 @@ function performNoPhoneInterview(customerId, customerName, caller) {
                         const customerRow = document.querySelector(`tr[data-customer-id="${customerId}"]`);
                         if (customerRow) {
                             customerRow.remove();
+                            AppState.removeCustomer(customerId); // AppState에서도 제거
                             
                             // 테이블이 비어있으면 안내 메시지 표시
                             const tbody = document.querySelector('.data-table tbody');
@@ -1576,13 +1568,13 @@ function confirmInterviewDateTime() {
             console.log('Reservation created successfully');
             
             // 입력 필드 초기화
-            document.getElementById(`interview-${pendingInterviewCustomerId}`).value = '';
+            document.getElementById(`interview-${AppState.interview.pending.customerId}`).value = '';
             
             // 확인 모달 닫기 (리팩터링: ModalManager 사용)
             ModalManager.hide('interviewConfirmModal');
             
             // 성공 모달 표시
-            showReservationResultModal(true, pendingInterviewCustomerName);
+            showReservationResultModal(true, AppState.interview.pending.customerName);
             sendCalendarEvent(result.data)
             // SMS 자동 발송 처리
             sendReservationSMS(result.data);
@@ -1594,7 +1586,7 @@ function confirmInterviewDateTime() {
             ModalManager.hide('interviewConfirmModal');
             
             // 실패 모달 표시
-            showReservationResultModal(false, pendingInterviewCustomerName, errorMsg);
+            showReservationResultModal(false, AppState.interview.pending.customerName, errorMsg);
         }
     })
     .catch(error => {
@@ -1620,62 +1612,20 @@ function confirmInterviewDateTime() {
 // 구글 캘린더 이벤트 생성
 async function sendCalendarEvent(reservationData) {
     try {
-        // 고객 전화번호 가져오기
-        const customerRow = document.querySelector(`tr[data-customer-id="${pendingInterviewCustomerId}"]`);
-        let customerPhone = '';
-        let caller = '';
-        let callCount = 0;
-        let commercialName = '';
-        let adSource = '';
-        let comment = '';
+        // AppState에서 고객 데이터 가져오기
+        const customerId = AppState.interview.pending.customerId;
+        const customer = AppState.getCustomer(customerId);
         
-        if (customerRow) {
-            const phoneCell = customerRow.querySelector(`#phone-${pendingInterviewCustomerId} .phone-number`);
-            if (phoneCell) {
-                customerPhone = phoneCell.textContent.trim();
-            }
-            
-            // CALLER 정보 가져오기 (선택된 버튼)
-            const selectedCallerBtn = customerRow.querySelector(`.caller-btn.selected`);
-            if (selectedCallerBtn) {
-                caller = selectedCallerBtn.dataset.letter || selectedCallerBtn.textContent.trim();
-            }
-            
-            // 전화 횟수 가져오기
-            const callCountElement = customerRow.querySelector(`#call-count-${pendingInterviewCustomerId}`);
-            if (callCountElement) {
-                const callCountText = callCountElement.textContent.trim();
-                callCount = parseInt(callCountText.replace('회', '')) || 0;
-            }
-            
-            // 광고명 가져오기 (테이블의 "광고명" 컬럼 - 인덱스 7)
-            const cells = customerRow.querySelectorAll('td');
-            if (cells.length > 7) {
-                commercialName = cells[7].textContent.trim();
-                // 빈 값이나 '-'인 경우 빈 문자열로 처리
-                if (commercialName === '-' || commercialName === '') {
-                    commercialName = '';
-                }
-            }
-            
-            // 광고 출처 가져오기 (테이블의 "지원경로" 컬럼 - 인덱스 8)
-            if (cells.length > 8) {
-                adSource = cells[8].textContent.trim();
-                if (adSource === '-' || adSource === '') {
-                    adSource = '';
-                }
-            }
-            
-            // 코멘트 가져오기
-            const commentDisplay = customerRow.querySelector(`#comment-display-${pendingInterviewCustomerId}`);
-            if (commentDisplay) {
-                comment = commentDisplay.textContent.trim();
-            }
-        }
+        const customerPhone = customer ? customer.phone : '';
+        const caller = AppState.caller.selectedMap[customerId] || '';
+        const callCount = customer ? customer.callCount : 0;
+        const commercialName = customer ? customer.adName : '';
+        const adSource = customer ? customer.adSource : '';
+        const comment = customer ? customer.comment : '';
         
         // 캘린더 이벤트 생성 요청 (JSON 형식)
         const eventData = {
-            customer_name: pendingInterviewCustomerName,
+            customer_name: AppState.interview.pending.customerName,
             phone_number: customerPhone,
             interview_date: reservationData.interview_date,
             comment: comment,
@@ -1735,7 +1685,7 @@ async function sendReservationSMS(reservationData) {
         if (!smsConfigResponse.ok) {
             const smsConfig = await smsConfigResponse.json();
             const errorMsg = smsConfig.error || smsConfig.message || 'SMS 설정을 가져올 수 없습니다.';
-            showReservationResultModal(false, pendingInterviewCustomerName, `SMS 설정 조회 실패: ${errorMsg}`);
+            showReservationResultModal(false, AppState.interview.pending.customerName, `SMS 설정 조회 실패: ${errorMsg}`);
             return;
         }
         
@@ -1744,22 +1694,17 @@ async function sendReservationSMS(reservationData) {
         
         // auto_send가 비활성화된 경우
         if (!smsConfig.auto_send) {
-            showReservationResultModal(false, pendingInterviewCustomerName, 'SMS 자동 발송이 비활성화되어 있습니다.\n설정 페이지에서 활성화해주세요.');
+            showReservationResultModal(false, AppState.interview.pending.customerName, 'SMS 자동 발송이 비활성화되어 있습니다.\n설정 페이지에서 활성화해주세요.');
             return;
         }
         
-        // 고객 전화번호 가져오기
-        const customerRow = document.querySelector(`tr[data-customer-id="${pendingInterviewCustomerId}"]`);
-        let customerPhone = '';
-        if (customerRow) {
-            const phoneCell = customerRow.querySelector(`#phone-${pendingInterviewCustomerId} .phone-number`);
-            if (phoneCell) {
-                customerPhone = phoneCell.textContent.trim();
-            }
-        }
+        // 고객 전화번호 가져오기 (AppState에서)
+        const customerId = AppState.interview.pending.customerId;
+        const customer = AppState.getCustomer(customerId);
+        const customerPhone = customer ? customer.phone : '';
         
         if (!customerPhone) {
-            showReservationResultModal(false, pendingInterviewCustomerName, '고객 전화번호를 찾을 수 없습니다.');
+            showReservationResultModal(false, AppState.interview.pending.customerName, '고객 전화번호를 찾을 수 없습니다.');
             return;
         }
         
@@ -1772,7 +1717,7 @@ async function sendReservationSMS(reservationData) {
         console.log('변환된 날짜 (날짜+시간):', formattedDate);
         
         const message = replaceTemplateVariables(smsConfig.template_content, {
-            customerName: pendingInterviewCustomerName,
+            customerName: AppState.interview.pending.customerName,
             reservationDate: formattedDate,
             interviewDate: formattedDate,
             reservationTime: formattedDate
@@ -1782,7 +1727,7 @@ async function sendReservationSMS(reservationData) {
         
         // 3단계: SMS 발송
         const smsFormData = new FormData();
-        smsFormData.append('customer_seq', pendingInterviewCustomerId);
+        smsFormData.append('customer_seq', AppState.interview.pending.customerId);
         smsFormData.append('sender_phone', smsConfig.sender_number);
         smsFormData.append('receiver_phone', customerPhone);
         smsFormData.append('message', message);
@@ -1803,18 +1748,17 @@ async function sendReservationSMS(reservationData) {
             
             // 실패 시 모달로 표시
             const errorMsg = smsError.error || smsError.message || 'SMS 발송에 실패했습니다.';
-            showReservationResultModal(false, pendingInterviewCustomerName, `SMS 발송 실패: ${errorMsg}`);
+            showReservationResultModal(false, AppState.interview.pending.customerName, `SMS 발송 실패: ${errorMsg}`);
         }
     } catch (error) {
         console.error('SMS 발송 중 오류:', error);
-        showReservationResultModal(false, pendingInterviewCustomerName, `SMS 발송 중 오류 발생: ${error.message}`);
+        showReservationResultModal(false, AppState.interview.pending.customerName, `SMS 발송 중 오류 발생: ${error.message}`);
     }
 }
 
 // 코멘트 저장
 function saveComment(customerId) {
     const commentInput = document.getElementById(`comment-${customerId}`);
-    const commentDisplay = document.getElementById(`comment-display-${customerId}`);
     const comment = commentInput.value.trim();
     
     if (!comment) {
@@ -1841,9 +1785,8 @@ function saveComment(customerId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // 저장된 코멘트를 표시
-            commentDisplay.querySelector('span').textContent = comment;
-            commentDisplay.style.display = 'block';
+            // display 영역 + AppState 업데이트
+            AppState.updateDisplay(customerId, 'comment', comment);
             // 입력창 비우기
             commentInput.value = '';
             ModalManager.createAlert({
@@ -1878,77 +1821,6 @@ function saveComment(customerId) {
     });
 }
 
-// 고객 삭제
-function deleteCustomer(customerId) {
-    // 고객 이름을 동적으로 가져오기
-    const displayEl = document.getElementById(`name-display-${customerId}`);
-    const customerName = displayEl ? displayEl.querySelector('span').textContent.trim() : '';
-    
-    // 동적 모달 생성
-    ModalManager.createConfirm({
-        id: 'deleteCustomerConfirm',
-        title: '🗑️ 고객 삭제 확인',
-        message: `<strong style="color: #f44336; font-size: 1.1rem;">${customerName}</strong>님을<br><br>정말 삭제하시겠습니까?<br><br><span style="color: #666; font-size: 0.9rem;">이 작업은 되돌릴 수 없습니다.</span>`,
-        confirmText: '삭제',
-        cancelText: '취소',
-        confirmColor: '#f44336',
-        onConfirm: () => {
-            performDeleteCustomer(customerId, customerName);
-        }
-    });
-    ModalManager.show('deleteCustomerConfirm');
-}
-
-// 실제 고객 삭제 처리
-function performDeleteCustomer(customerId, customerName) {
-    fetch(`/api/customers/${customerId}`, {
-        method: 'DELETE'
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('고객 삭제 실패');
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            // 성공 시 행 제거
-            const customerRow = document.querySelector(`tr[data-customer-id="${customerId}"]`);
-            if (customerRow) {
-                customerRow.remove();
-                
-                // 테이블이 비어있으면 안내 메시지 표시
-                const tbody = document.querySelector('.data-table tbody');
-                if (tbody && tbody.children.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 2rem; color: #999;">고객이 없습니다.</td></tr>';
-                }
-            }
-            
-            ModalManager.createAlert({
-                id: 'deleteCustomerSuccess',
-                title: '✅ 삭제 완료',
-                message: `${customerName}님이 삭제되었습니다.`,
-                confirmText: '확인',
-                confirmColor: '#10b981'
-            });
-            ModalManager.show('deleteCustomerSuccess');
-        } else {
-            throw new Error(data.message || '고객 삭제 실패');
-        }
-    })
-    .catch(error => {
-        console.error('고객 삭제 오류:', error);
-        ModalManager.createAlert({
-            id: 'deleteCustomerError',
-            title: '❌ 삭제 실패',
-            message: '고객 삭제 중 오류가 발생했습니다.<br>다시 시도해주세요.',
-            confirmText: '확인',
-            confirmColor: '#f44336'
-        });
-        ModalManager.show('deleteCustomerError');
-    });
-}
-
 // 최근 회신 시간을 체크하고, 현재로부터 1시간 이내라면 색을 변환
 function checkRecentContacts() {
     const now = new Date();
@@ -1974,6 +1846,28 @@ function checkRecentContacts() {
 
 // 페이지 로드 시 최근 응대 체크 실행
 document.addEventListener('DOMContentLoaded', function() {
+    // ========== AppState.customers 초기화 (서버 렌더링 데이터 → AppState) ==========
+    document.querySelectorAll('tr[data-customer-id]').forEach(row => {
+        const id = row.getAttribute('data-customer-id');
+        const nameDisplay = document.getElementById(`name-display-${id}`);
+        const phoneCell = document.getElementById(`phone-${id}`);
+        const callCountEl = document.getElementById(`call-count-${id}`);
+        const commentDisplay = document.getElementById(`comment-display-${id}`);
+        const cells = row.querySelectorAll('td');
+
+        AppState.customers[id] = {
+            name: nameDisplay ? nameDisplay.querySelector('span').textContent.trim() : '',
+            phone: phoneCell ? phoneCell.querySelector('.phone-number').textContent.trim() : '',
+            callCount: callCountEl ? parseInt(callCountEl.textContent.replace('회', '')) || 0 : 0,
+            comment: commentDisplay ? commentDisplay.querySelector('span').textContent.trim() : '',
+            lastContactDate: row.getAttribute('data-last-visit') || '',
+            adName: (cells.length > 7 && cells[7].textContent.trim() !== '-') ? cells[7].textContent.trim() : '',
+            adSource: (cells.length > 8 && cells[8].textContent.trim() !== '-') ? cells[8].textContent.trim() : '',
+            registerDate: cells.length > 9 ? cells[9].textContent.trim() : ''
+        };
+    });
+    console.log(`AppState.customers 초기화 완료: ${Object.keys(AppState.customers).length}명`);
+
     checkRecentContacts();
     
     // 기존 DOMContentLoaded 로직들
@@ -2032,7 +1926,11 @@ function toggleSearchInput(searchType) {
     }
 }
 
-function deleteCustomer(customerId, customerName) {
+function deleteCustomer(customerId) {
+    // 고객 이름을 AppState에서 가져오기
+    const customer = AppState.getCustomer(customerId);
+    const customerName = customer ? customer.name : '';
+    console.log(`Attempting to delete customer - ID: ${customerId}, Name: ${customerName}`);
     // 동적 모달 생성
     ModalManager.createConfirm({
         id: 'deleteCustomerModal',
@@ -2062,6 +1960,7 @@ function deleteCustomer(customerId, customerName) {
                 const row = document.querySelector(`tr[data-customer-id="${customerId}"]`);
                 if (row) {
                     row.remove();
+                    AppState.removeCustomer(customerId); // AppState에서도 제거
                     // 전체 카운트 업데이트
                     const currentCount = parseInt(document.querySelector('.table-header span[style*="color: #4a90e2"]').textContent);
                     document.querySelector('.table-header span[style*="color: #4a90e2"]').textContent = currentCount - 1;

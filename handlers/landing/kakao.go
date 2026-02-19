@@ -58,8 +58,7 @@ func KakaoLoginHandler(w http.ResponseWriter, r *http.Request) {
 	// 지점 정보 가져오기
 	branchSeq := r.URL.Query().Get("branch")
 	if branchSeq == "" {
-		http.Redirect(w, r, "/ad/error", http.StatusSeeOther)
-		return
+		branchSeq = "-1"
 	}
 
 	// State 생성 (지점 정보 및 CSRF 방지용 랜덤 값 포함)
