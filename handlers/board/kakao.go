@@ -73,7 +73,7 @@ func KakaoLoginHandler(w http.ResponseWriter, r *http.Request) {
 		redirectURI = "http://localhost:8080/board/kakao/callback"
 	}
 
-	authURL := fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&response_type=code&state=%s&scope=name,phone_number",
+	authURL := fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&response_type=code&state=%s&scope=profile_nickname",
 		kakaoAuthURL,
 		kakaoClientID,
 		url.QueryEscape(redirectURI),
