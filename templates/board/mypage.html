@@ -1,0 +1,131 @@
+{{define "board/mypage.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마이페이지 - CulCom</title>
+    <link rel="stylesheet" href="/static/css/board.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- 상단 네비게이션 -->
+<nav class="board-nav">
+    <div class="board-container nav-inner">
+        <a href="/" class="board-logo">
+            <span class="logo-icon">📢</span>
+            <span class="logo-text">CulCom</span>
+            <span class="logo-divider"></span>
+            <span class="logo-sub">공지 · 이벤트</span>
+        </a>
+        <div class="nav-right">
+            <a href="/board/mypage" class="nav-mypage-btn active">마이페이지</a>
+            <a href="/board/logout" class="nav-logout-btn">로그아웃</a>
+        </div>
+    </div>
+</nav>
+
+<!-- 메인 콘텐츠 -->
+<main class="board-main">
+    <div class="board-container board-container-narrow">
+
+        <h2 class="mypage-title">마이페이지</h2>
+
+        <!-- 회원 정보 -->
+        <div class="mypage-section">
+            <h3 class="mypage-section-title">회원 정보</h3>
+            <div class="mypage-info-card">
+                <div class="info-row">
+                    <span class="info-label">이름</span>
+                    <span class="info-value">{{.MemberInfo.Name}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">전화번호</span>
+                    <span class="info-value">{{if .MemberInfo.PhoneNumber}}{{.MemberInfo.PhoneNumber}}{{else}}미등록{{end}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">가입일</span>
+                    <span class="info-value">{{.MemberInfo.CreatedDate}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">로그인 방식</span>
+                    <span class="info-value">
+                        <span class="kakao-login-badge">카카오 로그인</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 회원탈퇴 -->
+        <div class="mypage-section mypage-danger-zone">
+            <h3 class="mypage-section-title danger">회원탈퇴</h3>
+            <div class="mypage-danger-card">
+                <p class="danger-description">
+                    회원탈퇴 시 모든 회원 정보가 삭제되며, 이 작업은 되돌릴 수 없습니다.
+                </p>
+                <button type="button" class="btn-withdraw" onclick="confirmWithdraw()">회원탈퇴</button>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- 회원탈퇴 확인 모달 -->
+<div class="modal-overlay" id="withdrawModal" style="display:none;">
+    <div class="modal-box">
+        <h3 class="modal-title">정말 탈퇴하시겠습니까?</h3>
+        <p class="modal-desc">탈퇴 후에는 모든 회원 정보가 삭제되며,<br>복구할 수 없습니다.</p>
+        <div class="modal-actions">
+            <button type="button" class="btn-modal-cancel" onclick="closeWithdrawModal()">취소</button>
+            <button type="button" class="btn-modal-confirm" onclick="executeWithdraw()">탈퇴하기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 푸터 -->
+<footer class="board-footer">
+    <div class="board-container">
+        <p>&copy; 2026 CulCom. All rights reserved.</p>
+    </div>
+</footer>
+
+<script>
+function confirmWithdraw() {
+    document.getElementById('withdrawModal').style.display = 'flex';
+}
+
+function closeWithdrawModal() {
+    document.getElementById('withdrawModal').style.display = 'none';
+}
+
+function executeWithdraw() {
+    fetch('/board/withdraw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(resp => resp.json())
+    .then(data => {
+        if (data.success) {
+            alert('회원탈퇴가 완료되었습니다.');
+            window.location.href = '/';
+        } else {
+            alert(data.error || '오류가 발생했습니다.');
+        }
+    })
+    .catch(() => {
+        alert('요청 처리 중 오류가 발생했습니다.');
+    });
+}
+
+// 모달 바깥 클릭 시 닫기
+document.getElementById('withdrawModal').addEventListener('click', function(e) {
+    if (e.target === this) closeWithdrawModal();
+});
+</script>
+
+</body>
+</html>
+{{end}}

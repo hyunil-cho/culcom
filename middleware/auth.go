@@ -14,7 +14,7 @@ func RequireAuth(next http.HandlerFunc) http.HandlerFunc {
 		session, err := config.SessionStore.Get(r, "user-session")
 		if err != nil {
 			log.Printf("세션 가져오기 실패: %v", err)
-			http.Redirect(w, r, "/?error=unauthorized", http.StatusSeeOther)
+			http.Redirect(w, r, "/login?error=unauthorized", http.StatusSeeOther)
 			return
 		}
 
@@ -23,7 +23,7 @@ func RequireAuth(next http.HandlerFunc) http.HandlerFunc {
 		if !ok || !authenticated {
 			// 인증되지 않은 경우 로그인 페이지로 리다이렉트
 			log.Printf("인증되지 않은 접근 시도: %s %s", r.Method, r.URL.Path)
-			http.Redirect(w, r, "/?error=unauthorized", http.StatusSeeOther)
+			http.Redirect(w, r, "/login?error=unauthorized", http.StatusSeeOther)
 			return
 		}
 

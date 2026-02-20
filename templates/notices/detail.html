@@ -1,0 +1,122 @@
+{{define "notices/detail.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <link rel="stylesheet" href="/static/css/notices.css">
+</head>
+<body>
+    {{template "sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+
+<!-- 뒤로가기 -->
+<div class="notice-detail-nav">
+    <a href="/notices" class="notice-back-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        목록으로
+    </a>
+</div>
+
+<!-- 상세 카드 -->
+<article class="notice-detail-card">
+    <!-- 상단 메타 정보 -->
+    <div class="notice-detail-header">
+        <div class="notice-detail-badges">
+            <span class="notice-category {{.Notice.CategoryClass}}">{{.Notice.Category}}</span>
+            {{if .Notice.IsPinned}}
+            <span class="notice-pin-badge">📌 고정글</span>
+            {{end}}
+            <span class="notice-branch-badge">🏢 {{.Notice.BranchName}}</span>
+        </div>
+        <h1 class="notice-detail-title">{{.Notice.Title}}</h1>
+        <div class="notice-detail-meta">
+            <div class="notice-detail-meta-left">
+                <span class="meta-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    {{.Notice.CreatedBy}}
+                </span>
+                <span class="meta-divider">·</span>
+                <span class="meta-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    {{.Notice.CreatedDate}}
+                </span>
+                <span class="meta-divider">·</span>
+                <span class="meta-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    조회 {{.Notice.ViewCount}}
+                </span>
+            </div>
+            {{if .Notice.HasEventDate}}
+            <div class="notice-event-date-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                이벤트 기간: {{.Notice.EventStartDate}} ~ {{.Notice.EventEndDate}}
+            </div>
+            {{end}}
+        </div>
+    </div>
+
+    <!-- 본문 -->
+    <div class="notice-detail-body">
+        <div class="notice-content-text">{{.Notice.Content}}</div>
+    </div>
+
+    <!-- 하단 액션 -->
+    <div class="notice-detail-footer">
+        <div class="notice-detail-actions">
+            <a href="/notices/edit?id={{.Notice.ID}}" class="btn-notice-edit">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                수정
+            </a>
+            <button onclick="confirmDelete({{.Notice.ID}})" class="btn-notice-delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                삭제
+            </button>
+        </div>
+        {{if .Notice.LastUpdateDate}}
+        <div class="notice-last-updated">
+            최종 수정: {{.Notice.LastUpdateDate}}
+        </div>
+        {{end}}
+    </div>
+</article>
+
+<!-- 삭제 확인 모달 -->
+<div id="deleteModal" class="notice-modal-overlay" style="display: none;">
+    <div class="notice-modal">
+        <div class="notice-modal-icon">⚠️</div>
+        <h3>정말 삭제하시겠습니까?</h3>
+        <p>삭제된 게시글은 복구할 수 없습니다.</p>
+        <div class="notice-modal-actions">
+            <button onclick="closeDeleteModal()" class="btn-modal-cancel">취소</button>
+            <form id="deleteForm" method="POST" action="/notices/delete" style="display: inline;">
+                <input type="hidden" name="id" id="deleteNoticeId" value="">
+                <button type="submit" class="btn-modal-confirm">삭제</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(id) {
+    document.getElementById('deleteNoticeId').value = id;
+    document.getElementById('deleteModal').style.display = 'flex';
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+}
+
+// 모달 바깥 클릭 시 닫기
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteModal();
+});
+</script>
+
+        </main>
+    </div>
+</body>
+</html>
+{{end}}

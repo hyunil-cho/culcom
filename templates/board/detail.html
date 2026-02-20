@@ -1,0 +1,113 @@
+{{define "board/detail.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Notice.Title}} - CulCom</title>
+    <link rel="stylesheet" href="/static/css/board.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- 상단 네비게이션 -->
+<nav class="board-nav">
+    <div class="board-container nav-inner">
+        <a href="/" class="board-logo">
+            <span class="logo-icon">📢</span>
+            <span class="logo-text">CulCom</span>
+            <span class="logo-divider"></span>
+            <span class="logo-sub">공지 · 이벤트</span>
+        </a>
+        {{if .IsLoggedIn}}
+        <div class="nav-right">
+            <span class="nav-username">{{.MemberName}}님</span>
+            <a href="/board/mypage" class="nav-mypage-btn">마이페이지</a>
+            <a href="/board/logout" class="nav-logout-btn">로그아웃</a>
+        </div>
+        {{else}}
+        <a href="/board/kakao/login" class="nav-login-btn">
+            <svg class="kakao-icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.48 3 2 6.58 2 10.94c0 2.8 1.86 5.27 4.66 6.67l-1.19 4.39 5.09-3.36c.47.04.95.06 1.44.06 5.52 0 10-3.58 10-7.94S17.52 3 12 3z"/></svg>
+            카카오 로그인
+        </a>
+        {{end}}
+    </div>
+</nav>
+
+<!-- 상세 콘텐츠 -->
+<main class="board-main board-main-detail">
+    <div class="board-container board-container-narrow">
+
+        <!-- 뒤로가기 -->
+        <a href="/" class="detail-back">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            목록으로 돌아가기
+        </a>
+
+        <!-- 게시글 아티클 -->
+        <article class="detail-article">
+            <!-- 헤더 -->
+            <header class="detail-header">
+                <div class="detail-badges">
+                    <span class="card-badge {{.Notice.CategoryClass}}">{{.Notice.Category}}</span>
+                    {{if .Notice.IsPinned}}
+                    <span class="detail-pin-badge">📌 고정</span>
+                    {{end}}
+                    <span class="detail-branch-badge">🏢 {{.Notice.BranchName}}</span>
+                </div>
+                <h1 class="detail-title">{{.Notice.Title}}</h1>
+                <div class="detail-meta">
+                    <div class="detail-meta-group">
+                        <span class="meta-item">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            {{.Notice.CreatedBy}}
+                        </span>
+                        <span class="meta-dot">·</span>
+                        <span class="meta-item">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            {{.Notice.CreatedDate}}
+                        </span>
+                        <span class="meta-dot">·</span>
+                        <span class="meta-item">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            조회 {{.Notice.ViewCount}}
+                        </span>
+                    </div>
+                    {{if .Notice.HasEventDate}}
+                    <div class="detail-event-period">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        이벤트 기간: {{.Notice.EventStartDate}} ~ {{.Notice.EventEndDate}}
+                    </div>
+                    {{end}}
+                </div>
+            </header>
+
+            <!-- 본문 -->
+            <div class="detail-body">
+                {{.Notice.Content}}
+            </div>
+
+            <!-- 하단 액션 -->
+            <footer class="detail-footer">
+                <a href="/" class="btn-back-list">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                    목록으로
+                </a>
+            </footer>
+        </article>
+
+    </div>
+</main>
+
+<!-- 푸터 -->
+<footer class="board-footer">
+    <div class="board-container">
+        <p>&copy; 2026 CulCom. All rights reserved.</p>
+    </div>
+</footer>
+
+</body>
+</html>
+{{end}}

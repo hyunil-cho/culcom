@@ -53,12 +53,13 @@ type OAuthState struct {
 	Random    string `json:"random"`
 }
 
+const kakakoBranchSeq = "99999" // 카카오 로그인용 가상 지점 번호
 // KakaoLoginHandler 카카오 로그인 시작 (OAuth 인증 페이지로 리다이렉트)
 func KakaoLoginHandler(w http.ResponseWriter, r *http.Request) {
 	// 지점 정보 가져오기
 	branchSeq := r.URL.Query().Get("branch")
 	if branchSeq == "" {
-		branchSeq = "99999"
+		branchSeq = kakakoBranchSeq
 	}
 
 	// State 생성 (지점 정보 및 CSRF 방지용 랜덤 값 포함)

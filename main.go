@@ -3,6 +3,7 @@ package main
 import (
 	"backoffice/config"
 	"backoffice/database"
+	"backoffice/handlers/board"
 	"backoffice/handlers/branches"
 	"backoffice/handlers/consultation"
 	"backoffice/handlers/customers"
@@ -12,6 +13,7 @@ import (
 	"backoffice/handlers/landing"
 	"backoffice/handlers/login"
 	"backoffice/handlers/messagetemplates"
+	"backoffice/handlers/notices"
 	"backoffice/handlers/opens"
 	"backoffice/handlers/services"
 	"backoffice/handlers/settings"
@@ -66,6 +68,7 @@ func init() {
 	templates = template.Must(templates.ParseGlob("templates/auth/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/landing/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/consultation/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/notices/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/error.html"))
 
 	home.Templates = templates
@@ -78,6 +81,15 @@ func init() {
 	errorhandler.Templates = templates
 	landing.Templates = templates
 	consultation.Templates = templates
+	notices.Templates = templates
+
+	// 공개 게시판 템플릿 (백오피스 레이아웃과 완전 분리)
+	publicFuncMap := template.FuncMap{
+		"add": func(a, b int) int { return a + b },
+		"sub": func(a, b int) int { return a - b },
+	}
+	publicTemplates := template.Must(template.New("").Funcs(publicFuncMap).ParseGlob("templates/board/*.html"))
+	board.PublicTemplates = publicTemplates
 
 	// 개인정보 처리방침 템플릿 초기화
 	opens.InitPrivacyTemplate()
@@ -113,10 +125,19 @@ func main() {
 	mux.HandleFunc("/ad/kakao/login", middleware.RecoverFunc(landing.KakaoLoginHandler))       // 카카오 로그인 시작
 	mux.HandleFunc("/ad/kakao/callback", middleware.RecoverFunc(landing.KakaoCallbackHandler)) // 카카오 OAuth 콜백
 
-	mux.HandleFunc("/privacy", opens.PrivacyPolicyHandler)                          // 개인정보 처리방침
-	mux.HandleFunc("/consultation/register", middleware.RecoverFunc(consultation.RegisterHandler))  // 상담 신청 페이지
-	mux.HandleFunc("/consultation/submit", middleware.RecoverFunc(consultation.SubmitHandler))      // 상담 신청 처리
-	mux.HandleFunc("/consultation/success", middleware.RecoverFunc(consultation.SuccessHandler))    // 상담 신청 완료
+	mux.HandleFunc("/privacy", opens.PrivacyPolicyHandler)                                         // 개인정보 처리방침
+	mux.HandleFunc("/consultation/register", middleware.RecoverFunc(consultation.RegisterHandler)) // 상담 신청 페이지
+	mux.HandleFunc("/consultation/submit", middleware.RecoverFunc(consultation.SubmitHandler))     // 상담 신청 처리
+	mux.HandleFunc("/consultation/success", middleware.RecoverFunc(consultation.SuccessHandler))   // 상담 신청 완료
+
+	// 공개 게시판 (인증 불필요 - 일반 사용자 열람용)
+	mux.HandleFunc("/board", middleware.RecoverFunc(board.ListHandler))                         // 공지사항/이벤트 목록 (공개, /board 호환)
+	mux.HandleFunc("/board/detail", middleware.RecoverFunc(board.DetailHandler))                // 공지사항/이벤트 상세 (공개, /board 호환)
+	mux.HandleFunc("/board/kakao/login", middleware.RecoverFunc(board.KakaoLoginHandler))       // 게시판 카카오 로그인
+	mux.HandleFunc("/board/kakao/callback", middleware.RecoverFunc(board.KakaoCallbackHandler)) // 게시판 카카오 콜백
+	mux.HandleFunc("/board/mypage", middleware.RecoverFunc(board.MypageHandler))                // 마이페이지
+	mux.HandleFunc("/board/logout", middleware.RecoverFunc(board.BoardLogoutHandler))           // 게시판 로그아웃
+	mux.HandleFunc("/board/withdraw", middleware.RecoverFunc(board.WithdrawHandler))            // 회원탈퇴
 
 	// 라우트 설정 (인증 필요한 라우트는 RequireAuthRecover 미들웨어 적용)
 	mux.HandleFunc("/dashboard", middleware.RequireAuthRecover(middleware.InjectBranchData(home.Handler)))                                        // 대시보드
@@ -153,6 +174,11 @@ func main() {
 	mux.HandleFunc("/message-templates/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(messagetemplates.EditHandler)))           // 메시지 템플릿 수정
 	mux.HandleFunc("/message-templates/delete", middleware.RequireAuthRecover(messagetemplates.DeleteHandler))                                    // 메시지 템플릿 삭제
 	mux.HandleFunc("/message-templates/set-default", middleware.RequireAuthRecover(messagetemplates.SetDefaultHandler))                           // 메시지 템플릿 기본값 설정
+	mux.HandleFunc("/notices", middleware.RequireAuthRecover(middleware.InjectBranchData(notices.Handler)))                                       // 공지사항/이벤트 목록
+	mux.HandleFunc("/notices/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(notices.DetailHandler)))                          // 공지사항/이벤트 상세
+	mux.HandleFunc("/notices/add", middleware.RequireAuthRecover(middleware.InjectBranchData(notices.AddHandler)))                                // 공지사항/이벤트 등록
+	mux.HandleFunc("/notices/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(notices.EditHandler)))                              // 공지사항/이벤트 수정
+	mux.HandleFunc("/notices/delete", middleware.RequireAuthRecover(notices.DeleteHandler))                                                       // 공지사항/이벤트 삭제
 	mux.HandleFunc("/settings", middleware.RequireAuthRecover(middleware.InjectBranchData(settings.Handler)))                                     // 설정 메인 페이지
 	mux.HandleFunc("/settings/reservation-sms", middleware.RequireAuthRecover(middleware.InjectBranchData(settings.ReservationSMSConfigHandler))) // 예약 SMS 설정
 	mux.HandleFunc("/logout", middleware.RequireAuthRecover(login.LogoutHandler))                                                                 // 로그아웃 처리
@@ -164,7 +190,7 @@ func main() {
 	// Swagger UI
 	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 
-	// 루트 경로 핸들러 (세션 유무에 따른 리다이렉트)
+	// 루트 경로 핸들러 - 공개 게시판 (공지사항/이벤트)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			// "/" 이외의 경로는 404
@@ -172,16 +198,8 @@ func main() {
 			return
 		}
 
-		// 세션 확인
-		session, err := config.SessionStore.Get(r, "user-session")
-		if err != nil || session.Values["user_id"] == nil {
-			// 세션이 없으면 로그인 페이지로
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-			return
-		}
-
-		// 세션이 있으면 대시보드로
-		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+		// 루트 접속 시 공개 게시판 표시
+		board.ListHandler(w, r)
 	})
 
 	// 서버 설정 가져오기

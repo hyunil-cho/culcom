@@ -1,0 +1,135 @@
+{{define "notices/list.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <link rel="stylesheet" href="/static/css/notices.css">
+</head>
+<body>
+    {{template "sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+
+<!-- 페이지 헤더 섹션 -->
+<div class="notices-hero">
+    <div class="notices-hero-content">
+        <h2 class="notices-hero-title">📢 공지사항 · 이벤트 관리</h2>
+        <p class="notices-hero-desc">공지사항과 이벤트를 등록/수정/삭제할 수 있습니다. 일반 사용자는 <a href="/" target="_blank" style="color: #fff; text-decoration: underline; font-weight: 600;">메인 페이지</a>에서 열람합니다.</p>
+    </div>
+    <div class="notices-hero-actions">
+        <a href="/" target="_blank" class="btn-notice-add" style="margin-right: 0.5rem; background: rgba(255,255,255,0.1);">🌐 공개 페이지</a>
+        <a href="/notices/add" class="btn-notice-add">✏️ 새 글 작성</a>
+    </div>
+</div>
+
+<!-- 필터 & 검색 -->
+<div class="notices-filter-bar">
+    <div class="notices-filter-tabs">
+        <a href="/notices?filter=all" class="filter-tab {{if eq .CurrentFilter "all"}}active{{end}}">
+            <span class="filter-tab-icon">📋</span> 전체
+        </a>
+        <a href="/notices?filter=공지사항" class="filter-tab {{if eq .CurrentFilter "공지사항"}}active{{end}}">
+            <span class="filter-tab-icon">📌</span> 공지사항
+        </a>
+        <a href="/notices?filter=이벤트" class="filter-tab {{if eq .CurrentFilter "이벤트"}}active{{end}}">
+            <span class="filter-tab-icon">🎉</span> 이벤트
+        </a>
+    </div>
+    <form method="GET" action="/notices" class="notices-search-form">
+        <input type="hidden" name="filter" value="{{.CurrentFilter}}">
+        <div class="notices-search-box">
+            <input type="text" name="searchKeyword" placeholder="제목 또는 내용 검색..." value="{{.SearchKeyword}}" class="notices-search-input">
+            <button type="submit" class="notices-search-btn">🔍</button>
+        </div>
+        {{if .SearchKeyword}}
+        <a href="/notices?filter={{.CurrentFilter}}" class="notices-search-clear">초기화</a>
+        {{end}}
+    </form>
+</div>
+
+<!-- 검색 결과 요약 -->
+<div class="notices-result-summary">
+    <span class="notices-count">총 <strong>{{.TotalCount}}</strong>건</span>
+    {{if .SearchKeyword}}
+    <span class="notices-search-tag">"{{.SearchKeyword}}" 검색 결과</span>
+    {{end}}
+</div>
+
+<!-- 공지사항 목록 -->
+<div class="notices-list">
+    {{if .Notices}}
+        {{range .Notices}}
+        <a href="/notices/detail?id={{.ID}}" class="notice-card {{if .IsPinned}}notice-pinned{{end}}">
+            <div class="notice-card-left">
+                {{if .IsPinned}}
+                <div class="notice-pin-badge">📌 고정</div>
+                {{end}}
+                <div class="notice-meta-top">
+                    <span class="notice-category {{.CategoryClass}}">{{.Category}}</span>
+                    <span class="notice-branch">{{.BranchName}}</span>
+                </div>
+                <h3 class="notice-title">{{.Title}}</h3>
+                <div class="notice-meta-bottom">
+                    <span class="notice-author">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        {{.CreatedBy}}
+                    </span>
+                    <span class="notice-date">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        {{.CreatedDate}}
+                    </span>
+                    <span class="notice-views">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        {{.ViewCount}}
+                    </span>
+                    {{if .HasEventDate}}
+                    <span class="notice-event-period">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        {{.EventStartDate}} ~ {{.EventEndDate}}
+                    </span>
+                    {{end}}
+                </div>
+            </div>
+            <div class="notice-card-arrow">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+        </a>
+        {{end}}
+    {{else}}
+        <div class="notices-empty">
+            <div class="notices-empty-icon">📭</div>
+            <h3>등록된 게시글이 없습니다</h3>
+            <p>새로운 공지사항이나 이벤트를 등록해 주세요.</p>
+        </div>
+    {{end}}
+</div>
+
+<!-- 페이지네이션 -->
+{{if gt .Pagination.TotalPages 1}}
+<div class="notices-pagination">
+    {{if .Pagination.HasPrev}}
+    <a href="/notices?page={{sub .Pagination.CurrentPage 1}}&filter={{.CurrentFilter}}&searchKeyword={{.SearchKeyword}}" class="page-btn page-prev">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </a>
+    {{end}}
+    
+    {{range .Pagination.Pages}}
+    <a href="/notices?page={{.}}&filter={{$.CurrentFilter}}&searchKeyword={{$.SearchKeyword}}" 
+       class="page-btn {{if eq . $.Pagination.CurrentPage}}page-active{{end}}">{{.}}</a>
+    {{end}}
+    
+    {{if .Pagination.HasNext}}
+    <a href="/notices?page={{add .Pagination.CurrentPage 1}}&filter={{.CurrentFilter}}&searchKeyword={{.SearchKeyword}}" class="page-btn page-next">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
+    {{end}}
+</div>
+{{end}}
+
+        </main>
+    </div>
+</body>
+</html>
+{{end}}
