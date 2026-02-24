@@ -45,6 +45,7 @@ type KakaoOAuthConfig struct {
 	ClientID     string
 	ClientSecret string
 	RedirectURI  string
+	AdminKey     string
 }
 
 // SessionConfig - 세션 설정 구조체

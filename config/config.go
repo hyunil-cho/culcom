@@ -54,6 +54,7 @@ func Init() error {
 			ClientID:     getEnv("KAKAO_CLIENT_ID", ""),
 			ClientSecret: getEnv("KAKAO_CLIENT_SECRET", ""),
 			RedirectURI:  getEnv("KAKAO_REDIRECT_URI", "http://localhost:8080/ad/kakao/callback"),
+			AdminKey:     getEnv("KAKAO_ADMIN_KEY", ""),
 		},
 		Session: SessionConfig{
 			SecretKey: getEnv("SESSION_SECRET_KEY", "your-secret-key-change-this-in-production"),

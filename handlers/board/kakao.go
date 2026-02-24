@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -20,6 +21,7 @@ const (
 	kakaoAuthURL     = "https://kauth.kakao.com/oauth/authorize"
 	kakaoTokenURL    = "https://kauth.kakao.com/oauth/token"
 	kakaoUserInfoURL = "https://kapi.kakao.com/v2/user/me"
+	kakaoUnlinkURL   = "https://kapi.kakao.com/v1/user/unlink"
 )
 
 type boardOAuthState struct {
@@ -73,7 +75,7 @@ func KakaoLoginHandler(w http.ResponseWriter, r *http.Request) {
 		redirectURI = "http://localhost:8080/board/kakao/callback"
 	}
 
-	authURL := fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&response_type=code&state=%s&scope=profile_nickname",
+	authURL := fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&response_type=code&state=%s&scope=name,phone_number",
 		kakaoAuthURL,
 		kakaoClientID,
 		url.QueryEscape(redirectURI),
@@ -223,6 +225,54 @@ func GetBoardSession(r *http.Request) (isLoggedIn bool, memberSeq int, memberNam
 
 	name, _ := session.Values["member_name"].(string)
 	return true, seq, name
+}
+
+// UnlinkKakaoUser - 카카오 연결 끊기 (회원탈퇴 시 호출)
+// Admin Key를 사용하여 서버에서 직접 카카오 연결을 해제합니다.
+// 참고: https://developers.kakao.com/docs/latest/ko/kakaologin/rest-api#unlink
+func UnlinkKakaoUser(kakaoID int64) error {
+	cfg := config.GetConfig()
+	adminKey := cfg.KakaoOAuth.AdminKey
+
+	if adminKey == "" {
+		return fmt.Errorf("KAKAO_ADMIN_KEY가 설정되지 않았습니다")
+	}
+
+	if kakaoID == 0 {
+		return fmt.Errorf("카카오 ID가 유효하지 않습니다")
+	}
+
+	data := url.Values{}
+	data.Set("target_id_type", "user_id")
+	data.Set("target_id", strconv.FormatInt(kakaoID, 10))
+
+	req, err := http.NewRequest("POST", kakaoUnlinkURL, strings.NewReader(data.Encode()))
+	if err != nil {
+		return fmt.Errorf("unlink 요청 생성 실패: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Authorization", "KakaoAK "+adminKey)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("unlink API 호출 실패: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("unlink 응답 읽기 실패: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("카카오 unlink 실패 - status: %d, body: %s, kakao_id: %d", resp.StatusCode, string(body), kakaoID)
+		return fmt.Errorf("카카오 unlink API 실패 (status: %d): %s", resp.StatusCode, string(body))
+	}
+
+	log.Printf("카카오 unlink 성공 - kakao_id: %d, response: %s", kakaoID, string(body))
+	return nil
 }
 
 // --- 내부 헬퍼 함수 ---
