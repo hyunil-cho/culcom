@@ -107,9 +107,9 @@ function executeWithdraw() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
     })
-    .then(resp => resp.json())
-    .then(data => {
-        if (data.success) {
+    .then(resp => resp.json().then(data => ({ ok: resp.ok, data })))
+    .then(({ ok, data }) => {
+        if (ok && data.success) {
             alert('회원탈퇴가 완료되었습니다.');
             window.location.href = '/';
         } else {

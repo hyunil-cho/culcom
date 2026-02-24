@@ -3,10 +3,9 @@ package board
 import (
 	"backoffice/config"
 	"backoffice/database"
-	"encoding/json"
+	"backoffice/utils"
 	"log"
 	"net/http"
-	"strings"
 )
 
 // MypageData - 마이페이지 템플릿 데이터
@@ -61,9 +60,7 @@ func WithdrawHandler(w http.ResponseWriter, r *http.Request) {
 
 	isLoggedIn, memberSeq, memberName := GetBoardSession(r)
 	if !isLoggedIn {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"error": "로그인이 필요합니다"})
+		utils.JSONError(w, http.StatusUnauthorized, "로그인이 필요합니다")
 		return
 	}
 
@@ -71,31 +68,22 @@ func WithdrawHandler(w http.ResponseWriter, r *http.Request) {
 	customer, err := database.GetCustomerBySeqForMypage(memberSeq)
 	if err != nil {
 		log.Printf("회원탈퇴 - 고객 정보 조회 실패 - seq: %d, error: %v", memberSeq, err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "회원탈퇴 처리 중 오류가 발생했습니다"})
+		utils.JSONError(w, http.StatusInternalServerError, "회원탈퇴 처리 중 오류가 발생했습니다")
 		return
 	}
 
 	if customer.KakaoID != 0 {
 		if err := UnlinkKakaoUser(customer.KakaoID); err != nil {
 			log.Printf("카카오 unlink 실패 - seq: %d, kakao_id: %d, error: %v", memberSeq, customer.KakaoID, err)
-			// AdminKey 미설정인 경우에도 탈퇴는 진행 (unlink 실패 로그만 남김)
-			if !strings.Contains(err.Error(), "KAKAO_ADMIN_KEY가 설정되지 않았습니다") {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusInternalServerError)
-				json.NewEncoder(w).Encode(map[string]string{"error": "카카오 연결 해제 중 오류가 발생했습니다. 다시 시도해주세요."})
-				return
-			}
+			utils.JSONError(w, http.StatusInternalServerError, "카카오 연결 해제 중 오류가 발생했습니다. 다시 시도해주세요.")
+			return
 		}
 	}
 
 	// DB에서 고객 삭제
 	if err := database.DeleteCustomerBySeq(memberSeq); err != nil {
 		log.Printf("회원탈퇴 실패 - seq: %d, error: %v", memberSeq, err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "회원탈퇴 처리 중 오류가 발생했습니다"})
+		utils.JSONError(w, http.StatusInternalServerError, "회원탈퇴 처리 중 오류가 발생했습니다")
 		return
 	}
 
@@ -106,6 +94,5 @@ func WithdrawHandler(w http.ResponseWriter, r *http.Request) {
 	session.Options.MaxAge = -1
 	session.Save(r, w)
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"success": "회원탈퇴가 완료되었습니다"})
+	utils.JSONSuccessMessage(w, "회원탈퇴가 완료되었습니다")
 }
