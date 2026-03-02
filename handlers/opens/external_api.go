@@ -97,7 +97,7 @@ func ExternalRegisterCustomerHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("고객 등록 성공: customer_seq=%d", customerSeq)
 
-	log.Println("=== 외부 고객 등록 API 호출 완료 ===")
+	log.Println("=== 외부 고객 등록 API 호출 완료!!!!!!! ===")
 
 	// 성공 응답
 	utils.JSONSuccess(w, map[string]interface{}{
