@@ -1,0 +1,25 @@
+{{define "complex_sidebar"}}
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <h2 id="sidebarTitle">🏗️ CULCOM-COMPLEX</h2>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="/complex" class="nav-item {{if eq .ActiveMenu "complex_home"}}active{{end}}">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-text">Dashboard</span>
+        </a>
+        <a href="/complex/analytics" class="nav-item {{if eq .ActiveMenu "complex_analytics"}}active{{end}}">
+            <span class="nav-icon">📈</span>
+            <span class="nav-text">Analytics</span>
+        </a>
+        <a href="/complex/settings" class="nav-item {{if eq .ActiveMenu "complex_settings"}}active{{end}}">
+            <span class="nav-icon">🛠️</span>
+            <span class="nav-text">Settings</span>
+        </a>
+        <a href="/dashboard" class="nav-item" style="margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+            <span class="nav-icon">🔙</span>
+            <span class="nav-text">Back to Backoffice</span>
+        </a>
+    </nav>
+</aside>
+{{end}}

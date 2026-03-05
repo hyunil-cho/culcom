@@ -145,10 +145,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // 사이드바 제목 업데이트 (서버에서 전달받은 한글 이름 사용)
     if (sidebarTitle) {
         const branchName = '{{.SelectedBranchName}}';
+        const isComplex = window.location.pathname.startsWith('/complex');
+        const prefix = isComplex ? '🏗️' : '🏢';
+        const suffix = isComplex ? 'COMPLEX' : '백오피스';
+        
         if (branchName && branchName !== '') {
-            sidebarTitle.textContent = `🏢 ${branchName}-백오피스`;
+            sidebarTitle.textContent = `${prefix} ${branchName}-${suffix}`;
         } else {
-            sidebarTitle.textContent = '🏢 백오피스!!';
+            sidebarTitle.textContent = `${prefix} ${suffix}`;
         }
     }
 });

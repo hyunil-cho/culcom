@@ -9,6 +9,9 @@
         
         <main class="content">
 <!-- 통계 카드 그리드 -->
+<div style="margin-bottom: 20px; display: flex; justify-content: flex-end;">
+    <button onclick="location.href='/complex'" class="period-btn" style="background-color: #e67e22; color: white; border-color: #e67e22;">complex</button>
+</div>
 <div class="stats-grid">
     {{range .Stats}}
     <div class="stat-card" style="border-left: 4px solid {{.Color}}">

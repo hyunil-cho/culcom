@@ -1,0 +1,28 @@
+{{define "dashboard/complex.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    {{template "complex_sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+            <div class="content-header">
+                <h2>Complex View</h2>
+            </div>
+            
+            <div class="content-card">
+                <p>This is the complex view page. It uses its own sidebar but reuses the common header.</p>
+                <button onclick="location.href='/dashboard'" class="period-btn">Back to Dashboard</button>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
+{{end}}
