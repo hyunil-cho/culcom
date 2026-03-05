@@ -5,8 +5,10 @@ import (
 	"backoffice/database"
 	"backoffice/handlers/board"
 	"backoffice/handlers/branches"
+	complexBranches "backoffice/handlers/complex/branches"
 	"backoffice/handlers/complex/classes"
 	"backoffice/handlers/complex/index"
+	"backoffice/handlers/complex/management"
 	"backoffice/handlers/consultation"
 	"backoffice/handlers/customers"
 	"backoffice/handlers/errorhandler"
@@ -86,6 +88,8 @@ func init() {
 	notices.Templates = templates
 	index.Templates = templates
 	classes.Templates = templates
+	complexBranches.Templates = templates
+	management.Templates = templates
 
 	// 공개 게시판 템플릿 (백오피스 레이아웃과 완전 분리)
 	publicFuncMap := template.FuncMap{
@@ -148,6 +152,14 @@ func main() {
 	mux.HandleFunc("/complex", middleware.RequireAuthRecover(middleware.InjectBranchData(index.Handler)))                                         // Complex View
 	mux.HandleFunc("/complex/classes", middleware.RequireAuthRecover(middleware.InjectBranchData(classes.Handler)))                               // 출석 현황 (캘린더)
 	mux.HandleFunc("/complex/classes/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(classes.DetailHandler)))                  // 출석부 상세
+	mux.HandleFunc("/complex/management", middleware.RequireAuthRecover(middleware.InjectBranchData(management.Handler)))                         // 수업 관리 목록
+	mux.HandleFunc("/complex/management/add", middleware.RequireAuthRecover(middleware.InjectBranchData(management.AddHandler)))                  // 수업 추가
+	mux.HandleFunc("/complex/management/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(management.EditHandler)))                 // 수업 수정
+	mux.HandleFunc("/complex/management/update", middleware.RequireAuthRecover(middleware.InjectBranchData(management.UpdateHandler)))             // 수업 업데이트 처리
+	mux.HandleFunc("/complex/branches", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.Handler)))                      // Complex 지점 관리
+	mux.HandleFunc("/complex/branches/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.DetailHandler)))           // Complex 지점 상세
+	mux.HandleFunc("/complex/branches/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.EditHandler)))               // Complex 지점 수정
+	mux.HandleFunc("/complex/branches/update", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.UpdateHandler)))           // Complex 지점 업데이트
 	mux.HandleFunc("/api/dashboard/caller-stats", middleware.RequireAuthRecover(home.GetCallerStatsAPI))                                          // CALLER별 통계 API
 	mux.HandleFunc("/customers", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.Handler)))                                   // 고객 관리
 	mux.HandleFunc("/customers/add", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.AddHandler)))                            // 고객 추가

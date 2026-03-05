@@ -1,0 +1,46 @@
+{{define "dashboard/complex_class_list.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<body>
+    {{template "complex_sidebar" .}}
+    <div class="main-wrapper">
+        {{template "header" .}}
+        <main class="content">
+            <div class="content-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <a href="/complex/management/add" class="btn-primary" style="background: #10b981;">➕ 새 수업 추가</a>
+                </div>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>수업 이름</th>
+                                <th>설명</th>
+                                <th>일정 형식</th>
+                                <th>날짜/요일</th>
+                                <th>시간대</th>
+                                <th style="text-align: center;">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{range .Classes}}
+                            <tr>
+                                <td><strong>{{.Name}}</strong></td>
+                                <td>{{.Description}}</td>
+                                <td>{{if eq .DateType "fixed"}}일자 선택{{else}}매주 요일{{end}}</td>
+                                <td>{{.DateValue}}</td>
+                                <td>{{.StartTime}} ~ {{.EndTime}}</td>
+                                <td style="text-align: center;">
+                                    <a href="/complex/management/edit?id={{.ID}}" class="btn-table-action">수정</a>
+                                </td>
+                            </tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
+{{end}}

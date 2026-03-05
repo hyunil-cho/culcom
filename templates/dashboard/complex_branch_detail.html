@@ -1,0 +1,36 @@
+{{define "dashboard/complex_branch_detail.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<body>
+    {{template "complex_sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+            <div class="content-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>지점 상세 정보</h2>
+                    <a href="/complex/branches" class="btn-secondary">◀ 목록으로</a>
+                </div>
+
+                <div style="background: #f8f9fa; padding: 30px; border-radius: 8px; border: 1px solid #eee;">
+                    <div style="margin-bottom: 15px;">
+                        <label style="font-weight: bold; color: #666; display: block; margin-bottom: 5px;">지점명</label>
+                        <div style="font-size: 1.2rem; color: #333;">{{.Branch.Name}}</div>
+                    </div>
+                    <div>
+                        <label style="font-weight: bold; color: #666; display: block; margin-bottom: 5px;">등록일</label>
+                        <div style="color: #333;">{{.Branch.RegisterDate}}</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <a href="/complex/branches/edit?id={{.Branch.ID}}" class="btn-primary" style="background: #4a90e2; padding: 10px 20px; text-decoration: none; border-radius: 4px; color: white; font-weight: bold;">정보 수정</a>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
+{{end}}

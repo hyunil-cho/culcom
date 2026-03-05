@@ -1,0 +1,77 @@
+{{define "dashboard/complex_branches.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<body>
+    {{template "complex_sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+            <!-- 상단 액션 버튼 -->
+            <div class="content-card">
+                <div class="search-section">
+                    <div class="action-buttons">
+                        <a href="/complex/branches/add" class="btn-primary" style="background: #10b981;">➕ 지점 추가</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 지점 테이블 -->
+            <div class="content-card">
+                <div class="table-header">
+                    <div class="table-info">
+                        <span style="font-size: 1rem; font-weight: 600;">총 <strong>{{len .Branches}}</strong>개 지점</span>
+                    </div>
+                </div>
+                
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>지점명</th>
+                                <th>영문코드</th>
+                                <th>등록일</th>
+                                <th style="text-align: center;">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{range .Branches}}
+                            <tr>
+                                <td><strong>{{.Name}}</strong></td>
+                                <td><span class="status-badge" style="background: #eef6ff; color: #4a90e2; padding: 4px 8px; border-radius: 4px; font-weight: 600;">{{.Alias}}</span></td>
+                                <td>{{.RegisterDate}}</td>
+                                <td style="text-align: center;">
+                                    <a href="/complex/branches/detail?id={{.ID}}" class="btn-table-action" style="padding: 5px 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; text-decoration: none; color: #333; font-size: 0.85rem; margin-right: 5px;">상세</a>
+                                    <a href="/complex/branches/edit?id={{.ID}}" class="btn-table-action" style="padding: 5px 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; text-decoration: none; color: #333; font-size: 0.85rem; margin-right: 5px;">수정</a>
+                                    <button class="btn-table-action" onclick="confirmDelete('{{.ID}}', '{{.Name}}')" style="padding: 5px 10px; background: #fee2e2; border: 1px solid #fecaca; border-radius: 4px; color: #dc2626; font-size: 0.85rem; cursor: pointer;">삭제</button>
+                                </td>
+                            </tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+<script>
+    function confirmDelete(branchId, branchName) {
+        const modalId = 'delete-confirm-modal';
+        ModalManager.createConfirm({
+            id: modalId,
+            title: '지점 삭제 확인',
+            message: `⚠️ <strong>${branchName}</strong> 지점을 삭제하시겠습니까?<br><br><span style="color: #dc2626;">이 작업은 되돌릴 수 없습니다.</span>`,
+            confirmText: '삭제',
+            confirmColor: '#dc2626',
+            onConfirm: () => {
+                alert(branchName + ' 지점이 삭제되었습니다. (데모)');
+                location.reload();
+            }
+        });
+        ModalManager.show(modalId);
+    }
+</script>
+</body>
+</html>
+{{end}}

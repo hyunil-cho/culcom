@@ -1,0 +1,36 @@
+{{define "dashboard/complex_branch_edit.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<body>
+    {{template "complex_sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+            <div class="content-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>지점 정보 수정</h2>
+                    <a href="/complex/branches" class="btn-secondary">취소</a>
+                </div>
+
+                <form action="/complex/branches/update" method="POST" style="background: white; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                    <input type="hidden" name="id" value="{{.Branch.ID}}">
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label for="name" style="display: block; font-weight: bold; margin-bottom: 8px; color: #333;">지점명</label>
+                        <input type="text" id="name" name="name" value="{{.Branch.Name}}" required 
+                               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="btn-primary" style="padding: 10px 25px; background: #4a90e2; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">저장하기</button>
+                        <a href="/complex/branches/detail?id={{.Branch.ID}}" class="btn-secondary" style="padding: 10px 25px; text-decoration: none; text-align: center; border-radius: 4px;">취소</a>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
+{{end}}
