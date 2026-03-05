@@ -5,6 +5,7 @@ import (
 	"backoffice/database"
 	"backoffice/handlers/board"
 	"backoffice/handlers/branches"
+	"backoffice/handlers/complex/classes"
 	"backoffice/handlers/complex/index"
 	"backoffice/handlers/consultation"
 	"backoffice/handlers/customers"
@@ -84,6 +85,7 @@ func init() {
 	consultation.Templates = templates
 	notices.Templates = templates
 	index.Templates = templates
+	classes.Templates = templates
 
 	// 공개 게시판 템플릿 (백오피스 레이아웃과 완전 분리)
 	publicFuncMap := template.FuncMap{
@@ -144,6 +146,8 @@ func main() {
 	// 라우트 설정 (인증 필요한 라우트는 RequireAuthRecover 미들웨어 적용)
 	mux.HandleFunc("/dashboard", middleware.RequireAuthRecover(middleware.InjectBranchData(home.Handler)))                                        // 대시보드
 	mux.HandleFunc("/complex", middleware.RequireAuthRecover(middleware.InjectBranchData(index.Handler)))                                         // Complex View
+	mux.HandleFunc("/complex/classes", middleware.RequireAuthRecover(middleware.InjectBranchData(classes.Handler)))                               // 출석 현황 (캘린더)
+	mux.HandleFunc("/complex/classes/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(classes.DetailHandler)))                  // 출석부 상세
 	mux.HandleFunc("/api/dashboard/caller-stats", middleware.RequireAuthRecover(home.GetCallerStatsAPI))                                          // CALLER별 통계 API
 	mux.HandleFunc("/customers", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.Handler)))                                   // 고객 관리
 	mux.HandleFunc("/customers/add", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.AddHandler)))                            // 고객 추가
