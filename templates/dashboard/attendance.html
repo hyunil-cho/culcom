@@ -233,7 +233,7 @@
                                 {{end}}
                             </ul>
                             <div class="card-footer">
-                                <strong>현재 인원: {{len .Members}}명</strong>
+                                <strong>인원: {{len .Members}} / {{.Capacity}}명</strong>
                                 <a href="/complex/attendance/detail?slot={{$slotName}}&classId={{.ID}}" style="color: #4a90e2; cursor: pointer; text-decoration: none; font-weight: 600;">상세보기 →</a>
                             </div>
                         </div>

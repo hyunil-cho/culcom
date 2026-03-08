@@ -12,8 +12,8 @@ var Templates *template.Template
 
 // MOCK 데이터: 시간대 슬롯과 연결된 형태
 var mockClasses = []Class{
-	{ID: 1, TimeSlotID: 1, TimeSlotName: "평일 월수 오전반", Name: "크로스핏 기초반", Description: "수업 수준이 기초인 수업입니다."},
-	{ID: 2, TimeSlotID: 2, TimeSlotName: "평일 화목 오후반", Name: "크로스핏 선수반", Description: "선수 육성반"},
+	{ID: 1, TimeSlotID: 1, TimeSlotName: "평일 월수 오전반", Name: "크로스핏 기초반", Description: "수업 수준이 기초인 수업입니다.", Capacity: 10},
+	{ID: 2, TimeSlotID: 2, TimeSlotName: "평일 화목 오후반", Name: "크로스핏 선수반", Description: "선수 육성반", Capacity: 8},
 }
 
 // Handler - 수업 목록
@@ -88,8 +88,10 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	timeSlotIDStr := r.FormValue("time_slot_id")
 	name := r.FormValue("name")
 	desc := r.FormValue("description")
+	capacityStr := r.FormValue("capacity")
 
 	timeSlotID, _ := strconv.Atoi(timeSlotIDStr)
+	capacity, _ := strconv.Atoi(capacityStr)
 
 	// 슬롯 정보 시뮬레이션 (원래는 DB에서 가져와야 함)
 	// UI MOCK이므로 간단하게 채움
@@ -102,8 +104,8 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 		newID := len(mockClasses) + 1
 		mockClasses = append(mockClasses, Class{
 			ID: newID, TimeSlotID: timeSlotID, TimeSlotName: slotName,
-			Name: name, Description: desc, DateValue: days,
-			StartTime: start, EndTime: end,
+			Name: name, Description: desc, Capacity: capacity,
+			DateValue: days, StartTime: start, EndTime: end,
 		})
 	} else { // 수정
 		id, _ := strconv.Atoi(idStr)
@@ -112,6 +114,7 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 				mockClasses[i].TimeSlotID = timeSlotID
 				mockClasses[i].Name = name
 				mockClasses[i].Description = desc
+				mockClasses[i].Capacity = capacity
 				break
 			}
 		}

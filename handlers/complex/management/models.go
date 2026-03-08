@@ -10,6 +10,7 @@ type Class struct {
 	TimeSlotName string // 표시용: 평일 오전, 주말 등
 	Name         string
 	Description  string
+	Capacity     int    // 정원
 	DateValue    string // 요일 (슬롯에서 가져올 정보)
 	StartTime    string // 시작 시간 (슬롯에서 가져올 정보)
 	EndTime      string // 종료 시간 (슬롯에서 가져올 정보)
