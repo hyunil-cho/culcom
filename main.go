@@ -60,6 +60,16 @@ func init() {
 		"sub": func(a, b int) int {
 			return a - b
 		},
+		"seq": func(start, end int) []int {
+			if start > end {
+				return []int{}
+			}
+			s := make([]int, end-start+1)
+			for i := range s {
+				s[i] = start + i
+			}
+			return s
+		},
 	}
 
 	// 템플릿 파싱 - layouts, dashboard, customers 등 모든 템플릿 파일 로드
@@ -165,7 +175,9 @@ func main() {
 	mux.HandleFunc("/complex/class-time-slots/add", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.AddHandler)))        // 수업 시간대 추가
 	mux.HandleFunc("/complex/class-time-slots/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.EditHandler)))      // 수업 시간대 수정
 	mux.HandleFunc("/complex/class-time-slots/delete", middleware.RequireAuthRecover(classtimeslots.DeleteHandler))                               // 수업 시간대 삭제
-	mux.HandleFunc("/complex/attendance", middleware.RequireAuthRecover(middleware.InjectBranchData(attendance.Handler)))                         // 출석부 확인
+	mux.HandleFunc("/complex/attendance", middleware.RequireAuthRecover(middleware.InjectBranchData(attendance.Handler)))                         // 등록현황 확인
+	mux.HandleFunc("/complex/attendance/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(attendance.DetailHandler)))                  // 등록현황 상세(출석부 스타일)
+
 	mux.HandleFunc("/api/dashboard/caller-stats", middleware.RequireAuthRecover(home.GetCallerStatsAPI))                                          // CALLER별 통계 API
 	mux.HandleFunc("/customers", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.Handler)))                                   // 고객 관리
 	mux.HandleFunc("/customers/add", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.AddHandler)))                            // 고객 추가

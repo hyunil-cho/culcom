@@ -196,10 +196,14 @@
                 <h1 class="complex-title">{{.Title}}</h1>
                 
                 {{range .Groups}}
+                {{$slotName := .SlotName}}
                 <section class="slot-section">
                     <div class="slot-header">
                         <h2>{{.SlotName}}</h2>
-                        <span style="color: #888;">총 {{len .Classes}}개 분반</span>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <span style="color: #888;">총 {{len .Classes}}개 분반</span>
+                            <a href="/complex/attendance/detail?slot={{.SlotName}}" class="btn-primary" style="text-decoration: none; padding: 5px 12px; font-size: 0.85rem; background: #4a90e2; color: white; border-radius: 4px; font-weight: 600;">전체 상세보기</a>
+                        </div>
                     </div>
                     
                     <div class="complex-grid">
@@ -230,7 +234,7 @@
                             </ul>
                             <div class="card-footer">
                                 <strong>현재 인원: {{len .Members}}명</strong>
-                                <span style="color: #4a90e2; cursor: pointer;">상세보기 →</span>
+                                <a href="/complex/attendance/detail?slot={{$slotName}}&classId={{.ID}}" style="color: #4a90e2; cursor: pointer; text-decoration: none; font-weight: 600;">상세보기 →</a>
                             </div>
                         </div>
                         {{end}}
@@ -280,7 +284,7 @@
                             <button class="btn-secondary" style="padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; background: #e3f2fd; color: #1976d2; border-color: #bbdefb;" onclick="showClassSelection('${memberId}', '${name}', '${currentClassName}')">
                                 ✈️ 수업 이동
                             </button>
-                            <button class="btn-secondary" style="padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer;" onclick="alert('출석 수정 기능은 준비 중입니다.')">
+                            <button class="btn-secondary" style="padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer;" onclick="alert('상태 수정 기능은 준비 중입니다.')">
                                 ✅ 출석 상태 수정
                             </button>
                         </div>

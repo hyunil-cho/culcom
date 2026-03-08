@@ -17,10 +17,18 @@ type Class struct {
 
 // Member - 수업 등록 회원 정보 (MOCK용)
 type Member struct {
-	ID          int
-	Name        string
-	PhoneNumber string
-	Status      string // 출석 상태 등 (O, X 등)
+	ID                int
+	Name              string
+	PhoneNumber       string
+	Status            string   // 출석 상태 등 (O, X 등)
+	Level             string   // 레벨 (예: 3-)
+	Info              string   // 소속/정보 (예: 달서 멤버)
+	JoinDate          string   // 가입일
+	LastDate          string   // 마지막 수업일
+	ExpiryDate        string   // 만료일
+	Stats             string   // 통계 (예: 8 did 97 left)
+	Grade             string   // 등급 (예: A+, VVIP+)
+	AttendanceHistory []string // 지난 출석 기록 (O, X 등)
 }
 
 // ClassWithMembers - 회원이 포함된 수업 정보
