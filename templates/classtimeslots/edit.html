@@ -1,0 +1,92 @@
+{{define "classtimeslots/edit.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/modal-utils.js"></script>
+    <script src="/static/js/modal-manager.js"></script>
+</head>
+<body>
+    {{template "complex_sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+            <div class="detail-actions">
+                <a href="/complex/class-time-slots" class="btn-back">← 목록으로</a>
+            </div>
+
+            <div class="content-card">
+                <div class="form-header">
+                    <h2>수업 시간대 정보 수정</h2>
+                </div>
+                <form method="POST" action="/complex/class-time-slots/edit?seq={{.Slot.Seq}}" class="form-body">
+                    <div class="form-row">
+                        <label class="form-label">시간대 이름 <span class="required">*</span></label>
+                        <input type="text" name="name" class="form-input" value="{{.Slot.Name}}" required>
+                    </div>
+
+                    <div class="form-row">
+                        <label class="form-label">요일 <span class="required">*</span></label>
+                        <div class="checkbox-group" style="display: flex; gap: 15px; flex-wrap: wrap; padding: 10px; background: #f9f9f9; border-radius: 4px;">
+                            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="checkbox" name="days_of_week" value="월" {{if .IsDaySelected "월"}}checked{{end}}> 월
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="checkbox" name="days_of_week" value="화" {{if .IsDaySelected "화"}}checked{{end}}> 화
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="checkbox" name="days_of_week" value="수" {{if .IsDaySelected "수"}}checked{{end}}> 수
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="checkbox" name="days_of_week" value="목" {{if .IsDaySelected "목"}}checked{{end}}> 목
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="checkbox" name="days_of_week" value="금" {{if .IsDaySelected "금"}}checked{{end}}> 금
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="checkbox" name="days_of_week" value="토" {{if .IsDaySelected "토"}}checked{{end}}> 토
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="checkbox" name="days_of_week" value="일" {{if .IsDaySelected "일"}}checked{{end}}> 일
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <label class="form-label">시작 시간 <span class="required">*</span></label>
+                        <input type="time" name="start_time" class="form-input" value="{{.Slot.StartTime}}" required>
+                    </div>
+
+                    <div class="form-row">
+                        <label class="form-label">종료 시간 <span class="required">*</span></label>
+                        <input type="time" name="end_time" class="form-input" value="{{.Slot.EndTime}}" required>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary-large">💾 저장</button>
+                        <a href="/complex/class-time-slots" class="btn-secondary-large">취소</a>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+<script>
+    {{if .ErrorMessage}}
+    window.addEventListener('DOMContentLoaded', function() {
+        ModalManager.createAlert({
+            title: '오류',
+            message: '{{.ErrorMessage}}',
+            icon: '❌'
+        });
+    });
+    {{end}}
+</script>
+</body>
+</html>
+{{end}}

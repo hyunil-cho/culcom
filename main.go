@@ -6,6 +6,7 @@ import (
 	"backoffice/handlers/board"
 	"backoffice/handlers/branches"
 	complexBranches "backoffice/handlers/complex/branches"
+	"backoffice/handlers/complex/classtimeslots"
 	"backoffice/handlers/complex/index"
 	"backoffice/handlers/complex/management"
 	"backoffice/handlers/consultation"
@@ -72,6 +73,7 @@ func init() {
 	templates = template.Must(templates.ParseGlob("templates/landing/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/consultation/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/notices/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/classtimeslots/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/error.html"))
 
 	home.Templates = templates
@@ -88,6 +90,7 @@ func init() {
 	index.Templates = templates
 	complexBranches.Templates = templates
 	management.Templates = templates
+	classtimeslots.Templates = templates
 
 	// 공개 게시판 템플릿 (백오피스 레이아웃과 완전 분리)
 	publicFuncMap := template.FuncMap{
@@ -156,6 +159,10 @@ func main() {
 	mux.HandleFunc("/complex/branches/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.DetailHandler)))         // Complex 지점 상세
 	mux.HandleFunc("/complex/branches/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.EditHandler)))             // Complex 지점 수정
 	mux.HandleFunc("/complex/branches/update", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.UpdateHandler)))         // Complex 지점 업데이트
+	mux.HandleFunc("/complex/class-time-slots", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.Handler)))               // 수업 시간대 관리
+	mux.HandleFunc("/complex/class-time-slots/add", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.AddHandler)))        // 수업 시간대 추가
+	mux.HandleFunc("/complex/class-time-slots/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.EditHandler)))      // 수업 시간대 수정
+	mux.HandleFunc("/complex/class-time-slots/delete", middleware.RequireAuthRecover(classtimeslots.DeleteHandler))                               // 수업 시간대 삭제
 	mux.HandleFunc("/api/dashboard/caller-stats", middleware.RequireAuthRecover(home.GetCallerStatsAPI))                                          // CALLER별 통계 API
 	mux.HandleFunc("/customers", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.Handler)))                                   // 고객 관리
 	mux.HandleFunc("/customers/add", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.AddHandler)))                            // 고객 추가
