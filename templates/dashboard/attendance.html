@@ -1,0 +1,352 @@
+{{define "dashboard/attendance.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .complex-container {
+            padding: 20px;
+            background: #f4f7f6;
+            min-height: 100vh;
+        }
+        .complex-title {
+            text-align: center;
+            color: #4a90e2;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        .slot-section {
+            margin-bottom: 50px;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .slot-header {
+            border-left: 5px solid #4a90e2;
+            padding-left: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .slot-header h2 {
+            margin: 0;
+            color: #333;
+            font-size: 1.5rem;
+        }
+        .complex-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            align-items: start;
+        }
+        .class-card {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s;
+        }
+        .class-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .class-card-header {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .class-card-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #4a90e2;
+            font-weight: 700;
+        }
+        .attendance-label {
+            font-size: 0.75rem;
+            color: #2e7d32;
+            background: #e8f5e9;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        .member-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .member-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #f1f3f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+        .member-info {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex: 1;
+        }
+        .member-index {
+            color: #adb5bd;
+            font-size: 0.8rem;
+            width: 18px;
+        }
+        .member-name {
+            font-weight: 600;
+            color: #495057;
+        }
+        .member-phone {
+            color: #999;
+            font-size: 0.85rem;
+        }
+        .status-mark {
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #dee2e6;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 0.8rem;
+            background: #fff;
+        }
+        .status-mark.active {
+            background: #4a90e2;
+            color: white;
+            border-color: #4a90e2;
+        }
+        .card-footer {
+            padding: 12px 15px;
+            background: #fdfdfd;
+            border-top: 1px solid #eee;
+            border-radius: 0 0 8px 8px;
+            font-size: 0.85rem;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .empty-row {
+            color: #f1f3f5;
+        }
+        .btn-member-manage {
+            background: #fff;
+            color: #4a90e2;
+            border: 1px solid #4a90e2;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            text-decoration: none;
+            margin-left: 10px;
+            transition: all 0.2s;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-member-manage:hover {
+            background: #4a90e2;
+            color: white;
+        }
+        .class-select-item {
+            padding: 12px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .class-select-item:hover {
+            background: #f0f7ff;
+            border-color: #4a90e2;
+        }
+        .class-select-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .class-select-name {
+            font-weight: 600;
+            color: #333;
+        }
+        .class-select-slot {
+            font-size: 0.8rem;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    {{template "complex_sidebar" .}}
+    <div class="main-wrapper">
+        {{template "header" .}}
+        <main class="content">
+            <div class="complex-container">
+                <h1 class="complex-title">{{.Title}}</h1>
+                
+                {{range .Groups}}
+                <section class="slot-section">
+                    <div class="slot-header">
+                        <h2>{{.SlotName}}</h2>
+                        <span style="color: #888;">총 {{len .Classes}}개 분반</span>
+                    </div>
+                    
+                    <div class="complex-grid">
+                        {{range .Classes}}
+                        <div class="class-card">
+                            <div class="class-card-header">
+                                <h3>{{.Name}}</h3>
+                                <span class="attendance-label">출석 체크중</span>
+                            </div>
+                            <ul class="member-list">
+                                {{range $i, $m := .Members}}
+                                <li class="member-item" data-member-id="{{.ID}}" data-member-name="{{.Name}}">
+                                    <div class="member-info">
+                                        <span class="member-index">{{$i}}</span>
+                                        <span class="member-name">{{.Name}}</span>
+                                        <span class="member-phone">{{.PhoneNumber}}</span>
+                                        <button type="button" class="btn-member-manage" onclick="openMemberManageModal('{{.ID}}', '{{.Name}}', '{{.PhoneNumber}}')">관리</button>
+                                    </div>
+                                    <div class="status-mark {{if .Status}}active{{end}}">{{if .Status}}{{.Status}}{{else}}&nbsp;{{end}}</div>
+                                </li>
+                                {{end}}
+                                
+                                {{/* 최소 5줄 보장 MOCK */}}
+                                {{if lt (len .Members) 5}}
+                                    <li class="member-item empty-row"><div class="member-info"><span>- , x</span></div><div class="status-mark"></div></li>
+                                {{end}}
+                            </ul>
+                            <div class="card-footer">
+                                <strong>현재 인원: {{len .Members}}명</strong>
+                                <span style="color: #4a90e2; cursor: pointer;">상세보기 →</span>
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                </section>
+                {{end}}
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 모든 수업 데이터를 JS 배열로 수집
+        const allAvailableClasses = [
+            {{range .Groups}}
+                {{range .Classes}}
+                {
+                    id: "{{.ID}}",
+                    name: "{{.Name}}",
+                    slotName: "{{.TimeSlotName}}"
+                },
+                {{end}}
+            {{end}}
+        ];
+
+        function openMemberManageModal(memberId, name, phone) {
+            if (typeof ModalManager === 'undefined') {
+                console.error('ModalManager is not loaded');
+                return;
+            }
+
+            ModalManager.createCustom({
+                id: 'memberManageModal',
+                title: `회원 관리 - ${name}`,
+                maxWidth: '450px',
+                headerColor: '#4a90e2',
+                contentBuilder: () => `
+                    <div id="memberModalContent" style="text-align: left; padding: 10px;">
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p style="margin: 5px 0;"><strong>👤 이름:</strong> ${name}</p>
+                            <p style="margin: 5px 0;"><strong>📞 연락처:</strong> ${phone}</p>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <a href="/customers?searchType=phone&searchKeyword=${phone}" class="btn-primary" style="display: block; text-align: center; text-decoration: none; padding: 12px; border-radius: 6px; font-weight: 600;">
+                                🔍 상세 정보 및 회신 관리
+                            </a>
+                            <button class="btn-secondary" style="padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; background: #e3f2fd; color: #1976d2; border-color: #bbdefb;" onclick="showClassSelection('${memberId}', '${name}')">
+                                ✈️ 수업 이동
+                            </button>
+                            <button class="btn-secondary" style="padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer;" onclick="alert('출석 수정 기능은 준비 중입니다.')">
+                                ✅ 출석 상태 수정
+                            </button>
+                        </div>
+                    </div>
+                `,
+                buttons: [
+                    {
+                        text: '닫기',
+                        class: 'btn-secondary',
+                        onClick: () => ModalManager.hide('memberManageModal')
+                    }
+                ]
+            });
+        }
+
+        function showClassSelection(memberId, memberName) {
+            const contentArea = document.getElementById('memberModalContent');
+            
+            let classListHTML = `
+                <div style="margin-bottom: 15px;">
+                    <button onclick="restoreMainModal('${memberId}', '${memberName}')" style="background: none; border: none; color: #4a90e2; cursor: pointer; font-weight: 600; padding: 0;">← 이전으로</button>
+                    <h4 style="margin: 10px 0; color: #333;">이동할 수업 선택</h4>
+                </div>
+                <div style="max-height: 300px; overflow-y: auto; padding-right: 5px;">
+            `;
+
+            allAvailableClasses.forEach(cls => {
+                classListHTML += `
+                    <div class="class-select-item" onclick="confirmMoveClass('${memberId}', '${memberName}', '${cls.id}', '${cls.name}')">
+                        <div class="class-select-info">
+                            <span class="class-select-name">${cls.name}</span>
+                            <span class="class-select-slot">${cls.slotName}</span>
+                        </div>
+                        <span style="color: #4a90e2; font-size: 0.8rem;">선택</span>
+                    </div>
+                `;
+            });
+
+            classListHTML += `</div>`;
+            contentArea.innerHTML = classListHTML;
+        }
+
+        function restoreMainModal(memberId, memberName) {
+            // 이전에 저장된 정보를 다시 불러오기 위해 openMemberManageModal 다시 호출하거나
+            // innerHTML을 직접 복원. 여기서는 간단히 다시 호출
+            const memberItem = document.querySelector(`.member-item[data-member-id="${memberId}"]`);
+            const phone = memberItem.querySelector('.member-phone').textContent;
+            openMemberManageModal(memberId, memberName, phone);
+        }
+
+        function confirmMoveClass(memberId, memberName, classId, className) {
+            ModalManager.createConfirm({
+                id: 'moveClassConfirm',
+                title: '수업 이동 확인',
+                message: `<strong>${memberName}</strong> 회원을<br><strong>${className}</strong> 수업으로 이동하시겠습니까?`,
+                confirmText: '이동',
+                confirmColor: '#4a90e2',
+                onConfirm: () => {
+                    // 실제 이동 API가 있다면 여기서 호출
+                    alert(`${memberName} 회원을 ${className} 수업으로 이동 처리를 시작합니다.`);
+                    ModalManager.hide('moveClassConfirm');
+                    ModalManager.hide('memberManageModal');
+                    // 성공 시 페이지 새로고침 등 후속 처리
+                    location.reload();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+{{end}}

@@ -5,6 +5,7 @@ import (
 	"backoffice/database"
 	"backoffice/handlers/board"
 	"backoffice/handlers/branches"
+	"backoffice/handlers/complex/attendance"
 	complexBranches "backoffice/handlers/complex/branches"
 	"backoffice/handlers/complex/classtimeslots"
 	"backoffice/handlers/complex/index"
@@ -91,6 +92,7 @@ func init() {
 	complexBranches.Templates = templates
 	management.Templates = templates
 	classtimeslots.Templates = templates
+	attendance.Templates = templates
 
 	// 공개 게시판 템플릿 (백오피스 레이아웃과 완전 분리)
 	publicFuncMap := template.FuncMap{
@@ -163,6 +165,7 @@ func main() {
 	mux.HandleFunc("/complex/class-time-slots/add", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.AddHandler)))        // 수업 시간대 추가
 	mux.HandleFunc("/complex/class-time-slots/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.EditHandler)))      // 수업 시간대 수정
 	mux.HandleFunc("/complex/class-time-slots/delete", middleware.RequireAuthRecover(classtimeslots.DeleteHandler))                               // 수업 시간대 삭제
+	mux.HandleFunc("/complex/attendance", middleware.RequireAuthRecover(middleware.InjectBranchData(attendance.Handler)))                         // 출석부 확인
 	mux.HandleFunc("/api/dashboard/caller-stats", middleware.RequireAuthRecover(home.GetCallerStatsAPI))                                          // CALLER별 통계 API
 	mux.HandleFunc("/customers", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.Handler)))                                   // 고객 관리
 	mux.HandleFunc("/customers/add", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.AddHandler)))                            // 고객 추가
