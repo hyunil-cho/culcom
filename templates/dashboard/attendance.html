@@ -204,10 +204,11 @@
                     
                     <div class="complex-grid">
                         {{range .Classes}}
+                        {{$currentClassName := .Name}}
                         <div class="class-card">
                             <div class="class-card-header">
                                 <h3>{{.Name}}</h3>
-                                <span class="attendance-label">출석 체크중</span>
+                                <span class="attendance-label">등록 완료</span>
                             </div>
                             <ul class="member-list">
                                 {{range $i, $m := .Members}}
@@ -216,7 +217,7 @@
                                         <span class="member-index">{{$i}}</span>
                                         <span class="member-name">{{.Name}}</span>
                                         <span class="member-phone">{{.PhoneNumber}}</span>
-                                        <button type="button" class="btn-member-manage" onclick="openMemberManageModal('{{.ID}}', '{{.Name}}', '{{.PhoneNumber}}')">관리</button>
+                                        <button type="button" class="btn-member-manage" onclick="openMemberManageModal('{{.ID}}', '{{.Name}}', '{{.PhoneNumber}}', '{{$currentClassName}}')">관리</button>
                                     </div>
                                     <div class="status-mark {{if .Status}}active{{end}}">{{if .Status}}{{.Status}}{{else}}&nbsp;{{end}}</div>
                                 </li>
@@ -254,7 +255,7 @@
             {{end}}
         ];
 
-        function openMemberManageModal(memberId, name, phone) {
+        function openMemberManageModal(memberId, name, phone, currentClassName) {
             if (typeof ModalManager === 'undefined') {
                 console.error('ModalManager is not loaded');
                 return;
@@ -270,12 +271,13 @@
                         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                             <p style="margin: 5px 0;"><strong>👤 이름:</strong> ${name}</p>
                             <p style="margin: 5px 0;"><strong>📞 연락처:</strong> ${phone}</p>
+                            <p style="margin: 5px 0;"><strong>🏫 현재 수업:</strong> ${currentClassName || '정보 없음'}</p>
                         </div>
                         <div style="display: flex; flex-direction: column; gap: 10px;">
                             <a href="/customers?searchType=phone&searchKeyword=${phone}" class="btn-primary" style="display: block; text-align: center; text-decoration: none; padding: 12px; border-radius: 6px; font-weight: 600;">
                                 🔍 상세 정보 및 회신 관리
                             </a>
-                            <button class="btn-secondary" style="padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; background: #e3f2fd; color: #1976d2; border-color: #bbdefb;" onclick="showClassSelection('${memberId}', '${name}')">
+                            <button class="btn-secondary" style="padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; background: #e3f2fd; color: #1976d2; border-color: #bbdefb;" onclick="showClassSelection('${memberId}', '${name}', '${currentClassName}')">
                                 ✈️ 수업 이동
                             </button>
                             <button class="btn-secondary" style="padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer;" onclick="alert('출석 수정 기능은 준비 중입니다.')">
@@ -294,25 +296,29 @@
             });
         }
 
-        function showClassSelection(memberId, memberName) {
+        function showClassSelection(memberId, memberName, currentClassName) {
             const contentArea = document.getElementById('memberModalContent');
             
             let classListHTML = `
                 <div style="margin-bottom: 15px;">
-                    <button onclick="restoreMainModal('${memberId}', '${memberName}')" style="background: none; border: none; color: #4a90e2; cursor: pointer; font-weight: 600; padding: 0;">← 이전으로</button>
+                    <button onclick="restoreMainModal('${memberId}', '${memberName}', '${currentClassName}')" style="background: none; border: none; color: #4a90e2; cursor: pointer; font-weight: 600; padding: 0;">← 이전으로</button>
                     <h4 style="margin: 10px 0; color: #333;">이동할 수업 선택</h4>
+                    <p style="font-size: 0.85rem; color: #666;">현재 수업: <strong>${currentClassName}</strong></p>
                 </div>
                 <div style="max-height: 300px; overflow-y: auto; padding-right: 5px;">
             `;
 
             allAvailableClasses.forEach(cls => {
+                // 현재 수업은 목록에서 강조하거나 다르게 표시할 수 있음 (여기서는 일단 다 표시)
+                const isCurrent = cls.name === currentClassName;
                 classListHTML += `
-                    <div class="class-select-item" onclick="confirmMoveClass('${memberId}', '${memberName}', '${cls.id}', '${cls.name}')">
+                    <div class="class-select-item" style="${isCurrent ? 'background: #f1f3f5; cursor: default; opacity: 0.7;' : ''}" 
+                         onclick="${isCurrent ? 'alert(\'이미 수강 중인 수업입니다.\')' : `confirmMoveClass('${memberId}', '${memberName}', '${currentClassName}', '${cls.id}', '${cls.name}')`}">
                         <div class="class-select-info">
-                            <span class="class-select-name">${cls.name}</span>
+                            <span class="class-select-name">${cls.name} ${isCurrent ? '<small>(현재)</small>' : ''}</span>
                             <span class="class-select-slot">${cls.slotName}</span>
                         </div>
-                        <span style="color: #4a90e2; font-size: 0.8rem;">선택</span>
+                        ${isCurrent ? '' : '<span style="color: #4a90e2; font-size: 0.8rem;">선택</span>'}
                     </div>
                 `;
             });
@@ -321,27 +327,32 @@
             contentArea.innerHTML = classListHTML;
         }
 
-        function restoreMainModal(memberId, memberName) {
-            // 이전에 저장된 정보를 다시 불러오기 위해 openMemberManageModal 다시 호출하거나
-            // innerHTML을 직접 복원. 여기서는 간단히 다시 호출
+        function restoreMainModal(memberId, memberName, currentClassName) {
             const memberItem = document.querySelector(`.member-item[data-member-id="${memberId}"]`);
             const phone = memberItem.querySelector('.member-phone').textContent;
-            openMemberManageModal(memberId, memberName, phone);
+            openMemberManageModal(memberId, memberName, phone, currentClassName);
         }
 
-        function confirmMoveClass(memberId, memberName, classId, className) {
+        function confirmMoveClass(memberId, memberName, fromClassName, toClassId, toClassName) {
             ModalManager.createConfirm({
                 id: 'moveClassConfirm',
                 title: '수업 이동 확인',
-                message: `<strong>${memberName}</strong> 회원을<br><strong>${className}</strong> 수업으로 이동하시겠습니까?`,
+                message: `
+                    <div style="text-align: center;">
+                        <strong>${memberName}</strong> 회원을 이동하시겠습니까?
+                        <div style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <span style="color: #666;">${fromClassName}</span>
+                            <span style="color: #4a90e2;">➔</span>
+                            <strong style="color: #333;">${toClassName}</strong>
+                        </div>
+                    </div>
+                `,
                 confirmText: '이동',
                 confirmColor: '#4a90e2',
                 onConfirm: () => {
-                    // 실제 이동 API가 있다면 여기서 호출
-                    alert(`${memberName} 회원을 ${className} 수업으로 이동 처리를 시작합니다.`);
+                    alert(`${memberName} 회원을 ${fromClassName}에서 ${toClassName} 수업으로 이동 처리를 시작합니다.`);
                     ModalManager.hide('moveClassConfirm');
                     ModalManager.hide('memberManageModal');
-                    // 성공 시 페이지 새로고침 등 후속 처리
                     location.reload();
                 }
             });

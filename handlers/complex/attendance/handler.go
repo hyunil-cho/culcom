@@ -62,7 +62,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	data := management.ComplexViewPageData{
 		BasePageData: middleware.GetBasePageData(r),
-		Title:        "지점 통합 출석부",
+		Title:        "지점 통합 등록현황",
 		ActiveMenu:   "complex_attendance",
 		Groups:       []management.SlotGroup{monWedMorning, tueThuAfternoon, weekendIntensive},
 	}
