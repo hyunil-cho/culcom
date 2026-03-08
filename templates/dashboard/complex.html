@@ -5,6 +5,55 @@
     <meta charset="UTF-8">
     <title>{{.Title}}</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 25px;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        .period-selector {
+            display: flex;
+            gap: 5px;
+            background: #f1f3f5;
+            padding: 4px;
+            border-radius: 8px;
+        }
+        .period-btn {
+            padding: 6px 15px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #495057;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .period-btn.active {
+            background: white;
+            color: #4a90e2;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .chart-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
     {{template "complex_sidebar" .}}
@@ -13,16 +62,98 @@
         {{template "header" .}}
         
         <main class="content">
-            <div class="content-header">
-                <h2>Complex View</h2>
-            </div>
-            
-            <div class="content-card">
-                <p>This is the complex view page. It uses its own sidebar but reuses the common header.</p>
-                <button onclick="location.href='/dashboard'" class="period-btn">Back to Dashboard</button>
+            <div class="dashboard-grid">
+                <!-- 평균 출석률 그래프 카드 -->
+                <div class="stats-card">
+                    <div class="card-header">
+                        <h3 style="font-size: 1.2rem; color: #2c3e50;">📊 평균 출석률 현황</h3>
+                        <div class="period-selector">
+                            <button class="period-btn active" onclick="updateChart('day', this)">일간</button>
+                            <button class="period-btn" onclick="updateChart('week', this)">주간</button>
+                            <button class="period-btn" onclick="updateChart('month', this)">월간</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 추가 정보 카드 (예시) -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    <div class="stats-card" style="text-align: center;">
+                        <div style="font-size: 0.9rem; color: #888; margin-bottom: 10px;">이번 달 누적 수업</div>
+                        <div style="font-size: 1.8rem; font-weight: bold; color: #4a90e2;">42개</div>
+                    </div>
+                    <div class="stats-card" style="text-align: center;">
+                        <div style="font-size: 0.9rem; color: #888; margin-bottom: 10px;">전체 등록 학생</div>
+                        <div style="font-size: 1.8rem; font-weight: bold; color: #10b981;">156명</div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
+
+    <script>
+        let myChart;
+        const rawData = JSON.parse('{{.AttendanceStatsJSON}}');
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('attendanceChart').getContext('2d');
+            
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: rawData.map(d => d.date),
+                    datasets: [{
+                        label: '평균 출석률 (%)',
+                        data: rawData.map(d => d.rate),
+                        borderColor: '#4a90e2',
+                        backgroundColor: 'rgba(74, 144, 226, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#4a90e2',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { callback: value => value + '%' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        });
+
+        function updateChart(period, btn) {
+            // 버튼 활성화 스타일 전환
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // 데모용 데이터 무작위 변경
+            const newData = rawData.map(d => ({
+                ...d,
+                rate: Math.floor(Math.random() * 40) + 60 // 60~100 사이 랜덤
+            }));
+
+            myChart.data.datasets[0].data = newData.map(d => d.rate);
+            myChart.update();
+            console.log(period + " 데이터를 불러왔습니다. (데모)");
+        }
+    </script>
 </body>
 </html>
 {{end}}
