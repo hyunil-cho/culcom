@@ -1,0 +1,139 @@
+{{define "opens/postponement.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수업 연기 요청 - 컬컴</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body {
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .postpone-card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+        .postpone-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .postpone-header h1 {
+            color: #4a90e2;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+        .postpone-header p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            border-color: #4a90e2;
+            outline: none;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+        .btn-submit:hover {
+            background: #357abd;
+        }
+        .notice-box {
+            background: #fff9db;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #fcc419;
+            margin-top: 25px;
+            font-size: 0.85rem;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="postpone-card">
+        <div class="postpone-header">
+            <h1>📅 수업 연기 요청</h1>
+            <p>개인 사정으로 수업 참여가 어려우신 경우 아래 양식을 작성해주세요.</p>
+        </div>
+
+        <form action="/api/postponement/submit" method="POST">
+            <div class="form-group">
+                <label class="form-label">이름 <span style="color: #e74c3c;">*</span></label>
+                <input type="text" name="name" class="form-input" placeholder="성함을 입력하세요" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">연락처 <span style="color: #e74c3c;">*</span></label>
+                <input type="tel" name="phone" class="form-input" placeholder="010-0000-0000" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">현재 수강 중인 수업 <span style="color: #e74c3c;">*</span></label>
+                <input type="text" name="current_class" class="form-input" placeholder="예: 월수 오전 레벨1" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">연기 요청 기간 <span style="color: #e74c3c;">*</span></label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="date" name="start_date" class="form-input" required>
+                    <span>~</span>
+                    <input type="date" name="end_date" class="form-input" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">연기 사유</label>
+                <textarea name="reason" class="form-input" style="height: 100px; resize: none;" placeholder="사유를 간단히 적어주세요"></textarea>
+            </div>
+
+            <button type="submit" class="btn-submit">요청 제출하기</button>
+        </form>
+
+        <div class="notice-box">
+            <strong>⚠️ 안내사항</strong>
+            <ul style="margin: 5px 0 0 18px; padding: 0;">
+                <li>연기 요청은 관리자 확인 후 승인됩니다.</li>
+                <li>연기 가능 횟수 및 기간은 수강 규정에 따릅니다.</li>
+                <li>승인 결과는 입력하신 연락처로 안내드립니다.</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
+{{end}}

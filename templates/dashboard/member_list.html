@@ -1,0 +1,223 @@
+{{define "dashboard/member_list.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .staff-view-container {
+            padding: 20px;
+            background: #f4f7f6;
+            min-height: 100vh;
+            font-family: 'Malgun Gothic', sans-serif;
+        }
+        .staff-header {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .staff-title {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .search-bar-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+        }
+        .search-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .search-input {
+            padding: 6px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .btn-search {
+            padding: 6px 12px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .staff-table-wrapper {
+            background: #fff;
+            border-radius: 8px;
+            overflow-x: auto;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .staff-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            min-width: 1200px;
+        }
+        .staff-table th {
+            background: #f8f9fa;
+            color: #495057;
+            font-weight: 600;
+            padding: 12px 8px;
+            border-bottom: 2px solid #dee2e6;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .staff-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+            color: #333;
+            vertical-align: middle;
+        }
+        .staff-table tr:hover {
+            background-color: #f1f8ff;
+        }
+
+        .col-index { width: 40px; color: #adb5bd; }
+        .col-name { font-weight: bold; color: #4a90e2; min-width: 80px; }
+        .col-phone { font-family: monospace; min-width: 110px; }
+        .col-date { font-size: 0.8rem; color: #666; min-width: 90px; }
+        .col-stats { color: #e67e22; font-weight: 600; }
+        
+        .history-grid {
+            display: flex;
+            gap: 2px;
+            justify-content: center;
+        }
+        .history-cell {
+            width: 22px;
+            height: 22px;
+            border: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            background: #fff;
+        }
+        .history-cell.present {
+            background: #2ecc71;
+            color: white;
+            border-color: #27ae60;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+        .btn-mini {
+            padding: 3px 8px;
+            font-size: 0.75rem;
+            border-radius: 3px;
+            border: none;
+            cursor: pointer;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-edit { background: #10b981; }
+        .btn-delete { background: #f44336; }
+    </style>
+</head>
+<body>
+    {{template "complex_sidebar" .}}
+    <div class="main-wrapper">
+        {{template "header" .}}
+        <main class="content">
+            <div class="staff-view-container">
+                <div class="staff-header">
+                    <div class="staff-title">
+                        <span>👥 전체 회원 관리 (Complex)</span>
+                        <a href="/complex/members/add" class="btn-primary" style="text-decoration: none;">➕ 새 회원 등록</a>
+                    </div>
+
+                    <div class="search-bar-group">
+                        <div class="search-item">
+                            이름 검색 <input type="text" class="search-input" placeholder="이름 입력">
+                            <button class="btn-search">회원 이름 검색</button>
+                        </div>
+                        <div class="search-item">
+                            전화번호 4자리 <input type="text" class="search-input" placeholder="번호 4자리">
+                            <button class="btn-search">검색</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="staff-table-wrapper">
+                    <table class="staff-table">
+                        <thead>
+                            <tr>
+                                <th>번호</th>
+                                <th>이름</th>
+                                <th>레벨</th>
+                                <th>소속정보</th>
+                                <th>가입일</th>
+                                <th>전화번호</th>
+                                <th>최근수업</th>
+                                <th>만료일</th>
+                                <th>잔여횟수</th>
+                                <th>등급</th>
+                                <th colspan="10">최근 출석기록</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{range $i, $m := .Members}}
+                            <tr>
+                                <td class="col-index">{{add $i 1}}</td>
+                                <td class="col-name">{{.Name}}</td>
+                                <td>{{.Level}}</td>
+                                <td style="color: #888;">{{.Info}}</td>
+                                <td class="col-date">{{.JoinDate}}</td>
+                                <td class="col-phone">{{.PhoneNumber}}</td>
+                                <td class="col-date">{{.LastDate}}</td>
+                                <td class="col-date">{{.ExpiryDate}}</td>
+                                <td class="col-stats">{{.Stats}}</td>
+                                <td>
+                                    <span class="status-badge status-active">{{.Grade}}</span>
+                                </td>
+                                <td>
+                                    <div class="history-grid">
+                                        {{range .AttendanceHistory}}
+                                        <div class="history-cell {{if eq . "O"}}present{{end}}">{{.}}</div>
+                                        {{end}}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-btns">
+                                        <a href="/complex/members/edit?id={{.ID}}" class="btn-mini btn-edit">수정</a>
+                                        <button class="btn-mini btn-delete" onclick="alert('삭제 기능 준비 중')">삭제</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {{else}}
+                            <tr>
+                                <td colspan="12" style="text-align: center; padding: 40px; color: #999;">등록된 회원이 없습니다.</td>
+                            </tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
+{{end}}

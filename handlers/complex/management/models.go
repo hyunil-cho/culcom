@@ -32,6 +32,32 @@ type Member struct {
 	AttendanceHistory []string // 지난 출석 기록 (O, X 등)
 }
 
+// Staff - 강사 정보 (MOCK용)
+type Staff struct {
+	ID          int
+	Name        string
+	PhoneNumber string
+	Email       string
+	Subject     string // 담당 과목/분야
+	Role        string // 역할 (강사, 팀장 등)
+	Status      string // 상태 (재직, 휴직 등)
+	JoinDate    string // 등록일
+	Comment     string // 비고
+}
+
+// PostponementRequest - 수업 연기 요청 (MOCK용)
+type PostponementRequest struct {
+	ID           int
+	MemberName   string
+	PhoneNumber  string
+	CurrentClass string
+	StartDate    string
+	EndDate      string
+	Reason       string
+	Status       string // 대기, 승인, 반려
+	RequestDate  string
+}
+
 // ClassWithMembers - 회원이 포함된 수업 정보
 type ClassWithMembers struct {
 	Class
