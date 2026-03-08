@@ -1,6 +1,7 @@
 package management
 
 import (
+	"backoffice/database"
 	"backoffice/middleware"
 	"html/template"
 	"net/http"
@@ -9,10 +10,10 @@ import (
 
 var Templates *template.Template
 
+// MOCK 데이터: 시간대 슬롯과 연결된 형태
 var mockClasses = []Class{
-	{ID: 1, Name: "월수 오전 레벨0", Description: "왕초보 일본어", DateType: "weekly", DateValue: "월, 수", StartTime: "10:00", EndTime: "12:00"},
-	{ID: 2, Name: "화목 오후 레벨2", Description: "비즈니스 회화", DateType: "weekly", DateValue: "화, 목", StartTime: "14:00", EndTime: "16:00"},
-	{ID: 3, Name: "특별 보충 수업", Description: "N3 문법 정리", DateType: "fixed", DateValue: "2026-03-15", StartTime: "13:00", EndTime: "15:00"},
+	{ID: 1, TimeSlotID: 1, TimeSlotName: "평일 월수 오전반", Name: "크로스핏 기초반", Description: "수업 수준이 기초인 수업입니다."},
+	{ID: 2, TimeSlotID: 2, TimeSlotName: "평일 화목 오후반", Name: "크로스핏 선수반", Description: "선수 육성반"},
 }
 
 // Handler - 수업 목록
@@ -30,10 +31,14 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 // AddHandler - 수업 등록 화면
 func AddHandler(w http.ResponseWriter, r *http.Request) {
+	branchSeq := middleware.GetSelectedBranch(r)
+	slots, _ := database.GetClassTimeSlotsByBranch(branchSeq)
+
 	data := PageData{
 		BasePageData: middleware.GetBasePageData(r),
 		Title:        "새 수업 등록",
 		ActiveMenu:   "complex_management",
+		TimeSlots:    slots,
 	}
 	if err := Templates.ExecuteTemplate(w, "dashboard/complex_class_add.html", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -43,6 +48,9 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 // EditHandler - 수업 수정 화면
 func EditHandler(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
+	branchSeq := middleware.GetSelectedBranch(r)
+	slots, _ := database.GetClassTimeSlotsByBranch(branchSeq)
+
 	var class Class
 	for _, c := range mockClasses {
 		if c.ID == id {
@@ -56,11 +64,13 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 		Title      string
 		ActiveMenu string
 		Class      Class
+		TimeSlots  []map[string]interface{}
 	}{
 		BasePageData: middleware.GetBasePageData(r),
 		Title:        "수업 정보 수정",
 		ActiveMenu:   "complex_management",
 		Class:        class,
+		TimeSlots:    slots,
 	}
 	if err := Templates.ExecuteTemplate(w, "dashboard/complex_class_edit.html", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -75,29 +85,33 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	idStr := r.FormValue("id")
+	timeSlotIDStr := r.FormValue("time_slot_id")
 	name := r.FormValue("name")
 	desc := r.FormValue("description")
-	dateType := r.FormValue("date_type")
-	dateValue := r.FormValue("date_value")
-	startTime := r.FormValue("start_time")
-	endTime := r.FormValue("end_time")
+
+	timeSlotID, _ := strconv.Atoi(timeSlotIDStr)
+
+	// 슬롯 정보 시뮬레이션 (원래는 DB에서 가져와야 함)
+	// UI MOCK이므로 간단하게 채움
+	slotName := "선택된 슬롯"
+	days := "월,수"
+	start := "10:00"
+	end := "12:00"
 
 	if idStr == "" { // 신규 등록
 		newID := len(mockClasses) + 1
 		mockClasses = append(mockClasses, Class{
-			ID: newID, Name: name, Description: desc, DateType: dateType, DateValue: dateValue,
-			StartTime: startTime, EndTime: endTime,
+			ID: newID, TimeSlotID: timeSlotID, TimeSlotName: slotName,
+			Name: name, Description: desc, DateValue: days,
+			StartTime: start, EndTime: end,
 		})
 	} else { // 수정
 		id, _ := strconv.Atoi(idStr)
 		for i, c := range mockClasses {
 			if c.ID == id {
+				mockClasses[i].TimeSlotID = timeSlotID
 				mockClasses[i].Name = name
 				mockClasses[i].Description = desc
-				mockClasses[i].DateType = dateType
-				mockClasses[i].DateValue = dateValue
-				mockClasses[i].StartTime = startTime
-				mockClasses[i].EndTime = endTime
 				break
 			}
 		}

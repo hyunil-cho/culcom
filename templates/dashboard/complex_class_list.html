@@ -15,10 +15,8 @@
                         <thead>
                             <tr>
                                 <th>수업 이름</th>
+                                <th>시간대 슬롯</th>
                                 <th>설명</th>
-                                <th>일정 형식</th>
-                                <th>날짜/요일</th>
-                                <th>시간대</th>
                                 <th style="text-align: center;">관리</th>
                             </tr>
                         </thead>
@@ -26,10 +24,8 @@
                             {{range .Classes}}
                             <tr>
                                 <td><strong>{{.Name}}</strong></td>
+                                <td><span class="status-badge status-active">{{.TimeSlotName}}</span></td>
                                 <td>{{.Description}}</td>
-                                <td>{{if eq .DateType "fixed"}}일자 선택{{else}}매주 요일{{end}}</td>
-                                <td>{{.DateValue}}</td>
-                                <td>{{.StartTime}} ~ {{.EndTime}}</td>
                                 <td style="text-align: center;">
                                     <a href="/complex/management/edit?id={{.ID}}" class="btn-table-action">수정</a>
                                 </td>

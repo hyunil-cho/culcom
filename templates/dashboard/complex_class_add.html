@@ -2,205 +2,54 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <style>
-        .day-selector {
-            display: flex;
-            gap: 8px;
-            margin-top: 5px;
-        }
-        .day-box {
-            display: none;
-        }
-        .day-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 45px;
-            height: 45px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            color: #666;
-            background: white;
-            transition: all 0.2s;
-            user-select: none;
-        }
-        .day-box:checked + .day-label {
-            background-color: #4a90e2;
-            color: white;
-            border-color: #4a90e2;
-            box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3);
-        }
-        .day-label:hover {
-            border-color: #4a90e2;
-            color: #4a90e2;
-        }
-        
-        /* 날짜 태그 스타일 */
-        .date-tags-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 10px;
-            min-height: 40px;
-            padding: 10px;
-            background: #fcfcfc;
-            border: 1px dashed #ddd;
-            border-radius: 4px;
-        }
-        .date-tag {
-            background: #eef6ff;
-            color: #4a90e2;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border: 1px solid #d0e3ff;
-        }
-        .remove-date {
-            cursor: pointer;
-            font-weight: bold;
-            color: #ff6b6b;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     {{template "complex_sidebar" .}}
     <div class="main-wrapper">
         {{template "header" .}}
         <main class="content">
+            <div class="detail-actions">
+                <a href="/complex/management" class="btn-back">← 목록으로</a>
+            </div>
+
             <div class="content-card">
-                <form action="/complex/management/update" method="POST" style="margin-top: 20px;" onsubmit="return prepareSubmit()">
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">수업 이름</label>
-                        <input type="text" name="name" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                <div class="form-header">
+                    <h2>새 수업 등록</h2>
+                </div>
+                <form action="/complex/management/update" method="POST" class="form-body">
+                    <div class="form-row">
+                        <label class="form-label">수업 이름 <span class="required">*</span></label>
+                        <input type="text" name="name" class="form-input" placeholder="예: 월수 오전 레벨0" required>
                     </div>
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">설명</label>
-                        <textarea name="description" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; height: 80px;"></textarea>
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">일정 형식</label>
-                        <select name="date_type" id="dateTypeSelect" onchange="toggleDateInput(this.value)" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-                            <option value="fixed">일자 선택 (특정 날짜 추가)</option>
-                            <option value="weekly">매주 요일 (반복 수업)</option>
+
+                    <div class="form-row">
+                        <label class="form-label">수업 시간대 선택 <span class="required">*</span></label>
+                        <select name="time_slot_id" class="form-input" required>
+                            <option value="">-- 시간대 슬롯 선택 --</option>
+                            {{range .TimeSlots}}
+                            <option value="{{.seq}}">[{{.name}}] {{.days_of_week}} ({{.start_time}} ~ {{.end_time}})</option>
+                            {{else}}
+                            <option value="" disabled>등록된 시간대가 없습니다.</option>
+                            {{end}}
                         </select>
+                        <p class="form-help">원하는 시간대가 없으면 '수업 시간대 관리'에서 먼저 등록해주세요.</p>
                     </div>
 
-                    <input type="hidden" name="date_value" id="finalDateValue">
-
-                    <!-- 다중 날짜 선택 UI -->
-                    <div id="fixedDateContainer" style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">날짜 추가</label>
-                        <div style="display: flex; gap: 10px;">
-                            <input type="date" id="fixedDatePicker" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-                            <button type="button" onclick="addDate()" style="padding: 0 20px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">추가</button>
-                        </div>
-                        <div class="date-tags-container" id="dateTags">
-                            <!-- 날짜 태그들이 여기에 생성됨 -->
-                        </div>
+                    <div class="form-row">
+                        <label class="form-label">수업 설명</label>
+                        <textarea name="description" class="form-input" style="height: 100px;" placeholder="수업에 대한 상세 설명을 입력하세요."></textarea>
                     </div>
 
-                    <!-- 매주 요일 선택 UI -->
-                    <div id="weeklyDayContainer" style="margin-bottom: 20px; display: none;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">반복 요일 선택</label>
-                        <div class="day-selector">
-                            <input type="checkbox" id="day-mon" class="day-box" value="월"><label for="day-mon" class="day-label">월</label>
-                            <input type="checkbox" id="day-tue" class="day-box" value="화"><label for="day-tue" class="day-label">화</label>
-                            <input type="checkbox" id="day-wed" class="day-box" value="수"><label for="day-wed" class="day-label">수</label>
-                            <input type="checkbox" id="day-thu" class="day-box" value="목"><label for="day-thu" class="day-label">목</label>
-                            <input type="checkbox" id="day-fri" class="day-box" value="금"><label for="day-fri" class="day-label">금</label>
-                            <input type="checkbox" id="day-sat" class="day-box" value="토"><label for="day-sat" class="day-label">토</label>
-                            <input type="checkbox" id="day-sun" class="day-box" value="일"><label for="day-sun" class="day-label">일</label>
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 20px; display: flex; gap: 20px;">
-                        <div style="flex: 1;">
-                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">시작 시간</label>
-                            <input type="time" name="start_time" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-                        </div>
-                        <div style="flex: 1;">
-                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">종료 시간</label>
-                            <input type="time" name="end_time" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-                        </div>
-                    </div>
-
-                    <div style="display: flex; gap: 10px;">
-                        <button type="submit" class="btn-primary">저장하기</button>
-                        <a href="/complex/management" class="btn-secondary" style="text-decoration: none; padding: 10px 20px;">취소</a>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary-large">💾 저장</button>
+                        <a href="/complex/management" class="btn-secondary-large">취소</a>
                     </div>
                 </form>
             </div>
         </main>
     </div>
-    <script>
-        let selectedDates = [];
-
-        function addDate() {
-            const picker = document.getElementById('fixedDatePicker');
-            const date = picker.value;
-            if (!date) return;
-            if (selectedDates.includes(date)) {
-                alert("이미 추가된 날짜입니다.");
-                return;
-            }
-            selectedDates.push(date);
-            selectedDates.sort(); // 날짜순 정렬
-            renderDateTags();
-            picker.value = "";
-        }
-
-        function removeDate(date) {
-            selectedDates = selectedDates.filter(d => d !== date);
-            renderDateTags();
-        }
-
-        function renderDateTags() {
-            const container = document.getElementById('dateTags');
-            container.innerHTML = "";
-            selectedDates.forEach(date => {
-                const tag = document.createElement('div');
-                tag.className = 'date-tag';
-                tag.innerHTML = `${date} <span class="remove-date" onclick="removeDate('${date}')">&times;</span>`;
-                container.appendChild(tag);
-            });
-        }
-
-        function toggleDateInput(val) {
-            document.getElementById('fixedDateContainer').style.display = val === 'fixed' ? 'block' : 'none';
-            document.getElementById('weeklyDayContainer').style.display = val === 'weekly' ? 'block' : 'none';
-        }
-
-        function prepareSubmit() {
-            const dateType = document.getElementById('dateTypeSelect').value;
-            let finalValue = "";
-
-            if (dateType === 'fixed') {
-                if (selectedDates.length === 0) {
-                    alert("최소 하나 이상의 날짜를 추가해주세요.");
-                    return false;
-                }
-                finalValue = selectedDates.join(', ');
-            } else {
-                const selectedDays = [];
-                document.querySelectorAll('.day-box:checked').forEach(cb => {
-                    selectedDays.push(cb.value);
-                });
-                if (selectedDays.length === 0) {
-                    alert("최소 하나 이상의 요일을 선택해주세요.");
-                    return false;
-                }
-                finalValue = selectedDays.join(', ');
-            }
-
-            document.getElementById('finalDateValue').value = finalValue;
-            return true;
-        }
-    </script>
 </body>
 </html>
 {{end}}
