@@ -34,6 +34,24 @@
                             <input type="text" name="level" class="form-input" placeholder="예: 3-">
                         </div>
 
+                        <!-- 수업 배정 섹션 (톤앤매너 수정) -->
+                        <div class="form-row">
+                            <label class="form-label">수업 시간대</label>
+                            <select id="slotSelect" class="form-input" onchange="updateClassOptions()">
+                                <option value="">-- 시간대 선택 --</option>
+                                <option value="월수 오전">월수 오전팀 (10:00 ~ 12:00)</option>
+                                <option value="화목 오후">화목 오후팀 (14:00 ~ 16:00)</option>
+                                <option value="주말 집중">주말 집중팀 (13:00 ~ 17:00)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">배정 수업</label>
+                            <select id="classSelect" name="class_id" class="form-input" disabled>
+                                <option value="">-- 시간대를 먼저 선택하세요 --</option>
+                            </select>
+                        </div>
+
                         <div class="form-row">
                             <label class="form-label">소속정보</label>
                             <input type="text" name="info" class="form-input" placeholder="예: 달서 멤버">
@@ -41,28 +59,34 @@
 
                         <div class="form-row">
                             <label class="form-label">가입일</label>
-                            <input type="date" name="join_date" class="form-input">
+                            <input type="date" id="joinDate" name="join_date" class="form-input" onchange="calculateExpiryDate()">
                         </div>
 
                         <div class="form-row">
-                            <label class="form-label">만료일</label>
-                            <input type="date" name="expiry_date" class="form-input">
-                        </div>
-
-                        <div class="form-row">
-                            <label class="form-label">등급</label>
-                            <select name="grade" class="form-input">
-                                <option value="멤버쉽">멤버쉽</option>
-                                <option value="A+">A+</option>
-                                <option value="VVIP">VVIP</option>
-                                <option value="VVIP+">VVIP+</option>
-                                <option value="H+">H+</option>
+                            <label class="form-label">등급 (멤버십)</label>
+                            <select id="gradeSelect" name="grade" class="form-input" onchange="calculateExpiryDate()">
+                                <option value="멤버쉽">멤버쉽 (1개월)</option>
+                                <option value="A+">A+ (3개월)</option>
+                                <option value="VVIP">VVIP (6개월)</option>
+                                <option value="VVIP+">VVIP+ (12개월)</option>
+                                <option value="H+">H+ (평생)</option>
                             </select>
                         </div>
 
                         <div class="form-row">
-                            <label class="form-label">잔여횟수/통계</label>
-                            <input type="text" name="stats" class="form-input" placeholder="예: 0 did 100 left">
+                            <label class="form-label">만료일</label>
+                            <input type="date" id="expiryDate" name="expiry_date" class="form-input" readonly style="background-color: #f8f9fa; cursor: not-allowed;">
+                            <small style="color: #666; font-size: 0.8rem; margin-top: 4px; display: block;">* 등급 선택 시 자동으로 기간이 산정됩니다.</small>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">차트넘버</label>
+                            <input type="text" name="chart_number" class="form-input" placeholder="차트 번호를 입력하세요">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">코멘트</label>
+                            <textarea name="comment" class="form-input" style="height: 100px; resize: vertical; padding: 10px;" placeholder="직업, 관심사, 등록 동기 등 상세 정보를 입력하세요"></textarea>
                         </div>
                     </div>
 
@@ -76,6 +100,73 @@
     </div>
 
 <script>
+// Mock 데이터: 시간대별 수업 목록
+const allAvailableClasses = [
+    { id: "101", name: "레벨1-1반", slot: "월수 오전" },
+    { id: "102", name: "레벨1-2반", slot: "월수 오전" },
+    { id: "103", name: "프리토킹 A반", slot: "월수 오전" },
+    { id: "201", name: "레벨2-1반", slot: "화목 오후" },
+    { id: "202", name: "프리토킹 B반", slot: "화목 오후" },
+    { id: "301", name: "주말 입문반", slot: "주말 집중" },
+    { id: "302", name: "주말 고급반", slot: "주말 집중" }
+];
+
+function updateClassOptions() {
+    const slotSelect = document.getElementById('slotSelect');
+    const classSelect = document.getElementById('classSelect');
+    const selectedSlot = slotSelect.value;
+
+    // 초기화
+    classSelect.innerHTML = '<option value="">-- 수업 선택 --</option>';
+    
+    if (!selectedSlot) {
+        classSelect.disabled = true;
+        classSelect.innerHTML = '<option value="">-- 시간대를 먼저 선택하세요 --</option>';
+        return;
+    }
+
+    // 필터링 및 렌더링
+    const filteredClasses = allAvailableClasses.filter(c => c.slot === selectedSlot);
+    
+    filteredClasses.forEach(cls => {
+        const option = document.createElement('option');
+        option.value = cls.id;
+        option.textContent = cls.name;
+        classSelect.appendChild(option);
+    });
+
+    classSelect.disabled = false;
+}
+
+function calculateExpiryDate() {
+    const joinDateInput = document.getElementById('joinDate');
+    const gradeSelect = document.getElementById('gradeSelect');
+    const expiryInput = document.getElementById('expiryDate');
+    
+    if (!gradeSelect.value) return;
+    
+    // 가입일이 없으면 오늘 날짜 기준
+    let baseDate = joinDateInput.value ? new Date(joinDateInput.value) : new Date();
+    
+    // 등급별 기간 매핑
+    const gradeDuration = {
+        '멤버쉽': 1,
+        'A+': 3,
+        'VVIP': 6,
+        'VVIP+': 12,
+        'H+': 120 // 10년
+    };
+    
+    const months = gradeDuration[gradeSelect.value] || 0;
+    baseDate.setMonth(baseDate.getMonth() + months);
+    
+    // YYYY-MM-DD 형식으로 변환
+    const yyyy = baseDate.getFullYear();
+    const mm = String(baseDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(baseDate.getDate()).padStart(2, '0');
+    expiryInput.value = `${yyyy}-${mm}-${dd}`;
+}
+
 // 전화번호 입력 검증
 const phoneInput = document.getElementById('phoneNumber');
 if (phoneInput) {

@@ -252,7 +252,9 @@
                             <tbody>
                                 {{range $i, $m := .Members}}
                                 <tr>
-                                    <td class="col-index">{{add $i 1}}</td>
+                                    <td class="col-index" style="{{if eq $i 0}}font-weight: 800; color: #e67e22; font-size: 0.7rem;{{end}}">
+                                        {{if eq $i 0}}STAFF{{else}}{{$i}}{{end}}
+                                    </td>
                                     <td class="col-name">{{.Name}}</td>
                                     <td>{{.Level}}</td>
                                     <td style="color: #888;">{{.Info}}</td>

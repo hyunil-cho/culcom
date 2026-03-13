@@ -100,7 +100,7 @@
         .member-index {
             color: #adb5bd;
             font-size: 0.8rem;
-            width: 18px;
+            width: 38px; /* STAFF 표시를 위해 너비 확장 */
         }
         .member-name {
             font-weight: 600;
@@ -330,7 +330,9 @@
                                 {{range $i, $m := .Members}}
                                 <li class="member-item" data-member-id="{{.ID}}" data-member-name="{{.Name}}">
                                     <div class="member-info">
-                                        <span class="member-index">{{$i}}</span>
+                                        <span class="member-index" style="{{if eq $i 0}}font-weight: 800; color: #e67e22; font-size: 0.7rem;{{end}}">
+                                            {{if eq $i 0}}STAFF{{else}}{{$i}}{{end}}
+                                        </span>
                                         <span class="member-name">{{.Name}}</span>
                                         <span class="member-phone">{{.PhoneNumber}}</span>
                                         <button type="button" class="btn-member-manage" onclick="openMemberManageModal('{{.ID}}', '{{.Name}}', '{{.PhoneNumber}}', '{{$currentClassName}}')">관리</button>

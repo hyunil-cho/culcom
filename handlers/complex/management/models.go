@@ -24,6 +24,8 @@ type Member struct {
 	Status            string   // 출석 상태 등 (O, X 등)
 	Level             string   // 레벨 (예: 3-)
 	Info              string   // 소속/정보 (예: 달서 멤버)
+	ChartNumber       string   // 차트 넘버
+	Comment           string   // 코멘트 (직업, 관심사, 동기 등)
 	JoinDate          string   // 가입일
 	LastDate          string   // 마지막 수업일
 	ExpiryDate        string   // 만료일

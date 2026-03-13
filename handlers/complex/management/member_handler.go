@@ -2,6 +2,7 @@ package management
 
 import (
 	"backoffice/middleware"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -50,6 +51,7 @@ func MemberListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := Templates.ExecuteTemplate(w, "dashboard/member_list.html", data); err != nil {
+		log.Println("Template error:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -67,6 +69,7 @@ func MemberAddHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := Templates.ExecuteTemplate(w, "dashboard/member_add.html", data); err != nil {
+		log.Println("Template error:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -97,6 +100,7 @@ func MemberEditHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := Templates.ExecuteTemplate(w, "dashboard/member_edit.html", data); err != nil {
+		log.Println("Template error:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -118,6 +122,8 @@ func MemberUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	expiryDate := r.FormValue("expiry_date")
 	grade := r.FormValue("grade")
 	stats := r.FormValue("stats")
+	chartNumber := r.FormValue("chart_number")
+	comment := r.FormValue("comment")
 
 	if idStr == "" { // 신규
 		newID := len(mockMembers) + 1
@@ -125,6 +131,7 @@ func MemberUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			ID: newID, Name: name, Level: level, Info: info,
 			PhoneNumber: phone, JoinDate: joinDate, LastDate: lastDate,
 			ExpiryDate: expiryDate, Grade: grade, Stats: stats,
+			ChartNumber: chartNumber, Comment: comment,
 			AttendanceHistory: []string{"", "", "", "", "", "", "", "", "", ""},
 		})
 	} else { // 수정
@@ -140,6 +147,8 @@ func MemberUpdateHandler(w http.ResponseWriter, r *http.Request) {
 				mockMembers[i].ExpiryDate = expiryDate
 				mockMembers[i].Grade = grade
 				mockMembers[i].Stats = stats
+				mockMembers[i].ChartNumber = chartNumber
+				mockMembers[i].Comment = comment
 				break
 			}
 		}

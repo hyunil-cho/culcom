@@ -166,12 +166,12 @@
                             <tr>
                                 <th>번호</th>
                                 <th>이름</th>
+                                <th>전화번호</th>
                                 <th>레벨</th>
                                 <th>소속정보</th>
                                 <th>가입일</th>
-                                <th>전화번호</th>
-                                <th>최근수업</th>
                                 <th>만료일</th>
+                                <th>최근수업</th>
                                 <th>잔여횟수</th>
                                 <th>등급</th>
                                 <th colspan="10">최근 출석기록</th>
@@ -180,20 +180,24 @@
                         </thead>
                         <tbody>
                             {{range $i, $m := .Members}}
-                            <tr>
+                            <tr class="member-row" data-member-id="{{.ID}}">
                                 <td class="col-index">{{add $i 1}}</td>
-                                <td class="col-name">{{.Name}}</td>
+                                <td class="col-name">
+                                    <a href="/complex/members/edit?id={{.ID}}" style="color: #4a90e2; text-decoration: none; font-weight: bold;">{{.Name}}</a>
+                                </td>
+                                <td class="col-phone">
+                                    <a href="/complex/members/edit?id={{.ID}}" style="color: inherit; text-decoration: none; font-family: monospace;">{{.PhoneNumber}}</a>
+                                </td>
                                 <td>{{.Level}}</td>
                                 <td style="color: #888;">{{.Info}}</td>
                                 <td class="col-date">{{.JoinDate}}</td>
-                                <td class="col-phone">{{.PhoneNumber}}</td>
-                                <td class="col-date">{{.LastDate}}</td>
                                 <td class="col-date">{{.ExpiryDate}}</td>
+                                <td class="col-date">{{.LastDate}}</td>
                                 <td class="col-stats">{{.Stats}}</td>
                                 <td>
                                     <span class="status-badge status-active">{{.Grade}}</span>
                                 </td>
-                                <td>
+                                <td colspan="10">
                                     <div class="history-grid">
                                         {{range .AttendanceHistory}}
                                         <div class="history-cell {{if eq . "O"}}present{{end}}">{{.}}</div>
@@ -209,7 +213,7 @@
                             </tr>
                             {{else}}
                             <tr>
-                                <td colspan="12" style="text-align: center; padding: 40px; color: #999;">등록된 회원이 없습니다.</td>
+                                <td colspan="21" style="text-align: center; padding: 40px; color: #999;">등록된 회원이 없습니다.</td>
                             </tr>
                             {{end}}
                         </tbody>
@@ -218,6 +222,190 @@
             </div>
         </main>
     </div>
+
+    <script>
+        // MOCK 데이터: 이동 가능한 수업 목록
+        const allAvailableClasses = [
+            { id: "101", name: "레벨1-1반", slotName: "월수 오전팀 (10:00 ~ 12:00)" },
+            { id: "102", name: "레벨1-2반", slotName: "월수 오전팀 (10:00 ~ 12:00)" },
+            { id: "201", name: "프리토킹 A반", slotName: "화목 오후팀 (14:00 ~ 16:00)" },
+            { id: "301", name: "주말 집중반", slotName: "주말 집중팀 (13:00 ~ 17:00)" }
+        ];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 검색 기능 초기화
+            initSearch();
+        });
+
+        function initSearch() {
+            const nameInput = document.querySelector('.search-item:nth-child(1) .search-input');
+            const btnNameSearch = document.querySelector('.search-item:nth-child(1) .btn-search');
+            const phoneInput = document.querySelector('.search-item:nth-child(2) .search-input');
+            const btnPhoneSearch = document.querySelector('.search-item:nth-child(2) .btn-search');
+            
+            const allRows = document.querySelectorAll('.member-row');
+            let matchedRows = [];
+            let currentIndex = -1;
+
+            // 검색 결과 카운터 UI 동적 생성
+            const searchBar = document.querySelector('.search-bar-group');
+            const counterHTML = `
+                <div id="searchNav" style="display: none; align-items: center; gap: 10px; margin-left: auto; background: #e3f2fd; padding: 5px 15px; border-radius: 20px; font-size: 0.85rem; color: #1976d2; font-weight: 600;">
+                    <span id="searchCounter">0 / 0</span>
+                    <div style="display: flex; gap: 5px;">
+                        <button id="prevMatch" style="background:#fff; border:1px solid #bbdefb; border-radius:4px; padding:2px 8px; cursor:pointer; color:#1976d2; font-size:0.75rem;">◀</button>
+                        <button id="nextMatch" style="background:#fff; border:1px solid #bbdefb; border-radius:4px; padding:2px 8px; cursor:pointer; color:#1976d2; font-size:0.75rem;">▶</button>
+                    </div>
+                </div>
+            `;
+            searchBar.insertAdjacentHTML('beforeend', counterHTML);
+
+            const navArea = document.getElementById('searchNav');
+            const counter = document.getElementById('searchCounter');
+
+            function performSearch(type) {
+                // 초기화
+                allRows.forEach(r => r.style.backgroundColor = '');
+                matchedRows = [];
+                currentIndex = -1;
+
+                const keyword = (type === 'name' ? nameInput.value : phoneInput.value).trim();
+                if (!keyword) {
+                    navArea.style.display = 'none';
+                    return;
+                }
+
+                allRows.forEach(row => {
+                    const target = type === 'name' ? row.querySelector('.col-name').textContent : row.querySelector('.col-phone').textContent;
+                    if (target.includes(keyword)) {
+                        row.style.backgroundColor = '#fff9c4';
+                        matchedRows.push(row);
+                    }
+                });
+
+                if (matchedRows.length > 0) {
+                    navArea.style.display = 'flex';
+                    currentIndex = 0;
+                    updateNav();
+                } else {
+                    navArea.style.display = 'none';
+                    alert('검색 결과가 없습니다.');
+                }
+            }
+
+            function updateNav() {
+                matchedRows.forEach(r => r.style.outline = '');
+                const currentRow = matchedRows[currentIndex];
+                currentRow.style.outline = '2px solid #fbc02d';
+                currentRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                counter.textContent = `${currentIndex + 1} / ${matchedRows.length}`;
+            }
+
+            btnNameSearch.onclick = () => performSearch('name');
+            btnPhoneSearch.onclick = () => performSearch('phone');
+            
+            document.getElementById('prevMatch').onclick = () => {
+                currentIndex = (currentIndex - 1 + matchedRows.length) % matchedRows.length;
+                updateNav();
+            };
+            document.getElementById('nextMatch').onclick = () => {
+                currentIndex = (currentIndex + 1) % matchedRows.length;
+                updateNav();
+            };
+
+            [nameInput, phoneInput].forEach(input => {
+                input.onkeypress = (e) => { if (e.key === 'Enter') performSearch(input === nameInput ? 'name' : 'phone'); };
+            });
+        }
+
+        // 회원 관리 모달 (attendance.html 과 동일 로직)
+        function openMemberManageModal(memberId, name, phone, currentClassName) {
+            if (typeof ModalManager === 'undefined') return;
+
+            ModalManager.createCustom({
+                id: 'memberManageModal',
+                title: `회원 관리 - ${name}`,
+                maxWidth: '450px',
+                headerColor: '#4a90e2',
+                contentBuilder: () => `
+                    <div id="memberModalContent" style="text-align: left; padding: 10px;">
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p style="margin: 5px 0;"><strong>👤 이름:</strong> ${name}</p>
+                            <p style="margin: 5px 0;"><strong>📞 연락처:</strong> ${phone}</p>
+                            <p style="margin: 5px 0;"><strong>🏫 현재 정보:</strong> ${currentClassName || '정보 없음'}</p>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <a href="/customers?searchType=phone&searchKeyword=${phone}" class="btn-primary" style="display: block; text-align: center; text-decoration: none; padding: 12px; border-radius: 6px; font-weight: 600;">
+                                🔍 상세 정보 및 회신 관리
+                            </a>
+                            <button class="btn-secondary" style="padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; background: #e3f2fd; color: #1976d2; border-color: #bbdefb;" onclick="showClassSelection('${memberId}', '${name}', '${currentClassName}')">
+                                ✈️ 수업 이동
+                            </button>
+                            <button class="btn-secondary" style="padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer;" onclick="alert('상태 수정 기능은 준비 중입니다.')">
+                                ✅ 출석 상태 수정
+                            </button>
+                        </div>
+                    </div>
+                `,
+                buttons: [{ text: '닫기', class: 'btn-secondary', onClick: () => ModalManager.hide('memberManageModal') }]
+            });
+        }
+
+        function showClassSelection(memberId, memberName, currentClassName) {
+            const contentArea = document.getElementById('memberModalContent');
+            contentArea.style.minHeight = '450px';
+            contentArea.style.display = 'flex';
+            contentArea.style.flexDirection = 'column';
+
+            let headerHTML = `
+                <div style="margin-bottom: 15px; flex-shrink: 0;">
+                    <button onclick="restoreMainModal('${memberId}', '${memberName}', '${currentClassName}')" style="background: none; border: none; color: #4a90e2; cursor: pointer; font-weight: 600; padding: 0;">← 이전으로</button>
+                    <h4 style="margin: 10px 0; color: #333;">이동할 수업 선택</h4>
+                    <div style="margin: 15px 0; position: relative;">
+                        <input type="text" id="classSearchInput" placeholder="수업명 또는 시간대 검색..." 
+                               style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;"
+                               oninput="renderClassList('${memberId}', '${memberName}', '${currentClassName}', this.value)">
+                    </div>
+                </div>
+                <div id="classListContainer" style="height: 320px; overflow-y: auto; padding-right: 5px; flex-grow: 1;"></div>
+            `;
+            contentArea.innerHTML = headerHTML;
+            renderClassList(memberId, memberName, currentClassName, '');
+        }
+
+        function renderClassList(memberId, memberName, currentClassName, searchTerm) {
+            const container = document.getElementById('classListContainer');
+            const term = searchTerm.toLowerCase();
+            const filtered = allAvailableClasses.filter(c => c.name.toLowerCase().includes(term) || c.slotName.toLowerCase().includes(term));
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">결과 없음</div>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(cls => `
+                <div class="class-select-item" onclick="confirmMoveClass('${memberId}', '${memberName}', '${currentClassName}', '${cls.id}', '${cls.name}')">
+                    <div class="class-select-info">
+                        <span class="class-select-name">${cls.name}</span>
+                        <span class="class-select-slot">${cls.slotName}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function restoreMainModal(memberId, name, currentClassName) {
+            const row = document.querySelector(`.member-row[data-member-id="${memberId}"]`);
+            const phone = row.querySelector('.col-phone').textContent;
+            openMemberManageModal(memberId, name, phone, currentClassName);
+        }
+
+        function confirmMoveClass(memberId, memberName, from, toId, toName) {
+            if(confirm(`${memberName} 회원을 ${toName} 수업으로 이동하시겠습니까?`)) {
+                alert('이동 처리되었습니다.');
+                location.reload();
+            }
+        }
+    </script>
 </body>
 </html>
 {{end}}
