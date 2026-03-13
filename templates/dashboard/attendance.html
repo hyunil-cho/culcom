@@ -200,8 +200,9 @@
                 <section class="slot-section">
                     <div class="slot-header">
                         <h2>{{.SlotName}}</h2>
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <span style="color: #888;">총 {{len .Classes}}개 분반</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="color: #888; margin-right: 5px;">총 {{len .Classes}}개 분반</span>
+                            <button type="button" class="btn-secondary" style="padding: 5px 12px; font-size: 0.85rem; font-weight: 600; cursor: pointer;" onclick="openSlotMessageModal('{{.SlotName}}')">💬 메시지</button>
                             <a href="/complex/attendance/detail?slot={{.SlotName}}" class="btn-primary" style="text-decoration: none; padding: 5px 12px; font-size: 0.85rem; background: #4a90e2; color: white; border-radius: 4px; font-weight: 600;">전체 상세보기</a>
                         </div>
                     </div>
@@ -212,7 +213,6 @@
                         <div class="class-card">
                             <div class="class-card-header">
                                 <h3>{{.Name}}</h3>
-                                <span class="attendance-label">등록 완료</span>
                             </div>
                             <ul class="member-list">
                                 {{range $i, $m := .Members}}
@@ -246,18 +246,254 @@
     </div>
 
     <script>
-        // 모든 수업 데이터를 JS 배열로 수집
+        // 모든 수업 데이터를 JS 배열로 수집 (회원 정보 포함)
         const allAvailableClasses = [
             {{range .Groups}}
                 {{range .Classes}}
                 {
                     id: "{{.ID}}",
                     name: "{{.Name}}",
-                    slotName: "{{.TimeSlotName}}"
+                    slotName: "{{.TimeSlotName}}",
+                    members: [
+                        {{range $idx, $m := .Members}}
+                        {
+                            id: "{{.ID}}",
+                            name: "{{.Name}}",
+                            phone: "{{.PhoneNumber}}",
+                            isLeader: {{if eq $idx 0}}true{{else}}false{{end}} // 첫 번째 회원을 리더로 가정 (MOCK)
+                        },
+                        {{end}}
+                    ]
                 },
                 {{end}}
             {{end}}
         ];
+
+        function openSlotMessageModal(slotName) {
+            if (typeof ModalManager === 'undefined') {
+                console.error('ModalManager is not loaded');
+                return;
+            }
+
+            ModalManager.createCustom({
+                id: 'slotMessageModal',
+                title: `메시지 발송 대상 선택 - ${slotName}`,
+                maxWidth: '500px',
+                headerColor: '#2c3e50',
+                contentBuilder: () => `
+                    <div id="messageModalStep1" style="padding: 10px;">
+                        <p style="margin-bottom: 20px; color: #666; font-size: 0.9rem; text-align: center;">발송할 그룹을 선택해주세요.</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <button class="class-select-item" style="flex-direction: column; padding: 20px; text-align: center; gap: 10px;" onclick="showMessageComposition('${slotName}', 'all')">
+                                <span style="font-size: 1.5rem;">👥</span>
+                                <div class="class-select-info">
+                                    <span class="class-select-name">전체</span>
+                                    <span class="class-select-slot">모든 인원 대상</span>
+                                </div>
+                            </button>
+                            <button class="class-select-item" style="flex-direction: column; padding: 20px; text-align: center; gap: 10px;" onclick="showMessageComposition('${slotName}', 'leader')">
+                                <span style="font-size: 1.5rem;">⭐</span>
+                                <div class="class-select-info">
+                                    <span class="class-select-name">리더</span>
+                                    <span class="class-select-slot">클래스 리더 대상</span>
+                                </div>
+                            </button>
+                            <button class="class-select-item" style="flex-direction: column; padding: 20px; text-align: center; gap: 10px;" onclick="showMessageComposition('${slotName}', 'member')">
+                                <span style="font-size: 1.5rem;">👤</span>
+                                <div class="class-select-info">
+                                    <span class="class-select-name">회원</span>
+                                    <span class="class-select-slot">일반 회원 대상</span>
+                                </div>
+                            </button>
+                            <button class="class-select-item" style="flex-direction: column; padding: 20px; text-align: center; gap: 10px;" onclick="showMessageComposition('${slotName}', 'direct')">
+                                <span style="font-size: 1.5rem;">✅</span>
+                                <div class="class-select-info">
+                                    <span class="class-select-name">직접 선택</span>
+                                    <span class="class-select-slot">개별 선택 발송</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="messageModalStep2" style="display: none; height: 420px; flex-direction: column;">
+                        <!-- 상단 뒤로가기 버튼 위치 조정 -->
+                        <div style="margin-bottom: 10px; flex-shrink: 0; text-align: left;">
+                            <button onclick="goBackToStep1('${slotName}')" style="background: none; border: none; color: #4a90e2; cursor: pointer; font-weight: 600; padding: 0; margin-left: -5px; font-size: 0.85rem;">← 이전으로 (그룹 선택)</button>
+                        </div>
+                        <div style="display: flex; flex-grow: 1; gap: 15px; min-height: 0;">
+                            <!-- 왼쪽: 메시지 작성 -->
+                            <div style="flex: 1; display: flex; flex-direction: column;">
+                                <label style="font-weight: 600; margin-bottom: 6px; display: block; font-size: 0.85rem; color: #555;">💬 메시지 내용</label>
+                                <textarea id="smsContent" style="flex: 1; width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; resize: none; font-family: inherit; font-size: 0.9rem; line-height: 1.5;" placeholder="보낼 내용을 입력하세요..."></textarea>
+                                <div style="margin-top: 5px; font-size: 0.75rem; color: #888; text-align: right;">
+                                    <span id="charCount" style="font-weight: 600; color: #4a90e2;">0</span> / 2000 bytes
+                                </div>
+                            </div>
+                            <!-- 오른쪽: 대상 리스트 -->
+                            <div style="width: 240px; display: flex; flex-direction: column; border-left: 1px solid #eee; padding-left: 15px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <label style="font-weight: 600; font-size: 0.85rem; color: #555;">👥 수신자 (<span id="recipientCount" style="color: #4a90e2;">0</span>명)</label>
+                                    <button onclick="toggleAllRecipients(true)" style="background: none; border: none; color: #4a90e2; font-size: 0.7rem; cursor: pointer; padding: 0; font-weight: 600;">전체선택</button>
+                                </div>
+                                <div id="recipientList" style="flex: 1; overflow-y: auto; border: 1px solid #f0f0f0; border-radius: 6px; padding: 3px; background: #fafafa;">
+                                    <!-- 리스트 동적 삽입 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                buttons: [
+                    {
+                        id: 'btnBackToStep1',
+                        text: '이전',
+                        class: 'btn-secondary',
+                        style: { display: 'none' },
+                        onClick: () => goBackToStep1(slotName)
+                    },
+                    {
+                        id: 'btnSendSms',
+                        text: '메시지 발송',
+                        class: 'btn-primary',
+                        style: { display: 'none', background: '#4a90e2', borderColor: '#4a90e2' },
+                        onClick: () => {
+                            const content = document.getElementById('smsContent').value;
+                            const checkedOnes = document.querySelectorAll('.recipient-checkbox:checked');
+                            if (!content.trim()) return alert('메시지 내용을 입력해주세요.');
+                            if (checkedOnes.length === 0) return alert('수신자를 최소 한 명 이상 선택해주세요.');
+                            
+                            alert(`${checkedOnes.length}명에게 메시지를 발송했습니다.`);
+                            ModalManager.hide('slotMessageModal');
+                        }
+                    },
+                    {
+                        text: '취소',
+                        class: 'btn-secondary',
+                        onClick: () => ModalManager.hide('slotMessageModal')
+                    }
+                ]
+            });
+        }
+
+        function showMessageComposition(slotName, groupType) {
+            const modal = document.getElementById('slotMessageModal');
+            if (!modal) return;
+
+            const step1 = document.getElementById('messageModalStep1');
+            const step2 = document.getElementById('messageModalStep2');
+            const btnBack = document.getElementById('btnBackToStep1');
+            const btnSend = document.getElementById('btnSendSms');
+            const btnCancel = modal.querySelector('.modal-footer .btn-secondary:not(#btnBackToStep1)');
+            const modalTitle = modal.querySelector('.modal-header h3');
+            const modalContent = modal.querySelector('.modal-content');
+
+            if (step1) step1.style.display = 'none';
+            if (step2) {
+                step2.style.display = 'flex';
+                step2.style.flexDirection = 'column';
+            }
+            if (btnBack) btnBack.style.display = 'inline-block';
+            if (btnSend) btnSend.style.display = 'inline-block';
+            if (btnCancel) btnCancel.textContent = '닫기';
+            
+            // 타이틀 변경
+            const groupNames = { all: '전체', leader: '리더', member: '회원', direct: '직접 선택' };
+            if (modalTitle) modalTitle.textContent = `메시지 작성 - ${slotName} (${groupNames[groupType]})`;
+
+            // 모달 너비 확장 (850px로 컴팩트하게 조정)
+            if (modalContent) {
+                modalContent.style.maxWidth = '850px';
+                modalContent.style.width = '95%'; 
+            }
+
+            // 명단 필터링 및 생성
+            const recipientList = document.getElementById('recipientList');
+            if (!recipientList) return;
+            recipientList.innerHTML = '';
+            
+            allAvailableClasses.forEach(cls => {
+                if (cls.slotName === slotName) {
+                    cls.members.forEach(m => {
+                        let shouldInclude = false;
+                        if (groupType === 'all' || groupType === 'direct') shouldInclude = true;
+                        else if (groupType === 'leader' && m.isLeader) shouldInclude = true;
+                        else if (groupType === 'member' && !m.isLeader) shouldInclude = true;
+
+                        if (shouldInclude) {
+                            const item = document.createElement('div');
+                            item.style.padding = '10px';
+                            item.style.borderBottom = '1px solid #f0f0f0';
+                            item.style.display = 'flex';
+                            item.style.alignItems = 'center';
+                            item.style.gap = '12px';
+                            item.style.fontSize = '0.9rem';
+                            
+                            item.innerHTML = `
+                                <input type="checkbox" class="recipient-checkbox" id="recp_${m.id}" checked 
+                                       style="width: 18px; height: 18px; cursor: pointer;"
+                                       onchange="updateRecipientCount()">
+                                <label for="recp_${m.id}" style="cursor: pointer; flex: 1; display: flex; justify-content: space-between; align-items: center;">
+                                    <span><strong>${m.name}</strong> ${m.isLeader ? '<small style="color:#e67e22; margin-left:5px;">[리더]</small>' : ''}</span>
+                                    <span style="color: #666; font-family: monospace;">${m.phone}</span>
+                                </label>
+                            `;
+                            recipientList.appendChild(item);
+                        }
+                    });
+                }
+            });
+            updateRecipientCount();
+
+            // 글자수 체크 이벤트
+            const textarea = document.getElementById('smsContent');
+            const charCount = document.getElementById('charCount');
+            if (textarea && charCount) {
+                textarea.oninput = () => {
+                    charCount.textContent = new Blob([textarea.value]).size;
+                };
+            }
+        }
+
+        function updateRecipientCount() {
+            const checkedOnes = document.querySelectorAll('.recipient-checkbox:checked');
+            const display = document.getElementById('recipientCount');
+            if (display) display.textContent = checkedOnes.length;
+        }
+
+        function toggleAllRecipients(checked) {
+            document.querySelectorAll('.recipient-checkbox').forEach(cb => cb.checked = checked);
+            updateRecipientCount();
+        }
+
+        function goBackToStep1(slotName) {
+            const modal = document.getElementById('slotMessageModal');
+            if (!modal) return;
+
+            const step1 = document.getElementById('messageModalStep1');
+            const step2 = document.getElementById('messageModalStep2');
+            const btnBack = document.getElementById('btnBackToStep1');
+            const btnSend = document.getElementById('btnSendSms');
+            const btnCancel = modal.querySelector('.modal-footer .btn-secondary:not(#btnBackToStep1)');
+            const modalContent = modal.querySelector('.modal-content');
+            const modalTitle = modal.querySelector('.modal-header h3');
+
+            if (step1) step1.style.display = 'block';
+            if (step2) step2.style.display = 'none';
+            if (btnBack) btnBack.style.display = 'none';
+            if (btnSend) btnSend.style.display = 'none';
+            
+            const otherBtn = modal.querySelector('.modal-footer .btn-secondary:not(#btnBackToStep1)');
+            if (otherBtn) {
+                otherBtn.style.display = 'block';
+                otherBtn.textContent = '취소';
+            }
+            
+            // 모달 너비 원복
+            if (modalContent) {
+                modalContent.style.maxWidth = '500px';
+                modalContent.style.width = '';
+            }
+            
+            if (modalTitle) modalTitle.textContent = `메시지 발송 대상 선택 - ${slotName}`;
+        }
 
         function openMemberManageModal(memberId, name, phone, currentClassName) {
             if (typeof ModalManager === 'undefined') {
@@ -303,19 +539,63 @@
         function showClassSelection(memberId, memberName, currentClassName) {
             const contentArea = document.getElementById('memberModalContent');
             
-            let classListHTML = `
-                <div style="margin-bottom: 15px;">
+            // 모달 전체 높이를 어느정도 고정하기 위해 min-height 부여
+            contentArea.style.minHeight = '450px';
+            contentArea.style.display = 'flex';
+            contentArea.style.flexDirection = 'column';
+
+            let headerHTML = `
+                <div style="margin-bottom: 15px; flex-shrink: 0;">
                     <button onclick="restoreMainModal('${memberId}', '${memberName}', '${currentClassName}')" style="background: none; border: none; color: #4a90e2; cursor: pointer; font-weight: 600; padding: 0;">← 이전으로</button>
                     <h4 style="margin: 10px 0; color: #333;">이동할 수업 선택</h4>
                     <p style="font-size: 0.85rem; color: #666;">현재 수업: <strong>${currentClassName}</strong></p>
+                    
+                    <div style="margin: 15px 0; position: relative;">
+                        <input type="text" id="classSearchInput" placeholder="수업명 또는 시간대 검색..." 
+                               style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;"
+                               oninput="renderClassList('${memberId}', '${memberName}', '${currentClassName}', this.value)">
+                        <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #888;">🔍</span>
+                    </div>
                 </div>
-                <div style="max-height: 300px; overflow-y: auto; padding-right: 5px;">
+                <div id="classListContainer" style="height: 320px; overflow-y: auto; padding-right: 5px; flex-grow: 1;">
+                </div>
             `;
+            
+            contentArea.innerHTML = headerHTML;
+            renderClassList(memberId, memberName, currentClassName, '');
+            
+            // 검색창에 포커스
+            setTimeout(() => {
+                const searchInput = document.getElementById('classSearchInput');
+                if (searchInput) searchInput.focus();
+            }, 100);
+        }
 
-            allAvailableClasses.forEach(cls => {
-                // 현재 수업은 목록에서 강조하거나 다르게 표시할 수 있음 (여기서는 일단 다 표시)
+        function renderClassList(memberId, memberName, currentClassName, searchTerm) {
+            const container = document.getElementById('classListContainer');
+            if (!container) return;
+
+            const term = (searchTerm || '').toLowerCase();
+            
+            const filteredClasses = allAvailableClasses.filter(cls => 
+                cls.name.toLowerCase().includes(term) || 
+                cls.slotName.toLowerCase().includes(term)
+            );
+
+            if (filteredClasses.length === 0) {
+                container.innerHTML = `
+                    <div style="height: 100%; display: flex; align-items: center; justify-content: center; color: #888; flex-direction: column; gap: 10px;">
+                        <span style="font-size: 2rem;">🔍</span>
+                        <span>검색 결과가 없습니다.</span>
+                    </div>
+                `;
+                return;
+            }
+
+            let listHTML = '';
+            filteredClasses.forEach(cls => {
                 const isCurrent = cls.name === currentClassName;
-                classListHTML += `
+                listHTML += `
                     <div class="class-select-item" style="${isCurrent ? 'background: #f1f3f5; cursor: default; opacity: 0.7;' : ''}" 
                          onclick="${isCurrent ? 'alert(\'이미 수강 중인 수업입니다.\')' : `confirmMoveClass('${memberId}', '${memberName}', '${currentClassName}', '${cls.id}', '${cls.name}')`}">
                         <div class="class-select-info">
@@ -326,9 +606,7 @@
                     </div>
                 `;
             });
-
-            classListHTML += `</div>`;
-            contentArea.innerHTML = classListHTML;
+            container.innerHTML = listHTML;
         }
 
         function restoreMainModal(memberId, memberName, currentClassName) {

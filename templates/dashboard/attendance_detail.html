@@ -89,6 +89,44 @@
             background-color: #f1f8ff;
         }
 
+        /* 검색 강조 스타일 */
+        .row-highlight {
+            background-color: #fff9c4 !important;
+            transition: background-color 0.3s ease;
+        }
+        /* 현재 선택된 검색 결과 강조 */
+        .row-active-highlight {
+            background-color: #ffd600 !important;
+            outline: 2px solid #fbc02d;
+            transition: all 0.2s ease;
+        }
+
+        .search-result-info {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            background: #e3f2fd;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #1976d2;
+            font-weight: 600;
+            margin-left: auto;
+        }
+        .btn-nav {
+            background: #fff;
+            border: 1px solid #bbdefb;
+            border-radius: 4px;
+            padding: 2px 8px;
+            cursor: pointer;
+            color: #1976d2;
+            font-size: 0.75rem;
+        }
+        .btn-nav:hover {
+            background: #1976d2;
+            color: #fff;
+        }
+
         /* 상세 컬럼 스타일 */
         .col-index { width: 40px; color: #adb5bd; }
         .col-name { font-weight: bold; color: #4a90e2; min-width: 80px; }
@@ -173,12 +211,20 @@
 
                     <div class="search-bar-group">
                         <div class="search-item">
-                            이름 검색 <input type="text" class="search-input" placeholder="이름 입력">
-                            <button class="btn-search">회원 이름 검색</button>
+                            이름 검색 <input type="text" id="nameSearchInput" class="search-input" placeholder="이름 입력">
+                            <button id="btnNameSearch" class="btn-search">회원 이름 검색</button>
                         </div>
                         <div class="search-item">
-                            전화번호 4자리 <input type="text" class="search-input" placeholder="번호 4자리">
-                            <button class="btn-search">검색</button>
+                            전화번호 4자리 <input type="text" id="phoneSearchInput" class="search-input" placeholder="번호 4자리">
+                            <button id="btnPhoneSearch" class="btn-search">검색</button>
+                        </div>
+                        
+                        <div id="searchResultInfo" class="search-result-info">
+                            <span id="searchCounter">0 / 0</span>
+                            <div style="display: flex; gap: 5px;">
+                                <button id="btnPrevMatch" class="btn-nav">◀ 이전</button>
+                                <button id="btnNextMatch" class="btn-nav">다음 ▶</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -196,11 +242,11 @@
                                     <th>소속정보</th>
                                     <th>가입일</th>
                                     <th>전화번호</th>
-                                    <th>최근수업</th>
+                                    <th>마지막 출석일</th>
                                     <th>만료일</th>
                                     <th>잔여횟수</th>
                                     <th>등급</th>
-                                    <th colspan="10">최근 2주 출석기록</th>
+                                    <th colspan="10">최근 출석기록</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -244,18 +290,98 @@
                     </div>
                 </div>
                 {{end}}
-
-                <div class="summary-footer">
-                    <div class="summary-item">
-                        <strong>스터디중인 멤버:</strong> 송예은, 김재민, 김무준, 신민철 (총 4명)
-                    </div>
-                    <div class="summary-item alert">
-                        <strong>출석체크 안한멤버:</strong> 홍지완, 최민지, 김지현 (총 3명)
-                    </div>
-                </div>
             </div>
         </main>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const nameInput = document.getElementById('nameSearchInput');
+            const btnNameSearch = document.getElementById('btnNameSearch');
+            const phoneInput = document.getElementById('phoneSearchInput');
+            const btnPhoneSearch = document.getElementById('btnPhoneSearch');
+            
+            const resultInfoArea = document.getElementById('searchResultInfo');
+            const counterDisplay = document.getElementById('searchCounter');
+            const btnPrev = document.getElementById('btnPrevMatch');
+            const btnNext = document.getElementById('btnNextMatch');
+
+            const allRows = document.querySelectorAll('.staff-table tbody tr');
+            
+            let matchedRows = [];
+            let currentMatchIndex = -1;
+
+            function clearHighlights() {
+                allRows.forEach(row => {
+                    row.classList.remove('row-highlight');
+                    row.classList.remove('row-active-highlight');
+                });
+                resultInfoArea.style.display = 'none';
+            }
+
+            function updateNavigation() {
+                if (matchedRows.length > 0) {
+                    resultInfoArea.style.display = 'flex';
+                    counterDisplay.textContent = `${currentMatchIndex + 1} / ${matchedRows.length}`;
+                    
+                    // 이전 하이라이트 제거 후 현재 인덱스 강조
+                    matchedRows.forEach(row => row.classList.remove('row-active-highlight'));
+                    const currentRow = matchedRows[currentMatchIndex];
+                    currentRow.classList.add('row-active-highlight');
+                    
+                    currentRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    resultInfoArea.style.display = 'none';
+                }
+            }
+
+            function performSearch(type) {
+                clearHighlights();
+                matchedRows = [];
+                currentMatchIndex = -1;
+                
+                const keyword = (type === 'name' ? nameInput.value : phoneInput.value).trim();
+                if (!keyword) return;
+
+                allRows.forEach(row => {
+                    const targetCell = type === 'name' ? row.querySelector('.col-name') : row.querySelector('.col-phone');
+                    if (targetCell && targetCell.textContent.includes(keyword)) {
+                        row.classList.add('row-highlight');
+                        matchedRows.push(row);
+                    }
+                });
+
+                if (matchedRows.length > 0) {
+                    currentMatchIndex = 0;
+                    updateNavigation();
+                } else {
+                    alert('검색 결과가 없습니다.');
+                }
+            }
+
+            btnPrev.addEventListener('click', () => {
+                if (matchedRows.length === 0) return;
+                currentMatchIndex = (currentMatchIndex - 1 + matchedRows.length) % matchedRows.length;
+                updateNavigation();
+            });
+
+            btnNext.addEventListener('click', () => {
+                if (matchedRows.length === 0) return;
+                currentMatchIndex = (currentMatchIndex + 1) % matchedRows.length;
+                updateNavigation();
+            });
+
+            btnNameSearch.addEventListener('click', () => performSearch('name'));
+            btnPhoneSearch.addEventListener('click', () => performSearch('phone'));
+
+            nameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') performSearch('name');
+            });
+            phoneInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') performSearch('phone');
+            });
+        });
+    </script>
 </body>
 </html>
 {{end}}
