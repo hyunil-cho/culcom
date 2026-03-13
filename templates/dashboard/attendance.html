@@ -185,6 +185,96 @@
             font-size: 0.8rem;
             color: #888;
         }
+
+        /* 검색 강조 스타일 */
+        .member-highlight {
+            background-color: #fff9c4 !important;
+            transition: background-color 0.3s ease;
+        }
+        /* 현재 선택된 검색 결과 강조 */
+        .member-active-highlight {
+            background-color: #ffd600 !important;
+            outline: 2px solid #fbc02d;
+            z-index: 1;
+            transition: all 0.2s ease;
+        }
+
+        .search-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: center;
+        }
+        .search-bar-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            align-items: center;
+            width: 100%;
+            max-width: 1000px;
+        }
+        .search-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #555;
+        }
+        .search-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            width: 180px;
+        }
+        .btn-search {
+            padding: 8px 16px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .btn-search:hover {
+            background: #357abd;
+        }
+
+        .search-result-info {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            background: #e3f2fd;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #1976d2;
+            font-weight: 700;
+            margin-left: auto;
+        }
+        .btn-nav {
+            background: #fff;
+            border: 1px solid #bbdefb;
+            border-radius: 4px;
+            padding: 3px 10px;
+            cursor: pointer;
+            color: #1976d2;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .btn-nav:hover {
+            background: #1976d2;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -194,6 +284,28 @@
         <main class="content">
             <div class="complex-container">
                 <h1 class="complex-title">{{.Title}}</h1>
+
+                <!-- 검색 바 추가 -->
+                <div class="search-container">
+                    <div class="search-bar-group">
+                        <div class="search-item">
+                            이름 <input type="text" id="mainNameSearchInput" class="search-input" placeholder="회원 이름 입력">
+                            <button id="btnMainNameSearch" class="btn-search">검색</button>
+                        </div>
+                        <div class="search-item">
+                            전화번호 <input type="text" id="mainPhoneSearchInput" class="search-input" placeholder="번호 4자리">
+                            <button id="btnMainPhoneSearch" class="btn-search">검색</button>
+                        </div>
+                        
+                        <div id="mainSearchResultInfo" class="search-result-info">
+                            <span id="mainSearchCounter">0 / 0</span>
+                            <div style="display: flex; gap: 5px;">
+                                <button id="btnMainPrevMatch" class="btn-nav">◀ 이전</button>
+                                <button id="btnMainNextMatch" class="btn-nav">다음 ▶</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 {{range .Groups}}
                 {{$slotName := .SlotName}}
@@ -269,6 +381,93 @@
             {{end}}
         ];
 
+        // 메인 화면 검색 기능 구현
+        document.addEventListener('DOMContentLoaded', function() {
+            const nameInput = document.getElementById('mainNameSearchInput');
+            const btnNameSearch = document.getElementById('btnMainNameSearch');
+            const phoneInput = document.getElementById('mainPhoneSearchInput');
+            const btnPhoneSearch = document.getElementById('btnMainPhoneSearch');
+            
+            const resultInfoArea = document.getElementById('mainSearchResultInfo');
+            const counterDisplay = document.getElementById('mainSearchCounter');
+            const btnPrev = document.getElementById('btnMainPrevMatch');
+            const btnNext = document.getElementById('btnMainNextMatch');
+
+            const allMemberItems = document.querySelectorAll('.member-item');
+            
+            let matchedItems = [];
+            let currentMatchIndex = -1;
+
+            function clearHighlights() {
+                allMemberItems.forEach(item => {
+                    item.classList.remove('member-highlight');
+                    item.classList.remove('member-active-highlight');
+                });
+                if (resultInfoArea) resultInfoArea.style.display = 'none';
+            }
+
+            function updateNavigation() {
+                if (matchedItems.length > 0) {
+                    resultInfoArea.style.display = 'flex';
+                    counterDisplay.textContent = `${currentMatchIndex + 1} / ${matchedItems.length}`;
+                    
+                    matchedItems.forEach(item => item.classList.remove('member-active-highlight'));
+                    const currentItem = matchedItems[currentMatchIndex];
+                    currentItem.classList.add('member-active-highlight');
+                    
+                    currentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    resultInfoArea.style.display = 'none';
+                }
+            }
+
+            function performSearch(type) {
+                clearHighlights();
+                matchedItems = [];
+                currentMatchIndex = -1;
+                
+                const keyword = (type === 'name' ? nameInput.value : phoneInput.value).trim();
+                if (!keyword) return;
+
+                allMemberItems.forEach(item => {
+                    const targetCell = type === 'name' ? item.querySelector('.member-name') : item.querySelector('.member-phone');
+                    if (targetCell && targetCell.textContent.includes(keyword)) {
+                        item.classList.add('member-highlight');
+                        matchedItems.push(item);
+                    }
+                });
+
+                if (matchedItems.length > 0) {
+                    currentMatchIndex = 0;
+                    updateNavigation();
+                } else {
+                    alert('검색 결과가 없습니다.');
+                }
+            }
+
+            if (btnPrev) btnPrev.addEventListener('click', () => {
+                if (matchedItems.length === 0) return;
+                currentMatchIndex = (currentMatchIndex - 1 + matchedItems.length) % matchedItems.length;
+                updateNavigation();
+            });
+
+            if (btnNext) btnNext.addEventListener('click', () => {
+                if (matchedItems.length === 0) return;
+                currentMatchIndex = (currentMatchIndex + 1) % matchedItems.length;
+                updateNavigation();
+            });
+
+            if (btnNameSearch) btnNameSearch.addEventListener('click', () => performSearch('name'));
+            if (btnPhoneSearch) btnPhoneSearch.addEventListener('click', () => performSearch('phone'));
+
+            if (nameInput) nameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') performSearch('name');
+            });
+            if (phoneInput) phoneInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') performSearch('phone');
+            });
+        });
+
         function openSlotMessageModal(slotName) {
             if (typeof ModalManager === 'undefined') {
                 console.error('ModalManager is not loaded');
@@ -277,48 +476,59 @@
 
             ModalManager.createCustom({
                 id: 'slotMessageModal',
-                title: `메시지 발송 대상 선택 - ${slotName}`,
+                title: `메시지 발송 대상 선택`,
                 maxWidth: '500px',
                 headerColor: '#2c3e50',
                 contentBuilder: () => `
+                    <!-- 1단계: 그룹 선택 -->
                     <div id="messageModalStep1" style="padding: 10px;">
-                        <p style="margin-bottom: 20px; color: #666; font-size: 0.9rem; text-align: center;">발송할 그룹을 선택해주세요.</p>
+                        <div style="background: #f1f7fe; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center; border: 1px solid #d0e3ff;">
+                            <span style="color: #4a90e2; font-weight: 700; font-size: 1rem;">📍 ${slotName}</span>
+                        </div>
+                        <p style="margin-bottom: 20px; color: #666; font-size: 0.85rem; text-align: center;">발송할 수신 그룹을 선택해주세요.</p>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                            <button class="class-select-item" style="flex-direction: column; padding: 20px; text-align: center; gap: 10px;" onclick="showMessageComposition('${slotName}', 'all')">
-                                <span style="font-size: 1.5rem;">👥</span>
+                            <button class="class-select-item" style="flex-direction: column; padding: 15px; text-align: center; gap: 8px;" onclick="showMessageComposition('${slotName}', 'all')">
+                                <span style="font-size: 1.4rem;">👥</span>
                                 <div class="class-select-info">
                                     <span class="class-select-name">전체</span>
-                                    <span class="class-select-slot">모든 인원 대상</span>
+                                    <span class="class-select-slot" style="font-size: 0.75rem;">모든 인원 대상</span>
                                 </div>
                             </button>
-                            <button class="class-select-item" style="flex-direction: column; padding: 20px; text-align: center; gap: 10px;" onclick="showMessageComposition('${slotName}', 'leader')">
-                                <span style="font-size: 1.5rem;">⭐</span>
+                            <button class="class-select-item" style="flex-direction: column; padding: 15px; text-align: center; gap: 8px;" onclick="showMessageComposition('${slotName}', 'leader')">
+                                <span style="font-size: 1.4rem;">⭐</span>
                                 <div class="class-select-info">
                                     <span class="class-select-name">리더</span>
-                                    <span class="class-select-slot">클래스 리더 대상</span>
+                                    <span class="class-select-slot" style="font-size: 0.75rem;">클래스 리더 대상</span>
                                 </div>
                             </button>
-                            <button class="class-select-item" style="flex-direction: column; padding: 20px; text-align: center; gap: 10px;" onclick="showMessageComposition('${slotName}', 'member')">
-                                <span style="font-size: 1.5rem;">👤</span>
+                            <button class="class-select-item" style="flex-direction: column; padding: 15px; text-align: center; gap: 8px;" onclick="showMessageComposition('${slotName}', 'member')">
+                                <span style="font-size: 1.4rem;">👤</span>
                                 <div class="class-select-info">
                                     <span class="class-select-name">회원</span>
-                                    <span class="class-select-slot">일반 회원 대상</span>
+                                    <span class="class-select-slot" style="font-size: 0.75rem;">일반 회원 대상</span>
                                 </div>
                             </button>
-                            <button class="class-select-item" style="flex-direction: column; padding: 20px; text-align: center; gap: 10px;" onclick="showMessageComposition('${slotName}', 'direct')">
-                                <span style="font-size: 1.5rem;">✅</span>
+                            <button class="class-select-item" style="flex-direction: column; padding: 15px; text-align: center; gap: 8px;" onclick="showMessageComposition('${slotName}', 'direct')">
+                                <span style="font-size: 1.4rem;">✅</span>
                                 <div class="class-select-info">
                                     <span class="class-select-name">직접 선택</span>
-                                    <span class="class-select-slot">개별 선택 발송</span>
+                                    <span class="class-select-slot" style="font-size: 0.75rem;">개별 선택 발송</span>
                                 </div>
                             </button>
                         </div>
                     </div>
+
+                    <!-- 2단계: 메시지 작성 및 수신자 관리 -->
                     <div id="messageModalStep2" style="display: none; height: 420px; flex-direction: column;">
-                        <!-- 상단 뒤로가기 버튼 위치 조정 -->
-                        <div style="margin-bottom: 10px; flex-shrink: 0; text-align: left;">
-                            <button onclick="goBackToStep1('${slotName}')" style="background: none; border: none; color: #4a90e2; cursor: pointer; font-weight: 600; padding: 0; margin-left: -5px; font-size: 0.85rem;">← 이전으로 (그룹 선택)</button>
+                        <div id="messageSubHeader" style="background: #f1f7fe; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #d0e3ff; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+                            <span style="color: #4a90e2; font-weight: 700; font-size: 0.95rem;">📍 ${slotName}</span>
+                            <span id="groupBadge" style="background: #4a90e2; color: white; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">그룹</span>
                         </div>
+                        
+                        <div style="margin-bottom: 12px; flex-shrink: 0; text-align: left;">
+                            <button onclick="goBackToStep1('${slotName}')" style="background: none; border: none; color: #4a90e2; cursor: pointer; font-weight: 600; padding: 0; font-size: 0.85rem; margin-left: -5px;">← 다시 그룹 선택하기</button>
+                        </div>
+                        
                         <div style="display: flex; flex-grow: 1; gap: 15px; min-height: 0;">
                             <!-- 왼쪽: 메시지 작성 -->
                             <div style="flex: 1; display: flex; flex-direction: column;">
@@ -384,6 +594,7 @@
             const btnCancel = modal.querySelector('.modal-footer .btn-secondary:not(#btnBackToStep1)');
             const modalTitle = modal.querySelector('.modal-header h3');
             const modalContent = modal.querySelector('.modal-content');
+            const groupBadge = document.getElementById('groupBadge');
 
             if (step1) step1.style.display = 'none';
             if (step2) {
@@ -394,9 +605,10 @@
             if (btnSend) btnSend.style.display = 'inline-block';
             if (btnCancel) btnCancel.textContent = '닫기';
             
-            // 타이틀 변경
+            // 타이틀 및 배지 변경
             const groupNames = { all: '전체', leader: '리더', member: '회원', direct: '직접 선택' };
-            if (modalTitle) modalTitle.textContent = `메시지 작성 - ${slotName} (${groupNames[groupType]})`;
+            if (modalTitle) modalTitle.textContent = `메시지 작성`;
+            if (groupBadge) groupBadge.textContent = groupNames[groupType];
 
             // 모달 너비 확장 (850px로 컴팩트하게 조정)
             if (modalContent) {
@@ -471,7 +683,6 @@
             const step2 = document.getElementById('messageModalStep2');
             const btnBack = document.getElementById('btnBackToStep1');
             const btnSend = document.getElementById('btnSendSms');
-            const btnCancel = modal.querySelector('.modal-footer .btn-secondary:not(#btnBackToStep1)');
             const modalContent = modal.querySelector('.modal-content');
             const modalTitle = modal.querySelector('.modal-header h3');
 
@@ -486,13 +697,12 @@
                 otherBtn.textContent = '취소';
             }
             
-            // 모달 너비 원복
+            // 모달 너비 원복 및 타이틀 복구
             if (modalContent) {
                 modalContent.style.maxWidth = '500px';
                 modalContent.style.width = '';
             }
-            
-            if (modalTitle) modalTitle.textContent = `메시지 발송 대상 선택 - ${slotName}`;
+            if (modalTitle) modalTitle.textContent = `메시지 발송 대상 선택`;
         }
 
         function openMemberManageModal(memberId, name, phone, currentClassName) {
