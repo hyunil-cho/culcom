@@ -41,6 +41,19 @@
                     </div>
 
                     <div class="form-row">
+                        <label class="form-label">리더 선택</label>
+                        <select name="staff_id" class="form-input">
+                            <option value="">-- 리더 선택 (선택 사항) --</option>
+                            {{$selectedStaffID := .Class.StaffID}}
+                            {{range .Staffs}}
+                            <option value="{{.ID}}" {{if eq .ID $selectedStaffID}}selected{{end}}>{{.Name}}</option>
+                            {{else}}
+                            <option value="" disabled>등록된 리더가 없습니다.</option>
+                            {{end}}
+                        </select>
+                    </div>
+
+                    <div class="form-row">
                         <label class="form-label">수업 정원 (인원 수) <span class="required">*</span></label>
                         <input type="number" name="capacity" class="form-input" value="{{.Class.Capacity}}" min="1" required>
                         <p class="form-help">해당 수업에 동시에 참여 가능한 최대 인원 수를 입력하세요.</p>

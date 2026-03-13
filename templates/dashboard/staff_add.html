@@ -1,0 +1,190 @@
+{{define "dashboard/staff_add.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .assigned-class-tag {
+            display: inline-flex;
+            align-items: center;
+            background: #f1f7fe;
+            color: #4a90e2;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #d0e3ff;
+        }
+        .remove-class-btn {
+            margin-left: 6px;
+            cursor: pointer;
+            color: #ff5252;
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+        .remove-class-btn:hover { color: #ff0000; }
+    </style>
+</head>
+<body>
+    {{template "complex_sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+            <div class="detail-actions">
+                <a href="/complex/staffs" class="btn-back">← 목록으로</a>
+            </div>
+
+            <div class="content-card">
+                <div class="form-header">
+                    <h2>새 강사 등록</h2>
+                </div>
+                <form action="/complex/staffs/update" method="POST" id="staffForm">
+                    <div class="form-body">
+                        <div class="form-row">
+                            <label class="form-label">이름 <span class="required">*</span></label>
+                            <input type="text" name="name" class="form-input" placeholder="이름을 입력하세요" required>
+                        </div>
+                        
+                        <div class="form-row">
+                            <label class="form-label">전화번호 <span class="required">*</span></label>
+                            <input type="tel" id="phoneNumber" name="phone_number" class="form-input" placeholder="01012345678" pattern="^010[0-9]{8}$" maxlength="11" required>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">소속 지점 <span class="required">*</span></label>
+                            <select name="branch_seq" class="form-input" required>
+                                <option value="">-- 지점 선택 --</option>
+                                {{range .BranchList}}
+                                <option value="{{index . "seq"}}">{{index . "name"}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+
+                        <!-- 톤앤매너에 맞춘 다중 수업 배정 -->
+                        <div class="form-row">
+                            <label class="form-label">담당 시간대 선택</label>
+                            <select id="slotSelect" class="form-input" onchange="updateClassOptions()">
+                                <option value="">-- 시간대 선택 --</option>
+                                <option value="월수 오전">월수 오전팀 (10:00 ~ 12:00)</option>
+                                <option value="화목 오후">화목 오후팀 (14:00 ~ 16:00)</option>
+                                <option value="주말 집중">주말 집중팀 (13:00 ~ 17:00)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">수업 지정 및 추가</label>
+                            <div style="display: flex; gap: 8px;">
+                                <select id="classSelect" class="form-input" style="flex: 1;" disabled>
+                                    <option value="">-- 시간대를 먼저 선택하세요 --</option>
+                                </select>
+                                <button type="button" class="btn-primary" style="padding: 0 15px; height: 38px; border-radius: 6px; white-space: nowrap; font-size: 0.85rem;" onclick="addClassToList()">➕ 추가</button>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">배정된 수업 목록</label>
+                            <div id="assignedClassesContainer" style="min-height: 45px; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 6px;">
+                                <span style="color: #bbb; font-size: 0.85rem;" id="emptyMsg">배정된 수업이 없습니다.</span>
+                            </div>
+                            <input type="hidden" name="assigned_classes" id="assignedClassesInput">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">비고 (코멘트)</label>
+                            <textarea name="comment" class="form-input" style="height: 80px; resize: vertical; padding: 10px;" placeholder="강사 특이사항 입력"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary-large">💾 등록하기</button>
+                        <a href="/complex/staffs" class="btn-secondary-large">취소</a>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+<script>
+const allAvailableClasses = [
+    { id: "101", name: "레벨1-1반", slot: "월수 오전" },
+    { id: "102", name: "레벨1-2반", slot: "월수 오전" },
+    { id: "201", name: "레벨2-1반", slot: "화목 오후" },
+    { id: "301", name: "주말 입문반", slot: "주말 집중" }
+];
+
+let selectedClasses = [];
+
+function updateClassOptions() {
+    const slotSelect = document.getElementById('slotSelect');
+    const classSelect = document.getElementById('classSelect');
+    const selectedSlot = slotSelect.value;
+
+    classSelect.innerHTML = '<option value="">-- 수업 선택 --</option>';
+    if (!selectedSlot) { classSelect.disabled = true; return; }
+
+    allAvailableClasses.filter(c => c.slot === selectedSlot).forEach(cls => {
+        const option = document.createElement('option');
+        option.value = cls.id;
+        option.textContent = cls.name;
+        classSelect.appendChild(option);
+    });
+    classSelect.disabled = false;
+}
+
+function addClassToList() {
+    const classSelect = document.getElementById('classSelect');
+    const classId = classSelect.value;
+    if (!classId) return;
+
+    const className = classSelect.options[classSelect.selectedIndex].text;
+    const slotName = document.getElementById('slotSelect').value;
+
+    if (selectedClasses.some(c => c.id === classId)) return alert('이미 추가된 수업입니다.');
+
+    selectedClasses.push({ id: classId, name: className, slot: slotName });
+    renderAssignedClasses();
+}
+
+function removeClass(classId) {
+    selectedClasses = selectedClasses.filter(c => c.id !== classId);
+    renderAssignedClasses();
+}
+
+function renderAssignedClasses() {
+    const container = document.getElementById('assignedClassesContainer');
+    const input = document.getElementById('assignedClassesInput');
+
+    if (selectedClasses.length === 0) {
+        container.innerHTML = '<span style="color: #bbb; font-size: 0.85rem;" id="emptyMsg">배정된 수업이 없습니다.</span>';
+        input.value = '';
+        return;
+    }
+
+    container.innerHTML = selectedClasses.map(c => `
+        <span class="assigned-class-tag">
+            [${c.slot}] ${c.name}
+            <span class="remove-class-btn" onclick="removeClass('${c.id}')">&times;</span>
+        </span>
+    `).join('');
+    
+    input.value = selectedClasses.map(c => c.id).join(',');
+}
+
+// 전화번호 입력 검증
+const phoneInput = document.getElementById('phoneNumber');
+if (phoneInput) {
+    phoneInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/[^0-9]/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+        e.target.value = value;
+    });
+}
+</script>
+</body>
+</html>
+{{end}}

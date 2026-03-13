@@ -187,6 +187,9 @@ func main() {
 	mux.HandleFunc("/complex/members/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberEditHandler)))             // 회원 수정 화면
 	mux.HandleFunc("/complex/members/update", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberUpdateHandler)))         // 회원 저장 처리
 	mux.HandleFunc("/complex/staffs", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffListHandler)))                    // 강사진 관리 목록
+	mux.HandleFunc("/complex/staffs/add", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffAddHandler)))                 // 강사 등록 화면
+	mux.HandleFunc("/complex/staffs/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffEditHandler)))               // 강사 수정 화면
+	mux.HandleFunc("/complex/staffs/update", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffUpdateHandler)))           // 강사 저장 처리
 	mux.HandleFunc("/complex/postponements", middleware.RequireAuthRecover(middleware.InjectBranchData(management.PostponementListHandler)))      // 연기 요청 목록
 	mux.HandleFunc("/complex/postponements/update-status", middleware.RequireAuthRecover(management.PostponementUpdateStatusHandler))             // 연기 요청 상태 변경
 

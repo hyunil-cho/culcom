@@ -8,6 +8,8 @@ type Class struct {
 	ID           int
 	TimeSlotID   int    // 연결된 시간대 슬롯 ID
 	TimeSlotName string // 표시용: 평일 오전, 주말 등
+	StaffID      int    // 담당 강사 ID
+	StaffName    string // 담당 강사 이름
 	Name         string
 	Description  string
 	Capacity     int    // 정원
@@ -19,6 +21,7 @@ type Class struct {
 // Member - 수업 등록 회원 정보 (MOCK용)
 type Member struct {
 	ID                int
+	BranchSeq         string   // 소속 지점 코드
 	Name              string
 	PhoneNumber       string
 	Status            string   // 출석 상태 등 (O, X 등)
@@ -36,15 +39,17 @@ type Member struct {
 
 // Staff - 강사 정보 (MOCK용)
 type Staff struct {
-	ID          int
-	Name        string
-	PhoneNumber string
-	Email       string
-	Subject     string // 담당 과목/분야
-	Role        string // 역할 (강사, 팀장 등)
-	Status      string // 상태 (재직, 휴직 등)
-	JoinDate    string // 등록일
-	Comment     string // 비고
+	ID                 int
+	BranchSeq          string // 소속 지점 코드
+	Name               string
+	PhoneNumber        string
+	Email              string
+	Subject            string // 담당 과목/분야
+	Role               string // 역할 (강사, 팀장 등)
+	Status             string // 상태 (재직, 휴직 등)
+	JoinDate           string // 등록일
+	Comment            string // 비고
+	AssignedClassIDs   string // 배정된 수업 ID 리스트 (쉼표 구분)
 }
 
 // PostponementRequest - 수업 연기 요청 (MOCK용)
@@ -78,6 +83,7 @@ type PageData struct {
 	ActiveMenu string
 	Classes    []Class
 	TimeSlots  []map[string]interface{} // 선택 가능한 시간대 목록
+	Staffs     []Staff                  // 선택 가능한 강사 목록
 }
 
 // ComplexViewPageData - 슬롯별 통합 뷰 데이터

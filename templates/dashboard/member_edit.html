@@ -36,6 +36,16 @@
                         </div>
 
                         <div class="form-row">
+                            <label class="form-label">소속 지점 <span class="required">*</span></label>
+                            <select name="branch_seq" class="form-input" required>
+                                <option value="">-- 지점 선택 --</option>
+                                {{range .BranchList}}
+                                <option value="{{index . "seq"}}" {{if eq (index . "seq") $.Member.BranchSeq}}selected{{end}}>{{index . "name"}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+
+                        <div class="form-row">
                             <label class="form-label">레벨</label>
                             <input type="text" name="level" class="form-input" value="{{.Member.Level}}" placeholder="예: 3-">
                         </div>

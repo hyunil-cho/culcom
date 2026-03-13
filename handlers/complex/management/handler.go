@@ -4,6 +4,7 @@ import (
 	"backoffice/database"
 	"backoffice/middleware"
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -25,6 +26,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		Classes:      mockClasses,
 	}
 	if err := Templates.ExecuteTemplate(w, "dashboard/complex_class_list.html", data); err != nil {
+		log.Println("Template error:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -39,8 +41,10 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		Title:        "새 수업 등록",
 		ActiveMenu:   "complex_management",
 		TimeSlots:    slots,
+		Staffs:       mockStaffs,
 	}
 	if err := Templates.ExecuteTemplate(w, "dashboard/complex_class_add.html", data); err != nil {
+		log.Println("Template error:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -65,14 +69,17 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 		ActiveMenu string
 		Class      Class
 		TimeSlots  []map[string]interface{}
+		Staffs     []Staff
 	}{
 		BasePageData: middleware.GetBasePageData(r),
 		Title:        "수업 정보 수정",
 		ActiveMenu:   "complex_management",
 		Class:        class,
 		TimeSlots:    slots,
+		Staffs:       mockStaffs,
 	}
 	if err := Templates.ExecuteTemplate(w, "dashboard/complex_class_edit.html", data); err != nil {
+		log.Println("Template error:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -86,15 +93,25 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	idStr := r.FormValue("id")
 	timeSlotIDStr := r.FormValue("time_slot_id")
+	staffIDStr := r.FormValue("staff_id")
 	name := r.FormValue("name")
 	desc := r.FormValue("description")
 	capacityStr := r.FormValue("capacity")
 
 	timeSlotID, _ := strconv.Atoi(timeSlotIDStr)
+	staffID, _ := strconv.Atoi(staffIDStr)
 	capacity, _ := strconv.Atoi(capacityStr)
 
-	// 슬롯 정보 시뮬레이션 (원래는 DB에서 가져와야 함)
-	// UI MOCK이므로 간단하게 채움
+	// 강사 이름 찾기
+	staffName := ""
+	for _, s := range mockStaffs {
+		if s.ID == staffID {
+			staffName = s.Name
+			break
+		}
+	}
+
+	// 슬롯 정보 시뮬레이션
 	slotName := "선택된 슬롯"
 	days := "월,수"
 	start := "10:00"
@@ -104,6 +121,7 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 		newID := len(mockClasses) + 1
 		mockClasses = append(mockClasses, Class{
 			ID: newID, TimeSlotID: timeSlotID, TimeSlotName: slotName,
+			StaffID: staffID, StaffName: staffName,
 			Name: name, Description: desc, Capacity: capacity,
 			DateValue: days, StartTime: start, EndTime: end,
 		})
@@ -112,6 +130,8 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 		for i, c := range mockClasses {
 			if c.ID == id {
 				mockClasses[i].TimeSlotID = timeSlotID
+				mockClasses[i].StaffID = staffID
+				mockClasses[i].StaffName = staffName
 				mockClasses[i].Name = name
 				mockClasses[i].Description = desc
 				mockClasses[i].Capacity = capacity

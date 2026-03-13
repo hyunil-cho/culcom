@@ -39,7 +39,7 @@
                         </div>
                     </form>
                     <div class="action-buttons">
-                        <button class="btn-primary" onclick="alert('강사 등록 기능은 준비 중입니다.')">➕ 강사 등록</button>
+                        <a href="/complex/staffs/add" class="btn-primary" style="text-decoration: none;">➕ 강사 등록</a>
                     </div>
                 </div>
             </div>
@@ -72,10 +72,14 @@
                         </thead>
                         <tbody>
                             {{range $i, $s := .Staffs}}
-                            <tr>
+                            <tr class="staff-row" data-staff-id="{{.ID}}">
                                 <td>{{add $i 1}}</td>
-                                <td><strong>{{.Name}}</strong></td>
-                                <td>{{.PhoneNumber}}</td>
+                                <td class="col-name">
+                                    <a href="/complex/staffs/edit?id={{.ID}}" style="color: #4a90e2; text-decoration: none; font-weight: bold;">{{.Name}}</a>
+                                </td>
+                                <td class="col-phone">
+                                    <a href="/complex/staffs/edit?id={{.ID}}" style="color: inherit; text-decoration: none; font-family: monospace;">{{.PhoneNumber}}</a>
+                                </td>
                                 <td>{{.Email}}</td>
                                 <td><span class="status-badge status-active">{{.Subject}}</span></td>
                                 <td>{{.Role}}</td>
@@ -84,7 +88,7 @@
                                 <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{.Comment}}</td>
                                 <td>
                                     <div style="display: flex; gap: 5px; justify-content: center;">
-                                        <button class="btn-table-action" onclick="alert('수정 기능 준비 중')">수정</button>
+                                        <a href="/complex/staffs/edit?id={{.ID}}" class="btn-table-action" style="text-decoration: none;">수정</a>
                                         <button class="btn-table-action" style="background: #f44336;" onclick="alert('삭제 기능 준비 중')">삭제</button>
                                     </div>
                                 </td>
@@ -100,6 +104,106 @@
             </div>
         </main>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 강사 검색 및 강조 기능 (member_list.html 로직 재사용)
+            initStaffSearch();
+        });
+
+        function initStaffSearch() {
+            const searchInput = document.querySelector('.search-input');
+            const btnSearch = document.querySelector('.btn-search');
+            const searchType = document.querySelector('.filter-select');
+            
+            const allRows = document.querySelectorAll('.staff-row');
+            let matchedRows = [];
+            let currentIndex = -1;
+
+            // 검색 결과 내비게이션 UI
+            const searchSection = document.querySelector('.search-section');
+            const navHTML = `
+                <div id="searchNav" style="display: none; align-items: center; gap: 10px; margin-left: 20px; background: #e3f2fd; padding: 5px 15px; border-radius: 20px; font-size: 0.85rem; color: #1976d2; font-weight: 600;">
+                    <span id="searchCounter">0 / 0</span>
+                    <div style="display: flex; gap: 5px;">
+                        <button id="prevMatch" style="background:#fff; border:1px solid #bbdefb; border-radius:4px; padding:2px 8px; cursor:pointer; color:#1976d2; font-size:0.75rem;">◀</button>
+                        <button id="nextMatch" style="background:#fff; border:1px solid #bbdefb; border-radius:4px; padding:2px 8px; cursor:pointer; color:#1976d2; font-size:0.75rem;">▶</button>
+                    </div>
+                </div>
+            `;
+            searchSection.insertAdjacentHTML('beforeend', navHTML);
+
+            const navArea = document.getElementById('searchNav');
+            const counter = document.getElementById('searchCounter');
+
+            function performSearch() {
+                allRows.forEach(r => {
+                    r.style.backgroundColor = '';
+                    r.style.outline = '';
+                });
+                matchedRows = [];
+                currentIndex = -1;
+
+                const keyword = searchInput.value.trim().toLowerCase();
+                const type = searchType.value;
+
+                if (!keyword) {
+                    navArea.style.display = 'none';
+                    return;
+                }
+
+                allRows.forEach(row => {
+                    let targetText = "";
+                    if (type === 'name') targetText = row.querySelector('.col-name').textContent;
+                    else if (type === 'phone') targetText = row.querySelector('.col-phone').textContent;
+                    else targetText = row.textContent; // 기본적으로 전체 텍스트 검색
+
+                    if (targetText.toLowerCase().includes(keyword)) {
+                        row.style.backgroundColor = '#fff9c4';
+                        matchedRows.push(row);
+                    }
+                });
+
+                if (matchedRows.length > 0) {
+                    navArea.style.display = 'flex';
+                    currentIndex = 0;
+                    updateNav();
+                } else {
+                    navArea.style.display = 'none';
+                    alert('검색 결과가 없습니다.');
+                }
+            }
+
+            function updateNav() {
+                matchedRows.forEach(r => r.style.outline = '');
+                const currentRow = matchedRows[currentIndex];
+                currentRow.style.outline = '2px solid #fbc02d';
+                currentRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                counter.textContent = `${currentIndex + 1} / ${matchedRows.length}`;
+            }
+
+            btnSearch.addEventListener('click', (e) => {
+                e.preventDefault();
+                performSearch();
+            });
+
+            document.getElementById('prevMatch').onclick = () => {
+                currentIndex = (currentIndex - 1 + matchedRows.length) % matchedRows.length;
+                updateNav();
+            };
+            document.getElementById('nextMatch').onclick = () => {
+                currentIndex = (currentIndex + 1) % matchedRows.length;
+                updateNav();
+            };
+
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    performSearch();
+                }
+            });
+        }
+    </script>
 </body>
 </html>
 {{end}}

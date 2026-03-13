@@ -1,6 +1,13 @@
 {{define "dashboard/complex_class_list.html"}}
 <!DOCTYPE html>
 <html lang="ko">
+<head>
+    <style>
+        .clickable-row:hover {
+            background-color: #f8f9fa !important;
+        }
+    </style>
+</head>
 <body>
     {{template "complex_sidebar" .}}
     <div class="main-wrapper">
@@ -15,22 +22,28 @@
                         <thead>
                             <tr>
                                 <th>수업 이름</th>
+                                <th>담당 강사</th>
                                 <th>시간대 슬롯</th>
                                 <th>정원</th>
                                 <th>설명</th>
-                                <th style="text-align: center;">관리</th>
                             </tr>
                         </thead>
                         <tbody>
                             {{range .Classes}}
-                            <tr>
-                                <td><strong>{{.Name}}</strong></td>
+                            <tr class="clickable-row" onclick="location.href='/complex/management/edit?id={{.ID}}'" style="cursor: pointer;">
+                                <td>
+                                    <a href="/complex/management/edit?id={{.ID}}" style="color: #4a90e2; text-decoration: none; font-weight: bold;">{{.Name}}</a>
+                                </td>
+                                <td>
+                                    <span style="color: #555; font-weight: 600;">{{if .StaffName}}{{.StaffName}}{{else}}<small style="color: #ccc; font-weight: normal;">(미배정)</small>{{end}}</span>
+                                </td>
                                 <td><span class="status-badge status-active">{{.TimeSlotName}}</span></td>
                                 <td style="text-align: center;"><span style="color: #4a90e2; font-weight: bold;">{{.Capacity}}</span>명</td>
-                                <td>{{.Description}}</td>
-                                <td style="text-align: center;">
-                                    <a href="/complex/management/edit?id={{.ID}}" class="btn-table-action">수정</a>
-                                </td>
+                                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{.Description}}</td>
+                            </tr>
+                            {{else}}
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 3rem; color: #999;">등록된 수업이 없습니다.</td>
                             </tr>
                             {{end}}
                         </tbody>
