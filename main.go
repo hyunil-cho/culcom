@@ -75,19 +75,27 @@ func init() {
 
 	// 템플릿 파싱 - layouts, dashboard, customers 등 모든 템플릿 파일 로드
 	templates := template.Must(template.New("").Funcs(funcMap).ParseGlob("templates/layouts/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/dashboard/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/customers/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/branches/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/integrations/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/message-templates/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/settings/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/auth/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/landing/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/consultation/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/notices/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/classtimeslots/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/memberships/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/error.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/dashboard/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/customers/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/branches/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/integrations/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/message-templates/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/settings/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/auth/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/landing/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/consultation/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/notices/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/privacy/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/classtimeslots/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/memberships/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/attendance/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/branches/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/management/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/members/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/staffs/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/postponements/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/index/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/error.html"))
 
 	home.Templates = templates
 	login.Templates = templates
@@ -112,15 +120,12 @@ func init() {
 		"add": func(a, b int) int { return a + b },
 		"sub": func(a, b int) int { return a - b },
 	}
-	publicTemplates := template.Must(template.New("").Funcs(publicFuncMap).ParseGlob("templates/board/*.html"))
+	publicTemplates := template.Must(template.New("").Funcs(publicFuncMap).ParseGlob("templates/main/board/*.html"))
 	board.PublicTemplates = publicTemplates
 
 	// 개인정보 처리방침 및 연기요청 템플릿 초기화
 	opens.InitPrivacyTemplate()
-	opens.PostponementTemplates = template.Must(template.New("").ParseGlob("templates/privacy/*.html"))
-
-	// 개인정보 처리방침 템플릿 초기화
-	opens.InitPrivacyTemplate()
+	opens.PostponementTemplates = template.Must(template.New("").ParseGlob("templates/main/privacy/*.html"))
 }
 
 func main() {
