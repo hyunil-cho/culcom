@@ -100,12 +100,34 @@
 
             <div class="form-group">
                 <label class="form-label">연락처 <span style="color: #e74c3c;">*</span></label>
-                <input type="tel" name="phone" class="form-input" placeholder="010-0000-0000" required>
+                <input type="tel" name="phone" class="form-input" placeholder="01000000000" required>
             </div>
 
             <div class="form-group">
-                <label class="form-label">현재 수강 중인 수업 <span style="color: #e74c3c;">*</span></label>
-                <input type="text" name="current_class" class="form-input" placeholder="예: 월수 오전 레벨1" required>
+                <label class="form-label">참여지점 <span style="color: #e74c3c;">*</span></label>
+                <select name="branch_id" class="form-input" required>
+                    <option value="">지점을 선택해 주세요</option>
+                    {{range .Branches}}
+                    <option value="{{.id}}">{{.name}}</option>
+                    {{end}}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">수업 시간대 <span style="color: #e74c3c;">*</span></label>
+                <select name="time_slot" id="time_slot" class="form-input" required onchange="updateClasses()">
+                    <option value="">시간대를 선택해 주세요</option>
+                    {{range .TimeSlots}}
+                    <option value="{{.}}">{{.}}</option>
+                    {{end}}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">수강 중인 수업 <span style="color: #e74c3c;">*</span></label>
+                <select name="current_class" id="current_class" class="form-input" required disabled>
+                    <option value="">시간대를 먼저 선택해 주세요</option>
+                </select>
             </div>
 
             <div class="form-group">
@@ -115,11 +137,6 @@
                     <span>~</span>
                     <input type="date" name="end_date" class="form-input" required>
                 </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">연기 사유</label>
-                <textarea name="reason" class="form-input" style="height: 100px; resize: none;" placeholder="사유를 간단히 적어주세요"></textarea>
             </div>
 
             <button type="submit" class="btn-submit">요청 제출하기</button>
@@ -134,6 +151,32 @@
             </ul>
         </div>
     </div>
+
+    <script>
+        const classesByTimeSlot = {{.ClassesByTimeSlot}};
+
+        function updateClasses() {
+            const timeSlotSelect = document.getElementById('time_slot');
+            const classSelect = document.getElementById('current_class');
+            const selectedSlot = timeSlotSelect.value;
+
+            // 수업 선택박스 초기화
+            classSelect.innerHTML = '<option value="">수업을 선택해 주세요</option>';
+            
+            if (selectedSlot && classesByTimeSlot[selectedSlot]) {
+                classesByTimeSlot[selectedSlot].forEach(className => {
+                    const option = document.createElement('option');
+                    option.value = className;
+                    option.textContent = className;
+                    classSelect.appendChild(option);
+                });
+                classSelect.disabled = false;
+            } else {
+                classSelect.innerHTML = '<option value="">시간대를 먼저 선택해 주세요</option>';
+                classSelect.disabled = true;
+            }
+        }
+    </script>
 </body>
 </html>
 {{end}}

@@ -3,25 +3,26 @@ package main
 import (
 	"backoffice/config"
 	"backoffice/database"
-	"backoffice/handlers/board"
-	"backoffice/handlers/branches"
 	"backoffice/handlers/complex/attendance"
 	complexBranches "backoffice/handlers/complex/branches"
 	"backoffice/handlers/complex/classtimeslots"
 	"backoffice/handlers/complex/index"
 	"backoffice/handlers/complex/management"
-	"backoffice/handlers/consultation"
-	"backoffice/handlers/customers"
+	"backoffice/handlers/complex/memberships"
+	"backoffice/handlers/main/board"
+	"backoffice/handlers/main/branches"
+	"backoffice/handlers/main/consultation"
+	"backoffice/handlers/main/customers"
 	"backoffice/handlers/errorhandler"
-	"backoffice/handlers/home"
-	"backoffice/handlers/integrations"
-	"backoffice/handlers/landing"
-	"backoffice/handlers/login"
-	"backoffice/handlers/messagetemplates"
-	"backoffice/handlers/notices"
-	"backoffice/handlers/opens"
-	"backoffice/handlers/services"
-	"backoffice/handlers/settings"
+	"backoffice/handlers/main/home"
+	"backoffice/handlers/main/integrations"
+	"backoffice/handlers/main/landing"
+	"backoffice/handlers/main/login"
+	"backoffice/handlers/main/messagetemplates"
+	"backoffice/handlers/main/notices"
+	"backoffice/handlers/main/opens"
+	"backoffice/handlers/main/services"
+	"backoffice/handlers/main/settings"
 	"backoffice/middleware"
 	"encoding/gob"
 	"html/template"
@@ -85,6 +86,7 @@ func init() {
 	templates = template.Must(templates.ParseGlob("templates/consultation/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/notices/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/classtimeslots/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/memberships/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/error.html"))
 
 	home.Templates = templates
@@ -103,6 +105,7 @@ func init() {
 	management.Templates = templates
 	classtimeslots.Templates = templates
 	attendance.Templates = templates
+	memberships.Templates = templates
 
 	// 공개 게시판 템플릿 (백오피스 레이아웃과 완전 분리)
 	publicFuncMap := template.FuncMap{
@@ -231,6 +234,10 @@ func main() {
 	mux.HandleFunc("/notices/add", middleware.RequireAuthRecover(middleware.InjectBranchData(notices.AddHandler)))                                // 공지사항/이벤트 등록
 	mux.HandleFunc("/notices/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(notices.EditHandler)))                              // 공지사항/이벤트 수정
 	mux.HandleFunc("/notices/delete", middleware.RequireAuthRecover(notices.DeleteHandler))                                                       // 공지사항/이벤트 삭제
+	mux.HandleFunc("/complex/memberships", middleware.RequireAuthRecover(middleware.InjectBranchData(memberships.ListHandler)))                           // 멤버십 목록
+	mux.HandleFunc("/complex/memberships/add", middleware.RequireAuthRecover(middleware.InjectBranchData(memberships.AddHandler)))                         // 멤버십 추가
+	mux.HandleFunc("/complex/memberships/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(memberships.EditHandler)))                       // 멤버십 수정
+	mux.HandleFunc("/complex/memberships/delete", middleware.RequireAuthRecover(memberships.DeleteHandler))                                               // 멤버십 삭제
 	mux.HandleFunc("/settings", middleware.RequireAuthRecover(middleware.InjectBranchData(settings.Handler)))                                     // 설정 메인 페이지
 	mux.HandleFunc("/settings/reservation-sms", middleware.RequireAuthRecover(middleware.InjectBranchData(settings.ReservationSMSConfigHandler))) // 예약 SMS 설정
 	mux.HandleFunc("/logout", middleware.RequireAuthRecover(login.LogoutHandler))                                                                 // 로그아웃 처리
