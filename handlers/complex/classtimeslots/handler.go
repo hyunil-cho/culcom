@@ -47,7 +47,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	data := PageData{
 		BasePageData:   middleware.GetBasePageData(r),
 		Title:          "수업 시간대 관리",
-		ActiveMenu:     "class-time-slots",
+		ActiveMenu: "complex_timeslots",
 		Slots:          slots,
 		SuccessMessage: successMessage,
 		ErrorMessage:   errorMessage,
@@ -69,7 +69,7 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		data := EditPageData{
 			BasePageData:   middleware.GetBasePageData(r),
 			Title:          "수업 시간대 추가",
-			ActiveMenu:     "class-time-slots",
+			ActiveMenu: "complex_timeslots",
 			IsEdit:         false,
 			SuccessMessage: successMessage,
 			ErrorMessage:   errorMessage,
@@ -153,7 +153,7 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 		data := EditPageData{
 			BasePageData:   middleware.GetBasePageData(r),
 			Title:          "수업 시간대 수정",
-			ActiveMenu:     "class-time-slots",
+			ActiveMenu: "complex_timeslots",
 			Slot:           slot,
 			IsEdit:         true,
 			SuccessMessage: successMessage,

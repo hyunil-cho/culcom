@@ -20,7 +20,7 @@
             <div class="content-card">
                 <div class="search-section">
                     <div class="action-buttons">
-                        <a href="/complex/class-time-slots/add" class="btn-primary">➕ 시간대 추가</a>
+                        <a href="/complex/timeslots/add" class="btn-primary">➕ 시간대 추가</a>
                     </div>
                 </div>
             </div>
@@ -52,7 +52,7 @@
                                 <td>{{.StartTime}}</td>
                                 <td>{{.EndTime}}</td>
                                 <td>
-                                    <a href="/complex/class-time-slots/edit?seq={{.Seq}}" class="btn-table-action">수정</a>
+                                    <a href="/complex/timeslots/edit?seq={{.Seq}}" class="btn-table-action">수정</a>
                                     <button class="btn-table-action" onclick="confirmDelete('{{.Seq}}', '{{.Name}}')" style="background: #f44336; color: white;">삭제</button>
                                 </td>
                             </tr>
@@ -102,7 +102,7 @@
             onConfirm: () => {
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = '/complex/class-time-slots/delete?seq=' + seq;
+                form.action = '/complex/timeslots/delete?seq=' + seq;
                 document.body.appendChild(form);
                 form.submit();
             }

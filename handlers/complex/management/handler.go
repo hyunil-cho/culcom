@@ -22,7 +22,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	data := PageData{
 		BasePageData: middleware.GetBasePageData(r),
 		Title:        "수업 관리",
-		ActiveMenu:   "complex_management",
+		ActiveMenu:   "complex_classes",
 		Classes:      mockClasses,
 	}
 	if err := Templates.ExecuteTemplate(w, "dashboard/complex_class_list.html", data); err != nil {
@@ -39,7 +39,7 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 	data := PageData{
 		BasePageData: middleware.GetBasePageData(r),
 		Title:        "새 수업 등록",
-		ActiveMenu:   "complex_management",
+		ActiveMenu:   "complex_classes",
 		TimeSlots:    slots,
 		Staffs:       mockStaffs,
 	}
@@ -73,7 +73,7 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 	}{
 		BasePageData: middleware.GetBasePageData(r),
 		Title:        "수업 정보 수정",
-		ActiveMenu:   "complex_management",
+		ActiveMenu:   "complex_classes",
 		Class:        class,
 		TimeSlots:    slots,
 		Staffs:       mockStaffs,
@@ -140,5 +140,5 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	http.Redirect(w, r, "/complex/management", http.StatusSeeOther)
+	http.Redirect(w, r, "/complex/classes", http.StatusSeeOther)
 }

@@ -1,4 +1,4 @@
-{{define "dashboard/complex_branch_edit.html"}}
+{{define "dashboard/complex_branch_add.html"}}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -34,7 +34,7 @@
         }
         .btn-submit {
             padding: 10px 25px;
-            background: #4a90e2;
+            background: #10b981;
             color: white;
             border: none;
             border-radius: 4px;
@@ -62,41 +62,40 @@
         <main class="content">
             <div class="content-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h2>지점 정보 수정</h2>
+                    <h2>새 지점 추가</h2>
                     <a href="/complex/branches" class="btn-cancel">목록으로</a>
                 </div>
 
-                <form action="/complex/branches/update" method="POST" style="background: white; padding: 30px; border: 1px solid #ddd; border-radius: 8px; max-width: 800px;">
-                    <input type="hidden" name="id" value="{{.Branch.ID}}">
-                    
+                <form action="/complex/branches/store" method="POST" style="background: white; padding: 30px; border: 1px solid #ddd; border-radius: 8px; max-width: 800px;">
                     <div class="form-group">
                         <label for="name">지점명 <span style="color: #dc2626;">*</span></label>
-                        <input type="text" id="name" name="name" class="form-control" value="{{.Branch.Name}}" required>
+                        <input type="text" id="name" name="name" class="form-control" placeholder="예: 대구지점" required>
                     </div>
 
                     <div class="form-group">
                         <label for="alias">영문코드 (Alias) <span style="color: #dc2626;">*</span></label>
-                        <input type="text" id="alias" name="alias" class="form-control" value="{{.Branch.Alias}}" required>
+                        <input type="text" id="alias" name="alias" class="form-control" placeholder="예: daegu" required>
+                        <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">URL이나 시스템 식별자로 사용되는 고유 코드입니다.</p>
                     </div>
 
                     <div class="form-group">
                         <label for="manager">담당자</label>
-                        <input type="text" id="manager" name="manager" class="form-control" value="{{.Branch.Manager}}">
+                        <input type="text" id="manager" name="manager" class="form-control" placeholder="지점 담당자 이름">
                     </div>
 
                     <div class="form-group">
                         <label for="address">주소</label>
-                        <input type="text" id="address" name="address" class="form-control" value="{{.Branch.Address}}">
+                        <input type="text" id="address" name="address" class="form-control" placeholder="지점 위치 주소">
                     </div>
 
                     <div class="form-group">
                         <label for="directions">오시는 길</label>
-                        <textarea id="directions" name="directions" class="form-control">{{.Branch.Directions}}</textarea>
+                        <textarea id="directions" name="directions" class="form-control" placeholder="지점 방문 방법 설명"></textarea>
                     </div>
 
                     <div class="btn-container">
-                        <button type="submit" class="btn-submit">저장하기</button>
-                        <a href="/complex/branches/detail?id={{.Branch.ID}}" class="btn-cancel">취소</a>
+                        <button type="submit" class="btn-submit">지점 생성</button>
+                        <a href="/complex/branches" class="btn-cancel">취소</a>
                     </div>
                 </form>
             </div>

@@ -15,7 +15,7 @@
         <main class="content">
             <div class="content-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <a href="/complex/management/add" class="btn-primary" style="background: #10b981;">➕ 새 수업 추가</a>
+                    <a href="/complex/classes/add" class="btn-primary" style="background: #10b981;">➕ 새 수업 추가</a>
                 </div>
                 <div class="table-wrapper">
                     <table class="data-table">
@@ -30,9 +30,9 @@
                         </thead>
                         <tbody>
                             {{range .Classes}}
-                            <tr class="clickable-row" onclick="location.href='/complex/management/edit?id={{.ID}}'" style="cursor: pointer;">
+                            <tr class="clickable-row" onclick="location.href='/complex/classes/edit?id={{.ID}}'" style="cursor: pointer;">
                                 <td>
-                                    <a href="/complex/management/edit?id={{.ID}}" style="color: #4a90e2; text-decoration: none; font-weight: bold;">{{.Name}}</a>
+                                    <a href="/complex/classes/edit?id={{.ID}}" style="color: #4a90e2; text-decoration: none; font-weight: bold;">{{.Name}}</a>
                                 </td>
                                 <td>
                                     <span style="color: #555; font-weight: 600;">{{if .StaffName}}{{.StaffName}}{{else}}<small style="color: #ccc; font-weight: normal;">(미배정)</small>{{end}}</span>

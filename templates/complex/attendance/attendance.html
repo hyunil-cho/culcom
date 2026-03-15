@@ -726,7 +726,7 @@
                             <p style="margin: 5px 0;"><strong>🏫 현재 수업:</strong> ${currentClassName || '정보 없음'}</p>
                         </div>
                         <div style="display: flex; flex-direction: column; gap: 10px;">
-                            <a href="/customers?searchType=phone&searchKeyword=${phone}" class="btn-primary" style="display: block; text-align: center; text-decoration: none; padding: 12px; border-radius: 6px; font-weight: 600;">
+                            <a href="/complex/members/edit?id=${memberId}" class="btn-primary" style="display: block; text-align: center; text-decoration: none; padding: 12px; border-radius: 6px; font-weight: 600;">
                                 🔍 상세 정보 및 회신 관리
                             </a>
                             <button class="btn-secondary" style="padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; background: #e3f2fd; color: #1976d2; border-color: #bbdefb;" onclick="showClassSelection('${memberId}', '${name}', '${currentClassName}')">

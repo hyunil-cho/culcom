@@ -8,7 +8,12 @@ type Branch struct {
 	ID           int
 	Name         string
 	Alias        string
-	RegisterDate string
+	Manager      string
+	Address      string
+	Directions   string
+	CreatedAt    string
+	UpdatedAt    string
+	RegisterDate string // For compatibility with existing code if any
 }
 
 type PageData struct {
