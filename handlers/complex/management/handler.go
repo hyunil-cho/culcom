@@ -1,7 +1,6 @@
 package management
 
 import (
-	"backoffice/database"
 	"backoffice/middleware"
 	"html/template"
 	"log"
@@ -33,8 +32,12 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 // AddHandler - 수업 등록 화면
 func AddHandler(w http.ResponseWriter, r *http.Request) {
-	branchSeq := middleware.GetSelectedBranch(r)
-	slots, _ := database.GetClassTimeSlotsByBranch(branchSeq)
+	// MOCK 시간대 데이터
+	slots := []map[string]interface{}{
+		{"seq": 1, "name": "평일 월수 오전반"},
+		{"seq": 2, "name": "평일 화목 오후반"},
+		{"seq": 3, "name": "주말 오전 집중반"},
+	}
 
 	data := PageData{
 		BasePageData: middleware.GetBasePageData(r),
@@ -52,8 +55,13 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 // EditHandler - 수업 수정 화면
 func EditHandler(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
-	branchSeq := middleware.GetSelectedBranch(r)
-	slots, _ := database.GetClassTimeSlotsByBranch(branchSeq)
+
+	// MOCK 시간대 데이터
+	slots := []map[string]interface{}{
+		{"seq": 1, "name": "평일 월수 오전반"},
+		{"seq": 2, "name": "평일 화목 오후반"},
+		{"seq": 3, "name": "주말 오전 집중반"},
+	}
 
 	var class Class
 	for _, c := range mockClasses {

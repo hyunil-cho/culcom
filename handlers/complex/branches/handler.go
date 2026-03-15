@@ -1,7 +1,6 @@
 package branches
 
 import (
-	"backoffice/database"
 	"backoffice/middleware"
 	"html/template"
 	"log"
@@ -11,36 +10,21 @@ import (
 
 var Templates *template.Template
 
+// UI 개발을 위한 MOCK 데이터
+var mockBranches = []Branch{
+	{ID: 1, Name: "대구지점", Alias: "daegu", Manager: "김관리", Address: "대구광역시 중구", Directions: "반월당역 1번 출구", CreatedAt: "2026-01-01", UpdatedAt: "2026-01-01", RegisterDate: "2026-01-01"},
+	{ID: 2, Name: "가산지점", Alias: "gasan", Manager: "이매니저", Address: "서울특별시 금천구", Directions: "가산디지털단지역 7번 출구", CreatedAt: "2026-01-05", UpdatedAt: "2026-01-05", RegisterDate: "2026-01-05"},
+	{ID: 3, Name: "강남지점", Alias: "gangnam", Manager: "박팀장", Address: "서울특별시 강남구", Directions: "강남역 10번 출구", CreatedAt: "2026-02-10", UpdatedAt: "2026-02-10", RegisterDate: "2026-02-10"},
+}
+
 // Handler - 지점 목록
 func Handler(w http.ResponseWriter, r *http.Request) {
-	dbBranches, err := database.GetAllBranches()
-	if err != nil {
-		log.Println("GetAllBranches error:", err)
-		http.Error(w, "지점 목록을 가져오는 데 실패했습니다.", http.StatusInternalServerError)
-		return
-	}
-
-	var branches []Branch
-	for _, dbB := range dbBranches {
-		branches = append(branches, Branch{
-			ID:           dbB["id"].(int),
-			Name:         dbB["name"].(string),
-			Alias:        dbB["alias"].(string),
-			Manager:      getOrDefault(dbB["manager"]),
-			Address:      getOrDefault(dbB["address"]),
-			Directions:   getOrDefault(dbB["directions"]),
-			CreatedAt:    dbB["created_at"].(string),
-			UpdatedAt:    dbB["updated_at"].(string),
-			RegisterDate: dbB["created_at"].(string), // For backward compatibility
-		})
-	}
-
 	data := PageData{
 		BasePageData: middleware.GetBasePageData(r),
 		Title:        "지점 관리",
 		ActiveMenu:   "complex_branches",
 		AdminName:    "관리자",
-		Branches:     branches,
+		Branches:     mockBranches,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "dashboard/complex_branches.html", data); err != nil {
@@ -93,12 +77,19 @@ func StoreHandler(w http.ResponseWriter, r *http.Request) {
 	address := r.FormValue("address")
 	directions := r.FormValue("directions")
 
-	_, err := database.InsertBranch(name, alias, manager, address, directions)
-	if err != nil {
-		log.Println("InsertBranch error:", err)
-		http.Error(w, "지점 추가에 실패했습니다.", http.StatusInternalServerError)
-		return
-	}
+	// MOCK 추가 로직
+	newID := len(mockBranches) + 1
+	mockBranches = append(mockBranches, Branch{
+		ID:           newID,
+		Name:         name,
+		Alias:        alias,
+		Manager:      manager,
+		Address:      address,
+		Directions:   directions,
+		CreatedAt:    "2026-03-15",
+		UpdatedAt:    "2026-03-15",
+		RegisterDate: "2026-03-15",
+	})
 
 	http.Redirect(w, r, "/complex/branches", http.StatusSeeOther)
 }
@@ -107,23 +98,12 @@ func StoreHandler(w http.ResponseWriter, r *http.Request) {
 func DetailHandler(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
 	
-	dbBranch, err := database.GetBranchByID(id)
-	if err != nil {
-		log.Println("GetBranchByID error:", err)
-		http.Error(w, "지점 정보를 가져오는 데 실패했습니다.", http.StatusInternalServerError)
-		return
-	}
-
-	branch := Branch{
-		ID:           dbBranch["id"].(int),
-		Name:         dbBranch["name"].(string),
-		Alias:        dbBranch["alias"].(string),
-		Manager:      getOrDefault(dbBranch["manager"]),
-		Address:      getOrDefault(dbBranch["address"]),
-		Directions:   getOrDefault(dbBranch["directions"]),
-		CreatedAt:    dbBranch["created_at"].(string),
-		UpdatedAt:    dbBranch["updated_at"].(string),
-		RegisterDate: dbBranch["created_at"].(string),
+	var branch Branch
+	for _, b := range mockBranches {
+		if b.ID == id {
+			branch = b
+			break
+		}
 	}
 
 	data := struct {
@@ -148,23 +128,12 @@ func DetailHandler(w http.ResponseWriter, r *http.Request) {
 func EditHandler(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
 	
-	dbBranch, err := database.GetBranchByID(id)
-	if err != nil {
-		log.Println("GetBranchByID error:", err)
-		http.Error(w, "지점 정보를 가져오는 데 실패했습니다.", http.StatusInternalServerError)
-		return
-	}
-
-	branch := Branch{
-		ID:           dbBranch["id"].(int),
-		Name:         dbBranch["name"].(string),
-		Alias:        dbBranch["alias"].(string),
-		Manager:      getOrDefault(dbBranch["manager"]),
-		Address:      getOrDefault(dbBranch["address"]),
-		Directions:   getOrDefault(dbBranch["directions"]),
-		CreatedAt:    dbBranch["created_at"].(string),
-		UpdatedAt:    dbBranch["updated_at"].(string),
-		RegisterDate: dbBranch["created_at"].(string),
+	var branch Branch
+	for _, b := range mockBranches {
+		if b.ID == id {
+			branch = b
+			break
+		}
 	}
 
 	data := struct {
@@ -185,6 +154,36 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// UpdateHandler - 지점 정보 업데이트 처리 (POST)
+func UpdateHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	id, _ := strconv.Atoi(r.FormValue("id"))
+	name := r.FormValue("name")
+	alias := r.FormValue("alias")
+	manager := r.FormValue("manager")
+	address := r.FormValue("address")
+	directions := r.FormValue("directions")
+
+	// MOCK 업데이트 로직
+	for i, b := range mockBranches {
+		if b.ID == id {
+			mockBranches[i].Name = name
+			mockBranches[i].Alias = alias
+			mockBranches[i].Manager = manager
+			mockBranches[i].Address = address
+			mockBranches[i].Directions = directions
+			mockBranches[i].UpdatedAt = "2026-03-15"
+			break
+		}
+	}
+
+	http.Redirect(w, r, "/complex/branches", http.StatusSeeOther)
+}
+
 // DeleteHandler - 지점 삭제 처리 (POST)
 func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -194,11 +193,12 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, _ := strconv.Atoi(r.FormValue("id"))
 
-	_, err := database.DeleteBranch(id)
-	if err != nil {
-		log.Println("DeleteBranch error:", err)
-		http.Error(w, "지점 삭제에 실패했습니다.", http.StatusInternalServerError)
-		return
+	// MOCK 삭제 로직
+	for i, b := range mockBranches {
+		if b.ID == id {
+			mockBranches = append(mockBranches[:i], mockBranches[i+1:]...)
+			break
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)

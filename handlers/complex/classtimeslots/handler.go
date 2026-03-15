@@ -1,7 +1,6 @@
 package classtimeslots
 
 import (
-	"backoffice/database"
 	"backoffice/middleware"
 	"backoffice/utils"
 	"html/template"
@@ -13,42 +12,25 @@ import (
 
 var Templates *template.Template
 
+// UI 개발을 위한 MOCK 데이터
+var mockTimeSlots = []ClassTimeSlot{
+	{Seq: 1, BranchSeq: 1, Name: "평일 월수 오전반", DaysOfWeek: "월,수", StartTime: "10:00", EndTime: "12:00", CreatedDate: "2026-03-01"},
+	{Seq: 2, BranchSeq: 1, Name: "평일 화목 오후반", DaysOfWeek: "화,목", StartTime: "14:00", EndTime: "16:00", CreatedDate: "2026-03-01"},
+	{Seq: 3, BranchSeq: 1, Name: "주말 오전 집중반", DaysOfWeek: "토,일", StartTime: "10:00", EndTime: "14:00", CreatedDate: "2026-03-01"},
+}
+
 // Handler - 수업 시간대 목록 페이지 핸들러
 func Handler(w http.ResponseWriter, r *http.Request) {
 	// 세션에서 플래시 메시지 읽기
 	successMessage := utils.GetFlashMessage(w, r, "success")
 	errorMessage := utils.GetFlashMessage(w, r, "error")
 
-	// 세션에서 선택된 지점 정보 가져오기
-	branchSeq := middleware.GetSelectedBranch(r)
-
-	// DB에서 수업 시간대 목록 조회
-	slotsData, err := database.GetClassTimeSlotsByBranch(branchSeq)
-	if err != nil {
-		log.Printf("GetClassTimeSlotsByBranch error: %v", err)
-		http.Redirect(w, r, "/error", http.StatusSeeOther)
-		return
-	}
-
-	var slots []ClassTimeSlot
-	for _, row := range slotsData {
-		slot := ClassTimeSlot{
-			Seq:         row["seq"].(int),
-			BranchSeq:   row["branch_seq"].(int),
-			Name:        row["name"].(string),
-			DaysOfWeek:  row["days_of_week"].(string),
-			StartTime:   row["start_time"].(string),
-			EndTime:     row["end_time"].(string),
-			CreatedDate: row["created_at"].(string),
-		}
-		slots = append(slots, slot)
-	}
-
+	// DB 대신 MOCK 데이터 사용
 	data := PageData{
 		BasePageData:   middleware.GetBasePageData(r),
 		Title:          "수업 시간대 관리",
-		ActiveMenu: "complex_timeslots",
-		Slots:          slots,
+		ActiveMenu:     "complex_timeslots",
+		Slots:          mockTimeSlots,
 		SuccessMessage: successMessage,
 		ErrorMessage:   errorMessage,
 	}
@@ -69,7 +51,7 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		data := EditPageData{
 			BasePageData:   middleware.GetBasePageData(r),
 			Title:          "수업 시간대 추가",
-			ActiveMenu: "complex_timeslots",
+			ActiveMenu:     "complex_timeslots",
 			IsEdit:         false,
 			SuccessMessage: successMessage,
 			ErrorMessage:   errorMessage,
@@ -102,12 +84,20 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_, err := database.InsertClassTimeSlot(branchSeq, name, daysOfWeek, startTime, endTime)
-		if err != nil {
-			log.Printf("InsertClassTimeSlot error: %v", err)
-			http.Redirect(w, r, "/error", http.StatusSeeOther)
-			return
+		// MOCK 데이터 추가
+		newSeq := 1
+		if len(mockTimeSlots) > 0 {
+			newSeq = mockTimeSlots[len(mockTimeSlots)-1].Seq + 1
 		}
+		mockTimeSlots = append(mockTimeSlots, ClassTimeSlot{
+			Seq:         newSeq,
+			BranchSeq:   branchSeq,
+			Name:        name,
+			DaysOfWeek:  daysOfWeek,
+			StartTime:   startTime,
+			EndTime:     endTime,
+			CreatedDate: "2026-03-15",
+		})
 
 		utils.SetFlashMessage(w, r, "success", "수업 시간대가 성공적으로 추가되었습니다.")
 		http.Redirect(w, r, "/complex/class-time-slots", http.StatusSeeOther)
@@ -134,26 +124,26 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 		successMessage := utils.GetFlashMessage(w, r, "success")
 		errorMessage := utils.GetFlashMessage(w, r, "error")
 
-		slotData, err := database.GetClassTimeSlotBySeq(seq)
-		if err != nil {
-			log.Printf("GetClassTimeSlotBySeq error: %v", err)
-			http.Redirect(w, r, "/error", http.StatusSeeOther)
-			return
+		// MOCK 데이터 조회
+		var slot ClassTimeSlot
+		found := false
+		for _, s := range mockTimeSlots {
+			if s.Seq == seq {
+				slot = s
+				found = true
+				break
+			}
 		}
 
-		slot := ClassTimeSlot{
-			Seq:        slotData["seq"].(int),
-			BranchSeq:  slotData["branch_seq"].(int),
-			Name:       slotData["name"].(string),
-			DaysOfWeek: slotData["days_of_week"].(string),
-			StartTime:  slotData["start_time"].(string),
-			EndTime:    slotData["end_time"].(string),
+		if !found {
+			http.Redirect(w, r, "/complex/class-time-slots", http.StatusSeeOther)
+			return
 		}
 
 		data := EditPageData{
 			BasePageData:   middleware.GetBasePageData(r),
 			Title:          "수업 시간대 수정",
-			ActiveMenu: "complex_timeslots",
+			ActiveMenu:     "complex_timeslots",
 			Slot:           slot,
 			IsEdit:         true,
 			SuccessMessage: successMessage,
@@ -186,11 +176,15 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_, err := database.UpdateClassTimeSlot(seq, name, daysOfWeek, startTime, endTime)
-		if err != nil {
-			log.Printf("UpdateClassTimeSlot error: %v", err)
-			http.Redirect(w, r, "/error", http.StatusSeeOther)
-			return
+		// MOCK 데이터 수정
+		for i, s := range mockTimeSlots {
+			if s.Seq == seq {
+				mockTimeSlots[i].Name = name
+				mockTimeSlots[i].DaysOfWeek = daysOfWeek
+				mockTimeSlots[i].StartTime = startTime
+				mockTimeSlots[i].EndTime = endTime
+				break
+			}
 		}
 
 		utils.SetFlashMessage(w, r, "success", "수업 시간대가 성공적으로 수정되었습니다.")
@@ -218,11 +212,12 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = database.DeleteClassTimeSlot(seq)
-	if err != nil {
-		log.Printf("DeleteClassTimeSlot error: %v", err)
-		http.Redirect(w, r, "/error", http.StatusSeeOther)
-		return
+	// MOCK 데이터 삭제
+	for i, s := range mockTimeSlots {
+		if s.Seq == seq {
+			mockTimeSlots = append(mockTimeSlots[:i], mockTimeSlots[i+1:]...)
+			break
+		}
 	}
 
 	utils.SetFlashMessage(w, r, "success", "수업 시간대가 성공적으로 삭제되었습니다.")
