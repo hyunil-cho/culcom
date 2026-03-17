@@ -55,7 +55,7 @@ type kakaoAccount struct {
 
 // KakaoLoginHandler - 공개 게시판용 카카오 로그인 시작
 func KakaoLoginHandler(w http.ResponseWriter, r *http.Request) {
-	stateParam := r.URL.Query().Get("state")
+	stateParam := r.URL.Query().Get("query")
 	state := generateBoardState(stateParam)
 	log.Printf("카카오 로그인 요청 - state: %s", stateParam)
 
