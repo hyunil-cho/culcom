@@ -127,14 +127,23 @@
         const container = document.getElementById('modal-qrcode');
         const sizeText = document.getElementById('modal-size-text');
 
+        // 여백(Padding) 계산: 전체 크기의 약 5% 혹은 최소 15px
+        const padding = Math.max(15, Math.floor(size * 0.05));
+        const qrSize = size - (padding * 2);
+
         sizeText.innerText = size;
         container.innerHTML = ""; // 기존 내용 초기화
+        
+        // 배경색과 여백 스타일 적용
+        container.style.background = "white";
+        container.style.padding = padding + "px";
+        container.style.display = "inline-block";
 
-        // 실제 선택된 크기로 QR 생성
+        // 실제 선택된 크기보다 약간 작게 QR 생성 (여백 확보)
         new QRCode(container, {
             text: kakaoSyncURL,
-            width: size,
-            height: size,
+            width: qrSize,
+            height: qrSize,
             colorDark : "#000000",
             colorLight : "#ffffff",
             correctLevel : QRCode.CorrectLevel.H
@@ -164,40 +173,52 @@
     }
 
     function downloadQR() {
-        // 모달이 열려있으면 모달 내 QR 사용, 아니면 임시 생성
-        let container = document.getElementById('modal-qrcode');
-        let needsCleanup = false;
+        const totalSize = parseInt(slider.value);
+        const padding = Math.max(15, Math.floor(totalSize * 0.05));
+        const qrSize = totalSize - (padding * 2);
 
-        if (document.getElementById('qrPreviewModal').style.display === "none") {
-            // 모달이 닫혀있을 때는 보이지 않는 임시 컨테이너에 생성
-            container = document.createElement('div');
-            new QRCode(container, {
-                text: kakaoSyncURL,
-                width: parseInt(slider.value),
-                height: parseInt(slider.value),
-                correctLevel : QRCode.CorrectLevel.H
-            });
-            needsCleanup = true;
-        }
+        // 보이지 않는 임시 컨테이너에 QR 생성
+        const tempContainer = document.createElement('div');
+        new QRCode(tempContainer, {
+            text: kakaoSyncURL,
+            width: qrSize,
+            height: qrSize,
+            correctLevel : QRCode.CorrectLevel.H
+        });
 
+        // QRCode 생성 시간을 위해 약간의 지연 후 처리
         setTimeout(() => {
-            const canvas = container.querySelector('canvas');
-            const img = container.querySelector('img');
-            const currentSize = slider.value;
+            const qrCanvas = tempContainer.querySelector('canvas');
+            const qrImg = tempContainer.querySelector('img');
             
-            let dataURL;
-            if (canvas) dataURL = canvas.toDataURL("image/png");
-            else if (img) dataURL = img.src;
+            // 최종 결과물을 위한 새 캔버스 생성 (전체 사이즈)
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = totalSize;
+            finalCanvas.height = totalSize;
+            const ctx = finalCanvas.getContext('2d');
+            
+            // 1. 흰색 배경 채우기
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, totalSize, totalSize);
+            
+            // 2. QR 코드를 중앙에 그리기
+            if (qrCanvas) {
+                ctx.drawImage(qrCanvas, padding, padding);
+            } else if (qrImg) {
+                // 이미지가 로드되지 않았을 경우를 대비해 이미지 객체로 처리
+                ctx.drawImage(qrImg, padding, padding);
+            }
 
-            if (dataURL) {
+            const dataURL = finalCanvas.toDataURL("image/png");
+            if (dataURL && dataURL !== "data:,") {
                 const link = document.createElement('a');
-                link.download = `kakaosync-qr-{{.SelectedBranchName}}-${currentSize}px.png`;
+                link.download = `kakaosync-qr-{{.SelectedBranchName}}-${totalSize}px.png`;
                 link.href = dataURL;
                 link.click();
             } else {
-                alert("QR 코드를 준비하는 중입니다.");
+                alert("QR 코드를 준비하는 중입니다. 다시 시도해주세요.");
             }
-        }, 50);
+        }, 100);
     }
     </script>
 </body>
