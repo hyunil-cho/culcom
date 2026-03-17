@@ -90,6 +90,8 @@ func KakaoCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	stateParam := r.URL.Query().Get("state")
 
+	log.Printf("카카오 콜백 요청 - code: %s, state: %s", code, stateParam)
+
 	if code == "" || stateParam == "" {
 		log.Printf("카카오 콜백 - code 또는 state 누락")
 		http.Redirect(w, r, "/?error=login_failed", http.StatusSeeOther)
@@ -116,6 +118,8 @@ func KakaoCallbackHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/?error=login_expired", http.StatusSeeOther)
 		return
 	}
+
+	log.Printf("카카오 콜백 - code: %s, state: %+v", code, stateData)
 
 	// 액세스 토큰 받기
 	cfg := config.GetConfig()
