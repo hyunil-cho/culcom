@@ -55,9 +55,23 @@ type kakaoAccount struct {
 
 // KakaoLoginHandler - 공개 게시판용 카카오 로그인 시작
 func KakaoLoginHandler(w http.ResponseWriter, r *http.Request) {
-	stateParam := r.URL.Query().Get("query")
-	state := generateBoardState(stateParam)
-	log.Printf("카카오 로그인 요청 - state: %s", stateParam)
+	// 전체 쿼리 로그
+	log.Printf("KakaoLoginHandler - Incoming RawQuery: %s", r.URL.RawQuery)
+
+	// "query" 파라미터 (예: "state=17") 분석
+	rawQuery := r.URL.Query().Get("query")
+	branchSeq := ""
+
+	if rawQuery != "" {
+		log.Printf("KakaoLoginHandler - 'query' parameter: %s", rawQuery)
+		if innerValues, err := url.ParseQuery(rawQuery); err == nil {
+			branchSeq = innerValues.Get("state")
+			log.Printf("KakaoLoginHandler - Parsed 'state' from inner query: %s", branchSeq)
+		}
+	}
+
+	state := generateBoardState(branchSeq)
+	log.Printf("KakaoLoginHandler - Final state used for OAuth: %s (branchSeq: %s)", state, branchSeq)
 
 	cfg := config.GetConfig()
 	kakaoClientID := cfg.KakaoOAuth.ClientID
