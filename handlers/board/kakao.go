@@ -55,9 +55,10 @@ type kakaoAccount struct {
 
 // KakaoLoginHandler - 공개 게시판용 카카오 로그인 시작
 func KakaoLoginHandler(w http.ResponseWriter, r *http.Request) {
-	branchSeq := r.URL.Query().Get("branch")
-	log.Printf("카카오 로그인 요청 - branch: %s", branchSeq)
-	state := generateBoardState(branchSeq)
+	stateParam := r.URL.Query().Get("state")
+	state := generateBoardState(stateParam)
+	log.Printf("카카오 로그인 요청 - state: %s", stateParam)
+
 	cfg := config.GetConfig()
 	kakaoClientID := cfg.KakaoOAuth.ClientID
 	redirectURI := cfg.KakaoOAuth.RedirectURI
