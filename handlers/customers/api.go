@@ -3,6 +3,7 @@ package customers
 import (
 	"backoffice/config"
 	"backoffice/database"
+	"backoffice/handlers/board"
 	"backoffice/middleware"
 	"backoffice/utils"
 	"log"
@@ -252,6 +253,21 @@ func DeleteCustomerHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("customer_seq 변환 오류: %v", err)
 		utils.JSONError(w, http.StatusBadRequest, "Invalid customer_seq")
 		return
+	}
+
+	// 카카오 연결 해제 처리 (카카오 가입 고객인 경우)
+	customer, err := database.GetCustomerBySeqForMypage(customerSeq)
+	if err == nil && customer != nil && customer.KakaoID != 0 {
+		log.Printf("카카오 고객 삭제 시도 - CustomerSeq: %d, KakaoID: %d", customerSeq, customer.KakaoID)
+		if err := board.UnlinkKakaoUser(customer.KakaoID); err != nil {
+			log.Printf("카카오 unlink 실패 (삭제 중) - seq: %d, kakao_id: %d, error: %v", customerSeq, customer.KakaoID, err)
+			// unlink 실패해도 DB 삭제는 진행할지 고민 필요. 
+			// 여기선 사용자 경험을 위해 중단하거나, 혹은 로그만 남기고 진행할 수 있음.
+			// 일단 board.WithdrawHandler와 동일하게 에러 반환.
+			utils.JSONError(w, http.StatusInternalServerError, "카카오 연결 해제 중 오류가 발생했습니다: "+err.Error())
+			return
+		}
+		log.Printf("카카오 unlink 성공 - CustomerSeq: %d", customerSeq)
 	}
 
 	// 고객 삭제 (reservation_info는 FK constraint에 의해 자동으로 customer_id가 NULL로 변경됨)
