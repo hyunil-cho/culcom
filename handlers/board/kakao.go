@@ -58,16 +58,10 @@ func KakaoLoginHandler(w http.ResponseWriter, r *http.Request) {
 	// 전체 쿼리 로그
 	log.Printf("KakaoLoginHandler - Incoming RawQuery: %s", r.URL.RawQuery)
 
-	// "query" 파라미터 (예: "state=17") 분석
-	rawQuery := r.URL.Query().Get("query")
-	branchSeq := ""
-
-	if rawQuery != "" {
-		log.Printf("KakaoLoginHandler - 'query' parameter: %s", rawQuery)
-		if innerValues, err := url.ParseQuery(rawQuery); err == nil {
-			branchSeq = innerValues.Get("state")
-			log.Printf("KakaoLoginHandler - Parsed 'state' from inner query: %s", branchSeq)
-		}
+	// "state" 파라미터 확인 (예: state=17)
+	branchSeq := r.URL.Query().Get("state")
+	if branchSeq != "" {
+		log.Printf("KakaoLoginHandler - Found branchSeq from 'state': %s", branchSeq)
 	}
 
 	state := generateBoardState(branchSeq)
