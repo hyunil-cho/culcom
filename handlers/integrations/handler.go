@@ -228,3 +228,32 @@ func SMSConfigSaveHandler(w http.ResponseWriter, r *http.Request) {
 	// 성공 시 리다이렉트
 	http.Redirect(w, r, "/integrations?success=saved", http.StatusSeeOther)
 }
+
+// KakaoSyncHandler 카카오싱크 URL 생성기 페이지
+func KakaoSyncHandler(w http.ResponseWriter, r *http.Request) {
+	// 선택된 지점의 seq 가져오기
+	branchSeq := middleware.GetSelectedBranch(r)
+
+	// 카카오싱크 URL 생성
+	// 형식: https://pf-link.kakao.com/qr/_qFHUn/pages/_MM?query=state%3D17
+	// state%3D 뒤에 branchSeq를 붙임
+	kakaoSyncBaseURL := "https://pf-link.kakao.com/qr/_qFHUn/pages/_MM"
+	kakaoSyncURL := fmt.Sprintf("%s?query=state%%3D%d", kakaoSyncBaseURL, branchSeq)
+
+	data := struct {
+		middleware.BasePageData
+		Title        string
+		ActiveMenu   string
+		KakaoSyncURL string
+	}{
+		BasePageData: middleware.GetBasePageData(r),
+		Title:        "카카오싱크 URL 생성",
+		ActiveMenu:   "kakao-sync",
+		KakaoSyncURL: kakaoSyncURL,
+	}
+
+	if err := Templates.ExecuteTemplate(w, "integrations/kakao-sync.html", data); err != nil {
+		log.Printf("템플릿 실행 오류: %v", err)
+		http.Error(w, "페이지를 불러올 수 없습니다", http.StatusInternalServerError)
+	}
+}

@@ -1,0 +1,205 @@
+{{define "integrations/kakao-sync.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    {{template "sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+            <div class="content-header" style="margin-bottom: 2rem;">
+                <div class="header-title">
+                    <h1 style="font-size: 1.5rem; font-weight: 700; color: #1a1a1a; margin-bottom: 0.5rem;">💬 카카오싱크 URL 및 QR 코드 생성</h1>
+                    <p style="color: #666; font-size: 0.95rem;">현재 선택된 지점(<strong>{{.SelectedBranchName}}</strong>) 전용 카카오싱크 연결 정보입니다.</p>
+                </div>
+            </div>
+
+            <!-- URL 섹션 -->
+            <div class="content-card" style="margin-bottom: 1.5rem; padding: 1.5rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 600; color: #333; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.2rem;">🔗</span> 카카오싱크 연결 URL
+                </h3>
+                
+                <div style="background: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.25rem;">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="kakaoSyncUrl" value="{{.KakaoSyncURL}}" readonly 
+                               style="flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; background: white; font-family: monospace; font-size: 0.9rem; color: #374151;">
+                        <button class="btn-primary" onclick="copyToClipboard('kakaoSyncUrl')" style="padding: 0 1.25rem; white-space: nowrap; height: auto;">
+                            URL 복사
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QR 코드 설정 섹션 -->
+            <div class="content-card" style="padding: 1.5rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 600; color: #333; margin-bottom: 1.2rem;">
+                    <span style="font-size: 1.2rem;">📱</span> QR 코드 설정 및 생성
+                </h3>
+
+                <div style="max-width: 600px; margin: 0 auto; background: #fafafa; padding: 2rem; border-radius: 12px; border: 1px solid #eee;">
+                    <div style="margin-bottom: 2rem;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 15px; color: #4b5563; text-align: center;">
+                            출력 크기 설정: <span id="size-display" style="color: #007bff; font-size: 1.2rem;">300</span> x <span id="size-display-2" style="color: #007bff; font-size: 1.2rem;">300</span> px
+                        </label>
+                        <input type="range" id="qr-size-slider" min="128" max="1200" step="32" value="300"
+                               style="width: 100%; cursor: pointer;" oninput="updateSizeDisplay(this.value)">                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #9ca3af; margin-top: 8px;">
+                            <span>작게 (128px)</span>
+                            <span>크게 (1200px)</span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 2rem;">
+                        <button class="btn-secondary" style="padding: 6px 16px; font-size: 0.85rem;" onclick="setPresetSize(300)">기본 (300px)</button>
+                        <button class="btn-secondary" style="padding: 6px 16px; font-size: 0.85rem;" onclick="setPresetSize(600)">중형 (600px)</button>
+                        <button class="btn-secondary" style="padding: 6px 16px; font-size: 0.85rem;" onclick="setPresetSize(1000)">인쇄용 (1000px)</button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <button class="btn-secondary" onclick="openPreviewModal()" style="padding: 1rem; font-size: 1rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <span>🔍</span> 실제 크기 미리보기
+                        </button>
+                        <button class="btn-primary" onclick="downloadQR()" style="padding: 1rem; font-size: 1rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <span>📥</span> PNG 다운로드
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 미리보기 모달 (프로젝트 스타일 적용) -->
+    <div id="qrPreviewModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 16px; width: 90%; max-width: 900px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
+            <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa;">
+                <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700;">QR 코드 실제 크기 미리보기 (<span id="modal-size-text">300</span>px)</h3>
+                <button onclick="closePreviewModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;">&times;</button>
+            </div>
+            <div id="modal-body" style="flex: 1; overflow: auto; padding: 2rem; display: flex; justify-content: center; align-items: flex-start; background: #f0f0f0;">
+                <div id="modal-qrcode-container" style="background: white; padding: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 8px;">
+                    <div id="modal-qrcode"></div>
+                </div>
+            </div>
+            <div style="padding: 1rem; border-top: 1px solid #eee; text-align: center; background: #fff;">
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 1rem;">※ 화면보다 큰 경우 스크롤하여 확인할 수 있습니다.</p>
+                <button class="btn-primary" onclick="downloadQR()" style="padding: 0.75rem 2rem;">이 크기로 다운로드</button>
+                <button class="btn-secondary" onclick="closePreviewModal()" style="padding: 0.75rem 2rem; margin-left: 8px;">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .btn { transition: all 0.2s; cursor: pointer; border-radius: 6px; border: none; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-primary:hover { background: #0069d9; }
+        .btn-secondary { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+        .btn-secondary:hover { background: #e5e7eb; }
+        
+        #modal-qrcode img, #modal-qrcode canvas {
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+
+    <script>
+    const kakaoSyncURL = "{{.KakaoSyncURL}}";
+    const slider = document.getElementById('qr-size-slider');
+    const sizeDisplay = document.getElementById('size-display');
+    const sizeDisplay2 = document.getElementById('size-display-2');
+
+    function updateSizeDisplay(size) {
+        sizeDisplay.innerText = size;
+        if (sizeDisplay2) sizeDisplay2.innerText = size;
+    }
+
+    function setPresetSize(size) {
+        slider.value = size;
+        updateSizeDisplay(size);
+    }
+
+    function openPreviewModal() {
+        const size = parseInt(slider.value);
+        const modal = document.getElementById('qrPreviewModal');
+        const container = document.getElementById('modal-qrcode');
+        const sizeText = document.getElementById('modal-size-text');
+
+        sizeText.innerText = size;
+        container.innerHTML = ""; // 기존 내용 초기화
+
+        // 실제 선택된 크기로 QR 생성
+        new QRCode(container, {
+            text: kakaoSyncURL,
+            width: size,
+            height: size,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+
+        modal.style.display = "flex";
+        document.body.style.overflow = "hidden"; // 배경 스크롤 방지
+    }
+
+    function closePreviewModal() {
+        const modal = document.getElementById('qrPreviewModal');
+        modal.style.display = "none";
+        document.body.style.overflow = "auto";
+    }
+
+    // 모달 바깥 클릭 시 닫기
+    document.getElementById('qrPreviewModal').addEventListener('click', function(e) {
+        if (e.target === this) closePreviewModal();
+    });
+
+    function copyToClipboard(id) {
+        const copyText = document.getElementById(id);
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        document.execCommand("copy");
+        alert("URL이 클립보드에 복사되었습니다.");
+    }
+
+    function downloadQR() {
+        // 모달이 열려있으면 모달 내 QR 사용, 아니면 임시 생성
+        let container = document.getElementById('modal-qrcode');
+        let needsCleanup = false;
+
+        if (document.getElementById('qrPreviewModal').style.display === "none") {
+            // 모달이 닫혀있을 때는 보이지 않는 임시 컨테이너에 생성
+            container = document.createElement('div');
+            new QRCode(container, {
+                text: kakaoSyncURL,
+                width: parseInt(slider.value),
+                height: parseInt(slider.value),
+                correctLevel : QRCode.CorrectLevel.H
+            });
+            needsCleanup = true;
+        }
+
+        setTimeout(() => {
+            const canvas = container.querySelector('canvas');
+            const img = container.querySelector('img');
+            const currentSize = slider.value;
+            
+            let dataURL;
+            if (canvas) dataURL = canvas.toDataURL("image/png");
+            else if (img) dataURL = img.src;
+
+            if (dataURL) {
+                const link = document.createElement('a');
+                link.download = `kakaosync-qr-{{.SelectedBranchName}}-${currentSize}px.png`;
+                link.href = dataURL;
+                link.click();
+            } else {
+                alert("QR 코드를 준비하는 중입니다.");
+            }
+        }, 50);
+    }
+    </script>
+</body>
+</html>
+{{end}}

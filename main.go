@@ -154,6 +154,7 @@ func main() {
 	mux.HandleFunc("/branches/add", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.AddHandler)))                              // 지점 추가
 	mux.HandleFunc("/branches/delete", middleware.RequireAuthRecover(branches.DeleteHandler))                                                     // 지점 삭제
 	mux.HandleFunc("/integrations", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.Handler)))                             // 외부 시스템 연동
+	mux.HandleFunc("/integrations/kakao-sync", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.KakaoSyncHandler)))          // 카카오싱크 URL 생성
 	mux.HandleFunc("/integrations/configure", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.ConfigureHandler)))          // 연동 설정
 	mux.HandleFunc("/integrations/manage", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.ConfigureHandler)))             // 연동 관리 (설정과 동일)
 	mux.HandleFunc("/api/external/sms", middleware.RequireAuthRecover(integrations.SMSTestHandler))                                               // SMS 테스트 발송 API
