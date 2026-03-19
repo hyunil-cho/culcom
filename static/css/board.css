@@ -990,10 +990,29 @@ a {
         display: none;
     }
 
+    .logo-divider,
+    .logo-sub {
+        display: none;
+    }
+
+    .board-logo {
+        padding: 12px 0;
+        gap: 6px;
+    }
+
+    .logo-text {
+        font-size: 1.1rem;
+    }
+
     .nav-mypage-btn,
-    .nav-logout-btn {
+    .nav-logout-btn,
+    .nav-login-btn {
         padding: 7px 12px;
-        font-size: 0.78rem;
+        font-size: 0.75rem;
+    }
+
+    .nav-login-btn {
+        padding: 7px 10px;
     }
 
     .info-row {
