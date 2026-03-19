@@ -78,8 +78,8 @@ func GetCustomerBySeqForMypage(seq int) (*KakaoCustomer, error) {
 
 // UpsertKakaoCustomer - 카카오 로그인 시 고객 등록 또는 업데이트
 // 이미 존재하면 이름/전화번호 업데이트, 없으면 새로 등록
-// 반환: 고객 seq
-func UpsertKakaoCustomer(branchSeq int, kakaoID int64, name, phoneNumber string) (int, error) {
+// 반환: 고객 seq, 신규 가입 여부, 에러
+func UpsertKakaoCustomer(branchSeq int, kakaoID int64, name, phoneNumber string) (int, bool, error) {
 	// 전화번호 정리
 	cleanPhone := strings.Map(func(r rune) rune {
 		if r >= '0' && r <= '9' {
@@ -96,10 +96,10 @@ func UpsertKakaoCustomer(branchSeq int, kakaoID int64, name, phoneNumber string)
 		_, err = DB.Exec(updateQuery, name, cleanPhone, kakaoID)
 		if err != nil {
 			log.Printf("카카오 고객 업데이트 실패: %v", err)
-			return 0, err
+			return 0, false, err
 		}
 		log.Printf("카카오 고객 업데이트 - seq: %d, 이름: %s", existing.Seq, name)
-		return existing.Seq, nil
+		return existing.Seq, false, nil
 	}
 
 	// 신규 등록
@@ -108,16 +108,16 @@ func UpsertKakaoCustomer(branchSeq int, kakaoID int64, name, phoneNumber string)
 	result, err := DB.Exec(insertQuery, branchSeq, name, cleanPhone, kakaoID)
 	if err != nil {
 		log.Printf("카카오 고객 등록 실패: %v", err)
-		return 0, fmt.Errorf("고객 등록에 실패했습니다: %w", err)
+		return 0, false, fmt.Errorf("고객 등록에 실패했습니다: %w", err)
 	}
 
 	customerSeq, err := result.LastInsertId()
 	if err != nil {
-		return 0, err
+		return 0, false, err
 	}
 
 	log.Printf("카카오 고객 신규 등록 - seq: %d, 이름: %s, kakao_id: %d", customerSeq, name, kakaoID)
-	return int(customerSeq), nil
+	return int(customerSeq), true, nil
 }
 
 // DeleteCustomerBySeq - 고객 삭제 (회원탈퇴)

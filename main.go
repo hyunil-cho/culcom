@@ -127,6 +127,7 @@ func main() {
 	mux.HandleFunc("/board/detail", middleware.RecoverFunc(board.DetailHandler))                // 공지사항/이벤트 상세 (공개, /board 호환)
 	mux.HandleFunc("/board/kakao/login", middleware.RecoverFunc(board.KakaoLoginHandler))       // 게시판 카카오 로그인
 	mux.HandleFunc("/board/kakao/callback", middleware.RecoverFunc(board.KakaoCallbackHandler)) // 게시판 카카오 콜백
+	mux.HandleFunc("/board/kakao/success", middleware.RecoverFunc(board.KakaoRegistrationSuccessHandler)) // 게시판 카카오 회원가입 완료
 	mux.HandleFunc("/board/mypage", middleware.RecoverFunc(board.MypageHandler))                // 마이페이지
 	mux.HandleFunc("/board/logout", middleware.RecoverFunc(board.BoardLogoutHandler))           // 게시판 로그아웃
 	mux.HandleFunc("/board/withdraw", middleware.RecoverFunc(board.WithdrawHandler))            // 회원탈퇴

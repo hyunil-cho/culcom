@@ -178,7 +178,7 @@ func KakaoCallbackHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	memberSeq, err := database.UpsertKakaoCustomer(branchSeq, userInfo.ID, memberName, phoneNumber)
+	memberSeq, isNew, err := database.UpsertKakaoCustomer(branchSeq, userInfo.ID, memberName, phoneNumber)
 	if err != nil {
 		log.Printf("카카오 고객 등록/업데이트 실패: %v", err)
 		http.Redirect(w, r, "/?error=login_failed", http.StatusSeeOther)
@@ -205,8 +205,37 @@ func KakaoCallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("카카오 회원 로그인 성공 - seq: %d, 이름: %s", memberSeq, memberName)
 
-	// 게시판 메인으로 리다이렉트
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	// 신규 가입인 경우 완료 페이지로, 기존 회원은 메인으로
+	if isNew {
+		http.Redirect(w, r, "/board/kakao/success", http.StatusSeeOther)
+	} else {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+	}
+}
+
+// KakaoRegistrationSuccessHandler - 카카오 회원가입 완료 페이지
+func KakaoRegistrationSuccessHandler(w http.ResponseWriter, r *http.Request) {
+	isLoggedIn, _, memberName := GetBoardSession(r)
+	if !isLoggedIn {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	data := struct {
+		Title      string
+		MemberName string
+		IsLoggedIn bool
+	}{
+		Title:      "회원가입 완료",
+		MemberName: memberName,
+		IsLoggedIn: isLoggedIn,
+	}
+
+	if err := PublicTemplates.ExecuteTemplate(w, "board/kakao-success.html", data); err != nil {
+		log.Printf("템플릿 렌더링 오류: %v", err)
+		http.Error(w, "페이지를 불러올 수 없습니다", http.StatusInternalServerError)
+	}
+
 }
 
 // BoardLogoutHandler - 공개 게시판 로그아웃
