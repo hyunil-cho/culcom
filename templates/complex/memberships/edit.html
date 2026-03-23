@@ -1,0 +1,62 @@
+{{define "memberships/edit.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<body>
+    {{template "complex_sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+            <div class="detail-actions">
+                <a href="/complex/memberships" class="btn-back">← 목록으로</a>
+            </div>
+
+            <div class="content-card">
+                <div class="form-header">
+                    <h2>멤버십 정보 수정</h2>
+                </div>
+                <form action="/complex/memberships/edit?id={{.Membership.Seq}}" method="POST">
+                    <div class="form-body">
+                        <div class="form-row">
+                            <label class="form-label">멤버십 이름 <span class="required">*</span></label>
+                            <input type="text" name="name" class="form-input" value="{{.Membership.Name}}" required>
+                        </div>
+                        
+                        <div class="form-row">
+                            <label class="form-label">유효 기간 <span class="required">*</span></label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="number" name="duration_value" class="form-input" style="flex: 2;" value="{{.DurationVal}}" required>
+                                <select name="duration_unit" class="form-input" style="flex: 1;">
+                                    <option value="day" {{if eq .DurationUnit "day"}}selected{{end}}>일</option>
+                                    <option value="month" {{if eq .DurationUnit "month"}}selected{{end}}>개월</option>
+                                    <option value="year" {{if eq .DurationUnit "year"}}selected{{end}}>년</option>
+                                </select>
+                            </div>
+                            <small style="color: #666; font-size: 0.85rem; margin-top: 0.25rem; display: block;">수강이 가능한 기간을 수정하세요.</small>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">수강 횟수 (회) <span class="required">*</span></label>
+                            <input type="number" name="count" class="form-input" value="{{.Membership.Count}}" required>
+                            <small style="color: #666; font-size: 0.85rem; margin-top: 0.25rem; display: block;">해당 기간 동안 수강 가능한 총 횟수를 입력하세요.</small>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">판매 가격 (원) <span class="required">*</span></label>
+                            <input type="number" name="price" class="form-input" value="{{.Membership.Price}}" required>
+                            <small style="color: #666; font-size: 0.85rem; margin-top: 0.25rem; display: block;">부가세 포함 판매가를 입력하세요.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary-large">💾 수정완료</button>
+                        <a href="/complex/memberships" class="btn-secondary-large">취소</a>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
+{{end}}

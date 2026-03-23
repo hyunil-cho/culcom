@@ -1,0 +1,123 @@
+{{define "dashboard/postponement_list.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <style>
+        .status-pending { background: #fff9db; color: #f08c00; border: 1px solid #ffe066; }
+        .status-approved { background: #e6fcf5; color: #099268; border: 1px solid #63e6be; }
+        .status-rejected { background: #fff5f5; color: #c92a2a; border: 1px solid #ffa8a8; }
+        
+        .status-select {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    {{template "complex_sidebar" .}}
+    
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+            <div class="content-card">
+                <div class="table-header">
+                    <h2>수업 연기 요청 현황</h2>
+                </div>
+                
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>요청일</th>
+                                <th>요청회원</th>
+                                <th>연락처</th>
+                                <th>현재수업</th>
+                                <th>연기기간</th>
+                                <th>사유</th>
+                                <th>상태</th>
+                                <th>처리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{range .Requests}}
+                            <tr>
+                                <td>{{.RequestDate}}</td>
+                                <td><strong>{{.MemberName}}</strong></td>
+                                <td>{{.PhoneNumber}}</td>
+                                <td>{{.CurrentClass}}</td>
+                                <td>
+                                    <span style="font-size: 0.85rem;">{{.StartDate}} ~ {{.EndDate}}</span>
+                                </td>
+                                <td style="max-width: 250px; text-align: left;">{{.Reason}}</td>
+                                <td>
+                                    <span class="status-badge {{if eq .Status "대기"}}status-pending{{else if eq .Status "승인"}}status-approved{{else}}status-rejected{{end}}">
+                                        {{.Status}}
+                                    </span>
+                                </td>
+                                <td>
+                                    <form action="/complex/postponements/update-status" method="POST" style="display: flex; gap: 5px; justify-content: center;">
+                                        <input type="hidden" name="id" value="{{.ID}}">
+                                        <input type="hidden" name="memberName" value="{{.MemberName}}">
+                                        <input type="hidden" name="currentStatus" value="{{.Status}}">
+                                        <select name="status" class="status-select" onfocus="this.oldValue = this.value;" onchange="confirmStatusChange(this)">
+                                            <option value="대기" {{if eq .Status "대기"}}selected{{end}}>대기</option>
+                                            <option value="승인" {{if eq .Status "승인"}}selected{{end}}>승인</option>
+                                            <option value="반려" {{if eq .Status "반려"}}selected{{end}}>반려</option>
+                                        </select>
+                                    </form>
+                                </td>
+                            </tr>
+                            {{else}}
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 3rem; color: #999;">새로운 연기 요청이 없습니다.</td>
+                            </tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/modal-utils.js"></script>
+    <script>
+        function confirmStatusChange(select) {
+            const form = select.form;
+            const memberName = form.querySelector('input[name="memberName"]').value;
+            const newStatus = select.value;
+            const oldStatus = select.oldValue;
+
+            if (newStatus === oldStatus) return;
+
+            if (typeof ModalManager === 'undefined') {
+                if (confirm(`${memberName} 회원의 요청 상태를 [${newStatus}](으)로 변경하시겠습니까?`)) {
+                    form.submit();
+                } else {
+                    select.value = oldStatus;
+                }
+                return;
+            }
+
+            ModalManager.createConfirm({
+                id: 'confirmStatusModal',
+                title: '상태 변경 확인',
+                message: `<strong>${memberName}</strong> 회원의 연기 요청 상태를 <span class="status-badge ${newStatus === '승인' ? 'status-approved' : (newStatus === '반려' ? 'status-rejected' : 'status-pending')}">${newStatus}</span>(으)로 변경하시겠습니까?`,
+                confirmText: '변경하기',
+                confirmColor: newStatus === '승인' ? '#10b981' : (newStatus === '반려' ? '#f44336' : '#f08c00'),
+                onConfirm: () => {
+                    form.submit();
+                },
+                onCancel: () => {
+                    select.value = oldStatus;
+                }
+            });
+            ModalManager.show('confirmStatusModal');
+        }
+    </script>
+</body>
+</html>
+{{end}}

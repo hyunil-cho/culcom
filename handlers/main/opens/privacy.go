@@ -11,7 +11,7 @@ var privacyTemplate *template.Template
 // InitPrivacyTemplate - 개인정보 처리방침 템플릿 초기화
 func InitPrivacyTemplate() {
 	var err error
-	privacyTemplate, err = template.ParseFiles("templates/privacy/policy.html")
+	privacyTemplate, err = template.ParseFiles("templates/main/privacy/policy.html")
 	if err != nil {
 		log.Printf("개인정보 처리방침 템플릿 파싱 오류: %v", err)
 	}

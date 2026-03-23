@@ -1,0 +1,115 @@
+{{define "classtimeslots/list.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/modal-utils.js"></script>
+    <script src="/static/js/modal-manager.js"></script>
+</head>
+<body>
+    {{template "complex_sidebar" .}}
+
+    <div class="main-wrapper">
+        {{template "header" .}}
+        
+        <main class="content">
+            <!-- 상단 액션 버튼 -->
+            <div class="content-card">
+                <div class="search-section">
+                    <div class="action-buttons">
+                        <a href="/complex/timeslots/add" class="btn-primary">➕ 시간대 추가</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 시간대 테이블 -->
+            <div class="content-card">
+                <div class="table-header">
+                    <div class="table-info">
+                        <span>총 <strong>{{len .Slots}}</strong>개 시간대</span>
+                    </div>
+                </div>
+                
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>시간대 이름</th>
+                                <th>요일</th>
+                                <th>시작 시간</th>
+                                <th>종료 시간</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{range .Slots}}
+                            <tr>
+                                <td><strong>{{.Name}}</strong></td>
+                                <td><span class="status-badge status-active">{{.DaysOfWeek}}요일</span></td>
+                                <td>{{.StartTime}}</td>
+                                <td>{{.EndTime}}</td>
+                                <td>
+                                    <a href="/complex/timeslots/edit?seq={{.Seq}}" class="btn-table-action">수정</a>
+                                    <button class="btn-table-action" onclick="confirmDelete('{{.Seq}}', '{{.Name}}')" style="background: #f44336; color: white;">삭제</button>
+                                </td>
+                            </tr>
+                            {{else}}
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 40px; color: #666;">
+                                    등록된 수업 시간대가 없습니다. 새로운 시간대를 추가해주세요.
+                                </td>
+                            </tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+<script>
+    {{if .SuccessMessage}}
+    window.addEventListener('DOMContentLoaded', function() {
+        ModalManager.createAlert({
+            title: '성공',
+            message: '{{.SuccessMessage}}',
+            icon: '✅'
+        });
+    });
+    {{end}}
+
+    {{if .ErrorMessage}}
+    window.addEventListener('DOMContentLoaded', function() {
+        ModalManager.createAlert({
+            title: '오류',
+            message: '{{.ErrorMessage}}',
+            icon: '❌'
+        });
+    });
+    {{end}}
+
+    function confirmDelete(seq, name) {
+        const modalId = 'delete-confirm-modal';
+        ModalManager.createConfirm({
+            id: modalId,
+            title: '삭제 확인',
+            message: `⚠️ <strong>${name}</strong> 시간대를 삭제하시겠습니까?<br><br>이 작업은 되돌릴 수 없습니다.`,
+            confirmText: '삭제',
+            confirmColor: '#f44336',
+            onConfirm: () => {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/complex/timeslots/delete?seq=' + seq;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+        ModalManager.show(modalId);
+    }
+</script>
+</body>
+</html>
+{{end}}

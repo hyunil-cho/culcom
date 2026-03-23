@@ -1,0 +1,77 @@
+{{define "dashboard/complex_class_edit.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    {{template "complex_sidebar" .}}
+    <div class="main-wrapper">
+        {{template "header" .}}
+        <main class="content">
+            <div class="detail-actions">
+                <a href="/complex/management" class="btn-back">← 목록으로</a>
+            </div>
+
+            <div class="content-card">
+                <div class="form-header">
+                    <h2>수업 정보 수정</h2>
+                </div>
+                <form action="/complex/management/update" method="POST" class="form-body">
+                    <input type="hidden" name="id" value="{{.Class.ID}}">
+                    
+                    <div class="form-row">
+                        <label class="form-label">수업 이름 <span class="required">*</span></label>
+                        <input type="text" name="name" class="form-input" value="{{.Class.Name}}" required>
+                    </div>
+
+                    <div class="form-row">
+                        <label class="form-label">수업 시간대 선택 <span class="required">*</span></label>
+                        <select name="time_slot_id" class="form-input" required>
+                            <option value="">-- 시간대 슬롯 선택 --</option>
+                            {{$selectedSlotID := .Class.TimeSlotID}}
+                            {{range .TimeSlots}}
+                            <option value="{{.seq}}" {{if eq .seq $selectedSlotID}}selected{{end}}>[{{.name}}] {{.days_of_week}} ({{.start_time}} ~ {{.end_time}})</option>
+                            {{else}}
+                            <option value="" disabled>등록된 시간대가 없습니다.</option>
+                            {{end}}
+                        </select>
+                        <p class="form-help">원하는 시간대가 없으면 '수업 시간대 관리'에서 먼저 등록해주세요.</p>
+                    </div>
+
+                    <div class="form-row">
+                        <label class="form-label">리더 선택</label>
+                        <select name="staff_id" class="form-input">
+                            <option value="">-- 리더 선택 (선택 사항) --</option>
+                            {{$selectedStaffID := .Class.StaffID}}
+                            {{range .Staffs}}
+                            <option value="{{.ID}}" {{if eq .ID $selectedStaffID}}selected{{end}}>{{.Name}}</option>
+                            {{else}}
+                            <option value="" disabled>등록된 리더가 없습니다.</option>
+                            {{end}}
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <label class="form-label">수업 정원 (인원 수) <span class="required">*</span></label>
+                        <input type="number" name="capacity" class="form-input" value="{{.Class.Capacity}}" min="1" required>
+                        <p class="form-help">해당 수업에 동시에 참여 가능한 최대 인원 수를 입력하세요.</p>
+                    </div>
+
+                    <div class="form-row">
+                        <label class="form-label">수업 설명</label>
+                        <textarea name="description" class="form-input" style="height: 100px;">{{.Class.Description}}</textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary-large">💾 저장</button>
+                        <a href="/complex/management" class="btn-secondary-large">취소</a>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
+{{end}}

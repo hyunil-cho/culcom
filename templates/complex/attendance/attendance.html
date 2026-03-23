@@ -1,0 +1,857 @@
+{{define "dashboard/attendance.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .complex-container {
+            padding: 20px;
+            background: #f4f7f6;
+            min-height: 100vh;
+        }
+        .complex-title {
+            text-align: center;
+            color: #4a90e2;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        .slot-section {
+            margin-bottom: 50px;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .slot-header {
+            border-left: 5px solid #4a90e2;
+            padding-left: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .slot-header h2 {
+            margin: 0;
+            color: #333;
+            font-size: 1.5rem;
+        }
+        .complex-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            align-items: start;
+        }
+        .class-card {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s;
+        }
+        .class-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .class-card-header {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .class-card-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #4a90e2;
+            font-weight: 700;
+        }
+        .attendance-label {
+            font-size: 0.75rem;
+            color: #2e7d32;
+            background: #e8f5e9;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        .member-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .member-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #f1f3f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+        .member-info {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex: 1;
+        }
+        .member-index {
+            color: #adb5bd;
+            font-size: 0.8rem;
+            width: 38px; /* STAFF 표시를 위해 너비 확장 */
+        }
+        .member-name {
+            font-weight: 600;
+            color: #495057;
+        }
+        .member-phone {
+            color: #999;
+            font-size: 0.85rem;
+        }
+        .status-mark {
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #dee2e6;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 0.8rem;
+            background: #fff;
+        }
+        .status-mark.active {
+            background: #4a90e2;
+            color: white;
+            border-color: #4a90e2;
+        }
+        .card-footer {
+            padding: 12px 15px;
+            background: #fdfdfd;
+            border-top: 1px solid #eee;
+            border-radius: 0 0 8px 8px;
+            font-size: 0.85rem;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .empty-row {
+            color: #f1f3f5;
+        }
+        .btn-member-manage {
+            background: #fff;
+            color: #4a90e2;
+            border: 1px solid #4a90e2;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            text-decoration: none;
+            margin-left: 10px;
+            transition: all 0.2s;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-member-manage:hover {
+            background: #4a90e2;
+            color: white;
+        }
+        .class-select-item {
+            padding: 12px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .class-select-item:hover {
+            background: #f0f7ff;
+            border-color: #4a90e2;
+        }
+        .class-select-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .class-select-name {
+            font-weight: 600;
+            color: #333;
+        }
+        .class-select-slot {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        /* 검색 강조 스타일 */
+        .member-highlight {
+            background-color: #fff9c4 !important;
+            transition: background-color 0.3s ease;
+        }
+        /* 현재 선택된 검색 결과 강조 */
+        .member-active-highlight {
+            background-color: #ffd600 !important;
+            outline: 2px solid #fbc02d;
+            z-index: 1;
+            transition: all 0.2s ease;
+        }
+
+        .search-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: center;
+        }
+        .search-bar-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            align-items: center;
+            width: 100%;
+            max-width: 1000px;
+        }
+        .search-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #555;
+        }
+        .search-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            width: 180px;
+        }
+        .btn-search {
+            padding: 8px 16px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .btn-search:hover {
+            background: #357abd;
+        }
+
+        .search-result-info {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            background: #e3f2fd;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #1976d2;
+            font-weight: 700;
+            margin-left: auto;
+        }
+        .btn-nav {
+            background: #fff;
+            border: 1px solid #bbdefb;
+            border-radius: 4px;
+            padding: 3px 10px;
+            cursor: pointer;
+            color: #1976d2;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .btn-nav:hover {
+            background: #1976d2;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    {{template "complex_sidebar" .}}
+    <div class="main-wrapper">
+        {{template "header" .}}
+        <main class="content">
+            <div class="complex-container">
+                <h1 class="complex-title">{{.Title}}</h1>
+
+                <!-- 검색 바 추가 -->
+                <div class="search-container">
+                    <div class="search-bar-group">
+                        <div class="search-item">
+                            이름 <input type="text" id="mainNameSearchInput" class="search-input" placeholder="회원 이름 입력">
+                            <button id="btnMainNameSearch" class="btn-search">검색</button>
+                        </div>
+                        <div class="search-item">
+                            전화번호 <input type="text" id="mainPhoneSearchInput" class="search-input" placeholder="번호 4자리">
+                            <button id="btnMainPhoneSearch" class="btn-search">검색</button>
+                        </div>
+                        
+                        <div id="mainSearchResultInfo" class="search-result-info">
+                            <span id="mainSearchCounter">0 / 0</span>
+                            <div style="display: flex; gap: 5px;">
+                                <button id="btnMainPrevMatch" class="btn-nav">◀ 이전</button>
+                                <button id="btnMainNextMatch" class="btn-nav">다음 ▶</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {{range .Groups}}
+                {{$slotName := .SlotName}}
+                <section class="slot-section">
+                    <div class="slot-header">
+                        <h2>{{.SlotName}}</h2>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="color: #888; margin-right: 5px;">총 {{len .Classes}}개 분반</span>
+                            <button type="button" class="btn-secondary" style="padding: 5px 12px; font-size: 0.85rem; font-weight: 600; cursor: pointer;" onclick="openSlotMessageModal('{{.SlotName}}')">💬 메시지</button>
+                            <a href="/complex/attendance/detail?slot={{.SlotName}}" class="btn-primary" style="text-decoration: none; padding: 5px 12px; font-size: 0.85rem; background: #4a90e2; color: white; border-radius: 4px; font-weight: 600;">전체 상세보기</a>
+                        </div>
+                    </div>
+                    
+                    <div class="complex-grid">
+                        {{range .Classes}}
+                        {{$currentClassName := .Name}}
+                        <div class="class-card">
+                            <div class="class-card-header">
+                                <h3>{{.Name}}</h3>
+                            </div>
+                            <ul class="member-list">
+                                {{range $i, $m := .Members}}
+                                <li class="member-item" data-member-id="{{.ID}}" data-member-name="{{.Name}}">
+                                    <div class="member-info">
+                                        <span class="member-index" style="{{if eq $i 0}}font-weight: 800; color: #e67e22; font-size: 0.7rem;{{end}}">
+                                            {{if eq $i 0}}STAFF{{else}}{{$i}}{{end}}
+                                        </span>
+                                        <span class="member-name">{{.Name}}</span>
+                                        <span class="member-phone">{{.PhoneNumber}}</span>
+                                        <button type="button" class="btn-member-manage" onclick="openMemberManageModal('{{.ID}}', '{{.Name}}', '{{.PhoneNumber}}', '{{$currentClassName}}')">관리</button>
+                                    </div>
+                                    <div class="status-mark {{if .Status}}active{{end}}">{{if .Status}}{{.Status}}{{else}}&nbsp;{{end}}</div>
+                                </li>
+                                {{end}}
+                                
+                                {{/* 최소 5줄 보장 MOCK */}}
+                                {{if lt (len .Members) 5}}
+                                    <li class="member-item empty-row"><div class="member-info"><span>- , x</span></div><div class="status-mark"></div></li>
+                                {{end}}
+                            </ul>
+                            <div class="card-footer">
+                                <strong>인원: {{len .Members}} / {{.Capacity}}명</strong>
+                                <a href="/complex/attendance/detail?slot={{$slotName}}&classId={{.ID}}" style="color: #4a90e2; cursor: pointer; text-decoration: none; font-weight: 600;">상세보기 →</a>
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                </section>
+                {{end}}
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 모든 수업 데이터를 JS 배열로 수집 (회원 정보 포함)
+        const allAvailableClasses = [
+            {{range .Groups}}
+                {{range .Classes}}
+                {
+                    id: "{{.ID}}",
+                    name: "{{.Name}}",
+                    slotName: "{{.TimeSlotName}}",
+                    members: [
+                        {{range $idx, $m := .Members}}
+                        {
+                            id: "{{.ID}}",
+                            name: "{{.Name}}",
+                            phone: "{{.PhoneNumber}}",
+                            isLeader: {{if eq $idx 0}}true{{else}}false{{end}} // 첫 번째 회원을 리더로 가정 (MOCK)
+                        },
+                        {{end}}
+                    ]
+                },
+                {{end}}
+            {{end}}
+        ];
+
+        // 메인 화면 검색 기능 구현
+        document.addEventListener('DOMContentLoaded', function() {
+            const nameInput = document.getElementById('mainNameSearchInput');
+            const btnNameSearch = document.getElementById('btnMainNameSearch');
+            const phoneInput = document.getElementById('mainPhoneSearchInput');
+            const btnPhoneSearch = document.getElementById('btnMainPhoneSearch');
+            
+            const resultInfoArea = document.getElementById('mainSearchResultInfo');
+            const counterDisplay = document.getElementById('mainSearchCounter');
+            const btnPrev = document.getElementById('btnMainPrevMatch');
+            const btnNext = document.getElementById('btnMainNextMatch');
+
+            const allMemberItems = document.querySelectorAll('.member-item');
+            
+            let matchedItems = [];
+            let currentMatchIndex = -1;
+
+            function clearHighlights() {
+                allMemberItems.forEach(item => {
+                    item.classList.remove('member-highlight');
+                    item.classList.remove('member-active-highlight');
+                });
+                if (resultInfoArea) resultInfoArea.style.display = 'none';
+            }
+
+            function updateNavigation() {
+                if (matchedItems.length > 0) {
+                    resultInfoArea.style.display = 'flex';
+                    counterDisplay.textContent = `${currentMatchIndex + 1} / ${matchedItems.length}`;
+                    
+                    matchedItems.forEach(item => item.classList.remove('member-active-highlight'));
+                    const currentItem = matchedItems[currentMatchIndex];
+                    currentItem.classList.add('member-active-highlight');
+                    
+                    currentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    resultInfoArea.style.display = 'none';
+                }
+            }
+
+            function performSearch(type) {
+                clearHighlights();
+                matchedItems = [];
+                currentMatchIndex = -1;
+                
+                const keyword = (type === 'name' ? nameInput.value : phoneInput.value).trim();
+                if (!keyword) return;
+
+                allMemberItems.forEach(item => {
+                    const targetCell = type === 'name' ? item.querySelector('.member-name') : item.querySelector('.member-phone');
+                    if (targetCell && targetCell.textContent.includes(keyword)) {
+                        item.classList.add('member-highlight');
+                        matchedItems.push(item);
+                    }
+                });
+
+                if (matchedItems.length > 0) {
+                    currentMatchIndex = 0;
+                    updateNavigation();
+                } else {
+                    alert('검색 결과가 없습니다.');
+                }
+            }
+
+            if (btnPrev) btnPrev.addEventListener('click', () => {
+                if (matchedItems.length === 0) return;
+                currentMatchIndex = (currentMatchIndex - 1 + matchedItems.length) % matchedItems.length;
+                updateNavigation();
+            });
+
+            if (btnNext) btnNext.addEventListener('click', () => {
+                if (matchedItems.length === 0) return;
+                currentMatchIndex = (currentMatchIndex + 1) % matchedItems.length;
+                updateNavigation();
+            });
+
+            if (btnNameSearch) btnNameSearch.addEventListener('click', () => performSearch('name'));
+            if (btnPhoneSearch) btnPhoneSearch.addEventListener('click', () => performSearch('phone'));
+
+            if (nameInput) nameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') performSearch('name');
+            });
+            if (phoneInput) phoneInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') performSearch('phone');
+            });
+        });
+
+        function openSlotMessageModal(slotName) {
+            if (typeof ModalManager === 'undefined') {
+                console.error('ModalManager is not loaded');
+                return;
+            }
+
+            ModalManager.createCustom({
+                id: 'slotMessageModal',
+                title: `메시지 발송 대상 선택`,
+                maxWidth: '500px',
+                headerColor: '#2c3e50',
+                contentBuilder: () => `
+                    <!-- 1단계: 그룹 선택 -->
+                    <div id="messageModalStep1" style="padding: 10px;">
+                        <div style="background: #f1f7fe; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center; border: 1px solid #d0e3ff;">
+                            <span style="color: #4a90e2; font-weight: 700; font-size: 1rem;">📍 ${slotName}</span>
+                        </div>
+                        <p style="margin-bottom: 20px; color: #666; font-size: 0.85rem; text-align: center;">발송할 수신 그룹을 선택해주세요.</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <button class="class-select-item" style="flex-direction: column; padding: 15px; text-align: center; gap: 8px;" onclick="showMessageComposition('${slotName}', 'all')">
+                                <span style="font-size: 1.4rem;">👥</span>
+                                <div class="class-select-info">
+                                    <span class="class-select-name">전체</span>
+                                    <span class="class-select-slot" style="font-size: 0.75rem;">모든 인원 대상</span>
+                                </div>
+                            </button>
+                            <button class="class-select-item" style="flex-direction: column; padding: 15px; text-align: center; gap: 8px;" onclick="showMessageComposition('${slotName}', 'leader')">
+                                <span style="font-size: 1.4rem;">⭐</span>
+                                <div class="class-select-info">
+                                    <span class="class-select-name">리더</span>
+                                    <span class="class-select-slot" style="font-size: 0.75rem;">클래스 리더 대상</span>
+                                </div>
+                            </button>
+                            <button class="class-select-item" style="flex-direction: column; padding: 15px; text-align: center; gap: 8px;" onclick="showMessageComposition('${slotName}', 'member')">
+                                <span style="font-size: 1.4rem;">👤</span>
+                                <div class="class-select-info">
+                                    <span class="class-select-name">회원</span>
+                                    <span class="class-select-slot" style="font-size: 0.75rem;">일반 회원 대상</span>
+                                </div>
+                            </button>
+                            <button class="class-select-item" style="flex-direction: column; padding: 15px; text-align: center; gap: 8px;" onclick="showMessageComposition('${slotName}', 'direct')">
+                                <span style="font-size: 1.4rem;">✅</span>
+                                <div class="class-select-info">
+                                    <span class="class-select-name">직접 선택</span>
+                                    <span class="class-select-slot" style="font-size: 0.75rem;">개별 선택 발송</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 2단계: 메시지 작성 및 수신자 관리 -->
+                    <div id="messageModalStep2" style="display: none; height: 420px; flex-direction: column;">
+                        <div id="messageSubHeader" style="background: #f1f7fe; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #d0e3ff; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+                            <span style="color: #4a90e2; font-weight: 700; font-size: 0.95rem;">📍 ${slotName}</span>
+                            <span id="groupBadge" style="background: #4a90e2; color: white; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">그룹</span>
+                        </div>
+                        
+                        <div style="margin-bottom: 12px; flex-shrink: 0; text-align: left;">
+                            <button onclick="goBackToStep1('${slotName}')" style="background: none; border: none; color: #4a90e2; cursor: pointer; font-weight: 600; padding: 0; font-size: 0.85rem; margin-left: -5px;">← 다시 그룹 선택하기</button>
+                        </div>
+                        
+                        <div style="display: flex; flex-grow: 1; gap: 15px; min-height: 0;">
+                            <!-- 왼쪽: 메시지 작성 -->
+                            <div style="flex: 1; display: flex; flex-direction: column;">
+                                <label style="font-weight: 600; margin-bottom: 6px; display: block; font-size: 0.85rem; color: #555;">💬 메시지 내용</label>
+                                <textarea id="smsContent" style="flex: 1; width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; resize: none; font-family: inherit; font-size: 0.9rem; line-height: 1.5;" placeholder="보낼 내용을 입력하세요..."></textarea>
+                                <div style="margin-top: 5px; font-size: 0.75rem; color: #888; text-align: right;">
+                                    <span id="charCount" style="font-weight: 600; color: #4a90e2;">0</span> / 2000 bytes
+                                </div>
+                            </div>
+                            <!-- 오른쪽: 대상 리스트 -->
+                            <div style="width: 240px; display: flex; flex-direction: column; border-left: 1px solid #eee; padding-left: 15px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <label style="font-weight: 600; font-size: 0.85rem; color: #555;">👥 수신자 (<span id="recipientCount" style="color: #4a90e2;">0</span>명)</label>
+                                    <button onclick="toggleAllRecipients(true)" style="background: none; border: none; color: #4a90e2; font-size: 0.7rem; cursor: pointer; padding: 0; font-weight: 600;">전체선택</button>
+                                </div>
+                                <div id="recipientList" style="flex: 1; overflow-y: auto; border: 1px solid #f0f0f0; border-radius: 6px; padding: 3px; background: #fafafa;">
+                                    <!-- 리스트 동적 삽입 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                buttons: [
+                    {
+                        id: 'btnBackToStep1',
+                        text: '이전',
+                        class: 'btn-secondary',
+                        style: { display: 'none' },
+                        onClick: () => goBackToStep1(slotName)
+                    },
+                    {
+                        id: 'btnSendSms',
+                        text: '메시지 발송',
+                        class: 'btn-primary',
+                        style: { display: 'none', background: '#4a90e2', borderColor: '#4a90e2' },
+                        onClick: () => {
+                            const content = document.getElementById('smsContent').value;
+                            const checkedOnes = document.querySelectorAll('.recipient-checkbox:checked');
+                            if (!content.trim()) return alert('메시지 내용을 입력해주세요.');
+                            if (checkedOnes.length === 0) return alert('수신자를 최소 한 명 이상 선택해주세요.');
+                            
+                            alert(`${checkedOnes.length}명에게 메시지를 발송했습니다.`);
+                            ModalManager.hide('slotMessageModal');
+                        }
+                    },
+                    {
+                        text: '취소',
+                        class: 'btn-secondary',
+                        onClick: () => ModalManager.hide('slotMessageModal')
+                    }
+                ]
+            });
+        }
+
+        function showMessageComposition(slotName, groupType) {
+            const modal = document.getElementById('slotMessageModal');
+            if (!modal) return;
+
+            const step1 = document.getElementById('messageModalStep1');
+            const step2 = document.getElementById('messageModalStep2');
+            const btnBack = document.getElementById('btnBackToStep1');
+            const btnSend = document.getElementById('btnSendSms');
+            const btnCancel = modal.querySelector('.modal-footer .btn-secondary:not(#btnBackToStep1)');
+            const modalTitle = modal.querySelector('.modal-header h3');
+            const modalContent = modal.querySelector('.modal-content');
+            const groupBadge = document.getElementById('groupBadge');
+
+            if (step1) step1.style.display = 'none';
+            if (step2) {
+                step2.style.display = 'flex';
+                step2.style.flexDirection = 'column';
+            }
+            if (btnBack) btnBack.style.display = 'inline-block';
+            if (btnSend) btnSend.style.display = 'inline-block';
+            if (btnCancel) btnCancel.textContent = '닫기';
+            
+            // 타이틀 및 배지 변경
+            const groupNames = { all: '전체', leader: '리더', member: '회원', direct: '직접 선택' };
+            if (modalTitle) modalTitle.textContent = `메시지 작성`;
+            if (groupBadge) groupBadge.textContent = groupNames[groupType];
+
+            // 모달 너비 확장 (850px로 컴팩트하게 조정)
+            if (modalContent) {
+                modalContent.style.maxWidth = '850px';
+                modalContent.style.width = '95%'; 
+            }
+
+            // 명단 필터링 및 생성
+            const recipientList = document.getElementById('recipientList');
+            if (!recipientList) return;
+            recipientList.innerHTML = '';
+            
+            allAvailableClasses.forEach(cls => {
+                if (cls.slotName === slotName) {
+                    cls.members.forEach(m => {
+                        let shouldInclude = false;
+                        if (groupType === 'all' || groupType === 'direct') shouldInclude = true;
+                        else if (groupType === 'leader' && m.isLeader) shouldInclude = true;
+                        else if (groupType === 'member' && !m.isLeader) shouldInclude = true;
+
+                        if (shouldInclude) {
+                            const item = document.createElement('div');
+                            item.style.padding = '10px';
+                            item.style.borderBottom = '1px solid #f0f0f0';
+                            item.style.display = 'flex';
+                            item.style.alignItems = 'center';
+                            item.style.gap = '12px';
+                            item.style.fontSize = '0.9rem';
+                            
+                            item.innerHTML = `
+                                <input type="checkbox" class="recipient-checkbox" id="recp_${m.id}" checked 
+                                       style="width: 18px; height: 18px; cursor: pointer;"
+                                       onchange="updateRecipientCount()">
+                                <label for="recp_${m.id}" style="cursor: pointer; flex: 1; display: flex; justify-content: space-between; align-items: center;">
+                                    <span><strong>${m.name}</strong> ${m.isLeader ? '<small style="color:#e67e22; margin-left:5px;">[리더]</small>' : ''}</span>
+                                    <span style="color: #666; font-family: monospace;">${m.phone}</span>
+                                </label>
+                            `;
+                            recipientList.appendChild(item);
+                        }
+                    });
+                }
+            });
+            updateRecipientCount();
+
+            // 글자수 체크 이벤트
+            const textarea = document.getElementById('smsContent');
+            const charCount = document.getElementById('charCount');
+            if (textarea && charCount) {
+                textarea.oninput = () => {
+                    charCount.textContent = new Blob([textarea.value]).size;
+                };
+            }
+        }
+
+        function updateRecipientCount() {
+            const checkedOnes = document.querySelectorAll('.recipient-checkbox:checked');
+            const display = document.getElementById('recipientCount');
+            if (display) display.textContent = checkedOnes.length;
+        }
+
+        function toggleAllRecipients(checked) {
+            document.querySelectorAll('.recipient-checkbox').forEach(cb => cb.checked = checked);
+            updateRecipientCount();
+        }
+
+        function goBackToStep1(slotName) {
+            const modal = document.getElementById('slotMessageModal');
+            if (!modal) return;
+
+            const step1 = document.getElementById('messageModalStep1');
+            const step2 = document.getElementById('messageModalStep2');
+            const btnBack = document.getElementById('btnBackToStep1');
+            const btnSend = document.getElementById('btnSendSms');
+            const modalContent = modal.querySelector('.modal-content');
+            const modalTitle = modal.querySelector('.modal-header h3');
+
+            if (step1) step1.style.display = 'block';
+            if (step2) step2.style.display = 'none';
+            if (btnBack) btnBack.style.display = 'none';
+            if (btnSend) btnSend.style.display = 'none';
+            
+            const otherBtn = modal.querySelector('.modal-footer .btn-secondary:not(#btnBackToStep1)');
+            if (otherBtn) {
+                otherBtn.style.display = 'block';
+                otherBtn.textContent = '취소';
+            }
+            
+            // 모달 너비 원복 및 타이틀 복구
+            if (modalContent) {
+                modalContent.style.maxWidth = '500px';
+                modalContent.style.width = '';
+            }
+            if (modalTitle) modalTitle.textContent = `메시지 발송 대상 선택`;
+        }
+
+        function openMemberManageModal(memberId, name, phone, currentClassName) {
+            if (typeof ModalManager === 'undefined') {
+                console.error('ModalManager is not loaded');
+                return;
+            }
+
+            ModalManager.createCustom({
+                id: 'memberManageModal',
+                title: `회원 관리 - ${name}`,
+                maxWidth: '450px',
+                headerColor: '#4a90e2',
+                contentBuilder: () => `
+                    <div id="memberModalContent" style="text-align: left; padding: 10px;">
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p style="margin: 5px 0;"><strong>👤 이름:</strong> ${name}</p>
+                            <p style="margin: 5px 0;"><strong>📞 연락처:</strong> ${phone}</p>
+                            <p style="margin: 5px 0;"><strong>🏫 현재 수업:</strong> ${currentClassName || '정보 없음'}</p>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <a href="/complex/members/edit?id=${memberId}" class="btn-primary" style="display: block; text-align: center; text-decoration: none; padding: 12px; border-radius: 6px; font-weight: 600;">
+                                🔍 상세 정보 및 회신 관리
+                            </a>
+                            <button class="btn-secondary" style="padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; background: #e3f2fd; color: #1976d2; border-color: #bbdefb;" onclick="showClassSelection('${memberId}', '${name}', '${currentClassName}')">
+                                ✈️ 수업 이동
+                            </button>
+                            <button class="btn-secondary" style="padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer;" onclick="alert('상태 수정 기능은 준비 중입니다.')">
+                                ✅ 출석 상태 수정
+                            </button>
+                        </div>
+                    </div>
+                `,
+                buttons: [
+                    {
+                        text: '닫기',
+                        class: 'btn-secondary',
+                        onClick: () => ModalManager.hide('memberManageModal')
+                    }
+                ]
+            });
+        }
+
+        function showClassSelection(memberId, memberName, currentClassName) {
+            const contentArea = document.getElementById('memberModalContent');
+            
+            // 모달 전체 높이를 어느정도 고정하기 위해 min-height 부여
+            contentArea.style.minHeight = '450px';
+            contentArea.style.display = 'flex';
+            contentArea.style.flexDirection = 'column';
+
+            let headerHTML = `
+                <div style="margin-bottom: 15px; flex-shrink: 0;">
+                    <button onclick="restoreMainModal('${memberId}', '${memberName}', '${currentClassName}')" style="background: none; border: none; color: #4a90e2; cursor: pointer; font-weight: 600; padding: 0;">← 이전으로</button>
+                    <h4 style="margin: 10px 0; color: #333;">이동할 수업 선택</h4>
+                    <p style="font-size: 0.85rem; color: #666;">현재 수업: <strong>${currentClassName}</strong></p>
+                    
+                    <div style="margin: 15px 0; position: relative;">
+                        <input type="text" id="classSearchInput" placeholder="수업명 또는 시간대 검색..." 
+                               style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;"
+                               oninput="renderClassList('${memberId}', '${memberName}', '${currentClassName}', this.value)">
+                        <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #888;">🔍</span>
+                    </div>
+                </div>
+                <div id="classListContainer" style="height: 320px; overflow-y: auto; padding-right: 5px; flex-grow: 1;">
+                </div>
+            `;
+            
+            contentArea.innerHTML = headerHTML;
+            renderClassList(memberId, memberName, currentClassName, '');
+            
+            // 검색창에 포커스
+            setTimeout(() => {
+                const searchInput = document.getElementById('classSearchInput');
+                if (searchInput) searchInput.focus();
+            }, 100);
+        }
+
+        function renderClassList(memberId, memberName, currentClassName, searchTerm) {
+            const container = document.getElementById('classListContainer');
+            if (!container) return;
+
+            const term = (searchTerm || '').toLowerCase();
+            
+            const filteredClasses = allAvailableClasses.filter(cls => 
+                cls.name.toLowerCase().includes(term) || 
+                cls.slotName.toLowerCase().includes(term)
+            );
+
+            if (filteredClasses.length === 0) {
+                container.innerHTML = `
+                    <div style="height: 100%; display: flex; align-items: center; justify-content: center; color: #888; flex-direction: column; gap: 10px;">
+                        <span style="font-size: 2rem;">🔍</span>
+                        <span>검색 결과가 없습니다.</span>
+                    </div>
+                `;
+                return;
+            }
+
+            let listHTML = '';
+            filteredClasses.forEach(cls => {
+                const isCurrent = cls.name === currentClassName;
+                listHTML += `
+                    <div class="class-select-item" style="${isCurrent ? 'background: #f1f3f5; cursor: default; opacity: 0.7;' : ''}" 
+                         onclick="${isCurrent ? 'alert(\'이미 수강 중인 수업입니다.\')' : `confirmMoveClass('${memberId}', '${memberName}', '${currentClassName}', '${cls.id}', '${cls.name}')`}">
+                        <div class="class-select-info">
+                            <span class="class-select-name">${cls.name} ${isCurrent ? '<small>(현재)</small>' : ''}</span>
+                            <span class="class-select-slot">${cls.slotName}</span>
+                        </div>
+                        ${isCurrent ? '' : '<span style="color: #4a90e2; font-size: 0.8rem;">선택</span>'}
+                    </div>
+                `;
+            });
+            container.innerHTML = listHTML;
+        }
+
+        function restoreMainModal(memberId, memberName, currentClassName) {
+            const memberItem = document.querySelector(`.member-item[data-member-id="${memberId}"]`);
+            const phone = memberItem.querySelector('.member-phone').textContent;
+            openMemberManageModal(memberId, memberName, phone, currentClassName);
+        }
+
+        function confirmMoveClass(memberId, memberName, fromClassName, toClassId, toClassName) {
+            ModalManager.createConfirm({
+                id: 'moveClassConfirm',
+                title: '수업 이동 확인',
+                message: `
+                    <div style="text-align: center;">
+                        <strong>${memberName}</strong> 회원을 이동하시겠습니까?
+                        <div style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <span style="color: #666;">${fromClassName}</span>
+                            <span style="color: #4a90e2;">➔</span>
+                            <strong style="color: #333;">${toClassName}</strong>
+                        </div>
+                    </div>
+                `,
+                confirmText: '이동',
+                confirmColor: '#4a90e2',
+                onConfirm: () => {
+                    alert(`${memberName} 회원을 ${fromClassName}에서 ${toClassName} 수업으로 이동 처리를 시작합니다.`);
+                    ModalManager.hide('moveClassConfirm');
+                    ModalManager.hide('memberManageModal');
+                    location.reload();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+{{end}}

@@ -1,0 +1,59 @@
+{{define "landing/error.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오류 발생 - CulCom</title>
+    <link rel="stylesheet" href="/static/css/landing.css">
+    <style>
+        .error-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        .error-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 12px;
+        }
+        .error-message {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .back-button {
+            display: inline-block;
+            padding: 12px 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="landing-container">
+        <div class="landing-card">            
+            <div style="text-align: center;">
+                <div class="error-icon">⚠️</div>
+                <div class="error-title">서비스 일시 오류</div>
+                <div class="error-message">
+                    죄송합니다. 일시적인 서버 문제로<br>
+                    요청을 완료할 수 없습니다.<br>
+                    잠시 후 다시 시도해 주세요.
+                </div>
+                <a href="/ad" class="back-button">처음으로 돌아가기</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+{{end}}

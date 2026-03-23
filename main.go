@@ -3,19 +3,26 @@ package main
 import (
 	"backoffice/config"
 	"backoffice/database"
-	"backoffice/handlers/board"
-	"backoffice/handlers/branches"
-	"backoffice/handlers/consultation"
-	"backoffice/handlers/customers"
+	"backoffice/handlers/complex/attendance"
+	complexBranches "backoffice/handlers/complex/branches"
+	"backoffice/handlers/complex/classtimeslots"
+	"backoffice/handlers/complex/index"
+	"backoffice/handlers/complex/management"
+	"backoffice/handlers/complex/memberships"
 	"backoffice/handlers/errorhandler"
-	"backoffice/handlers/home"
-	"backoffice/handlers/integrations"
-	"backoffice/handlers/login"
-	"backoffice/handlers/messagetemplates"
-	"backoffice/handlers/notices"
-	"backoffice/handlers/opens"
-	"backoffice/handlers/services"
-	"backoffice/handlers/settings"
+	"backoffice/handlers/main/board"
+	"backoffice/handlers/main/branches"
+	"backoffice/handlers/main/consultation"
+	"backoffice/handlers/main/customers"
+	"backoffice/handlers/main/home"
+	"backoffice/handlers/main/integrations"
+	"backoffice/handlers/main/landing"
+	"backoffice/handlers/main/login"
+	"backoffice/handlers/main/messagetemplates"
+	"backoffice/handlers/main/notices"
+	"backoffice/handlers/main/opens"
+	"backoffice/handlers/main/services"
+	"backoffice/handlers/main/settings"
 	"backoffice/middleware"
 	"encoding/gob"
 	"html/template"
@@ -58,16 +65,27 @@ func init() {
 
 	// 템플릿 파싱 - layouts, dashboard, customers 등 모든 템플릿 파일 로드
 	templates := template.Must(template.New("").Funcs(funcMap).ParseGlob("templates/layouts/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/dashboard/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/customers/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/branches/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/integrations/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/message-templates/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/settings/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/auth/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/consultation/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/notices/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/error.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/dashboard/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/customers/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/branches/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/integrations/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/message-templates/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/settings/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/auth/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/landing/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/consultation/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/notices/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/privacy/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/classtimeslots/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/memberships/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/attendance/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/branches/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/management/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/members/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/staffs/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/postponements/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/index/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/main/error.html"))
 
 	home.Templates = templates
 	login.Templates = templates
@@ -77,19 +95,27 @@ func init() {
 	messagetemplates.Templates = templates
 	settings.Templates = templates
 	errorhandler.Templates = templates
+	landing.Templates = templates
 	consultation.Templates = templates
 	notices.Templates = templates
+	index.Templates = templates
+	complexBranches.Templates = templates
+	management.Templates = templates
+	classtimeslots.Templates = templates
+	attendance.Templates = templates
+	memberships.Templates = templates
 
 	// 공개 게시판 템플릿 (백오피스 레이아웃과 완전 분리)
 	publicFuncMap := template.FuncMap{
 		"add": func(a, b int) int { return a + b },
 		"sub": func(a, b int) int { return a - b },
 	}
-	publicTemplates := template.Must(template.New("").Funcs(publicFuncMap).ParseGlob("templates/board/*.html"))
+	publicTemplates := template.Must(template.New("").Funcs(publicFuncMap).ParseGlob("templates/main/board/*.html"))
 	board.PublicTemplates = publicTemplates
 
-	// 개인정보 처리방침 템플릿 초기화
+	// 개인정보 처리방침 및 연기요청 템플릿 초기화
 	opens.InitPrivacyTemplate()
+	opens.PostponementTemplates = template.Must(template.New("").ParseGlob("templates/main/privacy/*.html"))
 }
 
 func main() {
@@ -118,6 +144,7 @@ func main() {
 	mux.HandleFunc("/login", middleware.RecoverFunc(login.LoginHandler))                       // 로그인 처리
 
 	mux.HandleFunc("/privacy", opens.PrivacyPolicyHandler)                                         // 개인정보 처리방침
+	mux.HandleFunc("/complex/postponement", opens.PostponementHandler)                             // 수업 연기 요청 페이지
 	mux.HandleFunc("/consultation/register", middleware.RecoverFunc(consultation.RegisterHandler)) // 상담 신청 페이지
 	mux.HandleFunc("/consultation/submit", middleware.RecoverFunc(consultation.SubmitHandler))     // 상담 신청 처리
 	mux.HandleFunc("/consultation/success", middleware.RecoverFunc(consultation.SuccessHandler))   // 상담 신청 완료
@@ -133,7 +160,37 @@ func main() {
 	mux.HandleFunc("/board/withdraw", middleware.RecoverFunc(board.WithdrawHandler))            // 회원탈퇴
 
 	// 라우트 설정 (인증 필요한 라우트는 RequireAuthRecover 미들웨어 적용)
-	mux.HandleFunc("/dashboard", middleware.RequireAuthRecover(middleware.InjectBranchData(home.Handler)))                                        // 대시보드
+	mux.HandleFunc("/dashboard", middleware.RequireAuthRecover(middleware.InjectBranchData(home.Handler)))                                // 대시보드
+	mux.HandleFunc("/complex", middleware.RequireAuthRecover(middleware.InjectBranchData(index.Handler)))                                 // Complex View
+	mux.HandleFunc("/complex/classes", middleware.RequireAuthRecover(middleware.InjectBranchData(management.Handler)))                    // 수업 관리 목록
+	mux.HandleFunc("/complex/classes/add", middleware.RequireAuthRecover(middleware.InjectBranchData(management.AddHandler)))             // 수업 추가
+	mux.HandleFunc("/complex/classes/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(management.EditHandler)))           // 수업 수정
+	mux.HandleFunc("/complex/classes/update", middleware.RequireAuthRecover(middleware.InjectBranchData(management.UpdateHandler)))       // 수업 업데이트 처리
+	mux.HandleFunc("/complex/branches", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.Handler)))              // Complex 지점 관리
+	mux.HandleFunc("/complex/branches/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.DetailHandler))) // Complex 지점 상세
+	mux.HandleFunc("/complex/branches/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.EditHandler)))     // Complex 지점 수정
+	mux.HandleFunc("/complex/branches/update", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.EditHandler)))   // Complex 지점 업데이트
+	mux.HandleFunc("/complex/branches/add", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.AddHandler)))       // Complex 지점 추가 화면
+	mux.HandleFunc("/complex/branches/store", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.StoreHandler)))   // Complex 지점 추가 처리
+	mux.HandleFunc("/complex/branches/delete", middleware.RequireAuthRecover(complexBranches.DeleteHandler))                              // Complex 지점 삭제 처리
+	mux.HandleFunc("/complex/timeslots", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.Handler)))              // 수업 시간대 관리
+	mux.HandleFunc("/complex/timeslots/add", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.AddHandler)))       // 수업 시간대 추가
+	mux.HandleFunc("/complex/timeslots/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.EditHandler)))     // 수업 시간대 수정
+	mux.HandleFunc("/complex/timeslots/delete", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.DeleteHandler))) // 수업 시간대 삭제
+
+	mux.HandleFunc("/complex/attendance", middleware.RequireAuthRecover(middleware.InjectBranchData(attendance.Handler)))                    // 등록현황 확인
+	mux.HandleFunc("/complex/attendance/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(attendance.DetailHandler)))       // 등록현황 상세(출석부 스타일)
+	mux.HandleFunc("/complex/members", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberListHandler)))             // 회원 관리 목록
+	mux.HandleFunc("/complex/members/add", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberAddHandler)))          // 회원 등록 화면
+	mux.HandleFunc("/complex/members/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberEditHandler)))        // 회원 수정 화면
+	mux.HandleFunc("/complex/members/update", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberUpdateHandler)))    // 회원 저장 처리
+	mux.HandleFunc("/complex/staffs", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffListHandler)))               // 강사진 관리 목록
+	mux.HandleFunc("/complex/staffs/add", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffAddHandler)))            // 강사 등록 화면
+	mux.HandleFunc("/complex/staffs/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffEditHandler)))          // 강사 수정 화면
+	mux.HandleFunc("/complex/staffs/update", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffUpdateHandler)))      // 강사 저장 처리
+	mux.HandleFunc("/complex/postponements", middleware.RequireAuthRecover(middleware.InjectBranchData(management.PostponementListHandler))) // 연기 요청 목록
+	mux.HandleFunc("/complex/postponements/update-status", middleware.RequireAuthRecover(management.PostponementUpdateStatusHandler))        // 연기 요청 상태 변경
+
 	mux.HandleFunc("/api/dashboard/caller-stats", middleware.RequireAuthRecover(home.GetCallerStatsAPI))                                          // CALLER별 통계 API
 	mux.HandleFunc("/customers", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.Handler)))                                   // 고객 관리
 	mux.HandleFunc("/customers/add", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.AddHandler)))                            // 고객 추가
@@ -155,7 +212,6 @@ func main() {
 	mux.HandleFunc("/branches/add", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.AddHandler)))                              // 지점 추가
 	mux.HandleFunc("/branches/delete", middleware.RequireAuthRecover(branches.DeleteHandler))                                                     // 지점 삭제
 	mux.HandleFunc("/integrations", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.Handler)))                             // 외부 시스템 연동
-	mux.HandleFunc("/integrations/kakao-sync", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.KakaoSyncHandler)))          // 카카오싱크 URL 생성
 	mux.HandleFunc("/integrations/configure", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.ConfigureHandler)))          // 연동 설정
 	mux.HandleFunc("/integrations/manage", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.ConfigureHandler)))             // 연동 관리 (설정과 동일)
 	mux.HandleFunc("/api/external/sms", middleware.RequireAuthRecover(integrations.SMSTestHandler))                                               // SMS 테스트 발송 API
@@ -173,6 +229,10 @@ func main() {
 	mux.HandleFunc("/notices/add", middleware.RequireAuthRecover(middleware.InjectBranchData(notices.AddHandler)))                                // 공지사항/이벤트 등록
 	mux.HandleFunc("/notices/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(notices.EditHandler)))                              // 공지사항/이벤트 수정
 	mux.HandleFunc("/notices/delete", middleware.RequireAuthRecover(notices.DeleteHandler))                                                       // 공지사항/이벤트 삭제
+	mux.HandleFunc("/complex/memberships", middleware.RequireAuthRecover(middleware.InjectBranchData(memberships.ListHandler)))                   // 멤버십 목록
+	mux.HandleFunc("/complex/memberships/add", middleware.RequireAuthRecover(middleware.InjectBranchData(memberships.AddHandler)))                // 멤버십 추가
+	mux.HandleFunc("/complex/memberships/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(memberships.EditHandler)))              // 멤버십 수정
+	mux.HandleFunc("/complex/memberships/delete", middleware.RequireAuthRecover(memberships.DeleteHandler))                                       // 멤버십 삭제
 	mux.HandleFunc("/settings", middleware.RequireAuthRecover(middleware.InjectBranchData(settings.Handler)))                                     // 설정 메인 페이지
 	mux.HandleFunc("/settings/reservation-sms", middleware.RequireAuthRecover(middleware.InjectBranchData(settings.ReservationSMSConfigHandler))) // 예약 SMS 설정
 	mux.HandleFunc("/logout", middleware.RequireAuthRecover(login.LogoutHandler))                                                                 // 로그아웃 처리

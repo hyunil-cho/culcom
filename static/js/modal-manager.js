@@ -52,9 +52,17 @@ const ModalManager = {
         const header = document.createElement('div');
         header.className = 'modal-header';
         header.style.borderBottom = `2px solid ${headerColor}`;
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'center';
+        header.style.textAlign = 'left';
+        header.style.padding = '1.25rem 2rem';
         
         const titleElement = document.createElement('h3');
         titleElement.textContent = title;
+        titleElement.style.margin = '0';
+        titleElement.style.flex = '1';
+        titleElement.style.paddingRight = '2rem'; // 닫기 버튼을 위한 여백
         header.appendChild(titleElement);
 
         // 닫기 버튼 추가 (옵션)
@@ -62,6 +70,10 @@ const ModalManager = {
             const closeBtn = document.createElement('span');
             closeBtn.className = 'modal-close';
             closeBtn.innerHTML = '&times;';
+            closeBtn.style.position = 'static'; // flex 구조에 맞게 absolute 해제
+            closeBtn.style.fontSize = '1.8rem';
+            closeBtn.style.lineHeight = '1';
+            closeBtn.style.cursor = 'pointer';
             closeBtn.onclick = () => this.hide(id);
             header.appendChild(closeBtn);
         }
