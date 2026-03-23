@@ -3,7 +3,7 @@ package customers
 import (
 	"backoffice/config"
 	"backoffice/database"
-	"backoffice/handlers/board"
+	"backoffice/handlers/main/board"
 	"backoffice/middleware"
 	"backoffice/utils"
 	"log"

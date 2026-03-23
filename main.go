@@ -61,6 +61,13 @@ func init() {
 		"sub": func(a, b int) int {
 			return a - b
 		},
+		"seq": func(start, end int) []int {
+			s := make([]int, 0)
+			for i := start; i <= end; i++ {
+				s = append(s, i)
+			}
+			return s
+		},
 	}
 
 	// 템플릿 파싱 - layouts, dashboard, customers 등 모든 템플릿 파일 로드
@@ -141,7 +148,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	// 공개 라우트 (인증 불필요)
-	mux.HandleFunc("/login", middleware.RecoverFunc(login.LoginHandler))                       // 로그인 처리
+	mux.HandleFunc("/login", middleware.RecoverFunc(login.LoginHandler)) // 로그인 처리
 
 	mux.HandleFunc("/privacy", opens.PrivacyPolicyHandler)                                         // 개인정보 처리방침
 	mux.HandleFunc("/complex/postponement", opens.PostponementHandler)                             // 수업 연기 요청 페이지
@@ -150,14 +157,14 @@ func main() {
 	mux.HandleFunc("/consultation/success", middleware.RecoverFunc(consultation.SuccessHandler))   // 상담 신청 완료
 
 	// 공개 게시판 (인증 불필요 - 일반 사용자 열람용)
-	mux.HandleFunc("/board", middleware.RecoverFunc(board.ListHandler))                         // 공지사항/이벤트 목록 (공개, /board 호환)
-	mux.HandleFunc("/board/detail", middleware.RecoverFunc(board.DetailHandler))                // 공지사항/이벤트 상세 (공개, /board 호환)
-	mux.HandleFunc("/board/kakao/login", middleware.RecoverFunc(board.KakaoLoginHandler))       // 게시판 카카오 로그인
-	mux.HandleFunc("/board/kakao/callback", middleware.RecoverFunc(board.KakaoCallbackHandler)) // 게시판 카카오 콜백
+	mux.HandleFunc("/board", middleware.RecoverFunc(board.ListHandler))                                   // 공지사항/이벤트 목록 (공개, /board 호환)
+	mux.HandleFunc("/board/detail", middleware.RecoverFunc(board.DetailHandler))                          // 공지사항/이벤트 상세 (공개, /board 호환)
+	mux.HandleFunc("/board/kakao/login", middleware.RecoverFunc(board.KakaoLoginHandler))                 // 게시판 카카오 로그인
+	mux.HandleFunc("/board/kakao/callback", middleware.RecoverFunc(board.KakaoCallbackHandler))           // 게시판 카카오 콜백
 	mux.HandleFunc("/board/kakao/success", middleware.RecoverFunc(board.KakaoRegistrationSuccessHandler)) // 게시판 카카오 회원가입 완료
-	mux.HandleFunc("/board/mypage", middleware.RecoverFunc(board.MypageHandler))                // 마이페이지
-	mux.HandleFunc("/board/logout", middleware.RecoverFunc(board.BoardLogoutHandler))           // 게시판 로그아웃
-	mux.HandleFunc("/board/withdraw", middleware.RecoverFunc(board.WithdrawHandler))            // 회원탈퇴
+	mux.HandleFunc("/board/mypage", middleware.RecoverFunc(board.MypageHandler))                          // 마이페이지
+	mux.HandleFunc("/board/logout", middleware.RecoverFunc(board.BoardLogoutHandler))                     // 게시판 로그아웃
+	mux.HandleFunc("/board/withdraw", middleware.RecoverFunc(board.WithdrawHandler))                      // 회원탈퇴
 
 	// 라우트 설정 (인증 필요한 라우트는 RequireAuthRecover 미들웨어 적용)
 	mux.HandleFunc("/dashboard", middleware.RequireAuthRecover(middleware.InjectBranchData(home.Handler)))                                // 대시보드
@@ -191,29 +198,31 @@ func main() {
 	mux.HandleFunc("/complex/postponements", middleware.RequireAuthRecover(middleware.InjectBranchData(management.PostponementListHandler))) // 연기 요청 목록
 	mux.HandleFunc("/complex/postponements/update-status", middleware.RequireAuthRecover(management.PostponementUpdateStatusHandler))        // 연기 요청 상태 변경
 
-	mux.HandleFunc("/api/dashboard/caller-stats", middleware.RequireAuthRecover(home.GetCallerStatsAPI))                                          // CALLER별 통계 API
-	mux.HandleFunc("/customers", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.Handler)))                                   // 고객 관리
-	mux.HandleFunc("/customers/add", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.AddHandler)))                            // 고객 추가
-	mux.HandleFunc("/api/customers/comment", middleware.RequireAuthRecover(customers.UpdateCommentHandler))                                       // 고객 코멘트 업데이트
-	mux.HandleFunc("/api/customers/process-call", middleware.RequireAuthRecover(customers.ProcessCallHandler))                                    // 통화 처리 (CALLER 선택 + 통화 횟수 증가)
-	mux.HandleFunc("/api/customers/mark-no-phone-interview", middleware.RequireAuthRecover(customers.MarkNoPhoneInterviewHandler))                // 전화상안함 처리
-	mux.HandleFunc("/api/customers/reservation", middleware.RequireAuthRecover(customers.CreateReservationHandler))                               // 예약 정보 생성
-	mux.HandleFunc("/api/customers/update-name", middleware.RequireAuthRecover(customers.UpdateCustomerNameHandler))                              // 고객 이름 업데이트
-	mux.HandleFunc("/api/customers/delete", middleware.RequireAuthRecover(customers.DeleteCustomerHandler))                                       // 고객 삭제 API
-	mux.HandleFunc("/api/integrations/check-sms", middleware.RequireAuthRecover(integrations.CheckSMSIntegrationHandler))                         // SMS 연동 상태 확인
-	mux.HandleFunc("/api/integrations/sms-senders", middleware.RequireAuthRecover(integrations.GetSMSSenderNumbersHandler))                       // SMS 발신번호 목록 조회
-	mux.HandleFunc("/api/external/customers", opens.ExternalRegisterCustomerHandler)                                                              // 외부 고객 등록 API (인증 불필요)
-	mux.HandleFunc("/api/service/sms", middleware.RequireAuthRecover(services.SendSMSHandler))                                                    // SMS 메시지 전송
-	mux.HandleFunc("/api/service/reservation-sms-config", middleware.RequireAuthRecover(services.GetReservationSMSConfigHandler))                 // 예약 SMS 설정 조회
-	mux.HandleFunc("/api/message-templates", middleware.RequireAuthRecover(messagetemplates.GetTemplatesAPI))                                     // 메시지 템플릿 목록 API
-	mux.HandleFunc("/branches", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.Handler)))                                     // 지점 관리
-	mux.HandleFunc("/branches/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.DetailHandler)))                        // 지점 상세
-	mux.HandleFunc("/branches/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.EditHandler)))                            // 지점 수정
-	mux.HandleFunc("/branches/add", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.AddHandler)))                              // 지점 추가
-	mux.HandleFunc("/branches/delete", middleware.RequireAuthRecover(branches.DeleteHandler))                                                     // 지점 삭제
-	mux.HandleFunc("/integrations", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.Handler)))                             // 외부 시스템 연동
-	mux.HandleFunc("/integrations/configure", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.ConfigureHandler)))          // 연동 설정
-	mux.HandleFunc("/integrations/manage", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.ConfigureHandler)))             // 연동 관리 (설정과 동일)
+	mux.HandleFunc("/api/dashboard/caller-stats", middleware.RequireAuthRecover(home.GetCallerStatsAPI))                                  // CALLER별 통계 API
+	mux.HandleFunc("/customers", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.Handler)))                           // 고객 관리
+	mux.HandleFunc("/customers/add", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.AddHandler)))                    // 고객 추가
+	mux.HandleFunc("/api/customers/comment", middleware.RequireAuthRecover(customers.UpdateCommentHandler))                               // 고객 코멘트 업데이트
+	mux.HandleFunc("/api/customers/process-call", middleware.RequireAuthRecover(customers.ProcessCallHandler))                            // 통화 처리 (CALLER 선택 + 통화 횟수 증가)
+	mux.HandleFunc("/api/customers/mark-no-phone-interview", middleware.RequireAuthRecover(customers.MarkNoPhoneInterviewHandler))        // 전화상안함 처리
+	mux.HandleFunc("/api/customers/reservation", middleware.RequireAuthRecover(customers.CreateReservationHandler))                       // 예약 정보 생성
+	mux.HandleFunc("/api/customers/update-name", middleware.RequireAuthRecover(customers.UpdateCustomerNameHandler))                      // 고객 이름 업데이트
+	mux.HandleFunc("/api/customers/delete", middleware.RequireAuthRecover(customers.DeleteCustomerHandler))                               // 고객 삭제 API
+	mux.HandleFunc("/api/integrations/check-sms", middleware.RequireAuthRecover(integrations.CheckSMSIntegrationHandler))                 // SMS 연동 상태 확인
+	mux.HandleFunc("/api/integrations/sms-senders", middleware.RequireAuthRecover(integrations.GetSMSSenderNumbersHandler))               // SMS 발신번호 목록 조회
+	mux.HandleFunc("/api/external/customers", opens.ExternalRegisterCustomerHandler)                                                      // 외부 고객 등록 API (인증 불필요)
+	mux.HandleFunc("/api/service/sms", middleware.RequireAuthRecover(services.SendSMSHandler))                                            // SMS 메시지 전송
+	mux.HandleFunc("/api/service/reservation-sms-config", middleware.RequireAuthRecover(services.GetReservationSMSConfigHandler))         // 예약 SMS 설정 조회
+	mux.HandleFunc("/api/message-templates", middleware.RequireAuthRecover(messagetemplates.GetTemplatesAPI))                             // 메시지 템플릿 목록 API
+	mux.HandleFunc("/branches", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.Handler)))                             // 지점 관리
+	mux.HandleFunc("/branches/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.DetailHandler)))                // 지점 상세
+	mux.HandleFunc("/branches/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.EditHandler)))                    // 지점 수정
+	mux.HandleFunc("/branches/add", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.AddHandler)))                      // 지점 추가
+	mux.HandleFunc("/branches/delete", middleware.RequireAuthRecover(branches.DeleteHandler))                                             // 지점 삭제
+	mux.HandleFunc("/integrations", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.Handler)))                     // 외부 시스템 연동
+	mux.HandleFunc("/integrations/configure", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.ConfigureHandler)))  // 연동 설정
+	mux.HandleFunc("/integrations/manage", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.ConfigureHandler)))     // 연동 관리 (설정과 동일)
+	mux.HandleFunc("/integrations/kakao-sync", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.KakaoSyncHandler))) // 카카오싱크 URL 생성
+
 	mux.HandleFunc("/api/external/sms", middleware.RequireAuthRecover(integrations.SMSTestHandler))                                               // SMS 테스트 발송 API
 	mux.HandleFunc("/api/sms/config", middleware.RequireAuthRecover(integrations.SMSConfigSaveHandler))                                           // SMS 설정 저장 API
 	mux.HandleFunc("/api/integrations/activate", middleware.RequireAuthRecover(integrations.ActivateHandler))                                     // 연동 활성화 API
