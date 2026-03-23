@@ -69,8 +69,8 @@
                         </div>
 
                         <div class="form-row">
-                            <label class="form-label">소속정보</label>
-                            <input type="text" name="info" class="form-input" value="{{.Member.Info}}" placeholder="예: 달서 멤버">
+                            <label class="form-label">인적사항</label>
+                            <input type="text" name="info" class="form-input" value="{{.Member.Info}}" placeholder="예: 대학생, 영어회화 관심">
                         </div>
 
                         <div class="form-row">
@@ -96,6 +96,45 @@
                         </div>
 
                         <div class="form-row">
+                            <label class="form-label">금액</label>
+                            <input type="text" name="price" class="form-input" value="{{.Member.Price}}" placeholder="예: 450,000">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">결제방법</label>
+                            <div>
+                                <select id="paymentMethodSelect" name="payment_method" class="form-input" onchange="togglePaymentCustom(this)">
+                                    <option value="">-- 선택 --</option>
+                                    <option value="카드" {{if eq .Member.PaymentMethod "카드"}}selected{{end}}>카드</option>
+                                    <option value="온라인구독" {{if eq .Member.PaymentMethod "온라인구독"}}selected{{end}}>온라인구독</option>
+                                    <option value="온라인신용" {{if eq .Member.PaymentMethod "온라인신용"}}selected{{end}}>온라인신용</option>
+                                    <option value="토스링크" {{if eq .Member.PaymentMethod "토스링크"}}selected{{end}}>토스링크</option>
+                                    <option value="이체(개인통장)" {{if eq .Member.PaymentMethod "이체(개인통장)"}}selected{{end}}>이체(개인통장)</option>
+                                    <option value="이체(법인통장)" {{if eq .Member.PaymentMethod "이체(법인통장)"}}selected{{end}}>이체(법인통장)</option>
+                                    <option value="현금" {{if eq .Member.PaymentMethod "현금"}}selected{{end}}>현금</option>
+                                    <option value="기타" id="paymentCustomOption">기타 (직접입력)</option>
+                                </select>
+                                <input type="text" id="paymentMethodCustom" name="payment_method_custom" class="form-input" placeholder="결제방법을 직접 입력하세요" style="display: none; margin-top: 8px;">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">가입 경로</label>
+                            <div>
+                                <select id="signupChannelSelect" name="signup_channel" class="form-input" onchange="toggleSignupCustom(this)">
+                                    <option value="">-- 선택 --</option>
+                                    <option value="인스타그램" {{if eq .Member.SignupChannel "인스타그램"}}selected{{end}}>인스타그램</option>
+                                    <option value="네이버 검색" {{if eq .Member.SignupChannel "네이버 검색"}}selected{{end}}>네이버 검색</option>
+                                    <option value="지인 소개" {{if eq .Member.SignupChannel "지인 소개"}}selected{{end}}>지인 소개</option>
+                                    <option value="전단지" {{if eq .Member.SignupChannel "전단지"}}selected{{end}}>전단지</option>
+                                    <option value="홈페이지" {{if eq .Member.SignupChannel "홈페이지"}}selected{{end}}>홈페이지</option>
+                                    <option value="기타">기타 (직접입력)</option>
+                                </select>
+                                <input type="text" id="signupChannelCustom" name="signup_channel_custom" class="form-input" placeholder="가입 경로를 직접 입력하세요" style="display: none; margin-top: 8px;">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
                             <label class="form-label">최근수업일</label>
                             <input type="date" name="last_date" class="form-input" value="{{.Member.LastDate}}">
                         </div>
@@ -103,6 +142,11 @@
                         <div class="form-row">
                             <label class="form-label">잔여횟수/통계</label>
                             <input type="text" name="stats" class="form-input" value="{{.Member.Stats}}" placeholder="예: 0 did 100 left">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">인터뷰어</label>
+                            <input type="text" name="interviewer" class="form-input" value="{{.Member.Interviewer}}" placeholder="인터뷰어 이름을 입력하세요">
                         </div>
 
                         <div class="form-row">
@@ -114,6 +158,19 @@
                             <label class="form-label">코멘트</label>
                             <textarea name="comment" class="form-input" style="height: 100px; resize: vertical; padding: 10px;" placeholder="직업, 관심사, 등록 동기 등 상세 정보를 입력하세요">{{.Member.Comment}}</textarea>
                         </div>
+
+                        {{if .Member.CreatedAt}}
+                        <div class="form-row">
+                            <label class="form-label">등록일자</label>
+                            <span class="form-input" style="background: #f8f9fa; border: none; color: #666;">{{.Member.CreatedAt}}</span>
+                        </div>
+                        {{end}}
+                        {{if .Member.UpdatedAt}}
+                        <div class="form-row">
+                            <label class="form-label">수정일자</label>
+                            <span class="form-input" style="background: #f8f9fa; border: none; color: #666;">{{.Member.UpdatedAt}}</span>
+                        </div>
+                        {{end}}
                     </div>
 
                     <div class="form-actions">
@@ -310,6 +367,49 @@ function renderModalPage(page) {
         });
     }
 }
+
+function togglePaymentCustom(select) {
+    const customInput = document.getElementById('paymentMethodCustom');
+    if (select.value === '기타') {
+        customInput.style.display = 'block';
+        customInput.focus();
+    } else {
+        customInput.style.display = 'none';
+        customInput.value = '';
+    }
+}
+
+function toggleSignupCustom(select) {
+    const customInput = document.getElementById('signupChannelCustom');
+    if (select.value === '기타') {
+        customInput.style.display = 'block';
+        customInput.focus();
+    } else {
+        customInput.style.display = 'none';
+        customInput.value = '';
+    }
+}
+
+// 기존 저장된 값이 기본 옵션에 없으면 '기타'로 처리
+document.addEventListener('DOMContentLoaded', function() {
+    const paySelect = document.getElementById('paymentMethodSelect');
+    const payCustom = document.getElementById('paymentMethodCustom');
+    const savedPay = "{{.Member.PaymentMethod}}";
+    if (savedPay && !paySelect.querySelector('option[value="' + savedPay + '"]')) {
+        paySelect.value = '기타';
+        payCustom.style.display = 'block';
+        payCustom.value = savedPay;
+    }
+
+    const chSelect = document.getElementById('signupChannelSelect');
+    const chCustom = document.getElementById('signupChannelCustom');
+    const savedCh = "{{.Member.SignupChannel}}";
+    if (savedCh && !chSelect.querySelector('option[value="' + savedCh + '"]')) {
+        chSelect.value = '기타';
+        chCustom.style.display = 'block';
+        chCustom.value = savedCh;
+    }
+});
 
 // 기존 전화번호 로직 유지
 document.addEventListener('DOMContentLoaded', function() {

@@ -39,17 +39,17 @@
                         </div>
                     </form>
                     <div class="action-buttons">
-                        <a href="/complex/staffs/add" class="btn-primary" style="text-decoration: none;">➕ 강사 등록</a>
+                        <a href="/complex/staffs/add" class="btn-primary" style="text-decoration: none;">➕ 스태프 등록</a>
                     </div>
                 </div>
             </div>
 
-            <!-- 강사 테이블 -->
+            <!-- 스태프 테이블 -->
             <div class="content-card">
                 <div class="table-header">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 1rem; font-weight: 600; color: #333;">
-                            전체 강사 <span style="color: #4a90e2; font-size: 1.2rem;">{{.TotalCount}}</span>명
+                            전체 스태프 <span style="color: #4a90e2; font-size: 1.2rem;">{{.TotalCount}}</span>명
                         </span>
                     </div>
                 </div>
@@ -61,12 +61,11 @@
                                 <th>번호</th>
                                 <th>이름</th>
                                 <th>전화번호</th>
-                                <th>이메일</th>
+                                <th>소속정보</th>
                                 <th>담당과목</th>
                                 <th>역할</th>
                                 <th>상태</th>
                                 <th>등록일</th>
-                                <th>비고</th>
                                 <th>관리</th>
                             </tr>
                         </thead>
@@ -80,12 +79,11 @@
                                 <td class="col-phone">
                                     <a href="/complex/staffs/edit?id={{.ID}}" style="color: inherit; text-decoration: none; font-family: monospace;">{{.PhoneNumber}}</a>
                                 </td>
-                                <td>{{.Email}}</td>
+                                <td>{{.BranchName}}</td>
                                 <td><span class="status-badge status-active">{{.Subject}}</span></td>
                                 <td>{{.Role}}</td>
                                 <td class="{{if eq .Status "재직"}}staff-status-active{{else}}staff-status-inactive{{end}}">{{.Status}}</td>
                                 <td>{{.JoinDate}}</td>
-                                <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{.Comment}}</td>
                                 <td>
                                     <div style="display: flex; gap: 5px; justify-content: center;">
                                         <a href="/complex/staffs/edit?id={{.ID}}" class="btn-table-action" style="text-decoration: none;">수정</a>
@@ -95,7 +93,7 @@
                             </tr>
                             {{else}}
                             <tr>
-                                <td colspan="10" style="text-align: center; padding: 2rem; color: #999;">등록된 강사진이 없습니다.</td>
+                                <td colspan="9" style="text-align: center; padding: 2rem; color: #999;">등록된 스태프진이 없습니다.</td>
                             </tr>
                             {{end}}
                         </tbody>

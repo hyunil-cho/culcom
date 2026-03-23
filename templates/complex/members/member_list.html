@@ -133,7 +133,6 @@
             display: inline-block;
         }
         .btn-edit { background: #10b981; }
-        .btn-delete { background: #f44336; }
     </style>
 </head>
 <body>
@@ -168,12 +167,18 @@
                                 <th>이름</th>
                                 <th>전화번호</th>
                                 <th>레벨</th>
-                                <th>소속정보</th>
+                                <th>인적사항</th>
                                 <th>가입일</th>
                                 <th>만료일</th>
                                 <th>최근수업</th>
                                 <th>잔여횟수</th>
                                 <th>등급</th>
+                                <th>금액</th>
+                                <th>결제방법</th>
+                                <th>가입경로</th>
+                                <th>인터뷰어</th>
+                                <th>등록일자</th>
+                                <th>수정일자</th>
                                 <th colspan="10">최근 출석기록</th>
                                 <th>관리</th>
                             </tr>
@@ -197,6 +202,12 @@
                                 <td>
                                     <span class="status-badge status-active">{{.Grade}}</span>
                                 </td>
+                                <td style="font-weight: 600; color: #2c3e50;">{{.Price}}</td>
+                                <td style="color: #666;">{{.PaymentMethod}}</td>
+                                <td style="color: #555;">{{.SignupChannel}}</td>
+                                <td style="color: #333; font-weight: 600;">{{.Interviewer}}</td>
+                                <td class="col-date" style="font-size: 0.75rem;">{{.CreatedAt}}</td>
+                                <td class="col-date" style="font-size: 0.75rem;">{{.UpdatedAt}}</td>
                                 <td colspan="10">
                                     <div class="history-grid">
                                         {{range .AttendanceHistory}}
@@ -207,13 +218,12 @@
                                 <td>
                                     <div class="action-btns">
                                         <a href="/complex/members/edit?id={{.ID}}" class="btn-mini btn-edit">수정</a>
-                                        <button class="btn-mini btn-delete" onclick="alert('삭제 기능 준비 중')">삭제</button>
                                     </div>
                                 </td>
                             </tr>
                             {{else}}
                             <tr>
-                                <td colspan="21" style="text-align: center; padding: 40px; color: #999;">등록된 회원이 없습니다.</td>
+                                <td colspan="27" style="text-align: center; padding: 40px; color: #999;">등록된 회원이 없습니다.</td>
                             </tr>
                             {{end}}
                         </tbody>

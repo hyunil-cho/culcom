@@ -5,35 +5,57 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 // MOCK 전역 데이터 (실제 DB 연동 전까지 유지)
 var mockMembers = []Member{
 	{
-		ID: 1, Name: "송예은", Level: "3-", Info: "달서 멤버", JoinDate: "2026-01-08",
+		ID: 1, Name: "송예은", Level: "3-", Info: "대학생, 영어회화 관심", JoinDate: "2026-01-08",
 		PhoneNumber: "01052852951", LastDate: "2025-12-22", ExpiryDate: "2036-10-21",
-		Stats: "22 did 1109 left", Grade: "VVIP+", AttendanceHistory: []string{"O", "O", "", "O", "", "", "O", "O", "O", "O"},
+		Stats: "22 did 1109 left", Grade: "VVIP+", Price: "1,200,000", PaymentMethod: "카드", SignupChannel: "인스타그램", Interviewer: "김강사",
+		CreatedAt: "2026-01-08 09:30", UpdatedAt: "2026-03-15 14:20",
+		AttendanceHistory: []string{"O", "O", "", "O", "", "", "O", "O", "O", "O"},
 	},
 	{
-		ID: 2, Name: "홍지완", Level: "", Info: "", JoinDate: "0000-00-00",
+		ID: 2, Name: "홍지완", Level: "", Info: "직장인, 조용한 성격", JoinDate: "0000-00-00",
 		PhoneNumber: "01022223333", LastDate: "0000-00-00", ExpiryDate: "0000-00-00",
-		Stats: "0 left", Grade: "멤버쉽", AttendanceHistory: []string{"", "O", "O", "O", "O", "O", "", "", "", ""},
+		Stats: "0 left", Grade: "멤버쉽", Price: "150,000", PaymentMethod: "현금", SignupChannel: "지인 소개", Interviewer: "이매니저",
+		CreatedAt: "2026-02-01 11:00", UpdatedAt: "2026-02-01 11:00",
+		AttendanceHistory: []string{"", "O", "O", "O", "O", "O", "", "", "", ""},
 	},
 	{
-		ID: 3, Name: "김재민", Level: "0", Info: "", JoinDate: "0000-00-00",
+		ID: 3, Name: "김재민", Level: "0", Info: "고등학생, 수능 준비", JoinDate: "0000-00-00",
 		PhoneNumber: "01086859818", LastDate: "2026-02-09", ExpiryDate: "2027-02-08",
-		Stats: "8 did 97 left", Grade: "A+", AttendanceHistory: []string{"", "", "", "O", "", "", "", "", "", ""},
+		Stats: "8 did 97 left", Grade: "A+", Price: "450,000", PaymentMethod: "계좌이체", SignupChannel: "네이버 검색", Interviewer: "박교수",
+		CreatedAt: "2026-01-20 10:15", UpdatedAt: "2026-03-10 16:45",
+		AttendanceHistory: []string{"", "", "", "O", "", "", "", "", "", ""},
 	},
 	{
-		ID: 4, Name: "최민지", Level: "0", Info: "", JoinDate: "0000-00-00",
+		ID: 4, Name: "최민지", Level: "0", Info: "주부, 취미 목적", JoinDate: "0000-00-00",
 		PhoneNumber: "01040733875", LastDate: "2026-01-05", ExpiryDate: "2027-01-04",
-		Stats: "18 did 87 left", Grade: "A+", AttendanceHistory: []string{"", "", "", "", "", "", "O", "O", "O", ""},
+		Stats: "18 did 87 left", Grade: "A+", Price: "450,000", PaymentMethod: "카드", SignupChannel: "전단지", Interviewer: "김강사",
+		CreatedAt: "2025-12-15 13:30", UpdatedAt: "2026-02-28 09:10",
+		AttendanceHistory: []string{"", "", "", "", "", "", "O", "O", "O", ""},
 	},
 	{
-		ID: 5, Name: "김무준", Level: "0", Info: "월화수목 오전", JoinDate: "2026-01-08",
+		ID: 5, Name: "김무준", Level: "0", Info: "프리랜서, 적극적", JoinDate: "2026-01-08",
 		PhoneNumber: "01054117431", LastDate: "2026-01-06", ExpiryDate: "2036-01-05",
-		Stats: "17 did 1026 left", Grade: "VVIP", AttendanceHistory: []string{"O", "", "O", "O", "O", "", "", "", "", ""},
+		Stats: "17 did 1026 left", Grade: "VVIP", Price: "800,000", PaymentMethod: "카드", SignupChannel: "홈페이지", Interviewer: "이매니저",
+		CreatedAt: "2026-01-08 15:00", UpdatedAt: "2026-03-20 11:30",
+		AttendanceHistory: []string{"O", "", "O", "O", "O", "", "", "", "", ""},
 	},
+}
+
+// FindMemberByPhone - 전화번호로 회원 검색 (공개 API용)
+func FindMemberByPhone(phone string) *Member {
+	for _, m := range mockMembers {
+		if m.PhoneNumber == phone {
+			member := m
+			return &member
+		}
+	}
+	return nil
 }
 
 // MemberListHandler - 회원 관리 목록 (전체 회원 리스트)
@@ -124,6 +146,22 @@ func MemberUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	stats := r.FormValue("stats")
 	chartNumber := r.FormValue("chart_number")
 	comment := r.FormValue("comment")
+	price := r.FormValue("price")
+	paymentMethod := r.FormValue("payment_method")
+	if paymentMethod == "기타" {
+		if custom := r.FormValue("payment_method_custom"); custom != "" {
+			paymentMethod = custom
+		}
+	}
+	signupChannel := r.FormValue("signup_channel")
+	if signupChannel == "기타" {
+		if custom := r.FormValue("signup_channel_custom"); custom != "" {
+			signupChannel = custom
+		}
+	}
+
+	interviewer := r.FormValue("interviewer")
+	now := time.Now().Format("2006-01-02 15:04")
 
 	if idStr == "" { // 신규
 		newID := len(mockMembers) + 1
@@ -132,6 +170,9 @@ func MemberUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			PhoneNumber: phone, JoinDate: joinDate, LastDate: lastDate,
 			ExpiryDate: expiryDate, Grade: grade, Stats: stats,
 			ChartNumber: chartNumber, Comment: comment,
+			Price: price, PaymentMethod: paymentMethod, SignupChannel: signupChannel,
+			Interviewer: interviewer,
+			CreatedAt:   now, UpdatedAt: now,
 			AttendanceHistory: []string{"", "", "", "", "", "", "", "", "", ""},
 		})
 	} else { // 수정
@@ -149,6 +190,11 @@ func MemberUpdateHandler(w http.ResponseWriter, r *http.Request) {
 				mockMembers[i].Stats = stats
 				mockMembers[i].ChartNumber = chartNumber
 				mockMembers[i].Comment = comment
+				mockMembers[i].Price = price
+				mockMembers[i].PaymentMethod = paymentMethod
+				mockMembers[i].SignupChannel = signupChannel
+				mockMembers[i].Interviewer = interviewer
+				mockMembers[i].UpdatedAt = now
 				break
 			}
 		}

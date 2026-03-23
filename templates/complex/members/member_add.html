@@ -63,8 +63,8 @@
                         </div>
 
                         <div class="form-row">
-                            <label class="form-label">소속정보</label>
-                            <input type="text" name="info" class="form-input" placeholder="예: 달서 멤버">
+                            <label class="form-label">인적사항</label>
+                            <input type="text" name="info" class="form-input" placeholder="예: 대학생, 영어회화 관심">
                         </div>
 
                         <div class="form-row">
@@ -87,6 +87,50 @@
                             <label class="form-label">만료일</label>
                             <input type="date" id="expiryDate" name="expiry_date" class="form-input" readonly style="background-color: #f8f9fa; cursor: not-allowed;">
                             <small style="color: #666; font-size: 0.8rem; margin-top: 4px; display: block;">* 등급 선택 시 자동으로 기간이 산정됩니다.</small>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">금액</label>
+                            <input type="text" name="price" class="form-input" placeholder="예: 450,000">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">결제방법</label>
+                            <div>
+                                <select id="paymentMethodSelect" name="payment_method" class="form-input" onchange="togglePaymentCustom(this)">
+                                    <option value="">-- 선택 --</option>
+                                    <option value="카드">카드</option>
+                                    <option value="온라인구독">온라인구독</option>
+                                    <option value="온라인신용">온라인신용</option>
+                                    <option value="토스링크">토스링크</option>
+                                    <option value="이체(개인통장)">이체(개인통장)</option>
+                                    <option value="이체(법인통장)">이체(법인통장)</option>
+                                    <option value="현금">현금</option>
+                                    <option value="기타">기타 (직접입력)</option>
+                                </select>
+                                <input type="text" id="paymentMethodCustom" name="payment_method_custom" class="form-input" placeholder="결제방법을 직접 입력하세요" style="display: none; margin-top: 8px;">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">가입 경로</label>
+                            <div>
+                                <select id="signupChannelSelect" name="signup_channel" class="form-input" onchange="toggleSignupCustom(this)">
+                                    <option value="">-- 선택 --</option>
+                                    <option value="인스타그램">인스타그램</option>
+                                    <option value="네이버 검색">네이버 검색</option>
+                                    <option value="지인 소개">지인 소개</option>
+                                    <option value="전단지">전단지</option>
+                                    <option value="홈페이지">홈페이지</option>
+                                    <option value="기타">기타 (직접입력)</option>
+                                </select>
+                                <input type="text" id="signupChannelCustom" name="signup_channel_custom" class="form-input" placeholder="가입 경로를 직접 입력하세요" style="display: none; margin-top: 8px;">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">인터뷰어</label>
+                            <input type="text" name="interviewer" class="form-input" placeholder="인터뷰어 이름을 입력하세요">
                         </div>
 
                         <div class="form-row">
@@ -175,6 +219,28 @@ function calculateExpiryDate() {
     const mm = String(baseDate.getMonth() + 1).padStart(2, '0');
     const dd = String(baseDate.getDate()).padStart(2, '0');
     expiryInput.value = `${yyyy}-${mm}-${dd}`;
+}
+
+function togglePaymentCustom(select) {
+    const customInput = document.getElementById('paymentMethodCustom');
+    if (select.value === '기타') {
+        customInput.style.display = 'block';
+        customInput.focus();
+    } else {
+        customInput.style.display = 'none';
+        customInput.value = '';
+    }
+}
+
+function toggleSignupCustom(select) {
+    const customInput = document.getElementById('signupChannelCustom');
+    if (select.value === '기타') {
+        customInput.style.display = 'block';
+        customInput.focus();
+    } else {
+        customInput.style.display = 'none';
+        customInput.value = '';
+    }
 }
 
 // 전화번호 입력 검증

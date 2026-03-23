@@ -123,6 +123,9 @@ func init() {
 	// 개인정보 처리방침 및 연기요청 템플릿 초기화
 	opens.InitPrivacyTemplate()
 	opens.PostponementTemplates = template.Must(template.New("").ParseGlob("templates/main/privacy/*.html"))
+
+	// 멤버쉽 확인 공개 페이지 템플릿
+	opens.MembershipCheckTemplates = template.Must(template.New("").ParseGlob("templates/main/membership/*.html"))
 }
 
 func main() {
@@ -150,8 +153,11 @@ func main() {
 	// 공개 라우트 (인증 불필요)
 	mux.HandleFunc("/login", middleware.RecoverFunc(login.LoginHandler)) // 로그인 처리
 
-	mux.HandleFunc("/privacy", opens.PrivacyPolicyHandler)                                         // 개인정보 처리방침
-	mux.HandleFunc("/complex/postponement", opens.PostponementHandler)                             // 수업 연기 요청 페이지
+	mux.HandleFunc("/privacy", opens.PrivacyPolicyHandler)                      // 개인정보 처리방침
+	mux.HandleFunc("/complex/postponement", opens.PostponementHandler)          // 수업 연기 요청 페이지
+	mux.HandleFunc("/complex/membership", opens.MembershipCheckHandler)         // 멤버쉽 확인 (전화번호 입력)
+	mux.HandleFunc("/complex/membership/result", opens.MembershipResultHandler) // 멤버쉽 조회 결과
+
 	mux.HandleFunc("/consultation/register", middleware.RecoverFunc(consultation.RegisterHandler)) // 상담 신청 페이지
 	mux.HandleFunc("/consultation/submit", middleware.RecoverFunc(consultation.SubmitHandler))     // 상담 신청 처리
 	mux.HandleFunc("/consultation/success", middleware.RecoverFunc(consultation.SuccessHandler))   // 상담 신청 완료

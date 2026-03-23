@@ -40,8 +40,9 @@
             </div>
 
             <div class="content-card">
-                <div class="form-header">
-                    <h2>강사 정보 수정 - {{.Staff.Name}}</h2>
+                <div class="form-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="margin: 0;">스태프 정보 수정 - {{.Staff.Name}}</h2>
+                    <button type="button" class="btn-secondary" style="padding: 8px 15px; font-weight: 600;" onclick="openStaffAttendanceModal('{{.Staff.Name}}')">📅 출석 히스토리 보기</button>
                 </div>
                 <form action="/complex/staffs/update" method="POST" id="staffForm">
                     <input type="hidden" name="id" value="{{.Staff.ID}}">
@@ -57,13 +58,48 @@
                         </div>
 
                         <div class="form-row">
+                            <label class="form-label">이메일</label>
+                            <input type="email" name="email" class="form-input" value="{{.Staff.Email}}" placeholder="email@example.com">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">담당과목</label>
+                            <input type="text" name="subject" class="form-input" value="{{.Staff.Subject}}" placeholder="예: 영어 회화">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">역할</label>
+                            <select name="role" class="form-input">
+                                <option value="">-- 선택 --</option>
+                                <option value="강사" {{if eq .Staff.Role "강사"}}selected{{end}}>강사</option>
+                                <option value="팀장" {{if eq .Staff.Role "팀장"}}selected{{end}}>팀장</option>
+                                <option value="매니저" {{if eq .Staff.Role "매니저"}}selected{{end}}>매니저</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">상태</label>
+                            <select name="status" class="form-input">
+                                <option value="재직" {{if eq .Staff.Status "재직"}}selected{{end}}>재직</option>
+                                <option value="휴직" {{if eq .Staff.Status "휴직"}}selected{{end}}>휴직</option>
+                                <option value="퇴직" {{if eq .Staff.Status "퇴직"}}selected{{end}}>퇴직</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">등록일</label>
+                            <input type="date" name="join_date" class="form-input" value="{{.Staff.JoinDate}}">
+                        </div>
+
+                        <div class="form-row">
                             <label class="form-label">소속 지점 <span class="required">*</span></label>
-                            <select name="branch_seq" class="form-input" required>
+                            <select name="branch_seq" class="form-input" id="branchSelect" required onchange="updateBranchName(this)">
                                 <option value="">-- 지점 선택 --</option>
                                 {{range .BranchList}}
-                                <option value="{{index . "seq"}}" {{if eq (index . "seq") $.Staff.BranchSeq}}selected{{end}}>{{index . "name"}}</option>
+                                <option value="{{index . "seq"}}" data-name="{{index . "name"}}" {{if eq (index . "seq") $.Staff.BranchSeq}}selected{{end}}>{{index . "name"}}</option>
                                 {{end}}
                             </select>
+                            <input type="hidden" name="branch_name" id="branchNameInput" value="{{.Staff.BranchName}}">
                         </div>
 
                         <!-- 톤앤매너에 맞춘 다중 수업 배정 (Edit 페이지) -->
@@ -96,8 +132,41 @@
                         </div>
 
                         <div class="form-row">
+                            <label class="form-label">인터뷰어</label>
+                            <input type="text" name="interviewer" class="form-input" value="{{.Staff.Interviewer}}" placeholder="인터뷰어 이름을 입력하세요">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">결제방법</label>
+                            <div>
+                                <select id="paymentMethodSelect" name="payment_method" class="form-input" onchange="togglePaymentCustom(this)">
+                                    <option value="">-- 선택 --</option>
+                                    <option value="카드" {{if eq .Staff.PaymentMethod "카드"}}selected{{end}}>카드</option>
+                                    <option value="온라인구독" {{if eq .Staff.PaymentMethod "온라인구독"}}selected{{end}}>온라인구독</option>
+                                    <option value="온라인신용" {{if eq .Staff.PaymentMethod "온라인신용"}}selected{{end}}>온라인신용</option>
+                                    <option value="토스링크" {{if eq .Staff.PaymentMethod "토스링크"}}selected{{end}}>토스링크</option>
+                                    <option value="이체(개인통장)" {{if eq .Staff.PaymentMethod "이체(개인통장)"}}selected{{end}}>이체(개인통장)</option>
+                                    <option value="이체(법인통장)" {{if eq .Staff.PaymentMethod "이체(법인통장)"}}selected{{end}}>이체(법인통장)</option>
+                                    <option value="현금" {{if eq .Staff.PaymentMethod "현금"}}selected{{end}}>현금</option>
+                                    <option value="기타">기타 (직접입력)</option>
+                                </select>
+                                <input type="text" id="paymentMethodCustom" name="payment_method_custom" class="form-input" placeholder="결제방법을 직접 입력하세요" style="display: none; margin-top: 8px;">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">디파짓 금액</label>
+                            <input type="text" name="deposit_amount" class="form-input" value="{{.Staff.DepositAmount}}" placeholder="예: 500,000">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">환급 금액</label>
+                            <input type="text" name="refund_amount" class="form-input" value="{{.Staff.RefundAmount}}" placeholder="예: 200,000">
+                        </div>
+
+                        <div class="form-row">
                             <label class="form-label">비고 (코멘트)</label>
-                            <textarea name="comment" class="form-input" style="height: 80px; resize: vertical; padding: 10px;" placeholder="강사 특이사항 입력">{{.Staff.Comment}}</textarea>
+                            <textarea name="comment" class="form-input" style="height: 80px; resize: vertical; padding: 10px;" placeholder="스태프 특이사항 입력">{{.Staff.Comment}}</textarea>
                         </div>
                     </div>
 
@@ -187,6 +256,173 @@ function renderAssignedClasses() {
     `).join('');
     
     input.value = selectedClasses.map(c => c.id).join(',');
+}
+
+function updateBranchName(select) {
+    const selected = select.options[select.selectedIndex];
+    document.getElementById('branchNameInput').value = selected ? selected.getAttribute('data-name') || '' : '';
+}
+
+function togglePaymentCustom(select) {
+    const customInput = document.getElementById('paymentMethodCustom');
+    if (select.value === '기타') {
+        customInput.style.display = 'block';
+        customInput.focus();
+    } else {
+        customInput.style.display = 'none';
+        customInput.value = '';
+    }
+}
+
+// 기존 저장된 결제방법이 기본 옵션에 없으면 '기타'로 처리
+document.addEventListener('DOMContentLoaded', function() {
+    const paySelect = document.getElementById('paymentMethodSelect');
+    const payCustom = document.getElementById('paymentMethodCustom');
+    const savedPay = "{{.Staff.PaymentMethod}}";
+    if (savedPay && !paySelect.querySelector('option[value="' + savedPay + '"]')) {
+        paySelect.value = '기타';
+        payCustom.style.display = 'block';
+        payCustom.value = savedPay;
+    }
+});
+
+// 출석 히스토리 모달
+const staffAttendanceData = [];
+const staffItemsPerPage = 10;
+let staffCurrentPage = 1;
+
+function generateStaffAttendance() {
+    staffAttendanceData.length = 0;
+    const statuses = ['O', 'O', 'O', 'O', 'O', 'O', 'X', 'O'];
+    const classes = ['레벨1-1반', '레벨1-2반', '프리토킹 A반', '레벨2-1반'];
+    const slots = ['월수 오전', '화목 오후', '주말 집중'];
+
+    const today = new Date();
+    for (let i = 0; i < 80; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - i);
+        if (date.getDay() === 0 || date.getDay() === 6) continue;
+
+        staffAttendanceData.push({
+            date: date.toISOString().split('T')[0],
+            className: classes[Math.floor(Math.random() * classes.length)],
+            slotName: slots[Math.floor(Math.random() * slots.length)],
+            status: statuses[Math.floor(Math.random() * statuses.length)],
+            note: i % 15 === 0 ? '대체수업' : '-'
+        });
+    }
+}
+
+function calcAttendanceRate() {
+    if (staffAttendanceData.length === 0) return 0;
+    const present = staffAttendanceData.filter(d => d.status === 'O').length;
+    return Math.round((present / staffAttendanceData.length) * 100);
+}
+
+function openStaffAttendanceModal(staffName) {
+    if (typeof ModalManager === 'undefined') return;
+
+    generateStaffAttendance();
+    staffCurrentPage = 1;
+    const rate = calcAttendanceRate();
+    const total = staffAttendanceData.length;
+    const present = staffAttendanceData.filter(d => d.status === 'O').length;
+    const absent = total - present;
+
+    let rateColor = '#10b981';
+    if (rate < 70) rateColor = '#f44336';
+    else if (rate < 85) rateColor = '#e67e22';
+
+    ModalManager.createCustom({
+        id: 'staffAttendanceModal',
+        title: `출석 히스토리 - ${staffName}`,
+        maxWidth: '850px',
+        headerColor: '#4a90e2',
+        contentBuilder: () => `
+            <div style="padding: 10px; min-height: 580px; display: flex; flex-direction: column;">
+                <!-- 출석률 요약 카드 -->
+                <div style="display: flex; gap: 12px; margin-bottom: 15px; flex-shrink: 0;">
+                    <div style="flex: 1; background: linear-gradient(135deg, ${rateColor}11, ${rateColor}22); border: 1px solid ${rateColor}44; border-radius: 10px; padding: 15px; text-align: center;">
+                        <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px;">평균 출석률</div>
+                        <div style="font-size: 2rem; font-weight: 800; color: ${rateColor};">${rate}%</div>
+                    </div>
+                    <div style="flex: 1; background: #f0f7ff; border: 1px solid #d0e3ff; border-radius: 10px; padding: 15px; text-align: center;">
+                        <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px;">총 수업일</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #4a90e2;">${total}<span style="font-size: 0.8rem; color: #999;">일</span></div>
+                    </div>
+                    <div style="flex: 1; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 15px; text-align: center;">
+                        <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px;">출석</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;">${present}<span style="font-size: 0.8rem; color: #999;">일</span></div>
+                    </div>
+                    <div style="flex: 1; background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 15px; text-align: center;">
+                        <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px;">결석</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #f44336;">${absent}<span style="font-size: 0.8rem; color: #999;">일</span></div>
+                    </div>
+                </div>
+                <!-- 테이블 -->
+                <div style="height: 370px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; flex-shrink: 0;">
+                    <table class="data-table" style="min-width: 100%; margin: 0; table-layout: fixed;">
+                        <thead style="position: sticky; top: 0; z-index: 10;">
+                            <tr>
+                                <th style="background: #f8f9fa; width: 120px;">날짜</th>
+                                <th style="background: #f8f9fa;">수업명</th>
+                                <th style="background: #f8f9fa; width: 80px;">상태</th>
+                                <th style="background: #f8f9fa; width: 120px;">비고</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staffAttendanceBody"></tbody>
+                    </table>
+                </div>
+                <div id="staffPaginationRoot" style="margin-top: auto; padding-top: 15px; flex-shrink: 0;"></div>
+            </div>
+        `,
+        buttons: [{ text: '닫기', class: 'btn-secondary', onClick: () => ModalManager.hide('staffAttendanceModal') }]
+    });
+
+    renderStaffAttendancePage(1);
+}
+
+function renderStaffAttendancePage(page) {
+    staffCurrentPage = page;
+    const start = (page - 1) * staffItemsPerPage;
+    const end = start + staffItemsPerPage;
+    const pageData = staffAttendanceData.slice(start, end);
+
+    const body = document.getElementById('staffAttendanceBody');
+    if (!body) return;
+
+    body.innerHTML = pageData.map(item => `
+        <tr>
+            <td style="font-family: monospace; font-size: 0.85rem;">${item.date}</td>
+            <td>
+                <div style="font-weight: 600; color: #4a90e2; font-size: 0.85rem;">${item.className}</div>
+                <div style="font-size: 0.75rem; color: #999;">${item.slotName}</div>
+            </td>
+            <td>
+                <span style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; font-weight: bold; font-size: 0.75rem; ${item.status === 'O' ? 'background: #4a90e2; color: white;' : 'background: #fee; color: #f44336; border: 1px solid #fca5a5;'}">
+                    ${item.status}
+                </span>
+            </td>
+            <td style="color: #888; font-size: 0.8rem;">${item.note}</td>
+        </tr>
+    `).join('');
+
+    const totalPages = Math.ceil(staffAttendanceData.length / staffItemsPerPage);
+    const pages = [];
+    for (let i = Math.max(1, staffCurrentPage - 2); i <= Math.min(totalPages, staffCurrentPage + 2); i++) {
+        pages.push(i);
+    }
+
+    if (typeof renderPagination !== 'undefined') {
+        renderPagination('#staffPaginationRoot', {
+            currentPage: staffCurrentPage,
+            totalPages: totalPages,
+            totalItems: staffAttendanceData.length,
+            pages: pages,
+            hasPrev: staffCurrentPage > 1,
+            hasNext: staffCurrentPage < totalPages
+        }, { onPageClick: (p) => renderStaffAttendancePage(p) });
+    }
 }
 
 // 전화번호 입력 검증

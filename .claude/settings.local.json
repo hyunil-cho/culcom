@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find C:UserslookhIdeaProjectsculcomhandlersmainopens -type f -name *.go)",
+      "Bash(go build:*)"
+    ]
+  }
+}

@@ -41,7 +41,7 @@
 
             <div class="content-card">
                 <div class="form-header">
-                    <h2>새 강사 등록</h2>
+                    <h2>새 스태프 등록</h2>
                 </div>
                 <form action="/complex/staffs/update" method="POST" id="staffForm">
                     <div class="form-body">
@@ -56,13 +56,48 @@
                         </div>
 
                         <div class="form-row">
+                            <label class="form-label">이메일</label>
+                            <input type="email" name="email" class="form-input" placeholder="email@example.com">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">담당과목</label>
+                            <input type="text" name="subject" class="form-input" placeholder="예: 영어 회화">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">역할</label>
+                            <select name="role" class="form-input">
+                                <option value="">-- 선택 --</option>
+                                <option value="강사">강사</option>
+                                <option value="팀장">팀장</option>
+                                <option value="매니저">매니저</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">상태</label>
+                            <select name="status" class="form-input">
+                                <option value="재직">재직</option>
+                                <option value="휴직">휴직</option>
+                                <option value="퇴직">퇴직</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">등록일</label>
+                            <input type="date" name="join_date" class="form-input">
+                        </div>
+
+                        <div class="form-row">
                             <label class="form-label">소속 지점 <span class="required">*</span></label>
-                            <select name="branch_seq" class="form-input" required>
+                            <select name="branch_seq" class="form-input" id="branchSelect" required onchange="updateBranchName(this)">
                                 <option value="">-- 지점 선택 --</option>
                                 {{range .BranchList}}
-                                <option value="{{index . "seq"}}">{{index . "name"}}</option>
+                                <option value="{{index . "seq"}}" data-name="{{index . "name"}}">{{index . "name"}}</option>
                                 {{end}}
                             </select>
+                            <input type="hidden" name="branch_name" id="branchNameInput">
                         </div>
 
                         <!-- 톤앤매너에 맞춘 다중 수업 배정 -->
@@ -95,8 +130,41 @@
                         </div>
 
                         <div class="form-row">
+                            <label class="form-label">인터뷰어</label>
+                            <input type="text" name="interviewer" class="form-input" placeholder="인터뷰어 이름을 입력하세요">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">결제방법</label>
+                            <div>
+                                <select id="paymentMethodSelect" name="payment_method" class="form-input" onchange="togglePaymentCustom(this)">
+                                    <option value="">-- 선택 --</option>
+                                    <option value="카드">카드</option>
+                                    <option value="온라인구독">온라인구독</option>
+                                    <option value="온라인신용">온라인신용</option>
+                                    <option value="토스링크">토스링크</option>
+                                    <option value="이체(개인통장)">이체(개인통장)</option>
+                                    <option value="이체(법인통장)">이체(법인통장)</option>
+                                    <option value="현금">현금</option>
+                                    <option value="기타">기타 (직접입력)</option>
+                                </select>
+                                <input type="text" id="paymentMethodCustom" name="payment_method_custom" class="form-input" placeholder="결제방법을 직접 입력하세요" style="display: none; margin-top: 8px;">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">디파짓 금액</label>
+                            <input type="text" name="deposit_amount" class="form-input" placeholder="예: 500,000">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">환급 금액</label>
+                            <input type="text" name="refund_amount" class="form-input" placeholder="예: 200,000">
+                        </div>
+
+                        <div class="form-row">
                             <label class="form-label">비고 (코멘트)</label>
-                            <textarea name="comment" class="form-input" style="height: 80px; resize: vertical; padding: 10px;" placeholder="강사 특이사항 입력"></textarea>
+                            <textarea name="comment" class="form-input" style="height: 80px; resize: vertical; padding: 10px;" placeholder="스태프 특이사항 입력"></textarea>
                         </div>
                     </div>
 
@@ -173,6 +241,22 @@ function renderAssignedClasses() {
     `).join('');
     
     input.value = selectedClasses.map(c => c.id).join(',');
+}
+
+function updateBranchName(select) {
+    const selected = select.options[select.selectedIndex];
+    document.getElementById('branchNameInput').value = selected ? selected.getAttribute('data-name') || '' : '';
+}
+
+function togglePaymentCustom(select) {
+    const customInput = document.getElementById('paymentMethodCustom');
+    if (select.value === '기타') {
+        customInput.style.display = 'block';
+        customInput.focus();
+    } else {
+        customInput.style.display = 'none';
+        customInput.value = '';
+    }
 }
 
 // 전화번호 입력 검증

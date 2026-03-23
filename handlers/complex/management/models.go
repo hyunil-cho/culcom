@@ -21,12 +21,12 @@ type Class struct {
 // Member - 수업 등록 회원 정보 (MOCK용)
 type Member struct {
 	ID                int
-	BranchSeq         string   // 소속 지점 코드
+	BranchSeq         string // 소속 지점 코드
 	Name              string
 	PhoneNumber       string
 	Status            string   // 출석 상태 등 (O, X 등)
 	Level             string   // 레벨 (예: 3-)
-	Info              string   // 소속/정보 (예: 달서 멤버)
+	Info              string   // 인적사항 (스태프가 기록하는 회원 특징)
 	ChartNumber       string   // 차트 넘버
 	Comment           string   // 코멘트 (직업, 관심사, 동기 등)
 	JoinDate          string   // 가입일
@@ -34,35 +34,49 @@ type Member struct {
 	ExpiryDate        string   // 만료일
 	Stats             string   // 통계 (예: 8 did 97 left)
 	Grade             string   // 등급 (예: A+, VVIP+)
+	Price             string   // 금액
+	PaymentMethod     string   // 결제방법
+	SignupChannel     string   // 가입 경로
+	Interviewer       string   // 인터뷰어 (상담/등록 담당 스태프)
+	CreatedAt         string   // 등록일자
+	UpdatedAt         string   // 수정일자
 	AttendanceHistory []string // 지난 출석 기록 (O, X 등)
 }
 
 // Staff - 강사 정보 (MOCK용)
 type Staff struct {
-	ID                 int
-	BranchSeq          string // 소속 지점 코드
-	Name               string
-	PhoneNumber        string
-	Email              string
-	Subject            string // 담당 과목/분야
-	Role               string // 역할 (강사, 팀장 등)
-	Status             string // 상태 (재직, 휴직 등)
-	JoinDate           string // 등록일
-	Comment            string // 비고
-	AssignedClassIDs   string // 배정된 수업 ID 리스트 (쉼표 구분)
+	ID               int
+	BranchSeq        string // 소속 지점 코드
+	BranchName       string // 소속 지점명 (표시용)
+	Name             string
+	PhoneNumber      string
+	Email            string
+	Subject          string // 담당 과목/분야
+	Role             string // 역할 (강사, 팀장 등)
+	Status           string // 상태 (재직, 휴직 등)
+	JoinDate         string // 등록일
+	Comment          string // 비고
+	AssignedClassIDs string // 배정된 수업 ID 리스트 (쉼표 구분)
+	Interviewer      string // 인터뷰어
+	PaymentMethod    string // 결제방법
+	DepositAmount    string // 디파짓 금액
+	RefundAmount     string // 환급 금액
 }
 
 // PostponementRequest - 수업 연기 요청 (MOCK용)
 type PostponementRequest struct {
-	ID           int
-	MemberName   string
-	PhoneNumber  string
-	CurrentClass string
-	StartDate    string
-	EndDate      string
-	Reason       string
-	Status       string // 대기, 승인, 반려
-	RequestDate  string
+	ID             int
+	MemberName     string
+	PhoneNumber    string
+	CurrentClass   string
+	StartDate      string
+	EndDate        string
+	Reason         string
+	Status         string // 대기, 승인, 반려
+	RejectReason   string // 반려 사유
+	RequestDate    string
+	UsedCount      int // 사용한 연기 횟수
+	RemainingCount int // 남은 연기 횟수
 }
 
 // ClassWithMembers - 회원이 포함된 수업 정보
