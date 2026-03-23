@@ -141,6 +141,41 @@
         .empty-row {
             color: #f1f3f5;
         }
+        /* 드래그 앤 드롭 스타일 */
+        .member-item.draggable {
+            cursor: grab;
+            user-select: none;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+        }
+        .member-item.draggable:hover {
+            background: #f8f9ff;
+        }
+        .member-item.drag-placeholder {
+            background: #e8f0fe;
+            border: 1px dashed #4a90e2;
+            border-radius: 4px;
+            min-height: 42px;
+            padding: 10px 15px;
+            box-sizing: border-box;
+        }
+        .member-item.drag-placeholder > * {
+            visibility: hidden;
+        }
+        .drag-clone {
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+            background: #fff;
+            border: 1px solid #4a90e2;
+            border-radius: 6px;
+            box-shadow: 0 8px 24px rgba(74,144,226,0.25);
+            opacity: 0.95;
+            transition: none;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
         .btn-member-manage {
             background: #fff;
             color: #4a90e2;
@@ -848,6 +883,108 @@
                     ModalManager.hide('moveClassConfirm');
                     ModalManager.hide('memberManageModal');
                     location.reload();
+                }
+            });
+        }
+        // 드래그 앤 드롭 기능 (pointer event 기반, STAFF 행 제외)
+        document.addEventListener('DOMContentLoaded', function() {
+            let dragState = null;
+
+            document.querySelectorAll('.member-list').forEach(list => {
+                const items = list.querySelectorAll('.member-item:not(.empty-row)');
+                items.forEach((item, index) => {
+                    if (index === 0) return; // STAFF 행 제외
+                    item.classList.add('draggable');
+
+                    item.addEventListener('pointerdown', function(e) {
+                        // 버튼/링크 클릭 시 드래그 시작하지 않음
+                        if (e.target.closest('button, a, input')) return;
+                        e.preventDefault();
+
+                        const rect = this.getBoundingClientRect();
+                        const clone = this.cloneNode(true);
+                        clone.className = 'drag-clone';
+                        clone.style.width = rect.width + 'px';
+                        clone.style.padding = getComputedStyle(this).padding;
+                        clone.style.left = rect.left + 'px';
+                        clone.style.top = rect.top + 'px';
+                        document.body.appendChild(clone);
+
+                        this.classList.add('drag-placeholder');
+
+                        dragState = {
+                            el: this,
+                            list: list,
+                            clone: clone,
+                            offsetX: e.clientX - rect.left,
+                            offsetY: e.clientY - rect.top,
+                            startX: rect.left,
+                            startY: rect.top,
+                        };
+                        document.body.style.cursor = 'grabbing';
+                    });
+                });
+            });
+
+            document.addEventListener('pointermove', function(e) {
+                if (!dragState) return;
+                e.preventDefault();
+                const { clone, offsetX, offsetY, list, el } = dragState;
+                clone.style.left = (e.clientX - offsetX) + 'px';
+                clone.style.top = (e.clientY - offsetY) + 'px';
+
+                // 드롭 대상 찾기
+                const siblings = Array.from(list.querySelectorAll('.member-item:not(.empty-row)'));
+                for (const sibling of siblings) {
+                    if (sibling === el) continue;
+                    const idx = siblings.indexOf(sibling);
+                    if (idx === 0) continue; // STAFF 행 보호
+                    const rect = sibling.getBoundingClientRect();
+                    const midY = rect.top + rect.height / 2;
+                    if (e.clientY > rect.top && e.clientY < rect.bottom) {
+                        if (e.clientY < midY) {
+                            // STAFF 행 바로 뒤로 가지 않도록 확인
+                            if (sibling.previousElementSibling && siblings.indexOf(sibling) <= 1 && siblings[0] !== el) {
+                                list.insertBefore(el, siblings[1] === sibling ? sibling : sibling);
+                            } else {
+                                list.insertBefore(el, sibling);
+                            }
+                        } else {
+                            list.insertBefore(el, sibling.nextSibling);
+                        }
+                        break;
+                    }
+                }
+                // STAFF 행 앞으로 가지 않도록 보정
+                const updatedSiblings = Array.from(list.querySelectorAll('.member-item:not(.empty-row)'));
+                if (updatedSiblings[0] === el) {
+                    list.insertBefore(el, updatedSiblings[1] ? updatedSiblings[1].nextSibling : null);
+                }
+            });
+
+            document.addEventListener('pointerup', function() {
+                if (!dragState) return;
+                const { el, clone, list } = dragState;
+                clone.remove();
+                el.classList.remove('drag-placeholder');
+                document.body.style.cursor = '';
+                renumberMembers(list);
+                dragState = null;
+            });
+        });
+
+        function renumberMembers(list) {
+            const items = list.querySelectorAll('.member-item:not(.empty-row)');
+            items.forEach((item, index) => {
+                const indexSpan = item.querySelector('.member-index');
+                if (!indexSpan) return;
+                if (index === 0) {
+                    indexSpan.textContent = 'STAFF';
+                } else {
+                    indexSpan.textContent = index;
+                    indexSpan.style.fontWeight = '';
+                    indexSpan.style.color = '';
+                    indexSpan.style.fontSize = '';
                 }
             });
         }
