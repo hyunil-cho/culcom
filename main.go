@@ -9,6 +9,7 @@ import (
 	"backoffice/handlers/complex/index"
 	"backoffice/handlers/complex/management"
 	"backoffice/handlers/complex/memberships"
+	complexSurvey "backoffice/handlers/complex/survey"
 	"backoffice/handlers/errorhandler"
 	"backoffice/handlers/main/board"
 	"backoffice/handlers/main/branches"
@@ -92,6 +93,7 @@ func init() {
 	templates = template.Must(templates.ParseGlob("templates/complex/staffs/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/complex/postponements/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/complex/index/*.html"))
+	templates = template.Must(templates.ParseGlob("templates/complex/survey/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/main/error.html"))
 
 	home.Templates = templates
@@ -111,6 +113,7 @@ func init() {
 	classtimeslots.Templates = templates
 	attendance.Templates = templates
 	memberships.Templates = templates
+	complexSurvey.Templates = templates
 
 	// 공개 게시판 템플릿 (백오피스 레이아웃과 완전 분리)
 	publicFuncMap := template.FuncMap{
@@ -126,6 +129,9 @@ func init() {
 
 	// 멤버쉽 확인 공개 페이지 템플릿
 	opens.MembershipCheckTemplates = template.Must(template.New("").ParseGlob("templates/main/membership/*.html"))
+
+	// 멤버십 환불 신청 공개 페이지 템플릿
+	opens.RefundTemplates = template.Must(template.New("").ParseGlob("templates/main/refund/*.html"))
 }
 
 func main() {
@@ -153,14 +159,20 @@ func main() {
 	// 공개 라우트 (인증 불필요)
 	mux.HandleFunc("/login", middleware.RecoverFunc(login.LoginHandler)) // 로그인 처리
 
-	mux.HandleFunc("/privacy", opens.PrivacyPolicyHandler)                      // 개인정보 처리방침
-	mux.HandleFunc("/complex/postponement", opens.PostponementHandler)          // 수업 연기 요청 페이지
-	mux.HandleFunc("/complex/membership", opens.MembershipCheckHandler)         // 멤버쉽 확인 (전화번호 입력)
-	mux.HandleFunc("/complex/membership/result", opens.MembershipResultHandler) // 멤버쉽 조회 결과
+	mux.HandleFunc("/privacy", opens.PrivacyPolicyHandler)                         // 개인정보 처리방침
+	mux.HandleFunc("/complex/postponement", opens.PostponementHandler)             // 수업 연기 요청 페이지
+	mux.HandleFunc("/complex/membership", opens.MembershipCheckHandler)            // 멤버쉽 확인 (전화번호 입력)
+	mux.HandleFunc("/complex/membership/result", opens.MembershipResultHandler)    // 멤버쉽 조회 결과
+	mux.HandleFunc("/complex/refund", middleware.RecoverFunc(opens.RefundHandler)) // 멤버십 환불 신청 (공개)
 
-	mux.HandleFunc("/consultation/register", middleware.RecoverFunc(consultation.RegisterHandler)) // 상담 신청 페이지
-	mux.HandleFunc("/consultation/submit", middleware.RecoverFunc(consultation.SubmitHandler))     // 상담 신청 처리
-	mux.HandleFunc("/consultation/success", middleware.RecoverFunc(consultation.SuccessHandler))   // 상담 신청 완료
+	mux.HandleFunc("/consultation/register", middleware.RecoverFunc(consultation.RegisterHandler))                                      // 상담 신청 페이지
+	mux.HandleFunc("/consultation/submit", middleware.RecoverFunc(consultation.SubmitHandler))                                          // 상담 신청 처리
+	mux.HandleFunc("/consultation/success", middleware.RecoverFunc(consultation.SuccessHandler))                                        // 상담 신청 완료
+	mux.HandleFunc("/complex/survey", middleware.RecoverFunc(consultation.SurveyHandler))                                               // 커스터마이징 상담 설문 (공개)
+	mux.HandleFunc("/complex/survey/options", middleware.RequireAuthRecover(middleware.InjectBranchData(complexSurvey.OptionsHandler))) // 설문 선택지 관리
+	mux.HandleFunc("/complex/survey/options/add", middleware.RequireAuthRecover(complexSurvey.AddOptionHandler))                        // 선택지 추가
+	mux.HandleFunc("/complex/survey/options/delete", middleware.RequireAuthRecover(complexSurvey.DeleteOptionHandler))                  // 선택지 삭제
+	mux.HandleFunc("/complex/survey/options/type", middleware.RequireAuthRecover(complexSurvey.UpdateTypeHandler))                      // 선택 타입 변경
 
 	// 공개 게시판 (인증 불필요 - 일반 사용자 열람용)
 	mux.HandleFunc("/board", middleware.RecoverFunc(board.ListHandler))                                   // 공지사항/이벤트 목록 (공개, /board 호환)

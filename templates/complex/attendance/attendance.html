@@ -193,6 +193,50 @@
             background: #4a90e2;
             color: white;
         }
+        /* 출석률 뱃지 */
+        .attend-rate-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            white-space: nowrap;
+            background: #e9ecef;
+            color: #868e96;
+            border: 1px solid #dee2e6;
+        }
+        .attend-rate-badge::before {
+            content: '';
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.7;
+        }
+        .rate-high  { background: #ebfbee; color: #2b8a3e; border-color: #b2f2bb; }
+        .rate-mid   { background: #fff9db; color: #e67700; border-color: #ffec99; }
+        .rate-low   { background: #fff5f5; color: #c92a2a; border-color: #ffa8a8; }
+
+        .btn-bulk-attend {
+            background: #fff;
+            color: #2e7d32;
+            border: 1px solid #2e7d32;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-bulk-attend:hover {
+            background: #2e7d32;
+            color: white;
+        }
         .class-select-item {
             padding: 12px;
             border: 1px solid #eee;
@@ -360,6 +404,8 @@
                         <div class="class-card">
                             <div class="class-card-header">
                                 <h3>{{.Name}}</h3>
+                                <span class="attend-rate-badge">집계 중</span>
+                                <button type="button" class="btn-bulk-attend" onclick="openBulkAttendanceModal('{{.ID}}', '{{.Name}}')">일괄 출석</button>
                             </div>
                             <ul class="member-list">
                                 {{range $i, $m := .Members}}
@@ -409,7 +455,8 @@
                             id: "{{.ID}}",
                             name: "{{.Name}}",
                             phone: "{{.PhoneNumber}}",
-                            isLeader: {{if eq $idx 0}}true{{else}}false{{end}} // 첫 번째 회원을 리더로 가정 (MOCK)
+                            status: "{{.Status}}",
+                            isLeader: {{if eq $idx 0}}true{{else}}false{{end}}
                         },
                         {{end}}
                     ]
@@ -417,6 +464,20 @@
                 {{end}}
             {{end}}
         ];
+
+        // ── 카드별 출석률 계산 · 표시 ─────────────────────────
+        function updateAttendRates() {
+            document.querySelectorAll('.class-card').forEach(card => {
+                const total   = card.querySelectorAll('.member-list .status-mark').length;
+                const present = card.querySelectorAll('.member-list .status-mark.active').length;
+                const pct     = total > 0 ? Math.round(present / total * 100) : 0;
+                const badge   = card.querySelector('.attend-rate-badge');
+                if (!badge) return;
+                badge.textContent = `${present}/${total}명 · ${pct}%`;
+                badge.className   = 'attend-rate-badge ' +
+                    (pct >= 80 ? 'rate-high' : pct >= 60 ? 'rate-mid' : 'rate-low');
+            });
+        }
 
         // 메인 화면 검색 기능 구현
         document.addEventListener('DOMContentLoaded', function() {
@@ -503,6 +564,8 @@
             if (phoneInput) phoneInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') performSearch('phone');
             });
+
+            updateAttendRates();
         });
 
         function openSlotMessageModal(slotName) {
@@ -740,6 +803,100 @@
                 modalContent.style.width = '';
             }
             if (modalTitle) modalTitle.textContent = `메시지 발송 대상 선택`;
+        }
+
+        // ── 일괄 출석 모달 ────────────────────────────────────
+        function openBulkAttendanceModal(classId, className) {
+            const cls = allAvailableClasses.find(c => c.id === String(classId));
+            if (!cls) return;
+
+            ModalManager.createCustom({
+                id: 'bulkAttendanceModal',
+                title: `${className} — 일괄 출석`,
+                maxWidth: '440px',
+                headerColor: '#2e7d32',
+                contentBuilder: () => {
+                    const rows = cls.members.map((m, i) => `
+                        <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #f0f0f0;">
+                            <input type="checkbox" id="bulk_${m.id}" class="bulk-attend-cb"
+                                   style="width:17px;height:17px;cursor:pointer;accent-color:#2e7d32;"
+                                   ${m.status === 'O' ? 'checked' : ''}>
+                            <label for="bulk_${m.id}" style="flex:1;cursor:pointer;display:flex;align-items:center;gap:8px;min-width:0;">
+                                ${i === 0
+                                    ? '<span style="color:#e67e22;font-size:0.72rem;font-weight:800;white-space:nowrap;">STAFF</span>'
+                                    : `<span style="color:#adb5bd;font-size:0.8rem;width:18px;text-align:right;flex-shrink:0;">${i}</span>`}
+                                <strong style="color:#333;white-space:nowrap;">${m.name}</strong>
+                                <span style="color:#999;font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.phone}</span>
+                            </label>
+                        </div>
+                    `).join('');
+
+                    return `
+                        <div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #e8f5e9;background:#f9fdf9;">
+                                <span style="font-size:0.82rem;color:#555;">총 <strong>${cls.members.length}</strong>명</span>
+                                <div style="display:flex;gap:6px;">
+                                    <button type="button" onclick="toggleAllBulk(true)"
+                                            style="font-size:0.75rem;padding:3px 10px;border:1px solid #2e7d32;border-radius:4px;background:white;color:#2e7d32;cursor:pointer;font-weight:700;">
+                                        전체 출석
+                                    </button>
+                                    <button type="button" onclick="toggleAllBulk(false)"
+                                            style="font-size:0.75rem;padding:3px 10px;border:1px solid #ccc;border-radius:4px;background:white;color:#888;cursor:pointer;font-weight:600;">
+                                        전체 해제
+                                    </button>
+                                </div>
+                            </div>
+                            <div style="max-height:340px;overflow-y:auto;">${rows}</div>
+                        </div>
+                    `;
+                },
+                buttons: [
+                    {
+                        text: '취소',
+                        class: 'btn-secondary',
+                        onClick: () => ModalManager.hide('bulkAttendanceModal')
+                    },
+                    {
+                        text: '저장',
+                        class: 'btn-primary',
+                        style: { background: '#2e7d32', borderColor: '#2e7d32' },
+                        closeOnClick: false,
+                        onClick: () => saveBulkAttendance(classId, cls)
+                    }
+                ]
+            });
+            ModalManager.show('bulkAttendanceModal');
+        }
+
+        function toggleAllBulk(checked) {
+            document.querySelectorAll('.bulk-attend-cb').forEach(cb => cb.checked = checked);
+        }
+
+        function saveBulkAttendance(classId, cls) {
+            // 체크박스 상태 → in-memory 업데이트
+            document.querySelectorAll('.bulk-attend-cb').forEach(cb => {
+                const memberId = cb.id.replace('bulk_', '');
+                const member = cls.members.find(m => m.id === memberId);
+                if (member) member.status = cb.checked ? 'O' : '';
+            });
+
+            // DOM 출석 마크 업데이트
+            cls.members.forEach(m => {
+                const item = document.querySelector(`.member-item[data-member-id="${m.id}"]`);
+                if (!item) return;
+                const mark = item.querySelector('.status-mark');
+                if (!mark) return;
+                if (m.status === 'O') {
+                    mark.classList.add('active');
+                    mark.textContent = 'O';
+                } else {
+                    mark.classList.remove('active');
+                    mark.innerHTML = '&nbsp;';
+                }
+            });
+
+            ModalManager.hide('bulkAttendanceModal');
+            updateAttendRates();
         }
 
         function openMemberManageModal(memberId, name, phone, currentClassName) {

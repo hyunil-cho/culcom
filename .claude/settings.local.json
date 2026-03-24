@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(find C:UserslookhIdeaProjectsculcomhandlersmainopens -type f -name *.go)",
-      "Bash(go build:*)"
+      "Bash(go build:*)",
+      "Bash(grep -n \"complex_sidebar\\\\|ActiveMenu\" C:/Users/lookh/IdeaProjects/culcom/templates/layouts/*.html)"
     ]
   }
 }

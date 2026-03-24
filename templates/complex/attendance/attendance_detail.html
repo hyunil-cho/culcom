@@ -191,6 +191,34 @@
             gap: 5px;
         }
         .btn-back:hover { color: #4a90e2; }
+
+        /* 출석률 뱃지 */
+        .attend-rate-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            white-space: nowrap;
+            background: #e9ecef;
+            color: #868e96;
+            border: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+        .attend-rate-badge::before {
+            content: '';
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.7;
+        }
+        .rate-high  { background: #ebfbee; color: #2b8a3e; border-color: #b2f2bb; }
+        .rate-mid   { background: #fff9db; color: #e67700; border-color: #ffec99; }
+        .rate-low   { background: #fff5f5; color: #c92a2a; border-color: #ffa8a8; }
     </style>
 </head>
 <body>
@@ -230,8 +258,11 @@
                 </div>
 
                 {{range .Classes}}
-                <div style="margin-bottom: 40px;">
-                    <h3 style="margin-bottom: 10px; color: #4a90e2;">📍 {{.Name}}</h3>
+                <div class="class-section" style="margin-bottom: 40px;">
+                    <h3 style="margin-bottom: 10px; color: #4a90e2; display: flex; align-items: center; gap: 10px;">
+                        📍 {{.Name}}
+                        <span class="attend-rate-badge">집계 중</span>
+                    </h3>
                     <div class="staff-table-wrapper">
                         <table class="staff-table">
                             <thead>
@@ -381,6 +412,18 @@
             });
             phoneInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') performSearch('phone');
+            });
+
+            // ── 클래스별 최근 출석률 계산 ──────────────────────
+            document.querySelectorAll('.class-section').forEach(section => {
+                const total   = section.querySelectorAll('.history-cell').length;
+                const present = section.querySelectorAll('.history-cell.present').length;
+                const pct     = total > 0 ? Math.round(present / total * 100) : 0;
+                const badge   = section.querySelector('.attend-rate-badge');
+                if (!badge) return;
+                badge.textContent = `최근 ${present}/${total}회 · ${pct}%`;
+                badge.className   = 'attend-rate-badge ' +
+                    (pct >= 80 ? 'rate-high' : pct >= 60 ? 'rate-mid' : 'rate-low');
             });
         });
     </script>

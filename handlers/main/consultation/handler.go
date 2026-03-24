@@ -2,6 +2,7 @@ package consultation
 
 import (
 	"backoffice/database"
+	surveystore "backoffice/handlers/complex/survey"
 	"html/template"
 	"log"
 	"net/http"
@@ -81,6 +82,32 @@ func SubmitHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 성공 페이지로 리다이렉트
 	http.Redirect(w, r, "/consultation/success?name="+name, http.StatusSeeOther)
+}
+
+// SurveyHandler - 커스터마이징 상담 설문 페이지 (GET)
+func SurveyHandler(w http.ResponseWriter, r *http.Request) {
+	q1Groups := surveystore.GroupedOptions("q1", []string{"현실 / 필요형", "목표 / 준비형", "라이프 스타일", "감정 / 욕망형"})
+	q5Groups := surveystore.GroupedOptions("q5", []string{"월 · 수", "화 · 목", "토 · 일"})
+
+	data := SurveyPageData{
+		Title:           "E-UT 커스터마이징 상담 설문",
+		InputTypes:      surveystore.AllInputTypes(),
+		AgeGroupOptions: surveystore.FlatOptions("age_group"),
+		OccupationData:  surveystore.BuildOccupationData(),
+		AdSourceOptions: surveystore.FlatOptions("ad_source"),
+		Q1Groups:        q1Groups,
+		Q2Options:       surveystore.FlatOptions("q2"),
+		Q4Options:       surveystore.FlatOptions("q4"),
+		Q5Groups:        q5Groups,
+		Q6Options:       surveystore.FlatOptions("q6"),
+		Q8Options:       surveystore.FlatOptions("q8"),
+		Q9Options:       surveystore.FlatOptions("q9"),
+	}
+
+	if err := Templates.ExecuteTemplate(w, "consultation/survey.html", data); err != nil {
+		log.Printf("템플릿 실행 오류: %v", err)
+		http.Error(w, "페이지를 불러올 수 없습니다", http.StatusInternalServerError)
+	}
 }
 
 // SuccessHandler - 상담 신청 완료 페이지

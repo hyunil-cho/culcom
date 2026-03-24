@@ -1,0 +1,535 @@
+{{define "consultation/survey.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-UT 커스터마이징 상담 설문</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --green: #2d7a4f;
+            --green-light: #e8f5ee;
+            --green-mid: #4caf78;
+            --text: #1a1a1a;
+            --text-muted: #666;
+            --border: #dde8e3;
+            --bg: #f6faf8;
+            --white: #ffffff;
+            --radius: 12px;
+            --shadow: 0 2px 16px rgba(45,122,79,0.08);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem 1rem 4rem;
+        }
+
+        .page-wrapper { max-width: 720px; margin: 0 auto; }
+
+        /* Header */
+        .survey-header { text-align: center; margin-bottom: 2.5rem; }
+        .brand-logo { font-size: 2.2rem; font-weight: 900; color: var(--green); letter-spacing: -1px; margin-bottom: 0.5rem; }
+        .brand-logo span { color: var(--green-mid); }
+        .survey-title { font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 0.75rem; }
+        .survey-notice {
+            background: var(--green-light);
+            border-left: 4px solid var(--green);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            text-align: left;
+            font-size: 0.95rem;
+            color: var(--green);
+            line-height: 1.6;
+            margin-top: 1rem;
+        }
+
+        /* Progress */
+        .progress-bar { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 2rem; }
+        .progress-step { display: flex; align-items: center; gap: 0.5rem; flex: 1; }
+        .step-dot {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: var(--border); color: var(--text-muted);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; font-weight: 700; flex-shrink: 0; transition: all 0.3s;
+        }
+        .step-dot.active { background: var(--green); color: white; }
+        .step-dot.done { background: var(--green-mid); color: white; }
+        .step-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+        .step-label.active { color: var(--green); font-weight: 700; }
+        .step-line { flex: 1; height: 2px; background: var(--border); border-radius: 2px; }
+
+        /* Cards */
+        .section-card {
+            background: var(--white); border-radius: var(--radius);
+            box-shadow: var(--shadow); padding: 2rem; margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+        }
+        .section-header {
+            display: flex; align-items: center; gap: 0.75rem;
+            margin-bottom: 1.75rem; padding-bottom: 1rem;
+            border-bottom: 2px solid var(--green-light);
+        }
+        .section-badge { background: var(--green); color: white; font-size: 0.75rem; font-weight: 700; padding: 0.3rem 0.75rem; border-radius: 20px; }
+        .section-title { font-size: 1.15rem; font-weight: 700; }
+
+        /* Fields */
+        .field-group { margin-bottom: 1.75rem; }
+        .field-group:last-child { margin-bottom: 0; }
+        .field-label { display: block; font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 0.6rem; }
+        .field-label .required { color: #e53e3e; margin-left: 3px; }
+        .field-label .hint { font-size: 0.8rem; color: var(--text-muted); font-weight: 400; margin-left: 6px; }
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .text-input {
+            width: 100%; padding: 0.75rem 1rem;
+            border: 1.5px solid var(--border); border-radius: 8px;
+            font-size: 1rem; font-family: inherit; color: var(--text);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .text-input:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px rgba(45,122,79,0.1); }
+        .text-input::placeholder { color: #b0b8b4; }
+        textarea.text-input { resize: vertical; min-height: 80px; line-height: 1.6; }
+
+        /* Chips */
+        .chip-group { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .chip-label {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.45rem 0.9rem; border: 1.5px solid var(--border);
+            border-radius: 24px; font-size: 0.9rem; color: var(--text);
+            cursor: pointer; transition: all 0.2s; background: var(--white); user-select: none;
+        }
+        .chip-label:hover { border-color: var(--green-mid); color: var(--green); }
+        .chip-label input { display: none; }
+        .chip-label:has(input:checked) { background: var(--green); border-color: var(--green); color: white; font-weight: 600; }
+
+        /* Sub-options */
+        .sub-options { margin-left: 1.75rem; margin-top: 0.4rem; display: none; flex-direction: column; gap: 0.4rem; }
+        .sub-options.visible { display: flex; }
+        .option-item { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; }
+        .option-item input[type="radio"], .option-item input[type="checkbox"] {
+            width: 18px; height: 18px; accent-color: var(--green); cursor: pointer; flex-shrink: 0;
+        }
+        .option-item label { font-size: 0.95rem; color: var(--text); cursor: pointer; line-height: 1.4; }
+        .other-input {
+            flex: 1; padding: 0.45rem 0.75rem; border: 1.5px solid var(--border);
+            border-radius: 8px; font-size: 0.9rem; font-family: inherit; transition: border-color 0.2s;
+        }
+        .other-input:focus { outline: none; border-color: var(--green); }
+
+        /* Q1 Motivation Grid */
+        .motivation-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+        .motivation-col { background: var(--green-light); border-radius: 10px; padding: 1rem; }
+        .motivation-col-title { font-size: 0.8rem; font-weight: 700; color: var(--green); margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .motivation-col .chip-group { flex-direction: column; gap: 0.4rem; }
+        .motivation-col .chip-label { background: var(--white); font-size: 0.85rem; padding: 0.4rem 0.75rem; border-radius: 8px; border-color: transparent; }
+        .motivation-col .chip-label:has(input:checked) { background: var(--green); color: white; }
+
+        /* Q5 Time Slots */
+        .timeslot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .timeslot-col { background: var(--green-light); border-radius: 10px; padding: 1rem; }
+        .timeslot-col-title { font-size: 0.85rem; font-weight: 700; color: var(--green); margin-bottom: 0.75rem; text-align: center; }
+        .timeslot-col .chip-group { flex-direction: column; gap: 0.4rem; }
+        .timeslot-col .chip-label { background: var(--white); font-size: 0.8rem; padding: 0.5rem 0.6rem; border-radius: 8px; border-color: transparent; text-align: center; justify-content: center; }
+        .timeslot-col .chip-label:has(input:checked) { background: var(--green); color: white; }
+
+        /* Q6 Level */
+        .level-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .level-item {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.75rem 1rem; border: 1.5px solid var(--border);
+            border-radius: 10px; cursor: pointer; transition: all 0.2s;
+        }
+        .level-item:hover { border-color: var(--green-mid); background: var(--green-light); }
+        .level-item input { width: 18px; height: 18px; accent-color: var(--green); flex-shrink: 0; }
+        .level-item.selected { border-color: var(--green); background: var(--green-light); }
+        .level-text { font-size: 0.9rem; color: var(--text); }
+
+        /* Q8 Duration */
+        .duration-group { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+        .duration-label {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0.6rem 1.25rem; border: 1.5px solid var(--border);
+            border-radius: 8px; font-size: 0.95rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; background: var(--white); user-select: none;
+        }
+        .duration-label:hover { border-color: var(--green-mid); color: var(--green); }
+        .duration-label input { display: none; }
+        .duration-label:has(input:checked) { background: var(--green); border-color: var(--green); color: white; }
+
+        /* Buttons */
+        .form-nav { display: flex; gap: 1rem; margin-top: 2rem; }
+        .btn { flex: 1; padding: 1rem; border-radius: 10px; font-size: 1rem; font-weight: 700; font-family: inherit; cursor: pointer; transition: all 0.2s; border: none; }
+        .btn-prev { background: var(--white); color: var(--text-muted); border: 1.5px solid var(--border); }
+        .btn-prev:hover { background: var(--bg); }
+        .btn-next, .btn-submit { background: var(--green); color: white; }
+        .btn-next:hover, .btn-submit:hover { background: #235f3d; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(45,122,79,0.3); }
+
+        .section-page { display: none; }
+        .section-page.active { display: block; }
+
+        .form-footer { text-align: center; margin-top: 2rem; font-size: 0.82rem; color: var(--text-muted); }
+
+        @media (max-width: 600px) {
+            body { padding: 1rem 0.75rem 3rem; }
+            .section-card { padding: 1.5rem 1.25rem; }
+            .field-row { grid-template-columns: 1fr; }
+            .motivation-grid { grid-template-columns: 1fr; }
+            .timeslot-grid { grid-template-columns: 1fr; }
+            .step-label { display: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="page-wrapper">
+
+    <div class="survey-header">
+        <div class="brand-logo">E<span>-</span>UT</div>
+        <div class="survey-title">커스터마이징 상담 설문지</div>
+        <div class="survey-notice">
+            <strong>이 설문은 커스터마이징 상담을 위한 것입니다.</strong><br>
+            솔직하게 작성해 주실수록, 딱 맞는 영어 솔루션을 안내드릴 수 있어요. 성심성의껏 부탁드립니다 :)
+        </div>
+    </div>
+
+    <div class="progress-bar">
+        <div class="progress-step">
+            <div class="step-dot active" id="dot-1">1</div>
+            <span class="step-label active" id="label-1">기본 정보</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="progress-step">
+            <div class="step-dot" id="dot-2">2</div>
+            <span class="step-label" id="label-2">영어회화 현황</span>
+        </div>
+    </div>
+
+    <form id="surveyForm" action="/consultation/survey/submit" method="POST">
+
+        <!-- ===== SECTION 1 ===== -->
+        <div class="section-page active" id="page-1">
+            <div class="section-card">
+                <div class="section-header">
+                    <span class="section-badge">Section 1</span>
+                    <span class="section-title">고객 기본 정보</span>
+                </div>
+
+                <div class="field-group field-row">
+                    <div>
+                        <label class="field-label" for="name">성함 <span class="required">*</span></label>
+                        <input type="text" id="name" name="name" class="text-input" placeholder="홍길동" required>
+                    </div>
+                    <div>
+                        <label class="field-label" for="phone">연락처 <span class="required">*</span></label>
+                        <input type="tel" id="phone" name="phone_number" class="text-input" placeholder="010-0000-0000" required>
+                    </div>
+                </div>
+
+                <div class="field-group field-row">
+                    <div>
+                        <label class="field-label">성별 <span class="required">*</span></label>
+                        <div class="chip-group" style="margin-top:0.25rem">
+                            <label class="chip-label"><input type="radio" name="gender" value="남" required> 남성</label>
+                            <label class="chip-label"><input type="radio" name="gender" value="여"> 여성</label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="field-label" for="location">사는 곳 <span class="required">*</span><span class="hint">동까지만 입력</span></label>
+                        <input type="text" id="location" name="location" class="text-input" placeholder="예) 서울 강남구 역삼동" required>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    {{$t := index .InputTypes "age_group"}}
+                    <label class="field-label">연령대 <span class="required">*</span></label>
+                    <div class="chip-group">
+                        {{range $i, $opt := .AgeGroupOptions}}
+                        <label class="chip-label">
+                            <input type="{{$t}}" name="age_group{{if eq $t "checkbox"}}[]{{end}}" value="{{$opt.Label}}"{{if and (eq $t "radio") (eq $i 0)}} required{{end}}> {{$opt.Label}}
+                        </label>
+                        {{end}}
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">현재 직군 <span class="required">*</span></label>
+                    <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                        {{range $i, $item := .OccupationData.Items}}
+                        <div class="option-item">
+                            <input type="radio" name="occupation" id="occ-{{$i}}" value="{{$item.Label}}"
+                                {{if or $item.SubOptions $item.IsOther}}data-sub="occ-sub-{{$i}}"{{end}}>
+                            <label for="occ-{{$i}}">{{$item.Label}}</label>
+                        </div>
+                        {{if $item.SubOptions}}
+                        <div class="sub-options" id="occ-sub-{{$i}}">
+                            <div class="chip-group">
+                                {{range $item.SubOptions}}
+                                <label class="chip-label">
+                                    <input type="radio" name="occupation_detail" value="{{.Label}}"> {{.Label}}
+                                </label>
+                                {{end}}
+                            </div>
+                        </div>
+                        {{else if $item.IsOther}}
+                        <div class="sub-options" id="occ-sub-{{$i}}">
+                            <input type="text" name="occupation_other" class="other-input" placeholder="직군을 입력해주세요">
+                        </div>
+                        {{end}}
+                        {{end}}
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    {{$adT := index .InputTypes "ad_source"}}
+                    <label class="field-label">E-UT를 어떻게 알게 되셨나요? <span class="required">*</span></label>
+                    <div class="chip-group">
+                        {{range $i, $opt := .AdSourceOptions}}
+                        <label class="chip-label">
+                            <input type="{{$adT}}" name="ad_source{{if eq $adT "checkbox"}}[]{{end}}" value="{{$opt.Label}}"{{if and (eq $adT "radio") (eq $i 0)}} required{{end}}> {{$opt.Label}}
+                        </label>
+                        {{end}}
+                        <label class="chip-label">
+                            <input type="{{$adT}}" name="ad_source{{if eq $adT "checkbox"}}[]{{end}}" value="기타" id="ad-other-radio"> 기타
+                        </label>
+                    </div>
+                    <div class="sub-options" id="ad-other-sub" style="margin-top:0.5rem; margin-left:0">
+                        <input type="text" name="ad_source_other" class="other-input" placeholder="어떻게 알게 되셨나요?">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-nav">
+                <button type="button" class="btn btn-next" onclick="goToPage(2)">다음 단계 &rarr;</button>
+            </div>
+        </div><!-- /page-1 -->
+
+
+        <!-- ===== SECTION 2 ===== -->
+        <div class="section-page" id="page-2">
+            <div class="section-card">
+                <div class="section-header">
+                    <span class="section-badge">Section 2</span>
+                    <span class="section-title">영어회화 현황</span>
+                </div>
+
+                <!-- Q1: 동기 (그룹형, 동적) -->
+                <div class="field-group">
+                    {{$q1t := index .InputTypes "q1"}}
+                    <label class="field-label">Q1. 영어회화를 하려는 동기가 무엇인가요? <span class="hint">{{if eq $q1t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    {{if .Q1Groups}}
+                    <div class="motivation-grid">
+                        {{range .Q1Groups}}
+                        <div class="motivation-col">
+                            <div class="motivation-col-title">{{.Name}}</div>
+                            <div class="chip-group">
+                                {{range .Options}}
+                                <label class="chip-label">
+                                    <input type="{{$q1t}}" name="q1{{if eq $q1t "checkbox"}}[]{{end}}" value="{{.Label}}"> {{.Label}}
+                                </label>
+                                {{end}}
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                    {{else}}
+                    <p style="color:#aaa; font-size:0.9rem;">선택지가 없습니다.</p>
+                    {{end}}
+                </div>
+
+                <!-- Q2: 경험 (플랫, 동적) -->
+                <div class="field-group">
+                    {{$q2t := index .InputTypes "q2"}}
+                    <label class="field-label">Q2. 영어회화를 배워본 경험이 있나요? <span class="hint">{{if eq $q2t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    <div class="chip-group">
+                        {{range .Q2Options}}
+                        <label class="chip-label">
+                            <input type="{{$q2t}}" name="q2{{if eq $q2t "checkbox"}}[]{{end}}" value="{{.Label}}"> {{.Label}}
+                        </label>
+                        {{end}}
+                    </div>
+                    <div style="margin-top:0.6rem">
+                        <input type="text" name="q2_other" class="other-input" placeholder="기타 경험이 있다면 입력해주세요 (선택)" style="width:100%">
+                    </div>
+                </div>
+
+                <!-- Q3: 그만 둔 이유 (주관식, 고정) -->
+                <div class="field-group">
+                    <label class="field-label" for="q3">Q3. 영어회화를 그만 두거나 중단한 이유가 있다면? <span class="hint">주관식</span></label>
+                    <textarea id="q3" name="q3" class="text-input" placeholder="자유롭게 작성해주세요. (없으면 '없음'이라고 적어주세요)"></textarea>
+                </div>
+
+                <!-- Q4: 학원 선택 요소 (플랫, 동적) -->
+                <div class="field-group">
+                    {{$q4t := index .InputTypes "q4"}}
+                    <label class="field-label">Q4. 영어회화학원 선택 시 가장 중요한 요소는? <span class="hint">{{if eq $q4t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    <div class="chip-group">
+                        {{range .Q4Options}}
+                        <label class="chip-label">
+                            <input type="{{$q4t}}" name="q4{{if eq $q4t "checkbox"}}[]{{end}}" value="{{.Label}}"> {{.Label}}
+                        </label>
+                        {{end}}
+                    </div>
+                </div>
+
+                <!-- Q5: 가능 시간 (그룹형, 동적) -->
+                <div class="field-group">
+                    {{$q5t := index .InputTypes "q5"}}
+                    <label class="field-label">Q5. 영어 스터디 참여 가능한 시간대는? <span class="hint">{{if eq $q5t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    {{if .Q5Groups}}
+                    <div class="timeslot-grid">
+                        {{range .Q5Groups}}
+                        <div class="timeslot-col">
+                            <div class="timeslot-col-title">{{.Name}}</div>
+                            <div class="chip-group">
+                                {{range .Options}}
+                                <label class="chip-label">
+                                    <input type="{{$q5t}}" name="q5{{if eq $q5t "checkbox"}}[]{{end}}" value="{{.Label}}"> {{.Label}}
+                                </label>
+                                {{end}}
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                    {{else}}
+                    <p style="color:#aaa; font-size:0.9rem;">선택지가 없습니다.</p>
+                    {{end}}
+                </div>
+
+                <!-- Q6: 레벨 (플랫, 동적) -->
+                <div class="field-group">
+                    {{$q6t := index .InputTypes "q6"}}
+                    <label class="field-label">Q6. 스스로 생각하는 본인의 회화 레벨은? <span class="required">*</span> <span class="hint">{{if eq $q6t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    <div class="level-group">
+                        {{range $i, $opt := .Q6Options}}
+                        <label class="level-item">
+                            <input type="{{$q6t}}" name="q6{{if eq $q6t "checkbox"}}[]{{end}}" value="{{$opt.Label}}"{{if and (eq $q6t "radio") (eq $i 0)}} required{{end}}>
+                            <span class="level-text">{{$opt.Label}}</span>
+                        </label>
+                        {{end}}
+                    </div>
+                </div>
+
+                <!-- Q7: 목표 (주관식, 고정) -->
+                <div class="field-group">
+                    <label class="field-label" for="q7">Q7. 나는 영어를 어느 정도까지 잘 하고 싶다. <span class="hint">주관식</span></label>
+                    <textarea id="q7" name="q7" class="text-input" placeholder="예) 외국인과 자유롭게 대화하고 싶어요 / 해외에서 혼자 생활할 수 있을 정도"></textarea>
+                </div>
+
+                <!-- Q8: 예상 기간 (동적) -->
+                <div class="field-group">
+                    {{$q8t := index .InputTypes "q8"}}
+                    <label class="field-label">Q8. 목표 레벨까지 도달하는 데 얼마나 걸릴 것 같나요? <span class="hint">{{if eq $q8t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    <div class="duration-group">
+                        {{range .Q8Options}}
+                        <label class="duration-label">
+                            <input type="{{$q8t}}" name="q8{{if eq $q8t "checkbox"}}[]{{end}}" value="{{.Label}}"> {{.Label}}
+                        </label>
+                        {{end}}
+                    </div>
+                </div>
+
+                <!-- Q9: E-UT 관심 (동적) -->
+                <div class="field-group">
+                    {{$q9t := index .InputTypes "q9"}}
+                    <label class="field-label">Q9. E-UT의 어떤 것에 관심이 있나요? <span class="hint">{{if eq $q9t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    <div class="chip-group">
+                        {{range .Q9Options}}
+                        <label class="chip-label">
+                            <input type="{{$q9t}}" name="q9{{if eq $q9t "checkbox"}}[]{{end}}" value="{{.Label}}"> {{.Label}}
+                        </label>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-nav">
+                <button type="button" class="btn btn-prev" onclick="goToPage(1)">&larr; 이전</button>
+                <button type="submit" class="btn btn-submit">설문 제출하기</button>
+            </div>
+        </div><!-- /page-2 -->
+
+    </form>
+
+    <div class="form-footer">
+        입력하신 정보는 상담 목적으로만 사용됩니다.<br>
+        문의: E-UT 카카오톡 채널
+    </div>
+</div>
+
+<script>
+    function goToPage(num) {
+        if (num === 2 && !validatePage1()) return;
+        document.querySelectorAll('.section-page').forEach(p => p.classList.remove('active'));
+        document.getElementById('page-' + num).classList.add('active');
+
+        for (let i = 1; i <= 2; i++) {
+            const dot = document.getElementById('dot-' + i);
+            const label = document.getElementById('label-' + i);
+            if (i < num) { dot.classList.remove('active'); dot.classList.add('done'); dot.textContent = '✓'; }
+            else if (i === num) { dot.classList.add('active'); dot.classList.remove('done'); dot.textContent = i; }
+            else { dot.classList.remove('active', 'done'); dot.textContent = i; }
+            if (i === num) label.classList.add('active'); else label.classList.remove('active');
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function validatePage1() {
+        if (!document.getElementById('name').value.trim()) { alert('성함을 입력해주세요.'); return false; }
+        if (!document.getElementById('phone').value.trim()) { alert('연락처를 입력해주세요.'); return false; }
+        if (!document.querySelector('input[name="gender"]:checked')) { alert('성별을 선택해주세요.'); return false; }
+        if (!document.getElementById('location').value.trim()) { alert('사는 곳을 입력해주세요.'); return false; }
+        if (!document.querySelector('input[name="age_group"]:checked')) { alert('연령대를 선택해주세요.'); return false; }
+        if (!document.querySelector('input[name="occupation"]:checked')) { alert('현재 직군을 선택해주세요.'); return false; }
+        if (!document.querySelector('input[name="ad_source"]:checked')) { alert('E-UT를 알게 된 경로를 선택해주세요.'); return false; }
+        return true;
+    }
+
+    // 직군 서브옵션
+    document.querySelectorAll('input[name="occupation"]').forEach(r => {
+        r.addEventListener('change', function() {
+            document.querySelectorAll('.sub-options[id^="occ-sub"]').forEach(el => el.classList.remove('visible'));
+            const subId = this.getAttribute('data-sub');
+            if (subId) document.getElementById(subId).classList.add('visible');
+            document.querySelectorAll('input[name="occupation_detail"]').forEach(r => r.checked = false);
+        });
+    });
+
+    // 광고 경로 기타
+    document.querySelectorAll('input[name="ad_source"]').forEach(r => {
+        r.addEventListener('change', function() {
+            document.getElementById('ad-other-sub').classList.toggle('visible', this.value === '기타');
+        });
+    });
+
+    // 레벨 선택 스타일
+    document.querySelectorAll('.level-item input[type="radio"]').forEach(r => {
+        r.addEventListener('change', function() {
+            document.querySelectorAll('.level-item').forEach(el => el.classList.remove('selected'));
+            this.closest('.level-item').classList.add('selected');
+        });
+    });
+
+    // 전화번호 자동 하이픈
+    document.getElementById('phone').addEventListener('input', function(e) {
+        let v = e.target.value.replace(/[^0-9]/g, '');
+        if (v.length <= 3) e.target.value = v;
+        else if (v.length <= 7) e.target.value = v.slice(0,3) + '-' + v.slice(3);
+        else e.target.value = v.slice(0,3) + '-' + v.slice(3,7) + '-' + v.slice(7,11);
+    });
+
+    // 칩 radio 스타일 동기화
+    document.querySelectorAll('.chip-label input[type="radio"]').forEach(input => {
+        input.addEventListener('change', function() {
+            const name = this.name;
+            document.querySelectorAll(`.chip-label input[name="${name}"]`).forEach(o => {
+                o.closest('.chip-label').classList.toggle('selected', o.checked);
+            });
+        });
+    });
+</script>
+</body>
+</html>
+{{end}}
