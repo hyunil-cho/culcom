@@ -270,13 +270,12 @@
                                     <th>번호</th>
                                     <th>이름</th>
                                     <th>레벨</th>
-                                    <th>소속정보</th>
-                                    <th>가입일</th>
-                                    <th>전화번호</th>
-                                    <th>마지막 출석일</th>
-                                    <th>만료일</th>
+                                    <th>연락처</th>
+                                    <th>특이사항</th>
+                                    <th>시작일</th>
+                                    <th>종료일</th>
                                     <th>잔여횟수</th>
-                                    <th>등급</th>
+                                    <th>멤버쉽등급</th>
                                     <th colspan="10">최근 출석기록</th>
                                 </tr>
                             </thead>
@@ -288,10 +287,9 @@
                                     </td>
                                     <td class="col-name">{{.Name}}</td>
                                     <td>{{.Level}}</td>
+                                    <td class="col-phone">{{.PhoneNumber}}</td>
                                     <td style="color: #888;">{{.Info}}</td>
                                     <td class="col-date">{{.JoinDate}}</td>
-                                    <td class="col-phone">{{.PhoneNumber}}</td>
-                                    <td class="col-date">{{.LastDate}}</td>
                                     <td class="col-date">{{.ExpiryDate}}</td>
                                     <td class="col-stats">{{.Stats}}</td>
                                     <td>
