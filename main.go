@@ -4,7 +4,6 @@ import (
 	"backoffice/config"
 	"backoffice/database"
 	"backoffice/handlers/complex/attendance"
-	complexBranches "backoffice/handlers/complex/branches"
 	"backoffice/handlers/complex/classtimeslots"
 	"backoffice/handlers/complex/index"
 	"backoffice/handlers/complex/management"
@@ -85,7 +84,6 @@ func init() {
 	templates = template.Must(templates.ParseGlob("templates/complex/classtimeslots/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/complex/memberships/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/complex/attendance/*.html"))
-	templates = template.Must(templates.ParseGlob("templates/complex/branches/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/complex/management/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/complex/members/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/complex/staffs/*.html"))
@@ -106,7 +104,6 @@ func init() {
 	consultation.Templates = templates
 	notices.Templates = templates
 	index.Templates = templates
-	complexBranches.Templates = templates
 	management.Templates = templates
 	classtimeslots.Templates = templates
 	attendance.Templates = templates
@@ -147,6 +144,10 @@ func registerPublicRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/complex/refund", middleware.RecoverFunc(opens.RefundHandler))
 	mux.HandleFunc("/complex/survey", middleware.RecoverFunc(consultation.SurveyHandler))
 
+	// /consultation (공개)
+	mux.HandleFunc("/consultation/success", middleware.RecoverFunc(consultation.SuccessHandler))
+	mux.HandleFunc("/consultation/survey/submit", middleware.RecoverFunc(consultation.SurveySubmitHandler))
+
 	// 기타
 	mux.HandleFunc("/login", middleware.RecoverFunc(login.LoginHandler))
 	mux.HandleFunc("/privacy", opens.PrivacyPolicyHandler)
@@ -159,15 +160,6 @@ func registerComplexRoutes(mux *http.ServeMux) {
 	// /complex/attendance
 	mux.HandleFunc("/complex/attendance", middleware.RequireAuthRecover(middleware.InjectBranchData(attendance.Handler)))
 	mux.HandleFunc("/complex/attendance/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(attendance.DetailHandler)))
-
-	// /complex/branches
-	mux.HandleFunc("/complex/branches", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.Handler)))
-	mux.HandleFunc("/complex/branches/add", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.AddHandler)))
-	mux.HandleFunc("/complex/branches/delete", middleware.RequireAuthRecover(complexBranches.DeleteHandler))
-	mux.HandleFunc("/complex/branches/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.DetailHandler)))
-	mux.HandleFunc("/complex/branches/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.EditHandler)))
-	mux.HandleFunc("/complex/branches/store", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.StoreHandler)))
-	mux.HandleFunc("/complex/branches/update", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.EditHandler)))
 
 	// /complex/classes
 	mux.HandleFunc("/complex/classes", middleware.RequireAuthRecover(middleware.InjectBranchData(management.Handler)))
@@ -190,6 +182,10 @@ func registerComplexRoutes(mux *http.ServeMux) {
 	// /complex/postponements
 	mux.HandleFunc("/complex/postponements", middleware.RequireAuthRecover(middleware.InjectBranchData(management.PostponementListHandler)))
 	mux.HandleFunc("/complex/postponements/update-status", middleware.RequireAuthRecover(management.PostponementUpdateStatusHandler))
+
+	// /complex/refunds
+	mux.HandleFunc("/complex/refunds", middleware.RequireAuthRecover(middleware.InjectBranchData(management.RefundListHandler)))
+	mux.HandleFunc("/complex/refunds/update-status", middleware.RequireAuthRecover(management.RefundUpdateStatusHandler))
 
 	// /complex/staffs
 	mux.HandleFunc("/complex/staffs", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffListHandler)))
@@ -226,6 +222,7 @@ func registerAuthRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/integrations/check-sms", middleware.RequireAuthRecover(integrations.CheckSMSIntegrationHandler))
 	mux.HandleFunc("/api/integrations/disconnect", middleware.RequireAuthRecover(integrations.DisconnectHandler))
 	mux.HandleFunc("/api/integrations/sms-senders", middleware.RequireAuthRecover(integrations.GetSMSSenderNumbersHandler))
+	mux.HandleFunc("/api/complex/survey/submissions", middleware.RequireAuthRecover(consultation.SurveySubmissionsAPIHandler))
 	mux.HandleFunc("/api/message-templates", middleware.RequireAuthRecover(messagetemplates.GetTemplatesAPI))
 	mux.HandleFunc("/api/service/reservation-sms-config", middleware.RequireAuthRecover(services.GetReservationSMSConfigHandler))
 	mux.HandleFunc("/api/service/sms", middleware.RequireAuthRecover(services.SendSMSHandler))

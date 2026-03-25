@@ -20,6 +20,7 @@ const (
 // BasePageData - 모든 페이지에 공통으로 필요한 데이터
 type BasePageData struct {
 	BranchList               []map[string]string
+	SelectedBranchSeq        int    // seq 숫자
 	SelectedBranch           string // alias
 	SelectedBranchName       string // 한글 이름
 	SelectedBranchManager    string // 담당자
@@ -30,6 +31,7 @@ type BasePageData struct {
 // GetBasePageData - context에서 공통 데이터를 가져오는 헬퍼 함수
 func GetBasePageData(r *http.Request) BasePageData {
 	branchList, _ := r.Context().Value(branchListKey).([]map[string]string)
+	selectedBranchSeq, _ := r.Context().Value(contextKey("selectedBranchSeq")).(int)
 	selectedBranch, _ := r.Context().Value(selectedBranchKey).(string)
 	selectedBranchName, _ := r.Context().Value(contextKey("selectedBranchName")).(string)
 	selectedBranchManager, _ := r.Context().Value(contextKey("selectedBranchManager")).(string)
@@ -38,6 +40,7 @@ func GetBasePageData(r *http.Request) BasePageData {
 
 	return BasePageData{
 		BranchList:               branchList,
+		SelectedBranchSeq:        selectedBranchSeq,        // seq 숫자
 		SelectedBranch:           selectedBranch,           // 헤더 표시용 alias
 		SelectedBranchName:       selectedBranchName,       // 한글 이름
 		SelectedBranchManager:    selectedBranchManager,    // 담당자
@@ -57,8 +60,11 @@ func InjectBranchData(next http.HandlerFunc) http.HandlerFunc {
 		selectedBranchAddress := GetSelectedBranchAddress(r)       // 주소
 		selectedBranchDirections := GetSelectedBranchDirections(r) // 오시는 길
 
+		selectedBranchSeq := GetSelectedBranch(r)
+
 		// context에 저장
 		ctx := context.WithValue(r.Context(), branchListKey, branchList)
+		ctx = context.WithValue(ctx, contextKey("selectedBranchSeq"), selectedBranchSeq)
 		ctx = context.WithValue(ctx, selectedBranchKey, selectedBranchAlias)
 		ctx = context.WithValue(ctx, contextKey("selectedBranchName"), selectedBranchName)
 		ctx = context.WithValue(ctx, contextKey("selectedBranchManager"), selectedBranchManager)

@@ -13,9 +13,26 @@
             </div>
 
             <div class="content-card">
-                <div class="form-header">
+                <div class="form-header" style="display:flex; align-items:center; justify-content:space-between;">
                     <h2>새 회원 등록</h2>
+                    <button type="button" id="btnLoadSurvey" onclick="openSurveyModal()" style="display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:#2d7a4f; color:white; border:none; border-radius:8px; font-size:0.9rem; font-weight:600; cursor:pointer;">
+                        📋 설문 불러오기
+                    </button>
                 </div>
+
+                <!-- 설문 참조 정보 패널 (불러온 경우에만 표시) -->
+                <div id="surveyRefPanel" style="display:none; margin:0 0 1.5rem; background:#e8f5ee; border:1.5px solid #4caf78; border-radius:10px; padding:1.25rem 1.5rem;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+                        <div style="font-size:1rem; font-weight:700; color:#2d7a4f;">📋 연결된 설문 정보</div>
+                        <button type="button" onclick="clearSurveyRef()" style="background:none; border:none; color:#888; font-size:0.85rem; cursor:pointer;">✕ 연결 해제</button>
+                    </div>
+                    <div id="surveyRefContent" style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem 1.5rem; font-size:0.88rem; color:#1a1a1a;"></div>
+                    <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid #c5e5d0;">
+                        <div style="font-size:0.85rem; font-weight:700; color:#2d7a4f; margin-bottom:0.5rem;">설문 응답 상세</div>
+                        <div id="surveyRefDetail" style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem 1.5rem; font-size:0.83rem; color:#444;"></div>
+                    </div>
+                </div>
+
                 <form action="/complex/members/update" method="POST">
                     <div class="form-body">
                         <div class="form-row">
@@ -70,6 +87,17 @@
                         <div class="form-row">
                             <label class="form-label">가입일</label>
                             <input type="date" id="joinDate" name="join_date" class="form-input" onchange="calculateExpiryDate()">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">상태</label>
+                            <select name="status" class="form-input">
+                                <option value="">-- 선택 --</option>
+                                <option value="미가입/예정">미가입/예정</option>
+                                <option value="디파짓">디파짓</option>
+                                <option value="양도/6개월미만">양도/6개월미만</option>
+                                <option value="가입(완불)">가입(완불)</option>
+                            </select>
                         </div>
 
                         <div class="form-row">
@@ -253,7 +281,7 @@ if (phoneInput) {
         }
         e.target.value = value;
     });
-    
+
     phoneInput.addEventListener('blur', function(e) {
         const value = e.target.value;
         if (value && !/^010[0-9]{8}$/.test(value)) {
@@ -261,7 +289,194 @@ if (phoneInput) {
         }
     });
 }
+
+// =============================================
+// 설문 불러오기 기능
+// =============================================
+
+// 설문 데이터 (API에서 로드)
+let surveyData = [];
+
+function openSurveyModal() {
+    document.getElementById('surveyModal').style.display = 'flex';
+    document.getElementById('surveyList').innerHTML = '<div style="text-align:center; padding:2rem; color:#999;">불러오는 중...</div>';
+
+    fetch('/api/complex/survey/submissions')
+        .then(res => res.json())
+        .then(data => {
+            surveyData = data || [];
+            renderSurveyList('');
+        })
+        .catch(() => {
+            document.getElementById('surveyList').innerHTML = '<div style="text-align:center; padding:2rem; color:#e53e3e;">설문 데이터를 불러올 수 없습니다.</div>';
+        });
+}
+
+function closeSurveyModal() {
+    document.getElementById('surveyModal').style.display = 'none';
+}
+
+function renderSurveyList(query) {
+    const list = document.getElementById('surveyList');
+    const filtered = surveyData.filter(s =>
+        s.name.includes(query) || s.phone.includes(query)
+    );
+
+    if (filtered.length === 0) {
+        list.innerHTML = '<div style="text-align:center; padding:2rem; color:#999; font-size:0.95rem;">검색 결과가 없습니다.</div>';
+        return;
+    }
+
+    list.innerHTML = filtered.map(s => `
+        <div class="survey-list-item" onclick="selectSurvey(${s.id})"
+            onmouseenter="this.style.borderColor='#2d7a4f'; this.style.background='#f4fbf7';"
+            onmouseleave="this.style.borderColor='#dde8e3'; this.style.background='#fff';"
+            style="display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border:1.5px solid #dde8e3; border-radius:10px; cursor:pointer; transition:all 0.2s; margin-bottom:0.6rem; background:#fff;">
+            <div>
+                <div style="font-weight:700; font-size:1rem; color:#1a1a1a; margin-bottom:0.25rem;">
+                    ${s.name} <span style="font-size:0.85rem; color:#666; font-weight:400;">${s.gender} · ${s.age_group} · ${s.location}</span>
+                </div>
+                <div style="font-size:0.85rem; color:#555;">
+                    📞 ${formatPhone(s.phone)} &nbsp;|&nbsp; 📅 ${s.submitted_at} &nbsp;|&nbsp; 유입: ${s.ad_source}
+                </div>
+            </div>
+            <div style="flex-shrink:0; margin-left:1rem; padding:6px 14px; background:#2d7a4f; color:white; border-radius:6px; font-size:0.82rem; font-weight:600;">선택</div>
+        </div>
+    `).join('');
+}
+
+function formatPhone(p) {
+    const s = p.replace(/[^0-9]/g, '');
+    if (s.length === 11) return s.slice(0,3) + '-' + s.slice(3,7) + '-' + s.slice(7);
+    return p;
+}
+
+function selectSurvey(id) {
+    const survey = surveyData.find(s => s.id === id);
+    if (!survey) return;
+
+    // 기본 필드 자동입력
+    const nameInput = document.querySelector('input[name="name"]');
+    const phoneInput = document.getElementById('phoneNumber');
+    const signupSelect = document.getElementById('signupChannelSelect');
+    const infoInput = document.querySelector('input[name="info"]');
+    const branchSelect = document.querySelector('select[name="branch_seq"]');
+
+    if (nameInput) nameInput.value = survey.name;
+    if (phoneInput) phoneInput.value = survey.phone;
+
+    // 지점 자동 선택
+    if (branchSelect && survey.branch_seq) {
+        branchSelect.value = String(survey.branch_seq);
+    }
+
+    // 가입 경로 매핑
+    if (signupSelect) {
+        const adSourceMap = {
+            '인스타 / 페이스북': '인스타그램',
+            '인스타그램': '인스타그램',
+            '네이버 검색': '네이버 검색',
+            '지인 소개 (친구 추천)': '지인 소개',
+            '지인 소개': '지인 소개',
+            '전단지': '전단지',
+            '홈페이지': '홈페이지'
+        };
+        const mapped = adSourceMap[survey.ad_source];
+        if (mapped) {
+            signupSelect.value = mapped;
+            toggleSignupCustom(signupSelect);
+        } else {
+            signupSelect.value = '기타';
+            toggleSignupCustom(signupSelect);
+            const customInput = document.getElementById('signupChannelCustom');
+            if (customInput) customInput.value = survey.ad_source;
+        }
+    }
+
+    // 인적사항 자동 조합
+    if (infoInput) {
+        const parts = [survey.age_group, survey.gender === '남' ? '남성' : '여성', survey.occupation];
+        if (survey.occupation_detail) parts.push(survey.occupation_detail);
+        infoInput.value = parts.join(', ');
+    }
+
+    // 설문 참조 패널 표시
+    showSurveyRef(survey);
+    closeSurveyModal();
+}
+
+function showSurveyRef(survey) {
+    const panel = document.getElementById('surveyRefPanel');
+    const content = document.getElementById('surveyRefContent');
+    const detail = document.getElementById('surveyRefDetail');
+
+    content.innerHTML = [
+        ['성함', survey.name],
+        ['연락처', formatPhone(survey.phone)],
+        ['성별', survey.gender === '남' ? '남성' : '여성'],
+        ['연령대', survey.age_group],
+        ['사는 곳', survey.location],
+        ['직군', survey.occupation + (survey.occupation_detail ? ' / ' + survey.occupation_detail : '')],
+        ['유입 경로', survey.ad_source],
+        ['설문 일시', survey.submitted_at]
+    ].map(([k, v]) => `
+        <div style="display:flex; gap:0.5rem;">
+            <span style="color:#2d7a4f; font-weight:600; white-space:nowrap;">${k}</span>
+            <span style="color:#333;">${v}</span>
+        </div>
+    `).join('');
+
+    const q = (label, val) => {
+        if (!val) return '';
+        const display = Array.isArray(val) ? val.join(', ') : val;
+        return `<div style="display:flex; gap:0.5rem; align-items:flex-start;"><span style="color:#555; font-weight:600; white-space:nowrap; min-width:80px;">${label}</span><span style="color:#444;">${display}</span></div>`;
+    };
+
+    detail.innerHTML = [
+        q('Q1 동기', survey.q1),
+        q('Q2 경험', survey.q2),
+        q('Q3 그만둔이유', survey.q3),
+        q('Q4 선택요소', survey.q4),
+        q('Q5 가능시간', survey.q5),
+        q('Q6 레벨', survey.q6),
+        q('Q7 목표', survey.q7),
+        q('Q8 예상기간', survey.q8),
+        q('Q9 관심사항', survey.q9)
+    ].filter(Boolean).join('');
+
+    panel.style.display = 'block';
+}
+
+function clearSurveyRef() {
+    window.location.reload();
+}
+
+// 모달 바깥 클릭 시 닫기
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('surveyModal').addEventListener('click', function(e) {
+        if (e.target === this) closeSurveyModal();
+    });
+});
 </script>
+
+<!-- 설문 불러오기 모달 -->
+<div id="surveyModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:14px; width:min(680px, 95vw); max-height:85vh; display:flex; flex-direction:column; box-shadow:0 8px 40px rgba(0,0,0,0.18);">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; border-bottom:1px solid #e8edf0;">
+            <div>
+                <div style="font-size:1.1rem; font-weight:700; color:#1a1a1a;">📋 설문 정보 불러오기</div>
+                <div style="font-size:0.82rem; color:#888; margin-top:2px;">설문을 선택하면 기본 정보가 자동으로 입력됩니다.</div>
+            </div>
+            <button onclick="closeSurveyModal()" style="background:none; border:none; font-size:1.4rem; color:#999; cursor:pointer; line-height:1;">✕</button>
+        </div>
+        <div style="padding:1rem 1.5rem; border-bottom:1px solid #f0f0f0;">
+            <input type="text" id="surveySearch" placeholder="이름 또는 전화번호로 검색..." oninput="renderSurveyList(this.value.trim())"
+                style="width:100%; padding:0.65rem 1rem; border:1.5px solid #dde8e3; border-radius:8px; font-size:0.95rem; outline:none; transition:border-color 0.2s;"
+                onfocus="this.style.borderColor='#2d7a4f'" onblur="this.style.borderColor='#dde8e3'">
+        </div>
+        <div id="surveyList" style="padding:1rem 1.5rem; overflow-y:auto; flex:1;"></div>
+    </div>
+</div>
 
 </body>
 </html>

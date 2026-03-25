@@ -79,6 +79,17 @@
                         </div>
 
                         <div class="form-row">
+                            <label class="form-label">상태</label>
+                            <select name="status" class="form-input">
+                                <option value="">-- 선택 --</option>
+                                <option value="미가입/예정" {{if eq .Member.Status "미가입/예정"}}selected{{end}}>미가입/예정</option>
+                                <option value="디파짓" {{if eq .Member.Status "디파짓"}}selected{{end}}>디파짓</option>
+                                <option value="양도/6개월미만" {{if eq .Member.Status "양도/6개월미만"}}selected{{end}}>양도/6개월미만</option>
+                                <option value="가입(완불)" {{if eq .Member.Status "가입(완불)"}}selected{{end}}>가입(완불)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
                             <label class="form-label">등급 (멤버십)</label>
                             <select id="gradeSelect" name="grade" class="form-input" onchange="calculateExpiryDate()">
                                 <option value="멤버쉽" {{if eq .Member.Grade "멤버쉽"}}selected{{end}}>멤버쉽 (1개월)</option>

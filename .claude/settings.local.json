@@ -3,7 +3,9 @@
     "allow": [
       "Bash(find C:UserslookhIdeaProjectsculcomhandlersmainopens -type f -name *.go)",
       "Bash(go build:*)",
-      "Bash(grep -n \"complex_sidebar\\\\|ActiveMenu\" C:/Users/lookh/IdeaProjects/culcom/templates/layouts/*.html)"
+      "Bash(grep -n \"complex_sidebar\\\\|ActiveMenu\" C:/Users/lookh/IdeaProjects/culcom/templates/layouts/*.html)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -v \"^--$\")"
     ]
   }
 }

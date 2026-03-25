@@ -208,6 +208,7 @@
     </div>
 
     <form id="surveyForm" action="/consultation/survey/submit" method="POST">
+        <input type="hidden" name="branch_seq" value="{{.BranchSeq}}">
 
         <!-- ===== SECTION 1 ===== -->
         <div class="section-page active" id="page-1">

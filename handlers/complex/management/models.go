@@ -79,6 +79,24 @@ type PostponementRequest struct {
 	RemainingCount int // 남은 연기 횟수
 }
 
+// RefundRequest - 환불 요청 (MOCK용)
+type RefundRequest struct {
+	ID            int
+	MemberName    string
+	PhoneNumber   string
+	Grade         string // 멤버십 등급
+	CurrentClass  string
+	PaymentAmount string // 결제 금액
+	RefundAmount  string // 환불 요청 금액
+	Reason        string
+	BankName      string // 환불 계좌 은행
+	AccountNumber string // 계좌번호
+	AccountHolder string // 예금주
+	Status        string // 진행중, 승인, 반려
+	RejectReason  string
+	RequestDate   string
+}
+
 // ClassWithMembers - 회원이 포함된 수업 정보
 type ClassWithMembers struct {
 	Class
