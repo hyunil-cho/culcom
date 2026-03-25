@@ -54,7 +54,6 @@ import (
 // @name user-session
 
 func init() {
-	// 커스텀 템플릿 함수 정의
 	funcMap := template.FuncMap{
 		"add": func(a, b int) int {
 			return a + b
@@ -71,7 +70,6 @@ func init() {
 		},
 	}
 
-	// 템플릿 파싱 - layouts, dashboard, customers 등 모든 템플릿 파일 로드
 	templates := template.Must(template.New("").Funcs(funcMap).ParseGlob("templates/layouts/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/main/dashboard/*.html"))
 	templates = template.Must(templates.ParseGlob("templates/main/customers/*.html"))
@@ -115,23 +113,167 @@ func init() {
 	memberships.Templates = templates
 	complexSurvey.Templates = templates
 
-	// 공개 게시판 템플릿 (백오피스 레이아웃과 완전 분리)
 	publicFuncMap := template.FuncMap{
 		"add": func(a, b int) int { return a + b },
 		"sub": func(a, b int) int { return a - b },
 	}
-	publicTemplates := template.Must(template.New("").Funcs(publicFuncMap).ParseGlob("templates/main/board/*.html"))
-	board.PublicTemplates = publicTemplates
+	board.PublicTemplates = template.Must(template.New("").Funcs(publicFuncMap).ParseGlob("templates/main/board/*.html"))
 
-	// 개인정보 처리방침 및 연기요청 템플릿 초기화
 	opens.InitPrivacyTemplate()
 	opens.PostponementTemplates = template.Must(template.New("").ParseGlob("templates/main/privacy/*.html"))
-
-	// 멤버쉽 확인 공개 페이지 템플릿
 	opens.MembershipCheckTemplates = template.Must(template.New("").ParseGlob("templates/main/membership/*.html"))
-
-	// 멤버십 환불 신청 공개 페이지 템플릿
 	opens.RefundTemplates = template.Must(template.New("").ParseGlob("templates/main/refund/*.html"))
+}
+
+// registerPublicRoutes 인증이 필요 없는 공개 라우트를 등록합니다.
+func registerPublicRoutes(mux *http.ServeMux) {
+	// /api
+	mux.HandleFunc("/api/external/customers", opens.ExternalRegisterCustomerHandler)
+
+	// /board
+	mux.HandleFunc("/board", middleware.RecoverFunc(board.ListHandler))
+	mux.HandleFunc("/board/detail", middleware.RecoverFunc(board.DetailHandler))
+	mux.HandleFunc("/board/kakao/callback", middleware.RecoverFunc(board.KakaoCallbackHandler))
+	mux.HandleFunc("/board/kakao/login", middleware.RecoverFunc(board.KakaoLoginHandler))
+	mux.HandleFunc("/board/kakao/success", middleware.RecoverFunc(board.KakaoRegistrationSuccessHandler))
+	mux.HandleFunc("/board/logout", middleware.RecoverFunc(board.BoardLogoutHandler))
+	mux.HandleFunc("/board/mypage", middleware.RecoverFunc(board.MypageHandler))
+	mux.HandleFunc("/board/withdraw", middleware.RecoverFunc(board.WithdrawHandler))
+
+	// /complex (공개)
+	mux.HandleFunc("/complex/membership", opens.MembershipCheckHandler)
+	mux.HandleFunc("/complex/membership/result", opens.MembershipResultHandler)
+	mux.HandleFunc("/complex/postponement", opens.PostponementHandler)
+	mux.HandleFunc("/complex/refund", middleware.RecoverFunc(opens.RefundHandler))
+	mux.HandleFunc("/complex/survey", middleware.RecoverFunc(consultation.SurveyHandler))
+
+	// 기타
+	mux.HandleFunc("/login", middleware.RecoverFunc(login.LoginHandler))
+	mux.HandleFunc("/privacy", opens.PrivacyPolicyHandler)
+}
+
+// registerComplexRoutes /complex 접두사를 가진 인증 필요 라우트를 등록합니다.
+func registerComplexRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/complex", middleware.RequireAuthRecover(middleware.InjectBranchData(index.Handler)))
+
+	// /complex/attendance
+	mux.HandleFunc("/complex/attendance", middleware.RequireAuthRecover(middleware.InjectBranchData(attendance.Handler)))
+	mux.HandleFunc("/complex/attendance/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(attendance.DetailHandler)))
+
+	// /complex/branches
+	mux.HandleFunc("/complex/branches", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.Handler)))
+	mux.HandleFunc("/complex/branches/add", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.AddHandler)))
+	mux.HandleFunc("/complex/branches/delete", middleware.RequireAuthRecover(complexBranches.DeleteHandler))
+	mux.HandleFunc("/complex/branches/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.DetailHandler)))
+	mux.HandleFunc("/complex/branches/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.EditHandler)))
+	mux.HandleFunc("/complex/branches/store", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.StoreHandler)))
+	mux.HandleFunc("/complex/branches/update", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.EditHandler)))
+
+	// /complex/classes
+	mux.HandleFunc("/complex/classes", middleware.RequireAuthRecover(middleware.InjectBranchData(management.Handler)))
+	mux.HandleFunc("/complex/classes/add", middleware.RequireAuthRecover(middleware.InjectBranchData(management.AddHandler)))
+	mux.HandleFunc("/complex/classes/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(management.EditHandler)))
+	mux.HandleFunc("/complex/classes/update", middleware.RequireAuthRecover(middleware.InjectBranchData(management.UpdateHandler)))
+
+	// /complex/members
+	mux.HandleFunc("/complex/members", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberListHandler)))
+	mux.HandleFunc("/complex/members/add", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberAddHandler)))
+	mux.HandleFunc("/complex/members/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberEditHandler)))
+	mux.HandleFunc("/complex/members/update", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberUpdateHandler)))
+
+	// /complex/memberships
+	mux.HandleFunc("/complex/memberships", middleware.RequireAuthRecover(middleware.InjectBranchData(memberships.ListHandler)))
+	mux.HandleFunc("/complex/memberships/add", middleware.RequireAuthRecover(middleware.InjectBranchData(memberships.AddHandler)))
+	mux.HandleFunc("/complex/memberships/delete", middleware.RequireAuthRecover(memberships.DeleteHandler))
+	mux.HandleFunc("/complex/memberships/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(memberships.EditHandler)))
+
+	// /complex/postponements
+	mux.HandleFunc("/complex/postponements", middleware.RequireAuthRecover(middleware.InjectBranchData(management.PostponementListHandler)))
+	mux.HandleFunc("/complex/postponements/update-status", middleware.RequireAuthRecover(management.PostponementUpdateStatusHandler))
+
+	// /complex/staffs
+	mux.HandleFunc("/complex/staffs", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffListHandler)))
+	mux.HandleFunc("/complex/staffs/add", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffAddHandler)))
+	mux.HandleFunc("/complex/staffs/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffEditHandler)))
+	mux.HandleFunc("/complex/staffs/update", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffUpdateHandler)))
+
+	// /complex/survey (관리자)
+	mux.HandleFunc("/complex/survey/options", middleware.RequireAuthRecover(middleware.InjectBranchData(complexSurvey.OptionsHandler)))
+	mux.HandleFunc("/complex/survey/options/add", middleware.RequireAuthRecover(complexSurvey.AddOptionHandler))
+	mux.HandleFunc("/complex/survey/options/delete", middleware.RequireAuthRecover(complexSurvey.DeleteOptionHandler))
+	mux.HandleFunc("/complex/survey/options/type", middleware.RequireAuthRecover(complexSurvey.UpdateTypeHandler))
+
+	// /complex/timeslots
+	mux.HandleFunc("/complex/timeslots", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.Handler)))
+	mux.HandleFunc("/complex/timeslots/add", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.AddHandler)))
+	mux.HandleFunc("/complex/timeslots/delete", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.DeleteHandler)))
+	mux.HandleFunc("/complex/timeslots/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.EditHandler)))
+}
+
+// registerAuthRoutes /complex 이외의 인증 필요 라우트를 등록합니다.
+func registerAuthRoutes(mux *http.ServeMux) {
+	// /api
+	mux.HandleFunc("/api/calendar/create-event", middleware.RequireAuthRecover(integrations.CreateCalendarEventHandler))
+	mux.HandleFunc("/api/customers/comment", middleware.RequireAuthRecover(customers.UpdateCommentHandler))
+	mux.HandleFunc("/api/customers/delete", middleware.RequireAuthRecover(customers.DeleteCustomerHandler))
+	mux.HandleFunc("/api/customers/mark-no-phone-interview", middleware.RequireAuthRecover(customers.MarkNoPhoneInterviewHandler))
+	mux.HandleFunc("/api/customers/process-call", middleware.RequireAuthRecover(customers.ProcessCallHandler))
+	mux.HandleFunc("/api/customers/reservation", middleware.RequireAuthRecover(customers.CreateReservationHandler))
+	mux.HandleFunc("/api/customers/update-name", middleware.RequireAuthRecover(customers.UpdateCustomerNameHandler))
+	mux.HandleFunc("/api/dashboard/caller-stats", middleware.RequireAuthRecover(home.GetCallerStatsAPI))
+	mux.HandleFunc("/api/external/sms", middleware.RequireAuthRecover(integrations.SMSTestHandler))
+	mux.HandleFunc("/api/integrations/activate", middleware.RequireAuthRecover(integrations.ActivateHandler))
+	mux.HandleFunc("/api/integrations/check-sms", middleware.RequireAuthRecover(integrations.CheckSMSIntegrationHandler))
+	mux.HandleFunc("/api/integrations/disconnect", middleware.RequireAuthRecover(integrations.DisconnectHandler))
+	mux.HandleFunc("/api/integrations/sms-senders", middleware.RequireAuthRecover(integrations.GetSMSSenderNumbersHandler))
+	mux.HandleFunc("/api/message-templates", middleware.RequireAuthRecover(messagetemplates.GetTemplatesAPI))
+	mux.HandleFunc("/api/service/reservation-sms-config", middleware.RequireAuthRecover(services.GetReservationSMSConfigHandler))
+	mux.HandleFunc("/api/service/sms", middleware.RequireAuthRecover(services.SendSMSHandler))
+	mux.HandleFunc("/api/sms/config", middleware.RequireAuthRecover(integrations.SMSConfigSaveHandler))
+
+	// /branches
+	mux.HandleFunc("/branches", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.Handler)))
+	mux.HandleFunc("/branches/add", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.AddHandler)))
+	mux.HandleFunc("/branches/delete", middleware.RequireAuthRecover(branches.DeleteHandler))
+	mux.HandleFunc("/branches/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.DetailHandler)))
+	mux.HandleFunc("/branches/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.EditHandler)))
+
+	// /customers
+	mux.HandleFunc("/customers", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.Handler)))
+	mux.HandleFunc("/customers/add", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.AddHandler)))
+
+	// /dashboard
+	mux.HandleFunc("/dashboard", middleware.RequireAuthRecover(middleware.InjectBranchData(home.Handler)))
+
+	// /error
+	mux.HandleFunc("/error", middleware.RecoverFunc(errorhandler.Handler404))
+
+	// /integrations
+	mux.HandleFunc("/integrations", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.Handler)))
+	mux.HandleFunc("/integrations/configure", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.ConfigureHandler)))
+	mux.HandleFunc("/integrations/kakao-sync", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.KakaoSyncHandler)))
+	mux.HandleFunc("/integrations/manage", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.ConfigureHandler)))
+
+	// /logout
+	mux.HandleFunc("/logout", middleware.RequireAuthRecover(login.LogoutHandler))
+
+	// /message-templates
+	mux.HandleFunc("/message-templates", middleware.RequireAuthRecover(middleware.InjectBranchData(messagetemplates.Handler)))
+	mux.HandleFunc("/message-templates/add", middleware.RequireAuthRecover(middleware.InjectBranchData(messagetemplates.AddHandler)))
+	mux.HandleFunc("/message-templates/delete", middleware.RequireAuthRecover(messagetemplates.DeleteHandler))
+	mux.HandleFunc("/message-templates/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(messagetemplates.EditHandler)))
+	mux.HandleFunc("/message-templates/set-default", middleware.RequireAuthRecover(messagetemplates.SetDefaultHandler))
+
+	// /notices
+	mux.HandleFunc("/notices", middleware.RequireAuthRecover(middleware.InjectBranchData(notices.Handler)))
+	mux.HandleFunc("/notices/add", middleware.RequireAuthRecover(middleware.InjectBranchData(notices.AddHandler)))
+	mux.HandleFunc("/notices/delete", middleware.RequireAuthRecover(notices.DeleteHandler))
+	mux.HandleFunc("/notices/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(notices.DetailHandler)))
+	mux.HandleFunc("/notices/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(notices.EditHandler)))
+
+	// /settings
+	mux.HandleFunc("/settings", middleware.RequireAuthRecover(middleware.InjectBranchData(settings.Handler)))
+	mux.HandleFunc("/settings/reservation-sms", middleware.RequireAuthRecover(middleware.InjectBranchData(settings.ReservationSMSConfigHandler)))
 }
 
 func main() {
@@ -156,111 +298,9 @@ func main() {
 	// 커스텀 ServeMux 생성 (404 핸들러 설정을 위해)
 	mux := http.NewServeMux()
 
-	// 공개 라우트 (인증 불필요)
-	mux.HandleFunc("/login", middleware.RecoverFunc(login.LoginHandler)) // 로그인 처리
-
-	mux.HandleFunc("/privacy", opens.PrivacyPolicyHandler)                         // 개인정보 처리방침
-	mux.HandleFunc("/complex/postponement", opens.PostponementHandler)             // 수업 연기 요청 페이지
-	mux.HandleFunc("/complex/membership", opens.MembershipCheckHandler)            // 멤버쉽 확인 (전화번호 입력)
-	mux.HandleFunc("/complex/membership/result", opens.MembershipResultHandler)    // 멤버쉽 조회 결과
-	mux.HandleFunc("/complex/refund", middleware.RecoverFunc(opens.RefundHandler)) // 멤버십 환불 신청 (공개)
-	// 상담 신청 완료
-	mux.HandleFunc("/complex/survey", middleware.RecoverFunc(consultation.SurveyHandler))                                               // 커스터마이징 상담 설문 (공개)
-	mux.HandleFunc("/complex/survey/options", middleware.RequireAuthRecover(middleware.InjectBranchData(complexSurvey.OptionsHandler))) // 설문 선택지 관리
-	mux.HandleFunc("/complex/survey/options/add", middleware.RequireAuthRecover(complexSurvey.AddOptionHandler))                        // 선택지 추가
-	mux.HandleFunc("/complex/survey/options/delete", middleware.RequireAuthRecover(complexSurvey.DeleteOptionHandler))                  // 선택지 삭제
-	mux.HandleFunc("/complex/survey/options/type", middleware.RequireAuthRecover(complexSurvey.UpdateTypeHandler))                      // 선택 타입 변경
-
-	// 공개 게시판 (인증 불필요 - 일반 사용자 열람용)
-	mux.HandleFunc("/board", middleware.RecoverFunc(board.ListHandler))                                   // 공지사항/이벤트 목록 (공개, /board 호환)
-	mux.HandleFunc("/board/detail", middleware.RecoverFunc(board.DetailHandler))                          // 공지사항/이벤트 상세 (공개, /board 호환)
-	mux.HandleFunc("/board/kakao/login", middleware.RecoverFunc(board.KakaoLoginHandler))                 // 게시판 카카오 로그인
-	mux.HandleFunc("/board/kakao/callback", middleware.RecoverFunc(board.KakaoCallbackHandler))           // 게시판 카카오 콜백
-	mux.HandleFunc("/board/kakao/success", middleware.RecoverFunc(board.KakaoRegistrationSuccessHandler)) // 게시판 카카오 회원가입 완료
-	mux.HandleFunc("/board/mypage", middleware.RecoverFunc(board.MypageHandler))                          // 마이페이지
-	mux.HandleFunc("/board/logout", middleware.RecoverFunc(board.BoardLogoutHandler))                     // 게시판 로그아웃
-	mux.HandleFunc("/board/withdraw", middleware.RecoverFunc(board.WithdrawHandler))                      // 회원탈퇴
-
-	// 라우트 설정 (인증 필요한 라우트는 RequireAuthRecover 미들웨어 적용)
-	mux.HandleFunc("/dashboard", middleware.RequireAuthRecover(middleware.InjectBranchData(home.Handler)))                                // 대시보드
-	mux.HandleFunc("/complex", middleware.RequireAuthRecover(middleware.InjectBranchData(index.Handler)))                                 // Complex View
-	mux.HandleFunc("/complex/classes", middleware.RequireAuthRecover(middleware.InjectBranchData(management.Handler)))                    // 수업 관리 목록
-	mux.HandleFunc("/complex/classes/add", middleware.RequireAuthRecover(middleware.InjectBranchData(management.AddHandler)))             // 수업 추가
-	mux.HandleFunc("/complex/classes/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(management.EditHandler)))           // 수업 수정
-	mux.HandleFunc("/complex/classes/update", middleware.RequireAuthRecover(middleware.InjectBranchData(management.UpdateHandler)))       // 수업 업데이트 처리
-	mux.HandleFunc("/complex/branches", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.Handler)))              // Complex 지점 관리
-	mux.HandleFunc("/complex/branches/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.DetailHandler))) // Complex 지점 상세
-	mux.HandleFunc("/complex/branches/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.EditHandler)))     // Complex 지점 수정
-	mux.HandleFunc("/complex/branches/update", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.EditHandler)))   // Complex 지점 업데이트
-	mux.HandleFunc("/complex/branches/add", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.AddHandler)))       // Complex 지점 추가 화면
-	mux.HandleFunc("/complex/branches/store", middleware.RequireAuthRecover(middleware.InjectBranchData(complexBranches.StoreHandler)))   // Complex 지점 추가 처리
-	mux.HandleFunc("/complex/branches/delete", middleware.RequireAuthRecover(complexBranches.DeleteHandler))                              // Complex 지점 삭제 처리
-	mux.HandleFunc("/complex/timeslots", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.Handler)))              // 수업 시간대 관리
-	mux.HandleFunc("/complex/timeslots/add", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.AddHandler)))       // 수업 시간대 추가
-	mux.HandleFunc("/complex/timeslots/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.EditHandler)))     // 수업 시간대 수정
-	mux.HandleFunc("/complex/timeslots/delete", middleware.RequireAuthRecover(middleware.InjectBranchData(classtimeslots.DeleteHandler))) // 수업 시간대 삭제
-
-	mux.HandleFunc("/complex/attendance", middleware.RequireAuthRecover(middleware.InjectBranchData(attendance.Handler)))                    // 등록현황 확인
-	mux.HandleFunc("/complex/attendance/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(attendance.DetailHandler)))       // 등록현황 상세(출석부 스타일)
-	mux.HandleFunc("/complex/members", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberListHandler)))             // 회원 관리 목록
-	mux.HandleFunc("/complex/members/add", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberAddHandler)))          // 회원 등록 화면
-	mux.HandleFunc("/complex/members/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberEditHandler)))        // 회원 수정 화면
-	mux.HandleFunc("/complex/members/update", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberUpdateHandler)))    // 회원 저장 처리
-	mux.HandleFunc("/complex/staffs", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffListHandler)))               // 강사진 관리 목록
-	mux.HandleFunc("/complex/staffs/add", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffAddHandler)))            // 강사 등록 화면
-	mux.HandleFunc("/complex/staffs/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffEditHandler)))          // 강사 수정 화면
-	mux.HandleFunc("/complex/staffs/update", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffUpdateHandler)))      // 강사 저장 처리
-	mux.HandleFunc("/complex/postponements", middleware.RequireAuthRecover(middleware.InjectBranchData(management.PostponementListHandler))) // 연기 요청 목록
-	mux.HandleFunc("/complex/postponements/update-status", middleware.RequireAuthRecover(management.PostponementUpdateStatusHandler))        // 연기 요청 상태 변경
-
-	mux.HandleFunc("/api/dashboard/caller-stats", middleware.RequireAuthRecover(home.GetCallerStatsAPI))                                  // CALLER별 통계 API
-	mux.HandleFunc("/customers", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.Handler)))                           // 고객 관리
-	mux.HandleFunc("/customers/add", middleware.RequireAuthRecover(middleware.InjectBranchData(customers.AddHandler)))                    // 고객 추가
-	mux.HandleFunc("/api/customers/comment", middleware.RequireAuthRecover(customers.UpdateCommentHandler))                               // 고객 코멘트 업데이트
-	mux.HandleFunc("/api/customers/process-call", middleware.RequireAuthRecover(customers.ProcessCallHandler))                            // 통화 처리 (CALLER 선택 + 통화 횟수 증가)
-	mux.HandleFunc("/api/customers/mark-no-phone-interview", middleware.RequireAuthRecover(customers.MarkNoPhoneInterviewHandler))        // 전화상안함 처리
-	mux.HandleFunc("/api/customers/reservation", middleware.RequireAuthRecover(customers.CreateReservationHandler))                       // 예약 정보 생성
-	mux.HandleFunc("/api/customers/update-name", middleware.RequireAuthRecover(customers.UpdateCustomerNameHandler))                      // 고객 이름 업데이트
-	mux.HandleFunc("/api/customers/delete", middleware.RequireAuthRecover(customers.DeleteCustomerHandler))                               // 고객 삭제 API
-	mux.HandleFunc("/api/integrations/check-sms", middleware.RequireAuthRecover(integrations.CheckSMSIntegrationHandler))                 // SMS 연동 상태 확인
-	mux.HandleFunc("/api/integrations/sms-senders", middleware.RequireAuthRecover(integrations.GetSMSSenderNumbersHandler))               // SMS 발신번호 목록 조회
-	mux.HandleFunc("/api/external/customers", opens.ExternalRegisterCustomerHandler)                                                      // 외부 고객 등록 API (인증 불필요)
-	mux.HandleFunc("/api/service/sms", middleware.RequireAuthRecover(services.SendSMSHandler))                                            // SMS 메시지 전송
-	mux.HandleFunc("/api/service/reservation-sms-config", middleware.RequireAuthRecover(services.GetReservationSMSConfigHandler))         // 예약 SMS 설정 조회
-	mux.HandleFunc("/api/message-templates", middleware.RequireAuthRecover(messagetemplates.GetTemplatesAPI))                             // 메시지 템플릿 목록 API
-	mux.HandleFunc("/branches", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.Handler)))                             // 지점 관리
-	mux.HandleFunc("/branches/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.DetailHandler)))                // 지점 상세
-	mux.HandleFunc("/branches/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.EditHandler)))                    // 지점 수정
-	mux.HandleFunc("/branches/add", middleware.RequireAuthRecover(middleware.InjectBranchData(branches.AddHandler)))                      // 지점 추가
-	mux.HandleFunc("/branches/delete", middleware.RequireAuthRecover(branches.DeleteHandler))                                             // 지점 삭제
-	mux.HandleFunc("/integrations", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.Handler)))                     // 외부 시스템 연동
-	mux.HandleFunc("/integrations/configure", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.ConfigureHandler)))  // 연동 설정
-	mux.HandleFunc("/integrations/manage", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.ConfigureHandler)))     // 연동 관리 (설정과 동일)
-	mux.HandleFunc("/integrations/kakao-sync", middleware.RequireAuthRecover(middleware.InjectBranchData(integrations.KakaoSyncHandler))) // 카카오싱크 URL 생성
-
-	mux.HandleFunc("/api/external/sms", middleware.RequireAuthRecover(integrations.SMSTestHandler))                                               // SMS 테스트 발송 API
-	mux.HandleFunc("/api/sms/config", middleware.RequireAuthRecover(integrations.SMSConfigSaveHandler))                                           // SMS 설정 저장 API
-	mux.HandleFunc("/api/integrations/activate", middleware.RequireAuthRecover(integrations.ActivateHandler))                                     // 연동 활성화 API
-	mux.HandleFunc("/api/integrations/disconnect", middleware.RequireAuthRecover(integrations.DisconnectHandler))                                 // 연동 해제 API
-	mux.HandleFunc("/api/calendar/create-event", middleware.RequireAuthRecover(integrations.CreateCalendarEventHandler))                          // 구글 캘린더 이벤트 생성 API
-	mux.HandleFunc("/message-templates", middleware.RequireAuthRecover(middleware.InjectBranchData(messagetemplates.Handler)))                    // 메시지 템플릿 목록
-	mux.HandleFunc("/message-templates/add", middleware.RequireAuthRecover(middleware.InjectBranchData(messagetemplates.AddHandler)))             // 메시지 템플릿 추가
-	mux.HandleFunc("/message-templates/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(messagetemplates.EditHandler)))           // 메시지 템플릿 수정
-	mux.HandleFunc("/message-templates/delete", middleware.RequireAuthRecover(messagetemplates.DeleteHandler))                                    // 메시지 템플릿 삭제
-	mux.HandleFunc("/message-templates/set-default", middleware.RequireAuthRecover(messagetemplates.SetDefaultHandler))                           // 메시지 템플릿 기본값 설정
-	mux.HandleFunc("/notices", middleware.RequireAuthRecover(middleware.InjectBranchData(notices.Handler)))                                       // 공지사항/이벤트 목록
-	mux.HandleFunc("/notices/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(notices.DetailHandler)))                          // 공지사항/이벤트 상세
-	mux.HandleFunc("/notices/add", middleware.RequireAuthRecover(middleware.InjectBranchData(notices.AddHandler)))                                // 공지사항/이벤트 등록
-	mux.HandleFunc("/notices/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(notices.EditHandler)))                              // 공지사항/이벤트 수정
-	mux.HandleFunc("/notices/delete", middleware.RequireAuthRecover(notices.DeleteHandler))                                                       // 공지사항/이벤트 삭제
-	mux.HandleFunc("/complex/memberships", middleware.RequireAuthRecover(middleware.InjectBranchData(memberships.ListHandler)))                   // 멤버십 목록
-	mux.HandleFunc("/complex/memberships/add", middleware.RequireAuthRecover(middleware.InjectBranchData(memberships.AddHandler)))                // 멤버십 추가
-	mux.HandleFunc("/complex/memberships/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(memberships.EditHandler)))              // 멤버십 수정
-	mux.HandleFunc("/complex/memberships/delete", middleware.RequireAuthRecover(memberships.DeleteHandler))                                       // 멤버십 삭제
-	mux.HandleFunc("/settings", middleware.RequireAuthRecover(middleware.InjectBranchData(settings.Handler)))                                     // 설정 메인 페이지
-	mux.HandleFunc("/settings/reservation-sms", middleware.RequireAuthRecover(middleware.InjectBranchData(settings.ReservationSMSConfigHandler))) // 예약 SMS 설정
-	mux.HandleFunc("/logout", middleware.RequireAuthRecover(login.LogoutHandler))                                                                 // 로그아웃 처리
-	mux.HandleFunc("/error", middleware.RecoverFunc(errorhandler.Handler404))                                                                     // 에러 페이지
+	registerPublicRoutes(mux)
+	registerComplexRoutes(mux)
+	registerAuthRoutes(mux)
 
 	// 정적 파일 서빙 (CSS, JS, 이미지 등)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
@@ -271,12 +311,9 @@ func main() {
 	// 루트 경로 핸들러 - 공개 게시판 (공지사항/이벤트)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
-			// "/" 이외의 경로는 404
 			errorhandler.Handler404(w, r)
 			return
 		}
-
-		// 루트 접속 시 공개 게시판 표시
 		board.ListHandler(w, r)
 	})
 
