@@ -157,7 +157,17 @@
 
             <div class="form-group">
                 <label class="form-label">연기 사유 <span style="color: #e74c3c;">*</span></label>
-                <textarea name="reason" class="form-textarea" placeholder="연기 사유를 간략히 입력해주세요." required></textarea>
+                <select name="reason" id="reasonSelect" class="form-input" required onchange="toggleReasonCustom(this)">
+                    <option value="">사유를 선택해 주세요</option>
+                    <option value="개인 사정 (출장/여행)">개인 사정 (출장/여행)</option>
+                    <option value="건강 상의 이유">건강 상의 이유</option>
+                    <option value="업무 일정 변경">업무 일정 변경</option>
+                    <option value="가족 행사 / 경조사">가족 행사 / 경조사</option>
+                    <option value="시험 준비">시험 준비</option>
+                    <option value="이사 / 거주지 변경">이사 / 거주지 변경</option>
+                    <option value="기타">기타 (직접 입력)</option>
+                </select>
+                <textarea name="reason_custom" id="reasonCustom" class="form-textarea" placeholder="연기 사유를 직접 입력해주세요." style="display:none; margin-top:10px;"></textarea>
             </div>
 
             <button type="submit" class="btn-submit">요청 제출하기</button>
@@ -174,6 +184,19 @@
     </div>
 
     <script>
+        function toggleReasonCustom(select) {
+            const custom = document.getElementById('reasonCustom');
+            if (select.value === '기타') {
+                custom.style.display = 'block';
+                custom.required = true;
+                custom.focus();
+            } else {
+                custom.style.display = 'none';
+                custom.required = false;
+                custom.value = '';
+            }
+        }
+
         const classesByTimeSlot = {{.ClassesByTimeSlot}};
 
         function updateClasses() {

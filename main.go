@@ -181,6 +181,10 @@ func registerComplexRoutes(mux *http.ServeMux) {
 
 	// /complex/postponements
 	mux.HandleFunc("/complex/postponements", middleware.RequireAuthRecover(middleware.InjectBranchData(management.PostponementListHandler)))
+	mux.HandleFunc("/complex/postponements/reasons", middleware.RequireAuthRecover(middleware.InjectBranchData(management.PostponementReasonListHandler)))
+	mux.HandleFunc("/complex/postponements/reasons/add", middleware.RequireAuthRecover(management.PostponementReasonAddHandler))
+	mux.HandleFunc("/complex/postponements/reasons/delete", middleware.RequireAuthRecover(management.PostponementReasonDeleteHandler))
+	mux.HandleFunc("/complex/postponements/reasons/label/delete", middleware.RequireAuthRecover(management.PostponementReasonLabelDeleteHandler))
 	mux.HandleFunc("/complex/postponements/update-status", middleware.RequireAuthRecover(management.PostponementUpdateStatusHandler))
 
 	// /complex/refunds
