@@ -24,7 +24,8 @@ type Member struct {
 	BranchSeq         string // 소속 지점 코드
 	Name              string
 	PhoneNumber       string
-	Status            string   // 출석 상태 등 (O, X 등)
+	Status            string   // 출석 상태 등 (O, X, △ 등)
+	IsPostponed       bool     // 수업 연기 중 여부
 	Level             string   // 레벨 (예: 3-)
 	Info              string   // 인적사항 (스태프가 기록하는 회원 특징)
 	ChartNumber       string   // 차트 넘버

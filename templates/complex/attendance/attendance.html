@@ -127,6 +127,19 @@
             color: white;
             border-color: #4a90e2;
         }
+        .status-mark.postponed {
+            background: #fff9db;
+            color: #e67700;
+            border-color: #ffc078;
+            font-size: 0.9rem;
+            cursor: default;
+        }
+        .member-item.is-postponed {
+            background: #fff3cd;
+        }
+        .member-item.is-postponed .member-name {
+            color: #b8860b;
+        }
         .card-footer {
             padding: 12px 15px;
             background: #fdfdfd;
@@ -409,7 +422,7 @@
                             </div>
                             <ul class="member-list">
                                 {{range $i, $m := .Members}}
-                                <li class="member-item" data-member-id="{{.ID}}" data-member-name="{{.Name}}">
+                                <li class="member-item {{if .IsPostponed}}is-postponed{{end}}" data-member-id="{{.ID}}" data-member-name="{{.Name}}" {{if .IsPostponed}}data-postponed="true"{{end}}>
                                     <div class="member-info">
                                         <span class="member-index" style="{{if eq $i 0}}font-weight: 800; color: #e67e22; font-size: 0.7rem;{{end}}">
                                             {{if eq $i 0}}STAFF{{else}}{{$i}}{{end}}
@@ -418,7 +431,11 @@
                                         <span class="member-phone">{{.PhoneNumber}}</span>
                                         <button type="button" class="btn-member-manage" onclick="openMemberManageModal('{{.ID}}', '{{.Name}}', '{{.PhoneNumber}}', '{{$currentClassName}}')">관리</button>
                                     </div>
+                                    {{if .IsPostponed}}
+                                    <div class="status-mark postponed" title="수업 연기 중">△</div>
+                                    {{else}}
                                     <div class="status-mark {{if .Status}}active{{end}}">{{if .Status}}{{.Status}}{{else}}&nbsp;{{end}}</div>
+                                    {{end}}
                                 </li>
                                 {{end}}
                                 
@@ -456,6 +473,7 @@
                             name: "{{.Name}}",
                             phone: "{{.PhoneNumber}}",
                             status: "{{.Status}}",
+                            isPostponed: {{if .IsPostponed}}true{{else}}false{{end}},
                             isLeader: {{if eq $idx 0}}true{{else}}false{{end}}
                         },
                         {{end}}
@@ -468,12 +486,15 @@
         // ── 카드별 출석률 계산 · 표시 ─────────────────────────
         function updateAttendRates() {
             document.querySelectorAll('.class-card').forEach(card => {
-                const total   = card.querySelectorAll('.member-list .status-mark').length;
+                const allMarks = card.querySelectorAll('.member-list .status-mark');
+                const postponed = card.querySelectorAll('.member-list .status-mark.postponed').length;
+                const total   = allMarks.length - postponed;
                 const present = card.querySelectorAll('.member-list .status-mark.active').length;
                 const pct     = total > 0 ? Math.round(present / total * 100) : 0;
                 const badge   = card.querySelector('.attend-rate-badge');
                 if (!badge) return;
-                badge.textContent = `${present}/${total}명 · ${pct}%`;
+                const suffix = postponed > 0 ? ` (연기 ${postponed})` : '';
+                badge.textContent = `${present}/${total}명 · ${pct}%${suffix}`;
                 badge.className   = 'attend-rate-badge ' +
                     (pct >= 80 ? 'rate-high' : pct >= 60 ? 'rate-mid' : 'rate-low');
             });
@@ -816,7 +837,22 @@
                 maxWidth: '440px',
                 headerColor: '#2e7d32',
                 contentBuilder: () => {
-                    const rows = cls.members.map((m, i) => `
+                    const rows = cls.members.map((m, i) => {
+                        if (m.isPostponed) {
+                            return `
+                        <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #f0f0f0;background:#fffdf5;opacity:0.75;">
+                            <span style="display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;background:#fff9db;border:1px solid #ffc078;border-radius:3px;color:#e67700;font-size:0.75rem;font-weight:800;flex-shrink:0;">△</span>
+                            <div style="flex:1;display:flex;align-items:center;gap:8px;min-width:0;">
+                                ${i === 0
+                                    ? '<span style="color:#e67e22;font-size:0.72rem;font-weight:800;white-space:nowrap;">STAFF</span>'
+                                    : `<span style="color:#adb5bd;font-size:0.8rem;width:18px;text-align:right;flex-shrink:0;">${i}</span>`}
+                                <strong style="color:#b8860b;white-space:nowrap;">${m.name}</strong>
+                                <span style="color:#999;font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.phone}</span>
+                                <span style="font-size:0.7rem;color:#e67700;background:#fff3cd;padding:1px 6px;border-radius:10px;white-space:nowrap;">연기중</span>
+                            </div>
+                        </div>`;
+                        }
+                        return `
                         <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #f0f0f0;">
                             <input type="checkbox" id="bulk_${m.id}" class="bulk-attend-cb"
                                    style="width:17px;height:17px;cursor:pointer;accent-color:#2e7d32;"
@@ -828,8 +864,8 @@
                                 <strong style="color:#333;white-space:nowrap;">${m.name}</strong>
                                 <span style="color:#999;font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.phone}</span>
                             </label>
-                        </div>
-                    `).join('');
+                        </div>`;
+                    }).join('');
 
                     return `
                         <div>
@@ -880,8 +916,9 @@
                 if (member) member.status = cb.checked ? 'O' : '';
             });
 
-            // DOM 출석 마크 업데이트
+            // DOM 출석 마크 업데이트 (연기 회원은 건너뜀)
             cls.members.forEach(m => {
+                if (m.isPostponed) return;
                 const item = document.querySelector(`.member-item[data-member-id="${m.id}"]`);
                 if (!item) return;
                 const mark = item.querySelector('.status-mark');

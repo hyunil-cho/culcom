@@ -28,6 +28,13 @@ func createMockClasses(slotName string, count int) []management.ClassWithMembers
 			{ID: i*10 + 4, Name: fmt.Sprintf("회원%d-4", i), PhoneNumber: "0104444XXXX", Status: ""},
 			{ID: i*10 + 5, Name: fmt.Sprintf("회원%d-5", i), PhoneNumber: "0105555XXXX", Status: "O"},
 		}
+		// 일부 반에 수업 연기 중인 회원 추가
+		if i%4 == 1 {
+			members[2] = management.Member{ID: i*10 + 3, Name: fmt.Sprintf("회원%d-3", i), PhoneNumber: "0103333XXXX", Status: "△", IsPostponed: true}
+		}
+		if i%5 == 0 {
+			members[4] = management.Member{ID: i*10 + 5, Name: fmt.Sprintf("회원%d-5", i), PhoneNumber: "0105555XXXX", Status: "△", IsPostponed: true}
+		}
 		// 일부 반은 인원을 더 많이
 		if i%3 == 0 {
 			members = append(members, management.Member{ID: i*10 + 6, Name: "추가회원A", PhoneNumber: "0109999XXXX", Status: "O"})
