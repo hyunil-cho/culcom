@@ -164,10 +164,7 @@ func main() {
 	mux.HandleFunc("/complex/membership", opens.MembershipCheckHandler)            // 멤버쉽 확인 (전화번호 입력)
 	mux.HandleFunc("/complex/membership/result", opens.MembershipResultHandler)    // 멤버쉽 조회 결과
 	mux.HandleFunc("/complex/refund", middleware.RecoverFunc(opens.RefundHandler)) // 멤버십 환불 신청 (공개)
-
-	mux.HandleFunc("/consultation/register", middleware.RecoverFunc(consultation.RegisterHandler))                                      // 상담 신청 페이지
-	mux.HandleFunc("/consultation/submit", middleware.RecoverFunc(consultation.SubmitHandler))                                          // 상담 신청 처리
-	mux.HandleFunc("/consultation/success", middleware.RecoverFunc(consultation.SuccessHandler))                                        // 상담 신청 완료
+	// 상담 신청 완료
 	mux.HandleFunc("/complex/survey", middleware.RecoverFunc(consultation.SurveyHandler))                                               // 커스터마이징 상담 설문 (공개)
 	mux.HandleFunc("/complex/survey/options", middleware.RequireAuthRecover(middleware.InjectBranchData(complexSurvey.OptionsHandler))) // 설문 선택지 관리
 	mux.HandleFunc("/complex/survey/options/add", middleware.RequireAuthRecover(complexSurvey.AddOptionHandler))                        // 선택지 추가
