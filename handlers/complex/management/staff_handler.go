@@ -9,7 +9,7 @@ import (
 
 // MOCK 강사 데이터
 var mockStaffs = []Staff{
-	{ID: 1, Name: "김강사", PhoneNumber: "01011112222", Email: "kim@culcom.com", BranchName: "달서점", Subject: "영어 회화", Role: "강사", Status: "재직", JoinDate: "2025-01-10", Comment: "기초반 전문", Interviewer: "본인", PaymentMethod: "카드", DepositAmount: "500,000", RefundAmount: ""},
+	{ID: 1, Name: "김강사", PhoneNumber: "01011112222", Email: "kim@culcom.com", BranchName: "달서점", Subject: "영어 회화", Role: "스태프", Status: "재직", JoinDate: "2025-01-10", Comment: "기초반 전문", Interviewer: "본인", PaymentMethod: "카드", DepositAmount: "500,000", RefundAmount: ""},
 	{ID: 2, Name: "이팀장", PhoneNumber: "01022223333", Email: "lee@culcom.com", BranchName: "수성점", Subject: "비즈니스 영어", Role: "팀장", Status: "재직", JoinDate: "2024-05-20", Comment: "", Interviewer: "대표", PaymentMethod: "계좌이체", DepositAmount: "1,000,000", RefundAmount: "200,000"},
 	{ID: 3, Name: "박교수", PhoneNumber: "01033334444", Email: "park@culcom.com", BranchName: "달서점", Subject: "토익/토플", Role: "강사", Status: "휴직", JoinDate: "2025-02-15", Comment: "개인 사정으로 휴직 중", Interviewer: "김강사", PaymentMethod: "현금", DepositAmount: "300,000", RefundAmount: "300,000"},
 }
@@ -24,7 +24,7 @@ func StaffListHandler(w http.ResponseWriter, r *http.Request) {
 		TotalCount int
 	}{
 		BasePageData: middleware.GetBasePageData(r),
-		Title:        "강사진 관리",
+		Title:        "스태프 관리",
 		ActiveMenu:   "complex_staffs",
 		Staffs:       mockStaffs,
 		TotalCount:   len(mockStaffs),
@@ -44,7 +44,7 @@ func StaffAddHandler(w http.ResponseWriter, r *http.Request) {
 		ActiveMenu string
 	}{
 		BasePageData: middleware.GetBasePageData(r),
-		Title:        "새 강사 등록",
+		Title:        "새 스태프 등록",
 		ActiveMenu:   "complex_staffs",
 	}
 
@@ -74,7 +74,7 @@ func StaffEditHandler(w http.ResponseWriter, r *http.Request) {
 		Staff      Staff
 	}{
 		BasePageData: middleware.GetBasePageData(r),
-		Title:        "강사 정보 수정",
+		Title:        "스태프 정보 수정",
 		ActiveMenu:   "complex_staffs",
 		Staff:        staff,
 	}
