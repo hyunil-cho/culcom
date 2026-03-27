@@ -181,6 +181,7 @@
                                 <th>등록일자</th>
                                 <th>수정일자</th>
                                 <th colspan="10">최근 출석기록</th>
+                                <th>히스토리</th>
                                 <th>관리</th>
                             </tr>
                         </thead>
@@ -218,6 +219,9 @@
                                     </div>
                                 </td>
                                 <td>
+                                    <button class="btn-mini" style="background:#4a90e2;" onclick="openAttendanceHistoryModal('{{.Name}}')">📅</button>
+                                </td>
+                                <td>
                                     <div class="action-btns">
                                         <a href="/complex/members/edit?id={{.ID}}" class="btn-mini btn-edit">수정</a>
                                     </div>
@@ -225,7 +229,7 @@
                             </tr>
                             {{else}}
                             <tr>
-                                <td colspan="27" style="text-align: center; padding: 40px; color: #999;">등록된 회원이 없습니다.</td>
+                                <td colspan="28" style="text-align: center; padding: 40px; color: #999;">등록된 회원이 없습니다.</td>
                             </tr>
                             {{end}}
                         </tbody>
@@ -415,6 +419,118 @@
             if(confirm(`${memberName} 회원을 ${toName} 수업으로 이동하시겠습니까?`)) {
                 alert('이동 처리되었습니다.');
                 location.reload();
+            }
+        }
+
+        // 출석 히스토리 모달
+        const attendanceData = [];
+        const itemsPerPage = 10;
+        let historyCurrentPage = 1;
+
+        function generateMockAttendance() {
+            attendanceData.length = 0;
+            const statuses = ['O', 'O', 'O', 'O', 'X', 'O', 'O', 'O'];
+            const classes = ['레벨1-1반', '레벨1-2반', '프리토킹 A반'];
+            const slots = ['월수 오전', '화목 오후', '주말 집중'];
+
+            const today = new Date();
+            for (let i = 0; i < 50; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                if (date.getDay() === 0 || date.getDay() === 6) continue;
+
+                attendanceData.push({
+                    date: date.toISOString().split('T')[0],
+                    className: classes[Math.floor(Math.random() * classes.length)],
+                    slotName: slots[Math.floor(Math.random() * slots.length)],
+                    status: statuses[Math.floor(Math.random() * statuses.length)],
+                    note: i % 12 === 0 ? '지각' : '-'
+                });
+            }
+        }
+
+        function openAttendanceHistoryModal(memberName) {
+            if (typeof ModalManager === 'undefined') return;
+
+            generateMockAttendance();
+            historyCurrentPage = 1;
+
+            ModalManager.createCustom({
+                id: 'attendanceHistoryModal',
+                title: `출석 히스토리 - ${memberName}`,
+                maxWidth: '800px',
+                headerColor: '#4a90e2',
+                contentBuilder: () => `
+                    <div style="padding: 10px; min-height: 550px; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0;">
+                            <span style="background: #e3f2fd; color: #1976d2; padding: 3px 10px; border-radius: 15px; font-size: 0.8rem; font-weight: 600;">총 ${attendanceData.length}회</span>
+                        </div>
+                        <div class="attendance-table-wrapper" style="height: 400px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; flex-shrink: 0;">
+                            <table class="staff-table" style="min-width: 100%; margin: 0; table-layout: fixed;">
+                                <thead style="position: sticky; top: 0; z-index: 10;">
+                                    <tr>
+                                        <th style="background: #f8f9fa; width: 120px;">날짜</th>
+                                        <th style="background: #f8f9fa;">수업명</th>
+                                        <th style="background: #f8f9fa; width: 80px;">상태</th>
+                                        <th style="background: #f8f9fa; width: 150px;">비고</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="modalAttendanceBody"></tbody>
+                            </table>
+                        </div>
+                        <div id="modalPaginationRoot" style="margin-top: auto; padding-top: 20px; flex-shrink: 0;"></div>
+                    </div>
+                `,
+                buttons: [{ text: '닫기', class: 'btn-secondary', onClick: () => ModalManager.hide('attendanceHistoryModal') }]
+            });
+
+            renderHistoryPage(1);
+        }
+
+        function renderHistoryPage(page) {
+            historyCurrentPage = page;
+            const start = (page - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const paginatedData = attendanceData.slice(start, end);
+
+            const body = document.getElementById('modalAttendanceBody');
+            if (!body) return;
+
+            body.innerHTML = paginatedData.map(item => `
+                <tr>
+                    <td style="font-family: monospace; font-size: 0.85rem;">${item.date}</td>
+                    <td>
+                        <div style="font-weight: 600; color: #4a90e2; font-size: 0.85rem;">${item.className}</div>
+                        <div style="font-size: 0.75rem; color: #999;">${item.slotName}</div>
+                    </td>
+                    <td>
+                        <span class="status-mark ${item.status === 'O' ? 'active' : ''}" style="margin: 0 auto; width: 22px; height: 22px; font-size: 0.7rem;">
+                            ${item.status}
+                        </span>
+                    </td>
+                    <td style="color: #888; font-size: 0.8rem;">${item.note}</td>
+                </tr>
+            `).join('');
+
+            const totalPages = Math.ceil(attendanceData.length / itemsPerPage);
+            const pages = [];
+            for (let i = Math.max(1, historyCurrentPage - 2); i <= Math.min(totalPages, historyCurrentPage + 2); i++) {
+                pages.push(i);
+            }
+
+            const paginationData = {
+                currentPage: historyCurrentPage,
+                totalPages: totalPages,
+                totalItems: attendanceData.length,
+                pages: pages,
+                hasPrev: historyCurrentPage > 1,
+                hasNext: historyCurrentPage < totalPages
+            };
+
+            if (typeof renderPagination !== 'undefined') {
+                renderPagination('#modalPaginationRoot', paginationData, {
+                    onPageClick: (p) => renderHistoryPage(p)
+                });
             }
         }
     </script>

@@ -1,4 +1,4 @@
-{{define "dashboard/member_edit.html"}}
+{{define "dashboard/member_form.html"}}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -7,28 +7,52 @@
 </head>
 <body>
     {{template "complex_sidebar" .}}
-    
+
     <div class="main-wrapper">
         {{template "header" .}}
-        
+
         <main class="content">
             <div class="detail-actions">
                 <a href="/complex/members" class="btn-back">← 목록으로</a>
             </div>
 
             <div class="content-card">
-                <div class="form-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="form-header" style="display:flex; align-items:center; justify-content:space-between;">
+                    {{if .IsEdit}}
                     <h2 style="margin: 0;">회원 정보 수정 - {{.Member.Name}}</h2>
-                    <button type="button" class="btn-secondary" style="padding: 8px 15px; font-weight: 600;" onclick="openAttendanceHistoryModal('{{.Member.Name}}')">📅 출석 히스토리 보기</button>
+                    {{else}}
+                    <h2>새 회원 등록</h2>
+                    <button type="button" id="btnLoadSurvey" onclick="openSurveyModal()" style="display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:#2d7a4f; color:white; border:none; border-radius:8px; font-size:0.9rem; font-weight:600; cursor:pointer;">
+                        📋 설문 불러오기
+                    </button>
+                    {{end}}
                 </div>
+
+                {{if not .IsEdit}}
+                <!-- 설문 참조 정보 패널 (불러온 경우에만 표시) -->
+                <div id="surveyRefPanel" style="display:none; margin:0 0 1.5rem; background:#e8f5ee; border:1.5px solid #4caf78; border-radius:10px; padding:1.25rem 1.5rem;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+                        <div style="font-size:1rem; font-weight:700; color:#2d7a4f;">📋 연결된 설문 정보</div>
+                        <button type="button" onclick="clearSurveyRef()" style="background:none; border:none; color:#888; font-size:0.85rem; cursor:pointer;">✕ 연결 해제</button>
+                    </div>
+                    <div id="surveyRefContent" style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem 1.5rem; font-size:0.88rem; color:#1a1a1a;"></div>
+                    <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid #c5e5d0;">
+                        <div style="font-size:0.85rem; font-weight:700; color:#2d7a4f; margin-bottom:0.5rem;">설문 응답 상세</div>
+                        <div id="surveyRefDetail" style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem 1.5rem; font-size:0.83rem; color:#444;"></div>
+                    </div>
+                </div>
+                {{end}}
+
                 <form action="/complex/members/update" method="POST">
+                    {{if .IsEdit}}
                     <input type="hidden" name="id" value="{{.Member.ID}}">
+                    {{end}}
                     <div class="form-body">
                         <div class="form-row">
                             <label class="form-label">이름 <span class="required">*</span></label>
-                            <input type="text" name="name" class="form-input" value="{{.Member.Name}}" required>
+                            <input type="text" name="name" class="form-input" value="{{.Member.Name}}" placeholder="이름을 입력하세요" required>
                         </div>
-                        
+
                         <div class="form-row">
                             <label class="form-label">전화번호 <span class="required">*</span></label>
                             <input type="tel" id="phoneNumber" name="phone_number" class="form-input" value="{{.Member.PhoneNumber}}" placeholder="01012345678" pattern="^010[0-9]{8}$" maxlength="11" required>
@@ -50,7 +74,11 @@
                             <input type="text" name="level" class="form-input" value="{{.Member.Level}}" placeholder="예: 3-">
                         </div>
 
-                        <!-- 수업 배정 섹션 (Edit 페이지 추가) -->
+                        <div class="form-row">
+                            <label class="form-label">언어</label>
+                            <input type="text" name="language" class="form-input" value="{{.Member.Language}}" placeholder="예: 영어, 일본어">
+                        </div>
+
                         <div class="form-row">
                             <label class="form-label">수업 시간대</label>
                             <select id="slotSelect" class="form-input" onchange="updateClassOptions()">
@@ -79,17 +107,6 @@
                         </div>
 
                         <div class="form-row">
-                            <label class="form-label">상태</label>
-                            <select name="status" class="form-input">
-                                <option value="">-- 선택 --</option>
-                                <option value="미가입/예정" {{if eq .Member.Status "미가입/예정"}}selected{{end}}>미가입/예정</option>
-                                <option value="디파짓" {{if eq .Member.Status "디파짓"}}selected{{end}}>디파짓</option>
-                                <option value="양도/6개월미만" {{if eq .Member.Status "양도/6개월미만"}}selected{{end}}>양도/6개월미만</option>
-                                <option value="가입(완불)" {{if eq .Member.Status "가입(완불)"}}selected{{end}}>가입(완불)</option>
-                            </select>
-                        </div>
-
-                        <div class="form-row">
                             <label class="form-label">등급 (멤버십)</label>
                             <select id="gradeSelect" name="grade" class="form-input" onchange="calculateExpiryDate()">
                                 <option value="멤버쉽" {{if eq .Member.Grade "멤버쉽"}}selected{{end}}>멤버쉽 (1개월)</option>
@@ -109,6 +126,27 @@
                         <div class="form-row">
                             <label class="form-label">금액</label>
                             <input type="text" name="price" class="form-input" value="{{.Member.Price}}" placeholder="예: 450,000">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">납부일</label>
+                            <input type="datetime-local" name="payment_date" class="form-input" value="{{.Member.PaymentDate}}">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">상태</label>
+                            <select id="statusSelect" name="status" class="form-input" onchange="toggleDepositField(this)">
+                                <option value="">-- 선택 --</option>
+                                <option value="미가입/예정" {{if eq .Member.Status "미가입/예정"}}selected{{end}}>미가입/예정</option>
+                                <option value="디파짓" {{if eq .Member.Status "디파짓"}}selected{{end}}>디파짓</option>
+                                <option value="양도/6개월미만" {{if eq .Member.Status "양도/6개월미만"}}selected{{end}}>양도/6개월미만</option>
+                                <option value="가입(완불)" {{if eq .Member.Status "가입(완불)"}}selected{{end}}>가입(완불)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row" id="depositAmountRow" style="display: none;">
+                            <label class="form-label">디파짓 납부금액</label>
+                            <input type="text" name="deposit_amount" id="depositAmount" class="form-input" value="{{.Member.DepositAmount}}" placeholder="예: 100,000">
                         </div>
 
                         <div class="form-row">
@@ -145,6 +183,7 @@
                             </div>
                         </div>
 
+                        {{if .IsEdit}}
                         <div class="form-row">
                             <label class="form-label">최근수업일</label>
                             <input type="date" name="last_date" class="form-input" value="{{.Member.LastDate}}">
@@ -154,6 +193,7 @@
                             <label class="form-label">잔여횟수/통계</label>
                             <input type="text" name="stats" class="form-input" value="{{.Member.Stats}}" placeholder="예: 0 did 100 left">
                         </div>
+                        {{end}}
 
                         <div class="form-row">
                             <label class="form-label">인터뷰어</label>
@@ -170,6 +210,7 @@
                             <textarea name="comment" class="form-input" style="height: 100px; resize: vertical; padding: 10px;" placeholder="직업, 관심사, 등록 동기 등 상세 정보를 입력하세요">{{.Member.Comment}}</textarea>
                         </div>
 
+                        {{if .IsEdit}}
                         {{if .Member.CreatedAt}}
                         <div class="form-row">
                             <label class="form-label">등록일자</label>
@@ -182,10 +223,15 @@
                             <span class="form-input" style="background: #f8f9fa; border: none; color: #666;">{{.Member.UpdatedAt}}</span>
                         </div>
                         {{end}}
+                        {{end}}
                     </div>
 
                     <div class="form-actions">
+                        {{if .IsEdit}}
                         <button type="submit" class="btn-primary-large">💾 수정하기</button>
+                        {{else}}
+                        <button type="submit" class="btn-primary-large">💾 등록하기</button>
+                        {{end}}
                         <a href="/complex/members" class="btn-secondary-large">취소</a>
                     </div>
                 </form>
@@ -211,7 +257,7 @@ function updateClassOptions() {
     const selectedSlot = slotSelect.value;
 
     classSelect.innerHTML = '<option value="">-- 수업 선택 --</option>';
-    
+
     if (!selectedSlot) {
         classSelect.disabled = true;
         classSelect.innerHTML = '<option value="">-- 시간대를 먼저 선택하세요 --</option>';
@@ -233,149 +279,37 @@ function calculateExpiryDate() {
     const joinDateInput = document.getElementById('joinDate');
     const gradeSelect = document.getElementById('gradeSelect');
     const expiryInput = document.getElementById('expiryDate');
-    
+
     if (!gradeSelect || !gradeSelect.value) return;
-    
-    // 가입일이 없으면 오늘 날짜 기준
+
     let baseDate = joinDateInput && joinDateInput.value ? new Date(joinDateInput.value) : new Date();
-    
-    // 등급별 기간 매핑
+
     const gradeDuration = {
         '멤버쉽': 1,
         'A+': 3,
         'VVIP': 6,
         'VVIP+': 12,
-        'H+': 120 // 10년
+        'H+': 120
     };
-    
+
     const months = gradeDuration[gradeSelect.value] || 0;
-    if (months === 0) return; // 매핑된 기간이 없으면 유지
+    if (months === 0) return;
 
     baseDate.setMonth(baseDate.getMonth() + months);
-    
-    // YYYY-MM-DD 형식으로 변환
+
     const yyyy = baseDate.getFullYear();
     const mm = String(baseDate.getMonth() + 1).padStart(2, '0');
     const dd = String(baseDate.getDate()).padStart(2, '0');
     expiryInput.value = `${yyyy}-${mm}-${dd}`;
 }
 
-// Mock 데이터 관리 (출석 히스토리용)
-const attendanceData = [];
-const itemsPerPage = 10;
-let currentPage = 1;
-
-function generateMockAttendance() {
-    attendanceData.length = 0; // 초기화
-    const statuses = ['O', 'O', 'O', 'O', 'X', 'O', 'O', 'O'];
-    const classes = ['레벨1-1반', '레벨1-2반', '프리토킹 A반'];
-    const slots = ['월수 오전', '화목 오후', '주말 집중'];
-    
-    const today = new Date();
-    for (let i = 0; i < 50; i++) {
-        const date = new Date(today);
-        date.setDate(today.getDate() - i);
-        if (date.getDay() === 0 || date.getDay() === 6) continue;
-
-        attendanceData.push({
-            date: date.toISOString().split('T')[0],
-            className: classes[Math.floor(Math.random() * classes.length)],
-            slotName: slots[Math.floor(Math.random() * slots.length)],
-            status: statuses[Math.floor(Math.random() * statuses.length)],
-            note: i % 12 === 0 ? '지각' : '-'
-        });
-    }
-}
-
-function openAttendanceHistoryModal(memberName) {
-    if (typeof ModalManager === 'undefined') return;
-    
-    generateMockAttendance();
-    currentPage = 1;
-
-    ModalManager.createCustom({
-        id: 'attendanceHistoryModal',
-        title: `출석 히스토리 - ${memberName}`,
-        maxWidth: '800px',
-        headerColor: '#4a90e2',
-        contentBuilder: () => `
-            <div style="padding: 10px; min-height: 550px; display: flex; flex-direction: column;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0;">
-                    <span style="background: #e3f2fd; color: #1976d2; padding: 3px 10px; border-radius: 15px; font-size: 0.8rem; font-weight: 600;">총 ${attendanceData.length}회</span>
-                </div>
-                <div class="attendance-table-wrapper" style="height: 400px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; flex-shrink: 0;">
-                    <table class="staff-table" style="min-width: 100%; margin: 0; table-layout: fixed;">
-                        <thead style="position: sticky; top: 0; z-index: 10;">
-                            <tr>
-                                <th style="background: #f8f9fa; width: 120px;">날짜</th>
-                                <th style="background: #f8f9fa;">수업명</th>
-                                <th style="background: #f8f9fa; width: 80px;">상태</th>
-                                <th style="background: #f8f9fa; width: 150px;">비고</th>
-                            </tr>
-                        </thead>
-                        <tbody id="modalAttendanceBody">
-                            <!-- JS로 렌더링 -->
-                        </tbody>
-                    </table>
-                </div>
-                <!-- 공통 페이지네이션 유틸 적용 -->
-                <div id="modalPaginationRoot" style="margin-top: auto; padding-top: 20px; flex-shrink: 0;">
-                </div>
-            </div>
-        `,
-        buttons: [{ text: '닫기', class: 'btn-secondary', onClick: () => ModalManager.hide('attendanceHistoryModal') }]
-    });
-
-    renderModalPage(1);
-}
-
-function renderModalPage(page) {
-    currentPage = page;
-    const start = (page - 1) * itemsPerPage;
-    const end = start + itemsPerPage;
-    const paginatedData = attendanceData.slice(start, end);
-    
-    const body = document.getElementById('modalAttendanceBody');
-    if (!body) return;
-
-    body.innerHTML = paginatedData.map(item => `
-        <tr>
-            <td style="font-family: monospace; font-size: 0.85rem;">${item.date}</td>
-            <td>
-                <div style="font-weight: 600; color: #4a90e2; font-size: 0.85rem;">${item.className}</div>
-                <div style="font-size: 0.75rem; color: #999;">${item.slotName}</div>
-            </td>
-            <td>
-                <span class="status-mark ${item.status === 'O' ? 'active' : ''}" style="margin: 0 auto; width: 22px; height: 22px; font-size: 0.7rem;">
-                    ${item.status}
-                </span>
-            </td>
-            <td style="color: #888; font-size: 0.8rem;">${item.note}</td>
-        </tr>
-    `).join('');
-
-    // 공통 유틸리티를 사용한 페이징 렌더링
-    const totalPages = Math.ceil(attendanceData.length / itemsPerPage);
-    
-    // 표시할 페이지 번호 배열 생성 (현재 페이지 기준 앞뒤 2개)
-    const pages = [];
-    for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
-        pages.push(i);
-    }
-
-    const paginationData = {
-        currentPage: currentPage,
-        totalPages: totalPages,
-        totalItems: attendanceData.length,
-        pages: pages,
-        hasPrev: currentPage > 1,
-        hasNext: currentPage < totalPages
-    };
-
-    if (typeof renderPagination !== 'undefined') {
-        renderPagination('#modalPaginationRoot', paginationData, {
-            onPageClick: (p) => renderModalPage(p)
-        });
+function toggleDepositField(select) {
+    const row = document.getElementById('depositAmountRow');
+    if (select.value === '디파짓') {
+        row.style.display = '';
+    } else {
+        row.style.display = 'none';
+        document.getElementById('depositAmount').value = '';
     }
 }
 
@@ -401,11 +335,11 @@ function toggleSignupCustom(select) {
     }
 }
 
-// 기존 저장된 값이 기본 옵션에 없으면 '기타'로 처리
 document.addEventListener('DOMContentLoaded', function() {
+    // 기존 저장된 값이 기본 옵션에 없으면 '기타'로 처리
     const paySelect = document.getElementById('paymentMethodSelect');
     const payCustom = document.getElementById('paymentMethodCustom');
-    const savedPay = "{{.Member.PaymentMethod}}";
+    const savedPay = paySelect.value;
     if (savedPay && !paySelect.querySelector('option[value="' + savedPay + '"]')) {
         paySelect.value = '기타';
         payCustom.style.display = 'block';
@@ -414,16 +348,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const chSelect = document.getElementById('signupChannelSelect');
     const chCustom = document.getElementById('signupChannelCustom');
-    const savedCh = "{{.Member.SignupChannel}}";
+    const savedCh = chSelect.value;
     if (savedCh && !chSelect.querySelector('option[value="' + savedCh + '"]')) {
         chSelect.value = '기타';
         chCustom.style.display = 'block';
         chCustom.value = savedCh;
     }
-});
 
-// 기존 전화번호 로직 유지
-document.addEventListener('DOMContentLoaded', function() {
+    // 상태값이 디파짓이면 필드 표시
+    const statusSelect = document.getElementById('statusSelect');
+    if (statusSelect && statusSelect.value === '디파짓') {
+        document.getElementById('depositAmountRow').style.display = '';
+    }
+
+    // 전화번호 입력 검증
     const phoneInput = document.getElementById('phoneNumber');
     if (phoneInput) {
         phoneInput.addEventListener('input', function(e) {
@@ -431,9 +369,205 @@ document.addEventListener('DOMContentLoaded', function() {
             if (value.length > 11) value = value.slice(0, 11);
             e.target.value = value;
         });
+        phoneInput.addEventListener('blur', function(e) {
+            const value = e.target.value;
+            if (value && !/^010[0-9]{8}$/.test(value)) {
+                alert('전화번호는 010으로 시작하는 11자리 숫자여야 합니다.');
+            }
+        });
+    }
+});
+
+// =============================================
+// 설문 불러오기 기능 (등록 모드에서만 사용)
+// =============================================
+let surveyData = [];
+
+function openSurveyModal() {
+    const modal = document.getElementById('surveyModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    document.getElementById('surveyList').innerHTML = '<div style="text-align:center; padding:2rem; color:#999;">불러오는 중...</div>';
+
+    fetch('/api/complex/survey/submissions')
+        .then(res => res.json())
+        .then(data => {
+            surveyData = data || [];
+            renderSurveyList('');
+        })
+        .catch(() => {
+            document.getElementById('surveyList').innerHTML = '<div style="text-align:center; padding:2rem; color:#e53e3e;">설문 데이터를 불러올 수 없습니다.</div>';
+        });
+}
+
+function closeSurveyModal() {
+    const modal = document.getElementById('surveyModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function renderSurveyList(query) {
+    const list = document.getElementById('surveyList');
+    if (!list) return;
+    const filtered = surveyData.filter(s =>
+        s.name.includes(query) || s.phone.includes(query)
+    );
+
+    if (filtered.length === 0) {
+        list.innerHTML = '<div style="text-align:center; padding:2rem; color:#999; font-size:0.95rem;">검색 결과가 없습니다.</div>';
+        return;
+    }
+
+    list.innerHTML = filtered.map(s => `
+        <div class="survey-list-item" onclick="selectSurvey(${s.id})"
+            onmouseenter="this.style.borderColor='#2d7a4f'; this.style.background='#f4fbf7';"
+            onmouseleave="this.style.borderColor='#dde8e3'; this.style.background='#fff';"
+            style="display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border:1.5px solid #dde8e3; border-radius:10px; cursor:pointer; transition:all 0.2s; margin-bottom:0.6rem; background:#fff;">
+            <div>
+                <div style="font-weight:700; font-size:1rem; color:#1a1a1a; margin-bottom:0.25rem;">
+                    ${s.name} <span style="font-size:0.85rem; color:#666; font-weight:400;">${s.gender} · ${s.age_group} · ${s.location}</span>
+                </div>
+                <div style="font-size:0.85rem; color:#555;">
+                    📞 ${formatPhone(s.phone)} &nbsp;|&nbsp; 📅 ${s.submitted_at} &nbsp;|&nbsp; 유입: ${s.ad_source}
+                </div>
+            </div>
+            <div style="flex-shrink:0; margin-left:1rem; padding:6px 14px; background:#2d7a4f; color:white; border-radius:6px; font-size:0.82rem; font-weight:600;">선택</div>
+        </div>
+    `).join('');
+}
+
+function formatPhone(p) {
+    const s = p.replace(/[^0-9]/g, '');
+    if (s.length === 11) return s.slice(0,3) + '-' + s.slice(3,7) + '-' + s.slice(7);
+    return p;
+}
+
+function selectSurvey(id) {
+    const survey = surveyData.find(s => s.id === id);
+    if (!survey) return;
+
+    const nameInput = document.querySelector('input[name="name"]');
+    const phoneInput = document.getElementById('phoneNumber');
+    const signupSelect = document.getElementById('signupChannelSelect');
+    const infoInput = document.querySelector('input[name="info"]');
+    const branchSelect = document.querySelector('select[name="branch_seq"]');
+
+    if (nameInput) nameInput.value = survey.name;
+    if (phoneInput) phoneInput.value = survey.phone;
+
+    if (branchSelect && survey.branch_seq) {
+        branchSelect.value = String(survey.branch_seq);
+    }
+
+    if (signupSelect) {
+        const adSourceMap = {
+            '인스타 / 페이스북': '인스타그램',
+            '인스타그램': '인스타그램',
+            '네이버 검색': '네이버 검색',
+            '지인 소개 (친구 추천)': '지인 소개',
+            '지인 소개': '지인 소개',
+            '전단지': '전단지',
+            '홈페이지': '홈페이지'
+        };
+        const mapped = adSourceMap[survey.ad_source];
+        if (mapped) {
+            signupSelect.value = mapped;
+            toggleSignupCustom(signupSelect);
+        } else {
+            signupSelect.value = '기타';
+            toggleSignupCustom(signupSelect);
+            const customInput = document.getElementById('signupChannelCustom');
+            if (customInput) customInput.value = survey.ad_source;
+        }
+    }
+
+    if (infoInput) {
+        const parts = [survey.age_group, survey.gender === '남' ? '남성' : '여성', survey.occupation];
+        if (survey.occupation_detail) parts.push(survey.occupation_detail);
+        infoInput.value = parts.join(', ');
+    }
+
+    showSurveyRef(survey);
+    closeSurveyModal();
+}
+
+function showSurveyRef(survey) {
+    const panel = document.getElementById('surveyRefPanel');
+    const content = document.getElementById('surveyRefContent');
+    const detail = document.getElementById('surveyRefDetail');
+    if (!panel) return;
+
+    content.innerHTML = [
+        ['성함', survey.name],
+        ['연락처', formatPhone(survey.phone)],
+        ['성별', survey.gender === '남' ? '남성' : '여성'],
+        ['연령대', survey.age_group],
+        ['사는 곳', survey.location],
+        ['직군', survey.occupation + (survey.occupation_detail ? ' / ' + survey.occupation_detail : '')],
+        ['유입 경로', survey.ad_source],
+        ['설문 일시', survey.submitted_at]
+    ].map(([k, v]) => `
+        <div style="display:flex; gap:0.5rem;">
+            <span style="color:#2d7a4f; font-weight:600; white-space:nowrap;">${k}</span>
+            <span style="color:#333;">${v}</span>
+        </div>
+    `).join('');
+
+    const q = (label, val) => {
+        if (!val) return '';
+        const display = Array.isArray(val) ? val.join(', ') : val;
+        return `<div style="display:flex; gap:0.5rem; align-items:flex-start;"><span style="color:#555; font-weight:600; white-space:nowrap; min-width:80px;">${label}</span><span style="color:#444;">${display}</span></div>`;
+    };
+
+    detail.innerHTML = [
+        q('Q1 동기', survey.q1),
+        q('Q2 경험', survey.q2),
+        q('Q3 그만둔이유', survey.q3),
+        q('Q4 선택요소', survey.q4),
+        q('Q5 가능시간', survey.q5),
+        q('Q6 레벨', survey.q6),
+        q('Q7 목표', survey.q7),
+        q('Q8 예상기간', survey.q8),
+        q('Q9 관심사항', survey.q9)
+    ].filter(Boolean).join('');
+
+    panel.style.display = 'block';
+}
+
+function clearSurveyRef() {
+    window.location.reload();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const surveyModal = document.getElementById('surveyModal');
+    if (surveyModal) {
+        surveyModal.addEventListener('click', function(e) {
+            if (e.target === this) closeSurveyModal();
+        });
     }
 });
 </script>
+
+{{if not .IsEdit}}
+<!-- 설문 불러오기 모달 -->
+<div id="surveyModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:14px; width:min(680px, 95vw); max-height:85vh; display:flex; flex-direction:column; box-shadow:0 8px 40px rgba(0,0,0,0.18);">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; border-bottom:1px solid #e8edf0;">
+            <div>
+                <div style="font-size:1.1rem; font-weight:700; color:#1a1a1a;">📋 설문 정보 불러오기</div>
+                <div style="font-size:0.82rem; color:#888; margin-top:2px;">설문을 선택하면 기본 정보가 자동으로 입력됩니다.</div>
+            </div>
+            <button onclick="closeSurveyModal()" style="background:none; border:none; font-size:1.4rem; color:#999; cursor:pointer; line-height:1;">✕</button>
+        </div>
+        <div style="padding:1rem 1.5rem; border-bottom:1px solid #f0f0f0;">
+            <input type="text" id="surveySearch" placeholder="이름 또는 전화번호로 검색..." oninput="renderSurveyList(this.value.trim())"
+                style="width:100%; padding:0.65rem 1rem; border:1.5px solid #dde8e3; border-radius:8px; font-size:0.95rem; outline:none; transition:border-color 0.2s;"
+                onfocus="this.style.borderColor='#2d7a4f'" onblur="this.style.borderColor='#dde8e3'">
+        </div>
+        <div id="surveyList" style="padding:1rem 1.5rem; overflow-y:auto; flex:1;"></div>
+    </div>
+</div>
+{{end}}
+
 </body>
 </html>
 {{end}}

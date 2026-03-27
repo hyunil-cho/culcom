@@ -27,6 +27,7 @@ type Member struct {
 	Status            string   // 출석 상태 등 (O, X, △ 등)
 	IsPostponed       bool     // 수업 연기 중 여부
 	Level             string   // 레벨 (예: 3-)
+	Language          string   // 언어 (예: 영어, 일본어)
 	Info              string   // 인적사항 (스태프가 기록하는 회원 특징)
 	ChartNumber       string   // 차트 넘버
 	Comment           string   // 코멘트 (직업, 관심사, 동기 등)
@@ -36,6 +37,8 @@ type Member struct {
 	Stats             string   // 통계 (예: 8 did 97 left)
 	Grade             string   // 등급 (예: A+, VVIP+)
 	Price             string   // 금액
+	PaymentDate       string   // 납부일
+	DepositAmount     string   // 디파짓 납부금액
 	PaymentMethod     string   // 결제방법
 	SignupChannel     string   // 가입 경로
 	Interviewer       string   // 인터뷰어 (상담/등록 담당 스태프)

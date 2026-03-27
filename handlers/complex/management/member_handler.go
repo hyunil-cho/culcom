@@ -84,13 +84,16 @@ func MemberAddHandler(w http.ResponseWriter, r *http.Request) {
 		middleware.BasePageData
 		Title      string
 		ActiveMenu string
+		IsEdit     bool
+		Member     Member
 	}{
 		BasePageData: middleware.GetBasePageData(r),
 		Title:        "새 회원 등록",
 		ActiveMenu:   "complex_members",
+		IsEdit:       false,
 	}
 
-	if err := Templates.ExecuteTemplate(w, "dashboard/member_add.html", data); err != nil {
+	if err := Templates.ExecuteTemplate(w, "dashboard/member_form.html", data); err != nil {
 		log.Println("Template error:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -113,15 +116,17 @@ func MemberEditHandler(w http.ResponseWriter, r *http.Request) {
 		middleware.BasePageData
 		Title      string
 		ActiveMenu string
+		IsEdit     bool
 		Member     Member
 	}{
 		BasePageData: middleware.GetBasePageData(r),
 		Title:        "회원 정보 수정",
 		ActiveMenu:   "complex_members",
+		IsEdit:       true,
 		Member:       member,
 	}
 
-	if err := Templates.ExecuteTemplate(w, "dashboard/member_edit.html", data); err != nil {
+	if err := Templates.ExecuteTemplate(w, "dashboard/member_form.html", data); err != nil {
 		log.Println("Template error:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
