@@ -49,22 +49,26 @@ type Member struct {
 
 // Staff - 강사 정보 (MOCK용)
 type Staff struct {
-	ID               int
-	BranchSeq        string // 소속 지점 코드
-	BranchName       string // 소속 지점명 (표시용)
-	Name             string
-	PhoneNumber      string
-	Email            string
-	Subject          string // 담당 과목/분야
-	Role             string // 역할 (강사, 팀장 등)
-	Status           string // 상태 (재직, 휴직 등)
-	JoinDate         string // 등록일
-	Comment          string // 비고
-	AssignedClassIDs string // 배정된 수업 ID 리스트 (쉼표 구분)
-	Interviewer      string // 인터뷰어
-	PaymentMethod    string // 결제방법
-	DepositAmount    string // 디파짓 금액
-	RefundAmount     string // 환급 금액
+	ID                   int
+	BranchSeq            string // 소속 지점 코드
+	BranchName           string // 소속 지점명 (표시용)
+	Name                 string
+	PhoneNumber          string
+	Email                string
+	Subject              string // 담당 과목/분야
+	Role                 string // 역할 (강사, 팀장 등)
+	Status               string // 상태 (재직, 휴직 등)
+	JoinDate             string // 등록일
+	Comment              string // 비고
+	AssignedClassIDs     string // 배정된 수업 ID 리스트 (쉼표 구분)
+	Interviewer          string // 인터뷰어
+	PaymentMethod        string // 결제방법
+	DepositAmount        string // 디파짓 금액
+	RefundableDeposit    string // 환급 예정 디파짓
+	NonRefundableDeposit string // 환급불가 디파짓
+	RefundBank           string // 환급 은행
+	RefundAccount        string // 환급 계좌번호
+	RefundAmount         string // 환급 금액
 }
 
 // PostponementRequest - 수업 연기 요청 (MOCK용)

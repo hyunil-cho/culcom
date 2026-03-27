@@ -160,16 +160,59 @@
                             </div>
                         </div>
 
+                    </div>
+
+                    <!-- 환급 정보 섹션 -->
+                    <div style="margin: 2rem 1.5rem 0; padding: 1.5rem; background: #fef9f0; border: 1.5px solid #f0dcc0; border-radius: 10px;">
+                        <div style="font-size: 1rem; font-weight: 700; color: #b8860b; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.1rem;">💰</span> 환급 정보
+                        </div>
+
                         <div class="form-row">
-                            <label class="form-label">디파짓 금액</label>
-                            <input type="text" name="deposit_amount" class="form-input" value="{{.Staff.DepositAmount}}" placeholder="예: 500,000">
+                            <label class="form-label">디파짓 금액 <span class="required">*</span></label>
+                            <input type="text" name="deposit_amount" class="form-input" value="{{.Staff.DepositAmount}}" placeholder="예: 500,000" required>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">환급 예정 디파짓 <span class="required">*</span></label>
+                            <input type="text" name="refundable_deposit" class="form-input" value="{{.Staff.RefundableDeposit}}" placeholder="예: 300,000" required>
+                            <small style="color: #666; font-size: 0.82rem; margin-top: 4px; display: block;">환급이 가능한 디파짓 금액을 입력하세요.</small>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">환급불가 디파짓 <span class="required">*</span></label>
+                            <input type="text" name="non_refundable_deposit" class="form-input" value="{{.Staff.NonRefundableDeposit}}" placeholder="예: 200,000" required>
+                            <small style="color: #666; font-size: 0.82rem; margin-top: 4px; display: block;">환급이 불가능한 디파짓 금액을 입력하세요.</small>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">환급 은행 <span class="required">*</span></label>
+                            <select name="refund_bank" class="form-input" required>
+                                <option value="">-- 은행 선택 --</option>
+                                <option value="국민은행" {{if eq .Staff.RefundBank "국민은행"}}selected{{end}}>국민은행</option>
+                                <option value="신한은행" {{if eq .Staff.RefundBank "신한은행"}}selected{{end}}>신한은행</option>
+                                <option value="우리은행" {{if eq .Staff.RefundBank "우리은행"}}selected{{end}}>우리은행</option>
+                                <option value="하나은행" {{if eq .Staff.RefundBank "하나은행"}}selected{{end}}>하나은행</option>
+                                <option value="농협은행" {{if eq .Staff.RefundBank "농협은행"}}selected{{end}}>농협은행</option>
+                                <option value="기업은행" {{if eq .Staff.RefundBank "기업은행"}}selected{{end}}>기업은행</option>
+                                <option value="카카오뱅크" {{if eq .Staff.RefundBank "카카오뱅크"}}selected{{end}}>카카오뱅크</option>
+                                <option value="토스뱅크" {{if eq .Staff.RefundBank "토스뱅크"}}selected{{end}}>토스뱅크</option>
+                                <option value="케이뱅크" {{if eq .Staff.RefundBank "케이뱅크"}}selected{{end}}>케이뱅크</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">환급 계좌번호 <span class="required">*</span></label>
+                            <input type="text" name="refund_account" class="form-input" value="{{.Staff.RefundAccount}}" placeholder="예: 110-123-456789" required>
                         </div>
 
                         <div class="form-row">
                             <label class="form-label">환급 금액</label>
                             <input type="text" name="refund_amount" class="form-input" value="{{.Staff.RefundAmount}}" placeholder="예: 200,000">
                         </div>
+                    </div>
 
+                    <div class="form-body">
                         <div class="form-row">
                             <label class="form-label">비고 (코멘트)</label>
                             <textarea name="comment" class="form-input" style="height: 80px; resize: vertical; padding: 10px;" placeholder="스태프 특이사항 입력">{{.Staff.Comment}}</textarea>

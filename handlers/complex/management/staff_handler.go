@@ -116,6 +116,10 @@ func StaffUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	depositAmount := r.FormValue("deposit_amount")
+	refundableDeposit := r.FormValue("refundable_deposit")
+	nonRefundableDeposit := r.FormValue("non_refundable_deposit")
+	refundBank := r.FormValue("refund_bank")
+	refundAccount := r.FormValue("refund_account")
 	refundAmount := r.FormValue("refund_amount")
 
 	if idStr == "" { // 신규
@@ -126,7 +130,9 @@ func StaffUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			Subject: subject, Role: role, Status: status,
 			JoinDate: joinDate, Comment: comment,
 			Interviewer: interviewer, PaymentMethod: paymentMethod,
-			DepositAmount: depositAmount, RefundAmount: refundAmount,
+			DepositAmount: depositAmount, RefundableDeposit: refundableDeposit,
+			NonRefundableDeposit: nonRefundableDeposit,
+			RefundBank:           refundBank, RefundAccount: refundAccount, RefundAmount: refundAmount,
 		})
 	} else { // 수정
 		id, _ := strconv.Atoi(idStr)
@@ -145,6 +151,10 @@ func StaffUpdateHandler(w http.ResponseWriter, r *http.Request) {
 				mockStaffs[i].Interviewer = interviewer
 				mockStaffs[i].PaymentMethod = paymentMethod
 				mockStaffs[i].DepositAmount = depositAmount
+				mockStaffs[i].RefundableDeposit = refundableDeposit
+				mockStaffs[i].NonRefundableDeposit = nonRefundableDeposit
+				mockStaffs[i].RefundBank = refundBank
+				mockStaffs[i].RefundAccount = refundAccount
 				mockStaffs[i].RefundAmount = refundAmount
 				break
 			}
