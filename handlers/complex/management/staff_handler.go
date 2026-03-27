@@ -42,13 +42,16 @@ func StaffAddHandler(w http.ResponseWriter, r *http.Request) {
 		middleware.BasePageData
 		Title      string
 		ActiveMenu string
+		IsEdit     bool
+		Staff      Staff
 	}{
 		BasePageData: middleware.GetBasePageData(r),
 		Title:        "새 스태프 등록",
 		ActiveMenu:   "complex_staffs",
+		IsEdit:       false,
 	}
 
-	if err := Templates.ExecuteTemplate(w, "dashboard/staff_add.html", data); err != nil {
+	if err := Templates.ExecuteTemplate(w, "dashboard/staff_form.html", data); err != nil {
 		log.Println("Template error:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -71,15 +74,17 @@ func StaffEditHandler(w http.ResponseWriter, r *http.Request) {
 		middleware.BasePageData
 		Title      string
 		ActiveMenu string
+		IsEdit     bool
 		Staff      Staff
 	}{
 		BasePageData: middleware.GetBasePageData(r),
 		Title:        "스태프 정보 수정",
 		ActiveMenu:   "complex_staffs",
+		IsEdit:       true,
 		Staff:        staff,
 	}
 
-	if err := Templates.ExecuteTemplate(w, "dashboard/staff_edit.html", data); err != nil {
+	if err := Templates.ExecuteTemplate(w, "dashboard/staff_form.html", data); err != nil {
 		log.Println("Template error:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

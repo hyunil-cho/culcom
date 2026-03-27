@@ -41,13 +41,14 @@ func ListHandler(w http.ResponseWriter, r *http.Request) {
 // AddHandler - 멤버십 추가 페이지 핸들러
 func AddHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		data := PageData{
+		data := EditPageData{
 			BasePageData: middleware.GetBasePageData(r),
 			Title:        "멤버십 추가",
 			ActiveMenu:   "complex_memberships",
+			IsEdit:       false,
 		}
 
-		if err := Templates.ExecuteTemplate(w, "memberships/add.html", data); err != nil {
+		if err := Templates.ExecuteTemplate(w, "memberships/form.html", data); err != nil {
 			log.Printf("Template error: %v", err)
 			http.Redirect(w, r, "/error", http.StatusSeeOther)
 		}
@@ -86,7 +87,7 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		if len(mockMemberships) > 0 {
 			newSeq = mockMemberships[len(mockMemberships)-1].Seq + 1
 		}
-		
+
 		newMembership := database.Membership{
 			Seq:         newSeq,
 			Name:        name,
@@ -140,23 +141,17 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 			displayUnit = "month"
 		}
 
-		data := struct {
-			middleware.BasePageData
-			Title        string
-			ActiveMenu   string
-			Membership   database.Membership
-			DurationVal  int
-			DurationUnit string
-		}{
+		data := EditPageData{
 			BasePageData: middleware.GetBasePageData(r),
 			Title:        "멤버십 수정",
 			ActiveMenu:   "complex_memberships",
+			IsEdit:       true,
 			Membership:   target,
 			DurationVal:  displayVal,
 			DurationUnit: displayUnit,
 		}
 
-		if err := Templates.ExecuteTemplate(w, "memberships/edit.html", data); err != nil {
+		if err := Templates.ExecuteTemplate(w, "memberships/form.html", data); err != nil {
 			log.Printf("Template error: %v", err)
 			http.Redirect(w, r, "/error", http.StatusSeeOther)
 		}

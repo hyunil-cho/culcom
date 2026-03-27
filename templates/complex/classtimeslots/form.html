@@ -1,4 +1,4 @@
-{{define "classtimeslots/edit.html"}}
+{{define "classtimeslots/form.html"}}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -11,10 +11,10 @@
 </head>
 <body>
     {{template "complex_sidebar" .}}
-    
+
     <div class="main-wrapper">
         {{template "header" .}}
-        
+
         <main class="content">
             <div class="detail-actions">
                 <a href="/complex/timeslots" class="btn-back">← 목록으로</a>
@@ -22,12 +22,16 @@
 
             <div class="content-card">
                 <div class="form-header">
+                    {{if .IsEdit}}
                     <h2>수업 시간대 정보 수정</h2>
+                    {{else}}
+                    <h2>수업 시간대 정보 추가</h2>
+                    {{end}}
                 </div>
-                <form method="POST" action="/complex/timeslots/edit?seq={{.Slot.Seq}}" class="form-body">
+                <form method="POST" action="{{if .IsEdit}}/complex/timeslots/edit?seq={{.Slot.Seq}}{{else}}/complex/timeslots/add{{end}}" class="form-body">
                     <div class="form-row">
                         <label class="form-label">시간대 이름 <span class="required">*</span></label>
-                        <input type="text" name="name" class="form-input" value="{{.Slot.Name}}" required>
+                        <input type="text" name="name" class="form-input" value="{{.Slot.Name}}" placeholder="예: 평일 오전, 주말 오후" required>
                     </div>
 
                     <div class="form-row">
@@ -66,9 +70,13 @@
                         <label class="form-label">종료 시간 <span class="required">*</span></label>
                         <input type="time" name="end_time" class="form-input" value="{{.Slot.EndTime}}" required>
                     </div>
-                    
+
                     <div class="form-actions">
-                        <button type="submit" class="btn-primary-large">💾 저장</button>
+                        {{if .IsEdit}}
+                        <button type="submit" class="btn-primary-large">💾 수정하기</button>
+                        {{else}}
+                        <button type="submit" class="btn-primary-large">💾 등록하기</button>
+                        {{end}}
                         <a href="/complex/timeslots" class="btn-secondary-large">취소</a>
                     </div>
                 </form>

@@ -14,10 +14,13 @@ type PageData struct {
 	SuccessMessage string
 }
 
-// EditPageData - 멤버십 수정 페이지 데이터 구조체
+// EditPageData - 멤버십 수정/추가 페이지 데이터 구조체
 type EditPageData struct {
 	middleware.BasePageData
-	Title      string
-	ActiveMenu string
-	Membership database.Membership
+	Title        string
+	ActiveMenu   string
+	IsEdit       bool
+	Membership   database.Membership
+	DurationVal  int
+	DurationUnit string
 }

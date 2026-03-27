@@ -57,7 +57,7 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 			ErrorMessage:   errorMessage,
 		}
 
-		if err := Templates.ExecuteTemplate(w, "classtimeslots/add.html", data); err != nil {
+		if err := Templates.ExecuteTemplate(w, "classtimeslots/form.html", data); err != nil {
 			log.Printf("Template error: %v", err)
 			http.Redirect(w, r, "/error", http.StatusSeeOther)
 		}
@@ -150,7 +150,7 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 			ErrorMessage:   errorMessage,
 		}
 
-		if err := Templates.ExecuteTemplate(w, "classtimeslots/edit.html", data); err != nil {
+		if err := Templates.ExecuteTemplate(w, "classtimeslots/form.html", data); err != nil {
 			log.Printf("Template error: %v", err)
 			http.Redirect(w, r, "/error", http.StatusSeeOther)
 		}

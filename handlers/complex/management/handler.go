@@ -39,14 +39,23 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		{"seq": 3, "name": "주말 오전 집중반"},
 	}
 
-	data := PageData{
+	data := struct {
+		middleware.BasePageData
+		Title      string
+		ActiveMenu string
+		IsEdit     bool
+		Class      Class
+		TimeSlots  []map[string]interface{}
+		Staffs     []Staff
+	}{
 		BasePageData: middleware.GetBasePageData(r),
 		Title:        "새 수업 등록",
 		ActiveMenu:   "complex_classes",
+		IsEdit:       false,
 		TimeSlots:    slots,
 		Staffs:       mockStaffs,
 	}
-	if err := Templates.ExecuteTemplate(w, "dashboard/complex_class_add.html", data); err != nil {
+	if err := Templates.ExecuteTemplate(w, "dashboard/complex_class_form.html", data); err != nil {
 		log.Println("Template error:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -75,6 +84,7 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 		middleware.BasePageData
 		Title      string
 		ActiveMenu string
+		IsEdit     bool
 		Class      Class
 		TimeSlots  []map[string]interface{}
 		Staffs     []Staff
@@ -82,11 +92,12 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 		BasePageData: middleware.GetBasePageData(r),
 		Title:        "수업 정보 수정",
 		ActiveMenu:   "complex_classes",
+		IsEdit:       true,
 		Class:        class,
 		TimeSlots:    slots,
 		Staffs:       mockStaffs,
 	}
-	if err := Templates.ExecuteTemplate(w, "dashboard/complex_class_edit.html", data); err != nil {
+	if err := Templates.ExecuteTemplate(w, "dashboard/complex_class_form.html", data); err != nil {
 		log.Println("Template error:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

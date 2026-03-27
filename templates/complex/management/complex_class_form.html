@@ -1,4 +1,4 @@
-{{define "dashboard/complex_class_edit.html"}}
+{{define "dashboard/complex_class_form.html"}}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -16,14 +16,20 @@
 
             <div class="content-card">
                 <div class="form-header">
+                    {{if .IsEdit}}
                     <h2>수업 정보 수정</h2>
+                    {{else}}
+                    <h2>새 수업 등록</h2>
+                    {{end}}
                 </div>
                 <form action="/complex/management/update" method="POST" class="form-body">
+                    {{if .IsEdit}}
                     <input type="hidden" name="id" value="{{.Class.ID}}">
-                    
+                    {{end}}
+
                     <div class="form-row">
                         <label class="form-label">수업 이름 <span class="required">*</span></label>
-                        <input type="text" name="name" class="form-input" value="{{.Class.Name}}" required>
+                        <input type="text" name="name" class="form-input" value="{{.Class.Name}}" placeholder="예: 월수 오전 레벨0" required>
                     </div>
 
                     <div class="form-row">
@@ -55,17 +61,21 @@
 
                     <div class="form-row">
                         <label class="form-label">수업 정원 (인원 수) <span class="required">*</span></label>
-                        <input type="number" name="capacity" class="form-input" value="{{.Class.Capacity}}" min="1" required>
+                        <input type="number" name="capacity" class="form-input" value="{{.Class.Capacity}}" placeholder="예: 10" min="1" required>
                         <p class="form-help">해당 수업에 동시에 참여 가능한 최대 인원 수를 입력하세요.</p>
                     </div>
 
                     <div class="form-row">
                         <label class="form-label">수업 설명</label>
-                        <textarea name="description" class="form-input" style="height: 100px;">{{.Class.Description}}</textarea>
+                        <textarea name="description" class="form-input" style="height: 100px;" placeholder="수업에 대한 상세 설명을 입력하세요.">{{.Class.Description}}</textarea>
                     </div>
 
                     <div class="form-actions">
-                        <button type="submit" class="btn-primary-large">💾 저장</button>
+                        {{if .IsEdit}}
+                        <button type="submit" class="btn-primary-large">💾 수정하기</button>
+                        {{else}}
+                        <button type="submit" class="btn-primary-large">💾 등록하기</button>
+                        {{end}}
                         <a href="/complex/management" class="btn-secondary-large">취소</a>
                     </div>
                 </form>
