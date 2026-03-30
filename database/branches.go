@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"log"
 )
-
-// InsertBranch - 지점 추가
+ 
 // 파라미터: name (지점명), alias (별칭), manager (담당자), address (주소), directions (오시는 길)
 // 반환: 생성된 ID, 에러
 func InsertBranch(name, alias, manager, address, directions string) (int64, error) {
