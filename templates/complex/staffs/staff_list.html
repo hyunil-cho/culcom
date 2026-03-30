@@ -63,7 +63,6 @@
                                 <th>전화번호</th>
                                 <th>소속정보</th>
                                 <th>담당과목</th>
-                                <th>역할</th>
                                 <th>상태</th>
                                 <th>등록일</th>
                                 <th>관리</th>
@@ -81,7 +80,6 @@
                                 </td>
                                 <td>{{.BranchName}}</td>
                                 <td><span class="status-badge status-active">{{.Subject}}</span></td>
-                                <td>{{.Role}}</td>
                                 <td class="{{if eq .Status "재직"}}staff-status-active{{else}}staff-status-inactive{{end}}">{{.Status}}</td>
                                 <td>{{.JoinDate}}</td>
                                 <td>
@@ -93,7 +91,7 @@
                             </tr>
                             {{else}}
                             <tr>
-                                <td colspan="9" style="text-align: center; padding: 2rem; color: #999;">등록된 스태프진이 없습니다.</td>
+                                <td colspan="8" style="text-align: center; padding: 2rem; color: #999;">등록된 스태프진이 없습니다.</td>
                             </tr>
                             {{end}}
                         </tbody>

@@ -5,7 +5,8 @@
       "Bash(go build:*)",
       "Bash(grep -n \"complex_sidebar\\\\|ActiveMenu\" C:/Users/lookh/IdeaProjects/culcom/templates/layouts/*.html)",
       "Bash(xargs grep:*)",
-      "Bash(grep -v \"^--$\")"
+      "Bash(grep -v \"^--$\")",
+      "Bash(grep -l database. /c/Users/lookh/IdeaProjects/culcom/handlers/complex/*/handler.go)"
     ]
   }
 }

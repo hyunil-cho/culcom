@@ -56,7 +56,6 @@ type Staff struct {
 	PhoneNumber          string
 	Email                string
 	Subject              string // 담당 과목/분야
-	Role                 string // 역할 (강사, 팀장 등)
 	Status               string // 상태 (재직, 휴직 등)
 	JoinDate             string // 등록일
 	Comment              string // 비고

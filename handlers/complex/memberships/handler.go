@@ -8,27 +8,26 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 var Templates *template.Template
-
-// MOCK 데이터 저장을 위한 변수
-var mockMemberships = []database.Membership{
-	{Seq: 1, Name: "3개월 주2회 멤버십", Duration: 90, Count: 24, Price: 450000, CreatedDate: "2026-01-10 10:00:00"},
-	{Seq: 2, Name: "6개월 주2회 멤버십", Duration: 180, Count: 48, Price: 800000, CreatedDate: "2026-01-15 11:00:00"},
-	{Seq: 3, Name: "12개월 프리패스", Duration: 365, Count: 100, Price: 1500000, CreatedDate: "2026-02-01 09:30:00"},
-}
 
 // ListHandler - 멤버십 목록 페이지 핸들러
 func ListHandler(w http.ResponseWriter, r *http.Request) {
 	successMessage := utils.GetFlashMessage(w, r, "success")
 
+	memberships, err := database.GetAllMemberships()
+	if err != nil {
+		log.Printf("멤버십 목록 조회 오류: %v", err)
+		http.Error(w, "멤버십 목록 조회 실패", http.StatusInternalServerError)
+		return
+	}
+
 	data := PageData{
 		BasePageData:   middleware.GetBasePageData(r),
 		Title:          "멤버십 관리",
 		ActiveMenu:     "complex_memberships",
-		Memberships:    mockMemberships,
+		Memberships:    memberships,
 		SuccessMessage: successMessage,
 	}
 
@@ -68,35 +67,18 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		count, _ := strconv.Atoi(r.FormValue("count"))
 		price, _ := strconv.Atoi(r.FormValue("price"))
 
-		// 일수 계산
-		durationDays := durationVal
-		switch durationUnit {
-		case "month":
-			durationDays = durationVal * 30
-		case "year":
-			durationDays = durationVal * 365
-		}
+		durationDays := calcDurationDays(durationVal, durationUnit)
 
 		if name == "" {
 			http.Redirect(w, r, "/error", http.StatusSeeOther)
 			return
 		}
 
-		// MOCK 데이터 추가
-		newSeq := 1
-		if len(mockMemberships) > 0 {
-			newSeq = mockMemberships[len(mockMemberships)-1].Seq + 1
+		if _, err := database.InsertMembership(name, durationDays, count, price); err != nil {
+			log.Printf("멤버십 추가 오류: %v", err)
+			http.Error(w, "멤버십 추가 실패", http.StatusInternalServerError)
+			return
 		}
-
-		newMembership := database.Membership{
-			Seq:         newSeq,
-			Name:        name,
-			Duration:    durationDays,
-			Count:       count,
-			Price:       price,
-			CreatedDate: time.Now().Format("2006-01-02 15:04:05"),
-		}
-		mockMemberships = append(mockMemberships, newMembership)
 
 		utils.SetFlashMessage(w, r, "success", "멤버십이 성공적으로 추가되었습니다.")
 		http.Redirect(w, r, "/complex/memberships", http.StatusSeeOther)
@@ -115,38 +97,21 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(idStr)
 
 	if r.Method == http.MethodGet {
-		var target database.Membership
-		found := false
-		for _, m := range mockMemberships {
-			if m.Seq == id {
-				target = m
-				found = true
-				break
-			}
-		}
-
-		if !found {
+		target, err := database.GetMembershipByID(id)
+		if err != nil {
+			log.Printf("멤버십 조회 오류: %v", err)
 			http.Redirect(w, r, "/complex/memberships", http.StatusSeeOther)
 			return
 		}
 
-		// 표시용 단위 변환
-		displayVal := target.Duration
-		displayUnit := "day"
-		if target.Duration > 0 && target.Duration%365 == 0 {
-			displayVal = target.Duration / 365
-			displayUnit = "year"
-		} else if target.Duration > 0 && target.Duration%30 == 0 {
-			displayVal = target.Duration / 30
-			displayUnit = "month"
-		}
+		displayVal, displayUnit := calcDisplayDuration(target.Duration)
 
 		data := EditPageData{
 			BasePageData: middleware.GetBasePageData(r),
 			Title:        "멤버십 수정",
 			ActiveMenu:   "complex_memberships",
 			IsEdit:       true,
-			Membership:   target,
+			Membership:   *target,
 			DurationVal:  displayVal,
 			DurationUnit: displayUnit,
 		}
@@ -171,30 +136,17 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 		count, _ := strconv.Atoi(r.FormValue("count"))
 		price, _ := strconv.Atoi(r.FormValue("price"))
 
-		// 일수 계산
-		durationDays := durationVal
-		switch durationUnit {
-		case "month":
-			durationDays = durationVal * 30
-		case "year":
-			durationDays = durationVal * 365
-		}
+		durationDays := calcDurationDays(durationVal, durationUnit)
 
 		if name == "" {
 			http.Redirect(w, r, "/error", http.StatusSeeOther)
 			return
 		}
 
-		// MOCK 데이터 수정
-		for i, m := range mockMemberships {
-			if m.Seq == id {
-				mockMemberships[i].Name = name
-				mockMemberships[i].Duration = durationDays
-				mockMemberships[i].Count = count
-				mockMemberships[i].Price = price
-				mockMemberships[i].LastUpdateDate = time.Now().Format("2006-01-02 15:04:05")
-				break
-			}
+		if _, err := database.UpdateMembership(id, name, durationDays, count, price); err != nil {
+			log.Printf("멤버십 수정 오류: %v", err)
+			http.Error(w, "멤버십 수정 실패", http.StatusInternalServerError)
+			return
 		}
 
 		utils.SetFlashMessage(w, r, "success", "멤버십이 성공적으로 수정되었습니다.")
@@ -218,14 +170,35 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, _ := strconv.Atoi(idStr)
 
-	// MOCK 데이터 삭제
-	for i, m := range mockMemberships {
-		if m.Seq == id {
-			mockMemberships = append(mockMemberships[:i], mockMemberships[i+1:]...)
-			break
-		}
+	if _, err := database.DeleteMembership(id); err != nil {
+		log.Printf("멤버십 삭제 오류: %v", err)
+		http.Error(w, "멤버십 삭제 실패", http.StatusInternalServerError)
+		return
 	}
 
 	utils.SetFlashMessage(w, r, "success", "멤버십이 성공적으로 삭제되었습니다.")
 	http.Redirect(w, r, "/complex/memberships", http.StatusSeeOther)
+}
+
+// calcDurationDays - 기간 단위를 일수로 변환
+func calcDurationDays(val int, unit string) int {
+	switch unit {
+	case "month":
+		return val * 30
+	case "year":
+		return val * 365
+	default:
+		return val
+	}
+}
+
+// calcDisplayDuration - 일수를 표시용 단위로 변환
+func calcDisplayDuration(days int) (int, string) {
+	if days > 0 && days%365 == 0 {
+		return days / 365, "year"
+	}
+	if days > 0 && days%30 == 0 {
+		return days / 30, "month"
+	}
+	return days, "day"
 }

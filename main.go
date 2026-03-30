@@ -166,6 +166,7 @@ func registerComplexRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/complex/classes/add", middleware.RequireAuthRecover(middleware.InjectBranchData(management.AddHandler)))
 	mux.HandleFunc("/complex/classes/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(management.EditHandler)))
 	mux.HandleFunc("/complex/classes/update", middleware.RequireAuthRecover(middleware.InjectBranchData(management.UpdateHandler)))
+	mux.HandleFunc("/complex/classes/delete", middleware.RequireAuthRecover(middleware.InjectBranchData(management.DeleteHandler)))
 
 	// /complex/members
 	mux.HandleFunc("/complex/members", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberListHandler)))
@@ -196,6 +197,7 @@ func registerComplexRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/complex/staffs/add", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffAddHandler)))
 	mux.HandleFunc("/complex/staffs/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffEditHandler)))
 	mux.HandleFunc("/complex/staffs/update", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffUpdateHandler)))
+	mux.HandleFunc("/complex/staffs/delete", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffDeleteHandler)))
 
 	// /complex/survey (관리자)
 	mux.HandleFunc("/complex/survey/options", middleware.RequireAuthRecover(middleware.InjectBranchData(complexSurvey.OptionsHandler)))

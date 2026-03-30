@@ -134,9 +134,9 @@
                                     <div class="membership-name">{{.Name}}</div>
                                     <div style="font-size: 0.75rem; color: #999; margin-top: 2px;">ID: #{{.Seq}}</div>
                                 </td>
-                                <td><span class="duration-badge">{{.Duration}}일</span></td>
+                                <td><span class="duration-badge" data-days="{{.Duration}}">{{.Duration}}일</span></td>
                                 <td><span class="count-badge">{{.Count}}회</span></td>
-                                <td><span class="price-badge">{{.Price}}원</span></td>
+                                <td><span class="price-badge" data-price="{{.Price}}">{{.Price}}원</span></td>
                                 <td style="color: #7f8c8d; font-size: 0.85rem;">{{.CreatedDate}}</td>
                                 <td>
                                     <div class="action-cell">
@@ -176,6 +176,24 @@
         ModalManager.show('successModal');
     });
     {{end}}
+
+    // 가격 포맷팅 (천 단위 콤마)
+    document.querySelectorAll('.price-badge[data-price]').forEach(el => {
+        const price = parseInt(el.dataset.price);
+        el.textContent = price.toLocaleString('ko-KR') + '원';
+    });
+
+    // 기간 표시 변환 (일 → 개월/년)
+    document.querySelectorAll('.duration-badge[data-days]').forEach(el => {
+        const days = parseInt(el.dataset.days);
+        if (days > 0 && days % 365 === 0) {
+            el.textContent = (days / 365) + '년';
+        } else if (days > 0 && days % 30 === 0) {
+            el.textContent = (days / 30) + '개월';
+        } else {
+            el.textContent = days + '일';
+        }
+    });
 
     function confirmDelete(id, name) {
         ModalManager.createConfirm({
