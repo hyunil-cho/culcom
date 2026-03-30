@@ -105,7 +105,7 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 
 		if name == "" || daysOfWeek == "" || startTime == "" || endTime == "" {
 			utils.SetFlashMessage(w, r, "error", "모든 필드를 입력해주세요.")
-			http.Redirect(w, r, "/complex/class-time-slots/add", http.StatusSeeOther)
+			http.Redirect(w, r, "/complex/timeslots/add", http.StatusSeeOther)
 			return
 		}
 
@@ -113,12 +113,12 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("AddHandler - InsertClassTimeSlot error: %v", err)
 			utils.SetFlashMessage(w, r, "error", "수업 시간대 추가 중 오류가 발생했습니다.")
-			http.Redirect(w, r, "/complex/class-time-slots/add", http.StatusSeeOther)
+			http.Redirect(w, r, "/complex/timeslots/add", http.StatusSeeOther)
 			return
 		}
 
 		utils.SetFlashMessage(w, r, "success", "수업 시간대가 성공적으로 추가되었습니다.")
-		http.Redirect(w, r, "/complex/class-time-slots", http.StatusSeeOther)
+		http.Redirect(w, r, "/complex/timeslots", http.StatusSeeOther)
 		return
 	}
 }
@@ -127,13 +127,13 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 func EditHandler(w http.ResponseWriter, r *http.Request) {
 	seqStr := r.URL.Query().Get("seq")
 	if seqStr == "" {
-		http.Redirect(w, r, "/complex/class-time-slots", http.StatusSeeOther)
+		http.Redirect(w, r, "/complex/timeslots", http.StatusSeeOther)
 		return
 	}
 
 	seq, err := strconv.Atoi(seqStr)
 	if err != nil {
-		http.Redirect(w, r, "/complex/class-time-slots", http.StatusSeeOther)
+		http.Redirect(w, r, "/complex/timeslots", http.StatusSeeOther)
 		return
 	}
 
@@ -144,7 +144,7 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 		dbSlot, err := database.GetClassTimeSlotBySeq(seq)
 		if err != nil {
 			log.Printf("EditHandler - GetClassTimeSlotBySeq error: %v", err)
-			http.Redirect(w, r, "/complex/class-time-slots", http.StatusSeeOther)
+			http.Redirect(w, r, "/complex/timeslots", http.StatusSeeOther)
 			return
 		}
 
@@ -182,7 +182,7 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 
 		if name == "" || daysOfWeek == "" || startTime == "" || endTime == "" {
 			utils.SetFlashMessage(w, r, "error", "모든 필드를 입력해주세요.")
-			http.Redirect(w, r, "/complex/class-time-slots/edit?seq="+seqStr, http.StatusSeeOther)
+			http.Redirect(w, r, "/complex/timeslots/edit?seq="+seqStr, http.StatusSeeOther)
 			return
 		}
 
@@ -190,12 +190,12 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("EditHandler - UpdateClassTimeSlot error: %v", err)
 			utils.SetFlashMessage(w, r, "error", "수업 시간대 수정 중 오류가 발생했습니다.")
-			http.Redirect(w, r, "/complex/class-time-slots/edit?seq="+seqStr, http.StatusSeeOther)
+			http.Redirect(w, r, "/complex/timeslots/edit?seq="+seqStr, http.StatusSeeOther)
 			return
 		}
 
 		utils.SetFlashMessage(w, r, "success", "수업 시간대가 성공적으로 수정되었습니다.")
-		http.Redirect(w, r, "/complex/class-time-slots", http.StatusSeeOther)
+		http.Redirect(w, r, "/complex/timeslots", http.StatusSeeOther)
 		return
 	}
 }
@@ -209,13 +209,13 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	seqStr := r.URL.Query().Get("seq")
 	if seqStr == "" {
-		http.Redirect(w, r, "/complex/class-time-slots", http.StatusSeeOther)
+		http.Redirect(w, r, "/complex/timeslots", http.StatusSeeOther)
 		return
 	}
 
 	seq, err := strconv.Atoi(seqStr)
 	if err != nil {
-		http.Redirect(w, r, "/complex/class-time-slots", http.StatusSeeOther)
+		http.Redirect(w, r, "/complex/timeslots", http.StatusSeeOther)
 		return
 	}
 
@@ -223,10 +223,10 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("DeleteHandler - DeleteClassTimeSlot error: %v", err)
 		utils.SetFlashMessage(w, r, "error", "수업 시간대 삭제 중 오류가 발생했습니다.")
-		http.Redirect(w, r, "/complex/class-time-slots", http.StatusSeeOther)
+		http.Redirect(w, r, "/complex/timeslots", http.StatusSeeOther)
 		return
 	}
 
 	utils.SetFlashMessage(w, r, "success", "수업 시간대가 성공적으로 삭제되었습니다.")
-	http.Redirect(w, r, "/complex/class-time-slots", http.StatusSeeOther)
+	http.Redirect(w, r, "/complex/timeslots", http.StatusSeeOther)
 }
