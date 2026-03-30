@@ -11,7 +11,7 @@
         {{template "header" .}}
         <main class="content">
             <div class="detail-actions">
-                <a href="/complex/management" class="btn-back">← 목록으로</a>
+                <a href="/complex/classes" class="btn-back">← 목록으로</a>
             </div>
 
             <div class="content-card">
@@ -22,7 +22,7 @@
                     <h2>새 수업 등록</h2>
                     {{end}}
                 </div>
-                <form action="/complex/management/update" method="POST" class="form-body">
+                <form action="/complex/classes/update" method="POST" class="form-body">
                     {{if .IsEdit}}
                     <input type="hidden" name="id" value="{{.Class.ID}}">
                     {{end}}
@@ -76,7 +76,7 @@
                         {{else}}
                         <button type="submit" class="btn-primary-large">💾 등록하기</button>
                         {{end}}
-                        <a href="/complex/management" class="btn-secondary-large">취소</a>
+                        <a href="/complex/classes" class="btn-secondary-large">취소</a>
                     </div>
                 </form>
             </div>

@@ -103,9 +103,9 @@
                             <label class="form-label">담당 시간대 선택</label>
                             <select id="slotSelect" class="form-input" onchange="updateClassOptions()">
                                 <option value="">-- 시간대 선택 --</option>
-                                <option value="월수 오전">월수 오전팀 (10:00 ~ 12:00)</option>
-                                <option value="화목 오후">화목 오후팀 (14:00 ~ 16:00)</option>
-                                <option value="주말 집중">주말 집중팀 (13:00 ~ 17:00)</option>
+                                {{range .TimeSlots}}
+                                <option value="{{index . "seq"}}">{{index . "name"}} ({{index . "start_time"}} ~ {{index . "end_time"}})</option>
+                                {{end}}
                             </select>
                         </div>
 
@@ -224,10 +224,9 @@
 
 <script>
 const allAvailableClasses = [
-    { id: "101", name: "레벨1-1반", slot: "월수 오전" },
-    { id: "102", name: "레벨1-2반", slot: "월수 오전" },
-    { id: "201", name: "레벨2-1반", slot: "화목 오후" },
-    { id: "301", name: "주말 입문반", slot: "주말 집중" }
+    {{range .Classes}}
+    { id: "{{index . "seq"}}", name: "{{index . "name"}}", slot: "{{index . "time_slot_seq"}}", slotName: "{{index . "time_slot_name"}}" },
+    {{end}}
 ];
 
 let selectedClasses = [];
@@ -239,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const initialIds = input.value.split(',').filter(id => id !== "");
         initialIds.forEach(id => {
             const cls = allAvailableClasses.find(c => c.id === id);
-            if (cls) selectedClasses.push(cls);
+            if (cls) selectedClasses.push({ id: cls.id, name: cls.name, slot: cls.slotName });
         });
     }
     renderAssignedClasses();
@@ -278,7 +277,8 @@ function addClassToList() {
     if (!classId) return;
 
     const className = classSelect.options[classSelect.selectedIndex].text;
-    const slotName = document.getElementById('slotSelect').value;
+    const cls = allAvailableClasses.find(c => c.id === classId);
+    const slotName = cls ? cls.slotName : '';
 
     if (selectedClasses.some(c => c.id === classId)) return alert('이미 추가된 수업입니다.');
 
@@ -345,8 +345,8 @@ let staffCurrentPage = 1;
 function generateStaffAttendance() {
     staffAttendanceData.length = 0;
     const statuses = ['O', 'O', 'O', 'O', 'O', 'O', 'X', 'O'];
-    const classes = ['레벨1-1반', '레벨1-2반', '프리토킹 A반', '레벨2-1반'];
-    const slots = ['월수 오전', '화목 오후', '주말 집중'];
+    const classes = allAvailableClasses.length > 0 ? allAvailableClasses.map(c => c.name) : ['수업 없음'];
+    const slots = allAvailableClasses.length > 0 ? [...new Set(allAvailableClasses.map(c => c.slotName))] : ['시간대 없음'];
 
     const today = new Date();
     for (let i = 0; i < 80; i++) {

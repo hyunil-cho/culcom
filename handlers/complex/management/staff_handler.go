@@ -86,17 +86,27 @@ func StaffListHandler(w http.ResponseWriter, r *http.Request) {
 
 // StaffAddHandler - 새 스태프 등록 화면
 func StaffAddHandler(w http.ResponseWriter, r *http.Request) {
+	base := middleware.GetBasePageData(r)
+	branchSeq := base.SelectedBranchSeq
+
+	timeSlots, _ := database.GetClassTimeSlotsByBranch(branchSeq)
+	classes, _ := database.GetComplexClassesByBranch(branchSeq)
+
 	data := struct {
 		middleware.BasePageData
 		Title      string
 		ActiveMenu string
 		IsEdit     bool
 		Staff      Staff
+		TimeSlots  []map[string]interface{}
+		Classes    []map[string]interface{}
 	}{
-		BasePageData: middleware.GetBasePageData(r),
+		BasePageData: base,
 		Title:        "새 스태프 등록",
 		ActiveMenu:   "complex_staffs",
 		IsEdit:       false,
+		TimeSlots:    timeSlots,
+		Classes:      classes,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "dashboard/staff_form.html", data); err != nil {
@@ -114,6 +124,9 @@ func StaffEditHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	base := middleware.GetBasePageData(r)
+	branchSeq := base.SelectedBranchSeq
+
 	dbStaff, err := database.GetStaffByID(id)
 	if err != nil {
 		log.Printf("StaffEditHandler - GetStaffByID error: %v", err)
@@ -123,18 +136,25 @@ func StaffEditHandler(w http.ResponseWriter, r *http.Request) {
 
 	staff := toStaffFromDB(dbStaff)
 
+	timeSlots, _ := database.GetClassTimeSlotsByBranch(branchSeq)
+	classes, _ := database.GetComplexClassesByBranch(branchSeq)
+
 	data := struct {
 		middleware.BasePageData
 		Title      string
 		ActiveMenu string
 		IsEdit     bool
 		Staff      Staff
+		TimeSlots  []map[string]interface{}
+		Classes    []map[string]interface{}
 	}{
-		BasePageData: middleware.GetBasePageData(r),
+		BasePageData: base,
 		Title:        "스태프 정보 수정",
 		ActiveMenu:   "complex_staffs",
 		IsEdit:       true,
 		Staff:        staff,
+		TimeSlots:    timeSlots,
+		Classes:      classes,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "dashboard/staff_form.html", data); err != nil {

@@ -141,6 +141,8 @@ func registerPublicRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/complex/membership", opens.MembershipCheckHandler)
 	mux.HandleFunc("/complex/membership/result", opens.MembershipResultHandler)
 	mux.HandleFunc("/complex/postponement", opens.PostponementHandler)
+	mux.HandleFunc("/api/postponement/submit", opens.PostponementSubmitHandler)
+	mux.HandleFunc("/api/postponement/search-member", opens.PostponementSearchMemberHandler)
 	mux.HandleFunc("/complex/refund", middleware.RecoverFunc(opens.RefundHandler))
 	mux.HandleFunc("/complex/survey", middleware.RecoverFunc(consultation.SurveyHandler))
 
@@ -173,6 +175,7 @@ func registerComplexRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/complex/members/add", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberAddHandler)))
 	mux.HandleFunc("/complex/members/edit", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberEditHandler)))
 	mux.HandleFunc("/complex/members/update", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberUpdateHandler)))
+	mux.HandleFunc("/complex/members/delete", middleware.RequireAuthRecover(middleware.InjectBranchData(management.MemberDeleteHandler)))
 
 	// /complex/memberships
 	mux.HandleFunc("/complex/memberships", middleware.RequireAuthRecover(middleware.InjectBranchData(memberships.ListHandler)))

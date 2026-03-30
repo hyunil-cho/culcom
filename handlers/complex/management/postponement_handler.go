@@ -1,32 +1,57 @@
 package management
 
 import (
+	"backoffice/database"
 	"backoffice/middleware"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
-// MOCK 연기 요청 데이터
-var mockPostponements = []PostponementRequest{
-	{ID: 1, MemberName: "김철수", PhoneNumber: "01011112222", CurrentClass: "월수 오전 레벨1", StartDate: "2026-03-10", EndDate: "2026-03-24", Reason: "개인 사정 (출장)", Status: "대기", RequestDate: "2026-03-05", UsedCount: 1, RemainingCount: 2},
-	{ID: 2, MemberName: "이영희", PhoneNumber: "01033334444", CurrentClass: "화목 오후 프리토킹", StartDate: "2026-03-15", EndDate: "2026-04-15", Reason: "건강 상의 이유", Status: "승인", RequestDate: "2026-03-01", UsedCount: 2, RemainingCount: 1},
-	{ID: 3, MemberName: "박지민", PhoneNumber: "01055556666", CurrentClass: "주말 집중반", StartDate: "2026-03-08", EndDate: "2026-03-15", Reason: "이사", Status: "반려", RejectReason: "연기 기간이 너무 짧아 수업 조정이 어렵습니다.", RequestDate: "2026-03-04", UsedCount: 0, RemainingCount: 3},
-}
-
 // PostponementListHandler - 연기 요청 목록 (백오피스용)
 func PostponementListHandler(w http.ResponseWriter, r *http.Request) {
+	base := middleware.GetBasePageData(r)
+	branchSeq := base.SelectedBranchSeq
+
+	dbRequests, err := database.GetPostponementRequestsByBranch(branchSeq)
+	if err != nil {
+		log.Printf("PostponementListHandler - GetPostponementRequestsByBranch error: %v", err)
+	}
+
+	// DB 구조체를 템플릿용 구조체로 변환
+	var requests []PostponementRequest
+	for _, r := range dbRequests {
+		rejectReason := ""
+		if r.RejectReason != nil {
+			rejectReason = *r.RejectReason
+		}
+		requests = append(requests, PostponementRequest{
+			ID:           r.Seq,
+			MemberName:   r.MemberName,
+			PhoneNumber:  r.PhoneNumber,
+			TimeSlot:     r.TimeSlot,
+			CurrentClass: r.CurrentClass,
+			StartDate:    r.StartDate,
+			EndDate:      r.EndDate,
+			Reason:       r.Reason,
+			Status:       r.Status,
+			RejectReason: rejectReason,
+			RequestDate:  r.CreatedDate,
+		})
+	}
+
 	data := struct {
 		middleware.BasePageData
 		Title      string
 		ActiveMenu string
 		Requests   []PostponementRequest
 	}{
-		BasePageData: middleware.GetBasePageData(r),
+		BasePageData: base,
 		Title:        "수업 연기 요청 관리",
 		ActiveMenu:   "complex_postponements",
-		Requests:     mockPostponements,
+		Requests:     requests,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "dashboard/postponement_list.html", data); err != nil {
@@ -46,16 +71,18 @@ func PostponementUpdateStatusHandler(w http.ResponseWriter, r *http.Request) {
 	rejectReason := r.FormValue("reject_reason")
 	id, _ := strconv.Atoi(idStr)
 
-	for i, req := range mockPostponements {
-		if req.ID == id {
-			mockPostponements[i].Status = status
-			if status == "반려" {
-				mockPostponements[i].RejectReason = rejectReason
-			} else {
-				mockPostponements[i].RejectReason = ""
-			}
-			break
-		}
+	var rejectReasonPtr *string
+	if status == "반려" && rejectReason != "" {
+		rejectReasonPtr = &rejectReason
+	}
+
+	// 변경자 정보 (향후 세션에서 가져올 수 있음)
+	changedBy := "관리자"
+
+	if err := database.UpdatePostponementStatus(id, status, rejectReasonPtr, changedBy); err != nil {
+		log.Printf("PostponementUpdateStatusHandler - UpdatePostponementStatus error: %v", err)
+		http.Error(w, "상태 변경 중 오류가 발생했습니다.", http.StatusInternalServerError)
+		return
 	}
 
 	http.Redirect(w, r, "/complex/postponements", http.StatusSeeOther)
@@ -74,7 +101,7 @@ type PostponementReason struct {
 	Labels []ReasonLabelKV
 }
 
-// MOCK 연기사유 목록
+// MOCK 연기사유 목록 (사유 관리는 아직 DB 테이블 없음)
 var mockPostponementReasons = []PostponementReason{
 	{ID: 1, Label: "개인 사정 (출장/여행)", Labels: []ReasonLabelKV{{Key: "카테고리", Value: "개인"}, {Key: "평균기간", Value: "1~2주"}}},
 	{ID: 2, Label: "건강 상의 이유", Labels: []ReasonLabelKV{{Key: "카테고리", Value: "건강"}, {Key: "증빙", Value: "진단서 권장"}}},
