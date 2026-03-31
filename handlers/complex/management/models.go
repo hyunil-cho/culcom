@@ -75,6 +75,7 @@ type PostponementRequest struct {
 	ID             int
 	MemberName     string
 	PhoneNumber    string
+	TimeSlot       string
 	CurrentClass   string
 	StartDate      string
 	EndDate        string

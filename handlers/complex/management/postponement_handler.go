@@ -88,43 +88,52 @@ func PostponementUpdateStatusHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/complex/postponements", http.StatusSeeOther)
 }
 
-// ReasonLabelKV - 연기사유 레이블 key-value
+// ReasonLabelKV - 연기사유 레이블 key-value (템플릿용)
 type ReasonLabelKV struct {
 	Key   string `json:"Key"`
 	Value string `json:"Value"`
 }
 
-// PostponementReason - 연기사유 항목
-type PostponementReason struct {
+// PostponementReasonView - 연기사유 항목 (템플릿용)
+type PostponementReasonView struct {
 	ID     int
 	Label  string
 	Labels []ReasonLabelKV
 }
 
-// MOCK 연기사유 목록 (사유 관리는 아직 DB 테이블 없음)
-var mockPostponementReasons = []PostponementReason{
-	{ID: 1, Label: "개인 사정 (출장/여행)", Labels: []ReasonLabelKV{{Key: "카테고리", Value: "개인"}, {Key: "평균기간", Value: "1~2주"}}},
-	{ID: 2, Label: "건강 상의 이유", Labels: []ReasonLabelKV{{Key: "카테고리", Value: "건강"}, {Key: "증빙", Value: "진단서 권장"}}},
-	{ID: 3, Label: "업무 일정 변경", Labels: []ReasonLabelKV{{Key: "카테고리", Value: "업무"}}},
-	{ID: 4, Label: "가족 행사 / 경조사"},
-	{ID: 5, Label: "시험 준비", Labels: []ReasonLabelKV{{Key: "카테고리", Value: "학업"}}},
-	{ID: 6, Label: "이사 / 거주지 변경"},
-}
-
-var nextReasonID = 7
-
 // PostponementReasonListHandler - 연기사유 관리 페이지 (GET)
 func PostponementReasonListHandler(w http.ResponseWriter, r *http.Request) {
+	base := middleware.GetBasePageData(r)
+	branchSeq := base.SelectedBranchSeq
+
+	dbReasons, labelsMap, err := database.GetPostponementReasonsByBranch(branchSeq)
+	if err != nil {
+		log.Printf("PostponementReasonListHandler error: %v", err)
+	}
+
+	var reasons []PostponementReasonView
+	for _, r := range dbReasons {
+		var kvs []ReasonLabelKV
+		for _, l := range labelsMap[r.Seq] {
+			kvs = append(kvs, ReasonLabelKV{Key: l.LabelKey, Value: l.LabelVal})
+		}
+		reasons = append(reasons, PostponementReasonView{
+			ID:     r.Seq,
+			Label:  r.Label,
+			Labels: kvs,
+		})
+	}
+
 	data := struct {
 		middleware.BasePageData
 		Title      string
 		ActiveMenu string
-		Reasons    []PostponementReason
+		Reasons    []PostponementReasonView
 	}{
-		BasePageData: middleware.GetBasePageData(r),
+		BasePageData: base,
 		Title:        "연기사유 관리",
 		ActiveMenu:   "complex_postponement_reasons",
-		Reasons:      mockPostponementReasons,
+		Reasons:      reasons,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "dashboard/postponement_reasons.html", data); err != nil {
@@ -139,24 +148,34 @@ func PostponementReasonAddHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	base := middleware.GetBasePageData(r)
+	branchSeq := base.SelectedBranchSeq
+
 	label := strings.TrimSpace(r.FormValue("label"))
 	if label == "" {
 		http.Redirect(w, r, "/complex/postponements/reasons", http.StatusSeeOther)
 		return
 	}
 
-	var labels []ReasonLabelKV
+	var labelKVs []ReasonLabelKV
 	rawLabels := strings.TrimSpace(r.FormValue("labels"))
 	if rawLabels != "" {
-		_ = json.Unmarshal([]byte(rawLabels), &labels)
+		_ = json.Unmarshal([]byte(rawLabels), &labelKVs)
 	}
 
-	mockPostponementReasons = append(mockPostponementReasons, PostponementReason{
-		ID:     nextReasonID,
-		Label:  label,
-		Labels: labels,
-	})
-	nextReasonID++
+	var dbLabels []database.EntityLabel
+	for _, kv := range labelKVs {
+		dbLabels = append(dbLabels, database.EntityLabel{
+			LabelKey: kv.Key,
+			LabelVal: kv.Value,
+		})
+	}
+
+	if _, err := database.InsertPostponementReasonWithLabels(branchSeq, label, dbLabels); err != nil {
+		log.Printf("PostponementReasonAddHandler error: %v", err)
+		http.Error(w, "사유 추가 중 오류가 발생했습니다.", http.StatusInternalServerError)
+		return
+	}
 
 	http.Redirect(w, r, "/complex/postponements/reasons", http.StatusSeeOther)
 }
@@ -172,16 +191,8 @@ func PostponementReasonLabelDeleteHandler(w http.ResponseWriter, r *http.Request
 	labelKey := r.FormValue("key")
 	labelValue := r.FormValue("value")
 
-	for i, reason := range mockPostponementReasons {
-		if reason.ID == reasonID {
-			for j, l := range reason.Labels {
-				if l.Key == labelKey && l.Value == labelValue {
-					mockPostponementReasons[i].Labels = append(reason.Labels[:j], reason.Labels[j+1:]...)
-					break
-				}
-			}
-			break
-		}
+	if _, err := database.DeleteEntityLabel(database.EntityTypePostponementReason, reasonID, labelKey, labelValue); err != nil {
+		log.Printf("PostponementReasonLabelDeleteHandler error: %v", err)
 	}
 
 	http.Redirect(w, r, "/complex/postponements/reasons", http.StatusSeeOther)
@@ -195,11 +206,8 @@ func PostponementReasonDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	for i, reason := range mockPostponementReasons {
-		if reason.ID == id {
-			mockPostponementReasons = append(mockPostponementReasons[:i], mockPostponementReasons[i+1:]...)
-			break
-		}
+	if _, err := database.DeletePostponementReason(id); err != nil {
+		log.Printf("PostponementReasonDeleteHandler error: %v", err)
 	}
 
 	http.Redirect(w, r, "/complex/postponements/reasons", http.StatusSeeOther)

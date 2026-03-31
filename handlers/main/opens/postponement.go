@@ -89,6 +89,36 @@ func PostponementSearchMemberHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{"members": results})
 }
 
+// PostponementReasonsAPIHandler - 지점별 연기사유 목록 API (JSON)
+func PostponementReasonsAPIHandler(w http.ResponseWriter, r *http.Request) {
+	branchSeqStr := r.URL.Query().Get("branch_id")
+	branchSeq, err := strconv.Atoi(branchSeqStr)
+	if err != nil || branchSeq <= 0 {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"reasons": []interface{}{}})
+		return
+	}
+
+	dbReasons, _, err := database.GetPostponementReasonsByBranch(branchSeq)
+	if err != nil {
+		log.Printf("PostponementReasonsAPIHandler error: %v", err)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"reasons": []interface{}{}})
+		return
+	}
+
+	type ReasonItem struct {
+		Label string `json:"label"`
+	}
+	var reasons []ReasonItem
+	for _, r := range dbReasons {
+		reasons = append(reasons, ReasonItem{Label: r.Label})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"reasons": reasons})
+}
+
 // PostponementSubmitHandler - 연기 요청 제출 처리 (POST)
 func PostponementSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {

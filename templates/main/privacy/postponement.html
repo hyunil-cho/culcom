@@ -147,12 +147,6 @@
                     <label class="form-label">연기 사유 <span style="color: #e74c3c;">*</span></label>
                     <select name="reason" id="reasonSelect" class="form-input" required onchange="toggleReasonCustom(this)">
                         <option value="">사유를 선택해 주세요</option>
-                        <option value="개인 사정 (출장/여행)">개인 사정 (출장/여행)</option>
-                        <option value="건강 상의 이유">건강 상의 이유</option>
-                        <option value="업무 일정 변경">업무 일정 변경</option>
-                        <option value="가족 행사 / 경조사">가족 행사 / 경조사</option>
-                        <option value="시험 준비">시험 준비</option>
-                        <option value="이사 / 거주지 변경">이사 / 거주지 변경</option>
                         <option value="기타">기타 (직접 입력)</option>
                     </select>
                     <textarea name="reason_custom" id="reasonCustom" class="form-textarea" placeholder="연기 사유를 직접 입력해주세요." style="display:none; margin-top:10px;"></textarea>
@@ -306,6 +300,9 @@ function goToStep3() {
         const opt = this.options[this.selectedIndex];
         document.getElementById('formTimeSlot').value = opt.dataset.slot || '';
     };
+
+    // 연기사유 드롭다운을 DB에서 불러오기
+    loadPostponementReasons(m.branch_seq);
 }
 
 function backToStep2() {
@@ -332,6 +329,25 @@ function toggleReasonCustom(select) {
         custom.required = false;
         custom.value = '';
     }
+}
+
+function loadPostponementReasons(branchSeq) {
+    const select = document.getElementById('reasonSelect');
+    fetch(`/api/postponement/reasons?branch_id=${branchSeq}`)
+        .then(res => res.json())
+        .then(data => {
+            // "기타" 옵션 전에 DB 사유 삽입
+            const etcOption = select.querySelector('option[value="기타"]');
+            if (data.reasons && data.reasons.length > 0) {
+                data.reasons.forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r.label;
+                    opt.textContent = r.label;
+                    select.insertBefore(opt, etcOption);
+                });
+            }
+        })
+        .catch(() => {});
 }
 
 // Enter 키로 검색

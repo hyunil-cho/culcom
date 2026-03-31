@@ -207,3 +207,23 @@ func MemberUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "/complex/members", http.StatusSeeOther)
 }
+
+// MemberDeleteHandler - 회원 삭제
+func MemberDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	idStr := r.FormValue("id")
+	id, _ := strconv.Atoi(idStr)
+
+	for i, m := range mockMembers {
+		if m.ID == id {
+			mockMembers = append(mockMembers[:i], mockMembers[i+1:]...)
+			break
+		}
+	}
+
+	http.Redirect(w, r, "/complex/members", http.StatusSeeOther)
+}

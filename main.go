@@ -143,6 +143,7 @@ func registerPublicRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/complex/postponement", opens.PostponementHandler)
 	mux.HandleFunc("/api/postponement/submit", opens.PostponementSubmitHandler)
 	mux.HandleFunc("/api/postponement/search-member", opens.PostponementSearchMemberHandler)
+	mux.HandleFunc("/api/postponement/reasons", opens.PostponementReasonsAPIHandler)
 	mux.HandleFunc("/complex/refund", middleware.RecoverFunc(opens.RefundHandler))
 	mux.HandleFunc("/complex/survey", middleware.RecoverFunc(consultation.SurveyHandler))
 
@@ -186,7 +187,7 @@ func registerComplexRoutes(mux *http.ServeMux) {
 	// /complex/postponements
 	mux.HandleFunc("/complex/postponements", middleware.RequireAuthRecover(middleware.InjectBranchData(management.PostponementListHandler)))
 	mux.HandleFunc("/complex/postponements/reasons", middleware.RequireAuthRecover(middleware.InjectBranchData(management.PostponementReasonListHandler)))
-	mux.HandleFunc("/complex/postponements/reasons/add", middleware.RequireAuthRecover(management.PostponementReasonAddHandler))
+	mux.HandleFunc("/complex/postponements/reasons/add", middleware.RequireAuthRecover(middleware.InjectBranchData(management.PostponementReasonAddHandler)))
 	mux.HandleFunc("/complex/postponements/reasons/delete", middleware.RequireAuthRecover(management.PostponementReasonDeleteHandler))
 	mux.HandleFunc("/complex/postponements/reasons/label/delete", middleware.RequireAuthRecover(management.PostponementReasonLabelDeleteHandler))
 	mux.HandleFunc("/complex/postponements/update-status", middleware.RequireAuthRecover(management.PostponementUpdateStatusHandler))

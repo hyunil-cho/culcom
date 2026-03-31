@@ -365,6 +365,33 @@ CREATE TABLE `memberships` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='멤버십 정보';
 
 
+-- culcom.complex_postponement_reasons definition
+
+CREATE TABLE `complex_postponement_reasons` (
+  `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `branch_seq` int(10) unsigned NOT NULL COMMENT '지점 seq',
+  `label` varchar(200) NOT NULL COMMENT '연기사유 텍스트',
+  `createdDate` datetime NOT NULL DEFAULT current_timestamp() COMMENT '등록일',
+  `lastUpdateDate` datetime DEFAULT NULL ON UPDATE current_timestamp() COMMENT '변경일',
+  PRIMARY KEY (`seq`),
+  KEY `postponement_reasons_branch_FK` (`branch_seq`),
+  CONSTRAINT `postponement_reasons_branch_FK` FOREIGN KEY (`branch_seq`) REFERENCES `branches` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='연기사유 관리';
+
+
+-- culcom.entity_labels definition (범용 레이블/메타정보)
+
+CREATE TABLE `entity_labels` (
+  `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `entity_type` varchar(50) NOT NULL COMMENT '엔티티 타입 (예: postponement_reason)',
+  `entity_seq` int(10) unsigned NOT NULL COMMENT '엔티티 PK',
+  `label_key` varchar(100) NOT NULL COMMENT '레이블 키',
+  `label_val` varchar(200) NOT NULL COMMENT '레이블 값',
+  PRIMARY KEY (`seq`),
+  KEY `idx_entity` (`entity_type`, `entity_seq`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='범용 엔티티 레이블 (key-value 메타정보)';
+
+
 -- ============================================
 -- 초기 데이터 삽입
 -- ============================================
