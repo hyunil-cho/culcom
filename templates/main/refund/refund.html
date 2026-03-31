@@ -322,25 +322,37 @@
         </button>
     </div>
 
-    <!-- ② 환불 신청 카드 (조회 후 표시) -->
-    <div id="step-refund" style="display:none">
+    <!-- ② 멤버십 선택 카드 -->
+    <div id="step-select" style="display:none">
         <button type="button" class="btn-back-text" onclick="goBack()">← 다시 조회하기</button>
-
         <div class="card">
-            <!-- 멤버십 정보 -->
             <div class="membership-info-card">
-                <div class="membership-info-title">📋 확인된 멤버십 정보</div>
+                <div class="membership-info-title">📋 회원 정보 확인</div>
                 <div class="member-name-row">
                     <span class="member-name-big" id="info-name"></span>
                     <span class="member-phone-small" id="info-phone"></span>
                 </div>
+            </div>
+            <div class="section-label">환불할 멤버십을 선택하세요</div>
+            <div id="membership-list"></div>
+        </div>
+    </div>
+
+    <!-- ③ 환불 신청 카드 -->
+    <div id="step-refund" style="display:none">
+        <button type="button" class="btn-back-text" onclick="backToSelect()">← 멤버십 선택으로</button>
+
+        <div class="card">
+            <!-- 선택된 멤버십 정보 -->
+            <div class="membership-info-card">
+                <div class="membership-info-title">📋 환불 대상 멤버십</div>
+                <div class="member-name-row">
+                    <span class="member-name-big" id="refund-name"></span>
+                    <span class="member-phone-small" id="refund-phone"></span>
+                </div>
                 <div class="info-grid">
                     <div class="info-item">
-                        <div class="info-item-label">수강 반</div>
-                        <div class="info-item-value" id="info-class"></div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-item-label">등급</div>
+                        <div class="info-item-label">멤버십</div>
                         <div class="info-item-value accent" id="info-grade"></div>
                     </div>
                     <div class="info-item">
@@ -359,11 +371,15 @@
                         <div class="info-item-label">사용 수업</div>
                         <div class="info-item-value" id="info-used"></div>
                     </div>
+                    <div class="info-item">
+                        <div class="info-item-label">기간</div>
+                        <div class="info-item-value" id="info-period"></div>
+                    </div>
                 </div>
             </div>
 
             <!-- 예상 환불액 -->
-            <div class="refund-estimate-box">
+            <div class="refund-estimate-box" id="estimate-box" style="display:none">
                 <div class="refund-estimate-label">
                     예상 환불액
                     <small>잔여 수업 비율 기준 · 실제 환불액은 운영 정책에 따라 달라질 수 있습니다</small>
@@ -447,75 +463,141 @@
 </div>
 
 <script>
-    // ── Mock 데이터 생성 ─────────────────────────────────────
-    const MOCK_CLASSES = ['레벨1-1반', '레벨1-2반', '레벨2-1반', '레벨2-2반', '프리토킹 A반', '프리토킹 B반'];
-    const MOCK_GRADES  = ['VVIP+', 'VVIP', 'A+', '멤버쉽', 'H+'];
-    const MOCK_PAID    = [480000, 360000, 300000, 240000, 180000];
+    let currentMember = null;
+    let selectedMembership = null;
 
-    function mockMembership(name, phone) {
-        const seed  = phone.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-        const total = [24, 20, 16, 12][seed % 4];
-        const used  = Math.floor(total * (0.2 + (seed % 7) * 0.1));
-        const rem   = total - used;
-        const grade = MOCK_GRADES[seed % MOCK_GRADES.length];
-        const cls   = MOCK_CLASSES[seed % MOCK_CLASSES.length];
-        const paid  = MOCK_PAID[seed % MOCK_PAID.length];
-        const est   = Math.round(paid * rem / total / 1000) * 1000;
-
-        // expiry: 1~6개월 후
-        const exp = new Date();
-        exp.setMonth(exp.getMonth() + 1 + (seed % 6));
-        const expiry = exp.toISOString().slice(0, 10);
-
-        return { name, phone, cls, grade, total, used, rem, paid, est, expiry };
+    function fmtPhone(p) {
+        const s = p.replace(/[^0-9]/g, '');
+        if (s.length === 11) return s.slice(0,3) + '-' + s.slice(3,7) + '-' + s.slice(7);
+        return p;
     }
 
-    function fmt(n) {
-        return n.toLocaleString('ko-KR') + '원';
-    }
-
-    // ── Step 1 → 2: 조회 ─────────────────────────────────────
-    let currentData = null;
-
+    // ── Step 1: 회원 조회 ─────────────────────────────────────
     function lookupMembership() {
         const name  = document.getElementById('inp-name').value.trim();
         const phone = document.getElementById('inp-phone').value.trim().replace(/[^0-9]/g, '');
         const errEl = document.getElementById('lookup-err');
 
         if (!name || phone.length < 10) {
+            errEl.textContent = '이름과 연락처를 모두 입력해 주세요.';
             errEl.style.display = 'block';
             return;
         }
         errEl.style.display = 'none';
 
-        currentData = mockMembership(name, phone);
+        fetch(`/api/refund/search-member?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.members || data.members.length === 0) {
+                    errEl.textContent = '일치하는 회원 정보를 찾을 수 없습니다.';
+                    errEl.style.display = 'block';
+                    return;
+                }
 
-        document.getElementById('info-name').textContent      = currentData.name;
-        document.getElementById('info-phone').textContent     = phone.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3');
-        document.getElementById('info-class').textContent     = currentData.cls;
-        document.getElementById('info-grade').textContent     = currentData.grade;
-        document.getElementById('info-remaining').textContent = `${currentData.rem}회 / 총 ${currentData.total}회`;
-        document.getElementById('info-expiry').textContent    = currentData.expiry;
-        document.getElementById('info-paid').textContent      = fmt(currentData.paid);
-        document.getElementById('info-used').textContent      = `${currentData.used}회`;
-        document.getElementById('info-estimate').textContent  = fmt(currentData.est);
+                currentMember = data.members[0];
+
+                if (!currentMember.memberships || currentMember.memberships.length === 0) {
+                    errEl.textContent = '활성 멤버십이 없습니다. 관리자에게 문의해 주세요.';
+                    errEl.style.display = 'block';
+                    return;
+                }
+
+                showSelectStep();
+            })
+            .catch(() => {
+                errEl.textContent = '조회 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+                errEl.style.display = 'block';
+            });
+    }
+
+    // ── Step 2: 멤버십 선택 ───────────────────────────────────
+    function showSelectStep() {
+        const m = currentMember;
+        document.getElementById('info-name').textContent = m.name;
+        document.getElementById('info-phone').textContent = fmtPhone(m.phone_number);
+
+        const listEl = document.getElementById('membership-list');
+        listEl.innerHTML = m.memberships.map(ms => {
+            const rem = ms.TotalCount - ms.UsedCount;
+            return `
+                <div class="membership-card" data-seq="${ms.Seq}" onclick="selectMembership(${ms.Seq})"
+                    style="border:1.5px solid #ddd; border-radius:10px; padding:14px 16px; margin-bottom:10px;
+                           cursor:pointer; transition:all 0.2s;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:700; font-size:0.95rem; color:#333;">${ms.MembershipName}</span>
+                        <span style="font-size:0.82rem; font-weight:600; color:#4a90e2;">잔여 ${rem}/${ms.TotalCount}회</span>
+                    </div>
+                    <div style="font-size:0.82rem; color:#666; margin-top:6px;">
+                        기간: ${ms.StartDate} ~ ${ms.ExpiryDate}
+                        ${ms.Price ? ' &nbsp;|&nbsp; 결제: ' + ms.Price : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        selectedMembership = null;
+        document.getElementById('step-lookup').style.display = 'none';
+        document.getElementById('step-select').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function selectMembership(seq) {
+        selectedMembership = currentMember.memberships.find(ms => ms.Seq === seq);
+        if (!selectedMembership) return;
+        showRefundStep();
+    }
+
+    // ── Step 3: 환불 상세 입력 ────────────────────────────────
+    function showRefundStep() {
+        const m = currentMember;
+        const ms = selectedMembership;
+        const rem = ms.TotalCount - ms.UsedCount;
+
+        document.getElementById('refund-name').textContent = m.name;
+        document.getElementById('refund-phone').textContent = fmtPhone(m.phone_number);
+        document.getElementById('info-grade').textContent = ms.MembershipName;
+        document.getElementById('info-remaining').textContent = `${rem}회 / 총 ${ms.TotalCount}회`;
+        document.getElementById('info-expiry').textContent = ms.ExpiryDate;
+        document.getElementById('info-paid').textContent = ms.Price || '-';
+        document.getElementById('info-used').textContent = `${ms.UsedCount}회`;
+        document.getElementById('info-period').textContent = `${ms.StartDate} ~ ${ms.ExpiryDate}`;
+
+        // 예상 환불액 계산 (price가 숫자인 경우)
+        const priceNum = parseInt((ms.Price || '').replace(/[^0-9]/g, ''), 10);
+        const estimateBox = document.getElementById('estimate-box');
+        if (priceNum > 0 && ms.TotalCount > 0) {
+            const est = Math.round(priceNum * rem / ms.TotalCount / 1000) * 1000;
+            document.getElementById('info-estimate').textContent = est.toLocaleString('ko-KR') + '원';
+            estimateBox.style.display = 'flex';
+        } else {
+            estimateBox.style.display = 'none';
+        }
 
         // 예금주 자동 입력
-        document.getElementById('inp-holder').value = currentData.name;
+        document.getElementById('inp-holder').value = m.name;
 
-        document.getElementById('step-lookup').style.display = 'none';
+        document.getElementById('step-select').style.display = 'none';
         document.getElementById('step-refund').style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // ── Step 2 → 1: 뒤로 ─────────────────────────────────────
+    // ── 네비게이션 ────────────────────────────────────────────
     function goBack() {
-        document.getElementById('step-refund').style.display = 'none';
+        document.getElementById('step-select').style.display = 'none';
         document.getElementById('step-lookup').style.display = 'block';
+        currentMember = null;
+        selectedMembership = null;
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // ── Step 2 → 3: 제출 ─────────────────────────────────────
+    function backToSelect() {
+        document.getElementById('step-refund').style.display = 'none';
+        document.getElementById('step-select').style.display = 'block';
+        selectedMembership = null;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── 제출 ──────────────────────────────────────────────────
     function submitRefund() {
         const reason  = document.getElementById('inp-reason').value.trim();
         const bank    = document.getElementById('inp-bank').value;
@@ -527,9 +609,36 @@
         if (!account) { alert('계좌번호를 입력해주세요.'); return; }
         if (!holder)  { alert('예금주를 입력해주세요.'); return; }
 
-        document.getElementById('step-refund').style.display = 'none';
-        document.getElementById('step-done').style.display   = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const formData = new URLSearchParams();
+        formData.append('branch_seq', currentMember.branch_seq);
+        formData.append('member_seq', currentMember.seq);
+        formData.append('member_membership_seq', selectedMembership.Seq);
+        formData.append('member_name', currentMember.name);
+        formData.append('phone_number', currentMember.phone_number);
+        formData.append('membership_name', selectedMembership.MembershipName);
+        formData.append('price', selectedMembership.Price || '');
+        formData.append('reason', reason);
+        formData.append('bank_name', bank);
+        formData.append('account_number', account);
+        formData.append('account_holder', holder);
+
+        fetch('/api/refund/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData.toString()
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('submit failed');
+            return res.json();
+        })
+        .then(() => {
+            document.getElementById('step-refund').style.display = 'none';
+            document.getElementById('step-done').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        })
+        .catch(() => {
+            alert('제출 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+        });
     }
 </script>
 </body>

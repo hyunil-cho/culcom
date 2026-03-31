@@ -44,6 +44,7 @@ type ComplexMemberMembershipInfo struct {
 	UsedCount      int
 	PostponeTotal  int
 	PostponeUsed   int
+	Price          string // 결제 금액
 	Status         string
 }
 
@@ -106,7 +107,7 @@ func GetComplexMemberByID(id int) (*ComplexMember, error) {
 		SELECT m.seq, m.branch_seq, b.branchName,
 			m.name, m.phone_number, m.level, m.language, m.info,
 			m.chart_number, m.comment,
-			DATE_FORMAT(m.join_date, '%Y-%m-%d') as join_date,
+			DATE_FORMAT(m.join_date, '%Y-%m-%d %H:%i') as join_date,
 			m.signup_channel, m.interviewer,
 			DATE_FORMAT(m.createdDate, '%Y-%m-%d %H:%i') as createdDate,
 			DATE_FORMAT(m.lastUpdateDate, '%Y-%m-%d %H:%i') as lastUpdateDate
@@ -137,7 +138,7 @@ func GetComplexMembersByBranch(branchSeq int) ([]ComplexMember, error) {
 		SELECT m.seq, m.branch_seq, b.branchName,
 			m.name, m.phone_number, m.level, m.language, m.info,
 			m.chart_number, m.comment,
-			DATE_FORMAT(m.join_date, '%Y-%m-%d') as join_date,
+			DATE_FORMAT(m.join_date, '%Y-%m-%d %H:%i') as join_date,
 			m.signup_channel, m.interviewer,
 			DATE_FORMAT(m.createdDate, '%Y-%m-%d %H:%i') as createdDate,
 			DATE_FORMAT(m.lastUpdateDate, '%Y-%m-%d %H:%i') as lastUpdateDate
@@ -180,7 +181,7 @@ func FindComplexMemberByPhone(phone string) (*ComplexMember, error) {
 		SELECT m.seq, m.branch_seq, COALESCE(b.branchName, ''),
 			m.name, m.phone_number, m.level, m.language, m.info,
 			m.chart_number, m.comment,
-			DATE_FORMAT(m.join_date, '%Y-%m-%d') as join_date,
+			DATE_FORMAT(m.join_date, '%Y-%m-%d %H:%i') as join_date,
 			m.signup_channel, m.interviewer,
 			DATE_FORMAT(m.createdDate, '%Y-%m-%d %H:%i') as createdDate,
 			DATE_FORMAT(m.lastUpdateDate, '%Y-%m-%d %H:%i') as lastUpdateDate
@@ -249,7 +250,7 @@ func GetClassesByMember(memberSeq int) ([]map[string]interface{}, error) {
 func SearchMemberByNameAndPhone(name, phone string) ([]ComplexMemberSearchResult, error) {
 	query := `
 		SELECT m.seq, m.branch_seq, b.branchName, m.name, m.phone_number, m.level,
-			DATE_FORMAT(m.join_date, '%Y-%m-%d') as join_date
+			DATE_FORMAT(m.join_date, '%Y-%m-%d %H:%i') as join_date
 		FROM complex_members m
 		LEFT JOIN branches b ON m.branch_seq = b.seq
 		WHERE m.name = ? AND m.phone_number = ?
@@ -284,6 +285,7 @@ func GetActiveMembershipsByMember(memberSeq int) ([]ComplexMemberMembershipInfo,
 			DATE_FORMAT(mm.expiry_date, '%Y-%m-%d') as expiry_date,
 			mm.total_count, mm.used_count,
 			mm.postpone_total, mm.postpone_used,
+			IFNULL(mm.price, '') as price,
 			mm.status
 		FROM complex_member_memberships mm
 		JOIN memberships ms ON mm.membership_seq = ms.seq
@@ -302,7 +304,7 @@ func GetActiveMembershipsByMember(memberSeq int) ([]ComplexMemberMembershipInfo,
 	for rows.Next() {
 		var m ComplexMemberMembershipInfo
 		err := rows.Scan(&m.Seq, &m.MembershipName, &m.StartDate, &m.ExpiryDate,
-			&m.TotalCount, &m.UsedCount, &m.PostponeTotal, &m.PostponeUsed, &m.Status)
+			&m.TotalCount, &m.UsedCount, &m.PostponeTotal, &m.PostponeUsed, &m.Price, &m.Status)
 		if err != nil {
 			log.Printf("GetActiveMembershipsByMember scan error: %v", err)
 			continue
@@ -311,4 +313,37 @@ func GetActiveMembershipsByMember(memberSeq int) ([]ComplexMemberMembershipInfo,
 	}
 
 	return memberships, nil
+}
+
+// InsertMemberMembership - 회원에 멤버십 연결 (구매)
+func InsertMemberMembership(memberSeq, membershipSeq int, startDate, expiryDate string, totalCount int, price, depositAmount, paymentMethod *string, paymentDate *string) (int64, error) {
+	query := `
+		INSERT INTO complex_member_memberships
+			(member_seq, membership_seq, start_date, expiry_date, total_count,
+			 price, deposit_amount, payment_method, payment_date)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`
+	result, err := DB.Exec(query, memberSeq, membershipSeq, startDate, expiryDate, totalCount,
+		price, depositAmount, paymentMethod, paymentDate)
+	if err != nil {
+		log.Printf("InsertMemberMembership error: %v", err)
+		return 0, err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		log.Printf("InsertMemberMembership get last insert id error: %v", err)
+		return 0, err
+	}
+	log.Printf("InsertMemberMembership 완료 - ID: %d, MemberSeq: %d", id, memberSeq)
+	return id, nil
+}
+
+// AssignMemberToClass - 회원을 수업에 배정 (중복 무시)
+func AssignMemberToClass(memberSeq, classSeq int) error {
+	query := `INSERT IGNORE INTO complex_member_class_mapping (member_seq, class_seq) VALUES (?, ?)`
+	_, err := DB.Exec(query, memberSeq, classSeq)
+	if err != nil {
+		log.Printf("AssignMemberToClass error: %v", err)
+	}
+	return err
 }

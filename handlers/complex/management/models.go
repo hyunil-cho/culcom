@@ -18,33 +18,35 @@ type Class struct {
 	EndTime      string // 종료 시간 (슬롯에서 가져올 정보)
 }
 
-// Member - 수업 등록 회원 정보 (MOCK용)
+// Member - 수업 등록 회원 정보
 type Member struct {
-	ID                int
-	BranchSeq         string // 소속 지점 코드
-	Name              string
-	PhoneNumber       string
-	Status            string   // 출석 상태 등 (O, X, △ 등)
+	ID            int
+	BranchSeq     string // 소속 지점 코드
+	Name          string
+	PhoneNumber   string
+	Level         string // 레벨 (예: 3-)
+	Language      string // 언어 (예: 영어, 일본어)
+	Info          string // 인적사항 (직업, 관심사 등)
+	ChartNumber   string // 차트 넘버
+	Comment       string // 코멘트 (상세 메모)
+	JoinDate      string // 가입일
+	SignupChannel string // 가입 경로
+	Interviewer   string // 인터뷰어
+	CreatedAt     string // 등록일자
+	UpdatedAt     string // 수정일자
+
+	// 아래 필드는 DB에 직접 저장되지 않음 (멤버십/출석 테이블에서 조합하여 표시용으로 사용)
+	Status            string   // 출석 상태 (O, X, △ 등)
 	IsPostponed       bool     // 수업 연기 중 여부
-	Level             string   // 레벨 (예: 3-)
-	Language          string   // 언어 (예: 영어, 일본어)
-	Info              string   // 인적사항 (스태프가 기록하는 회원 특징)
-	ChartNumber       string   // 차트 넘버
-	Comment           string   // 코멘트 (직업, 관심사, 동기 등)
-	JoinDate          string   // 가입일
 	LastDate          string   // 마지막 수업일
-	ExpiryDate        string   // 만료일
+	ExpiryDate        string   // 만료일 (활성 멤버십에서)
 	Stats             string   // 통계 (예: 8 did 97 left)
-	Grade             string   // 등급 (예: A+, VVIP+)
+	Grade             string   // 등급 (멤버십명)
 	Price             string   // 금액
 	PaymentDate       string   // 납부일
 	DepositAmount     string   // 디파짓 납부금액
 	PaymentMethod     string   // 결제방법
-	SignupChannel     string   // 가입 경로
-	Interviewer       string   // 인터뷰어 (상담/등록 담당 스태프)
-	CreatedAt         string   // 등록일자
-	UpdatedAt         string   // 수정일자
-	AttendanceHistory []string // 지난 출석 기록 (O, X 등)
+	AttendanceHistory []string // 최근 출석 기록
 }
 
 // Staff - 강사 정보 (MOCK용)
@@ -70,7 +72,7 @@ type Staff struct {
 	RefundAmount         string // 환급 금액
 }
 
-// PostponementRequest - 수업 연기 요청 (MOCK용)
+// PostponementRequest - 수업 연기 요청
 type PostponementRequest struct {
 	ID             int
 	MemberName     string

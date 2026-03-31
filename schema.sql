@@ -13,6 +13,12 @@ DROP TABLE IF EXISTS `user_info`;
 DROP TABLE IF EXISTS `third_party_services`;
 DROP TABLE IF EXISTS `placeholders`;
 DROP TABLE IF EXISTS `external_service_type`;
+DROP TABLE IF EXISTS `complex_member_attendance`;
+DROP TABLE IF EXISTS `complex_member_memberships`;
+DROP TABLE IF EXISTS `complex_member_class_mapping`;
+DROP TABLE IF EXISTS `complex_members`;
+DROP TABLE IF EXISTS `complex_postponement_status_history`;
+DROP TABLE IF EXISTS `complex_postponement_requests`;
 DROP TABLE IF EXISTS `complex_staff_class_mapping`;
 DROP TABLE IF EXISTS `complex_staff_refund_info`;
 DROP TABLE IF EXISTS `class_time_slots`;
@@ -307,6 +313,140 @@ CREATE TABLE `complex_staff_class_mapping` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='스태프-수업 배정 매핑';
 
 
+-- culcom.complex_postponement_requests definition
+
+CREATE TABLE `complex_postponement_requests` (
+  `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `branch_seq` int(10) unsigned NOT NULL COMMENT '참여 지점',
+  `member_seq` int(10) unsigned DEFAULT NULL COMMENT '회원 ID (비회원 요청 시 NULL)',
+  `member_membership_seq` int(10) unsigned DEFAULT NULL COMMENT '회원-멤버십 ID',
+  `member_name` varchar(100) NOT NULL COMMENT '요청자 이름',
+  `phone_number` varchar(20) NOT NULL COMMENT '연락처',
+  `time_slot` varchar(200) NOT NULL COMMENT '수업 시간대',
+  `current_class` varchar(200) NOT NULL COMMENT '수강 중인 수업',
+  `start_date` date NOT NULL COMMENT '연기 시작일',
+  `end_date` date NOT NULL COMMENT '연기 종료일',
+  `reason` varchar(300) NOT NULL COMMENT '연기 사유',
+  `status` ENUM('대기', '승인', '반려') NOT NULL DEFAULT '대기' COMMENT '처리 상태',
+  `reject_reason` varchar(300) DEFAULT NULL COMMENT '반려 사유',
+  `createdDate` datetime NOT NULL DEFAULT current_timestamp() COMMENT '요청 일시',
+  `lastUpdateDate` datetime DEFAULT NULL ON UPDATE current_timestamp() COMMENT '처리 일시',
+  PRIMARY KEY (`seq`),
+  KEY `complex_postponement_requests_branch_seq_IDX` (`branch_seq`) USING BTREE,
+  KEY `complex_postponement_requests_member_seq_IDX` (`member_seq`) USING BTREE,
+  KEY `complex_postponement_requests_mm_seq_IDX` (`member_membership_seq`) USING BTREE,
+  KEY `complex_postponement_requests_status_IDX` (`status`) USING BTREE,
+  CONSTRAINT `complex_postponement_requests_branches_FK` FOREIGN KEY (`branch_seq`) REFERENCES `branches` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `complex_postponement_requests_member_FK` FOREIGN KEY (`member_seq`) REFERENCES `complex_members` (`seq`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `complex_postponement_requests_mm_FK` FOREIGN KEY (`member_membership_seq`) REFERENCES `complex_member_memberships` (`seq`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='수업 연기 요청';
+
+
+-- culcom.complex_postponement_status_history definition
+
+CREATE TABLE `complex_postponement_status_history` (
+  `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `request_seq` int(10) unsigned NOT NULL COMMENT '연기 요청 ID',
+  `prev_status` ENUM('대기', '승인', '반려') DEFAULT NULL COMMENT '이전 상태 (최초 등록 시 NULL)',
+  `new_status` ENUM('대기', '승인', '반려') NOT NULL COMMENT '변경된 상태',
+  `reject_reason` varchar(300) DEFAULT NULL COMMENT '반려 사유 (반려 시에만)',
+  `changed_by` varchar(100) DEFAULT NULL COMMENT '변경자 (관리자 ID 등)',
+  `createdDate` datetime NOT NULL DEFAULT current_timestamp() COMMENT '변경 일시',
+  PRIMARY KEY (`seq`),
+  KEY `complex_postponement_status_history_request_IDX` (`request_seq`) USING BTREE,
+  CONSTRAINT `complex_postponement_status_history_FK` FOREIGN KEY (`request_seq`) REFERENCES `complex_postponement_requests` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='수업 연기 요청 상태 변경 이력';
+
+
+-- culcom.complex_members definition
+
+CREATE TABLE `complex_members` (
+  `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `branch_seq` int(10) unsigned NOT NULL COMMENT '소속 지점',
+  `name` varchar(100) NOT NULL COMMENT '회원 이름',
+  `phone_number` varchar(20) NOT NULL COMMENT '전화번호',
+  `level` varchar(20) DEFAULT NULL COMMENT '레벨 (예: 3-)',
+  `language` varchar(50) DEFAULT NULL COMMENT '언어 (예: 영어)',
+  `info` varchar(300) DEFAULT NULL COMMENT '인적사항 (직업, 관심사 등)',
+  `chart_number` varchar(50) DEFAULT NULL COMMENT '차트 넘버',
+  `comment` text DEFAULT NULL COMMENT '코멘트 (상세 메모)',
+  `join_date` datetime DEFAULT NULL COMMENT '가입일',
+  `signup_channel` varchar(100) DEFAULT NULL COMMENT '가입 경로',
+  `interviewer` varchar(100) DEFAULT NULL COMMENT '인터뷰어',
+  `createdDate` datetime NOT NULL DEFAULT current_timestamp() COMMENT '등록 일시',
+  `lastUpdateDate` datetime DEFAULT NULL ON UPDATE current_timestamp() COMMENT '수정 일시',
+  PRIMARY KEY (`seq`),
+  KEY `complex_members_branch_seq_IDX` (`branch_seq`) USING BTREE,
+  KEY `complex_members_phone_number_IDX` (`phone_number`) USING BTREE,
+  KEY `complex_members_name_IDX` (`name`) USING BTREE,
+  CONSTRAINT `complex_members_branches_FK` FOREIGN KEY (`branch_seq`) REFERENCES `branches` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='수업 등록 회원 정보';
+
+
+-- culcom.complex_member_class_mapping definition
+
+CREATE TABLE `complex_member_class_mapping` (
+  `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `member_seq` int(10) unsigned NOT NULL COMMENT '회원 ID',
+  `class_seq` int(10) unsigned NOT NULL COMMENT '수업 ID',
+  `createdDate` datetime NOT NULL DEFAULT current_timestamp() COMMENT '배정 일시',
+  PRIMARY KEY (`seq`),
+  UNIQUE KEY `complex_member_class_unique` (`member_seq`, `class_seq`),
+  KEY `complex_member_class_member_IDX` (`member_seq`) USING BTREE,
+  KEY `complex_member_class_class_IDX` (`class_seq`) USING BTREE,
+  CONSTRAINT `complex_member_class_member_FK` FOREIGN KEY (`member_seq`) REFERENCES `complex_members` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `complex_member_class_class_FK` FOREIGN KEY (`class_seq`) REFERENCES `complex_classes` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='회원-수업 배정 매핑';
+
+
+-- culcom.complex_member_memberships definition
+
+CREATE TABLE `complex_member_memberships` (
+  `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `member_seq` int(10) unsigned NOT NULL COMMENT '회원 ID',
+  `membership_seq` int(10) unsigned NOT NULL COMMENT '멤버십 ID',
+  `start_date` date NOT NULL COMMENT '시작일',
+  `expiry_date` date NOT NULL COMMENT '만료일',
+  `total_count` int(10) unsigned NOT NULL COMMENT '총 횟수 (멤버십에서 복사)',
+  `used_count` int(10) unsigned NOT NULL DEFAULT 0 COMMENT '사용 횟수 (출석 차감분)',
+  `postpone_total` int(10) unsigned NOT NULL DEFAULT 3 COMMENT '연기 가능 횟수',
+  `postpone_used` int(10) unsigned NOT NULL DEFAULT 0 COMMENT '연기 사용 횟수',
+  `price` varchar(50) DEFAULT NULL COMMENT '실제 결제 금액',
+  `deposit_amount` varchar(50) DEFAULT NULL COMMENT '디파짓 납부금액',
+  `payment_method` varchar(50) DEFAULT NULL COMMENT '결제방법',
+  `payment_date` datetime DEFAULT NULL COMMENT '납부일',
+  `status` ENUM('활성', '만료', '환불', '양도', '연기') NOT NULL DEFAULT '활성' COMMENT '멤버십 상태',
+  `createdDate` datetime NOT NULL DEFAULT current_timestamp() COMMENT '등록 일시',
+  `lastUpdateDate` datetime DEFAULT NULL ON UPDATE current_timestamp() COMMENT '수정 일시',
+  PRIMARY KEY (`seq`),
+  KEY `complex_member_memberships_member_IDX` (`member_seq`) USING BTREE,
+  KEY `complex_member_memberships_membership_IDX` (`membership_seq`) USING BTREE,
+  KEY `complex_member_memberships_status_IDX` (`status`) USING BTREE,
+  CONSTRAINT `complex_member_memberships_member_FK` FOREIGN KEY (`member_seq`) REFERENCES `complex_members` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `complex_member_memberships_membership_FK` FOREIGN KEY (`membership_seq`) REFERENCES `memberships` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='회원-멤버십 연결 (구매 이력)';
+
+
+-- culcom.complex_member_attendance definition
+
+CREATE TABLE `complex_member_attendance` (
+  `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `member_membership_seq` int(10) unsigned NOT NULL COMMENT '회원-멤버십 ID',
+  `class_seq` int(10) unsigned DEFAULT NULL COMMENT '수업 ID',
+  `attendance_date` date NOT NULL COMMENT '출석/연기 날짜',
+  `status` ENUM('출석', '결석', '지각', '연기') NOT NULL DEFAULT '출석' COMMENT '상태',
+  `note` varchar(200) DEFAULT NULL COMMENT '비고',
+  `createdDate` datetime NOT NULL DEFAULT current_timestamp() COMMENT '기록 일시',
+  PRIMARY KEY (`seq`),
+  KEY `complex_member_attendance_mm_IDX` (`member_membership_seq`) USING BTREE,
+  KEY `complex_member_attendance_date_IDX` (`attendance_date`) USING BTREE,
+  KEY `complex_member_attendance_class_IDX` (`class_seq`) USING BTREE,
+  UNIQUE KEY `complex_member_attendance_unique` (`member_membership_seq`, `class_seq`, `attendance_date`),
+  CONSTRAINT `complex_member_attendance_mm_FK` FOREIGN KEY (`member_membership_seq`) REFERENCES `complex_member_memberships` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `complex_member_attendance_class_FK` FOREIGN KEY (`class_seq`) REFERENCES `complex_classes` (`seq`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='회원 출석/연기 기록';
+
+
 -- culcom.caller_selection_history definition
 
 CREATE TABLE `caller_selection_history` (
@@ -363,6 +503,33 @@ CREATE TABLE `memberships` (
   `lastUpdateDate` datetime DEFAULT NULL ON UPDATE current_timestamp() COMMENT '변경일',
   PRIMARY KEY (`seq`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='멤버십 정보';
+
+
+-- culcom.complex_refund_requests definition
+
+CREATE TABLE `complex_refund_requests` (
+  `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `branch_seq` int(10) unsigned NOT NULL COMMENT '지점 seq',
+  `member_seq` int(10) unsigned NOT NULL COMMENT '회원 seq',
+  `member_membership_seq` int(10) unsigned NOT NULL COMMENT '회원-멤버십 seq',
+  `member_name` varchar(100) NOT NULL COMMENT '회원 이름',
+  `phone_number` varchar(20) NOT NULL COMMENT '연락처',
+  `membership_name` varchar(100) NOT NULL COMMENT '멤버십명',
+  `price` varchar(50) DEFAULT NULL COMMENT '결제 금액',
+  `reason` text NOT NULL COMMENT '환불 사유',
+  `bank_name` varchar(50) NOT NULL COMMENT '환불 은행',
+  `account_number` varchar(50) NOT NULL COMMENT '계좌번호',
+  `account_holder` varchar(50) NOT NULL COMMENT '예금주',
+  `status` ENUM('대기', '승인', '반려') NOT NULL DEFAULT '대기' COMMENT '처리 상태',
+  `reject_reason` varchar(300) DEFAULT NULL COMMENT '반려 사유',
+  `createdDate` datetime NOT NULL DEFAULT current_timestamp() COMMENT '요청 일시',
+  `lastUpdateDate` datetime DEFAULT NULL ON UPDATE current_timestamp() COMMENT '수정 일시',
+  PRIMARY KEY (`seq`),
+  KEY `complex_refund_requests_branch_IDX` (`branch_seq`) USING BTREE,
+  CONSTRAINT `complex_refund_requests_branch_FK` FOREIGN KEY (`branch_seq`) REFERENCES `branches` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `complex_refund_requests_member_FK` FOREIGN KEY (`member_seq`) REFERENCES `complex_members` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `complex_refund_requests_mm_FK` FOREIGN KEY (`member_membership_seq`) REFERENCES `complex_member_memberships` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='멤버십 환불 요청';
 
 
 -- culcom.complex_postponement_reasons definition

@@ -168,14 +168,9 @@
                                 <th>전화번호</th>
                                 <th>레벨</th>
                                 <th>인적사항</th>
-                                <th>가입일</th>
-                                <th>만료일</th>
-                                <th>최근수업</th>
-                                <th>잔여횟수</th>
+                                <th>멤버십</th>
                                 <th>상태</th>
                                 <th>등급</th>
-                                <th>금액</th>
-                                <th>결제방법</th>
                                 <th>가입경로</th>
                                 <th>인터뷰어</th>
                                 <th>등록일자</th>
@@ -197,16 +192,13 @@
                                 </td>
                                 <td>{{.Level}}</td>
                                 <td style="color: #888;">{{.Info}}</td>
-                                <td class="col-date">{{.JoinDate}}</td>
-                                <td class="col-date">{{.ExpiryDate}}</td>
-                                <td class="col-date">{{.LastDate}}</td>
-                                <td class="col-stats">{{.Stats}}</td>
+                                <td>
+                                    <button class="btn-mini" style="background:#6366f1; font-size:0.78rem; padding:4px 10px;" onclick="openMembershipModal({{.ID}}, '{{.Name}}')">멤버십 정보</button>
+                                </td>
                                 <td style="color: #555;">{{.Status}}</td>
                                 <td>
                                     <span class="status-badge status-active">{{.Grade}}</span>
                                 </td>
-                                <td style="font-weight: 600; color: #2c3e50;">{{.Price}}</td>
-                                <td style="color: #666;">{{.PaymentMethod}}</td>
                                 <td style="color: #555;">{{.SignupChannel}}</td>
                                 <td style="color: #333; font-weight: 600;">{{.Interviewer}}</td>
                                 <td class="col-date" style="font-size: 0.75rem;">{{.CreatedAt}}</td>
@@ -532,6 +524,51 @@
                     onPageClick: (p) => renderHistoryPage(p)
                 });
             }
+        }
+
+        // 멤버십 정보 모달
+        function openMembershipModal(memberSeq, memberName) {
+            if (typeof ModalManager === 'undefined') return;
+
+            fetch(`/api/complex/members/memberships?member_seq=${memberSeq}`)
+                .then(res => res.json())
+                .then(data => {
+                    const list = data.memberships || [];
+                    const content = list.length === 0
+                        ? '<div style="text-align:center; padding:2rem; color:#999;">활성 멤버십이 없습니다.</div>'
+                        : list.map(ms => {
+                            const rem = ms.TotalCount - ms.UsedCount;
+                            const pctUsed = ms.TotalCount > 0 ? Math.round(ms.UsedCount / ms.TotalCount * 100) : 0;
+                            return `
+                                <div style="border:1.5px solid #e0e7ff; border-radius:10px; padding:16px; margin-bottom:12px; background:#fafaff;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                        <span style="font-weight:700; font-size:1rem; color:#4338ca;">${ms.MembershipName}</span>
+                                        <span style="font-size:0.78rem; font-weight:600; color:#16a34a; background:#dcfce7; padding:2px 10px; border-radius:12px;">${ms.Status}</span>
+                                    </div>
+                                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.85rem;">
+                                        <div><span style="color:#888;">기간</span><br><strong>${ms.StartDate} ~ ${ms.ExpiryDate}</strong></div>
+                                        <div><span style="color:#888;">수업 횟수</span><br><strong style="color:#4a90e2;">${ms.UsedCount}회 사용 / ${ms.TotalCount}회 (잔여 ${rem}회)</strong></div>
+                                        <div><span style="color:#888;">결제 금액</span><br><strong>${ms.Price || '-'}</strong></div>
+                                        <div><span style="color:#888;">연기</span><br><strong>${ms.PostponeUsed}회 사용 / ${ms.PostponeTotal}회</strong></div>
+                                    </div>
+                                    <div style="margin-top:10px; background:#e5e7eb; border-radius:6px; height:8px; overflow:hidden;">
+                                        <div style="width:${pctUsed}%; height:100%; background:#6366f1; border-radius:6px;"></div>
+                                    </div>
+                                    <div style="text-align:right; font-size:0.75rem; color:#888; margin-top:4px;">수업 진행률 ${pctUsed}%</div>
+                                </div>
+                            `;
+                        }).join('');
+
+                    ModalManager.createCustom({
+                        id: 'membershipInfoModal',
+                        title: `${memberName} - 멤버십 정보 (${list.length}건)`,
+                        maxWidth: '560px',
+                        headerColor: '#6366f1',
+                        contentBuilder: () => `<div style="padding:12px 16px;">${content}</div>`,
+                        buttons: [{ text: '닫기', class: 'btn-secondary', onClick: () => ModalManager.hide('membershipInfoModal') }]
+                    });
+                })
+                .catch(() => alert('멤버십 정보를 불러오는 중 오류가 발생했습니다.'));
         }
     </script>
 </body>

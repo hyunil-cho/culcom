@@ -83,9 +83,9 @@
                             <label class="form-label">수업 시간대</label>
                             <select id="slotSelect" class="form-input" onchange="updateClassOptions()">
                                 <option value="">-- 시간대 선택 --</option>
-                                <option value="월수 오전">월수 오전팀 (10:00 ~ 12:00)</option>
-                                <option value="화목 오후">화목 오후팀 (14:00 ~ 16:00)</option>
-                                <option value="주말 집중">주말 집중팀 (13:00 ~ 17:00)</option>
+                                {{range .TimeSlots}}
+                                <option value="{{index . "seq"}}">{{index . "name"}} ({{index . "days_of_week"}} {{index . "start_time"}} ~ {{index . "end_time"}})</option>
+                                {{end}}
                             </select>
                         </div>
 
@@ -103,17 +103,21 @@
 
                         <div class="form-row">
                             <label class="form-label">가입일</label>
-                            <input type="date" id="joinDate" name="join_date" class="form-input" value="{{.Member.JoinDate}}" onchange="calculateExpiryDate()">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <input type="datetime-local" id="joinDate" name="join_date" class="form-input" value="{{.Member.JoinDate}}" onchange="calculateExpiryDate()" style="flex:1;">
+                                <label style="display:flex; align-items:center; gap:4px; white-space:nowrap; font-size:0.85rem; color:#555; cursor:pointer;">
+                                    <input type="checkbox" id="joinDateNow" onchange="toggleNow(this, 'joinDate')"> 현재시간으로 설정
+                                </label>
+                            </div>
                         </div>
 
                         <div class="form-row">
                             <label class="form-label">등급 (멤버십)</label>
-                            <select id="gradeSelect" name="grade" class="form-input" onchange="calculateExpiryDate()">
-                                <option value="멤버쉽" {{if eq .Member.Grade "멤버쉽"}}selected{{end}}>멤버쉽 (1개월)</option>
-                                <option value="A+" {{if eq .Member.Grade "A+"}}selected{{end}}>A+ (3개월)</option>
-                                <option value="VVIP" {{if eq .Member.Grade "VVIP"}}selected{{end}}>VVIP (6개월)</option>
-                                <option value="VVIP+" {{if eq .Member.Grade "VVIP+"}}selected{{end}}>VVIP+ (12개월)</option>
-                                <option value="H+" {{if eq .Member.Grade "H+"}}selected{{end}}>H+ (평생)</option>
+                            <select id="gradeSelect" name="membership_seq" class="form-input" onchange="calculateExpiryDate()">
+                                <option value="">-- 멤버십 선택 --</option>
+                                {{range .Memberships}}
+                                <option value="{{.Seq}}" data-duration="{{.Duration}}" data-name="{{.Name}}">{{.Name}} ({{.Duration}}일)</option>
+                                {{end}}
                             </select>
                         </div>
 
@@ -130,7 +134,12 @@
 
                         <div class="form-row">
                             <label class="form-label">납부일</label>
-                            <input type="datetime-local" name="payment_date" class="form-input" value="{{.Member.PaymentDate}}">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <input type="datetime-local" id="paymentDate" name="payment_date" class="form-input" value="{{.Member.PaymentDate}}" style="flex:1;">
+                                <label style="display:flex; align-items:center; gap:4px; white-space:nowrap; font-size:0.85rem; color:#555; cursor:pointer;">
+                                    <input type="checkbox" id="paymentDateNow" onchange="toggleNow(this, 'paymentDate')"> 현재시간으로 설정
+                                </label>
+                            </div>
                         </div>
 
                         <div class="form-row">
@@ -183,17 +192,6 @@
                             </div>
                         </div>
 
-                        {{if .IsEdit}}
-                        <div class="form-row">
-                            <label class="form-label">최근수업일</label>
-                            <input type="date" name="last_date" class="form-input" value="{{.Member.LastDate}}">
-                        </div>
-
-                        <div class="form-row">
-                            <label class="form-label">잔여횟수/통계</label>
-                            <input type="text" name="stats" class="form-input" value="{{.Member.Stats}}" placeholder="예: 0 did 100 left">
-                        </div>
-                        {{end}}
 
                         <div class="form-row">
                             <label class="form-label">인터뷰어</label>
@@ -240,39 +238,54 @@
     </div>
 
 <script>
-// Mock 데이터: 시간대별 수업 목록
+// DB에서 전달된 수업 목록
 const allAvailableClasses = [
-    { id: "101", name: "레벨1-1반", slot: "월수 오전" },
-    { id: "102", name: "레벨1-2반", slot: "월수 오전" },
-    { id: "103", name: "프리토킹 A반", slot: "월수 오전" },
-    { id: "201", name: "레벨2-1반", slot: "화목 오후" },
-    { id: "202", name: "프리토킹 B반", slot: "화목 오후" },
-    { id: "301", name: "주말 입문반", slot: "주말 집중" },
-    { id: "302", name: "주말 고급반", slot: "주말 집중" }
+    {{range .Classes}}
+    { id: "{{index . "seq"}}", name: "{{index . "name"}}", slotSeq: {{index . "time_slot_seq"}}, slotName: "{{index . "time_slot_name"}}", startTime: "{{index . "start_time"}}", endTime: "{{index . "end_time"}}" },
+    {{end}}
 ];
 
 function updateClassOptions() {
     const slotSelect = document.getElementById('slotSelect');
     const classSelect = document.getElementById('classSelect');
-    const selectedSlot = slotSelect.value;
+    const selectedSlotSeq = slotSelect.value;
 
     classSelect.innerHTML = '<option value="">-- 수업 선택 --</option>';
 
-    if (!selectedSlot) {
+    if (!selectedSlotSeq) {
         classSelect.disabled = true;
         classSelect.innerHTML = '<option value="">-- 시간대를 먼저 선택하세요 --</option>';
         return;
     }
 
-    const filteredClasses = allAvailableClasses.filter(c => c.slot === selectedSlot);
-    filteredClasses.forEach(cls => {
+    const filtered = allAvailableClasses.filter(c => String(c.slotSeq) === selectedSlotSeq);
+    filtered.forEach(cls => {
         const option = document.createElement('option');
         option.value = cls.id;
-        option.textContent = cls.name;
+        option.textContent = cls.name + ' [' + cls.startTime + '~' + cls.endTime + ']';
         classSelect.appendChild(option);
     });
 
     classSelect.disabled = false;
+}
+
+function toggleNow(checkbox, inputId) {
+    const input = document.getElementById(inputId);
+    if (checkbox.checked) {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        const h = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        input.value = `${y}-${m}-${d}T${h}:${min}`;
+        input.readOnly = true;
+        input.style.backgroundColor = '#f8f9fa';
+        if (inputId === 'joinDate') calculateExpiryDate();
+    } else {
+        input.readOnly = false;
+        input.style.backgroundColor = '';
+    }
 }
 
 function calculateExpiryDate() {
@@ -282,20 +295,12 @@ function calculateExpiryDate() {
 
     if (!gradeSelect || !gradeSelect.value) return;
 
+    const selectedOption = gradeSelect.options[gradeSelect.selectedIndex];
+    const durationDays = parseInt(selectedOption.dataset.duration, 10);
+    if (!durationDays || durationDays <= 0) return;
+
     let baseDate = joinDateInput && joinDateInput.value ? new Date(joinDateInput.value) : new Date();
-
-    const gradeDuration = {
-        '멤버쉽': 1,
-        'A+': 3,
-        'VVIP': 6,
-        'VVIP+': 12,
-        'H+': 120
-    };
-
-    const months = gradeDuration[gradeSelect.value] || 0;
-    if (months === 0) return;
-
-    baseDate.setMonth(baseDate.getMonth() + months);
+    baseDate.setDate(baseDate.getDate() + durationDays);
 
     const yyyy = baseDate.getFullYear();
     const mm = String(baseDate.getMonth() + 1).padStart(2, '0');

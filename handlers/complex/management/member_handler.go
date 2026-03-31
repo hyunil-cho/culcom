@@ -1,75 +1,84 @@
 package management
 
 import (
+	"backoffice/database"
 	"backoffice/middleware"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
 )
 
-// MOCK 전역 데이터 (실제 DB 연동 전까지 유지)
-var mockMembers = []Member{
-	{
-		ID: 1, Name: "송예은", Level: "3-", Info: "대학생, 영어회화 관심", JoinDate: "2026-01-08",
-		PhoneNumber: "01052852951", LastDate: "2025-12-22", ExpiryDate: "2036-10-21",
-		Stats: "22 did 1109 left", Grade: "VVIP+", Price: "1,200,000", PaymentMethod: "카드", SignupChannel: "인스타그램", Interviewer: "김강사",
-		CreatedAt: "2026-01-08 09:30", UpdatedAt: "2026-03-15 14:20",
-		AttendanceHistory: []string{"O", "O", "", "O", "", "", "O", "O", "O", "O"},
-	},
-	{
-		ID: 2, Name: "홍지완", Level: "", Info: "직장인, 조용한 성격", JoinDate: "0000-00-00",
-		PhoneNumber: "01022223333", LastDate: "0000-00-00", ExpiryDate: "0000-00-00",
-		Stats: "0 left", Grade: "멤버쉽", Price: "150,000", PaymentMethod: "현금", SignupChannel: "지인 소개", Interviewer: "이매니저",
-		CreatedAt: "2026-02-01 11:00", UpdatedAt: "2026-02-01 11:00",
-		AttendanceHistory: []string{"", "O", "O", "O", "O", "O", "", "", "", ""},
-	},
-	{
-		ID: 3, Name: "김재민", Level: "0", Info: "고등학생, 수능 준비", JoinDate: "0000-00-00",
-		PhoneNumber: "01086859818", LastDate: "2026-02-09", ExpiryDate: "2027-02-08",
-		Stats: "8 did 97 left", Grade: "A+", Price: "450,000", PaymentMethod: "계좌이체", SignupChannel: "네이버 검색", Interviewer: "박교수",
-		CreatedAt: "2026-01-20 10:15", UpdatedAt: "2026-03-10 16:45",
-		AttendanceHistory: []string{"", "", "", "O", "", "", "", "", "", ""},
-	},
-	{
-		ID: 4, Name: "최민지", Level: "0", Info: "주부, 취미 목적", JoinDate: "0000-00-00",
-		PhoneNumber: "01040733875", LastDate: "2026-01-05", ExpiryDate: "2027-01-04",
-		Stats: "18 did 87 left", Grade: "A+", Price: "450,000", PaymentMethod: "카드", SignupChannel: "전단지", Interviewer: "김강사",
-		CreatedAt: "2025-12-15 13:30", UpdatedAt: "2026-02-28 09:10",
-		AttendanceHistory: []string{"", "", "", "", "", "", "O", "O", "O", ""},
-	},
-	{
-		ID: 5, Name: "김무준", Level: "0", Info: "프리랜서, 적극적", JoinDate: "2026-01-08",
-		PhoneNumber: "01054117431", LastDate: "2026-01-06", ExpiryDate: "2036-01-05",
-		Stats: "17 did 1026 left", Grade: "VVIP", Price: "800,000", PaymentMethod: "카드", SignupChannel: "홈페이지", Interviewer: "이매니저",
-		CreatedAt: "2026-01-08 15:00", UpdatedAt: "2026-03-20 11:30",
-		AttendanceHistory: []string{"O", "", "O", "O", "O", "", "", "", "", ""},
-	},
+// toMemberFromDB - DB 구조체를 템플릿용 Member 구조체로 변환
+func toMemberFromDB(m *database.ComplexMember) Member {
+	pts := func(s *string) string {
+		if s == nil {
+			return ""
+		}
+		return *s
+	}
+	return Member{
+		ID:            m.Seq,
+		BranchSeq:     fmt.Sprintf("%d", m.BranchSeq),
+		Name:          m.Name,
+		PhoneNumber:   m.PhoneNumber,
+		Level:         pts(m.Level),
+		Language:      pts(m.Language),
+		Info:          pts(m.Info),
+		ChartNumber:   pts(m.ChartNumber),
+		Comment:       pts(m.Comment),
+		JoinDate:      pts(m.JoinDate),
+		SignupChannel: pts(m.SignupChannel),
+		Interviewer:   pts(m.Interviewer),
+		CreatedAt:     m.CreatedDate,
+		UpdatedAt:     pts(m.LastUpdateDate),
+	}
+}
+
+func strPtrIfNotEmpty(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }
 
 // FindMemberByPhone - 전화번호로 회원 검색 (공개 API용)
 func FindMemberByPhone(phone string) *Member {
-	for _, m := range mockMembers {
-		if m.PhoneNumber == phone {
-			member := m
-			return &member
-		}
+	dbMember, err := database.FindComplexMemberByPhone(phone)
+	if err != nil {
+		return nil
 	}
-	return nil
+	m := toMemberFromDB(dbMember)
+	return &m
 }
 
-// MemberListHandler - 회원 관리 목록 (전체 회원 리스트)
+// MemberListHandler - 회원 관리 목록
 func MemberListHandler(w http.ResponseWriter, r *http.Request) {
+	base := middleware.GetBasePageData(r)
+	branchSeq := base.SelectedBranchSeq
+
+	dbMembers, err := database.GetComplexMembersByBranch(branchSeq)
+	if err != nil {
+		log.Printf("MemberListHandler - GetComplexMembersByBranch error: %v", err)
+	}
+
+	var members []Member
+	for i := range dbMembers {
+		members = append(members, toMemberFromDB(&dbMembers[i]))
+	}
+
 	data := struct {
 		middleware.BasePageData
 		Title      string
 		ActiveMenu string
 		Members    []Member
 	}{
-		BasePageData: middleware.GetBasePageData(r),
+		BasePageData: base,
 		Title:        "전체 회원 관리",
 		ActiveMenu:   "complex_members",
-		Members:      mockMembers,
+		Members:      members,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "dashboard/member_list.html", data); err != nil {
@@ -80,17 +89,39 @@ func MemberListHandler(w http.ResponseWriter, r *http.Request) {
 
 // MemberAddHandler - 새 회원 등록 화면
 func MemberAddHandler(w http.ResponseWriter, r *http.Request) {
+	base := middleware.GetBasePageData(r)
+	branchSeq := base.SelectedBranchSeq
+
+	memberships, err := database.GetAllMemberships()
+	if err != nil {
+		log.Printf("MemberAddHandler - GetAllMemberships error: %v", err)
+	}
+	timeSlots, err := database.GetClassTimeSlotsByBranch(branchSeq)
+	if err != nil {
+		log.Printf("MemberAddHandler - GetClassTimeSlotsByBranch error: %v", err)
+	}
+	classes, err := database.GetComplexClassesByBranch(branchSeq)
+	if err != nil {
+		log.Printf("MemberAddHandler - GetComplexClassesByBranch error: %v", err)
+	}
+
 	data := struct {
 		middleware.BasePageData
-		Title      string
-		ActiveMenu string
-		IsEdit     bool
-		Member     Member
+		Title       string
+		ActiveMenu  string
+		IsEdit      bool
+		Member      Member
+		Memberships []database.Membership
+		TimeSlots   []map[string]interface{}
+		Classes     []map[string]interface{}
 	}{
-		BasePageData: middleware.GetBasePageData(r),
+		BasePageData: base,
 		Title:        "새 회원 등록",
 		ActiveMenu:   "complex_members",
 		IsEdit:       false,
+		Memberships:  memberships,
+		TimeSlots:    timeSlots,
+		Classes:      classes,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "dashboard/member_form.html", data); err != nil {
@@ -102,28 +133,55 @@ func MemberAddHandler(w http.ResponseWriter, r *http.Request) {
 // MemberEditHandler - 회원 정보 수정 화면
 func MemberEditHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
-	id, _ := strconv.Atoi(idStr)
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Redirect(w, r, "/complex/members", http.StatusSeeOther)
+		return
+	}
 
-	var member Member
-	for _, m := range mockMembers {
-		if m.ID == id {
-			member = m
-			break
-		}
+	dbMember, err := database.GetComplexMemberByID(id)
+	if err != nil {
+		log.Printf("MemberEditHandler - GetComplexMemberByID error: %v", err)
+		http.Redirect(w, r, "/complex/members", http.StatusSeeOther)
+		return
+	}
+
+	member := toMemberFromDB(dbMember)
+
+	base := middleware.GetBasePageData(r)
+	branchSeq := base.SelectedBranchSeq
+
+	memberships, err := database.GetAllMemberships()
+	if err != nil {
+		log.Printf("MemberEditHandler - GetAllMemberships error: %v", err)
+	}
+	timeSlots, err := database.GetClassTimeSlotsByBranch(branchSeq)
+	if err != nil {
+		log.Printf("MemberEditHandler - GetClassTimeSlotsByBranch error: %v", err)
+	}
+	classes, err := database.GetComplexClassesByBranch(branchSeq)
+	if err != nil {
+		log.Printf("MemberEditHandler - GetComplexClassesByBranch error: %v", err)
 	}
 
 	data := struct {
 		middleware.BasePageData
-		Title      string
-		ActiveMenu string
-		IsEdit     bool
-		Member     Member
+		Title       string
+		ActiveMenu  string
+		IsEdit      bool
+		Member      Member
+		Memberships []database.Membership
+		TimeSlots   []map[string]interface{}
+		Classes     []map[string]interface{}
 	}{
-		BasePageData: middleware.GetBasePageData(r),
+		BasePageData: base,
 		Title:        "회원 정보 수정",
 		ActiveMenu:   "complex_members",
 		IsEdit:       true,
 		Member:       member,
+		Memberships:  memberships,
+		TimeSlots:    timeSlots,
+		Classes:      classes,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "dashboard/member_form.html", data); err != nil {
@@ -141,66 +199,114 @@ func MemberUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	idStr := r.FormValue("id")
 	name := r.FormValue("name")
-	level := r.FormValue("level")
-	info := r.FormValue("info")
 	phone := r.FormValue("phone_number")
-	joinDate := r.FormValue("join_date")
-	lastDate := r.FormValue("last_date")
-	expiryDate := r.FormValue("expiry_date")
-	grade := r.FormValue("grade")
-	stats := r.FormValue("stats")
+	branchSeqStr := r.FormValue("branch_seq")
+	level := r.FormValue("level")
+	language := r.FormValue("language")
+	info := r.FormValue("info")
 	chartNumber := r.FormValue("chart_number")
 	comment := r.FormValue("comment")
-	price := r.FormValue("price")
-	paymentMethod := r.FormValue("payment_method")
-	if paymentMethod == "기타" {
-		if custom := r.FormValue("payment_method_custom"); custom != "" {
-			paymentMethod = custom
-		}
-	}
+	joinDate := r.FormValue("join_date")
 	signupChannel := r.FormValue("signup_channel")
 	if signupChannel == "기타" {
 		if custom := r.FormValue("signup_channel_custom"); custom != "" {
 			signupChannel = custom
 		}
 	}
-
 	interviewer := r.FormValue("interviewer")
-	now := time.Now().Format("2006-01-02 15:04")
 
-	if idStr == "" { // 신규
-		newID := len(mockMembers) + 1
-		mockMembers = append(mockMembers, Member{
-			ID: newID, Name: name, Level: level, Info: info,
-			PhoneNumber: phone, JoinDate: joinDate, LastDate: lastDate,
-			ExpiryDate: expiryDate, Grade: grade, Stats: stats,
-			ChartNumber: chartNumber, Comment: comment,
-			Price: price, PaymentMethod: paymentMethod, SignupChannel: signupChannel,
-			Interviewer: interviewer,
-			CreatedAt:   now, UpdatedAt: now,
-			AttendanceHistory: []string{"", "", "", "", "", "", "", "", "", ""},
-		})
-	} else { // 수정
-		id, _ := strconv.Atoi(idStr)
-		for i, m := range mockMembers {
-			if m.ID == id {
-				mockMembers[i].Name = name
-				mockMembers[i].Level = level
-				mockMembers[i].Info = info
-				mockMembers[i].PhoneNumber = phone
-				mockMembers[i].JoinDate = joinDate
-				mockMembers[i].LastDate = lastDate
-				mockMembers[i].ExpiryDate = expiryDate
-				mockMembers[i].Grade = grade
-				mockMembers[i].Stats = stats
-				mockMembers[i].ChartNumber = chartNumber
-				mockMembers[i].Comment = comment
-				mockMembers[i].Price = price
-				mockMembers[i].PaymentMethod = paymentMethod
-				mockMembers[i].SignupChannel = signupChannel
-				mockMembers[i].Interviewer = interviewer
-				mockMembers[i].UpdatedAt = now
-				break
+	// 멤버십 관련 필드
+	membershipSeqStr := r.FormValue("membership_seq")
+	expiryDate := r.FormValue("expiry_date")
+	price := r.FormValue("price")
+	paymentDate := r.FormValue("payment_date")
+	paymentMethod := r.FormValue("payment_method")
+	if paymentMethod == "기타" {
+		if custom := r.FormValue("payment_method_custom"); custom != "" {
+			paymentMethod = custom
+		}
+	}
+	depositAmount := r.FormValue("deposit_amount")
+
+	// 수업 배정
+	classIDStr := r.FormValue("class_id")
+
+	branchSeq, err := strconv.Atoi(branchSeqStr)
+	if err != nil {
+		http.Error(w, "잘못된 지점 정보입니다.", http.StatusBadRequest)
+		return
+	}
+
+	var memberID int64
+
+	if idStr == "" {
+		// 신규 등록
+		memberID, err = database.InsertComplexMember(
+			branchSeq, name, phone,
+			strPtrIfNotEmpty(level), strPtrIfNotEmpty(language), strPtrIfNotEmpty(info),
+			strPtrIfNotEmpty(chartNumber), strPtrIfNotEmpty(comment), strPtrIfNotEmpty(joinDate),
+			strPtrIfNotEmpty(signupChannel), strPtrIfNotEmpty(interviewer),
+		)
+		if err != nil {
+			log.Printf("MemberUpdateHandler - InsertComplexMember error: %v", err)
+			http.Error(w, "회원 등록 중 오류가 발생했습니다.", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		// 수정
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, "잘못된 회원 ID입니다.", http.StatusBadRequest)
+			return
+		}
+		memberID = int64(id)
+
+		err = database.UpdateComplexMember(
+			id, branchSeq, name, phone,
+			strPtrIfNotEmpty(level), strPtrIfNotEmpty(language), strPtrIfNotEmpty(info),
+			strPtrIfNotEmpty(chartNumber), strPtrIfNotEmpty(comment), strPtrIfNotEmpty(joinDate),
+			strPtrIfNotEmpty(signupChannel), strPtrIfNotEmpty(interviewer),
+		)
+		if err != nil {
+			log.Printf("MemberUpdateHandler - UpdateComplexMember error: %v", err)
+			http.Error(w, "회원 수정 중 오류가 발생했습니다.", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// 멤버십 연결 (선택된 경우)
+	if membershipSeqStr != "" {
+		msSeq, err := strconv.Atoi(membershipSeqStr)
+		if err == nil && msSeq > 0 {
+			ms, err := database.GetMembershipByID(msSeq)
+			if err == nil {
+				startDate := joinDate
+				if startDate == "" {
+					startDate = time.Now().Format("2006-01-02")
+				}
+				if expiryDate == "" {
+					start, _ := time.Parse("2006-01-02", startDate)
+					expiryDate = start.AddDate(0, 0, ms.Duration).Format("2006-01-02")
+				}
+
+				_, err = database.InsertMemberMembership(
+					int(memberID), msSeq, startDate, expiryDate, ms.Count,
+					strPtrIfNotEmpty(price), strPtrIfNotEmpty(depositAmount),
+					strPtrIfNotEmpty(paymentMethod), strPtrIfNotEmpty(paymentDate),
+				)
+				if err != nil {
+					log.Printf("MemberUpdateHandler - InsertMemberMembership error: %v", err)
+				}
+			}
+		}
+	}
+
+	// 수업 배정 (선택된 경우)
+	if classIDStr != "" {
+		classID, err := strconv.Atoi(classIDStr)
+		if err == nil && classID > 0 {
+			if err := database.AssignMemberToClass(int(memberID), classID); err != nil {
+				log.Printf("MemberUpdateHandler - AssignMemberToClass error: %v", err)
 			}
 		}
 	}
@@ -216,14 +322,36 @@ func MemberDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	idStr := r.FormValue("id")
-	id, _ := strconv.Atoi(idStr)
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "잘못된 회원 ID입니다.", http.StatusBadRequest)
+		return
+	}
 
-	for i, m := range mockMembers {
-		if m.ID == id {
-			mockMembers = append(mockMembers[:i], mockMembers[i+1:]...)
-			break
-		}
+	if err := database.DeleteComplexMember(id); err != nil {
+		log.Printf("MemberDeleteHandler - DeleteComplexMember error: %v", err)
+		http.Error(w, "회원 삭제 중 오류가 발생했습니다.", http.StatusInternalServerError)
+		return
 	}
 
 	http.Redirect(w, r, "/complex/members", http.StatusSeeOther)
+}
+
+// MemberMembershipsAPIHandler - 회원의 멤버십 목록 조회 API (JSON)
+func MemberMembershipsAPIHandler(w http.ResponseWriter, r *http.Request) {
+	memberSeqStr := r.URL.Query().Get("member_seq")
+	memberSeq, err := strconv.Atoi(memberSeqStr)
+	if err != nil || memberSeq <= 0 {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"memberships":[]}`))
+		return
+	}
+
+	memberships, err := database.GetActiveMembershipsByMember(memberSeq)
+	if err != nil {
+		log.Printf("MemberMembershipsAPIHandler error: %v", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{"memberships": memberships})
 }
