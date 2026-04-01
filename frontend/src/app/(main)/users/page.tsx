@@ -6,6 +6,7 @@ import { useSessionStore } from '@/lib/store';
 import ResultModal from '@/components/ui/ResultModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import ModalOverlay from '@/components/ui/ModalOverlay';
+import DataTable, { type Column } from '@/components/ui/DataTable';
 
 const ROLE_LABELS: Record<string, string> = {
   ROOT: '최고관리자',
@@ -44,6 +45,15 @@ export default function UsersPage() {
 
   const creatingRole = SessionRole.isRoot(session) ? '지점장' : '직원';
 
+  const userColumns: Column<UserResponse>[] = [
+    { header: '아이디', render: (u) => <strong>{u.userId}</strong> },
+    { header: '역할', render: (u) => <span className="status-badge status-active">{ROLE_LABELS[u.role] ?? u.role}</span> },
+    { header: '생성일', render: (u) => u.createdDate },
+    { header: '관리', render: (u) => u.role !== 'ROOT' ? (
+      <button className="btn-table-delete" onClick={() => setDeleting(u)}>삭제</button>
+    ) : null },
+  ];
+
   return (
     <>
       <div className="content-card action-bar">
@@ -58,40 +68,12 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <div className="content-card">
-        <div className="table-header">
-          <div className="table-info">
-            <span>총 <strong>{users.length}</strong>명</span>
-          </div>
-        </div>
-
-        <table>
-          <thead>
-            <tr>
-              <th>아이디</th>
-              <th>역할</th>
-              <th>생성일</th>
-              <th>관리</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.seq}>
-                <td><strong>{u.userId}</strong></td>
-                <td><span className="status-badge status-active">{ROLE_LABELS[u.role] ?? u.role}</span></td>
-                <td>{u.createdDate}</td>
-                <td>
-                  {u.role !== 'ROOT' && (
-                    <button className="btn-table-delete" onClick={() => setDeleting(u)}>
-                      삭제
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        columns={userColumns}
+        data={users}
+        rowKey={(u) => u.seq}
+        headerInfo={<span>총 <strong>{users.length}</strong>명</span>}
+      />
 
       {/* 생성 모달 */}
       {showCreate && (

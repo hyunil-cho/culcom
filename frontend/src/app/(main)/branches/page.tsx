@@ -6,6 +6,7 @@ import { branchApi, SessionRole, type Branch } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
 import ResultModal from '@/components/ui/ResultModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import DataTable, { type Column } from '@/components/ui/DataTable';
 
 export default function BranchesPage() {
   const session = useSessionStore((s) => s.session);
@@ -18,6 +19,24 @@ export default function BranchesPage() {
   const load = () => { branchApi.list().then(res => setBranches(res.data)); };
 
   useEffect(() => { load(); }, []);
+
+  const branchColumns: Column<Branch>[] = [
+    { header: '지점명', render: (b) => <strong>{b.branchName}</strong> },
+    { header: '영문코드', render: (b) => <span className="status-badge status-active">{b.alias}</span> },
+    { header: '담당자', render: (b) => b.branchManager ?? '-' },
+    { header: '등록일', render: (b) => b.createdDate ?? '-' },
+    { header: '관리', render: (b) => (
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <Link href={`/branches/${b.seq}`} className="btn-table-action">상세</Link>
+        {canEdit && (
+          <>
+            <Link href={`/branches/${b.seq}/edit`} className="btn-table-action">수정</Link>
+            <button className="btn-table-delete" onClick={() => setDeleting(b.seq)}>삭제</button>
+          </>
+        )}
+      </div>
+    )},
+  ];
 
   const confirmDelete = async () => {
     if (deleting === null) return;
@@ -38,46 +57,12 @@ export default function BranchesPage() {
         </div>
       )}
 
-      <div className="content-card">
-        <div className="table-header">
-          <div className="table-info">
-            <span>총 <strong>{branches.length}</strong>개 지점</span>
-          </div>
-        </div>
-
-        <table>
-          <thead>
-            <tr>
-              <th>지점명</th>
-              <th>영문코드</th>
-              <th>담당자</th>
-              <th>등록일</th>
-              <th>관리</th>
-            </tr>
-          </thead>
-          <tbody>
-            {branches.map((b) => (
-              <tr key={b.seq}>
-                <td><strong>{b.branchName}</strong></td>
-                <td><span className="status-badge status-active">{b.alias}</span></td>
-                <td>{b.branchManager ?? '-'}</td>
-                <td>{b.createdDate ?? '-'}</td>
-                <td style={{ display: 'flex', gap: '0.5rem' }}>
-                  <Link href={`/branches/${b.seq}`} className="btn-table-action">상세</Link>
-                  {canEdit && (
-                    <>
-                      <Link href={`/branches/${b.seq}/edit`} className="btn-table-action">수정</Link>
-                      <button className="btn-table-delete" onClick={() => setDeleting(b.seq)}>
-                        삭제
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        columns={branchColumns}
+        data={branches}
+        rowKey={(b) => b.seq}
+        headerInfo={<span>총 <strong>{branches.length}</strong>개 지점</span>}
+      />
 
       {deleting !== null && (
         <ConfirmModal

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { staffApi, type ComplexStaff } from '@/lib/api';
+import DataTable, { type Column } from '@/components/ui/DataTable';
 
 export default function StaffsPage() {
   const [staffs, setStaffs] = useState<ComplexStaff[]>([]);
@@ -17,6 +18,14 @@ export default function StaffsPage() {
     return <span className={`badge ${map[status] ?? ''}`}>{status}</span>;
   };
 
+  const columns: Column<ComplexStaff>[] = [
+    { header: '이름', render: (s) => s.name },
+    { header: '전화번호', render: (s) => s.phoneNumber ?? '-' },
+    { header: '이메일', render: (s) => s.email ?? '-' },
+    { header: '담당 과목', render: (s) => s.subject ?? '-' },
+    { header: '상태', render: (s) => statusBadge(s.status) },
+  ];
+
   return (
     <>
       <div className="page-toolbar">
@@ -24,33 +33,11 @@ export default function StaffsPage() {
         <button className="btn-primary">+ 스태프 추가</button>
       </div>
 
-      <div className="card" style={{ padding: 0 }}>
-        <table>
-          <thead>
-            <tr>
-              <th>이름</th>
-              <th>전화번호</th>
-              <th>이메일</th>
-              <th>담당 과목</th>
-              <th>상태</th>
-            </tr>
-          </thead>
-          <tbody>
-            {staffs.map((s) => (
-              <tr key={s.seq}>
-                <td>{s.name}</td>
-                <td>{s.phoneNumber ?? '-'}</td>
-                <td>{s.email ?? '-'}</td>
-                <td>{s.subject ?? '-'}</td>
-                <td>{statusBadge(s.status)}</td>
-              </tr>
-            ))}
-            {staffs.length === 0 && (
-              <tr><td colSpan={5} className="table-empty">데이터가 없습니다.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        columns={columns}
+        data={staffs}
+        rowKey={(s) => s.seq}
+      />
     </>
   );
 }

@@ -7,6 +7,7 @@ import { toServerDateTime, formatDateTime } from '@/lib/dateUtils';
 import ResultModal from '@/components/ui/ResultModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import SearchBar from '@/components/ui/SearchBar';
+import DataTable, { type Column } from '@/components/ui/DataTable';
 
 const CALLERS = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P'];
 
@@ -179,6 +180,84 @@ export default function CustomersPage() {
     if (res.success) setResult({ success: true, message: '고객이 삭제되었습니다.' });
   };
 
+  const customerColumns: Column<Customer>[] = [
+    { header: '누적콜수', render: (c) => <strong>{c.callCount}회</strong> },
+    { header: '이름', render: (c) => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+        <div style={{ padding: '0.4rem 0.6rem', background: '#f8f9fa', borderRadius: 4, fontSize: '1.3rem', fontWeight: 700, minWidth: 120 }}>
+          {c.name}
+        </div>
+        <div style={{ display: 'flex', gap: '0.3rem' }}>
+          <input
+            placeholder="이름 입력"
+            value={nameInputs[c.seq] ?? ''}
+            onChange={(e) => setNameInputs(prev => ({ ...prev, [c.seq]: e.target.value }))}
+            style={{ padding: '0.4rem 0.6rem', border: '1px solid #ddd', borderRadius: 4, fontSize: '0.85rem', width: 120 }}
+          />
+          <button className="btn-inline btn-inline-success" onClick={() => handleNameUpdate(c.seq)}>수정</button>
+        </div>
+      </div>
+    )},
+    { header: '코멘트', render: (c) => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+        {c.comment && (
+          <div style={{ padding: '0.4rem 0.6rem', background: '#f8f9fa', borderRadius: 4, fontSize: '0.85rem', minWidth: 120 }}>
+            {c.comment}
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: '0.3rem' }}>
+          <input
+            placeholder="코멘트 입력"
+            value={commentInputs[c.seq] ?? ''}
+            onChange={(e) => setCommentInputs(prev => ({ ...prev, [c.seq]: e.target.value }))}
+            style={{ padding: '0.4rem 0.6rem', border: '1px solid #ddd', borderRadius: 4, fontSize: '0.85rem', width: 120 }}
+          />
+          <button className="btn-inline btn-inline-primary" onClick={() => handleCommentUpdate(c.seq)}>등록</button>
+        </div>
+      </div>
+    )},
+    { header: '전화번호', render: (c) => (
+      <div style={{ textAlign: 'center' }}>
+        {phoneVisible[c.seq]
+          ? <span style={{ fontSize: '1.3rem', fontWeight: 700 }}>{c.phoneNumber}</span>
+          : <span style={{ color: '#999' }}>***-****-****</span>
+        }
+      </div>
+    )},
+    { header: 'CALLER', render: (c) => (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, width: 'fit-content' }}>
+        {CALLERS.map(letter => (
+          <button
+            key={letter}
+            className={`btn-caller ${selectedCallers[c.seq] === letter ? 'btn-caller-active' : 'btn-caller-inactive'}`}
+            onClick={() => handleCallerClick(c.seq, letter)}
+          >
+            {letter}
+          </button>
+        ))}
+      </div>
+    )},
+    { header: '인터뷰확정일시', render: (c) => (
+      <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+        <input
+          type="datetime-local"
+          value={interviewInputs[c.seq] ?? ''}
+          onChange={(e) => setInterviewInputs(prev => ({ ...prev, [c.seq]: e.target.value }))}
+          style={{ padding: '0.4rem 0.6rem', border: '1px solid #ddd', borderRadius: 4, fontSize: '0.85rem', width: 180 }}
+        />
+        <button className="btn-inline btn-inline-info" onClick={() => handleInterviewConfirm(c.seq)}>확정</button>
+        <button className="btn-inline btn-inline-purple" onClick={() => handleMarkNoPhone(c.seq)}>전화상안함</button>
+      </div>
+    )},
+    { header: '광고명', render: (c) => c.commercialName ?? '-' },
+    { header: '지원경로', render: (c) => c.adSource ?? '-' },
+    { header: '등록일', render: (c) => c.createdDate?.split('T')[0] },
+    { header: '회신일시', render: (c) => formatDateTime(c.lastUpdateDate) },
+    { header: '삭제', render: (c) => (
+      <button className="btn-table-delete" onClick={() => setDeleting(c.seq)}>삭제</button>
+    )},
+  ];
+
   return (
     <>
       <SearchBar
@@ -195,12 +274,16 @@ export default function CustomersPage() {
         actions={<Link href="/customers/add" className="btn-primary btn-nav">+ 워크인 추가</Link>}
       />
 
-      {/* 고객 테이블 */}
-      <div className="content-card">
-        <div className="table-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <DataTable
+        columns={customerColumns}
+        data={customers}
+        rowKey={(c) => c.seq}
+        headerInfo={
           <span style={{ fontSize: '1rem', fontWeight: 600, color: '#333' }}>
             전체 <span style={{ color: '#4a90e2', fontSize: '1.2rem' }}>{totalCount}</span>명
           </span>
+        }
+        headerRight={
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             {(['new', 'all'] as const).map(f => (
               <button
@@ -212,140 +295,13 @@ export default function CustomersPage() {
               </button>
             ))}
           </div>
-        </div>
-
-        <div style={{ overflowX: 'auto' }}>
-          <table>
-            <thead>
-              <tr>
-                <th>누적콜수</th>
-                <th>이름</th>
-                <th>코멘트</th>
-                <th>전화번호</th>
-                <th>CALLER</th>
-                <th>인터뷰확정일시</th>
-                <th>광고명</th>
-                <th>지원경로</th>
-                <th>등록일</th>
-                <th>회신일시</th>
-                <th>삭제</th>
-              </tr>
-            </thead>
-            <tbody>
-              {customers.map((c) => (
-                <tr key={c.seq} style={c.lastUpdateDate ? { backgroundColor: '#f3e8ff' } : undefined}>
-                  <td><strong>{c.callCount}회</strong></td>
-
-                  {/* 이름 */}
-                  <td>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                      <div style={{ padding: '0.4rem 0.6rem', background: '#f8f9fa', borderRadius: 4, fontSize: '1.3rem', fontWeight: 700, minWidth: 120 }}>
-                        {c.name}
-                      </div>
-                      <div style={{ display: 'flex', gap: '0.3rem' }}>
-                        <input
-                          placeholder="이름 입력"
-                          value={nameInputs[c.seq] ?? ''}
-                          onChange={(e) => setNameInputs(prev => ({ ...prev, [c.seq]: e.target.value }))}
-                          style={{ padding: '0.4rem 0.6rem', border: '1px solid #ddd', borderRadius: 4, fontSize: '0.85rem', width: 120 }}
-                        />
-                        <button className="btn-inline btn-inline-success" onClick={() => handleNameUpdate(c.seq)}>
-                          수정
-                        </button>
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* 코멘트 */}
-                  <td>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                      {c.comment && (
-                        <div style={{ padding: '0.4rem 0.6rem', background: '#f8f9fa', borderRadius: 4, fontSize: '0.85rem', minWidth: 120 }}>
-                          {c.comment}
-                        </div>
-                      )}
-                      <div style={{ display: 'flex', gap: '0.3rem' }}>
-                        <input
-                          placeholder="코멘트 입력"
-                          value={commentInputs[c.seq] ?? ''}
-                          onChange={(e) => setCommentInputs(prev => ({ ...prev, [c.seq]: e.target.value }))}
-                          style={{ padding: '0.4rem 0.6rem', border: '1px solid #ddd', borderRadius: 4, fontSize: '0.85rem', width: 120 }}
-                        />
-                        <button className="btn-inline btn-inline-primary" onClick={() => handleCommentUpdate(c.seq)}>
-                          등록
-                        </button>
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* 전화번호 */}
-                  <td style={{ textAlign: 'center' }}>
-                    {phoneVisible[c.seq] ? (
-                      <span style={{ fontSize: '1.3rem', fontWeight: 700 }}>{c.phoneNumber}</span>
-                    ) : (
-                      <span style={{ color: '#999' }}>***-****-****</span>
-                    )}
-                  </td>
-
-                  {/* CALLER */}
-                  <td>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, width: 'fit-content' }}>
-                      {CALLERS.map(letter => (
-                        <button
-                          key={letter}
-                          className={`btn-caller ${selectedCallers[c.seq] === letter ? 'btn-caller-active' : 'btn-caller-inactive'}`}
-                          onClick={() => handleCallerClick(c.seq, letter)}
-                        >
-                          {letter}
-                        </button>
-                      ))}
-                    </div>
-                  </td>
-
-                  {/* 인터뷰 확정일시 */}
-                  <td>
-                    <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
-                      <input
-                        type="datetime-local"
-                        value={interviewInputs[c.seq] ?? ''}
-                        onChange={(e) => setInterviewInputs(prev => ({ ...prev, [c.seq]: e.target.value }))}
-                        style={{ padding: '0.4rem 0.6rem', border: '1px solid #ddd', borderRadius: 4, fontSize: '0.85rem', width: 180 }}
-                      />
-                      <button className="btn-inline btn-inline-info" onClick={() => handleInterviewConfirm(c.seq)}>
-                        확정
-                      </button>
-                      <button className="btn-inline btn-inline-purple" onClick={() => handleMarkNoPhone(c.seq)}>
-                        전화상안함
-                      </button>
-                    </div>
-                  </td>
-
-                  <td>{c.commercialName ?? '-'}</td>
-                  <td>{c.adSource ?? '-'}</td>
-                  <td>{c.createdDate?.split('T')[0]}</td>
-                  <td>{formatDateTime(c.lastUpdateDate)}</td>
-                  <td>
-                    <button className="btn-table-delete" onClick={() => setDeleting(c.seq)}>
-                      삭제
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {customers.length === 0 && (
-                <tr><td colSpan={11} className="table-empty">고객이 없습니다.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {totalPages > 1 && (
-          <div className="pagination">
-            <button className="btn-secondary" disabled={page === 0} onClick={() => setPage(p => p - 1)}>이전</button>
-            <span className="pagination-info">{page + 1} / {totalPages}</span>
-            <button className="btn-secondary" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>다음</button>
-          </div>
-        )}
-      </div>
+        }
+        rowStyle={(c) => c.lastUpdateDate ? { backgroundColor: '#f3e8ff' } : undefined}
+        emptyMessage="고객이 없습니다."
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
 
       {/* CALLER 확인 모달 */}
       {callerModal && (
