@@ -24,7 +24,7 @@ public class BranchListResponse {
                 .branchName(branch.getBranchName())
                 .alias(branch.getAlias())
                 .branchManager(branch.getBranchManager())
-                .createdBy(branch.getCreatedBy())
+                .createdBy(branch.getCreatedBy().getUserId())
                 .createdDate(branch.getCreatedDate())
                 .build();
     }

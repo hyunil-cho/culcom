@@ -29,7 +29,7 @@ public class BranchDetailResponse {
                 .branchManager(branch.getBranchManager())
                 .address(branch.getAddress())
                 .directions(branch.getDirections())
-                .createdBy(branch.getCreatedBy())
+                .createdBy(branch.getCreatedBy().getUserId())
                 .createdDate(branch.getCreatedDate())
                 .lastUpdateDate(branch.getLastUpdateDate())
                 .build();
