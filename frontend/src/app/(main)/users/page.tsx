@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { userApi, SessionRole, type UserResponse } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
 import ResultModal from '@/components/ui/ResultModal';
+import ConfirmModal from '@/components/ui/ConfirmModal';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 const ROLE_LABELS: Record<string, string> = {
   ROOT: '최고관리자',
@@ -44,13 +46,11 @@ export default function UsersPage() {
 
   return (
     <>
-      <div className="content-card" style={{ marginBottom: '1.5rem' }}>
+      <div className="content-card action-bar">
         <div className="search-section">
           <div className="action-buttons">
             {SessionRole.canManageUsers(session) && (
-              <button className="btn-primary" onClick={() => setShowCreate(true)} style={{
-                padding: '0.75rem 1.5rem', borderRadius: 8, fontSize: '0.95rem', fontWeight: 500,
-              }}>
+              <button className="btn-primary btn-nav" onClick={() => setShowCreate(true)}>
                 + {creatingRole} 추가
               </button>
             )}
@@ -82,11 +82,7 @@ export default function UsersPage() {
                 <td>{u.createdDate}</td>
                 <td>
                   {u.role !== 'ROOT' && (
-                    <button
-                      className="btn-table-action"
-                      onClick={() => setDeleting(u)}
-                      style={{ background: '#f44336', color: 'white', border: 'none' }}
-                    >
+                    <button className="btn-table-delete" onClick={() => setDeleting(u)}>
                       삭제
                     </button>
                   )}
@@ -99,96 +95,61 @@ export default function UsersPage() {
 
       {/* 생성 모달 */}
       {showCreate && (
-        <div
-          onClick={(e) => { if (e.target === e.currentTarget) setShowCreate(false); }}
-          style={{
-            display: 'flex', position: 'fixed', top: 0, left: 0,
-            width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)',
-            zIndex: 10000, alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          <div style={{
-            background: 'white', borderRadius: 12, width: '90%', maxWidth: 450,
-            boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-          }}>
-            <div style={{ padding: '1.5rem 2rem', borderBottom: '2px solid #4a90e2' }}>
-              <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#2c3e50' }}>{creatingRole} 계정 생성</h3>
-            </div>
-            <form onSubmit={handleCreate} style={{ padding: '2rem' }}>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: 4, fontSize: 14, fontWeight: 500 }}>아이디</label>
-                <input
-                  type="text"
-                  value={form.userId}
-                  onChange={(e) => setForm({ ...form, userId: e.target.value })}
-                  placeholder="아이디를 입력하세요"
-                  required
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: 6, border: '1px solid #ddd', fontSize: '0.95rem' }}
-                />
-              </div>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: 4, fontSize: 14, fontWeight: 500 }}>비밀번호</label>
-                <input
-                  type="password"
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder="비밀번호를 입력하세요"
-                  required
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: 6, border: '1px solid #ddd', fontSize: '0.95rem' }}
-                />
-              </div>
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
-                <button type="button" onClick={() => setShowCreate(false)} style={{
-                  flex: 1, padding: '0.75rem', fontSize: '1rem',
-                  border: '1px solid #ddd', background: 'white', color: '#666',
-                  borderRadius: 6, cursor: 'pointer',
-                }}>취소</button>
-                <button type="submit" style={{
-                  flex: 1, padding: '0.75rem', fontSize: '1rem',
-                  border: 'none', background: '#4a90e2', color: 'white',
-                  borderRadius: 6, cursor: 'pointer',
-                }}>생성</button>
-              </div>
-            </form>
+        <ModalOverlay onClose={() => setShowCreate(false)}>
+          <div style={{ padding: '1.5rem 2rem', borderBottom: '2px solid #4a90e2' }}>
+            <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#2c3e50' }}>{creatingRole} 계정 생성</h3>
           </div>
-        </div>
-      )}
-
-      {/* 삭제 확인 모달 */}
-      {deleting && (
-        <div
-          onClick={(e) => { if (e.target === e.currentTarget) setDeleting(null); }}
-          style={{
-            display: 'flex', position: 'fixed', top: 0, left: 0,
-            width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)',
-            zIndex: 10000, alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          <div style={{
-            background: 'white', borderRadius: 12, width: '90%', maxWidth: 400,
-            boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-          }}>
-            <div style={{ padding: '1.5rem 2rem', borderBottom: '2px solid #4a90e2' }}>
-              <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#2c3e50' }}>삭제 확인</h3>
+          <form onSubmit={handleCreate} style={{ padding: '2rem' }}>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: 4, fontSize: 14, fontWeight: 500 }}>아이디</label>
+              <input
+                type="text"
+                value={form.userId}
+                onChange={(e) => setForm({ ...form, userId: e.target.value })}
+                placeholder="아이디를 입력하세요"
+                required
+                style={{ width: '100%', padding: '0.75rem', borderRadius: 6, border: '1px solid #ddd', fontSize: '0.95rem' }}
+              />
             </div>
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#666', fontSize: '0.95rem' }}>
-              <strong>{deleting.userId}</strong> ({ROLE_LABELS[deleting.role]}) 계정을 삭제하시겠습니까?
-              <br /><br />이 작업은 되돌릴 수 없습니다.
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: 4, fontSize: 14, fontWeight: 500 }}>비밀번호</label>
+              <input
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                placeholder="비밀번호를 입력하세요"
+                required
+                style={{ width: '100%', padding: '0.75rem', borderRadius: 6, border: '1px solid #ddd', fontSize: '0.95rem' }}
+              />
             </div>
-            <div style={{ padding: '1rem 2rem', borderTop: '1px solid #e0e0e0', display: 'flex', gap: '0.75rem' }}>
-              <button onClick={() => setDeleting(null)} style={{
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
+              <button type="button" onClick={() => setShowCreate(false)} style={{
                 flex: 1, padding: '0.75rem', fontSize: '1rem',
                 border: '1px solid #ddd', background: 'white', color: '#666',
                 borderRadius: 6, cursor: 'pointer',
               }}>취소</button>
-              <button onClick={confirmDelete} style={{
+              <button type="submit" style={{
                 flex: 1, padding: '0.75rem', fontSize: '1rem',
-                border: 'none', background: '#f44336', color: 'white',
+                border: 'none', background: '#4a90e2', color: 'white',
                 borderRadius: 6, cursor: 'pointer',
-              }}>삭제</button>
+              }}>생성</button>
             </div>
-          </div>
-        </div>
+          </form>
+        </ModalOverlay>
+      )}
+
+      {/* 삭제 확인 모달 */}
+      {deleting && (
+        <ConfirmModal
+          title="삭제 확인"
+          onCancel={() => setDeleting(null)}
+          onConfirm={confirmDelete}
+          confirmLabel="삭제"
+          confirmColor="#f44336"
+        >
+          <strong>{deleting.userId}</strong> ({ROLE_LABELS[deleting.role]}) 계정을 삭제하시겠습니까?
+          <br /><br />이 작업은 되돌릴 수 없습니다.
+        </ConfirmModal>
       )}
 
       {result && (

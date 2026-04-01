@@ -22,8 +22,8 @@ export default function MembersPage() {
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 600 }}>회원 관리</h2>
+      <div className="page-toolbar">
+        <h2 className="page-title" style={{ marginBottom: 0 }}>회원 관리</h2>
         <div style={{ display: 'flex', gap: 8 }}>
           <input placeholder="이름/전화번호 검색" value={keyword}
                  onChange={(e) => setKeyword(e.target.value)}
@@ -55,18 +55,16 @@ export default function MembersPage() {
               </tr>
             ))}
             {members.length === 0 && (
-              <tr><td colSpan={5} style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>
-                데이터가 없습니다.
-              </td></tr>
+              <tr><td colSpan={5} className="table-empty">데이터가 없습니다.</td></tr>
             )}
           </tbody>
         </table>
       </div>
 
       {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
+        <div className="pagination">
           <button className="btn-secondary" disabled={page === 0} onClick={() => setPage(p => p - 1)}>이전</button>
-          <span style={{ padding: '8px 16px', fontSize: 14 }}>{page + 1} / {totalPages}</span>
+          <span className="pagination-info">{page + 1} / {totalPages}</span>
           <button className="btn-secondary" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>다음</button>
         </div>
       )}

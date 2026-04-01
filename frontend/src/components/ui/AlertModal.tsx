@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import ModalOverlay from './ModalOverlay';
 
 interface AlertModalProps {
   message: string;
@@ -12,24 +13,11 @@ export default function AlertModal({ message }: AlertModalProps) {
   if (!visible) return null;
 
   return (
-    <div
-      style={{
-        display: 'flex', position: 'fixed', top: 0, left: 0,
-        width: '100%', height: '100%',
-        background: 'rgba(0,0,0,0.5)', zIndex: 10000,
-        alignItems: 'center', justifyContent: 'center',
-      }}
-    >
-      <div style={{
-        background: 'white', borderRadius: 12,
-        width: '90%', maxWidth: 400,
-        boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-        textAlign: 'center', padding: '2rem 1.5rem',
-      }}>
+    <ModalOverlay>
+      <div style={{ textAlign: 'center', padding: '2rem 1.5rem' }}>
         <p style={{ margin: '0 0 1.5rem', color: '#333', fontSize: '0.95rem', lineHeight: 1.6 }}>
           {message}
         </p>
-
         <button
           onClick={() => setVisible(false)}
           style={{
@@ -41,6 +29,6 @@ export default function AlertModal({ message }: AlertModalProps) {
           확인
         </button>
       </div>
-    </div>
+    </ModalOverlay>
   );
 }

@@ -21,8 +21,8 @@ export default function ClassesPage() {
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 600 }}>수업 관리</h2>
+      <div className="page-toolbar">
+        <h2 className="page-title" style={{ marginBottom: 0 }}>수업 관리</h2>
         <button className="btn-primary">+ 수업 추가</button>
       </div>
 
@@ -45,15 +45,12 @@ export default function ClassesPage() {
                 <td>{c.capacity}</td>
                 <td>{c.sortOrder}</td>
                 <td>
-                  <button className="btn-danger" style={{ fontSize: 12, padding: '4px 8px' }}
-                          onClick={() => handleDelete(c.seq)}>삭제</button>
+                  <button className="btn-table-delete" onClick={() => handleDelete(c.seq)}>삭제</button>
                 </td>
               </tr>
             ))}
             {classes.length === 0 && (
-              <tr><td colSpan={5} style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>
-                데이터가 없습니다.
-              </td></tr>
+              <tr><td colSpan={5} className="table-empty">데이터가 없습니다.</td></tr>
             )}
           </tbody>
         </table>

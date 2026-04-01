@@ -19,8 +19,8 @@ export default function StaffsPage() {
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 600 }}>스태프 관리</h2>
+      <div className="page-toolbar">
+        <h2 className="page-title" style={{ marginBottom: 0 }}>스태프 관리</h2>
         <button className="btn-primary">+ 스태프 추가</button>
       </div>
 
@@ -46,9 +46,7 @@ export default function StaffsPage() {
               </tr>
             ))}
             {staffs.length === 0 && (
-              <tr><td colSpan={5} style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>
-                데이터가 없습니다.
-              </td></tr>
+              <tr><td colSpan={5} className="table-empty">데이터가 없습니다.</td></tr>
             )}
           </tbody>
         </table>

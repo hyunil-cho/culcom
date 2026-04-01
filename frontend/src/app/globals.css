@@ -63,6 +63,45 @@ button {
   color: var(--text);
 }
 
+/* 네비게이션 링크 버튼 (Link에서 btn-primary와 함께 사용) */
+.btn-nav {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: white;
+  text-decoration: none;
+  display: inline-block;
+}
+
+/* 인라인 소형 버튼 (테이블 셀 내 액션) */
+.btn-inline {
+  padding: 0.4rem 0.7rem;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.btn-inline-success  { background-color: #10b981; }
+.btn-inline-primary  { background-color: #667eea; }
+.btn-inline-info     { background-color: #4a90e2; }
+.btn-inline-purple   { background-color: #9333ea; }
+
+/* 테이블 삭제 버튼 */
+.btn-table-delete {
+  padding: 0.4rem 0.8rem;
+  background: var(--danger);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
 input, select, textarea {
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -121,6 +160,47 @@ th {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   overflow-x: auto;
+}
+
+/* 페이지 타이틀 */
+.page-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+/* 테이블 빈 행 */
+.table-empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+}
+
+/* 테이블 페이지 상단 (타이틀 + 액션 버튼) */
+.page-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+/* 페이지네이션 */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 1rem;
+}
+
+.pagination-info {
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+/* 상단 액션바 (검색, 추가 버튼 등) */
+.action-bar {
+  margin-bottom: 1.5rem;
 }
 
 /* 테이블 헤더 */

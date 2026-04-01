@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { customerApi, type Customer, type PageResponse } from '@/lib/api';
 import { toServerDateTime, formatDateTime } from '@/lib/dateUtils';
 import ResultModal from '@/components/ui/ResultModal';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 const CALLERS = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P'];
 
@@ -117,7 +118,6 @@ export default function CustomersPage() {
     }));
     setCallerModal(null);
 
-    // 처리중 필터에서 콜수초과 시 행 제거
     if (filter === 'new' && data.call_count >= 5) {
       setCustomers(prev => prev.filter(c => c.seq !== customerSeq));
     }
@@ -149,7 +149,6 @@ export default function CustomersPage() {
       setInterviewInputs(prev => ({ ...prev, [customerSeq]: '' }));
       setInterviewModal(null);
 
-      // 처리중 필터에서 예약확정 시 행 제거
       if (filter === 'new') {
         setCustomers(prev => prev.filter(c => c.seq !== customerSeq));
       }
@@ -182,7 +181,7 @@ export default function CustomersPage() {
   return (
     <>
       {/* 검색 및 필터 */}
-      <div className="content-card" style={{ marginBottom: '1.5rem' }}>
+      <div className="content-card action-bar">
         <div className="search-section">
           <div style={{ display: 'flex', gap: 0, alignItems: 'flex-end', flexWrap: 'wrap' }}>
             <div style={{ minWidth: 'auto', margin: 0 }}>
@@ -219,9 +218,7 @@ export default function CustomersPage() {
             </div>
           </div>
           <div className="action-buttons" style={{ marginTop: '1rem' }}>
-            <Link href="/customers/add" className="btn-primary" style={{ padding: '0.75rem 1.5rem', borderRadius: 8, fontSize: '0.95rem', fontWeight: 500, color: 'white', textDecoration: 'none' }}>
-              + 워크인 추가
-            </Link>
+            <Link href="/customers/add" className="btn-primary btn-nav">+ 워크인 추가</Link>
           </div>
         </div>
       </div>
@@ -271,10 +268,9 @@ export default function CustomersPage() {
             <tbody>
               {customers.map((c) => (
                 <tr key={c.seq} style={c.lastUpdateDate ? { backgroundColor: '#f3e8ff' } : undefined}>
-                  {/* 콜수 */}
                   <td><strong>{c.callCount}회</strong></td>
 
-                  {/* 이름 (표시 + 인라인 수정) */}
+                  {/* 이름 */}
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                       <div style={{ padding: '0.4rem 0.6rem', background: '#f8f9fa', borderRadius: 4, fontSize: '1.3rem', fontWeight: 700, minWidth: 120 }}>
@@ -287,17 +283,14 @@ export default function CustomersPage() {
                           onChange={(e) => setNameInputs(prev => ({ ...prev, [c.seq]: e.target.value }))}
                           style={{ padding: '0.4rem 0.6rem', border: '1px solid #ddd', borderRadius: 4, fontSize: '0.85rem', width: 120 }}
                         />
-                        <button
-                          onClick={() => handleNameUpdate(c.seq)}
-                          style={{ padding: '0.4rem 0.7rem', background: '#10b981', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap' }}
-                        >
+                        <button className="btn-inline btn-inline-success" onClick={() => handleNameUpdate(c.seq)}>
                           수정
                         </button>
                       </div>
                     </div>
                   </td>
 
-                  {/* 코멘트 (표시 + 인라인 등록) */}
+                  {/* 코멘트 */}
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                       {c.comment && (
@@ -312,17 +305,14 @@ export default function CustomersPage() {
                           onChange={(e) => setCommentInputs(prev => ({ ...prev, [c.seq]: e.target.value }))}
                           style={{ padding: '0.4rem 0.6rem', border: '1px solid #ddd', borderRadius: 4, fontSize: '0.85rem', width: 120 }}
                         />
-                        <button
-                          onClick={() => handleCommentUpdate(c.seq)}
-                          style={{ padding: '0.4rem 0.7rem', background: '#667eea', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap' }}
-                        >
+                        <button className="btn-inline btn-inline-primary" onClick={() => handleCommentUpdate(c.seq)}>
                           등록
                         </button>
                       </div>
                     </div>
                   </td>
 
-                  {/* 전화번호 (CALLER 선택 전 숨김) */}
+                  {/* 전화번호 */}
                   <td style={{ textAlign: 'center' }}>
                     {phoneVisible[c.seq] ? (
                       <span style={{ fontSize: '1.3rem', fontWeight: 700 }}>{c.phoneNumber}</span>
@@ -331,7 +321,7 @@ export default function CustomersPage() {
                     )}
                   </td>
 
-                  {/* CALLER 선택 */}
+                  {/* CALLER */}
                   <td>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, width: 'fit-content' }}>
                       {CALLERS.map(letter => (
@@ -362,16 +352,10 @@ export default function CustomersPage() {
                         onChange={(e) => setInterviewInputs(prev => ({ ...prev, [c.seq]: e.target.value }))}
                         style={{ padding: '0.4rem 0.6rem', border: '1px solid #ddd', borderRadius: 4, fontSize: '0.85rem', width: 180 }}
                       />
-                      <button
-                        onClick={() => handleInterviewConfirm(c.seq)}
-                        style={{ padding: '0.4rem 0.6rem', background: '#4a90e2', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap' }}
-                      >
+                      <button className="btn-inline btn-inline-info" onClick={() => handleInterviewConfirm(c.seq)}>
                         확정
                       </button>
-                      <button
-                        onClick={() => handleMarkNoPhone(c.seq)}
-                        style={{ padding: '0.4rem 0.6rem', background: '#9333ea', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap' }}
-                      >
+                      <button className="btn-inline btn-inline-purple" onClick={() => handleMarkNoPhone(c.seq)}>
                         전화상안함
                       </button>
                     </div>
@@ -382,31 +366,23 @@ export default function CustomersPage() {
                   <td>{c.createdDate?.split('T')[0]}</td>
                   <td>{formatDateTime(c.lastUpdateDate)}</td>
                   <td>
-                    <button
-                      className="btn-table-action"
-                      onClick={() => setDeleting(c.seq)}
-                      style={{ background: '#f44336', color: 'white', border: 'none' }}
-                    >
+                    <button className="btn-table-delete" onClick={() => setDeleting(c.seq)}>
                       삭제
                     </button>
                   </td>
                 </tr>
               ))}
               {customers.length === 0 && (
-                <tr>
-                  <td colSpan={11} style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>
-                    고객이 없습니다.
-                  </td>
-                </tr>
+                <tr><td colSpan={11} className="table-empty">고객이 없습니다.</td></tr>
               )}
             </tbody>
           </table>
         </div>
 
         {totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, padding: '1rem' }}>
+          <div className="pagination">
             <button className="btn-secondary" disabled={page === 0} onClick={() => setPage(p => p - 1)}>이전</button>
-            <span style={{ padding: '8px 16px', fontSize: 14 }}>{page + 1} / {totalPages}</span>
+            <span className="pagination-info">{page + 1} / {totalPages}</span>
             <button className="btn-secondary" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>다음</button>
           </div>
         )}
@@ -414,107 +390,52 @@ export default function CustomersPage() {
 
       {/* CALLER 확인 모달 */}
       {callerModal && (
-        <div
-          onClick={(e) => { if (e.target === e.currentTarget) setCallerModal(null); }}
-          style={{ display: 'flex', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', zIndex: 10000, alignItems: 'center', justifyContent: 'center' }}
+        <ConfirmModal
+          title="CALLER 선택 확인"
+          onCancel={() => setCallerModal(null)}
+          onConfirm={confirmCaller}
+          confirmColor="#667eea"
         >
-          <div style={{ background: 'white', borderRadius: 12, width: '90%', maxWidth: 400, boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}>
-            <div style={{ padding: '1.5rem 2rem', borderBottom: '2px solid #667eea' }}>
-              <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#2c3e50' }}>CALLER 선택 확인</h3>
-            </div>
-            <div style={{ padding: '2rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.1rem', color: '#333', marginBottom: '1rem' }}>
-                <strong style={{ color: '#667eea', fontSize: '1.3rem' }}>{callerModal.customerName}</strong>님의
-              </div>
-              <div style={{ fontSize: '0.95rem', color: '#666', marginBottom: '0.5rem' }}>선택한 CALLER</div>
-              <div style={{ background: '#f5f3ff', padding: '1.5rem', borderRadius: 8, border: '2px solid #667eea', marginTop: '1rem' }}>
-                <div style={{ fontSize: '2rem', fontWeight: 700, color: '#667eea' }}>{callerModal.caller}</div>
-              </div>
-              <div style={{ marginTop: '1rem', color: '#666', fontSize: '0.95rem' }}>이 CALLER로 선택하시겠습니까?</div>
-            </div>
-            <div style={{ padding: '1rem 2rem', borderTop: '1px solid #e0e0e0', display: 'flex', gap: '0.75rem' }}>
-              <button
-                onClick={() => setCallerModal(null)}
-                style={{ flex: 1, padding: '0.75rem', fontSize: '1rem', border: '1px solid #ddd', background: 'white', color: '#666', borderRadius: 6, cursor: 'pointer' }}
-              >
-                취소
-              </button>
-              <button
-                onClick={confirmCaller}
-                style={{ flex: 1, padding: '0.75rem', fontSize: '1rem', border: 'none', background: '#667eea', color: 'white', borderRadius: 6, cursor: 'pointer' }}
-              >
-                확인
-              </button>
-            </div>
+          <div style={{ fontSize: '1.1rem', color: '#333', marginBottom: '1rem' }}>
+            <strong style={{ color: '#667eea', fontSize: '1.3rem' }}>{callerModal.customerName}</strong>님의
           </div>
-        </div>
+          <div style={{ fontSize: '0.95rem', color: '#666', marginBottom: '0.5rem' }}>선택한 CALLER</div>
+          <div style={{ background: '#f5f3ff', padding: '1.5rem', borderRadius: 8, border: '2px solid #667eea', marginTop: '1rem' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#667eea' }}>{callerModal.caller}</div>
+          </div>
+          <div style={{ marginTop: '1rem', color: '#666', fontSize: '0.95rem' }}>이 CALLER로 선택하시겠습니까?</div>
+        </ConfirmModal>
       )}
 
       {/* 인터뷰 확정 모달 */}
       {interviewModal && (
-        <div
-          onClick={(e) => { if (e.target === e.currentTarget) setInterviewModal(null); }}
-          style={{ display: 'flex', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', zIndex: 10000, alignItems: 'center', justifyContent: 'center' }}
+        <ConfirmModal
+          title="인터뷰 확정"
+          onCancel={() => setInterviewModal(null)}
+          onConfirm={confirmInterview}
+          confirmLabel="확정"
+          confirmColor="#4a90e2"
         >
-          <div style={{ background: 'white', borderRadius: 12, width: '90%', maxWidth: 400, boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}>
-            <div style={{ padding: '1.5rem 2rem', borderBottom: '2px solid #4a90e2' }}>
-              <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#2c3e50' }}>인터뷰 확정</h3>
-            </div>
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#666', fontSize: '0.95rem' }}>
-              <strong>{interviewModal.customerName}</strong>님의 인터뷰를 확정하시겠습니까?
-              <br /><br />
-              CALLER: <strong style={{ color: '#667eea' }}>{interviewModal.caller}</strong>
-              <br />
-              일시: <strong>{interviewInputs[interviewModal.customerSeq]}</strong>
-            </div>
-            <div style={{ padding: '1rem 2rem', borderTop: '1px solid #e0e0e0', display: 'flex', gap: '0.75rem' }}>
-              <button
-                onClick={() => setInterviewModal(null)}
-                style={{ flex: 1, padding: '0.75rem', fontSize: '1rem', border: '1px solid #ddd', background: 'white', color: '#666', borderRadius: 6, cursor: 'pointer' }}
-              >
-                취소
-              </button>
-              <button
-                onClick={confirmInterview}
-                style={{ flex: 1, padding: '0.75rem', fontSize: '1rem', border: 'none', background: '#4a90e2', color: 'white', borderRadius: 6, cursor: 'pointer' }}
-              >
-                확정
-              </button>
-            </div>
-          </div>
-        </div>
+          <strong>{interviewModal.customerName}</strong>님의 인터뷰를 확정하시겠습니까?
+          <br /><br />
+          CALLER: <strong style={{ color: '#667eea' }}>{interviewModal.caller}</strong>
+          <br />
+          일시: <strong>{interviewInputs[interviewModal.customerSeq]}</strong>
+        </ConfirmModal>
       )}
 
       {/* 삭제 확인 모달 */}
       {deleting !== null && (
-        <div
-          onClick={(e) => { if (e.target === e.currentTarget) setDeleting(null); }}
-          style={{ display: 'flex', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', zIndex: 10000, alignItems: 'center', justifyContent: 'center' }}
+        <ConfirmModal
+          title="삭제 확인"
+          onCancel={() => setDeleting(null)}
+          onConfirm={confirmDelete}
+          confirmLabel="삭제"
+          confirmColor="#f44336"
         >
-          <div style={{ background: 'white', borderRadius: 12, width: '90%', maxWidth: 400, boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}>
-            <div style={{ padding: '1.5rem 2rem', borderBottom: '2px solid #f44336' }}>
-              <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#2c3e50' }}>삭제 확인</h3>
-            </div>
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#666', fontSize: '0.95rem' }}>
-              <strong>{customers.find(c => c.seq === deleting)?.name}</strong> 고객을 삭제하시겠습니까?
-              <br /><br />이 작업은 되돌릴 수 없습니다.
-            </div>
-            <div style={{ padding: '1rem 2rem', borderTop: '1px solid #e0e0e0', display: 'flex', gap: '0.75rem' }}>
-              <button
-                onClick={() => setDeleting(null)}
-                style={{ flex: 1, padding: '0.75rem', fontSize: '1rem', border: '1px solid #ddd', background: 'white', color: '#666', borderRadius: 6, cursor: 'pointer' }}
-              >
-                취소
-              </button>
-              <button
-                onClick={confirmDelete}
-                style={{ flex: 1, padding: '0.75rem', fontSize: '1rem', border: 'none', background: '#f44336', color: 'white', borderRadius: 6, cursor: 'pointer' }}
-              >
-                삭제
-              </button>
-            </div>
-          </div>
-        </div>
+          <strong>{customers.find(c => c.seq === deleting)?.name}</strong> 고객을 삭제하시겠습니까?
+          <br /><br />이 작업은 되돌릴 수 없습니다.
+        </ConfirmModal>
       )}
 
       {result && (

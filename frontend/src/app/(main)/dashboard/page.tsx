@@ -11,7 +11,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>대시보드</h2>
+      <h2 className="page-title">대시보드</h2>
 
       {noBranch && (
         <div className="card" style={{

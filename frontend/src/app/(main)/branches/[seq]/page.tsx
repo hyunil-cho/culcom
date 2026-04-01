@@ -25,16 +25,7 @@ export default function BranchDetailPage() {
         <Link href="/branches" className="btn-back">← 목록으로</Link>
         {SessionRole.isManager(session) && (
           <div className="action-group">
-            <Link href={`/branches/${seq}/edit`} className="btn-primary" style={{
-              padding: '0.75rem 1.5rem',
-              borderRadius: 8,
-              fontSize: '0.95rem',
-              fontWeight: 500,
-              color: 'white',
-              textDecoration: 'none',
-            }}>
-              수정
-            </Link>
+            <Link href={`/branches/${seq}/edit`} className="btn-primary btn-nav">수정</Link>
           </div>
         )}
       </div>

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { branchApi, SessionRole, type Branch } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
 import ResultModal from '@/components/ui/ResultModal';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 export default function BranchesPage() {
   const session = useSessionStore((s) => s.session);
@@ -18,10 +19,6 @@ export default function BranchesPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleDelete = async (seq: number) => {
-    setDeleting(seq);
-  };
-
   const confirmDelete = async () => {
     if (deleting === null) return;
     const res = await branchApi.delete(deleting);
@@ -31,27 +28,16 @@ export default function BranchesPage() {
 
   return (
     <>
-      {/* 상단 액션 버튼 */}
       {canEdit && (
-        <div className="content-card" style={{ marginBottom: '1.5rem' }}>
+        <div className="content-card action-bar">
           <div className="search-section">
             <div className="action-buttons">
-              <Link href="/branches/add" className="btn-primary" style={{
-                padding: '0.75rem 1.5rem',
-                borderRadius: 8,
-                fontSize: '0.95rem',
-                fontWeight: 500,
-                color: 'white',
-                textDecoration: 'none',
-              }}>
-                + 지점 추가
-              </Link>
+              <Link href="/branches/add" className="btn-primary btn-nav">+ 지점 추가</Link>
             </div>
           </div>
         </div>
       )}
 
-      {/* 지점 테이블 */}
       <div className="content-card">
         <div className="table-header">
           <div className="table-info">
@@ -81,11 +67,7 @@ export default function BranchesPage() {
                   {canEdit && (
                     <>
                       <Link href={`/branches/${b.seq}/edit`} className="btn-table-action">수정</Link>
-                      <button
-                        className="btn-table-action"
-                        onClick={() => handleDelete(b.seq)}
-                        style={{ background: '#f44336', color: 'white', border: 'none' }}
-                      >
+                      <button className="btn-table-delete" onClick={() => setDeleting(b.seq)}>
                         삭제
                       </button>
                     </>
@@ -97,66 +79,17 @@ export default function BranchesPage() {
         </table>
       </div>
 
-      {/* 삭제 확인 모달 */}
       {deleting !== null && (
-        <div
-          onClick={(e) => { if (e.target === e.currentTarget) setDeleting(null); }}
-          style={{
-            display: 'flex',
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            background: 'rgba(0, 0, 0, 0.5)',
-            zIndex: 10000,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+        <ConfirmModal
+          title="삭제 확인"
+          onCancel={() => setDeleting(null)}
+          onConfirm={confirmDelete}
+          confirmLabel="삭제"
+          confirmColor="#f44336"
         >
-          <div style={{
-            background: 'white',
-            borderRadius: 12,
-            width: '90%',
-            maxWidth: 400,
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
-          }}>
-            <div style={{ padding: '1.5rem 2rem', borderBottom: '2px solid #4a90e2' }}>
-              <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#2c3e50' }}>삭제 확인</h3>
-            </div>
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#666', fontSize: '0.95rem' }}>
-              <strong>{branches.find(b => b.seq === deleting)?.branchName}</strong> 지점을 삭제하시겠습니까?
-              <br /><br />이 작업은 되돌릴 수 없습니다.
-            </div>
-            <div style={{
-              padding: '1rem 2rem',
-              borderTop: '1px solid #e0e0e0',
-              display: 'flex',
-              gap: '0.75rem',
-            }}>
-              <button
-                onClick={() => setDeleting(null)}
-                style={{
-                  flex: 1, padding: '0.75rem', fontSize: '1rem',
-                  border: '1px solid #ddd', background: 'white', color: '#666',
-                  borderRadius: 6, cursor: 'pointer',
-                }}
-              >
-                취소
-              </button>
-              <button
-                onClick={confirmDelete}
-                style={{
-                  flex: 1, padding: '0.75rem', fontSize: '1rem',
-                  border: 'none', background: '#f44336', color: 'white',
-                  borderRadius: 6, cursor: 'pointer',
-                }}
-              >
-                삭제
-              </button>
-            </div>
-          </div>
-        </div>
+          <strong>{branches.find(b => b.seq === deleting)?.branchName}</strong> 지점을 삭제하시겠습니까?
+          <br /><br />이 작업은 되돌릴 수 없습니다.
+        </ConfirmModal>
       )}
 
       {result && (
