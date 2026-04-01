@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { customerApi } from '@/lib/api';
-import {cleanPhoneNumber, verifyPhoneNumber} from "@/lib/commonUtils";
+import { cleanPhoneNumber, verifyPhoneNumber } from '@/lib/commonUtils';
 import ResultModal from '@/components/ui/ResultModal';
-
+import FormField from '@/components/ui/FormField';
 
 export default function CustomerAddPage() {
   const [form, setForm] = useState({
@@ -16,7 +16,6 @@ export default function CustomerAddPage() {
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const handlePhoneChange = (value: string) => {
-    // 숫자만 남기고 11자리 제한
     const cleaned = cleanPhoneNumber(value);
     setForm({ ...form, phoneNumber: cleaned });
   };
@@ -36,19 +35,16 @@ export default function CustomerAddPage() {
 
   return (
     <>
-      {/* 액션 버튼 */}
       <div className="detail-actions">
         <Link href="/customers" className="btn-back">← 목록으로</Link>
       </div>
 
-      {/* 고객 추가 폼 */}
       <div className="content-card">
         <div className="form-header">
           <h2>기본 정보</h2>
         </div>
         <div className="form-body">
-          <div className="form-row">
-            <label className="form-label">이름 <span className="required">*</span></label>
+          <FormField label="이름" required>
             <input
               className="form-input"
               placeholder="이름을 입력하세요"
@@ -56,10 +52,9 @@ export default function CustomerAddPage() {
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
             />
-          </div>
+          </FormField>
 
-          <div className="form-row">
-            <label className="form-label">전화번호 <span className="required">*</span></label>
+          <FormField label="전화번호" required hint="하이픈 없이 숫자만 입력해주세요 (예: 01012345678)">
             <input
               className="form-input"
               type="tel"
@@ -69,11 +64,9 @@ export default function CustomerAddPage() {
               onChange={(e) => handlePhoneChange(e.target.value)}
               required
             />
-            <span className="form-hint">하이픈 없이 숫자만 입력해주세요 (예: 01012345678)</span>
-          </div>
+          </FormField>
 
-          <div className="form-row">
-            <label className="form-label">코멘트</label>
+          <FormField label="코멘트" hint="최대 200자까지 입력 가능합니다.">
             <textarea
               className="form-input"
               rows={4}
@@ -82,12 +75,10 @@ export default function CustomerAddPage() {
               value={form.comment}
               onChange={(e) => setForm({ ...form, comment: e.target.value })}
             />
-            <span className="form-hint">최대 200자까지 입력 가능합니다.</span>
-          </div>
+          </FormField>
         </div>
       </div>
 
-      {/* 저장 버튼 */}
       <div className="form-actions">
         <button className="btn-primary-large" onClick={handleSubmit}>저장</button>
         <Link href="/customers" className="btn-secondary-large">취소</Link>

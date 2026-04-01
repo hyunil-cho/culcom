@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import FormField from '@/components/ui/FormField';
 
 export interface BranchFormData {
   branchName: string;
@@ -55,14 +56,12 @@ export default function BranchForm({
         </div>
         <div className="form-body">
           {seq !== undefined && (
-            <div className="form-row">
-              <label className="form-label">지점코드</label>
+            <FormField label="지점코드">
               <input className="form-input" value={seq} disabled />
-            </div>
+            </FormField>
           )}
 
-          <div className="form-row">
-            <label className="form-label">지점명 <span className="required">*</span></label>
+          <FormField label="지점명" required>
             <input
               className="form-input"
               placeholder="지점명을 입력하세요"
@@ -70,10 +69,9 @@ export default function BranchForm({
               onChange={(e) => set('branchName', e.target.value)}
               required
             />
-          </div>
+          </FormField>
 
-          <div className="form-row">
-            <label className="form-label">별칭 <span className="required">*</span></label>
+          <FormField label="별칭" required hint="영문만 입력 가능합니다 (예: gangnam, hongdae)">
             <input
               className="form-input"
               placeholder="영문 별칭을 입력하세요"
@@ -81,31 +79,27 @@ export default function BranchForm({
               onChange={(e) => set('alias', e.target.value)}
               required
             />
-            <span className="form-hint">영문만 입력 가능합니다 (예: gangnam, hongdae)</span>
-          </div>
+          </FormField>
 
-          <div className="form-row">
-            <label className="form-label">매니저</label>
+          <FormField label="매니저">
             <input
               className="form-input"
               placeholder="담당자를 입력하세요"
               value={form.branchManager}
               onChange={(e) => set('branchManager', e.target.value)}
             />
-          </div>
+          </FormField>
 
-          <div className="form-row">
-            <label className="form-label">주소</label>
+          <FormField label="주소">
             <input
               className="form-input"
               placeholder="주소를 입력하세요"
               value={form.address}
               onChange={(e) => set('address', e.target.value)}
             />
-          </div>
+          </FormField>
 
-          <div className="form-row">
-            <label className="form-label">오시는 길</label>
+          <FormField label="오시는 길">
             <textarea
               className="form-input"
               rows={4}
@@ -113,7 +107,7 @@ export default function BranchForm({
               value={form.directions}
               onChange={(e) => set('directions', e.target.value)}
             />
-          </div>
+          </FormField>
         </div>
       </div>
 
