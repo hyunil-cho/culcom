@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { branchApi, type Branch } from '@/lib/api';
+import { branchApi, SessionRole, type Branch } from '@/lib/api';
+import { useSessionStore } from '@/lib/store';
 
 export default function BranchDetailPage() {
   const params = useParams();
   const seq = Number(params.seq);
+  const session = useSessionStore((s) => s.session);
   const [branch, setBranch] = useState<Branch | null>(null);
 
   useEffect(() => {
@@ -21,18 +23,20 @@ export default function BranchDetailPage() {
       {/* 액션 버튼 */}
       <div className="detail-actions">
         <Link href="/branches" className="btn-back">← 목록으로</Link>
-        <div className="action-group">
-          <Link href={`/branches/${seq}/edit`} className="btn-primary" style={{
-            padding: '0.75rem 1.5rem',
-            borderRadius: 8,
-            fontSize: '0.95rem',
-            fontWeight: 500,
-            color: 'white',
-            textDecoration: 'none',
-          }}>
-            수정
-          </Link>
-        </div>
+        {SessionRole.isManager(session) && (
+          <div className="action-group">
+            <Link href={`/branches/${seq}/edit`} className="btn-primary" style={{
+              padding: '0.75rem 1.5rem',
+              borderRadius: 8,
+              fontSize: '0.95rem',
+              fontWeight: 500,
+              color: 'white',
+              textDecoration: 'none',
+            }}>
+              수정
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* 지점 상세 정보 */}
