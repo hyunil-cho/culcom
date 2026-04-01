@@ -41,8 +41,11 @@ export default function Header() {
     window.location.reload();
   };
 
+  const reset = useSessionStore((s) => s.reset);
+
   const handleLogout = async () => {
     await authApi.logout();
+    reset();
     router.push('/login');
   };
 

@@ -7,6 +7,7 @@ interface SessionState {
   loaded: boolean;
   fetchSession: () => Promise<void>;
   refreshBranches: () => Promise<void>;
+  reset: () => void;
 }
 
 export const useSessionStore = create<SessionState>((set, get) => ({
@@ -30,4 +31,5 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     const res = await branchApi.list();
     set({ branches: res.data });
   },
+  reset: () => set({ session: null, branches: [], loaded: false }),
 }));
