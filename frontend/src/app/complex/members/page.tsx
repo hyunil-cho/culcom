@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { memberApi, type ComplexMember, type PageResponse } from '@/lib/api';
+import SearchBar from '@/components/ui/SearchBar';
 
 export default function MembersPage() {
   const [members, setMembers] = useState<ComplexMember[]>([]);
@@ -22,16 +23,13 @@ export default function MembersPage() {
 
   return (
     <>
-      <div className="page-toolbar">
-        <h2 className="page-title" style={{ marginBottom: 0 }}>회원 관리</h2>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <input placeholder="이름/전화번호 검색" value={keyword}
-                 onChange={(e) => setKeyword(e.target.value)}
-                 onKeyDown={(e) => e.key === 'Enter' && load()}
-                 style={{ width: 200 }} />
-          <button className="btn-primary" onClick={load}>검색</button>
-        </div>
-      </div>
+      <h2 className="page-title">회원 관리</h2>
+      <SearchBar
+        keyword={keyword}
+        onKeywordChange={setKeyword}
+        onSearch={load}
+        placeholder="이름/전화번호 검색"
+      />
 
       <div className="card" style={{ padding: 0 }}>
         <table>

@@ -6,6 +6,7 @@ import { customerApi, type Customer, type PageResponse } from '@/lib/api';
 import { toServerDateTime, formatDateTime } from '@/lib/dateUtils';
 import ResultModal from '@/components/ui/ResultModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import SearchBar from '@/components/ui/SearchBar';
 
 const CALLERS = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P'];
 
@@ -180,43 +181,19 @@ export default function CustomersPage() {
 
   return (
     <>
-      {/* 검색 및 필터 */}
-      <div className="content-card action-bar">
-        <div className="search-section">
-          <div style={{ display: 'flex', gap: 0, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-            <div style={{ minWidth: 'auto', margin: 0 }}>
-              <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', color: '#5a6c7d', fontWeight: 600 }}>검색 조건</label>
-              <select
-                value={searchType}
-                onChange={(e) => setSearchType(e.target.value)}
-                style={{ width: 120, padding: '0.6rem', border: '1px solid #ddd', borderRadius: '4px 0 0 4px', fontSize: '0.9rem' }}
-              >
-                <option value="name">이름</option>
-                <option value="phone">전화번호</option>
-              </select>
-            </div>
-            <div style={{ flex: 1, margin: 0, maxWidth: 400 }}>
-              <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', color: '#5a6c7d', fontWeight: 600 }}>검색어</label>
-              <input
-                placeholder="검색어를 입력하세요"
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                style={{ padding: '0.6rem', border: '1px solid #ddd', borderLeft: 'none', borderRadius: '0 4px 4px 0', fontSize: '0.9rem', width: '100%' }}
-              />
-            </div>
-            <div style={{ margin: 0, display: 'flex', gap: '0.5rem' }}>
-              <button className="btn-search" onClick={handleSearch}>검색</button>
-              {keyword && (
-                <button className="btn-secondary" style={{ padding: '0.6rem 1.2rem' }} onClick={handleReset}>초기화</button>
-              )}
-            </div>
-          </div>
-          <div className="action-buttons" style={{ marginTop: '1rem' }}>
-            <Link href="/customers/add" className="btn-primary btn-nav">+ 워크인 추가</Link>
-          </div>
-        </div>
-      </div>
+      <SearchBar
+        keyword={keyword}
+        onKeywordChange={setKeyword}
+        onSearch={handleSearch}
+        onReset={handleReset}
+        searchOptions={[
+          { value: 'name', label: '이름' },
+          { value: 'phone', label: '전화번호' },
+        ]}
+        searchType={searchType}
+        onSearchTypeChange={setSearchType}
+        actions={<Link href="/customers/add" className="btn-primary btn-nav">+ 워크인 추가</Link>}
+      />
 
       {/* 고객 테이블 */}
       <div className="content-card">
