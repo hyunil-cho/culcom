@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { customerApi } from '@/lib/api';
+import {verifyPhoneNumber} from "@/lib/commonUtils";
 
 export default function CustomerAddPage() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function CustomerAddPage() {
       alert('이름을 입력해주세요.');
       return;
     }
-    if (!/^010[0-9]{8}$/.test(form.phoneNumber)) {
+    if (verifyPhoneNumber(form.phoneNumber)) {
       alert('전화번호는 010으로 시작하는 11자리 숫자여야 합니다.');
       return;
     }

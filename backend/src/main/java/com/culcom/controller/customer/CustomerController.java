@@ -21,8 +21,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import com.culcom.util.DateTimeUtils;
+
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 @RestController
 @RequestMapping("/api/customers")
@@ -175,8 +176,7 @@ public class CustomerController {
 
         customerRepository.save(customer);
 
-        String lastUpdateDate = customer.getLastUpdateDate()
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        String lastUpdateDate = DateTimeUtils.format(customer.getLastUpdateDate());
 
         return ResponseEntity.ok(ApiResponse.ok("통화 처리 완료",
                 CustomerProcessCallResponse.builder()
@@ -206,8 +206,7 @@ public class CustomerController {
             return ResponseEntity.notFound().build();
         }
 
-        LocalDateTime interviewDate = LocalDateTime.parse(request.getInterviewDate(),
-                DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+        LocalDateTime interviewDate = DateTimeUtils.parse(request.getInterviewDate());
 
         ReservationInfo reservation = ReservationInfo.builder()
                 .branch(branchRepository.getReferenceById(branchSeq))
@@ -225,7 +224,7 @@ public class CustomerController {
                 CustomerReservationResponse.builder()
                         .reservationId(reservation.getSeq())
                         .customerSeq(request.getCustomerSeq())
-                        .interviewDate(interviewDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                        .interviewDate(DateTimeUtils.format(interviewDate))
                         .build()));
     }
 

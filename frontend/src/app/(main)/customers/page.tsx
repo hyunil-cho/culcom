@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { customerApi, type Customer, type PageResponse } from '@/lib/api';
+import { toServerDateTime, formatDateTime } from '@/lib/dateUtils';
 
 const CALLERS = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P'];
 
@@ -139,7 +140,8 @@ export default function CustomersPage() {
 
     // 간단한 날짜 파싱: ISO format 지원
     try {
-      await customerApi.createReservation(customerSeq, caller, input);
+      const normalized = toServerDateTime(input);
+      await customerApi.createReservation(customerSeq, caller, normalized);
       setCustomers(prev => prev.map(c =>
         c.seq === customerSeq ? { ...c, status: '예약확정' } : c
       ));
@@ -378,7 +380,7 @@ export default function CustomersPage() {
                   <td>{c.commercialName ?? '-'}</td>
                   <td>{c.adSource ?? '-'}</td>
                   <td>{c.createdDate?.split('T')[0]}</td>
-                  <td>{c.lastUpdateDate?.replace('T', ' ').slice(0, 16) ?? '-'}</td>
+                  <td>{formatDateTime(c.lastUpdateDate)}</td>
                   <td>
                     <button
                       className="btn-table-action"
