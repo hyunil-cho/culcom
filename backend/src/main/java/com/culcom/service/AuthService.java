@@ -1,6 +1,7 @@
 package com.culcom.service;
 
 import com.culcom.entity.UserInfo;
+import com.culcom.entity.enums.UserRole;
 import com.culcom.repository.UserInfoRepository;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -30,18 +31,27 @@ public class AuthService {
     public void loginSession(HttpSession session, UserInfo user) {
         session.setAttribute("userSeq", user.getSeq());
         session.setAttribute("userId", user.getUserId());
-        session.setAttribute("branchSeq", user.getBranch() != null ? user.getBranch().getSeq() : null);
+        session.setAttribute("role", user.getRole().name());
+        session.setAttribute("branchSeqs",
+                user.getBranches().stream().map(b -> b.getSeq()).toList());
 
         var auth = new UsernamePasswordAuthenticationToken(
                 user.getUserId(),
                 null,
-                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
         );
-        SecurityContextHolder.getContext().setAuthentication(auth);
+        var context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
+        SecurityContextHolder.setContext(context);
+        session.setAttribute("SPRING_SECURITY_CONTEXT", context);
     }
 
     public Long getSessionUserSeq(HttpSession session) {
         return (Long) session.getAttribute("userSeq");
+    }
+
+    public String getSessionRole(HttpSession session) {
+        return (String) session.getAttribute("role");
     }
 
     public Long getSessionBranchSeq(HttpSession session) {

@@ -35,7 +35,12 @@ public class SecurityConfig {
             )
             .logout(logout -> logout
                 .logoutUrl("/api/auth/logout")
-                .logoutSuccessHandler((req, res, auth) -> res.setStatus(200))
+                .logoutSuccessHandler((req, res, auth) -> {
+                    res.setStatus(200);
+                    res.setContentType("application/json");
+                    res.setCharacterEncoding("UTF-8");
+                    res.getWriter().write("{\"success\":true,\"message\":\"로그아웃 완료\",\"data\":null}");
+                })
                 .invalidateHttpSession(true)
                 .deleteCookies("SESSION")
             );

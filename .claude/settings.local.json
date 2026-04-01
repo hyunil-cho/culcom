@@ -9,7 +9,10 @@
       "Bash(grep -l database. /c/Users/lookh/IdeaProjects/culcom/handlers/complex/*/handler.go)",
       "Bash(grep:*)",
       "Bash(gradle wrapper:*)",
-      "Bash(java:*)"
+      "Bash(java:*)",
+      "Bash(find:*)",
+      "Bash(ls -la /c/Users/lookh/IdeaProjects/culcom/legacy-culcom/*.go)",
+      "Bash(ls -d /c/Users/lookh/IdeaProjects/culcom/legacy-culcom/handlers/*)"
     ]
   }
 }

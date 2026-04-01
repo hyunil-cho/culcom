@@ -1,3 +1,5 @@
+import {number} from "prop-types";
+
 const API_BASE = '/api';
 
 export interface ApiResponse<T> {
@@ -60,8 +62,23 @@ export const authApi = {
 export interface SessionInfo {
   userSeq: number;
   userId: string;
+  role: string;
   selectedBranchSeq: number | null;
   selectedBranchName: string | null;
+}
+
+export interface UserResponse {
+  seq: number;
+  userId: string;
+  role: string;
+  branches: { seq: number; branchName: string }[];
+  createdDate: string;
+}
+
+export interface UserCreateRequest {
+  userId: string;
+  password: string;
+  branchSeqs?: number[];
 }
 
 export interface Branch {
@@ -83,6 +100,7 @@ export interface Customer {
   callCount: number;
   status: string;
   createdDate: string;
+  lastUpdateDate?: string;
 }
 
 export interface ComplexClass {
@@ -126,6 +144,16 @@ export const customerApi = {
   create: (data: Partial<Customer>) => api.post<Customer>('/customers', data),
   update: (seq: number, data: Partial<Customer>) => api.put<Customer>(`/customers/${seq}`, data),
   delete: (seq: number) => api.delete<void>(`/customers/${seq}`),
+  updateName: (customerSeq: number, name: string) =>
+    api.post<void>('/customers/update-name', { customerSeq, name }),
+  updateComment: (customerSeq: number, comment: string) =>
+    api.post<{ comment: string }>('/customers/comment', { customerSeq, comment }),
+  processCall: (customerSeq: number, caller: string) =>
+    api.post<{ call_count: number; last_update_date: string }>('/customers/process-call', { customerSeq, caller }),
+  createReservation: (customerSeq: number, caller: string, interviewDate: string) =>
+    api.post<{ reservation_id: number }>('/customers/reservation', { customerSeq, caller, interviewDate }),
+  markNoPhoneInterview: (customerSeq: number) =>
+    api.post<void>('/customers/mark-no-phone-interview', { customerSeq }),
 };
 
 export const classApi = {
@@ -142,6 +170,13 @@ export const memberApi = {
   create: (data: Partial<ComplexMember>) => api.post<ComplexMember>('/complex/members', data),
   update: (seq: number, data: Partial<ComplexMember>) => api.put<ComplexMember>(`/complex/members/${seq}`, data),
   delete: (seq: number) => api.delete<void>(`/complex/members/${seq}`),
+};
+
+export const userApi = {
+  list: () => api.get<UserResponse[]>('/users'),
+  create: (data: UserCreateRequest) => api.post<UserResponse>('/users', data),
+  update: (seq: number, data: Partial<UserCreateRequest>) => api.put<UserResponse>(`/users/${seq}`, data),
+  delete: (seq: number) => api.delete<void>(`/users/${seq}`),
 };
 
 export const staffApi = {

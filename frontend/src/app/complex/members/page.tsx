@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
 import { memberApi, type ComplexMember, type PageResponse } from '@/lib/api';
 
 export default function MembersPage() {
@@ -22,7 +21,7 @@ export default function MembersPage() {
   useEffect(() => { load(); }, [page]);
 
   return (
-    <AppLayout>
+    <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h2 style={{ fontSize: 20, fontWeight: 600 }}>회원 관리</h2>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -71,6 +70,6 @@ export default function MembersPage() {
           <button className="btn-secondary" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>다음</button>
         </div>
       )}
-    </AppLayout>
+    </>
   );
 }

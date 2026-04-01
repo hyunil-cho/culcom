@@ -1,8 +1,11 @@
 package com.culcom.entity;
 
+import com.culcom.entity.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "user_info")
@@ -15,9 +18,22 @@ public class UserInfo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seq;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private UserRole role;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "user_branch",
+        joinColumns = @JoinColumn(name = "user_seq"),
+        inverseJoinColumns = @JoinColumn(name = "branch_seq")
+    )
+    @Builder.Default
+    private List<Branch> branches = new ArrayList<>();
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "branch_seq")
-    private Branch branch;
+    @JoinColumn(name = "created_by_seq")
+    private UserInfo createdBy;
 
     @Column(name = "user_id", nullable = false, unique = true, length = 100)
     private String userId;

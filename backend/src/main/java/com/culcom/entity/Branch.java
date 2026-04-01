@@ -30,6 +30,9 @@ public class Branch {
     @Column(columnDefinition = "text")
     private String directions;
 
+    @Column(name = "created_by", length = 50, updatable = false)
+    private String createdBy;
+
     @Column(name = "createdDate", nullable = false, updatable = false)
     private LocalDate createdDate;
 

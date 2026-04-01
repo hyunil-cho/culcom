@@ -3,10 +3,12 @@ package com.culcom.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @AllArgsConstructor
 @Builder
+@ToString
 public class ApiResponse<T> {
     private boolean success;
     private String message;

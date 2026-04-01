@@ -114,3 +114,222 @@ th {
 .badge-warning { background: #fef3c7; color: #92400e; }
 .badge-danger  { background: #fee2e2; color: #991b1b; }
 .badge-info    { background: #dbeafe; color: #1e40af; }
+
+/* 콘텐츠 카드 */
+.content-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  overflow-x: auto;
+}
+
+/* 테이블 헤더 */
+.table-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.table-info {
+  color: #5a6c7d;
+  font-size: 0.9rem;
+}
+
+.table-info strong {
+  color: #2c3e50;
+}
+
+/* 테이블 액션 버튼 */
+.btn-table-action {
+  padding: 0.4rem 0.8rem;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #333;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.2s;
+}
+
+.btn-table-action:hover {
+  background: #e9ecef;
+}
+
+/* 검색 & 액션 섹션 */
+.search-section {
+  padding: 1.5rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* 상세 페이지 */
+.detail-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.action-group {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn-back {
+  padding: 0.75rem 1.5rem;
+  background-color: #ecf0f1;
+  color: #5a6c7d;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.3s;
+  display: inline-block;
+}
+
+.btn-back:hover {
+  background-color: #d5dbdb;
+}
+
+/* 상세/폼 헤더 */
+.detail-header,
+.form-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.detail-header h2,
+.form-header h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+}
+
+/* 상세/폼 바디 */
+.detail-body,
+.form-body {
+  padding: 1.5rem;
+}
+
+/* 상세/폼 행 */
+.detail-row,
+.form-row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f0f0f0;
+  align-items: center;
+}
+
+.detail-row:last-child,
+.form-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label,
+.form-label {
+  font-weight: 600;
+  color: #5a6c7d;
+  font-size: 0.95rem;
+}
+
+.detail-value {
+  color: #2c3e50;
+  font-size: 0.95rem;
+}
+
+/* 폼 입력 */
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: border-color 0.3s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.form-input:disabled {
+  background-color: #f8f9fa;
+  color: #95a5a6;
+  cursor: not-allowed;
+}
+
+.form-hint {
+  font-size: 0.8rem;
+  color: #95a5a6;
+  margin-top: 0.25rem;
+  grid-column: 2;
+}
+
+.required {
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+/* 폼 액션 */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.btn-primary-large,
+.btn-secondary-large {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  flex: 1;
+}
+
+.btn-primary-large {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-primary-large:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary-large {
+  background-color: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+.btn-secondary-large:hover {
+  background-color: #f8f9fa;
+}
+
+/* 상태 뱃지 */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.status-active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}

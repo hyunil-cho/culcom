@@ -1,18 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
-import { authApi, type SessionInfo } from '@/lib/api';
+import { useSessionStore } from '@/lib/store';
 
 export default function DashboardPage() {
-  const [session, setSession] = useState<SessionInfo | null>(null);
-
-  useEffect(() => {
-    authApi.me().then(res => setSession(res.data)).catch(() => {});
-  }, []);
+  const session = useSessionStore((s) => s.session);
 
   return (
-    <AppLayout>
+    <>
       <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>대시보드</h2>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
@@ -29,6 +23,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-    </AppLayout>
+    </>
   );
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
 import { classApi, type ComplexClass } from '@/lib/api';
 
 export default function ClassesPage() {
@@ -19,7 +18,7 @@ export default function ClassesPage() {
   };
 
   return (
-    <AppLayout>
+    <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h2 style={{ fontSize: 20, fontWeight: 600 }}>수업 관리</h2>
         <button className="btn-primary">+ 수업 추가</button>
@@ -57,6 +56,6 @@ export default function ClassesPage() {
           </tbody>
         </table>
       </div>
-    </AppLayout>
+    </>
   );
 }

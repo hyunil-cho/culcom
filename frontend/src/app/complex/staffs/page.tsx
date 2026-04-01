@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
 import { staffApi, type ComplexStaff } from '@/lib/api';
 
 export default function StaffsPage() {
@@ -19,7 +18,7 @@ export default function StaffsPage() {
   };
 
   return (
-    <AppLayout>
+    <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h2 style={{ fontSize: 20, fontWeight: 600 }}>스태프 관리</h2>
         <button className="btn-primary">+ 스태프 추가</button>
@@ -54,6 +53,6 @@ export default function StaffsPage() {
           </tbody>
         </table>
       </div>
-    </AppLayout>
+    </>
   );
 }
