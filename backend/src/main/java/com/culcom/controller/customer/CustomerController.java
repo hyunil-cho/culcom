@@ -69,6 +69,9 @@ public class CustomerController {
     public ResponseEntity<ApiResponse<CustomerResponse>> create(
             @RequestBody CustomerCreateRequest request, HttpSession session) {
         Long branchSeq = authService.getSessionBranchSeq(session);
+        if (branchSeq == null) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("지점을 먼저 선택해주세요."));
+        }
         Customer customer = Customer.builder()
                 .name(request.getName())
                 .phoneNumber(request.getPhoneNumber())

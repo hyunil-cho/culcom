@@ -2,6 +2,7 @@ package com.culcom.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDate;
 
 @Entity
@@ -30,8 +31,9 @@ public class Branch {
     @Column(columnDefinition = "text")
     private String directions;
 
-    @Column(name = "created_by", length = 50, updatable = false)
-    private String createdBy;
+    @JoinColumn(name = "created_by")
+    @ManyToOne
+    private UserInfo createdBy;
 
     @Column(name = "createdDate", nullable = false, updatable = false)
     private LocalDate createdDate;

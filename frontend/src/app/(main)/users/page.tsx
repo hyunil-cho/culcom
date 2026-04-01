@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { userApi, branchApi, type UserResponse, type Branch } from '@/lib/api';
+import { userApi, SessionRole, type UserResponse } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -13,45 +13,26 @@ const ROLE_LABELS: Record<string, string> = {
 export default function UsersPage() {
   const session = useSessionStore((s) => s.session);
   const [users, setUsers] = useState<UserResponse[]>([]);
-  const [allBranches, setAllBranches] = useState<Branch[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [deleting, setDeleting] = useState<UserResponse | null>(null);
-  const [form, setForm] = useState({ userId: '', password: '', branchSeqs: [] as number[] });
+  const [form, setForm] = useState({ userId: '', password: '' });
   const [error, setError] = useState('');
 
   const load = () => { userApi.list().then(res => setUsers(res.data)); };
 
-  useEffect(() => {
-    load();
-    if (session?.role === 'ROOT') {
-      branchApi.list().then(res => setAllBranches(res.data));
-    }
-  }, [session?.role]);
+  useEffect(() => { load(); }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     try {
-      await userApi.create({
-        userId: form.userId,
-        password: form.password,
-        ...(session?.role === 'ROOT' ? { branchSeqs: form.branchSeqs } : {}),
-      });
+      await userApi.create({ userId: form.userId, password: form.password });
       setShowCreate(false);
-      setForm({ userId: '', password: '', branchSeqs: [] });
+      setForm({ userId: '', password: '' });
       load();
     } catch {
       setError('사용자 생성에 실패했습니다.');
     }
-  };
-
-  const toggleBranch = (seq: number) => {
-    setForm(prev => ({
-      ...prev,
-      branchSeqs: prev.branchSeqs.includes(seq)
-        ? prev.branchSeqs.filter(s => s !== seq)
-        : [...prev.branchSeqs, seq],
-    }));
   };
 
   const confirmDelete = async () => {
@@ -61,14 +42,14 @@ export default function UsersPage() {
     load();
   };
 
-  const creatingRole = session?.role === 'ROOT' ? '지점장' : '직원';
+  const creatingRole = SessionRole.isRoot(session) ? '지점장' : '직원';
 
   return (
     <>
       <div className="content-card" style={{ marginBottom: '1.5rem' }}>
         <div className="search-section">
           <div className="action-buttons">
-            {(session?.role === 'ROOT' || session?.role === 'BRANCH_MANAGER') && (
+            {SessionRole.canManageUsers(session) && (
               <button className="btn-primary" onClick={() => setShowCreate(true)} style={{
                 padding: '0.75rem 1.5rem', borderRadius: 8, fontSize: '0.95rem', fontWeight: 500,
               }}>
@@ -91,7 +72,6 @@ export default function UsersPage() {
             <tr>
               <th>아이디</th>
               <th>역할</th>
-              <th>지점</th>
               <th>생성일</th>
               <th>관리</th>
             </tr>
@@ -101,7 +81,6 @@ export default function UsersPage() {
               <tr key={u.seq}>
                 <td><strong>{u.userId}</strong></td>
                 <td><span className="status-badge status-active">{ROLE_LABELS[u.role] ?? u.role}</span></td>
-                <td>{u.branches.map(b => b.branchName).join(', ') || '-'}</td>
                 <td>{u.createdDate}</td>
                 <td>
                   {u.role !== 'ROOT' && (
@@ -166,32 +145,6 @@ export default function UsersPage() {
                   style={{ width: '100%', padding: '0.75rem', borderRadius: 6, border: '1px solid #ddd', fontSize: '0.95rem' }}
                 />
               </div>
-              {session?.role === 'ROOT' && (
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 500 }}>
-                    지점 선택 ({form.branchSeqs.length}개)
-                  </label>
-                  <div style={{
-                    border: '1px solid #ddd', borderRadius: 6, padding: '0.5rem',
-                    maxHeight: 200, overflowY: 'auto',
-                  }}>
-                    {allBranches.map((b) => (
-                      <label key={b.seq} style={{
-                        display: 'flex', alignItems: 'center', gap: 8,
-                        padding: '6px 8px', cursor: 'pointer', borderRadius: 4,
-                        backgroundColor: form.branchSeqs.includes(b.seq) ? '#e8f0fe' : 'transparent',
-                      }}>
-                        <input
-                          type="checkbox"
-                          checked={form.branchSeqs.includes(b.seq)}
-                          onChange={() => toggleBranch(b.seq)}
-                        />
-                        {b.branchName}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
                 <button type="button" onClick={() => setShowCreate(false)} style={{
                   flex: 1, padding: '0.75rem', fontSize: '1rem',

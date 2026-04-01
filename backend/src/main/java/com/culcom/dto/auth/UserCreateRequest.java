@@ -4,8 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
-
 @Getter
 @Setter
 public class UserCreateRequest {
@@ -13,5 +11,4 @@ public class UserCreateRequest {
     private String userId;
     @NotBlank
     private String password;
-    private List<Long> branchSeqs;
 }

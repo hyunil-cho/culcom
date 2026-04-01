@@ -34,10 +34,60 @@ async function request<T>(url: string, options?: RequestInit): Promise<ApiRespon
   }
 
   if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`);
+    let message = `요청 실패 (HTTP ${res.status})`;
+    try {
+      const body = await res.json();
+      if (body?.message) message = body.message;
+    } catch { /* 응답 body 파싱 실패 시 기본 메시지 사용 */ }
+    showErrorModal(message);
+    throw new Error(message);
   }
 
-  return res.json();
+  const body: ApiResponse<T> = await res.json();
+  if (!body.success && body.message) {
+    showErrorModal(body.message);
+    throw new Error(body.message);
+  }
+
+  return body;
+}
+
+function showErrorModal(message: string) {
+  if (typeof window === 'undefined') return;
+
+  const existing = document.getElementById('api-error-modal');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'api-error-modal';
+  Object.assign(overlay.style, {
+    display: 'flex', position: 'fixed', top: '0', left: '0',
+    width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)',
+    zIndex: '10001', alignItems: 'center', justifyContent: 'center',
+  });
+
+  overlay.innerHTML = `
+    <div style="background:white;border-radius:12px;width:90%;max-width:400px;box-shadow:0 10px 40px rgba(0,0,0,0.2)">
+      <div style="padding:1.5rem 2rem;border-bottom:2px solid #f44336">
+        <h3 style="margin:0;font-size:1.25rem;color:#2c3e50">오류</h3>
+      </div>
+      <div style="padding:2rem;text-align:center;color:#666;font-size:0.95rem;word-break:keep-all">
+        ${message.replace(/</g, '&lt;')}
+      </div>
+      <div style="padding:1rem 2rem;border-top:1px solid #e0e0e0;display:flex">
+        <button id="api-error-close" style="flex:1;padding:0.75rem;font-size:1rem;border:none;background:#f44336;color:white;border-radius:6px;cursor:pointer">
+          확인
+        </button>
+      </div>
+    </div>
+  `;
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.remove();
+  });
+
+  document.body.appendChild(overlay);
+  overlay.querySelector('#api-error-close')?.addEventListener('click', () => overlay.remove());
 }
 
 export const api = {
@@ -67,18 +117,25 @@ export interface SessionInfo {
   selectedBranchName: string | null;
 }
 
+export const SessionRole = {
+  isRoot: (s: SessionInfo | null) => s?.role === 'ROOT',
+  isManager: (s: SessionInfo | null) => s?.role === 'BRANCH_MANAGER',
+  isStaff: (s: SessionInfo | null) => s?.role === 'STAFF',
+  canManageUsers: (s: SessionInfo | null) => s?.role === 'ROOT' || s?.role === 'BRANCH_MANAGER',
+  displayName: (s: SessionInfo | null) =>
+    s?.role === 'ROOT' ? '최고관리자' : s?.role === 'BRANCH_MANAGER' ? '지점장' : '직원',
+};
+
 export interface UserResponse {
   seq: number;
   userId: string;
   role: string;
-  branches: { seq: number; branchName: string }[];
   createdDate: string;
 }
 
 export interface UserCreateRequest {
   userId: string;
   password: string;
-  branchSeqs?: number[];
 }
 
 export interface Branch {
@@ -88,6 +145,7 @@ export interface Branch {
   branchManager?: string;
   address?: string;
   directions?: string;
+  createdDate?: string;
 }
 
 export interface Customer {

@@ -9,10 +9,5 @@ import java.util.Optional;
 
 public interface UserInfoRepository extends JpaRepository<UserInfo, Long> {
     Optional<UserInfo> findByUserId(String userId);
-
-    @Query("SELECT u FROM UserInfo u JOIN u.branches b WHERE b.seq = :branchSeq")
-    List<UserInfo> findByBranchSeq(Long branchSeq);
-
-    @Query("SELECT u FROM UserInfo u JOIN u.branches b WHERE b.seq = :branchSeq AND u.role = :role")
-    List<UserInfo> findByBranchSeqAndRole(Long branchSeq, UserRole role);
+    List<UserInfo> findByCreatedBy(UserInfo createdBy);
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { authApi } from '@/lib/api';
+import { authApi, SessionRole } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
 
 const pageTitles: Record<string, string> = {
@@ -64,7 +64,7 @@ export default function Header() {
         </div>
         <div className="header-right" style={{ display: 'flex', alignItems: 'center' }}>
           <div style={{ marginRight: '2rem', display: 'flex', alignItems: 'center' }}>
-            {branches.length > 1 ? (
+            {branches.length >= 1 ? (
               <>
                 <label style={{ marginRight: '0.5rem', color: '#5a6c7d', fontSize: '0.9rem' }}>지점 선택:</label>
                 <select
@@ -85,15 +85,29 @@ export default function Header() {
                 </select>
               </>
             ) : (
-              <span style={{ fontSize: '0.9rem', color: '#2c3e50' }}>
-                {session?.selectedBranchName ?? '-'}
-              </span>
+              <>
+                <span style={{ fontSize: '0.9rem', color: '#e74c3c', fontWeight: 500, marginRight: '0.75rem' }}>
+                  등록된 지점이 없습니다.
+                </span>
+                {SessionRole.isManager(session) && (
+                  <button
+                    onClick={() => router.push('/branches/add')}
+                    style={{
+                      padding: '0.4rem 1rem', fontSize: '0.85rem', fontWeight: 500,
+                      border: 'none', borderRadius: 6, cursor: 'pointer',
+                      background: '#4a90e2', color: 'white',
+                    }}
+                  >
+                    등록하기
+                  </button>
+                )}
+              </>
             )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span>👤</span>
             <span style={{ fontSize: '0.9rem', color: '#2c3e50' }}>
-              {session?.role === 'ROOT' ? '최고관리자' : session?.role === 'BRANCH_MANAGER' ? '지점장' : '직원'}
+              {SessionRole.displayName(session)}
             </span>
             <a
               href="javascript:void(0);"
@@ -111,7 +125,6 @@ export default function Header() {
           </div>
         </div>
       </header>
-
       {showLogoutModal && (
         <div
           onClick={(e) => { if (e.target === e.currentTarget) setShowLogoutModal(false); }}

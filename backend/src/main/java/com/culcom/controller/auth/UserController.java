@@ -3,7 +3,6 @@ package com.culcom.controller.auth;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.auth.UserCreateRequest;
 import com.culcom.dto.auth.UserResponse;
-import com.culcom.entity.Branch;
 import com.culcom.entity.UserInfo;
 import com.culcom.entity.enums.UserRole;
 import com.culcom.repository.BranchRepository;
@@ -12,6 +11,7 @@ import com.culcom.service.AuthService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,14 +28,15 @@ public class UserController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<UserResponse>>> list(HttpSession session) {
-        String role = authService.getSessionRole(session);
+        UserRole role = authService.getSessionRole(session);
+        Long callerSeq = authService.getSessionUserSeq(session);
+        UserInfo creator = userInfoRepository.findById(callerSeq).orElseThrow(()->new RuntimeException("creator is not present"));
 
         List<UserInfo> users;
-        if (UserRole.ROOT.name().equals(role)) {
+        if (UserRole.ROOT.equals(role)) {
             users = userInfoRepository.findAll();
-        } else if (UserRole.BRANCH_MANAGER.name().equals(role)) {
-            Long branchSeq = authService.getSessionBranchSeq(session);
-            users = userInfoRepository.findByBranchSeqAndRole(branchSeq, UserRole.STAFF);
+        } else if (UserRole.BRANCH_MANAGER.equals(role)) {
+            users = userInfoRepository.findByCreatedBy(creator);
         } else {
             return ResponseEntity.status(403).body(ApiResponse.error("사용자 조회 권한이 없습니다."));
         }
@@ -47,8 +48,9 @@ public class UserController {
     @PostMapping
     public ResponseEntity<ApiResponse<UserResponse>> create(
             @Valid @RequestBody UserCreateRequest request, HttpSession session) {
-        String role = authService.getSessionRole(session);
+        UserRole role = authService.getSessionRole(session);
         Long callerSeq = authService.getSessionUserSeq(session);
+        UserInfo creator = userInfoRepository.findById(callerSeq).orElseThrow(()->new RuntimeException("creator is not present"));
 
         if (userInfoRepository.findByUserId(request.getUserId()).isPresent()) {
             return ResponseEntity.badRequest().body(ApiResponse.error("이미 존재하는 아이디입니다."));
@@ -57,26 +59,13 @@ public class UserController {
         var builder = UserInfo.builder()
                 .userId(request.getUserId())
                 .userPassword(request.getPassword())
-                .createdBy(userInfoRepository.findById(callerSeq).orElse(null));
+                .createdBy(creator);
 
-        if (UserRole.ROOT.name().equals(role)) {
-            // ROOT → BRANCH_MANAGER 생성
-            if (request.getBranchSeqs() == null || request.getBranchSeqs().isEmpty()) {
-                return ResponseEntity.badRequest().body(ApiResponse.error("지점을 지정해주세요."));
-            }
-            List<Branch> branches = branchRepository.findAllById(request.getBranchSeqs());
-            if (branches.size() != request.getBranchSeqs().size()) {
-                return ResponseEntity.badRequest().body(ApiResponse.error("존재하지 않는 지점이 포함되어 있습니다."));
-            }
-            builder.role(UserRole.BRANCH_MANAGER).branches(branches);
-        } else if (UserRole.BRANCH_MANAGER.name().equals(role)) {
-            // BRANCH_MANAGER → STAFF 생성 (자기 지점 자동)
-            Long branchSeq = authService.getSessionBranchSeq(session);
-            var branch = branchRepository.findById(branchSeq);
-            if (branch.isEmpty()) {
-                return ResponseEntity.badRequest().body(ApiResponse.error("지점 정보를 찾을 수 없습니다."));
-            }
-            builder.role(UserRole.STAFF).branches(List.of(branch.get()));
+        if (UserRole.ROOT.equals(role)) {
+            // ROOT → BRANCH_MANAGER 생성 (지점 선택은 선택사항)
+            builder.role(UserRole.BRANCH_MANAGER);
+        } else if (UserRole.BRANCH_MANAGER.equals(role)) {
+            builder.role(UserRole.STAFF);
         } else {
             return ResponseEntity.status(403).body(ApiResponse.error("사용자 생성 권한이 없습니다."));
         }
@@ -88,11 +77,12 @@ public class UserController {
     @PutMapping("/{seq}")
     public ResponseEntity<ApiResponse<UserResponse>> update(
             @PathVariable Long seq, @RequestBody UserCreateRequest request, HttpSession session) {
-        String role = authService.getSessionRole(session);
+        UserInfo subject = getUserInfo(session);
+
 
         return userInfoRepository.findById(seq)
                 .map(user -> {
-                    if (!canManage(role, session, user)) {
+                    if (!isTargetManagedBySubject(subject, user)) {
                         return ResponseEntity.status(403)
                                 .body(ApiResponse.<UserResponse>error("수정 권한이 없습니다."));
                     }
@@ -105,9 +95,14 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    private @NonNull UserInfo getUserInfo(HttpSession session) {
+        Long sessionUserSeq = authService.getSessionUserSeq(session);
+        return this.userInfoRepository.findById(sessionUserSeq).orElseThrow(()->new RuntimeException("user not found"));
+    }
+
     @DeleteMapping("/{seq}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long seq, HttpSession session) {
-        String role = authService.getSessionRole(session);
+        UserInfo subject = getUserInfo(session);
 
         return userInfoRepository.findById(seq)
                 .map(user -> {
@@ -115,7 +110,7 @@ public class UserController {
                         return ResponseEntity.badRequest()
                                 .body(ApiResponse.<Void>error("ROOT 계정은 삭제할 수 없습니다."));
                     }
-                    if (!canManage(role, session, user)) {
+                    if (!isTargetManagedBySubject(subject, user)) {
                         return ResponseEntity.status(403)
                                 .body(ApiResponse.<Void>error("삭제 권한이 없습니다."));
                     }
@@ -125,16 +120,11 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    private boolean canManage(String callerRole, HttpSession session, UserInfo target) {
-        if (UserRole.ROOT.name().equals(callerRole)) {
+    private boolean isTargetManagedBySubject(UserInfo subject, UserInfo target) {
+        UserRole subjectRole = subject.getRole();
+        if (UserRole.ROOT.equals(subjectRole)) {
             return true;
         }
-        if (UserRole.BRANCH_MANAGER.name().equals(callerRole)) {
-            Long callerBranchSeq = authService.getSessionBranchSeq(session);
-            return target.getRole() == UserRole.STAFF
-                    && target.getBranches().stream()
-                            .anyMatch(b -> b.getSeq().equals(callerBranchSeq));
-        }
-        return false;
+        return target.getRole().equals(UserRole.STAFF) && target.getCreatedBy().equals(subject);
     }
 }

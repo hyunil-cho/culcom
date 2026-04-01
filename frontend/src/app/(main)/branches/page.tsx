@@ -2,13 +2,15 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { branchApi, type Branch } from '@/lib/api';
+import { branchApi, SessionRole, type Branch } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
 
 export default function BranchesPage() {
+  const session = useSessionStore((s) => s.session);
   const refreshBranches = useSessionStore((s) => s.refreshBranches);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const canEdit = SessionRole.isManager(session);
 
   const load = () => { branchApi.list().then(res => setBranches(res.data)); };
 
@@ -29,22 +31,24 @@ export default function BranchesPage() {
   return (
     <>
       {/* 상단 액션 버튼 */}
-      <div className="content-card" style={{ marginBottom: '1.5rem' }}>
-        <div className="search-section">
-          <div className="action-buttons">
-            <Link href="/branches/add" className="btn-primary" style={{
-              padding: '0.75rem 1.5rem',
-              borderRadius: 8,
-              fontSize: '0.95rem',
-              fontWeight: 500,
-              color: 'white',
-              textDecoration: 'none',
-            }}>
-              + 지점 추가
-            </Link>
+      {canEdit && (
+        <div className="content-card" style={{ marginBottom: '1.5rem' }}>
+          <div className="search-section">
+            <div className="action-buttons">
+              <Link href="/branches/add" className="btn-primary" style={{
+                padding: '0.75rem 1.5rem',
+                borderRadius: 8,
+                fontSize: '0.95rem',
+                fontWeight: 500,
+                color: 'white',
+                textDecoration: 'none',
+              }}>
+                + 지점 추가
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* 지점 테이블 */}
       <div className="content-card">
@@ -60,6 +64,7 @@ export default function BranchesPage() {
               <th>지점명</th>
               <th>영문코드</th>
               <th>담당자</th>
+              <th>등록일</th>
               <th>관리</th>
             </tr>
           </thead>
@@ -69,16 +74,21 @@ export default function BranchesPage() {
                 <td><strong>{b.branchName}</strong></td>
                 <td><span className="status-badge status-active">{b.alias}</span></td>
                 <td>{b.branchManager ?? '-'}</td>
+                <td>{b.createdDate ?? '-'}</td>
                 <td style={{ display: 'flex', gap: '0.5rem' }}>
                   <Link href={`/branches/${b.seq}`} className="btn-table-action">상세</Link>
-                  <Link href={`/branches/${b.seq}/edit`} className="btn-table-action">수정</Link>
-                  <button
-                    className="btn-table-action"
-                    onClick={() => handleDelete(b.seq)}
-                    style={{ background: '#f44336', color: 'white', border: 'none' }}
-                  >
-                    삭제
-                  </button>
+                  {canEdit && (
+                    <>
+                      <Link href={`/branches/${b.seq}/edit`} className="btn-table-action">수정</Link>
+                      <button
+                        className="btn-table-action"
+                        onClick={() => handleDelete(b.seq)}
+                        style={{ background: '#f44336', color: 'white', border: 'none' }}
+                      >
+                        삭제
+                      </button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}

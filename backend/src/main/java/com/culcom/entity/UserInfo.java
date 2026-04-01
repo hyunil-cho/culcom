@@ -22,17 +22,8 @@ public class UserInfo {
     @Column(name = "role", nullable = false)
     private UserRole role;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "user_branch",
-        joinColumns = @JoinColumn(name = "user_seq"),
-        inverseJoinColumns = @JoinColumn(name = "branch_seq")
-    )
-    @Builder.Default
-    private List<Branch> branches = new ArrayList<>();
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by_seq")
+    @JoinColumn(name = "created_by")
     private UserInfo createdBy;
 
     @Column(name = "user_id", nullable = false, unique = true, length = 100)
@@ -56,5 +47,9 @@ public class UserInfo {
     @PreUpdate
     protected void onUpdate() {
         lastUpdateDate = LocalDate.now();
+    }
+
+    public boolean isManager() {
+        return this.role.equals(UserRole.BRANCH_MANAGER);
     }
 }

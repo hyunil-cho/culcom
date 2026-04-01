@@ -1,7 +1,9 @@
 package com.culcom.service;
 
+import com.culcom.entity.Branch;
 import com.culcom.entity.UserInfo;
 import com.culcom.entity.enums.UserRole;
+import com.culcom.repository.BranchRepository;
 import com.culcom.repository.UserInfoRepository;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,10 @@ import java.util.Optional;
 public class AuthService {
 
     private final UserInfoRepository userInfoRepository;
+    private final BranchRepository branchRepository;
+    private final String USER_SEQ = "userSeq";
+    private final String ROLE = "role";
+    private final String CUR_BRANCH_SEQ = "selectedBranchSeq";
 
     /**
      * 기존 Go 앱과의 호환성을 위해 평문 비밀번호도 지원.
@@ -29,11 +35,8 @@ public class AuthService {
     }
 
     public void loginSession(HttpSession session, UserInfo user) {
-        session.setAttribute("userSeq", user.getSeq());
-        session.setAttribute("userId", user.getUserId());
-        session.setAttribute("role", user.getRole().name());
-        session.setAttribute("branchSeqs",
-                user.getBranches().stream().map(b -> b.getSeq()).toList());
+        session.setAttribute(USER_SEQ, user.getSeq());
+        session.setAttribute(ROLE, user.getRole());
 
         var auth = new UsernamePasswordAuthenticationToken(
                 user.getUserId(),
@@ -47,18 +50,32 @@ public class AuthService {
     }
 
     public Long getSessionUserSeq(HttpSession session) {
-        return (Long) session.getAttribute("userSeq");
+        return (Long) session.getAttribute(USER_SEQ);
     }
 
-    public String getSessionRole(HttpSession session) {
-        return (String) session.getAttribute("role");
+    public UserRole getSessionRole(HttpSession session) {
+        return (UserRole) session.getAttribute(ROLE);
     }
 
     public Long getSessionBranchSeq(HttpSession session) {
-        return (Long) session.getAttribute("selectedBranchSeq");
+        return (Long) session.getAttribute(CUR_BRANCH_SEQ);
     }
 
     public void setSelectedBranch(HttpSession session, Long branchSeq) {
-        session.setAttribute("selectedBranchSeq", branchSeq);
+        session.setAttribute(CUR_BRANCH_SEQ, branchSeq);
+    }
+
+    /**
+     * 해당 유저가 관리하는 지점 목록 조회.
+     * BRANCH_MANAGER: 본인이 생성한 지점
+     * STAFF: 생성자(BRANCH_MANAGER)의 지점
+     * ROOT: 전체 지점
+     */
+    public List<Branch> getManagedBranches(UserInfo user) {
+        if (user.getRole() == UserRole.ROOT) {
+            return branchRepository.findAll();
+        }
+        UserInfo manager = user.isManager() ? user : user.getCreatedBy();
+        return branchRepository.findAllByCreatedBy(manager);
     }
 }
