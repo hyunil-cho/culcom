@@ -1,0 +1,9 @@
+package com.culcom.repository;
+
+import com.culcom.entity.ComplexPostponementReason;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+public interface ComplexPostponementReasonRepository extends JpaRepository<ComplexPostponementReason, Long> {
+    List<ComplexPostponementReason> findByBranchSeq(Long branchSeq);
+}

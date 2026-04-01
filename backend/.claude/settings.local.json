@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/lookh/IdeaProjects/culcom/**)",
+      "Bash(mv .env.local legacy-culcom/)",
+      "Bash(mv .ai legacy-culcom/)"
+    ]
+  }
+}
