@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { customerApi, type Customer, type PageResponse } from '@/lib/api';
 import { toServerDateTime, formatDateTime } from '@/lib/dateUtils';
+import ResultModal from '@/components/ui/ResultModal';
 
 const CALLERS = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P'];
 
@@ -41,6 +42,7 @@ export default function CustomersPage() {
   // 인터뷰 확정 상태
   const [interviewInputs, setInterviewInputs] = useState<Record<number, string>>({});
   const [interviewModal, setInterviewModal] = useState<InterviewModal | null>(null);
+  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const load = async () => {
     const params = new URLSearchParams({ page: String(page), size: '20', filter });
@@ -138,10 +140,9 @@ export default function CustomersPage() {
     const input = interviewInputs[customerSeq]?.trim();
     if (!input) return;
 
-    // 간단한 날짜 파싱: ISO format 지원
-    try {
-      const normalized = toServerDateTime(input);
-      await customerApi.createReservation(customerSeq, caller, normalized);
+    const normalized = toServerDateTime(input);
+    const res = await customerApi.createReservation(customerSeq, caller, normalized);
+    if (res.success) {
       setCustomers(prev => prev.map(c =>
         c.seq === customerSeq ? { ...c, status: '예약확정' } : c
       ));
@@ -152,8 +153,7 @@ export default function CustomersPage() {
       if (filter === 'new') {
         setCustomers(prev => prev.filter(c => c.seq !== customerSeq));
       }
-    } catch {
-      alert('예약 생성에 실패했습니다.');
+      setResult({ success: true, message: '예약이 생성되었습니다.' });
     }
   };
 
@@ -174,9 +174,9 @@ export default function CustomersPage() {
   // 삭제
   const confirmDelete = async () => {
     if (deleting === null) return;
-    await customerApi.delete(deleting);
+    const res = await customerApi.delete(deleting);
     setDeleting(null);
-    load();
+    if (res.success) setResult({ success: true, message: '고객이 삭제되었습니다.' });
   };
 
   return (
@@ -515,6 +515,14 @@ export default function CustomersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {result && (
+        <ResultModal
+          success={result.success}
+          message={result.message}
+          onConfirm={() => { setResult(null); load(); }}
+        />
       )}
     </>
   );

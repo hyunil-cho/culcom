@@ -40,13 +40,12 @@ async function request<T>(url: string, options?: RequestInit): Promise<ApiRespon
       if (body?.message) message = body.message;
     } catch { /* 응답 body 파싱 실패 시 기본 메시지 사용 */ }
     showErrorModal(message);
-    throw new Error(message);
+    return { success: false, message, data: null as unknown as T };
   }
 
   const body: ApiResponse<T> = await res.json();
   if (!body.success && body.message) {
     showErrorModal(body.message);
-    throw new Error(body.message);
   }
 
   return body;

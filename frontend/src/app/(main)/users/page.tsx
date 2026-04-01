@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { userApi, SessionRole, type UserResponse } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
+import ResultModal from '@/components/ui/ResultModal';
 
 const ROLE_LABELS: Record<string, string> = {
   ROOT: '최고관리자',
@@ -16,7 +17,7 @@ export default function UsersPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [deleting, setDeleting] = useState<UserResponse | null>(null);
   const [form, setForm] = useState({ userId: '', password: '' });
-  const [error, setError] = useState('');
+  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const load = () => { userApi.list().then(res => setUsers(res.data)); };
 
@@ -24,22 +25,19 @@ export default function UsersPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    try {
-      await userApi.create({ userId: form.userId, password: form.password });
+    const res = await userApi.create({ userId: form.userId, password: form.password });
+    if (res.success) {
       setShowCreate(false);
       setForm({ userId: '', password: '' });
-      load();
-    } catch {
-      setError('사용자 생성에 실패했습니다.');
+      setResult({ success: true, message: '사용자가 생성되었습니다.' });
     }
   };
 
   const confirmDelete = async () => {
     if (!deleting) return;
-    await userApi.delete(deleting.seq);
+    const res = await userApi.delete(deleting.seq);
     setDeleting(null);
-    load();
+    if (res.success) setResult({ success: true, message: '사용자가 삭제되었습니다.' });
   };
 
   const creatingRole = SessionRole.isRoot(session) ? '지점장' : '직원';
@@ -117,12 +115,6 @@ export default function UsersPage() {
               <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#2c3e50' }}>{creatingRole} 계정 생성</h3>
             </div>
             <form onSubmit={handleCreate} style={{ padding: '2rem' }}>
-              {error && (
-                <div style={{
-                  backgroundColor: '#fee2e2', color: '#991b1b',
-                  padding: '8px 12px', borderRadius: 6, marginBottom: 16, fontSize: 14,
-                }}>{error}</div>
-              )}
               <div style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', marginBottom: 4, fontSize: 14, fontWeight: 500 }}>아이디</label>
                 <input
@@ -197,6 +189,14 @@ export default function UsersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {result && (
+        <ResultModal
+          success={result.success}
+          message={result.message}
+          onConfirm={() => { setResult(null); load(); }}
+        />
       )}
     </>
   );

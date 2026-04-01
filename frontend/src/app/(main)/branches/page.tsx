@@ -4,12 +4,14 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { branchApi, SessionRole, type Branch } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
+import ResultModal from '@/components/ui/ResultModal';
 
 export default function BranchesPage() {
   const session = useSessionStore((s) => s.session);
   const refreshBranches = useSessionStore((s) => s.refreshBranches);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
   const canEdit = SessionRole.isManager(session);
 
   const load = () => { branchApi.list().then(res => setBranches(res.data)); };
@@ -22,10 +24,9 @@ export default function BranchesPage() {
 
   const confirmDelete = async () => {
     if (deleting === null) return;
-    await branchApi.delete(deleting);
+    const res = await branchApi.delete(deleting);
     setDeleting(null);
-    load();
-    refreshBranches();
+    if (res.success) setResult({ success: true, message: '지점이 삭제되었습니다.' });
   };
 
   return (
@@ -156,6 +157,14 @@ export default function BranchesPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {result && (
+        <ResultModal
+          success={result.success}
+          message={result.message}
+          onConfirm={async () => { setResult(null); load(); await refreshBranches(); }}
+        />
       )}
     </>
   );

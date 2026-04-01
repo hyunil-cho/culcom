@@ -5,7 +5,9 @@
       "Bash(npm install:*)",
       "Bash(xargs grep:*)",
       "Bash(xargs ls:*)",
-      "Bash(./gradlew build:*)"
+      "Bash(./gradlew build:*)",
+      "Bash(npm run:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

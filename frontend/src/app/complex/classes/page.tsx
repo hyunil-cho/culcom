@@ -2,18 +2,20 @@
 
 import { useEffect, useState } from 'react';
 import { classApi, type ComplexClass } from '@/lib/api';
+import ResultModal from '@/components/ui/ResultModal';
 
 export default function ClassesPage() {
   const [classes, setClasses] = useState<ComplexClass[]>([]);
+  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
 
-  useEffect(() => {
-    classApi.list().then(res => setClasses(res.data));
-  }, []);
+  useEffect(() => { load(); }, []);
+
+  const load = () => { classApi.list().then(res => setClasses(res.data)); };
 
   const handleDelete = async (seq: number) => {
     if (confirm('정말 삭제하시겠습니까?')) {
-      await classApi.delete(seq);
-      classApi.list().then(res => setClasses(res.data));
+      const res = await classApi.delete(seq);
+      if (res.success) setResult({ success: true, message: '수업이 삭제되었습니다.' });
     }
   };
 
@@ -56,6 +58,14 @@ export default function ClassesPage() {
           </tbody>
         </table>
       </div>
+
+      {result && (
+        <ResultModal
+          success={result.success}
+          message={result.message}
+          onConfirm={() => { setResult(null); load(); }}
+        />
+      )}
     </>
   );
 }
