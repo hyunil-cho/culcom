@@ -22,7 +22,7 @@ func JSONSuccess(w http.ResponseWriter, data interface{}) error {
 		}
 		return JSONResponse(w, http.StatusOK, dataMap)
 	}
-	
+
 	// map이 아닌 경우, success 키와 함께 래핑
 	return JSONResponse(w, http.StatusOK, map[string]interface{}{
 		"success": true,

@@ -43,7 +43,7 @@ func (d EditPageData) IsDaySelected(day string) bool {
 	if d.Slot.DaysOfWeek == "" {
 		return false
 	}
-	
+
 	dayList := strings.Split(d.Slot.DaysOfWeek, ",")
 	for _, dayStr := range dayList {
 		if strings.TrimSpace(dayStr) == day {
