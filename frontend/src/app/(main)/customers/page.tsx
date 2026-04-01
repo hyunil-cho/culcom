@@ -206,14 +206,9 @@ export default function CustomersPage() {
               />
             </div>
             <div style={{ margin: 0, display: 'flex', gap: '0.5rem' }}>
-              <button
-                onClick={handleSearch}
-                style={{ padding: '0.6rem 1.2rem', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', border: 'none', borderRadius: 6, fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}
-              >
-                검색
-              </button>
+              <button className="btn-search" onClick={handleSearch}>검색</button>
               {keyword && (
-                <button onClick={handleReset} className="btn-secondary" style={{ padding: '0.6rem 1.2rem' }}>초기화</button>
+                <button className="btn-secondary" style={{ padding: '0.6rem 1.2rem' }} onClick={handleReset}>초기화</button>
               )}
             </div>
           </div>
@@ -233,14 +228,8 @@ export default function CustomersPage() {
             {(['new', 'all'] as const).map(f => (
               <button
                 key={f}
+                className={`btn-filter ${filter === f ? 'btn-filter-active' : 'btn-filter-inactive'}`}
                 onClick={() => { setFilter(f); setPage(0); }}
-                style={{
-                  padding: '0.6rem 1.5rem',
-                  border: `2px solid ${filter === f ? '#4a90e2' : '#ddd'}`,
-                  background: filter === f ? '#4a90e2' : 'white',
-                  color: filter === f ? 'white' : '#666',
-                  borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem',
-                }}
               >
                 {f === 'new' ? '처리중' : '전체'}
               </button>
@@ -327,15 +316,8 @@ export default function CustomersPage() {
                       {CALLERS.map(letter => (
                         <button
                           key={letter}
+                          className={`btn-caller ${selectedCallers[c.seq] === letter ? 'btn-caller-active' : 'btn-caller-inactive'}`}
                           onClick={() => handleCallerClick(c.seq, letter)}
-                          style={{
-                            width: 24, height: 24, padding: 0,
-                            border: `1px solid ${selectedCallers[c.seq] === letter ? '#4a90e2' : '#ddd'}`,
-                            background: selectedCallers[c.seq] === letter ? '#4a90e2' : 'white',
-                            color: selectedCallers[c.seq] === letter ? 'white' : '#333',
-                            fontSize: 10, fontWeight: 600, borderRadius: 2, cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          }}
                         >
                           {letter}
                         </button>

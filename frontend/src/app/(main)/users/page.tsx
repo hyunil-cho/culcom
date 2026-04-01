@@ -123,16 +123,8 @@ export default function UsersPage() {
               />
             </div>
             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
-              <button type="button" onClick={() => setShowCreate(false)} style={{
-                flex: 1, padding: '0.75rem', fontSize: '1rem',
-                border: '1px solid #ddd', background: 'white', color: '#666',
-                borderRadius: 6, cursor: 'pointer',
-              }}>취소</button>
-              <button type="submit" style={{
-                flex: 1, padding: '0.75rem', fontSize: '1rem',
-                border: 'none', background: '#4a90e2', color: 'white',
-                borderRadius: 6, cursor: 'pointer',
-              }}>생성</button>
+              <button type="button" className="btn-modal btn-modal-cancel" onClick={() => setShowCreate(false)}>취소</button>
+              <button type="submit" className="btn-modal btn-modal-confirm" style={{ background: '#4a90e2' }}>생성</button>
             </div>
           </form>
         </ModalOverlay>

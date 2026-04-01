@@ -30,24 +30,8 @@ export default function ConfirmModal({
         {children}
       </div>
       <div style={{ padding: '1rem 2rem', borderTop: '1px solid #e0e0e0', display: 'flex', gap: '0.75rem' }}>
-        <button
-          onClick={onCancel}
-          style={{
-            flex: 1, padding: '0.75rem', fontSize: '1rem',
-            border: '1px solid #ddd', background: 'white', color: '#666',
-            borderRadius: 6, cursor: 'pointer',
-          }}
-        >
-          취소
-        </button>
-        <button
-          onClick={onConfirm}
-          style={{
-            flex: 1, padding: '0.75rem', fontSize: '1rem',
-            border: 'none', background: confirmColor, color: 'white',
-            borderRadius: 6, cursor: 'pointer',
-          }}
-        >
+        <button className="btn-modal btn-modal-cancel" onClick={onCancel}>취소</button>
+        <button className="btn-modal btn-modal-confirm" style={{ background: confirmColor }} onClick={onConfirm}>
           {confirmLabel}
         </button>
       </div>

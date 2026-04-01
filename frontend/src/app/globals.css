@@ -63,6 +63,81 @@ button {
   color: var(--text);
 }
 
+/* 검색 버튼 (gradient) */
+.btn-search {
+  padding: 0.6rem 1.2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* 필터 토글 버튼 */
+.btn-filter {
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.btn-filter-active {
+  border: 2px solid #4a90e2;
+  background: #4a90e2;
+  color: white;
+}
+
+.btn-filter-inactive {
+  border: 2px solid #ddd;
+  background: white;
+  color: #666;
+}
+
+/* CALLER 그리드 버튼 */
+.btn-caller {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-caller-active {
+  border: 1px solid #4a90e2;
+  background: #4a90e2;
+  color: white;
+}
+
+.btn-caller-inactive {
+  border: 1px solid #ddd;
+  background: white;
+  color: #333;
+}
+
+/* 모달 액션 버튼 (취소/확인 쌍) */
+.btn-modal {
+  flex: 1;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border-radius: 6px;
+}
+
+.btn-modal-cancel {
+  border: 1px solid #ddd;
+  background: white;
+  color: #666;
+}
+
+.btn-modal-confirm {
+  border: none;
+  color: white;
+}
+
 /* 네비게이션 링크 버튼 (Link에서 btn-primary와 함께 사용) */
 .btn-nav {
   padding: 0.75rem 1.5rem;

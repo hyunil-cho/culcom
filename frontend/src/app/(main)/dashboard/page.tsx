@@ -25,12 +25,8 @@ export default function DashboardPage() {
             지점을 등록해야 고객 관리 등 주요 기능을 이용할 수 있습니다.
           </div>
           <button
+            className="btn-primary"
             onClick={() => router.push('/branches')}
-            style={{
-              padding: '0.5rem 1.25rem', fontSize: '0.9rem', fontWeight: 500,
-              border: 'none', borderRadius: 6, cursor: 'pointer',
-              background: '#4a90e2', color: 'white',
-            }}
           >
             지점 등록하러 가기
           </button>
