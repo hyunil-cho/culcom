@@ -165,6 +165,8 @@ func registerComplexRoutes(mux *http.ServeMux) {
 	// /complex/attendance
 	mux.HandleFunc("/complex/attendance", middleware.RequireAuthRecover(middleware.InjectBranchData(attendance.Handler)))
 	mux.HandleFunc("/complex/attendance/detail", middleware.RequireAuthRecover(middleware.InjectBranchData(attendance.DetailHandler)))
+	mux.HandleFunc("/complex/attendance/reorder", middleware.RequireAuthRecover(middleware.InjectBranchData(attendance.ReorderClassesHandler)))
+	mux.HandleFunc("/complex/attendance/bulk", middleware.RequireAuthRecover(middleware.InjectBranchData(attendance.BulkAttendanceHandler)))
 
 	// /complex/classes
 	mux.HandleFunc("/complex/classes", middleware.RequireAuthRecover(middleware.InjectBranchData(management.Handler)))
@@ -207,6 +209,14 @@ func registerComplexRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/complex/staffs/delete", middleware.RequireAuthRecover(middleware.InjectBranchData(management.StaffDeleteHandler)))
 
 	// /complex/survey (관리자)
+	mux.HandleFunc("/complex/survey/templates", middleware.RequireAuthRecover(middleware.InjectBranchData(complexSurvey.TemplateListHandler)))
+	mux.HandleFunc("/complex/survey/templates/create", middleware.RequireAuthRecover(middleware.InjectBranchData(complexSurvey.TemplateCreateHandler)))
+	mux.HandleFunc("/complex/survey/templates/copy", middleware.RequireAuthRecover(middleware.InjectBranchData(complexSurvey.TemplateCopyHandler)))
+	mux.HandleFunc("/complex/survey/templates/delete", middleware.RequireAuthRecover(complexSurvey.TemplateDeleteHandler))
+	mux.HandleFunc("/complex/survey/templates/status", middleware.RequireAuthRecover(complexSurvey.TemplateStatusHandler))
+	mux.HandleFunc("/complex/survey/questions/add", middleware.RequireAuthRecover(complexSurvey.QuestionAddHandler))
+	mux.HandleFunc("/complex/survey/questions/delete", middleware.RequireAuthRecover(complexSurvey.QuestionDeleteHandler))
+	mux.HandleFunc("/complex/survey/questions/update", middleware.RequireAuthRecover(complexSurvey.QuestionUpdateHandler))
 	mux.HandleFunc("/complex/survey/options", middleware.RequireAuthRecover(middleware.InjectBranchData(complexSurvey.OptionsHandler)))
 	mux.HandleFunc("/complex/survey/options/add", middleware.RequireAuthRecover(complexSurvey.AddOptionHandler))
 	mux.HandleFunc("/complex/survey/options/delete", middleware.RequireAuthRecover(complexSurvey.DeleteOptionHandler))

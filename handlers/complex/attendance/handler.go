@@ -1,78 +1,88 @@
 package attendance
 
 import (
+	"backoffice/database"
 	"backoffice/handlers/complex/management"
 	"backoffice/middleware"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"time"
 )
 
 var Templates *template.Template
 
-// createMockClasses - 수업 생성을 위한 헬퍼 함수 (MOCK용)
-func createMockClasses(slotName string, count int) []management.ClassWithMembers {
-	classes := []management.ClassWithMembers{}
-	for i := 1; i <= count; i++ {
-		className := fmt.Sprintf("레벨%d-%d반", (i-1)/3, i)
-		if i > 7 {
-			className = fmt.Sprintf("프리토킹 %c반", rune(64+i-7))
-		}
-
-		members := []management.Member{
-			{ID: i*10 + 1, Name: fmt.Sprintf("회원%d-1", i), PhoneNumber: "0101111XXXX", Status: "O"},
-			{ID: i*10 + 2, Name: fmt.Sprintf("회원%d-2", i), PhoneNumber: "0102222XXXX", Status: ""},
-			{ID: i*10 + 3, Name: fmt.Sprintf("회원%d-3", i), PhoneNumber: "0103333XXXX", Status: "O"},
-			{ID: i*10 + 4, Name: fmt.Sprintf("회원%d-4", i), PhoneNumber: "0104444XXXX", Status: ""},
-			{ID: i*10 + 5, Name: fmt.Sprintf("회원%d-5", i), PhoneNumber: "0105555XXXX", Status: "O"},
-		}
-		// 일부 반에 수업 연기 중인 회원 추가
-		if i%4 == 1 {
-			members[2] = management.Member{ID: i*10 + 3, Name: fmt.Sprintf("회원%d-3", i), PhoneNumber: "0103333XXXX", Status: "△", IsPostponed: true}
-		}
-		if i%5 == 0 {
-			members[4] = management.Member{ID: i*10 + 5, Name: fmt.Sprintf("회원%d-5", i), PhoneNumber: "0105555XXXX", Status: "△", IsPostponed: true}
-		}
-		// 일부 반은 인원을 더 많이
-		if i%3 == 0 {
-			members = append(members, management.Member{ID: i*10 + 6, Name: "추가회원A", PhoneNumber: "0109999XXXX", Status: "O"})
-			members = append(members, management.Member{ID: i*10 + 7, Name: "추가회원B", PhoneNumber: "0108888XXXX", Status: ""})
-		}
-
-		classes = append(classes, management.ClassWithMembers{
-			Class:   management.Class{Name: className, TimeSlotName: slotName},
-			Members: members,
-		})
-	}
-	return classes
-}
-
 // Handler - 등록현황(통합) 페이지
 func Handler(w http.ResponseWriter, r *http.Request) {
-	// 1. 월수 오전팀 (10개 수업)
-	monWedMorning := management.SlotGroup{
-		SlotName: "월수 오전팀 (10:00 ~ 12:00)",
-		Classes:  createMockClasses("월수 오전", 10),
+	baseData := middleware.GetBasePageData(r)
+	branchSeq := baseData.SelectedBranchSeq
+
+	today := time.Now().Format("2006-01-02")
+
+	// 수업 목록 조회
+	classes, err := database.GetAttendanceClasses(branchSeq)
+	if err != nil {
+		log.Printf("Handler: GetAttendanceClasses error: %v", err)
+		http.Error(w, "수업 데이터를 불러올 수 없습니다.", http.StatusInternalServerError)
+		return
 	}
 
-	// 2. 화목 오후팀 (10개 수업)
-	tueThuAfternoon := management.SlotGroup{
-		SlotName: "화목 오후팀 (14:00 ~ 16:00)",
-		Classes:  createMockClasses("화목 오후", 10),
+	// 회원 + 오늘 출석 상태 조회
+	members, err := database.GetAttendanceMembers(branchSeq, today)
+	if err != nil {
+		log.Printf("Handler: GetAttendanceMembers error: %v", err)
+		http.Error(w, "회원 데이터를 불러올 수 없습니다.", http.StatusInternalServerError)
+		return
 	}
 
-	// 3. 주말 집중팀 (8개 수업)
-	weekendIntensive := management.SlotGroup{
-		SlotName: "주말 집중팀 (13:00 ~ 17:00)",
-		Classes:  createMockClasses("주말 집중", 8),
+	// 수업별 회원 맵 구성
+	membersByClass := make(map[int][]management.Member)
+	for _, m := range members {
+		membersByClass[m.ClassSeq] = append(membersByClass[m.ClassSeq], management.Member{
+			ID:          m.MemberSeq,
+			Name:        m.Name,
+			PhoneNumber: m.PhoneNumber,
+			Status:      m.Status,
+			IsStaff:     m.IsStaff,
+			IsPostponed: m.IsPostponed,
+		})
+	}
+
+	// 시간대별 그룹핑
+	slotMap := make(map[int]*management.SlotGroup) // timeSlotSeq → SlotGroup
+	var slotOrder []int                            // 순서 보존용
+
+	for _, c := range classes {
+		if _, exists := slotMap[c.TimeSlotSeq]; !exists {
+			slotName := fmt.Sprintf("%s %s (%s ~ %s)", c.TimeSlotName, c.DaysOfWeek, c.StartTime, c.EndTime)
+			slotMap[c.TimeSlotSeq] = &management.SlotGroup{TimeSlotSeq: c.TimeSlotSeq, SlotName: slotName}
+			slotOrder = append(slotOrder, c.TimeSlotSeq)
+		}
+
+		slotMap[c.TimeSlotSeq].Classes = append(slotMap[c.TimeSlotSeq].Classes, management.ClassWithMembers{
+			Class: management.Class{
+				ID:           c.Seq,
+				Name:         c.Name,
+				TimeSlotName: c.TimeSlotName,
+				Capacity:     c.Capacity,
+			},
+			Members: membersByClass[c.Seq],
+		})
+	}
+
+	// 순서대로 SlotGroup 배열 구성
+	var groups []management.SlotGroup
+	for _, tsSeq := range slotOrder {
+		groups = append(groups, *slotMap[tsSeq])
 	}
 
 	data := management.ComplexViewPageData{
-		BasePageData: middleware.GetBasePageData(r),
+		BasePageData: baseData,
 		Title:        "지점 통합 등록현황",
 		ActiveMenu:   "complex_attendance",
-		Groups:       []management.SlotGroup{monWedMorning, tueThuAfternoon, weekendIntensive},
+		Groups:       groups,
 	}
 
 	if err := Templates.ExecuteTemplate(w, "dashboard/attendance.html", data); err != nil {
@@ -81,62 +91,125 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// createDetailMockClasses - 상세 출석부용 풍부한 MOCK 데이터
-func createDetailMockClasses(slotName string) []management.ClassWithMembers {
-	return []management.ClassWithMembers{
-		{
-			Class: management.Class{ID: 101, Name: "레벨0-1반", TimeSlotName: slotName, Capacity: 8},
-			Members: []management.Member{
-				{ID: 1001, Name: "김도현", PhoneNumber: "01012345678", Level: "3-", Info: "대학생, 교환학생 준비", JoinDate: "2026-01-06", ExpiryDate: "2026-07-06", Stats: "24 did 76 left", Grade: "VVIP", AttendanceHistory: []string{"O", "O", "O", "X", "O", "O", "O", "O", "X", "O"}},
-				{ID: 1002, Name: "이수진", PhoneNumber: "01098761234", Level: "3", Info: "직장인, IT기업", JoinDate: "2025-11-15", ExpiryDate: "2026-05-15", Stats: "38 did 62 left", Grade: "VVIP", AttendanceHistory: []string{"O", "O", "X", "O", "O", "O", "X", "O", "O", "O"}},
-				{ID: 1003, Name: "박준혁", PhoneNumber: "01055567890", Level: "2+", Info: "자영업, 해외바이어 미팅", JoinDate: "2026-02-10", ExpiryDate: "2026-08-10", Stats: "12 did 88 left", Grade: "VVIP", AttendanceHistory: []string{"O", "O", "O", "O", "O", "X", "O", "O", "O", "O"}},
-				{ID: 1004, Name: "정유나", PhoneNumber: "01033344556", Level: "3-", Info: "대학원생", JoinDate: "2026-01-20", ExpiryDate: "2026-04-20", Stats: "18 did 12 left", Grade: "A+", AttendanceHistory: []string{"O", "X", "O", "O", "X", "O", "O", "X", "O", "O"}},
-				{ID: 1005, Name: "최민서", PhoneNumber: "01077788899", Level: "2", Info: "워홀 준비", JoinDate: "2026-03-01", ExpiryDate: "2026-04-01", Stats: "6 did 4 left", Grade: "멤버쉽", Status: "△", IsPostponed: true, AttendanceHistory: []string{"O", "O", "O", "△", "△", "△"}},
-				{ID: 1006, Name: "한지우", PhoneNumber: "01011122233", Level: "3+", Info: "프리랜서 번역가", JoinDate: "2025-09-01", ExpiryDate: "2026-09-01", Stats: "52 did 48 left", Grade: "VVIP+", AttendanceHistory: []string{"O", "O", "O", "O", "O", "O", "O", "O", "O", "O"}},
-			},
-		},
-		{
-			Class: management.Class{ID: 102, Name: "레벨0-2반", TimeSlotName: slotName, Capacity: 7},
-			Members: []management.Member{
-				{ID: 2001, Name: "오승우", PhoneNumber: "01044455566", Level: "4-", Info: "외국계 기업 마케터", JoinDate: "2025-10-01", ExpiryDate: "2026-10-01", Stats: "48 did 52 left", Grade: "VVIP+", AttendanceHistory: []string{"O", "O", "O", "O", "X", "O", "O", "O", "O", "O"}},
-				{ID: 2002, Name: "윤서아", PhoneNumber: "01066677788", Level: "3", Info: "간호사, 해외취업 목표", JoinDate: "2026-01-13", ExpiryDate: "2026-07-13", Stats: "20 did 80 left", Grade: "VVIP", AttendanceHistory: []string{"O", "O", "X", "X", "O", "O", "O", "O", "O", "X"}},
-				{ID: 2003, Name: "장현우", PhoneNumber: "01099900011", Level: "3-", Info: "공무원", JoinDate: "2026-02-03", ExpiryDate: "2026-05-03", Stats: "14 did 16 left", Grade: "A+", AttendanceHistory: []string{"O", "X", "O", "O", "O", "X", "O", "O", "X", "O"}},
-				{ID: 2004, Name: "송예은", PhoneNumber: "01022233344", Level: "4", Info: "통역사 지망", JoinDate: "2025-08-20", ExpiryDate: "2026-08-20", Stats: "60 did 40 left", Grade: "VVIP+", AttendanceHistory: []string{"O", "O", "O", "O", "O", "O", "O", "O", "O", "O"}},
-				{ID: 2005, Name: "임태호", PhoneNumber: "01088899900", Level: "2+", Info: "스타트업 대표", JoinDate: "2026-03-10", ExpiryDate: "2026-06-10", Stats: "4 did 26 left", Grade: "A+", Status: "△", IsPostponed: true, AttendanceHistory: []string{"O", "O", "X", "△"}},
-			},
-		},
-		{
-			Class: management.Class{ID: 103, Name: "프리토킹 A반", TimeSlotName: slotName, Capacity: 6},
-			Members: []management.Member{
-				{ID: 3001, Name: "강민재", PhoneNumber: "01015926348", Level: "5", Info: "유학 경험, 영어강사 준비", JoinDate: "2025-06-01", ExpiryDate: "2026-06-01", Stats: "82 did 18 left", Grade: "VVIP+", AttendanceHistory: []string{"O", "O", "O", "O", "O", "O", "O", "O", "O", "O"}},
-				{ID: 3002, Name: "배소희", PhoneNumber: "01035746892", Level: "4+", Info: "외국계 금융사", JoinDate: "2025-12-01", ExpiryDate: "2026-06-01", Stats: "30 did 70 left", Grade: "VVIP", AttendanceHistory: []string{"O", "X", "O", "O", "O", "O", "X", "O", "O", "O"}},
-				{ID: 3003, Name: "문성빈", PhoneNumber: "01048261573", Level: "5-", Info: "해외영업 담당", JoinDate: "2026-01-02", ExpiryDate: "2026-07-02", Stats: "22 did 78 left", Grade: "VVIP", AttendanceHistory: []string{"O", "O", "O", "O", "X", "O", "O", "O", "O", "X"}},
-				{ID: 3004, Name: "권하린", PhoneNumber: "01067381924", Level: "4", Info: "항공사 승무원", JoinDate: "2026-02-17", ExpiryDate: "2026-05-17", Stats: "10 did 20 left", Grade: "A+", AttendanceHistory: []string{"O", "O", "O", "O", "O", "X", "O", "O", "O", "O"}},
-			},
-		},
-	}
-}
-
-// DetailHandler - 특정 시간대 또는 특정 수업의 상세 등록현황(출석부) 페이지
+// DetailHandler - 특정 시간대의 상세 등록현황(출석부) 페이지
 func DetailHandler(w http.ResponseWriter, r *http.Request) {
-	slotName := r.URL.Query().Get("slot")
-	if slotName == "" {
-		slotName = "월수 오전팀 (10:00 ~ 12:00)"
+	baseData := middleware.GetBasePageData(r)
+	branchSeq := baseData.SelectedBranchSeq
+
+	slotSeqStr := r.URL.Query().Get("slotSeq")
+	if slotSeqStr == "" {
+		http.Redirect(w, r, "/complex/attendance", http.StatusFound)
+		return
+	}
+	var slotSeq int
+	if _, err := fmt.Sscanf(slotSeqStr, "%d", &slotSeq); err != nil {
+		http.Error(w, "잘못된 슬롯 ID입니다.", http.StatusBadRequest)
+		return
 	}
 
-	displayClasses := createDetailMockClasses(slotName)
+	// 수업 목록 조회 (sort_order 적용)
+	classes, err := database.GetDetailClassesBySlot(branchSeq, slotSeq)
+	if err != nil {
+		log.Printf("DetailHandler: GetDetailClassesBySlot error: %v", err)
+		http.Error(w, "수업 데이터를 불러올 수 없습니다.", http.StatusInternalServerError)
+		return
+	}
+
+	// 슬롯 이름 조합
+	slotName := ""
+	if len(classes) > 0 {
+		c := classes[0]
+		slotName = fmt.Sprintf("%s %s (%s ~ %s)", c.TimeSlotName, c.DaysOfWeek, c.StartTime, c.EndTime)
+	}
+
+	// 회원 상세 정보 조회
+	detailMembers, err := database.GetDetailMembers(branchSeq, slotSeq)
+	if err != nil {
+		log.Printf("DetailHandler: GetDetailMembers error: %v", err)
+		http.Error(w, "회원 데이터를 불러올 수 없습니다.", http.StatusInternalServerError)
+		return
+	}
+
+	// 최근 출석 기록 조회
+	attendRecords, err := database.GetRecentAttendanceBySlot(branchSeq, slotSeq)
+	if err != nil {
+		log.Printf("DetailHandler: GetRecentAttendanceBySlot error: %v", err)
+		http.Error(w, "출석 기록을 불러올 수 없습니다.", http.StatusInternalServerError)
+		return
+	}
+
+	// 출석 기록을 (classSeq, memberSeq) → []string 맵으로 구성 (최근 10건)
+	type histKey struct{ classSeq, memberSeq int }
+	histMap := make(map[histKey][]string)
+	for _, r := range attendRecords {
+		k := histKey{r.ClassSeq, r.MemberSeq}
+		if len(histMap[k]) < 10 {
+			histMap[k] = append(histMap[k], r.Status)
+		}
+	}
+
+	// 회원을 수업별로 그룹핑
+	membersByClass := make(map[int][]management.Member)
+	for _, dm := range detailMembers {
+		remaining := dm.TotalCount - dm.UsedCount
+		if remaining < 0 {
+			remaining = 0
+		}
+		stats := fmt.Sprintf("%d did %d left", dm.UsedCount, remaining)
+
+		history := histMap[histKey{dm.ClassSeq, dm.MemberSeq}]
+
+		membersByClass[dm.ClassSeq] = append(membersByClass[dm.ClassSeq], management.Member{
+			ID:          dm.MemberSeq,
+			Name:        dm.Name,
+			PhoneNumber: dm.PhoneNumber,
+			Level:       dm.Level,
+			Info:        dm.Info,
+			JoinDate:    dm.JoinDate,
+			ExpiryDate:  dm.ExpiryDate,
+			Stats:       stats,
+			Grade:       dm.Grade,
+			IsStaff:     dm.IsStaff,
+			IsPostponed: dm.IsPostponed,
+			Status: func() string {
+				if dm.IsPostponed {
+					return "△"
+				}
+				return ""
+			}(),
+			AttendanceHistory: history,
+		})
+	}
+
+	// ClassWithMembers 조합 (스태프를 첫 번째로)
+	var displayClasses []management.ClassWithMembers
+	for _, c := range classes {
+		displayClasses = append(displayClasses, management.ClassWithMembers{
+			Class: management.Class{
+				ID:           c.Seq,
+				Name:         c.Name,
+				TimeSlotName: c.TimeSlotName,
+				Capacity:     c.Capacity,
+			},
+			Members: membersByClass[c.Seq],
+		})
+	}
+
+	today := time.Now().Format("2006-01-02")
 
 	data := struct {
 		middleware.BasePageData
 		Title      string
 		ActiveMenu string
 		SlotName   string
+		Today      string
 		Classes    []management.ClassWithMembers
 	}{
-		BasePageData: middleware.GetBasePageData(r),
+		BasePageData: baseData,
 		Title:        slotName + " 등록현황",
 		ActiveMenu:   "complex_attendance",
 		SlotName:     slotName,
+		Today:        today,
 		Classes:      displayClasses,
 	}
 
@@ -144,4 +217,96 @@ func DetailHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Println("Template error:", err)
 	}
+}
+
+// ReorderClassesHandler - 수업 카드 순서 저장 API
+func ReorderClassesHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		ClassOrders []struct {
+			ID        int `json:"id"`
+			SortOrder int `json:"sortOrder"`
+		} `json:"classOrders"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	orders := make([]struct {
+		Seq       int
+		SortOrder int
+	}, len(req.ClassOrders))
+
+	for i, co := range req.ClassOrders {
+		orders[i].Seq = co.ID
+		orders[i].SortOrder = co.SortOrder
+	}
+
+	if err := database.UpdateClassSortOrder(orders); err != nil {
+		log.Printf("ReorderClassesHandler error: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
+// BulkAttendanceHandler - 일괄 출석 저장 API
+func BulkAttendanceHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		ClassID int `json:"classId"`
+		Members []struct {
+			ID       int  `json:"id"`
+			IsStaff  bool `json:"isStaff"`
+			Attended bool `json:"attended"`
+		} `json:"members"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	today := time.Now().Format("2006-01-02")
+
+	items := make([]database.BulkAttendanceItem, len(req.Members))
+	for i, m := range req.Members {
+		items[i] = database.BulkAttendanceItem{
+			MemberSeq: m.ID,
+			IsStaff:   m.IsStaff,
+			Attended:  m.Attended,
+		}
+	}
+
+	results, err := database.SaveBulkAttendance(req.ClassID, today, items)
+	if err != nil {
+		log.Printf("BulkAttendanceHandler error: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	type resultItem struct {
+		MemberSeq int    `json:"memberSeq"`
+		Name      string `json:"name"`
+		Status    string `json:"status"`
+	}
+	resp := make([]resultItem, len(results))
+	for i, r := range results {
+		resp[i] = resultItem{MemberSeq: r.MemberSeq, Name: r.Name, Status: r.Status}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }

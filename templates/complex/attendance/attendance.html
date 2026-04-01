@@ -134,6 +134,16 @@
             font-size: 0.9rem;
             cursor: default;
         }
+        .member-item.is-staff {
+            background: #fff8f0;
+            border-bottom: 2px solid #f0c78a;
+        }
+        .status-mark.absent {
+            background: #fff5f5;
+            color: #ccc;
+            border-color: #eee;
+            font-size: 0.75rem;
+        }
         .member-item.is-postponed {
             background: #fff3cd;
         }
@@ -291,6 +301,26 @@
             transition: all 0.2s ease;
         }
 
+        /* 수업 카드 드래그 앤 드롭 */
+        .class-card-header {
+            cursor: grab;
+        }
+        .class-card.card-drag-placeholder {
+            opacity: 0.3;
+            border: 2px dashed #4a90e2;
+            background: #e8f0fe;
+        }
+        .class-card-clone {
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+            opacity: 0.9;
+            box-shadow: 0 12px 32px rgba(74,144,226,0.3);
+            border-radius: 8px;
+            transform: rotate(2deg);
+            transition: none;
+        }
+
         .search-container {
             background: #fff;
             padding: 20px;
@@ -407,14 +437,14 @@
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <span style="color: #888; margin-right: 5px;">총 {{len .Classes}}개 분반</span>
                             <button type="button" class="btn-secondary" style="padding: 5px 12px; font-size: 0.85rem; font-weight: 600; cursor: pointer;" onclick="openSlotMessageModal('{{.SlotName}}')">💬 메시지</button>
-                            <a href="/complex/attendance/detail?slot={{.SlotName}}" class="btn-primary" style="text-decoration: none; padding: 5px 12px; font-size: 0.85rem; background: #4a90e2; color: white; border-radius: 4px; font-weight: 600;">전체 상세보기</a>
+                            <a href="/complex/attendance/detail?slotSeq={{.TimeSlotSeq}}" class="btn-primary" style="text-decoration: none; padding: 5px 12px; font-size: 0.85rem; background: #4a90e2; color: white; border-radius: 4px; font-weight: 600;">전체 상세보기</a>
                         </div>
                     </div>
                     
                     <div class="complex-grid">
                         {{range .Classes}}
                         {{$currentClassName := .Name}}
-                        <div class="class-card">
+                        <div class="class-card" data-class-id="{{.ID}}">
                             <div class="class-card-header">
                                 <h3>{{.Name}}</h3>
                                 <span class="attend-rate-badge">집계 중</span>
@@ -422,10 +452,10 @@
                             </div>
                             <ul class="member-list">
                                 {{range $i, $m := .Members}}
-                                <li class="member-item {{if .IsPostponed}}is-postponed{{end}}" data-member-id="{{.ID}}" data-member-name="{{.Name}}" {{if .IsPostponed}}data-postponed="true"{{end}}>
+                                <li class="member-item {{if .IsPostponed}}is-postponed{{end}} {{if .IsStaff}}is-staff{{end}}" data-member-id="{{.ID}}" data-member-name="{{.Name}}" {{if .IsPostponed}}data-postponed="true"{{end}} {{if .IsStaff}}data-staff="true"{{end}}>
                                     <div class="member-info">
-                                        <span class="member-index" style="{{if eq $i 0}}font-weight: 800; color: #e67e22; font-size: 0.7rem;{{end}}">
-                                            {{if eq $i 0}}STAFF{{else}}{{$i}}{{end}}
+                                        <span class="member-index" style="{{if .IsStaff}}font-weight: 800; color: #e67e22; font-size: 0.7rem;{{end}}">
+                                            {{if .IsStaff}}STAFF{{else}}{{$i}}{{end}}
                                         </span>
                                         <span class="member-name">{{.Name}}</span>
                                         <span class="member-phone">{{.PhoneNumber}}</span>
@@ -434,19 +464,13 @@
                                     {{if .IsPostponed}}
                                     <div class="status-mark postponed" title="수업 연기 중">△</div>
                                     {{else}}
-                                    <div class="status-mark {{if .Status}}active{{end}}">{{if .Status}}{{.Status}}{{else}}&nbsp;{{end}}</div>
+                                    <div class="status-mark {{if eq .Status "O"}}active{{else if eq .Status "X"}}{{else}}absent{{end}}">{{if .Status}}{{.Status}}{{else}}-{{end}}</div>
                                     {{end}}
                                 </li>
-                                {{end}}
-                                
-                                {{/* 최소 5줄 보장 MOCK */}}
-                                {{if lt (len .Members) 5}}
-                                    <li class="member-item empty-row"><div class="member-info"><span>- , x</span></div><div class="status-mark"></div></li>
                                 {{end}}
                             </ul>
                             <div class="card-footer">
                                 <strong>인원: {{len .Members}} / {{.Capacity}}명</strong>
-                                <a href="/complex/attendance/detail?slot={{$slotName}}&classId={{.ID}}" style="color: #4a90e2; cursor: pointer; text-decoration: none; font-weight: 600;">상세보기 →</a>
                             </div>
                         </div>
                         {{end}}
@@ -474,7 +498,7 @@
                             phone: "{{.PhoneNumber}}",
                             status: "{{.Status}}",
                             isPostponed: {{if .IsPostponed}}true{{else}}false{{end}},
-                            isLeader: {{if eq $idx 0}}true{{else}}false{{end}}
+                            isStaff: {{if .IsStaff}}true{{else}}false{{end}}
                         },
                         {{end}}
                     ]
@@ -486,12 +510,20 @@
         // ── 카드별 출석률 계산 · 표시 ─────────────────────────
         function updateAttendRates() {
             document.querySelectorAll('.class-card').forEach(card => {
-                const allMarks = card.querySelectorAll('.member-list .status-mark');
-                const postponed = card.querySelectorAll('.member-list .status-mark.postponed').length;
-                const total   = allMarks.length - postponed;
-                const present = card.querySelectorAll('.member-list .status-mark.active').length;
-                const pct     = total > 0 ? Math.round(present / total * 100) : 0;
-                const badge   = card.querySelector('.attend-rate-badge');
+                const memberItems = card.querySelectorAll('.member-list .member-item');
+                let total = 0, present = 0, postponed = 0;
+                memberItems.forEach(item => {
+                    const mark = item.querySelector('.status-mark');
+                    if (!mark) return;
+                    if (mark.classList.contains('postponed')) {
+                        postponed++;
+                        return;
+                    }
+                    total++;
+                    if (mark.classList.contains('active')) present++;
+                });
+                const pct   = total > 0 ? Math.round(present / total * 100) : 0;
+                const badge = card.querySelector('.attend-rate-badge');
                 if (!badge) return;
                 const suffix = postponed > 0 ? ` (연기 ${postponed})` : '';
                 badge.textContent = `${present}/${total}명 · ${pct}%${suffix}`;
@@ -838,14 +870,15 @@
                 headerColor: '#2e7d32',
                 contentBuilder: () => {
                     const rows = cls.members.map((m, i) => {
+                        const label = m.isStaff
+                            ? '<span style="color:#e67e22;font-size:0.72rem;font-weight:800;white-space:nowrap;">STAFF</span>'
+                            : `<span style="color:#adb5bd;font-size:0.8rem;width:18px;text-align:right;flex-shrink:0;">${i}</span>`;
                         if (m.isPostponed) {
                             return `
                         <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #f0f0f0;background:#fffdf5;opacity:0.75;">
                             <span style="display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;background:#fff9db;border:1px solid #ffc078;border-radius:3px;color:#e67700;font-size:0.75rem;font-weight:800;flex-shrink:0;">△</span>
                             <div style="flex:1;display:flex;align-items:center;gap:8px;min-width:0;">
-                                ${i === 0
-                                    ? '<span style="color:#e67e22;font-size:0.72rem;font-weight:800;white-space:nowrap;">STAFF</span>'
-                                    : `<span style="color:#adb5bd;font-size:0.8rem;width:18px;text-align:right;flex-shrink:0;">${i}</span>`}
+                                ${label}
                                 <strong style="color:#b8860b;white-space:nowrap;">${m.name}</strong>
                                 <span style="color:#999;font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.phone}</span>
                                 <span style="font-size:0.7rem;color:#e67700;background:#fff3cd;padding:1px 6px;border-radius:10px;white-space:nowrap;">연기중</span>
@@ -853,14 +886,12 @@
                         </div>`;
                         }
                         return `
-                        <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #f0f0f0;">
+                        <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #f0f0f0;${m.isStaff ? 'background:#fff8f0;' : ''}">
                             <input type="checkbox" id="bulk_${m.id}" class="bulk-attend-cb"
                                    style="width:17px;height:17px;cursor:pointer;accent-color:#2e7d32;"
                                    ${m.status === 'O' ? 'checked' : ''}>
                             <label for="bulk_${m.id}" style="flex:1;cursor:pointer;display:flex;align-items:center;gap:8px;min-width:0;">
-                                ${i === 0
-                                    ? '<span style="color:#e67e22;font-size:0.72rem;font-weight:800;white-space:nowrap;">STAFF</span>'
-                                    : `<span style="color:#adb5bd;font-size:0.8rem;width:18px;text-align:right;flex-shrink:0;">${i}</span>`}
+                                ${label}
                                 <strong style="color:#333;white-space:nowrap;">${m.name}</strong>
                                 <span style="color:#999;font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.phone}</span>
                             </label>
@@ -909,31 +940,113 @@
         }
 
         function saveBulkAttendance(classId, cls) {
-            // 체크박스 상태 → in-memory 업데이트
-            document.querySelectorAll('.bulk-attend-cb').forEach(cb => {
-                const memberId = cb.id.replace('bulk_', '');
-                const member = cls.members.find(m => m.id === memberId);
-                if (member) member.status = cb.checked ? 'O' : '';
-            });
-
-            // DOM 출석 마크 업데이트 (연기 회원은 건너뜀)
-            cls.members.forEach(m => {
-                if (m.isPostponed) return;
-                const item = document.querySelector(`.member-item[data-member-id="${m.id}"]`);
-                if (!item) return;
-                const mark = item.querySelector('.status-mark');
-                if (!mark) return;
-                if (m.status === 'O') {
-                    mark.classList.add('active');
-                    mark.textContent = 'O';
-                } else {
-                    mark.classList.remove('active');
-                    mark.innerHTML = '&nbsp;';
+            // 체크박스 + 연기 회원 모두 수집
+            const members = [];
+            cls.members.forEach((m, i) => {
+                if (m.isPostponed) {
+                    members.push({ id: parseInt(m.id), isStaff: !!m.isStaff, attended: false });
+                    return;
                 }
+                const cb = document.getElementById('bulk_' + m.id);
+                members.push({ id: parseInt(m.id), isStaff: !!m.isStaff, attended: cb ? cb.checked : false });
             });
 
-            ModalManager.hide('bulkAttendanceModal');
-            updateAttendRates();
+            fetch('/complex/attendance/bulk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ classId: parseInt(classId), members: members })
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('저장 실패');
+                return res.json();
+            })
+            .then(results => {
+                // 결과별로 DOM 업데이트 (새로 처리된 건만)
+                results.forEach(r => {
+                    const member = cls.members.find(m => m.id === String(r.memberSeq));
+                    if (!member) return;
+
+                    if (r.status === 'skip_already' || r.status === 'skip_no_membership') return;
+
+                    const item = document.querySelector(`.member-item[data-member-id="${r.memberSeq}"]`);
+                    if (!item) return;
+                    const mark = item.querySelector('.status-mark');
+                    if (!mark) return;
+
+                    if (r.status === '출석') {
+                        member.status = 'O';
+                        mark.classList.remove('absent');
+                        mark.classList.add('active');
+                        mark.textContent = 'O';
+                    } else if (r.status === '연기') {
+                        // 연기는 이미 표시되어 있으므로 변경 없음
+                    } else if (r.status === '결석') {
+                        member.status = 'X';
+                        mark.classList.remove('active', 'absent');
+                        mark.textContent = 'X';
+                    }
+                });
+
+                ModalManager.hide('bulkAttendanceModal');
+                updateAttendRates();
+                showBulkResultModal(cls.name, results);
+            })
+            .catch(err => {
+                console.error(err);
+                alert('출석 저장 중 오류가 발생했습니다.');
+            });
+        }
+
+        function showBulkResultModal(className, results) {
+            const attended = results.filter(r => r.status === '출석');
+            const absent   = results.filter(r => r.status === '결석');
+            const postponed = results.filter(r => r.status === '연기');
+            const skipped  = results.filter(r => r.status === 'skip_already');
+            const noMembership = results.filter(r => r.status === 'skip_no_membership');
+
+            let html = '<div style="padding:10px; font-size:0.9rem; line-height:1.8;">';
+
+            if (attended.length > 0) {
+                html += `<div style="margin-bottom:10px;"><strong style="color:#2e7d32;">출석 (${attended.length}명)</strong><br>`;
+                html += attended.map(r => r.name).join(', ');
+                html += '</div>';
+            }
+            if (absent.length > 0) {
+                html += `<div style="margin-bottom:10px;"><strong style="color:#888;">결석 (${absent.length}명)</strong><br>`;
+                html += absent.map(r => r.name).join(', ');
+                html += '</div>';
+            }
+            if (postponed.length > 0) {
+                html += `<div style="margin-bottom:10px;"><strong style="color:#e67700;">연기 (${postponed.length}명)</strong><br>`;
+                html += postponed.map(r => r.name).join(', ');
+                html += '</div>';
+            }
+            if (skipped.length > 0) {
+                html += `<div style="margin-bottom:10px; color:#999;"><strong>이미 처리됨 (${skipped.length}명)</strong><br>`;
+                html += skipped.map(r => r.name).join(', ');
+                html += '</div>';
+            }
+            if (noMembership.length > 0) {
+                html += `<div style="margin-bottom:10px; color:#c92a2a;"><strong>멤버십 없음 (${noMembership.length}명)</strong><br>`;
+                html += noMembership.map(r => r.name).join(', ');
+                html += '</div>';
+            }
+
+            html += '</div>';
+
+            ModalManager.createCustom({
+                id: 'bulkResultModal',
+                title: `${className} — 출석 처리 결과`,
+                maxWidth: '400px',
+                headerColor: '#2e7d32',
+                contentBuilder: () => html,
+                buttons: [{
+                    text: '확인',
+                    class: 'btn-primary',
+                    style: { background: '#2e7d32', borderColor: '#2e7d32' },
+                    onClick: () => ModalManager.hide('bulkResultModal')
+                }]
+            });
         }
 
         function openMemberManageModal(memberId, name, phone, currentClassName) {
@@ -1080,6 +1193,93 @@
                 }
             });
         }
+        // ── 수업 카드 드래그 앤 드롭 (슬롯 내 순서 변경) ──────────
+        document.addEventListener('DOMContentLoaded', function() {
+            let cardDrag = null;
+
+            document.querySelectorAll('.complex-grid').forEach(grid => {
+                const cards = grid.querySelectorAll('.class-card');
+                cards.forEach(card => {
+                    const header = card.querySelector('.class-card-header');
+                    if (!header) return;
+
+                    header.addEventListener('pointerdown', function(e) {
+                        if (e.target.closest('button, a, input')) return;
+                        e.preventDefault();
+
+                        const rect = card.getBoundingClientRect();
+                        const clone = card.cloneNode(true);
+                        clone.className = 'class-card class-card-clone';
+                        clone.style.width = rect.width + 'px';
+                        clone.style.height = rect.height + 'px';
+                        clone.style.left = rect.left + 'px';
+                        clone.style.top = rect.top + 'px';
+                        clone.style.overflow = 'hidden';
+                        document.body.appendChild(clone);
+
+                        card.classList.add('card-drag-placeholder');
+
+                        cardDrag = {
+                            el: card,
+                            grid: grid,
+                            clone: clone,
+                            offsetX: e.clientX - rect.left,
+                            offsetY: e.clientY - rect.top,
+                        };
+                        document.body.style.cursor = 'grabbing';
+                    });
+                });
+            });
+
+            document.addEventListener('pointermove', function(e) {
+                if (!cardDrag) return;
+                e.preventDefault();
+                const { clone, offsetX, offsetY, grid, el } = cardDrag;
+                clone.style.left = (e.clientX - offsetX) + 'px';
+                clone.style.top = (e.clientY - offsetY) + 'px';
+
+                const siblings = Array.from(grid.querySelectorAll('.class-card'));
+                for (const sibling of siblings) {
+                    if (sibling === el) continue;
+                    const rect = sibling.getBoundingClientRect();
+                    const midX = rect.left + rect.width / 2;
+                    if (e.clientX > rect.left && e.clientX < rect.right &&
+                        e.clientY > rect.top && e.clientY < rect.bottom) {
+                        if (e.clientX < midX) {
+                            grid.insertBefore(el, sibling);
+                        } else {
+                            grid.insertBefore(el, sibling.nextSibling);
+                        }
+                        break;
+                    }
+                }
+            });
+
+            document.addEventListener('pointerup', function() {
+                if (!cardDrag) return;
+                const { el, clone, grid } = cardDrag;
+                clone.remove();
+                el.classList.remove('card-drag-placeholder');
+                document.body.style.cursor = '';
+                cardDrag = null;
+
+                // 순서를 서버에 저장
+                const cards = grid.querySelectorAll('.class-card');
+                const classOrders = [];
+                cards.forEach((card, idx) => {
+                    const id = parseInt(card.dataset.classId);
+                    if (id) classOrders.push({ id: id, sortOrder: idx });
+                });
+                if (classOrders.length > 0) {
+                    fetch('/complex/attendance/reorder', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ classOrders: classOrders })
+                    }).catch(err => console.error('순서 저장 실패:', err));
+                }
+            });
+        });
+
         // 드래그 앤 드롭 기능 (pointer event 기반, STAFF 행 제외)
         document.addEventListener('DOMContentLoaded', function() {
             let dragState = null;

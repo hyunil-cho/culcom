@@ -1,5 +1,9 @@
 -- culcom.branches definition
 
+DROP TABLE IF EXISTS `survey_template_options`;
+DROP TABLE IF EXISTS `survey_template_questions`;
+DROP TABLE IF EXISTS `survey_template_settings`;
+DROP TABLE IF EXISTS `survey_templates`;
 DROP TABLE IF EXISTS `mymunja_config_info`;
 DROP TABLE IF EXISTS `branch-third-party-mapping`;
 DROP TABLE IF EXISTS `reservation_sms_config`;
@@ -257,6 +261,24 @@ CREATE TABLE `complex_staffs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='스태프(강사진) 정보';
 
 
+-- culcom.complex_staff_attendance definition
+
+CREATE TABLE `complex_staff_attendance` (
+  `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `staff_seq` int(10) unsigned NOT NULL COMMENT '스태프 ID',
+  `class_seq` int(10) unsigned NOT NULL COMMENT '수업 ID',
+  `attendance_date` date NOT NULL COMMENT '출석 날짜',
+  `status` ENUM('출석', '결석') NOT NULL DEFAULT '출석' COMMENT '상태',
+  `createdDate` datetime NOT NULL DEFAULT current_timestamp() COMMENT '기록 일시',
+  PRIMARY KEY (`seq`),
+  UNIQUE KEY `complex_staff_attendance_unique` (`staff_seq`, `class_seq`, `attendance_date`),
+  KEY `complex_staff_attendance_staff_IDX` (`staff_seq`) USING BTREE,
+  KEY `complex_staff_attendance_class_IDX` (`class_seq`) USING BTREE,
+  CONSTRAINT `complex_staff_attendance_staff_FK` FOREIGN KEY (`staff_seq`) REFERENCES `complex_staffs` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `complex_staff_attendance_class_FK` FOREIGN KEY (`class_seq`) REFERENCES `complex_classes` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='스태프 수업 참여 기록';
+
+
 -- culcom.complex_classes definition
 
 CREATE TABLE `complex_classes` (
@@ -267,6 +289,7 @@ CREATE TABLE `complex_classes` (
   `name` varchar(100) NOT NULL COMMENT '수업 이름',
   `description` varchar(500) DEFAULT NULL COMMENT '수업 설명',
   `capacity` int(10) unsigned NOT NULL DEFAULT 10 COMMENT '정원',
+  `sort_order` int(10) unsigned NOT NULL DEFAULT 0 COMMENT '표시 순서 (낮을수록 먼저)',
   `createdDate` datetime NOT NULL DEFAULT current_timestamp() COMMENT '등록 일시',
   `lastUpdateDate` datetime DEFAULT NULL ON UPDATE current_timestamp() COMMENT '수정 일시',
   PRIMARY KEY (`seq`),
@@ -559,6 +582,84 @@ CREATE TABLE `entity_labels` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='범용 엔티티 레이블 (key-value 메타정보)';
 
 
+-- culcom.survey_templates definition
+
+CREATE TABLE `survey_templates` (
+  `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `branch_seq` int(10) unsigned NOT NULL COMMENT '지점 seq',
+  `name` varchar(200) NOT NULL COMMENT '설문지 이름 (예: 2026년 3월 설문)',
+  `description` varchar(500) DEFAULT NULL COMMENT '설문지 설명',
+  `status` ENUM('작성중', '활성', '비활성') NOT NULL DEFAULT '작성중' COMMENT '상태',
+  `createdDate` datetime NOT NULL DEFAULT current_timestamp(),
+  `lastUpdateDate` datetime DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`seq`),
+  KEY `survey_templates_branch_IDX` (`branch_seq`),
+  CONSTRAINT `survey_templates_branch_FK` FOREIGN KEY (`branch_seq`) REFERENCES `branches` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='설문지 템플릿';
+
+
+-- culcom.survey_template_settings definition
+
+CREATE TABLE `survey_template_settings` (
+  `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `template_seq` int(10) unsigned NOT NULL COMMENT '설문지 seq',
+  `question_key` varchar(50) NOT NULL COMMENT '질문 키 (예: q1, age_group)',
+  `input_type` ENUM('radio', 'checkbox', 'text') NOT NULL DEFAULT 'radio' COMMENT '입력 타입',
+  PRIMARY KEY (`seq`),
+  UNIQUE KEY `survey_settings_unique` (`template_seq`, `question_key`),
+  CONSTRAINT `survey_settings_template_FK` FOREIGN KEY (`template_seq`) REFERENCES `survey_templates` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='설문지 질문별 입력 타입 설정';
+
+
+-- culcom.survey_template_questions definition
+
+CREATE TABLE `survey_template_questions` (
+  `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `template_seq` int(10) unsigned NOT NULL COMMENT '설문지 seq',
+  `question_key` varchar(50) NOT NULL COMMENT '질문 키',
+  `title` varchar(200) NOT NULL COMMENT '질문 제목',
+  `description` varchar(500) DEFAULT NULL COMMENT '관리 보조 설명',
+  `section` int(10) unsigned NOT NULL DEFAULT 1 COMMENT '섹션 번호',
+  `section_title` varchar(100) DEFAULT NULL COMMENT '섹션 제목 (첫 번째 질문에만)',
+  `show_divider` tinyint(1) NOT NULL DEFAULT 0 COMMENT '섹션 구분선 표시',
+  `input_type` ENUM('radio', 'checkbox', 'text') NOT NULL DEFAULT 'radio',
+  `is_grouped` tinyint(1) NOT NULL DEFAULT 0,
+  `groups` varchar(500) DEFAULT NULL COMMENT '그룹명 목록 (쉼표 구분)',
+  `sort_order` int(10) unsigned NOT NULL DEFAULT 0,
+  PRIMARY KEY (`seq`),
+  KEY `survey_questions_template_IDX` (`template_seq`, `sort_order`),
+  CONSTRAINT `survey_questions_template_FK` FOREIGN KEY (`template_seq`) REFERENCES `survey_templates` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='설문지 질문 정의';
+
+
+-- culcom.survey_template_options definition
+
+CREATE TABLE `survey_template_options` (
+  `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `template_seq` int(10) unsigned NOT NULL COMMENT '설문지 seq',
+  `question_key` varchar(50) NOT NULL COMMENT '질문 키',
+  `group_name` varchar(100) DEFAULT '' COMMENT '그룹명 (그룹형 질문용)',
+  `label` varchar(300) NOT NULL COMMENT '선택지 텍스트',
+  `sort_order` int(10) unsigned NOT NULL DEFAULT 0 COMMENT '정렬 순서',
+  `createdDate` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`seq`),
+  KEY `survey_options_template_IDX` (`template_seq`, `question_key`),
+  CONSTRAINT `survey_options_template_FK` FOREIGN KEY (`template_seq`) REFERENCES `survey_templates` (`seq`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='설문지 선택지';
+
+CREATE TABLE `complex_staff_attendance` (
+                                            `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,
+                                            `staff_seq` int(10) unsigned NOT NULL,
+                                            `class_seq` int(10) unsigned NOT NULL,
+                                            `attendance_date` date NOT NULL,
+                                            `status` ENUM('출석', '결석') NOT NULL DEFAULT '출석',
+                                            `createdDate` datetime NOT NULL DEFAULT current_timestamp(),
+                                            PRIMARY KEY (`seq`),
+                                            UNIQUE KEY `complex_staff_attendance_unique` (`staff_seq`, `class_seq`, `attendance_date`),
+                                            CONSTRAINT `complex_staff_attendance_staff_FK` FOREIGN KEY (`staff_seq`) REFERENCES `complex_staffs` (`seq`) ON DELETE CASCADE,
+                                            CONSTRAINT `complex_staff_attendance_class_FK` FOREIGN KEY (`class_seq`) REFERENCES `complex_classes` (`seq`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ============================================
 -- 초기 데이터 삽입
 -- ============================================
@@ -587,3 +688,6 @@ INSERT INTO `placeholders` (`name`, `comment`, `examples`, `value`) VALUES
 -- 관리자 계정 (root/root - 평문 저장, 테스트용)
 INSERT INTO `user_info` (`seq`, `branch_seq`, `user_id`, `user_password`) VALUES
 (1, NULL, 'root', 'root');
+
+ALTER TABLE survey_template_settings MODIFY input_type ENUM('radio','checkbox','text') NOT NULL DEFAULT 'radio';
+ALTER TABLE survey_template_questions MODIFY input_type ENUM('radio','checkbox','text') NOT NULL DEFAULT 'radio';

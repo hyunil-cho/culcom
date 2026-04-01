@@ -37,6 +37,7 @@ type Member struct {
 
 	// 아래 필드는 DB에 직접 저장되지 않음 (멤버십/출석 테이블에서 조합하여 표시용으로 사용)
 	Status            string   // 출석 상태 (O, X, △ 등)
+	IsStaff           bool     // 스태프 여부
 	IsPostponed       bool     // 수업 연기 중 여부
 	LastDate          string   // 마지막 수업일
 	ExpiryDate        string   // 만료일 (활성 멤버십에서)
@@ -115,8 +116,9 @@ type ClassWithMembers struct {
 
 // SlotGroup - 슬롯별 수업 그룹
 type SlotGroup struct {
-	SlotName string
-	Classes  []ClassWithMembers
+	TimeSlotSeq int
+	SlotName    string
+	Classes     []ClassWithMembers
 }
 
 type PageData struct {

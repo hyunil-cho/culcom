@@ -38,6 +38,7 @@ type OccupationData struct {
 
 // QuestionMeta - 질문 메타정보 (대분류 — 변경 불가)
 type QuestionMeta struct {
+	Seq          int // DB seq (DB 기반일 때 사용)
 	Key          string
 	Title        string
 	Desc         string // 관리 UI 보조 설명
@@ -179,6 +180,8 @@ type PageData struct {
 	Questions      []QuestionMeta
 	OptionsByQ     map[string][]SurveyOption
 	InputTypes     map[string]string // question key → "radio" | "checkbox"
+	TemplateID     int
+	TemplateName   string
 	SuccessMessage string
 	ErrorMessage   string
 }

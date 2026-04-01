@@ -245,7 +245,10 @@
 
                 <div class="field-group">
                     {{$t := index .InputTypes "age_group"}}
-                    <label class="field-label">연령대 <span class="required">*</span></label>
+                    <label class="field-label">연령대 <span class="required">*</span> {{if eq $t "text"}}<span class="hint">주관식</span>{{end}}</label>
+                    {{if eq $t "text"}}
+                    <textarea name="age_group" class="text-input" placeholder="직접 입력해주세요." required></textarea>
+                    {{else}}
                     <div class="chip-group">
                         {{range $i, $opt := .AgeGroupOptions}}
                         <label class="chip-label">
@@ -253,6 +256,7 @@
                         </label>
                         {{end}}
                     </div>
+                    {{end}}
                 </div>
 
                 <div class="field-group">
@@ -285,7 +289,10 @@
 
                 <div class="field-group">
                     {{$adT := index .InputTypes "ad_source"}}
-                    <label class="field-label">E-UT를 어떻게 알게 되셨나요? <span class="required">*</span></label>
+                    <label class="field-label">E-UT를 어떻게 알게 되셨나요? <span class="required">*</span> {{if eq $adT "text"}}<span class="hint">주관식</span>{{end}}</label>
+                    {{if eq $adT "text"}}
+                    <textarea name="ad_source" class="text-input" placeholder="직접 입력해주세요." required></textarea>
+                    {{else}}
                     <div class="chip-group">
                         {{range $i, $opt := .AdSourceOptions}}
                         <label class="chip-label">
@@ -299,6 +306,7 @@
                     <div class="sub-options" id="ad-other-sub" style="margin-top:0.5rem; margin-left:0">
                         <input type="text" name="ad_source_other" class="other-input" placeholder="어떻게 알게 되셨나요?">
                     </div>
+                    {{end}}
                 </div>
             </div>
 
@@ -319,8 +327,10 @@
                 <!-- Q1: 동기 (그룹형, 동적) -->
                 <div class="field-group">
                     {{$q1t := index .InputTypes "q1"}}
-                    <label class="field-label">Q1. 영어회화를 하려는 동기가 무엇인가요? <span class="hint">{{if eq $q1t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
-                    {{if .Q1Groups}}
+                    <label class="field-label">Q1. 영어회화를 하려는 동기가 무엇인가요? <span class="hint">{{if eq $q1t "text"}}주관식{{else if eq $q1t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    {{if eq $q1t "text"}}
+                    <textarea name="q1" class="text-input" placeholder="직접 입력해주세요."></textarea>
+                    {{else if .Q1Groups}}
                     <div class="motivation-grid">
                         {{range .Q1Groups}}
                         <div class="motivation-col">
@@ -343,7 +353,10 @@
                 <!-- Q2: 경험 (플랫, 동적) -->
                 <div class="field-group">
                     {{$q2t := index .InputTypes "q2"}}
-                    <label class="field-label">Q2. 영어회화를 배워본 경험이 있나요? <span class="hint">{{if eq $q2t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    <label class="field-label">Q2. 영어회화를 배워본 경험이 있나요? <span class="hint">{{if eq $q2t "text"}}주관식{{else if eq $q2t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    {{if eq $q2t "text"}}
+                    <textarea name="q2" class="text-input" placeholder="직접 입력해주세요."></textarea>
+                    {{else}}
                     <div class="chip-group">
                         {{range .Q2Options}}
                         <label class="chip-label">
@@ -354,6 +367,7 @@
                     <div style="margin-top:0.6rem">
                         <input type="text" name="q2_other" class="other-input" placeholder="기타 경험이 있다면 입력해주세요 (선택)" style="width:100%">
                     </div>
+                    {{end}}
                 </div>
 
                 <!-- Q3: 그만 둔 이유 (주관식, 고정) -->
@@ -365,7 +379,10 @@
                 <!-- Q4: 학원 선택 요소 (플랫, 동적) -->
                 <div class="field-group">
                     {{$q4t := index .InputTypes "q4"}}
-                    <label class="field-label">Q4. 영어회화학원 선택 시 가장 중요한 요소는? <span class="hint">{{if eq $q4t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    <label class="field-label">Q4. 영어회화학원 선택 시 가장 중요한 요소는? <span class="hint">{{if eq $q4t "text"}}주관식{{else if eq $q4t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    {{if eq $q4t "text"}}
+                    <textarea name="q4" class="text-input" placeholder="직접 입력해주세요."></textarea>
+                    {{else}}
                     <div class="chip-group">
                         {{range .Q4Options}}
                         <label class="chip-label">
@@ -373,13 +390,16 @@
                         </label>
                         {{end}}
                     </div>
+                    {{end}}
                 </div>
 
                 <!-- Q5: 가능 시간 (그룹형, 동적) -->
                 <div class="field-group">
                     {{$q5t := index .InputTypes "q5"}}
-                    <label class="field-label">Q5. 영어 스터디 참여 가능한 시간대는? <span class="hint">{{if eq $q5t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
-                    {{if .Q5Groups}}
+                    <label class="field-label">Q5. 영어 스터디 참여 가능한 시간대는? <span class="hint">{{if eq $q5t "text"}}주관식{{else if eq $q5t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    {{if eq $q5t "text"}}
+                    <textarea name="q5" class="text-input" placeholder="직접 입력해주세요."></textarea>
+                    {{else if .Q5Groups}}
                     <div class="timeslot-grid">
                         {{range .Q5Groups}}
                         <div class="timeslot-col">
@@ -402,7 +422,10 @@
                 <!-- Q6: 레벨 (플랫, 동적) -->
                 <div class="field-group">
                     {{$q6t := index .InputTypes "q6"}}
-                    <label class="field-label">Q6. 스스로 생각하는 본인의 회화 레벨은? <span class="required">*</span> <span class="hint">{{if eq $q6t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    <label class="field-label">Q6. 스스로 생각하는 본인의 회화 레벨은? <span class="required">*</span> <span class="hint">{{if eq $q6t "text"}}주관식{{else if eq $q6t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    {{if eq $q6t "text"}}
+                    <textarea name="q6" class="text-input" placeholder="직접 입력해주세요." required></textarea>
+                    {{else}}
                     <div class="level-group">
                         {{range $i, $opt := .Q6Options}}
                         <label class="level-item">
@@ -411,6 +434,7 @@
                         </label>
                         {{end}}
                     </div>
+                    {{end}}
                 </div>
 
                 <!-- Q7: 목표 (주관식, 고정) -->
@@ -422,7 +446,10 @@
                 <!-- Q8: 예상 기간 (동적) -->
                 <div class="field-group">
                     {{$q8t := index .InputTypes "q8"}}
-                    <label class="field-label">Q8. 목표 레벨까지 도달하는 데 얼마나 걸릴 것 같나요? <span class="hint">{{if eq $q8t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    <label class="field-label">Q8. 목표 레벨까지 도달하는 데 얼마나 걸릴 것 같나요? <span class="hint">{{if eq $q8t "text"}}주관식{{else if eq $q8t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    {{if eq $q8t "text"}}
+                    <textarea name="q8" class="text-input" placeholder="직접 입력해주세요."></textarea>
+                    {{else}}
                     <div class="duration-group">
                         {{range .Q8Options}}
                         <label class="duration-label">
@@ -430,12 +457,16 @@
                         </label>
                         {{end}}
                     </div>
+                    {{end}}
                 </div>
 
                 <!-- Q9: E-UT 관심 (동적) -->
                 <div class="field-group">
                     {{$q9t := index .InputTypes "q9"}}
-                    <label class="field-label">Q9. E-UT의 어떤 것에 관심이 있나요? <span class="hint">{{if eq $q9t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    <label class="field-label">Q9. E-UT의 어떤 것에 관심이 있나요? <span class="hint">{{if eq $q9t "text"}}주관식{{else if eq $q9t "checkbox"}}중복 선택 가능{{else}}하나만 선택{{end}}</span></label>
+                    {{if eq $q9t "text"}}
+                    <textarea name="q9" class="text-input" placeholder="직접 입력해주세요."></textarea>
+                    {{else}}
                     <div class="chip-group">
                         {{range .Q9Options}}
                         <label class="chip-label">
@@ -443,6 +474,7 @@
                         </label>
                         {{end}}
                     </div>
+                    {{end}}
                 </div>
             </div>
 

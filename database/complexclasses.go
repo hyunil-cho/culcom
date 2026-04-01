@@ -131,7 +131,7 @@ func GetComplexClassesByBranch(branchSeq int) ([]map[string]interface{}, error) 
 	          JOIN class_time_slots ts ON c.time_slot_seq = ts.seq
 	          LEFT JOIN complex_staffs s ON c.staff_seq = s.seq
 	          WHERE c.branch_seq = ?
-	          ORDER BY ts.start_time ASC, c.name ASC`
+	          ORDER BY ts.start_time ASC, c.sort_order ASC, c.name ASC`
 
 	rows, err := DB.Query(query, branchSeq)
 	if err != nil {
@@ -183,6 +183,40 @@ func GetComplexClassesByBranch(branchSeq int) ([]map[string]interface{}, error) 
 	}
 
 	return classes, nil
+}
+
+// UpdateClassSortOrder - 수업 표시 순서 일괄 업데이트
+func UpdateClassSortOrder(classOrders []struct {
+	Seq       int
+	SortOrder int
+}) error {
+	tx, err := DB.Begin()
+	if err != nil {
+		log.Printf("UpdateClassSortOrder begin tx error: %v", err)
+		return err
+	}
+
+	stmt, err := tx.Prepare(`UPDATE complex_classes SET sort_order = ? WHERE seq = ?`)
+	if err != nil {
+		tx.Rollback()
+		log.Printf("UpdateClassSortOrder prepare error: %v", err)
+		return err
+	}
+	defer stmt.Close()
+
+	for _, co := range classOrders {
+		if _, err := stmt.Exec(co.SortOrder, co.Seq); err != nil {
+			tx.Rollback()
+			log.Printf("UpdateClassSortOrder exec error (seq=%d): %v", co.Seq, err)
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Printf("UpdateClassSortOrder commit error: %v", err)
+		return err
+	}
+	return nil
 }
 
 // GetStaffsByBranch - 지점별 스태프 목록 조회 (수업 폼의 드롭다운용)

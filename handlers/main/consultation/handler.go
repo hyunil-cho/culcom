@@ -90,10 +90,30 @@ func SubmitHandler(w http.ResponseWriter, r *http.Request) {
 
 // SurveyHandler - 커스터마이징 상담 설문 페이지 (GET)
 func SurveyHandler(w http.ResponseWriter, r *http.Request) {
+	branchSeq, _ := strconv.Atoi(r.URL.Query().Get("branch_seq"))
+	templateIDStr := r.URL.Query().Get("template_id")
+	templateID, _ := strconv.Atoi(templateIDStr)
+
+	// template_id 미지정 시 지점의 활성 설문지 자동 선택
+	if templateID <= 0 && branchSeq > 0 {
+		templates, _ := database.GetSurveyTemplatesByBranch(branchSeq)
+		for _, t := range templates {
+			if t.Status == "활성" {
+				templateID = t.Seq
+				break
+			}
+		}
+	}
+
+	// DB 기반 로드 (templateID가 유효한 경우)
+	if templateID > 0 {
+		surveyHandlerFromDB(w, r, templateID, branchSeq)
+		return
+	}
+
+	// 폴백: mock 데이터 (기존 호환)
 	q1Groups := surveystore.GroupedOptions("q1", []string{"현실 / 필요형", "목표 / 준비형", "라이프 스타일", "감정 / 욕망형"})
 	q5Groups := surveystore.GroupedOptions("q5", []string{"월 · 수", "화 · 목", "토 · 일"})
-
-	branchSeq, _ := strconv.Atoi(r.URL.Query().Get("branch_seq"))
 
 	data := SurveyPageData{
 		Title:           "E-UT 커스터마이징 상담 설문",
@@ -113,6 +133,121 @@ func SurveyHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := Templates.ExecuteTemplate(w, "consultation/survey.html", data); err != nil {
 		log.Printf("템플릿 실행 오류: %v", err)
+		http.Error(w, "페이지를 불러올 수 없습니다", http.StatusInternalServerError)
+	}
+}
+
+// surveyHandlerFromDB - DB 기반 설문 페이지 렌더링
+func surveyHandlerFromDB(w http.ResponseWriter, r *http.Request, templateID, branchSeq int) {
+	dbOptions, err := database.GetOptionsByTemplate(templateID)
+	if err != nil {
+		log.Printf("surveyHandlerFromDB - GetOptionsByTemplate error: %v", err)
+		http.Error(w, "설문지를 불러올 수 없습니다", http.StatusInternalServerError)
+		return
+	}
+
+	dbSettings, _ := database.GetSettingsByTemplate(templateID)
+	dbQuestions, _ := database.GetQuestionsByTemplate(templateID)
+
+	// DB 옵션 → SurveyOption 변환
+	var allOpts []surveystore.SurveyOption
+	for _, o := range dbOptions {
+		allOpts = append(allOpts, surveystore.SurveyOption{
+			Seq:       o.Seq,
+			Question:  o.QuestionKey,
+			Group:     o.GroupName,
+			Label:     o.Label,
+			SortOrder: o.SortOrder,
+		})
+	}
+
+	// 질문별 그룹명 맵 구성
+	questionGroups := make(map[string][]string)
+	for _, q := range dbQuestions {
+		if q.IsGrouped && q.Groups != "" {
+			var groups []string
+			for _, g := range strings.Split(q.Groups, ",") {
+				g = strings.TrimSpace(g)
+				if g != "" {
+					groups = append(groups, g)
+				}
+			}
+			questionGroups[q.QuestionKey] = groups
+		}
+	}
+
+	// 헬퍼: 질문별 flat 옵션
+	flatOpts := func(question string) []surveystore.SurveyOption {
+		var result []surveystore.SurveyOption
+		for _, o := range allOpts {
+			if o.Question == question {
+				result = append(result, o)
+			}
+		}
+		return result
+	}
+
+	// 헬퍼: 그룹별 옵션
+	groupedOpts := func(question string) []surveystore.OptionGroup {
+		groups := questionGroups[question]
+		result := make([]surveystore.OptionGroup, 0, len(groups))
+		for _, g := range groups {
+			var opts []surveystore.SurveyOption
+			for _, o := range allOpts {
+				if o.Question == question && o.Group == g {
+					opts = append(opts, o)
+				}
+			}
+			result = append(result, surveystore.OptionGroup{Name: g, Options: opts})
+		}
+		return result
+	}
+
+	// 직군 데이터 조합
+	mainOpts := flatOpts("occupation_main")
+	var occItems []surveystore.OccupationItem
+	for _, o := range mainOpts {
+		var subs []surveystore.SurveyOption
+		for _, s := range allOpts {
+			if s.Question == "occupation_detail" && s.Group == o.Label {
+				subs = append(subs, s)
+			}
+		}
+		occItems = append(occItems, surveystore.OccupationItem{
+			Label:      o.Label,
+			SubOptions: subs,
+			IsOther:    o.Label == "기타",
+		})
+	}
+
+	// InputTypes: DB 질문 기반
+	inputTypes := make(map[string]string)
+	for _, q := range dbQuestions {
+		if t, ok := dbSettings[q.QuestionKey]; ok {
+			inputTypes[q.QuestionKey] = t
+		} else {
+			inputTypes[q.QuestionKey] = q.InputType
+		}
+	}
+
+	data := SurveyPageData{
+		Title:           "E-UT 커스터마이징 상담 설문",
+		BranchSeq:       branchSeq,
+		InputTypes:      inputTypes,
+		AgeGroupOptions: flatOpts("age_group"),
+		OccupationData:  surveystore.OccupationData{Items: occItems},
+		AdSourceOptions: flatOpts("ad_source"),
+		Q1Groups:        groupedOpts("q1"),
+		Q2Options:       flatOpts("q2"),
+		Q4Options:       flatOpts("q4"),
+		Q5Groups:        groupedOpts("q5"),
+		Q6Options:       flatOpts("q6"),
+		Q8Options:       flatOpts("q8"),
+		Q9Options:       flatOpts("q9"),
+	}
+
+	if err := Templates.ExecuteTemplate(w, "consultation/survey.html", data); err != nil {
+		log.Printf("surveyHandlerFromDB 템플릿 실행 오류: %v", err)
 		http.Error(w, "페이지를 불러올 수 없습니다", http.StatusInternalServerError)
 	}
 }
