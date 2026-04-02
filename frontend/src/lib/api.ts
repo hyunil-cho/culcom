@@ -513,6 +513,108 @@ export const timeslotApi = {
   delete: (seq: number) => api.delete<void>(API.COMPLEX_TIMESLOT(seq)),
 };
 
+// ── Postponements ──
+
+export interface PostponementRequest {
+  seq: number;
+  memberName: string;
+  phoneNumber: string;
+  timeSlot: string;
+  currentClass: string;
+  startDate: string;
+  endDate: string;
+  reason: string;
+  status: '대기' | '승인' | '반려';
+  rejectReason: string | null;
+  createdDate: string;
+}
+
+export interface PostponementReason {
+  seq: number;
+  reason: string;
+  createdDate: string;
+}
+
+export const postponementApi = {
+  list: (params?: string) =>
+    api.get<PageResponse<PostponementRequest>>(`${API.COMPLEX_POSTPONEMENTS}${params ? `?${params}` : ''}`),
+  updateStatus: (seq: number, status: string, rejectReason?: string) =>
+    api.put<PostponementRequest>(
+      `${API.COMPLEX_POSTPONEMENT_STATUS(seq)}?status=${encodeURIComponent(status)}${rejectReason ? `&rejectReason=${encodeURIComponent(rejectReason)}` : ''}`
+    ),
+  reasons: () => api.get<PostponementReason[]>(API.COMPLEX_POSTPONEMENT_REASONS),
+  addReason: (reason: string) =>
+    api.post<PostponementReason>(API.COMPLEX_POSTPONEMENT_REASONS, { reason }),
+  deleteReason: (seq: number) =>
+    api.delete<void>(API.COMPLEX_POSTPONEMENT_REASON(seq)),
+};
+
+// ── Public Postponement ──
+
+export interface PublicMemberInfo {
+  seq: number;
+  name: string;
+  phoneNumber: string;
+  branchSeq: number;
+  branchName: string;
+  level: string | null;
+  memberships: PublicMembershipInfo[];
+  classes: PublicClassInfo[];
+}
+
+export interface PublicMembershipInfo {
+  seq: number;
+  membershipName: string;
+  startDate: string;
+  expiryDate: string;
+  totalCount: number;
+  usedCount: number;
+  postponeTotal: number;
+  postponeUsed: number;
+}
+
+export interface PublicClassInfo {
+  name: string;
+  timeSlotName: string;
+  startTime: string;
+  endTime: string;
+}
+
+export interface PostponementSubmitRequest {
+  name: string;
+  phone: string;
+  branchSeq: number;
+  memberSeq: number;
+  memberMembershipSeq: number;
+  timeSlot: string;
+  currentClass: string;
+  startDate: string;
+  endDate: string;
+  reason: string;
+}
+
+export interface PostponementSubmitResponse {
+  name: string;
+  phone: string;
+  branchName: string;
+  timeSlot: string;
+  currentClass: string;
+  startDate: string;
+  endDate: string;
+  reason: string;
+}
+
+export const publicPostponementApi = {
+  searchMember: (name: string, phone: string) =>
+    api.get<{ members: PublicMemberInfo[] }>(
+      `${API.PUBLIC_POSTPONEMENT_SEARCH}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`
+    ),
+  submit: (data: PostponementSubmitRequest) =>
+    api.post<PostponementSubmitResponse>(API.PUBLIC_POSTPONEMENT_SUBMIT, data),
+  reasons: (branchSeq: number) =>
+    api.get<string[]>(`${API.PUBLIC_POSTPONEMENT_REASONS}?branchSeq=${branchSeq}`),
+};
+
 // ── External Services ──
 
 export interface SmsSendRequest {

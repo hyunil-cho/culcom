@@ -21,6 +21,10 @@ export const ROUTES = {
   LOGIN: '/login',
   DASHBOARD: '/dashboard',
 
+  // 공개 페이지
+  PUBLIC_POSTPONEMENT: '/public/postponement',
+  PUBLIC_POSTPONEMENT_SUCCESS: '/public/postponement/success',
+
   // 고객 관리
   CUSTOMERS: R.CUSTOMERS,
   CUSTOMERS_ADD: `${R.CUSTOMERS}/add`,
@@ -69,6 +73,7 @@ export const ROUTES = {
   COMPLEX_TIMESLOTS_ADD: `${R.COMPLEX}/timeslots/add`,
   COMPLEX_TIMESLOT_EDIT: (seq: number) => `${R.COMPLEX}/timeslots/${seq}/edit`,
   COMPLEX_POSTPONEMENTS: `${R.COMPLEX}/postponements`,
+  COMPLEX_POSTPONEMENT_REASONS: `${R.COMPLEX}/postponements/reasons`,
   COMPLEX_REFUNDS: `${R.COMPLEX}/refunds`,
   COMPLEX_SURVEY: `${R.COMPLEX}/survey`,
 } as const;
@@ -132,6 +137,17 @@ export const API = {
   // 시간대
   COMPLEX_TIMESLOTS: '/complex/timeslots',
   COMPLEX_TIMESLOT: (seq: number) => `/complex/timeslots/${seq}`,
+
+  // 연기 요청
+  COMPLEX_POSTPONEMENTS: '/complex/postponements',
+  COMPLEX_POSTPONEMENT_STATUS: (seq: number) => `/complex/postponements/${seq}/status`,
+  COMPLEX_POSTPONEMENT_REASONS: '/complex/postponements/reasons',
+  COMPLEX_POSTPONEMENT_REASON: (seq: number) => `/complex/postponements/reasons/${seq}`,
+
+  // 공개 연기 요청
+  PUBLIC_POSTPONEMENT_SEARCH: '/public/postponement/search-member',
+  PUBLIC_POSTPONEMENT_SUBMIT: '/public/postponement/submit',
+  PUBLIC_POSTPONEMENT_REASONS: '/public/postponement/reasons',
 
   // 사용자
   USERS: A.USERS,

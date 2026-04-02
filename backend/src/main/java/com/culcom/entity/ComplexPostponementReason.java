@@ -20,7 +20,7 @@ public class ComplexPostponementReason {
     private Branch branch;
 
     @Column(nullable = false, length = 200)
-    private String label;
+    private String reason;
 
     @Column(name = "createdDate", nullable = false, updatable = false)
     private LocalDateTime createdDate;

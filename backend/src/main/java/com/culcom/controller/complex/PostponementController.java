@@ -1,6 +1,7 @@
 package com.culcom.controller.complex;
 
 import com.culcom.dto.ApiResponse;
+import com.culcom.entity.ComplexPostponementReason;
 import com.culcom.entity.ComplexPostponementRequest;
 import com.culcom.entity.enums.RequestStatus;
 import com.culcom.repository.BranchRepository;
@@ -73,5 +74,19 @@ public class PostponementController {
     public ResponseEntity<ApiResponse<List<?>>> reasons(HttpSession session) {
         Long branchSeq = authService.getSessionBranchSeq(session);
         return ResponseEntity.ok(ApiResponse.ok(reasonRepository.findByBranchSeq(branchSeq)));
+    }
+
+    @PostMapping("/reasons")
+    public ResponseEntity<ApiResponse<ComplexPostponementReason>> addReason(
+            @RequestBody ComplexPostponementReason reason, HttpSession session) {
+        Long branchSeq = authService.getSessionBranchSeq(session);
+        branchRepository.findById(branchSeq).ifPresent(reason::setBranch);
+        return ResponseEntity.ok(ApiResponse.ok("연기사유 추가 완료", reasonRepository.save(reason)));
+    }
+
+    @DeleteMapping("/reasons/{seq}")
+    public ResponseEntity<ApiResponse<Void>> deleteReason(@PathVariable Long seq) {
+        reasonRepository.deleteById(seq);
+        return ResponseEntity.ok(ApiResponse.ok("연기사유 삭제 완료", null));
     }
 }
