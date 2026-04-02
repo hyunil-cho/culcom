@@ -66,6 +66,8 @@ export const ROUTES = {
   COMPLEX_MEMBERSHIPS_ADD: `${R.COMPLEX}/memberships/add`,
   COMPLEX_MEMBERSHIP_EDIT: (seq: number) => `${R.COMPLEX}/memberships/${seq}/edit`,
   COMPLEX_TIMESLOTS: `${R.COMPLEX}/timeslots`,
+  COMPLEX_TIMESLOTS_ADD: `${R.COMPLEX}/timeslots/add`,
+  COMPLEX_TIMESLOT_EDIT: (seq: number) => `${R.COMPLEX}/timeslots/${seq}/edit`,
   COMPLEX_POSTPONEMENTS: `${R.COMPLEX}/postponements`,
   COMPLEX_REFUNDS: `${R.COMPLEX}/refunds`,
   COMPLEX_SURVEY: `${R.COMPLEX}/survey`,
@@ -126,6 +128,10 @@ export const API = {
   // 멤버십
   MEMBERSHIPS: '/memberships',
   MEMBERSHIP: (seq: number) => `/memberships/${seq}`,
+
+  // 시간대
+  COMPLEX_TIMESLOTS: '/complex/timeslots',
+  COMPLEX_TIMESLOT: (seq: number) => `/complex/timeslots/${seq}`,
 
   // 사용자
   USERS: A.USERS,
