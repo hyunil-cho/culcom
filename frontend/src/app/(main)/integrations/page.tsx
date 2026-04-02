@@ -50,7 +50,9 @@ export default function IntegrationsPage() {
 
   return (
     <>
-      <h2 className="page-title">외부 시스템 연동 관리</h2>
+      <div style={{ marginBottom: 8 }}>
+        <h2 className="page-title" style={{ margin: 0 }}>외부 시스템 연동 관리</h2>
+      </div>
 
       {/* 카테고리 필터 */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
@@ -81,7 +83,6 @@ export default function IntegrationsPage() {
             const sl = statusLabel(svc.status);
             return (
               <div key={svc.id} className="card" style={{ borderLeft: `4px solid ${borderColor(svc.status)}`, padding: 24 }}>
-                {/* 헤더 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                   <div style={{ fontSize: 32 }}>{svc.icon}</div>
                   <div>
@@ -96,7 +97,6 @@ export default function IntegrationsPage() {
                   </div>
                 </div>
 
-                {/* 카테고리 */}
                 <span style={{
                   display: 'inline-block', padding: '4px 10px',
                   background: '#f5f5f5', borderRadius: 4, fontSize: 12, color: '#666', marginBottom: 12,
@@ -108,7 +108,6 @@ export default function IntegrationsPage() {
                   {svc.description}
                 </p>
 
-                {/* 액션 버튼 */}
                 {svc.category === 'SMS' && (
                   <div style={{ marginTop: 16 }}>
                     <button
@@ -127,6 +126,7 @@ export default function IntegrationsPage() {
           })}
         </div>
       )}
+
     </>
   );
 }

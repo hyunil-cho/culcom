@@ -9,6 +9,7 @@ import com.culcom.entity.MymunjaConfigInfo;
 import com.culcom.entity.ThirdPartyService;
 import com.culcom.repository.BranchThirdPartyMappingRepository;
 import com.culcom.repository.MymunjaConfigInfoRepository;
+import com.culcom.repository.ThirdPartyServiceRepository;
 import com.culcom.service.AuthService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/integrations")
@@ -26,28 +28,36 @@ import java.util.List;
 public class IntegrationController {
 
     private final BranchThirdPartyMappingRepository mappingRepository;
+    private final ThirdPartyServiceRepository thirdPartyServiceRepository;
     private final MymunjaConfigInfoRepository mymunjaConfigInfoRepository;
     private final AuthService authService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<IntegrationServiceResponse>>> list(HttpSession session) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
+        Long sessionBranchSeq = this.authService.getSessionBranchSeq(session);
 
-        List<BranchThirdPartyMapping> mappings = branchSeq != null
-                ? mappingRepository.findByBranchSeq(branchSeq)
-                : List.of();
+        List<BranchThirdPartyMapping> mappings = mappingRepository.findByBranchSeq(sessionBranchSeq);
 
-        List<IntegrationServiceResponse> services = new ArrayList<>();
-        for (BranchThirdPartyMapping mapping : mappings) {
-            ThirdPartyService tps = mapping.getThirdPartyService();
-            String codeName = tps.getExternalServiceType() != null
-                    ? tps.getExternalServiceType().getCodeName() : "기타";
+        List<ThirdPartyService> allServices = thirdPartyServiceRepository.findAll();
+
+        List<IntegrationServiceResponse> results = new ArrayList<>();
+
+        for (ThirdPartyService service : allServices) {
+
+            String codeName = service.getExternalServiceType() != null
+                    ? service.getExternalServiceType().getCodeName() : "기타";
+
+            BranchThirdPartyMapping mapping = mappings.stream()
+                    .filter(m -> Objects.equals(m.getThirdPartyService().getSeq(), service.getSeq()))
+                    .findFirst().orElse(null);
 
             String status;
-            if (Boolean.TRUE.equals(mapping.getIsActive())) {
+            if (mapping != null && Boolean.TRUE.equals(mapping.getIsActive())) {
                 status = "active";
-            } else {
+            } else if (mapping != null) {
                 status = "inactive";
+            } else {
+                status = "not-configured";
             }
 
             String icon = switch (codeName) {
@@ -58,18 +68,18 @@ public class IntegrationController {
                 default -> "🔗";
             };
 
-            services.add(IntegrationServiceResponse.builder()
-                    .id(tps.getSeq())
-                    .name(tps.getName())
-                    .description(tps.getDescription())
+            results.add(IntegrationServiceResponse.builder()
+                    .id(service.getSeq())
+                    .name(service.getName())
+                    .description(service.getDescription())
                     .icon(icon)
                     .category(codeName)
                     .status(status)
-                    .connected(Boolean.TRUE.equals(mapping.getIsActive()))
+                    .connected("active".equals(status))
                     .build());
         }
 
-        return ResponseEntity.ok(ApiResponse.ok(services));
+        return ResponseEntity.ok(ApiResponse.ok(results));
     }
 
     @GetMapping("/sms-config")

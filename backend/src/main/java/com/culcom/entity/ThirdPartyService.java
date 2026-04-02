@@ -21,7 +21,7 @@ public class ThirdPartyService {
     @Column(name = "update_date", nullable = false)
     private LocalDate updateDate;
 
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 50, unique = true)
     private String name;
 
     @Column(length = 100)

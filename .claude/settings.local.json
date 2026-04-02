@@ -15,7 +15,9 @@
       "Bash(ls -d /c/Users/lookh/IdeaProjects/culcom/legacy-culcom/handlers/*)",
       "Bash(npm install:*)",
       "Bash(./gradlew build:*)",
-      "Bash(npx next:*)"
+      "Bash(npx next:*)",
+      "Bash(npx tsc:*)",
+      "Bash(./gradlew compileJava)"
     ]
   }
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { integrationApi, SmsConfig } from '@/lib/api';
+import ResultModal from '@/components/ui/ResultModal';
 
 export default function SmsConfigPage() {
   const router = useRouter();
@@ -15,6 +16,8 @@ export default function SmsConfigPage() {
   const [senderPhone, setSenderPhone] = useState('');
   const [active, setActive] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const [result, setResult] = useState<{ success: boolean; message: string; redirect?: boolean } | null>(null);
 
   useEffect(() => {
     integrationApi.getSmsConfig().then((res) => {
@@ -30,11 +33,11 @@ export default function SmsConfigPage() {
 
   const handleSave = async () => {
     if (!accountId.trim() || !password.trim() || !senderPhone.trim()) {
-      alert('모든 필수 항목을 입력해주세요.');
+      setResult({ success: false, message: '모든 필수 항목을 입력해주세요.' });
       return;
     }
     if (!config?.serviceId) {
-      alert('SMS 서비스 정보를 찾을 수 없습니다.');
+      setResult({ success: false, message: 'SMS 서비스 정보를 찾을 수 없습니다.' });
       return;
     }
 
@@ -48,10 +51,11 @@ export default function SmsConfigPage() {
     });
     setSaving(false);
 
-    if (res.success) {
-      alert('SMS 설정이 저장되었습니다.');
-      router.push('/integrations');
-    }
+    setResult({
+      success: res.success,
+      message: res.success ? 'SMS 설정이 저장되었습니다.' : (res.message ?? '저장에 실패했습니다.'),
+      redirect: res.success,
+    });
   };
 
   if (loading) {
@@ -74,7 +78,7 @@ export default function SmsConfigPage() {
           background: 'white', cursor: 'pointer', marginBottom: 20, fontSize: 14,
         }}
       >
-        ← 연동 관리로 돌아가기
+        &larr; 연동 관리로 돌아가기
       </button>
 
       {/* 서비스 헤더 카드 */}
@@ -211,6 +215,16 @@ export default function SmsConfigPage() {
           </button>
         </div>
       </div>
+
+      {result && (
+        <ResultModal
+          success={result.success}
+          message={result.message}
+          {...(result.redirect
+            ? { redirectPath: '/integrations' }
+            : { onConfirm: () => setResult(null) })}
+        />
+      )}
     </>
   );
 }

@@ -65,6 +65,11 @@ public class AuthService {
         session.setAttribute(CUR_BRANCH_SEQ, branchSeq);
     }
 
+    public UserInfo getUserInfo(HttpSession session){
+        Long sessionUserSeq = this.getSessionUserSeq(session);
+        return this.userInfoRepository.findById(sessionUserSeq).orElseThrow(()->new RuntimeException("user not found"));
+    }
+
     /**
      * 해당 유저가 관리하는 지점 목록 조회.
      * BRANCH_MANAGER: 본인이 생성한 지점

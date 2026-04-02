@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "placeholders")
+@Table(name = "message_placeholders")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
@@ -23,6 +23,6 @@ public class Placeholder {
     @Column(length = 50)
     private String examples;
 
-    @Column(length = 30)
+    @Column(name = "placeholder_value", length = 100)
     private String value;
 }

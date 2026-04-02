@@ -362,10 +362,89 @@ export const dashboardApi = {
     api.get<CallerStats[]>(`/dashboard/caller-stats?period=${period}`),
 };
 
+// ── Integrations ──
+
+export interface IntegrationService {
+  id: number;
+  name: string;
+  description: string;
+  icon: string;
+  category: string;
+  status: 'active' | 'inactive' | 'not-configured';
+  connected: boolean;
+}
+
+export interface SmsConfig {
+  serviceId: number;
+  serviceName: string;
+  accountId: string | null;
+  senderPhones: string[];
+  active: boolean;
+  updatedAt: string | null;
+}
+
+export interface SmsConfigSaveRequest {
+  serviceId: number;
+  accountId: string;
+  password: string;
+  senderPhone: string;
+  active: boolean;
+}
+
+export const integrationApi = {
+  list: () => api.get<IntegrationService[]>('/integrations'),
+  getSmsConfig: () => api.get<SmsConfig | null>('/integrations/sms-config'),
+  saveSmsConfig: (data: SmsConfigSaveRequest) => api.post<void>('/integrations/sms-config', data),
+};
+
 export const noticeApi = {
   list: (params?: string) => api.get<PageResponse<NoticeListItem>>(`/notices${params ? `?${params}` : ''}`),
   get: (seq: number) => api.get<NoticeDetail>(`/notices/${seq}`),
   create: (data: NoticeCreateRequest) => api.post<NoticeDetail>('/notices', data),
   update: (seq: number, data: NoticeUpdateRequest) => api.put<NoticeDetail>(`/notices/${seq}`, data),
   delete: (seq: number) => api.delete<void>(`/notices/${seq}`),
+};
+
+// Message Templates
+export interface MessageTemplateItem {
+  seq: number;
+  templateName: string;
+  description: string | null;
+  messageContext: string | null;
+  isDefault: boolean;
+  isActive: boolean;
+  createdDate: string | null;
+  lastUpdateDate: string | null;
+}
+
+export interface MessageTemplateCreateRequest {
+  templateName: string;
+  description?: string;
+  messageContext: string;
+  isActive: boolean;
+}
+
+export interface MessageTemplateUpdateRequest {
+  templateName: string;
+  description?: string;
+  messageContext: string;
+  isActive: boolean;
+}
+
+export interface PlaceholderItem {
+  seq: number;
+  name: string;
+  comment: string | null;
+  examples: string | null;
+  value: string | null;
+}
+
+export const messageTemplateApi = {
+  list: () => api.get<MessageTemplateItem[]>('/message-templates'),
+  get: (seq: number) => api.get<MessageTemplateItem>(`/message-templates/${seq}`),
+  create: (data: MessageTemplateCreateRequest) => api.post<MessageTemplateItem>('/message-templates', data),
+  update: (seq: number, data: MessageTemplateUpdateRequest) => api.put<MessageTemplateItem>(`/message-templates/${seq}`, data),
+  delete: (seq: number) => api.delete<void>(`/message-templates/${seq}`),
+  setDefault: (seq: number) => api.post<void>(`/message-templates/${seq}/set-default`),
+  placeholders: () => api.get<PlaceholderItem[]>('/message-templates/placeholders'),
 };
