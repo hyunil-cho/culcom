@@ -1,10 +1,8 @@
 package com.culcom.config;
 
-import com.culcom.entity.Branch;
-import com.culcom.entity.UserInfo;
+import com.culcom.entity.*;
 import com.culcom.entity.enums.UserRole;
-import com.culcom.repository.BranchRepository;
-import com.culcom.repository.UserInfoRepository;
+import com.culcom.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -20,6 +18,9 @@ public class LocalDataInitializer implements ApplicationRunner {
 
     private final UserInfoRepository userInfoRepository;
     private final BranchRepository branchRepository;
+    private final ExternalServiceTypeRepository externalServiceTypeRepository;
+    private final ThirdPartyServiceRepository thirdPartyServiceRepository;
+    private final BranchThirdPartyMappingRepository mappingRepository;
 
     @Override
     public void run(ApplicationArguments args) {
@@ -56,5 +57,45 @@ public class LocalDataInitializer implements ApplicationRunner {
                 log.info("초기 지점 생성: 강남점 (생성자: user)");
             }
         }
+
+        initThirdPartyServices();
+    }
+
+    private void initThirdPartyServices() {
+        ExternalServiceType smsType = externalServiceTypeRepository.findByCodeName("SMS")
+                .orElseGet(() -> {
+                    ExternalServiceType type = ExternalServiceType.builder()
+                            .codeName("SMS")
+                            .build();
+                    externalServiceTypeRepository.save(type);
+                    log.info("초기 외부 서비스 타입 생성: SMS");
+                    return type;
+                });
+
+        ThirdPartyService mymunja = thirdPartyServiceRepository.findByName("마이문자")
+                .orElseGet(() -> {
+                    ThirdPartyService service = ThirdPartyService.builder()
+                            .name("마이문자")
+                            .description("마이문자 연동 서비스")
+                            .externalServiceType(smsType)
+                            .build();
+                    thirdPartyServiceRepository.save(service);
+                    log.info("초기 서드파티 서비스 생성: 마이문자");
+                    return service;
+                });
+
+        // 강남점에 마이문자 매핑 생성
+        branchRepository.findByAlias("gangnam").ifPresent(branch -> {
+            if (mappingRepository.findByBranchSeqAndThirdPartyServiceSeq(
+                    branch.getSeq(), mymunja.getSeq()).isEmpty()) {
+                BranchThirdPartyMapping mapping = BranchThirdPartyMapping.builder()
+                        .branch(branch)
+                        .thirdPartyService(mymunja)
+                        .isActive(false)
+                        .build();
+                mappingRepository.save(mapping);
+                log.info("초기 매핑 생성: 강남점 - 마이문자");
+            }
+        });
     }
 }
