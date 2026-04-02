@@ -67,7 +67,7 @@ export default function MessageTemplateForm({
 
   const previewText = form.messageContext.trim()
     ? placeholders.reduce(
-        (text, ph) => text.replaceAll(ph.value || '', ph.examples || ph.value || ''),
+        (text, ph) => text.replaceAll(ph.name || '', ph.examples || ph.name || ''),
         form.messageContext
       )
     : '';
@@ -203,7 +203,7 @@ export default function MessageTemplateForm({
           {placeholders.map((ph) => (
             <div
               key={ph.seq}
-              onClick={() => ph.value && insertPlaceholder(ph.value)}
+              onClick={() => ph.name && insertPlaceholder(ph.name)}
               style={{
                 background: '#f9f9f9',
                 border: '1px solid #e0e0e0',

@@ -9,6 +9,7 @@ import ResultModal from '@/components/ui/ResultModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import SearchBar from '@/components/ui/SearchBar';
 import DataTable, { type Column } from '@/components/ui/DataTable';
+import SmsModal from './SmsModal';
 
 const CALLERS = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P'];
 
@@ -56,6 +57,9 @@ function CustomersContent() {
   const [interviewInputs, setInterviewInputs] = useState<Record<number, string>>({});
   const [interviewModal, setInterviewModal] = useState<InterviewModal | null>(null);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // SMS 모달
+  const [smsTarget, setSmsTarget] = useState<{ name: string; phone: string; interviewDate?: string } | null>(null);
 
   const load = useCallback(async () => {
     const params = new URLSearchParams({ page: String(page), size: '20', filter });
@@ -231,6 +235,18 @@ function CustomersContent() {
         }
       </div>
     )},
+    { header: 'TEXT', render: (c) => (
+      <button
+        onClick={() => setSmsTarget({ name: c.name, phone: c.phoneNumber, interviewDate: interviewInputs[c.seq] || undefined })}
+        style={{
+          padding: '0.4rem 0.8rem', background: '#10b981', color: 'white',
+          border: 'none', borderRadius: 4, cursor: 'pointer',
+          fontSize: '0.85rem', fontWeight: 600,
+        }}
+      >
+        TEXT
+      </button>
+    )},
     { header: 'CALLER', render: (c) => (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, width: 'fit-content' }}>
         {CALLERS.map(letter => (
@@ -358,6 +374,20 @@ function CustomersContent() {
           <strong>{customers.find(c => c.seq === deleting)?.name}</strong> 고객을 삭제하시겠습니까?
           <br /><br />이 작업은 되돌릴 수 없습니다.
         </ConfirmModal>
+      )}
+
+      {/* SMS 전송 모달 */}
+      {smsTarget && (
+        <SmsModal
+          customerName={smsTarget.name}
+          customerPhone={smsTarget.phone}
+          interviewDate={smsTarget.interviewDate}
+          onClose={() => setSmsTarget(null)}
+          onResult={(success, message) => {
+            setSmsTarget(null);
+            setResult({ success, message });
+          }}
+        />
       )}
 
       {result && (
