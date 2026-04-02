@@ -22,6 +22,7 @@ export default function MainSidebar() {
     {
       title: '연동',
       items: [
+        { href: '/integrations', label: '연동 관리', icon: '🔗' },
         { href: '/kakao-sync', label: '카카오싱크', icon: '💬' },
       ],
     },
