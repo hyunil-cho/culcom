@@ -111,6 +111,7 @@ export const authApi = {
 export interface SessionInfo {
   userSeq: number;
   userId: string;
+  name: string | null;
   role: string;
   selectedBranchSeq: number | null;
   selectedBranchName: string | null;
@@ -128,6 +129,7 @@ export const SessionRole = {
 export interface UserResponse {
   seq: number;
   userId: string;
+  name: string | null;
   role: string;
   createdDate: string;
 }
@@ -135,6 +137,8 @@ export interface UserResponse {
 export interface UserCreateRequest {
   userId: string;
   password: string;
+  name: string;
+  phone: string;
 }
 
 export interface Branch {

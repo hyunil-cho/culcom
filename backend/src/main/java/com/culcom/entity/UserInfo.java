@@ -32,6 +32,12 @@ public class UserInfo {
     @Column(name = "user_password", nullable = false, length = 200)
     private String userPassword;
 
+    @Column(name = "name", length = 50)
+    private String name;
+
+    @Column(name = "phone", length = 20)
+    private String phone;
+
     @Column(name = "createdDate", nullable = false, updatable = false)
     private LocalDate createdDate;
 

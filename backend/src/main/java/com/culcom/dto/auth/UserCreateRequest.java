@@ -11,4 +11,8 @@ public class UserCreateRequest {
     private String userId;
     @NotBlank
     private String password;
+    @NotBlank
+    private String name;
+    @NotBlank
+    private String phone;
 }

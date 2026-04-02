@@ -59,6 +59,8 @@ public class UserController {
         var builder = UserInfo.builder()
                 .userId(request.getUserId())
                 .userPassword(request.getPassword())
+                .name(request.getName())
+                .phone(request.getPhone())
                 .createdBy(creator);
 
         if (UserRole.ROOT.equals(role)) {

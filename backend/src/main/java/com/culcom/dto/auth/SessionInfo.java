@@ -10,6 +10,7 @@ import lombok.Getter;
 public class SessionInfo {
     private Long userSeq;
     private String userId;
+    private String name;
     private String role;
     private Long selectedBranchSeq;
     private String selectedBranchName;

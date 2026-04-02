@@ -10,3 +10,10 @@ export function verifyPhoneNumber(phone: string): boolean {
 export function cleanPhoneNumber(phone: string): string {
     return phone.replace(/[^0-9]/g, '').slice(0, 11);
 }
+
+export function maskName(name: string | null):string {
+    if (!name) return '-';
+    if (name.length <= 1) return '*';
+    if (name.length === 2) return name[0] + '*';
+    return name[0] + '*'.repeat(name.length - 2) + name[name.length - 1];
+}
