@@ -29,3 +29,11 @@ logging:
   level:
     org.hibernate.SQL: debug
     org.hibernate.type.descriptor.sql.BasicBinder: trace
+kakao:
+  oauth:
+    client-id: ${KAKAO_CLIENT_ID:}
+    client-secret: ${KAKAO_CLIENT_SECRET:}
+    admin-key: ${KAKAO_ADMIN_KEY:}
+    redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:3000/api/public/board/kakao/callback}
+  sync:
+    base-url: ${KAKAO_SYNC_BASE_URL:https://pf-link.kakao.com/qr/_qFHUn/pages/_MM}

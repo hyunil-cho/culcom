@@ -24,4 +24,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     @Query("SELECT COUNT(c) FROM Customer c WHERE c.branch.seq = :branchSeq AND FUNCTION('DATE', c.createdDate) = CURRENT_DATE")
     long countTodayByBranchSeq(@Param("branchSeq") Long branchSeq);
+
+    java.util.Optional<Customer> findByKakaoId(Long kakaoId);
 }
