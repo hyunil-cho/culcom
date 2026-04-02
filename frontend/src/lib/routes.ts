@@ -63,6 +63,8 @@ export const ROUTES = {
 
   // 복합시설
   COMPLEX_CLASSES: `${R.COMPLEX}/classes`,
+  COMPLEX_CLASSES_ADD: `${R.COMPLEX}/classes/add`,
+  COMPLEX_CLASS_EDIT: (seq: number) => `${R.COMPLEX}/classes/${seq}/edit`,
   COMPLEX_MEMBERS: `${R.COMPLEX}/members`,
   COMPLEX_STAFFS: `${R.COMPLEX}/staffs`,
   COMPLEX_ATTENDANCE: `${R.COMPLEX}/attendance`,

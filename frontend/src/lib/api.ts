@@ -186,6 +186,17 @@ export interface ComplexClass {
   description?: string;
   capacity: number;
   sortOrder: number;
+  timeSlot?: {
+    seq: number;
+    name: string;
+    daysOfWeek: string;
+    startTime: string;
+    endTime: string;
+  };
+  staff?: {
+    seq: number;
+    name: string;
+  };
 }
 
 export interface ComplexMember {
@@ -208,7 +219,7 @@ export interface ComplexStaff {
 }
 
 export const classApi = {
-  list: () => api.get<ComplexClass[]>(API.COMPLEX_CLASSES),
+  list: (params?: string) => api.get<PageResponse<ComplexClass>>(`${API.COMPLEX_CLASSES}${params ? `?${params}` : ''}`),
   get: (seq: number) => api.get<ComplexClass>(API.COMPLEX_CLASS(seq)),
   create: (data: Partial<ComplexClass>) => api.post<ComplexClass>(API.COMPLEX_CLASSES, data),
   update: (seq: number, data: Partial<ComplexClass>) => api.put<ComplexClass>(API.COMPLEX_CLASS(seq), data),

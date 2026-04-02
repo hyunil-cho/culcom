@@ -1,46 +1,111 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { classApi, type ComplexClass } from '@/lib/api';
+import { ROUTES } from '@/lib/routes';
 import ResultModal from '@/components/ui/ResultModal';
+import SearchBar from '@/components/ui/SearchBar';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 
 export default function ClassesPage() {
+  const router = useRouter();
   const [classes, setClasses] = useState<ComplexClass[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [keyword, setKeyword] = useState('');
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  const load = (p = page, kw = keyword) => {
+    const params = [`page=${p}`, 'size=20'];
+    if (kw) params.push(`keyword=${encodeURIComponent(kw)}`);
+    classApi.list(params.join('&')).then(res => {
+      setClasses(res.data.content);
+      setTotalPages(res.data.totalPages);
+    });
+  };
 
   useEffect(() => { load(); }, []);
 
-  const load = () => { classApi.list().then(res => setClasses(res.data)); };
+  const handleSearch = () => { setPage(0); load(0, keyword); };
+
+  const handlePageChange = (p: number) => { setPage(p); load(p); };
 
   const handleDelete = async (seq: number) => {
-    if (confirm('정말 삭제하시겠습니까?')) {
-      const res = await classApi.delete(seq);
-      if (res.success) setResult({ success: true, message: '수업이 삭제되었습니다.' });
-    }
+    if (!confirm('정말 삭제하시겠습니까?')) return;
+    const res = await classApi.delete(seq);
+    if (res.success) setResult({ success: true, message: '수업이 삭제되었습니다.' });
   };
 
   const columns: Column<ComplexClass>[] = [
-    { header: '수업명', render: (c) => c.name },
-    { header: '설명', render: (c) => c.description ?? '-' },
-    { header: '정원', render: (c) => c.capacity },
-    { header: '순서', render: (c) => c.sortOrder },
-    { header: '관리', render: (c) => (
-      <button className="btn-table-delete" onClick={() => handleDelete(c.seq)}>삭제</button>
-    )},
+    {
+      header: '수업 이름',
+      render: (c) => (
+        <a
+          href={ROUTES.COMPLEX_CLASS_EDIT(c.seq)}
+          style={{ color: '#4a90e2', textDecoration: 'none', fontWeight: 'bold' }}
+          onClick={(e) => { e.preventDefault(); router.push(ROUTES.COMPLEX_CLASS_EDIT(c.seq)); }}
+        >{c.name}</a>
+      ),
+    },
+    {
+      header: '담당 강사',
+      render: (c) => c.staff?.name
+        ? <span style={{ color: '#555', fontWeight: 600 }}>{c.staff.name}</span>
+        : <small style={{ color: '#ccc' }}>(미배정)</small>,
+    },
+    {
+      header: '시간대',
+      render: (c) => c.timeSlot
+        ? <span className="badge badge-success">{c.timeSlot.name}</span>
+        : '-',
+    },
+    {
+      header: '정원',
+      render: (c) => <><span style={{ color: '#4a90e2', fontWeight: 'bold' }}>{c.capacity}</span>명</>,
+    },
+    {
+      header: '설명',
+      render: (c) => (
+        <span style={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block' }}>
+          {c.description ?? '-'}
+        </span>
+      ),
+    },
+    {
+      header: '관리',
+      render: (c) => (
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+          <button className="btn-table-edit" onClick={() => router.push(ROUTES.COMPLEX_CLASS_EDIT(c.seq))}>수정</button>
+          <button className="btn-table-delete" onClick={() => handleDelete(c.seq)}>삭제</button>
+        </div>
+      ),
+    },
   ];
 
   return (
     <>
       <div className="page-toolbar">
         <h2 className="page-title" style={{ marginBottom: 0 }}>수업 관리</h2>
-        <button className="btn-primary">+ 수업 추가</button>
+        <button className="btn-primary" onClick={() => router.push(ROUTES.COMPLEX_CLASSES_ADD)}>+ 수업 추가</button>
       </div>
+
+      <SearchBar
+        keyword={keyword}
+        onKeywordChange={setKeyword}
+        onSearch={handleSearch}
+        onReset={keyword ? () => { setKeyword(''); setPage(0); load(0, ''); } : undefined}
+        placeholder="수업명, 강사, 시간대 검색"
+      />
 
       <DataTable
         columns={columns}
         data={classes}
         rowKey={(c) => c.seq}
+        emptyMessage="등록된 수업이 없습니다."
+        page={page}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
       />
 
       {result && (

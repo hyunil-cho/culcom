@@ -12,6 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+
 import java.util.List;
 
 @RestController
@@ -26,9 +29,17 @@ public class ComplexClassController {
     private final AuthService authService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ComplexClass>>> list(HttpSession session) {
+    public ResponseEntity<ApiResponse<Page<ComplexClass>>> list(
+            HttpSession session,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String keyword) {
         Long branchSeq = authService.getSessionBranchSeq(session);
-        return ResponseEntity.ok(ApiResponse.ok(classRepository.findByBranchSeqOrderBySortOrder(branchSeq)));
+        var pageable = PageRequest.of(page, size);
+        Page<ComplexClass> result = (keyword != null && !keyword.isBlank())
+                ? classRepository.searchByBranchSeq(branchSeq, keyword, pageable)
+                : classRepository.findByBranchSeqOrderBySortOrder(branchSeq, pageable);
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
     @GetMapping("/{seq}")
