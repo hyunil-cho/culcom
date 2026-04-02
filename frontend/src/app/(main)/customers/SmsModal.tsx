@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { branchApi, messageTemplateApi, settingsApi, externalApi, MessageTemplateItem, PlaceholderItem, Branch } from '@/lib/api';
-import { useSessionStore } from '@/lib/store';
-import { resolvePlaceholders } from '@/lib/commonUtils';
+import { messageTemplateApi, settingsApi, externalApi, MessageTemplateItem } from '@/lib/api';
+import { usePlaceholderResolver } from '@/lib/usePlaceholderResolver';
 
 interface SmsModalProps {
   customerName: string;
@@ -14,14 +13,11 @@ interface SmsModalProps {
 }
 
 export default function SmsModal({ customerName, customerPhone, interviewDate, onClose, onResult }: SmsModalProps) {
-  const session = useSessionStore((s) => s.session);
+  const { ready, resolve } = usePlaceholderResolver();
 
   const [mode, setMode] = useState<'template' | 'direct'>('template');
   const [templates, setTemplates] = useState<MessageTemplateItem[]>([]);
-  const [placeholders, setPlaceholders] = useState<PlaceholderItem[]>([]);
-  const [branch, setBranch] = useState<Branch | null>(null);
   const [senderNumbers, setSenderNumbers] = useState<string[]>([]);
-  const [dataReady, setDataReady] = useState(false);
 
   const [selectedTemplateSeq, setSelectedTemplateSeq] = useState<number | ''>('');
   const [senderPhone, setSenderPhone] = useState('');
@@ -29,9 +25,8 @@ export default function SmsModal({ customerName, customerPhone, interviewDate, o
   const [sending, setSending] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // 모든 데이터를 한번에 로드
   useEffect(() => {
-    const promises: Promise<void>[] = [
+    Promise.all([
       messageTemplateApi.list().then((res) => {
         if (res.success) {
           setTemplates(res.data);
@@ -39,50 +34,23 @@ export default function SmsModal({ customerName, customerPhone, interviewDate, o
           if (def) setSelectedTemplateSeq(def.seq);
         }
       }),
-      messageTemplateApi.placeholders().then((res) => {
-        if (res.success) setPlaceholders(res.data);
-      }),
       settingsApi.getSenderNumbers().then((res) => {
         if (res.success) {
           setSenderNumbers(res.data ?? []);
           if (res.data?.length > 0) setSenderPhone(res.data[0]);
         }
       }),
-    ];
-
-    if (session?.selectedBranchSeq) {
-      promises.push(
-        branchApi.get(session.selectedBranchSeq).then((res) => {
-          if (res.success) setBranch(res.data);
-        })
-      );
-    }
-
-    Promise.all(promises).then(() => setDataReady(true));
-  }, [session?.selectedBranchSeq]);
+    ]);
+  }, []);
 
   // 데이터 준비 완료 후 또는 템플릿 변경 시 치환
   useEffect(() => {
-    if (!dataReady || mode !== 'template' || !selectedTemplateSeq) return;
+    if (!ready || mode !== 'template' || !selectedTemplateSeq) return;
     const tmpl = templates.find(t => t.seq === selectedTemplateSeq);
     if (!tmpl?.messageContext) { setMessage(''); return; }
 
-    const now = new Date();
-    const values: Record<string, string> = {
-      '{customer.name}': customerName,
-      '{customer.phone_number}': customerPhone,
-      '{branch.name}': branch?.branchName ?? '',
-      '{branch.address}': branch?.address ?? '',
-      '{branch.manager}': branch?.branchManager ?? '',
-      '{branch.directions}': branch?.directions ?? '',
-      '{system.current_date}': now.toISOString().split('T')[0],
-      '{system.current_time}': now.toTimeString().slice(0, 5),
-      '{system.current_datetime}': `${now.toISOString().split('T')[0]} ${now.toTimeString().slice(0, 5)}`,
-      '{reservation.interview_date}': interviewDate ?? '',
-      '{reservation.interview_datetime}': interviewDate ?? '',
-    };
-    setMessage(resolvePlaceholders(tmpl.messageContext, placeholders, values));
-  }, [dataReady, selectedTemplateSeq, mode, templates, placeholders, branch, customerName, customerPhone, interviewDate]);
+    setMessage(resolve(tmpl.messageContext, { customerName, customerPhone, interviewDate }));
+  }, [ready, selectedTemplateSeq, mode, templates, customerName, customerPhone, interviewDate, resolve]);
 
   const handleModeChange = (newMode: 'template' | 'direct') => {
     setMode(newMode);
@@ -109,7 +77,7 @@ export default function SmsModal({ customerName, customerPhone, interviewDate, o
     } else {
       onResult(false, res.data?.message || res.message || '메시지 전송에 실패했습니다.');
     }
-  };``
+  };
 
   return (
     <div
@@ -126,7 +94,6 @@ export default function SmsModal({ customerName, customerPhone, interviewDate, o
         width: '90%', maxWidth: 560,
         boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
       }}>
-        {/* 헤더 */}
         <div style={{ padding: '1.25rem 1.5rem', borderBottom: '2px solid #10b981' }}>
           <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#2c3e50' }}>메시지 전송</h3>
         </div>
@@ -221,16 +188,11 @@ export default function SmsModal({ customerName, customerPhone, interviewDate, o
           </div>
         </div>
 
-        {/* 하단 버튼 */}
         <div style={{
           padding: '1rem 1.5rem', borderTop: '1px solid #e0e0e0',
           display: 'flex', justifyContent: 'flex-end', gap: 8,
         }}>
-          <button
-            onClick={onClose}
-            className="btn-secondary"
-            style={{ padding: '0.6rem 1.5rem' }}
-          >
+          <button onClick={onClose} className="btn-secondary" style={{ padding: '0.6rem 1.5rem' }}>
             닫기
           </button>
           <button

@@ -3,6 +3,7 @@
 import SidebarShell from './SidebarShell';
 import { useSessionStore } from '@/lib/store';
 import { SessionRole } from '@/lib/api';
+import { ROUTES } from '@/lib/routes';
 import type { MenuGroup } from './SidebarShell';
 
 export default function MainSidebar() {
@@ -12,25 +13,25 @@ export default function MainSidebar() {
     {
       title: '메인',
       items: [
-        { href: '/dashboard', label: '대시보드', icon: '📊' },
-        { href: '/customers', label: '지원자 회신 관리', icon: '👥' },
-        { href: '/notices', label: '공지사항', icon: '📢' },
-        { href: '/message-templates', label: '메시지 템플릿 관리', icon: '📝' },
-        ...(SessionRole.canManageUsers(session) ? [{ href: '/branches', label: '지점 관리', icon: '🏢' }] : []),
-        ...(SessionRole.canManageUsers(session) ? [{ href: '/users', label: '사용자 관리', icon: '🔑' }] : []),
+        { href: ROUTES.DASHBOARD, label: '대시보드', icon: '📊' },
+        { href: ROUTES.CUSTOMERS, label: '지원자 회신 관리', icon: '👥' },
+        { href: ROUTES.NOTICES, label: '공지사항', icon: '📢' },
+        { href: ROUTES.MESSAGE_TEMPLATES, label: '메시지 템플릿 관리', icon: '📝' },
+        ...(SessionRole.canManageUsers(session) ? [{ href: ROUTES.BRANCHES, label: '지점 관리', icon: '🏢' }] : []),
+        ...(SessionRole.canManageUsers(session) ? [{ href: ROUTES.USERS, label: '사용자 관리', icon: '🔑' }] : []),
       ],
     },
     {
       title: '연동',
       items: [
-        { href: '/integrations', label: '연동 관리', icon: '🔗' },
-        { href: '/kakao-sync', label: '카카오싱크', icon: '💬' },
+        { href: ROUTES.INTEGRATIONS, label: '연동 관리', icon: '🔗' },
+        { href: ROUTES.KAKAO_SYNC, label: '카카오싱크', icon: '💬' },
       ],
     },
     ...(SessionRole.canManageUsers(session) ? [{
       title: '관리',
       items: [
-        { href: '/settings', label: '설정', icon: '⚙️' },
+        { href: ROUTES.SETTINGS, label: '설정', icon: '⚙️' },
       ],
     }] : []),
   ];

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { noticeApi } from '@/lib/api';
+import { ROUTES } from '@/lib/routes';
 import ResultModal from '@/components/ui/ResultModal';
 import NoticeForm, { NoticeFormData } from '../NoticeForm';
 
@@ -54,7 +55,7 @@ export default function NoticeAddPage() {
   return (
     <>
       <div style={{ marginBottom: '1rem' }}>
-        <Link href="/notices" style={{ color: '#666', textDecoration: 'none', fontSize: '0.9rem' }}>
+        <Link href={ROUTES.NOTICES} style={{ color: '#666', textDecoration: 'none', fontSize: '0.9rem' }}>
           &larr; 목록으로
         </Link>
       </div>
@@ -67,14 +68,14 @@ export default function NoticeAddPage() {
         submitLabel="등록하기"
         submittingLabel="등록 중..."
         submitting={submitting}
-        cancelHref="/notices"
+        cancelHref={ROUTES.NOTICES}
       />
 
       {result && (
         <ResultModal
           success={result.success}
           message={result.message}
-          {...(result.success ? { redirectPath: '/notices' } : { onConfirm: () => setResult(null) })}
+          {...(result.success ? { redirectPath: ROUTES.NOTICES } : { onConfirm: () => setResult(null) })}
         />
       )}
     </>

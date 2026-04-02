@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { messageTemplateApi } from '@/lib/api';
+import { ROUTES } from '@/lib/routes';
 import ResultModal from '@/components/ui/ResultModal';
 import MessageTemplateForm, { MessageTemplateFormData } from '../../MessageTemplateForm';
 
@@ -72,7 +73,7 @@ export default function MessageTemplateEditPage() {
   return (
     <>
       <div style={{ marginBottom: '1rem' }}>
-        <Link href="/message-templates" style={{ color: '#666', textDecoration: 'none', fontSize: '0.9rem' }}>
+        <Link href={ROUTES.MESSAGE_TEMPLATES} style={{ color: '#666', textDecoration: 'none', fontSize: '0.9rem' }}>
           &larr; 템플릿 목록으로
         </Link>
       </div>
@@ -85,14 +86,14 @@ export default function MessageTemplateEditPage() {
         submitLabel="수정 완료"
         submittingLabel="수정 중..."
         submitting={submitting}
-        cancelHref="/message-templates"
+        cancelHref={ROUTES.MESSAGE_TEMPLATES}
       />
 
       {result && (
         <ResultModal
           success={result.success}
           message={result.message}
-          {...(result.success ? { redirectPath: '/message-templates' } : { onConfirm: () => setResult(null) })}
+          {...(result.success ? { redirectPath: ROUTES.MESSAGE_TEMPLATES } : { onConfirm: () => setResult(null) })}
         />
       )}
     </>

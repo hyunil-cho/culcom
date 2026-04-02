@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { customerApi } from '@/lib/api';
 import { cleanPhoneNumber, verifyPhoneNumber } from '@/lib/commonUtils';
+import { ROUTES } from '@/lib/routes';
 import ResultModal from '@/components/ui/ResultModal';
 import FormField from '@/components/ui/FormField';
 
@@ -36,7 +37,7 @@ export default function CustomerAddPage() {
   return (
     <>
       <div className="detail-actions">
-        <Link href="/customers" className="btn-back">← 목록으로</Link>
+        <Link href={ROUTES.CUSTOMERS} className="btn-back">← 목록으로</Link>
       </div>
 
       <div className="content-card">
@@ -81,14 +82,14 @@ export default function CustomerAddPage() {
 
       <div className="form-actions">
         <button className="btn-primary-large" onClick={handleSubmit}>저장</button>
-        <Link href="/customers" className="btn-secondary-large">취소</Link>
+        <Link href={ROUTES.CUSTOMERS} className="btn-secondary-large">취소</Link>
       </div>
 
       {result && (
         <ResultModal
           success={result.success}
           message={result.message}
-          redirectPath="/customers"
+          redirectPath={ROUTES.CUSTOMERS}
         />
       )}
     </>

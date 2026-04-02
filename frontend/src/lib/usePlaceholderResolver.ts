@@ -1,30 +1,25 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { branchApi, messageTemplateApi, Branch, PlaceholderItem } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
-import { resolvePlaceholders } from '@/lib/commonUtils';
-
-interface ResolverContext {
-  customerName?: string;
-  customerPhone?: string;
-  interviewDate?: string;
-}
+import { resolvePlaceholders, buildPlaceholderValues, PlaceholderContext } from '@/lib/commonUtils';
 
 /**
- * 메시지 템플릿 플레이스홀더 치환 hook.
- * - 현재 선택된 지점 정보를 서버에서 자동 조회
- * - 플레이스홀더 목록 자동 로드
- * - resolve(content, context) 호출 시 치환된 문자열 반환
+ * 플레이스홀더 + 지점 정보를 로드하고, 템플릿 치환 기능을 제공하는 hook.
+ * branch/placeholders는 마운트 시 한 번만 로드된다.
  */
 export function usePlaceholderResolver() {
   const session = useSessionStore((s) => s.session);
   const [branch, setBranch] = useState<Branch | null>(null);
   const [placeholders, setPlaceholders] = useState<PlaceholderItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const promises: Promise<void>[] = [];
+    const promises: Promise<void>[] = [
+      messageTemplateApi.placeholders().then((res) => {
+        if (res.success) setPlaceholders(res.data);
+      }),
+    ];
 
-    // 지점 정보 조회
     if (session?.selectedBranchSeq) {
       promises.push(
         branchApi.get(session.selectedBranchSeq).then((res) => {
@@ -33,33 +28,20 @@ export function usePlaceholderResolver() {
       );
     }
 
-    // 플레이스홀더 조회
-    promises.push(
-      messageTemplateApi.placeholders().then((res) => {
-        if (res.success) setPlaceholders(res.data);
-      })
-    );
-
-    Promise.all(promises).finally(() => setLoading(false));
+    Promise.all(promises).then(() => setReady(true));
   }, [session?.selectedBranchSeq]);
 
-  const resolve = useCallback((content: string, context: ResolverContext = {}) => {
-    const now = new Date();
-    const values: Record<string, string> = {
-      '{customer.name}': context.customerName ?? '',
-      '{customer.phone_number}': context.customerPhone ?? '',
-      '{branch.name}': branch?.branchName ?? '',
-      '{branch.address}': branch?.address ?? '',
-      '{branch.manager}': branch?.branchManager ?? '',
-      '{branch.directions}': branch?.directions ?? '',
-      '{system.current_date}': now.toISOString().split('T')[0],
-      '{system.current_time}': now.toTimeString().slice(0, 5),
-      '{system.current_datetime}': `${now.toISOString().split('T')[0]} ${now.toTimeString().slice(0, 5)}`,
-      '{reservation.interview_date}': context.interviewDate ?? '',
-      '{reservation.interview_datetime}': context.interviewDate ?? '',
+  /** 템플릿 내용을 컨텍스트 기반으로 치환한다. */
+  const resolve = (content: string, ctx: PlaceholderContext) => {
+    const fullCtx: PlaceholderContext = {
+      ...ctx,
+      branchName: ctx.branchName ?? branch?.branchName,
+      branchAddress: ctx.branchAddress ?? branch?.address,
+      branchManager: ctx.branchManager ?? branch?.branchManager,
+      branchDirections: ctx.branchDirections ?? branch?.directions,
     };
-    return resolvePlaceholders(content, placeholders, values);
-  }, [branch, placeholders]);
+    return resolvePlaceholders(content, placeholders, buildPlaceholderValues(fullCtx));
+  };
 
-  return { resolve, placeholders, branch, loading };
+  return { placeholders, branch, ready, resolve };
 }

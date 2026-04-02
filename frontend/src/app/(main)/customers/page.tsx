@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import { Suspense, useEffect, useState, useCallback } from 'react';
-import { customerApi, type Customer, type PageResponse } from '@/lib/api';
+import { customerApi, externalApi, settingsApi, messageTemplateApi, type Customer, type PageResponse } from '@/lib/api';
+import { usePlaceholderResolver } from '@/lib/usePlaceholderResolver';
+import { ROUTES } from '@/lib/routes';
 import { toServerDateTime, formatDateTime } from '@/lib/dateUtils';
 import { useQueryParams } from '@/lib/useQueryParams';
 import ResultModal from '@/components/ui/ResultModal';
@@ -32,6 +34,7 @@ export default function CustomersPage() {
 }
 
 function CustomersContent() {
+  const { resolve } = usePlaceholderResolver();
   const { params: qp, setParams } = useQueryParams(CUSTOMER_DEFAULTS);
   const page = Number(qp.page);
   const filter = qp.filter;
@@ -56,7 +59,7 @@ function CustomersContent() {
   // 인터뷰 확정 상태
   const [interviewInputs, setInterviewInputs] = useState<Record<number, string>>({});
   const [interviewModal, setInterviewModal] = useState<InterviewModal | null>(null);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [result, setResult] = useState<{ success: boolean; message: string; redirectPath?: string } | null>(null);
 
   // SMS 모달
   const [smsTarget, setSmsTarget] = useState<{ name: string; phone: string; interviewDate?: string } | null>(null);
@@ -147,12 +150,58 @@ function CustomersContent() {
     setInterviewModal({ customerSeq: seq, customerName: customer.name, caller });
   };
 
+  // 예약 확정 SMS 자동 발송
+  const sendReservationSms = async (customer: Customer | undefined, interviewDate: string) => {
+    try {
+      const configRes = await settingsApi.getReservationSmsConfig();
+      if (!configRes.success || !configRes.data) {
+        setResult({ success: false, message: '예약은 완료되었으나, 예약 SMS 설정이 되어 있지 않습니다. 설정 페이지에서 구성해주세요.', redirectPath: ROUTES.SETTINGS_RESERVATION_SMS });
+        return;
+      }
+      if (!configRes.data.autoSend) {
+        setResult({ success: false, message: '예약은 완료되었으나, 예약 후 자동 문자 발송이 비활성화 상태입니다. 설정 페이지에서 활성화해주세요.', redirectPath: ROUTES.SETTINGS_RESERVATION_SMS });
+        return;
+      }
+
+      const { templateSeq, senderNumber } = configRes.data;
+      if (!senderNumber) {
+        setResult({ success: false, message: '예약은 완료되었으나, 발신번호가 설정되지 않았습니다. 설정 페이지에서 발신번호를 지정해주세요.', redirectPath: ROUTES.SETTINGS_RESERVATION_SMS });
+        return;
+      }
+
+      const tmplRes = await messageTemplateApi.get(templateSeq);
+      if (!tmplRes.success || !tmplRes.data?.messageContext) {
+        setResult({ success: false, message: '예약은 완료되었으나, 메시지 템플릿을 불러올 수 없습니다. 설정을 확인해주세요.', redirectPath: ROUTES.MESSAGE_TEMPLATES });
+        return;
+      }
+
+      const message = resolve(tmplRes.data.messageContext, {
+        customerName: customer?.name,
+        customerPhone: customer?.phoneNumber,
+        interviewDate,
+      });
+
+      const smsRes = await externalApi.sendSms({
+        senderPhone: senderNumber,
+        receiverPhone: customer?.phoneNumber ?? '',
+        message,
+      });
+
+      if (!smsRes.success || !smsRes.data?.success) {
+        setResult({ success: false, message: `예약은 완료되었으나, SMS 자동 발송에 실패했습니다: ${smsRes.data?.message || smsRes.message || '알 수 없는 오류'}` });
+      }
+    } catch {
+      setResult({ success: false, message: '예약은 완료되었으나, SMS 자동 발송 중 오류가 발생했습니다.' });
+    }
+  };
+
   const confirmInterview = async () => {
     if (!interviewModal) return;
     const { customerSeq, caller } = interviewModal;
     const input = interviewInputs[customerSeq]?.trim();
     if (!input) return;
 
+    const customer = customers.find(c => c.seq === customerSeq);
     const normalized = toServerDateTime(input);
     const res = await customerApi.createReservation(customerSeq, caller, normalized);
     if (res.success) {
@@ -166,6 +215,30 @@ function CustomersContent() {
         setCustomers(prev => prev.filter(c => c.seq !== customerSeq));
       }
       setResult({ success: true, message: '예약이 생성되었습니다.' });
+
+      // 예약 확정 SMS 자동 발송
+      sendReservationSms(customer, normalized);
+
+      // 구글 캘린더 이벤트 생성
+      try {
+        const calRes = await externalApi.createCalendarEvent({
+          customerName: customer?.name ?? '',
+          phoneNumber: customer?.phoneNumber ?? '',
+          interviewDate: normalized,
+          comment: customer?.comment ?? undefined,
+          caller,
+          callCount: customer?.callCount ?? 0,
+          commercialName: customer?.commercialName ?? undefined,
+          adSource: customer?.adSource ?? undefined,
+        });
+        if (calRes.success && calRes.data?.link) {
+          window.open(calRes.data.link, '_blank');
+        } else {
+          setResult({ success: false, message: `예약은 완료되었으나, 캘린더 연동에 실패했습니다: ${calRes.message ?? '알 수 없는 오류'}` });
+        }
+      } catch {
+        setResult({ success: false, message: '예약은 완료되었으나, 캘린더 연동 중 오류가 발생했습니다.' });
+      }
     }
   };
 
@@ -294,7 +367,7 @@ function CustomersContent() {
         ]}
         searchType={searchType}
         onSearchTypeChange={(v) => setParams({ searchType: v })}
-        actions={<Link href="/customers/add" className="btn-primary btn-nav">+ 워크인 추가</Link>}
+        actions={<Link href={ROUTES.CUSTOMERS_ADD} className="btn-primary btn-nav">+ 워크인 추가</Link>}
       />
 
       <DataTable
@@ -394,7 +467,9 @@ function CustomersContent() {
         <ResultModal
           success={result.success}
           message={result.message}
-          onConfirm={() => { setResult(null); load(); }}
+          {...(result.redirectPath
+            ? { redirectPath: result.redirectPath }
+            : { onConfirm: () => { setResult(null); load(); } })}
         />
       )}
     </>

@@ -1,6 +1,4 @@
-import {number} from "prop-types";
-
-const API_BASE = '/api';
+import { API, ROUTES } from '@/lib/routes';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -16,6 +14,8 @@ export interface PageResponse<T> {
   size: number;
 }
 
+const API_BASE = '/api';
+
 async function request<T>(url: string, options?: RequestInit): Promise<ApiResponse<T>> {
   const res = await fetch(`${API_BASE}${url}`, {
     credentials: 'include',
@@ -28,7 +28,7 @@ async function request<T>(url: string, options?: RequestInit): Promise<ApiRespon
 
   if (res.status === 401) {
     if (typeof window !== 'undefined' && !url.includes('/auth/')) {
-      window.location.href = '/login';
+      window.location.href = ROUTES.LOGIN;
     }
     throw new Error('Unauthorized');
   }
@@ -98,16 +98,8 @@ export const api = {
   delete: <T>(url: string) => request<T>(url, { method: 'DELETE' }),
 };
 
-// Auth
-export const authApi = {
-  login: (userId: string, password: string) =>
-    api.post<SessionInfo>('/auth/login', { userId, password }),
-  me: () => api.get<SessionInfo>('/auth/me'),
-  logout: () => api.post<void>('/auth/logout'),
-  selectBranch: (branchSeq: number) => api.post<void>(`/auth/branch/${branchSeq}`),
-};
+// ── Auth ──
 
-// Types
 export interface SessionInfo {
   userSeq: number;
   userId: string;
@@ -126,20 +118,15 @@ export const SessionRole = {
     s?.role === 'ROOT' ? '최고관리자' : s?.role === 'BRANCH_MANAGER' ? '지점장' : '직원',
 };
 
-export interface UserResponse {
-  seq: number;
-  userId: string;
-  name: string | null;
-  role: string;
-  createdDate: string;
-}
+export const authApi = {
+  login: (userId: string, password: string) =>
+    api.post<SessionInfo>(API.AUTH_LOGIN, { userId, password }),
+  me: () => api.get<SessionInfo>(API.AUTH_ME),
+  logout: () => api.post<void>(API.AUTH_LOGOUT),
+  selectBranch: (branchSeq: number) => api.post<void>(API.AUTH_BRANCH(branchSeq)),
+};
 
-export interface UserCreateRequest {
-  userId: string;
-  password: string;
-  name: string;
-  phone: string;
-}
+// ── Branch ──
 
 export interface Branch {
   seq: number;
@@ -150,6 +137,16 @@ export interface Branch {
   directions?: string;
   createdDate?: string;
 }
+
+export const branchApi = {
+  list: () => api.get<Branch[]>(API.BRANCHES),
+  get: (seq: number) => api.get<Branch>(API.BRANCH(seq)),
+  create: (data: Partial<Branch>) => api.post<Branch>(API.BRANCHES, data),
+  update: (seq: number, data: Partial<Branch>) => api.put<Branch>(API.BRANCH(seq), data),
+  delete: (seq: number) => api.delete<void>(API.BRANCH(seq)),
+};
+
+// ── Customer ──
 
 export interface Customer {
   seq: number;
@@ -163,6 +160,25 @@ export interface Customer {
   createdDate: string;
   lastUpdateDate?: string;
 }
+
+export const customerApi = {
+  list: (params?: string) => api.get<PageResponse<Customer>>(`${API.CUSTOMERS}${params ? `?${params}` : ''}`),
+  create: (data: Partial<Customer>) => api.post<Customer>(API.CUSTOMERS, data),
+  update: (seq: number, data: Partial<Customer>) => api.put<Customer>(API.CUSTOMER(seq), data),
+  delete: (seq: number) => api.delete<void>(API.CUSTOMER(seq)),
+  updateName: (customerSeq: number, name: string) =>
+    api.post<void>(API.CUSTOMERS_UPDATE_NAME, { customerSeq, name }),
+  updateComment: (customerSeq: number, comment: string) =>
+    api.post<{ comment: string }>(API.CUSTOMERS_COMMENT, { customerSeq, comment }),
+  processCall: (customerSeq: number, caller: string) =>
+    api.post<{ call_count: number; last_update_date: string }>(API.CUSTOMERS_PROCESS_CALL, { customerSeq, caller }),
+  createReservation: (customerSeq: number, caller: string, interviewDate: string) =>
+    api.post<{ reservation_id: number }>(API.CUSTOMERS_RESERVATION, { customerSeq, caller, interviewDate }),
+  markNoPhoneInterview: (customerSeq: number) =>
+    api.post<void>(API.CUSTOMERS_MARK_NO_PHONE, { customerSeq }),
+};
+
+// ── Complex ──
 
 export interface ComplexClass {
   seq: number;
@@ -191,56 +207,56 @@ export interface ComplexStaff {
   status: string;
 }
 
-// API shortcuts
-export const branchApi = {
-  list: () => api.get<Branch[]>('/branches'),
-  get: (seq: number) => api.get<Branch>(`/branches/${seq}`),
-  create: (data: Partial<Branch>) => api.post<Branch>('/branches', data),
-  update: (seq: number, data: Partial<Branch>) => api.put<Branch>(`/branches/${seq}`, data),
-  delete: (seq: number) => api.delete<void>(`/branches/${seq}`),
-};
-
-export const customerApi = {
-  list: (params?: string) => api.get<PageResponse<Customer>>(`/customers${params ? `?${params}` : ''}`),
-  create: (data: Partial<Customer>) => api.post<Customer>('/customers', data),
-  update: (seq: number, data: Partial<Customer>) => api.put<Customer>(`/customers/${seq}`, data),
-  delete: (seq: number) => api.delete<void>(`/customers/${seq}`),
-  updateName: (customerSeq: number, name: string) =>
-    api.post<void>('/customers/update-name', { customerSeq, name }),
-  updateComment: (customerSeq: number, comment: string) =>
-    api.post<{ comment: string }>('/customers/comment', { customerSeq, comment }),
-  processCall: (customerSeq: number, caller: string) =>
-    api.post<{ call_count: number; last_update_date: string }>('/customers/process-call', { customerSeq, caller }),
-  createReservation: (customerSeq: number, caller: string, interviewDate: string) =>
-    api.post<{ reservation_id: number }>('/customers/reservation', { customerSeq, caller, interviewDate }),
-  markNoPhoneInterview: (customerSeq: number) =>
-    api.post<void>('/customers/mark-no-phone-interview', { customerSeq }),
-};
-
 export const classApi = {
-  list: () => api.get<ComplexClass[]>('/complex/classes'),
-  get: (seq: number) => api.get<ComplexClass>(`/complex/classes/${seq}`),
-  create: (data: Partial<ComplexClass>) => api.post<ComplexClass>('/complex/classes', data),
-  update: (seq: number, data: Partial<ComplexClass>) => api.put<ComplexClass>(`/complex/classes/${seq}`, data),
-  delete: (seq: number) => api.delete<void>(`/complex/classes/${seq}`),
+  list: () => api.get<ComplexClass[]>(API.COMPLEX_CLASSES),
+  get: (seq: number) => api.get<ComplexClass>(API.COMPLEX_CLASS(seq)),
+  create: (data: Partial<ComplexClass>) => api.post<ComplexClass>(API.COMPLEX_CLASSES, data),
+  update: (seq: number, data: Partial<ComplexClass>) => api.put<ComplexClass>(API.COMPLEX_CLASS(seq), data),
+  delete: (seq: number) => api.delete<void>(API.COMPLEX_CLASS(seq)),
 };
 
 export const memberApi = {
-  list: (params?: string) => api.get<PageResponse<ComplexMember>>(`/complex/members${params ? `?${params}` : ''}`),
-  get: (seq: number) => api.get<ComplexMember>(`/complex/members/${seq}`),
-  create: (data: Partial<ComplexMember>) => api.post<ComplexMember>('/complex/members', data),
-  update: (seq: number, data: Partial<ComplexMember>) => api.put<ComplexMember>(`/complex/members/${seq}`, data),
-  delete: (seq: number) => api.delete<void>(`/complex/members/${seq}`),
+  list: (params?: string) => api.get<PageResponse<ComplexMember>>(`${API.COMPLEX_MEMBERS}${params ? `?${params}` : ''}`),
+  get: (seq: number) => api.get<ComplexMember>(API.COMPLEX_MEMBER(seq)),
+  create: (data: Partial<ComplexMember>) => api.post<ComplexMember>(API.COMPLEX_MEMBERS, data),
+  update: (seq: number, data: Partial<ComplexMember>) => api.put<ComplexMember>(API.COMPLEX_MEMBER(seq), data),
+  delete: (seq: number) => api.delete<void>(API.COMPLEX_MEMBER(seq)),
 };
+
+export const staffApi = {
+  list: () => api.get<ComplexStaff[]>(API.COMPLEX_STAFFS),
+  get: (seq: number) => api.get<ComplexStaff>(API.COMPLEX_STAFF(seq)),
+  create: (data: Partial<ComplexStaff>) => api.post<ComplexStaff>(API.COMPLEX_STAFFS, data),
+  update: (seq: number, data: Partial<ComplexStaff>) => api.put<ComplexStaff>(API.COMPLEX_STAFF(seq), data),
+  delete: (seq: number) => api.delete<void>(API.COMPLEX_STAFF(seq)),
+};
+
+// ── User ──
+
+export interface UserResponse {
+  seq: number;
+  userId: string;
+  name: string | null;
+  role: string;
+  createdDate: string;
+}
+
+export interface UserCreateRequest {
+  userId: string;
+  password: string;
+  name: string;
+  phone: string;
+}
 
 export const userApi = {
-  list: () => api.get<UserResponse[]>('/users'),
-  create: (data: UserCreateRequest) => api.post<UserResponse>('/users', data),
-  update: (seq: number, data: Partial<UserCreateRequest>) => api.put<UserResponse>(`/users/${seq}`, data),
-  delete: (seq: number) => api.delete<void>(`/users/${seq}`),
+  list: () => api.get<UserResponse[]>(API.USERS),
+  create: (data: UserCreateRequest) => api.post<UserResponse>(API.USERS, data),
+  update: (seq: number, data: Partial<UserCreateRequest>) => api.put<UserResponse>(API.USER(seq), data),
+  delete: (seq: number) => api.delete<void>(API.USER(seq)),
 };
 
-// Settings
+// ── Settings ──
+
 export interface MessageTemplateSimple {
   seq: number;
   templateName: string;
@@ -261,20 +277,49 @@ export interface ReservationSmsConfigRequest {
 }
 
 export const settingsApi = {
-  getReservationSmsConfig: () => api.get<ReservationSmsConfig | null>('/settings/reservation-sms'),
-  getTemplates: () => api.get<MessageTemplateSimple[]>('/settings/reservation-sms/templates'),
-  getSenderNumbers: () => api.get<string[]>('/settings/reservation-sms/sender-numbers'),
+  getReservationSmsConfig: () => api.get<ReservationSmsConfig | null>(API.SETTINGS_RESERVATION_SMS),
+  getTemplates: () => api.get<MessageTemplateSimple[]>(API.SETTINGS_RESERVATION_SMS_TEMPLATES),
+  getSenderNumbers: () => api.get<string[]>(API.SETTINGS_RESERVATION_SMS_SENDERS),
   saveReservationSmsConfig: (data: ReservationSmsConfigRequest) =>
-    api.post<ReservationSmsConfig>('/settings/reservation-sms', data),
+    api.post<ReservationSmsConfig>(API.SETTINGS_RESERVATION_SMS, data),
 };
 
-export const staffApi = {
-  list: () => api.get<ComplexStaff[]>('/complex/staffs'),
-  get: (seq: number) => api.get<ComplexStaff>(`/complex/staffs/${seq}`),
-  create: (data: Partial<ComplexStaff>) => api.post<ComplexStaff>('/complex/staffs', data),
-  update: (seq: number, data: Partial<ComplexStaff>) => api.put<ComplexStaff>(`/complex/staffs/${seq}`, data),
-  delete: (seq: number) => api.delete<void>(`/complex/staffs/${seq}`),
+// ── Integrations ──
+
+export interface IntegrationService {
+  id: number;
+  name: string;
+  description: string;
+  icon: string;
+  category: string;
+  status: 'active' | 'inactive' | 'not-configured';
+  connected: boolean;
+}
+
+export interface SmsConfig {
+  serviceId: number;
+  serviceName: string;
+  accountId: string | null;
+  senderPhones: string[];
+  active: boolean;
+  updatedAt: string | null;
+}
+
+export interface SmsConfigSaveRequest {
+  serviceId: number;
+  accountId: string;
+  password: string;
+  senderPhone: string;
+  active: boolean;
+}
+
+export const integrationApi = {
+  list: () => api.get<IntegrationService[]>(API.INTEGRATIONS),
+  getSmsConfig: () => api.get<SmsConfig | null>(API.INTEGRATIONS_SMS_CONFIG),
+  saveSmsConfig: (data: SmsConfigSaveRequest) => api.post<void>(API.INTEGRATIONS_SMS_CONFIG, data),
 };
+
+// ── Kakao Sync ──
 
 export interface KakaoSyncUrlResponse {
   kakaoSyncUrl: string;
@@ -282,10 +327,39 @@ export interface KakaoSyncUrlResponse {
 }
 
 export const kakaoSyncApi = {
-  getUrl: () => api.get<KakaoSyncUrlResponse>('/kakao-sync/url'),
+  getUrl: () => api.get<KakaoSyncUrlResponse>(API.KAKAO_SYNC_URL),
 };
 
-// Notices
+// ── Dashboard ──
+
+export interface DailyStats {
+  date: string;
+  count: number;
+  reservationCount: number;
+}
+
+export interface CallerStats {
+  caller: string;
+  selectionCount: number;
+  reservationConfirm: number;
+  confirmRate: number;
+}
+
+export interface DashboardData {
+  todayTotalCustomers: number;
+  smsRemaining: number;
+  lmsRemaining: number;
+  dailyStats: DailyStats[];
+}
+
+export const dashboardApi = {
+  get: () => api.get<DashboardData>(API.DASHBOARD),
+  callerStats: (period: 'day' | 'week' | 'month') =>
+    api.get<CallerStats[]>(`${API.DASHBOARD_CALLER_STATS}?period=${period}`),
+};
+
+// ── Notices ──
+
 export interface NoticeListItem {
   seq: number;
   branchName: string;
@@ -334,78 +408,16 @@ export interface NoticeUpdateRequest {
   eventEndDate?: string;
 }
 
-// ── Dashboard ──
-
-export interface DailyStats {
-  date: string;
-  count: number;
-  reservationCount: number;
-}
-
-export interface CallerStats {
-  caller: string;
-  selectionCount: number;
-  reservationConfirm: number;
-  confirmRate: number;
-}
-
-export interface DashboardData {
-  todayTotalCustomers: number;
-  smsRemaining: number;
-  lmsRemaining: number;
-  dailyStats: DailyStats[];
-}
-
-export const dashboardApi = {
-  get: () => api.get<DashboardData>('/dashboard'),
-  callerStats: (period: 'day' | 'week' | 'month') =>
-    api.get<CallerStats[]>(`/dashboard/caller-stats?period=${period}`),
-};
-
-// ── Integrations ──
-
-export interface IntegrationService {
-  id: number;
-  name: string;
-  description: string;
-  icon: string;
-  category: string;
-  status: 'active' | 'inactive' | 'not-configured';
-  connected: boolean;
-}
-
-export interface SmsConfig {
-  serviceId: number;
-  serviceName: string;
-  accountId: string | null;
-  senderPhones: string[];
-  active: boolean;
-  updatedAt: string | null;
-}
-
-export interface SmsConfigSaveRequest {
-  serviceId: number;
-  accountId: string;
-  password: string;
-  senderPhone: string;
-  active: boolean;
-}
-
-export const integrationApi = {
-  list: () => api.get<IntegrationService[]>('/integrations'),
-  getSmsConfig: () => api.get<SmsConfig | null>('/integrations/sms-config'),
-  saveSmsConfig: (data: SmsConfigSaveRequest) => api.post<void>('/integrations/sms-config', data),
-};
-
 export const noticeApi = {
-  list: (params?: string) => api.get<PageResponse<NoticeListItem>>(`/notices${params ? `?${params}` : ''}`),
-  get: (seq: number) => api.get<NoticeDetail>(`/notices/${seq}`),
-  create: (data: NoticeCreateRequest) => api.post<NoticeDetail>('/notices', data),
-  update: (seq: number, data: NoticeUpdateRequest) => api.put<NoticeDetail>(`/notices/${seq}`, data),
-  delete: (seq: number) => api.delete<void>(`/notices/${seq}`),
+  list: (params?: string) => api.get<PageResponse<NoticeListItem>>(`${API.NOTICES}${params ? `?${params}` : ''}`),
+  get: (seq: number) => api.get<NoticeDetail>(API.NOTICE(seq)),
+  create: (data: NoticeCreateRequest) => api.post<NoticeDetail>(API.NOTICES, data),
+  update: (seq: number, data: NoticeUpdateRequest) => api.put<NoticeDetail>(API.NOTICE(seq), data),
+  delete: (seq: number) => api.delete<void>(API.NOTICE(seq)),
 };
 
-// Message Templates
+// ── Message Templates ──
+
 export interface MessageTemplateItem {
   seq: number;
   templateName: string;
@@ -440,16 +452,17 @@ export interface PlaceholderItem {
 }
 
 export const messageTemplateApi = {
-  list: () => api.get<MessageTemplateItem[]>('/message-templates'),
-  get: (seq: number) => api.get<MessageTemplateItem>(`/message-templates/${seq}`),
-  create: (data: MessageTemplateCreateRequest) => api.post<MessageTemplateItem>('/message-templates', data),
-  update: (seq: number, data: MessageTemplateUpdateRequest) => api.put<MessageTemplateItem>(`/message-templates/${seq}`, data),
-  delete: (seq: number) => api.delete<void>(`/message-templates/${seq}`),
-  setDefault: (seq: number) => api.post<void>(`/message-templates/${seq}/set-default`),
-  placeholders: () => api.get<PlaceholderItem[]>('/message-templates/placeholders'),
+  list: () => api.get<MessageTemplateItem[]>(API.MESSAGE_TEMPLATES),
+  get: (seq: number) => api.get<MessageTemplateItem>(API.MESSAGE_TEMPLATE(seq)),
+  create: (data: MessageTemplateCreateRequest) => api.post<MessageTemplateItem>(API.MESSAGE_TEMPLATES, data),
+  update: (seq: number, data: MessageTemplateUpdateRequest) => api.put<MessageTemplateItem>(API.MESSAGE_TEMPLATE(seq), data),
+  delete: (seq: number) => api.delete<void>(API.MESSAGE_TEMPLATE(seq)),
+  setDefault: (seq: number) => api.post<void>(API.MESSAGE_TEMPLATE_SET_DEFAULT(seq)),
+  placeholders: () => api.get<PlaceholderItem[]>(API.MESSAGE_TEMPLATE_PLACEHOLDERS),
 };
 
-// External Services
+// ── External Services ──
+
 export interface SmsSendRequest {
   senderPhone: string;
   receiverPhone: string;
@@ -466,6 +479,23 @@ export interface SmsSendResponse {
   msgType: string;
 }
 
+export interface CalendarEventRequest {
+  customerName: string;
+  phoneNumber: string;
+  interviewDate: string;
+  comment?: string;
+  duration?: number;
+  caller?: string;
+  callCount?: number;
+  commercialName?: string;
+  adSource?: string;
+}
+
+export interface CalendarEventResponse {
+  link: string;
+}
+
 export const externalApi = {
-  sendSms: (data: SmsSendRequest) => api.post<SmsSendResponse>('/external/sms/send', data),
+  sendSms: (data: SmsSendRequest) => api.post<SmsSendResponse>(API.EXTERNAL_SMS_SEND, data),
+  createCalendarEvent: (data: CalendarEventRequest) => api.post<CalendarEventResponse>(API.EXTERNAL_CALENDAR_CREATE, data),
 };

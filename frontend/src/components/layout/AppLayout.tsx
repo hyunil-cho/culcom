@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Header from './Header';
 import { useSessionStore } from '@/lib/store';
 import { SessionRole } from '@/lib/api';
+import { ROUTES } from '@/lib/routes';
 
 export default function AppLayout({
   sidebar,
@@ -22,15 +23,15 @@ export default function AppLayout({
   const [showNoBranchModal, setShowNoBranchModal] = useState(false);
 
   useEffect(() => {
-    fetchSession().catch(() => router.push('/login'));
+    fetchSession().catch(() => router.push(ROUTES.LOGIN));
   }, [fetchSession, router]);
 
   useEffect(() => {
     if (!loaded || !session) return;
     if (SessionRole.isRoot(session)) return;
     if (branches.length === 0) {
-      if (!pathname.startsWith('/branches')) {
-        router.replace('/branches');
+      if (!pathname.startsWith(ROUTES.BRANCHES)) {
+        router.replace(ROUTES.BRANCHES);
       }
       setShowNoBranchModal(true);
     }
@@ -84,7 +85,7 @@ export default function AppLayout({
               <button
                 onClick={() => {
                   setShowNoBranchModal(false);
-                  router.push('/branches/add');
+                  router.push(ROUTES.BRANCHES_ADD);
                 }}
                 style={{
                   padding: '0.75rem 2rem',

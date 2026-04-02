@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/api';
+import { ROUTES } from '@/lib/routes';
 import './login.css';
 
 export default function LoginPage() {
@@ -18,7 +19,7 @@ export default function LoginPage() {
     try {
       const loginResult = await authApi.login(userId, password);
       console.log(`login result ${loginResult} `)
-      router.push('/dashboard');
+      router.push(ROUTES.DASHBOARD);
     } catch {
       setError('아이디 또는 비밀번호가 올바르지 않습니다.');
     }

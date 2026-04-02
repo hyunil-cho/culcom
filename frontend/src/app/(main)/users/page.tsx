@@ -7,6 +7,7 @@ import { useSessionStore } from '@/lib/store';
 import ResultModal from '@/components/ui/ResultModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import DataTable, { type Column } from '@/components/ui/DataTable';
+import { ROUTES } from '@/lib/routes';
 import {maskName} from "@/lib/commonUtils";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -51,7 +52,7 @@ export default function UsersPage() {
         <div className="search-section">
           <div className="action-buttons">
             {SessionRole.canManageUsers(session) && (
-              <button className="btn-primary btn-nav" onClick={() => router.push('/users/create')}>
+              <button className="btn-primary btn-nav" onClick={() => router.push(ROUTES.USERS_CREATE)}>
                 + {creatingRole} 추가
               </button>
             )}

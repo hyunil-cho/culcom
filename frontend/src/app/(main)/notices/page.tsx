@@ -8,6 +8,7 @@ import { useQueryParams } from '@/lib/useQueryParams';
 import DataTable from '@/components/ui/DataTable';
 import SearchBar from '@/components/ui/SearchBar';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import { ROUTES } from '@/lib/routes';
 import ResultModal from '@/components/ui/ResultModal';
 
 const CATEGORY_FILTERS = [
@@ -125,7 +126,7 @@ function NoticesContent() {
     <>
       <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>공지사항 · 이벤트 관리</h1>
-        <Link href="/notices/add" className="btn-primary" style={{ padding: '0.6rem 1.2rem', textDecoration: 'none' }}>
+        <Link href={ROUTES.NOTICES_ADD} className="btn-primary" style={{ padding: '0.6rem 1.2rem', textDecoration: 'none' }}>
           새 글 작성
         </Link>
       </div>
@@ -160,7 +161,7 @@ function NoticesContent() {
         rowKey={(n) => n.seq}
         headerInfo={<>총 <strong>{totalElements}</strong>건{searchKeyword && <> · &quot;{searchKeyword}&quot; 검색 결과</>}</>}
         rowStyle={(n) => n.isPinned ? { background: '#fffde7' } : undefined}
-        onRowClick={(n) => router.push(`/notices/${n.seq}`)}
+        onRowClick={(n) => router.push(ROUTES.NOTICE_DETAIL(n.seq))}
         emptyMessage="등록된 게시글이 없습니다."
         page={page}
         totalPages={totalPages}

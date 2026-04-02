@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { noticeApi, NoticeDetail } from '@/lib/api';
+import { ROUTES } from '@/lib/routes';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import ResultModal from '@/components/ui/ResultModal';
 
@@ -39,7 +40,7 @@ export default function NoticeDetailPage() {
     <>
       {/* 뒤로가기 */}
       <div style={{ marginBottom: '1rem' }}>
-        <Link href="/notices" style={{ color: '#666', textDecoration: 'none', fontSize: '0.9rem' }}>
+        <Link href={ROUTES.NOTICES} style={{ color: '#666', textDecoration: 'none', fontSize: '0.9rem' }}>
           &larr; 목록으로
         </Link>
       </div>
@@ -86,7 +87,7 @@ export default function NoticeDetailPage() {
         {/* 하단 액션 */}
         <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Link href={`/notices/${seq}/edit`} className="btn-primary" style={{ padding: '0.6rem 1.2rem', textDecoration: 'none' }}>
+            <Link href={ROUTES.NOTICE_EDIT(seq)} className="btn-primary" style={{ padding: '0.6rem 1.2rem', textDecoration: 'none' }}>
               수정
             </Link>
             <button
@@ -119,7 +120,7 @@ export default function NoticeDetailPage() {
         <ResultModal
           success={result.success}
           message={result.message}
-          redirectPath="/notices"
+          redirectPath={ROUTES.NOTICES}
         />
       )}
     </>

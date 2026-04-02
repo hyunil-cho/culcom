@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { branchApi } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
+import { ROUTES } from '@/lib/routes';
 import BranchForm, { emptyBranchForm, validateBranchForm, type BranchFormData } from '../BranchForm';
 import ResultModal from '@/components/ui/ResultModal';
 
@@ -27,15 +28,15 @@ export default function BranchAddPage() {
         form={form}
         onChange={setForm}
         onSubmit={handleSubmit}
-        backHref="/branches"
+        backHref={ROUTES.BRANCHES}
         backLabel="← 목록으로"
-        cancelHref="/branches"
+        cancelHref={ROUTES.BRANCHES}
       />
       {result && (
         <ResultModal
           success={result.success}
           message={result.message}
-          redirectPath="/branches"
+          redirectPath={ROUTES.BRANCHES}
         />
       )}
     </>

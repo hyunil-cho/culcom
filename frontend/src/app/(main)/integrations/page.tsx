@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { integrationApi, IntegrationService } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import { ROUTES } from '@/lib/routes';
 
 const categories = [
   { key: 'all', label: '전체' },
@@ -111,7 +112,7 @@ export default function IntegrationsPage() {
                 {svc.category === 'SMS' && (
                   <div style={{ marginTop: 16 }}>
                     <button
-                      onClick={() => router.push('/integrations/sms-config')}
+                      onClick={() => router.push(ROUTES.INTEGRATIONS_SMS_CONFIG)}
                       style={{
                         width: '100%', padding: '8px 16px', borderRadius: 6, fontSize: 14,
                         background: '#2196f3', color: 'white', border: 'none', cursor: 'pointer',

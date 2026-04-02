@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { integrationApi, SmsConfig } from '@/lib/api';
+import { ROUTES } from '@/lib/routes';
 import ResultModal from '@/components/ui/ResultModal';
 
 export default function SmsConfigPage() {
@@ -72,7 +73,7 @@ export default function SmsConfigPage() {
       <h2 className="page-title">SMS 연동 설정</h2>
 
       <button
-        onClick={() => router.push('/integrations')}
+        onClick={() => router.push(ROUTES.INTEGRATIONS)}
         style={{
           padding: '8px 16px', borderRadius: 6, border: '1px solid #ddd',
           background: 'white', cursor: 'pointer', marginBottom: 20, fontSize: 14,
@@ -205,7 +206,7 @@ export default function SmsConfigPage() {
             {saving ? '저장 중...' : '설정 저장'}
           </button>
           <button
-            onClick={() => router.push('/integrations')}
+            onClick={() => router.push(ROUTES.INTEGRATIONS)}
             style={{
               padding: '12px 32px', borderRadius: 6, fontSize: 14,
               background: 'white', color: '#666', border: '1px solid #ddd', cursor: 'pointer',
@@ -221,7 +222,7 @@ export default function SmsConfigPage() {
           success={result.success}
           message={result.message}
           {...(result.redirect
-            ? { redirectPath: '/integrations' }
+            ? { redirectPath: ROUTES.INTEGRATIONS }
             : { onConfirm: () => setResult(null) })}
         />
       )}

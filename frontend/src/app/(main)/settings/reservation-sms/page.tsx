@@ -8,6 +8,7 @@ import {
   type MessageTemplateSimple,
   type ReservationSmsConfig,
 } from '@/lib/api';
+import { ROUTES } from '@/lib/routes';
 import ResultModal from '@/components/ui/ResultModal';
 
 export default function ReservationSmsConfigPage() {
@@ -65,7 +66,7 @@ export default function ReservationSmsConfigPage() {
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
       <div style={{ marginBottom: 16 }}>
         <Link
-          href="/settings"
+          href={ROUTES.SETTINGS}
           style={{
             fontSize: 14,
             color: '#666',
@@ -192,7 +193,7 @@ export default function ReservationSmsConfigPage() {
               {saving ? '저장 중...' : '저장'}
             </button>
             <Link
-              href="/settings"
+              href={ROUTES.SETTINGS}
               className="btn-secondary"
               style={{ padding: '12px 24px', fontSize: 14, textDecoration: 'none' }}
             >
@@ -207,7 +208,7 @@ export default function ReservationSmsConfigPage() {
           success={result.success}
           message={result.message}
           onConfirm={() => {
-            if (result.success) router.push('/settings');
+            if (result.success) router.push(ROUTES.SETTINGS);
             setResult(null);
           }}
         />

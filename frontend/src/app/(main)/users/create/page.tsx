@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { userApi, SessionRole } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
+import { ROUTES } from '@/lib/routes';
 import ResultModal from '@/components/ui/ResultModal';
 
 export default function UserCreatePage() {
@@ -78,7 +79,7 @@ export default function UserCreatePage() {
             />
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
-            <button type="button" className="btn-modal btn-modal-cancel" onClick={() => router.push('/users')}>취소</button>
+            <button type="button" className="btn-modal btn-modal-cancel" onClick={() => router.push(ROUTES.USERS)}>취소</button>
             <button type="submit" className="btn-modal btn-modal-confirm" style={{ background: '#4a90e2' }}>생성</button>
           </div>
         </form>
@@ -88,7 +89,7 @@ export default function UserCreatePage() {
         <ResultModal
           success={result.success}
           message={result.message}
-          onConfirm={() => router.push('/users')}
+          onConfirm={() => router.push(ROUTES.USERS)}
         />
       )}
     </>

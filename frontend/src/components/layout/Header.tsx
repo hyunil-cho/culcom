@@ -4,21 +4,22 @@ import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { authApi, SessionRole } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
+import { ROUTES } from '@/lib/routes';
 
 const pageTitles: Record<string, string> = {
-  '/dashboard': '대시보드',
-  '/customers': '고객 관리',
-  '/branches': '지점 관리',
-  '/complex/classes': '수업 관리',
-  '/complex/members': '회원 관리',
-  '/complex/staffs': '스태프 관리',
-  '/complex/attendance': '출석 관리',
-  '/complex/memberships': '멤버십',
-  '/complex/timeslots': '시간대 설정',
-  '/complex/postponements': '연기 요청',
-  '/complex/refunds': '환불 요청',
-  '/complex/survey': '설문 관리',
-  '/users': '사용자 관리',
+  [ROUTES.DASHBOARD]: '대시보드',
+  [ROUTES.CUSTOMERS]: '고객 관리',
+  [ROUTES.BRANCHES]: '지점 관리',
+  [ROUTES.COMPLEX_CLASSES]: '수업 관리',
+  [ROUTES.COMPLEX_MEMBERS]: '회원 관리',
+  [ROUTES.COMPLEX_STAFFS]: '스태프 관리',
+  [ROUTES.COMPLEX_ATTENDANCE]: '출석 관리',
+  [ROUTES.COMPLEX_MEMBERSHIPS]: '멤버십',
+  [ROUTES.COMPLEX_TIMESLOTS]: '시간대 설정',
+  [ROUTES.COMPLEX_POSTPONEMENTS]: '연기 요청',
+  [ROUTES.COMPLEX_REFUNDS]: '환불 요청',
+  [ROUTES.COMPLEX_SURVEY]: '설문 관리',
+  [ROUTES.USERS]: '사용자 관리',
 };
 
 function getPageTitle(pathname: string): string {
@@ -46,7 +47,7 @@ export default function Header() {
   const handleLogout = async () => {
     await authApi.logout();
     reset();
-    router.push('/login');
+    router.push(ROUTES.LOGIN);
   };
 
   return (
@@ -94,7 +95,7 @@ export default function Header() {
                 </span>
                 {SessionRole.isManager(session) && (
                   <button
-                    onClick={() => router.push('/branches/add')}
+                    onClick={() => router.push(ROUTES.BRANCHES_ADD)}
                     style={{
                       padding: '0.4rem 1rem', fontSize: '0.85rem', fontWeight: 500,
                       border: 'none', borderRadius: 6, cursor: 'pointer',

@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { ROUTES } from '@/lib/routes';
 
 const settingsItems = [
   {
-    href: '/settings/reservation-sms',
+    href: ROUTES.SETTINGS_RESERVATION_SMS,
     title: '예약 확정 시 문자 발송',
     description: '예약 확정 시 자동으로 발송되는 문자 메시지의 템플릿과 발신번호를 설정합니다.',
   },

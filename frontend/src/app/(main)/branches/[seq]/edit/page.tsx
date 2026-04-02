@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { branchApi } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
+import { ROUTES } from '@/lib/routes';
 import BranchForm, { emptyBranchForm, validateBranchForm, type BranchFormData } from '../../BranchForm';
 import ResultModal from '@/components/ui/ResultModal';
 
@@ -43,16 +44,16 @@ export default function BranchEditPage() {
         form={form}
         onChange={setForm}
         onSubmit={handleSubmit}
-        backHref={`/branches/${seq}`}
+        backHref={ROUTES.BRANCH_DETAIL(seq)}
         backLabel="← 상세로"
-        cancelHref={`/branches/${seq}`}
+        cancelHref={ROUTES.BRANCH_DETAIL(seq)}
         seq={seq}
       />
       {result && (
         <ResultModal
           success={result.success}
           message={result.message}
-          redirectPath={`/branches/${seq}`}
+          redirectPath={ROUTES.BRANCH_DETAIL(seq)}
         />
       )}
     </>

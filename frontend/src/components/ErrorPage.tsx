@@ -1,5 +1,7 @@
 'use client';
 
+import { ROUTES } from '@/lib/routes';
+
 const icons: Record<string, string> = {
   '404': '🔍',
   '403': '🚫',
@@ -59,7 +61,7 @@ export default function ErrorPage({
         )}
 
         <div style={{ display: 'flex', gap: 15, justifyContent: 'center', marginTop: 40 }}>
-          <a href="/dashboard" style={{
+          <a href={ROUTES.DASHBOARD} style={{
             padding: '14px 32px', borderRadius: 8, fontSize: 16, fontWeight: 600,
             textDecoration: 'none', background: '#2196f3', color: 'white', border: 'none',
           }}>

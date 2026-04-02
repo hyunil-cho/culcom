@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { branchApi, SessionRole, type Branch } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
+import { ROUTES } from '@/lib/routes';
 import DetailCard from '@/components/ui/DetailCard';
 
 export default function BranchDetailPage() {
@@ -22,10 +23,10 @@ export default function BranchDetailPage() {
   return (
     <>
       <div className="detail-actions">
-        <Link href="/branches" className="btn-back">← 목록으로</Link>
+        <Link href={ROUTES.BRANCHES} className="btn-back">← 목록으로</Link>
         {SessionRole.isManager(session) && (
           <div className="action-group">
-            <Link href={`/branches/${seq}/edit`} className="btn-primary btn-nav">수정</Link>
+            <Link href={ROUTES.BRANCH_EDIT(seq)} className="btn-primary btn-nav">수정</Link>
           </div>
         )}
       </div>

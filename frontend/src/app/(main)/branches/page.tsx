@@ -7,6 +7,7 @@ import { branchApi, SessionRole, type Branch } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
 import ResultModal from '@/components/ui/ResultModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import { ROUTES } from '@/lib/routes';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 
 export default function BranchesPage() {
@@ -29,7 +30,7 @@ export default function BranchesPage() {
     { header: '등록일', render: (b) => b.createdDate ?? '-' },
     { header: '관리', render: (b) => canEdit ? (
       <div style={{ display: 'flex', gap: '0.5rem' }} onClick={(e) => e.stopPropagation()}>
-        <Link href={`/branches/${b.seq}/edit`} className="btn-table-action">수정</Link>
+        <Link href={ROUTES.BRANCH_EDIT(b.seq)} className="btn-table-action">수정</Link>
         <button className="btn-table-delete" onClick={() => setDeleting(b.seq)}>삭제</button>
       </div>
     ) : null },
@@ -48,7 +49,7 @@ export default function BranchesPage() {
         <div className="content-card action-bar">
           <div className="search-section">
             <div className="action-buttons">
-              <Link href="/branches/add" className="btn-primary btn-nav">+ 지점 추가</Link>
+              <Link href={ROUTES.BRANCHES_ADD} className="btn-primary btn-nav">+ 지점 추가</Link>
             </div>
           </div>
         </div>
@@ -59,7 +60,7 @@ export default function BranchesPage() {
         data={branches}
         rowKey={(b) => b.seq}
         headerInfo={<span>총 <strong>{branches.length}</strong>개 지점</span>}
-        onRowClick={(b) => router.push(`/branches/${b.seq}`)}
+        onRowClick={(b) => router.push(ROUTES.BRANCH_DETAIL(b.seq))}
       />
 
       {deleting !== null && (
