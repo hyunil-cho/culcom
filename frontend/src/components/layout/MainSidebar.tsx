@@ -14,6 +14,7 @@ export default function MainSidebar() {
       items: [
         { href: '/dashboard', label: '대시보드', icon: '📊' },
         { href: '/customers', label: '지원자 회신 관리', icon: '👥' },
+        { href: '/notices', label: '공지사항', icon: '📢' },
         ...(SessionRole.canManageUsers(session) ? [{ href: '/branches', label: '지점 관리', icon: '🏢' }] : []),
         ...(SessionRole.canManageUsers(session) ? [{ href: '/users', label: '사용자 관리', icon: '🔑' }] : []),
       ],

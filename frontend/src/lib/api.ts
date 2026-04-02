@@ -240,10 +240,132 @@ export const userApi = {
   delete: (seq: number) => api.delete<void>(`/users/${seq}`),
 };
 
+// Settings
+export interface MessageTemplateSimple {
+  seq: number;
+  templateName: string;
+}
+
+export interface ReservationSmsConfig {
+  seq: number;
+  templateSeq: number;
+  templateName: string;
+  senderNumber: string;
+  autoSend: boolean;
+}
+
+export interface ReservationSmsConfigRequest {
+  templateSeq: number;
+  senderNumber: string;
+  autoSend: boolean;
+}
+
+export const settingsApi = {
+  getReservationSmsConfig: () => api.get<ReservationSmsConfig | null>('/settings/reservation-sms'),
+  getTemplates: () => api.get<MessageTemplateSimple[]>('/settings/reservation-sms/templates'),
+  getSenderNumbers: () => api.get<string[]>('/settings/reservation-sms/sender-numbers'),
+  saveReservationSmsConfig: (data: ReservationSmsConfigRequest) =>
+    api.post<ReservationSmsConfig>('/settings/reservation-sms', data),
+};
+
 export const staffApi = {
   list: () => api.get<ComplexStaff[]>('/complex/staffs'),
   get: (seq: number) => api.get<ComplexStaff>(`/complex/staffs/${seq}`),
   create: (data: Partial<ComplexStaff>) => api.post<ComplexStaff>('/complex/staffs', data),
   update: (seq: number, data: Partial<ComplexStaff>) => api.put<ComplexStaff>(`/complex/staffs/${seq}`, data),
   delete: (seq: number) => api.delete<void>(`/complex/staffs/${seq}`),
+};
+
+export interface KakaoSyncUrlResponse {
+  kakaoSyncUrl: string;
+  branchName: string;
+}
+
+export const kakaoSyncApi = {
+  getUrl: () => api.get<KakaoSyncUrlResponse>('/kakao-sync/url'),
+};
+
+// Notices
+export interface NoticeListItem {
+  seq: number;
+  branchName: string;
+  title: string;
+  category: string;
+  isPinned: boolean;
+  viewCount: number;
+  createdBy: string;
+  createdDate: string;
+  eventStartDate: string | null;
+  eventEndDate: string | null;
+}
+
+export interface NoticeDetail {
+  seq: number;
+  branchName: string;
+  title: string;
+  content: string;
+  category: string;
+  isPinned: boolean;
+  isActive: boolean;
+  viewCount: number;
+  createdBy: string;
+  createdDate: string;
+  lastUpdateDate: string | null;
+  eventStartDate: string | null;
+  eventEndDate: string | null;
+}
+
+export interface NoticeCreateRequest {
+  title: string;
+  content: string;
+  category: string;
+  isPinned: boolean;
+  createdBy?: string;
+  eventStartDate?: string;
+  eventEndDate?: string;
+}
+
+export interface NoticeUpdateRequest {
+  title: string;
+  content: string;
+  category: string;
+  isPinned: boolean;
+  eventStartDate?: string;
+  eventEndDate?: string;
+}
+
+// ── Dashboard ──
+
+export interface DailyStats {
+  date: string;
+  count: number;
+  reservationCount: number;
+}
+
+export interface CallerStats {
+  caller: string;
+  selectionCount: number;
+  reservationConfirm: number;
+  confirmRate: number;
+}
+
+export interface DashboardData {
+  todayTotalCustomers: number;
+  smsRemaining: number;
+  lmsRemaining: number;
+  dailyStats: DailyStats[];
+}
+
+export const dashboardApi = {
+  get: () => api.get<DashboardData>('/dashboard'),
+  callerStats: (period: 'day' | 'week' | 'month') =>
+    api.get<CallerStats[]>(`/dashboard/caller-stats?period=${period}`),
+};
+
+export const noticeApi = {
+  list: (params?: string) => api.get<PageResponse<NoticeListItem>>(`/notices${params ? `?${params}` : ''}`),
+  get: (seq: number) => api.get<NoticeDetail>(`/notices/${seq}`),
+  create: (data: NoticeCreateRequest) => api.post<NoticeDetail>('/notices', data),
+  update: (seq: number, data: NoticeUpdateRequest) => api.put<NoticeDetail>(`/notices/${seq}`, data),
+  delete: (seq: number) => api.delete<void>(`/notices/${seq}`),
 };

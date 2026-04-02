@@ -1,0 +1,192 @@
+'use client';
+
+import { Suspense, useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { noticeApi, NoticeListItem } from '@/lib/api';
+import { useQueryParams } from '@/lib/useQueryParams';
+import DataTable from '@/components/ui/DataTable';
+import SearchBar from '@/components/ui/SearchBar';
+import ConfirmModal from '@/components/ui/ConfirmModal';
+import ResultModal from '@/components/ui/ResultModal';
+
+const CATEGORY_FILTERS = [
+  { value: 'all', label: '전체' },
+  { value: '공지사항', label: '공지사항' },
+  { value: '이벤트', label: '이벤트' },
+];
+
+const DEFAULTS = { page: '0', filter: 'all', searchKeyword: '' };
+
+export default function NoticesPage() {
+  return <Suspense><NoticesContent /></Suspense>;
+}
+
+function NoticesContent() {
+  const router = useRouter();
+  const { params, setParams } = useQueryParams(DEFAULTS);
+  const page = Number(params.page);
+  const filter = params.filter;
+  const searchKeyword = params.searchKeyword;
+
+  const [notices, setNotices] = useState<NoticeListItem[]>([]);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [keyword, setKeyword] = useState(searchKeyword);
+  const [deleteTarget, setDeleteTarget] = useState<NoticeListItem | null>(null);
+  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  const fetchNotices = useCallback(async () => {
+    const apiParams = new URLSearchParams();
+    apiParams.set('page', String(page));
+    apiParams.set('size', '10');
+    apiParams.set('filter', filter);
+    if (searchKeyword) apiParams.set('searchKeyword', searchKeyword);
+    const res = await noticeApi.list(apiParams.toString());
+    if (res.success) {
+      setNotices(res.data.content);
+      setTotalPages(res.data.totalPages);
+      setTotalElements(res.data.totalElements);
+    }
+  }, [page, filter, searchKeyword]);
+
+  useEffect(() => {
+    fetchNotices();
+  }, [fetchNotices]);
+
+  // searchKeyword가 URL에서 복원될 때 입력창도 동기화
+  useEffect(() => {
+    setKeyword(searchKeyword);
+  }, [searchKeyword]);
+
+  const handleSearch = () => {
+    setParams({ page: '0', searchKeyword: keyword });
+  };
+
+  const handleReset = () => {
+    setKeyword('');
+    setParams({ page: '0', searchKeyword: '' });
+  };
+
+  const handleFilterChange = (f: string) => {
+    setParams({ filter: f, page: '0' });
+  };
+
+  const handlePageChange = (p: number) => {
+    setParams({ page: String(p) });
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const res = await noticeApi.delete(deleteTarget.seq);
+    setDeleteTarget(null);
+    setResult({ success: res.success, message: res.success ? '공지사항이 삭제되었습니다.' : '삭제에 실패했습니다.' });
+    if (res.success) fetchNotices();
+  };
+
+  const columns = [
+    {
+      header: '카테고리',
+      render: (n: NoticeListItem) => (
+        <span className={`status-badge ${n.category === '이벤트' ? 'status-warning' : 'status-active'}`}>
+          {n.category}
+        </span>
+      ),
+    },
+    {
+      header: '제목',
+      render: (n: NoticeListItem) => (
+        <span style={{ fontWeight: n.isPinned ? 700 : 400 }}>
+          {n.isPinned && <span style={{ marginRight: 4 }}>📌</span>}
+          {n.title}
+        </span>
+      ),
+    },
+    {
+      header: '작성자',
+      render: (n: NoticeListItem) => n.createdBy,
+    },
+    {
+      header: '조회',
+      render: (n: NoticeListItem) => n.viewCount,
+    },
+    {
+      header: '이벤트 기간',
+      render: (n: NoticeListItem) =>
+        n.eventStartDate ? `${n.eventStartDate} ~ ${n.eventEndDate || ''}` : '-',
+    },
+    {
+      header: '등록일',
+      render: (n: NoticeListItem) => n.createdDate,
+    }
+  ];
+
+  return (
+    <>
+      <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>공지사항 · 이벤트 관리</h1>
+        <Link href="/notices/add" className="btn-primary" style={{ padding: '0.6rem 1.2rem', textDecoration: 'none' }}>
+          새 글 작성
+        </Link>
+      </div>
+
+      {/* 카테고리 필터 */}
+      <div className="content-card" style={{ marginBottom: '1rem', padding: '0.75rem 1rem' }}>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {CATEGORY_FILTERS.map((f) => (
+            <button
+              key={f.value}
+              className={filter === f.value ? 'btn-primary' : 'btn-secondary'}
+              style={{ padding: '6px 16px', fontSize: '0.85rem' }}
+              onClick={() => handleFilterChange(f.value)}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <SearchBar
+        keyword={keyword}
+        onKeywordChange={setKeyword}
+        onSearch={handleSearch}
+        onReset={keyword ? handleReset : undefined}
+        placeholder="제목으로 검색..."
+      />
+
+      <DataTable
+        columns={columns}
+        data={notices}
+        rowKey={(n) => n.seq}
+        headerInfo={<>총 <strong>{totalElements}</strong>건{searchKeyword && <> · &quot;{searchKeyword}&quot; 검색 결과</>}</>}
+        rowStyle={(n) => n.isPinned ? { background: '#fffde7' } : undefined}
+        onRowClick={(n) => router.push(`/notices/${n.seq}`)}
+        emptyMessage="등록된 게시글이 없습니다."
+        page={page}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
+
+      {deleteTarget && (
+        <ConfirmModal
+          title="공지사항 삭제"
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={handleDelete}
+          confirmLabel="삭제"
+          confirmColor="var(--danger)"
+        >
+          <p>&quot;{deleteTarget.title}&quot;을(를) 삭제하시겠습니까?</p>
+          <p style={{ fontSize: '0.85rem', color: '#999' }}>삭제된 게시글은 복구할 수 없습니다.</p>
+        </ConfirmModal>
+      )}
+
+      {result && (
+        <ResultModal
+          success={result.success}
+          message={result.message}
+          onConfirm={() => setResult(null)}
+        />
+      )}
+    </>
+  );
+}
