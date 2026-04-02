@@ -448,3 +448,24 @@ export const messageTemplateApi = {
   setDefault: (seq: number) => api.post<void>(`/message-templates/${seq}/set-default`),
   placeholders: () => api.get<PlaceholderItem[]>('/message-templates/placeholders'),
 };
+
+// External Services
+export interface SmsSendRequest {
+  senderPhone: string;
+  receiverPhone: string;
+  message: string;
+  subject?: string;
+}
+
+export interface SmsSendResponse {
+  success: boolean;
+  message: string;
+  code: string;
+  nums: string;
+  cols: string;
+  msgType: string;
+}
+
+export const externalApi = {
+  sendSms: (data: SmsSendRequest) => api.post<SmsSendResponse>('/external/sms/send', data),
+};

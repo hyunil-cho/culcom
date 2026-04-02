@@ -28,7 +28,7 @@ public class MessageTemplateController {
     public ResponseEntity<ApiResponse<List<MessageTemplateResponse>>> list(HttpSession session) {
         Long branchSeq = authService.getSessionBranchSeq(session);
         List<MessageTemplateResponse> templates = templateRepository
-                .findByBranchSeqOrderBySeqDesc(branchSeq)
+                .findByBranchSeqOrderByIsDefaultDescLastUpdateDateDesc(branchSeq)
                 .stream()
                 .map(MessageTemplateResponse::from)
                 .toList();

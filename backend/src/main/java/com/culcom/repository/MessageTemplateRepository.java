@@ -6,5 +6,6 @@ import java.util.List;
 
 public interface MessageTemplateRepository extends JpaRepository<MessageTemplate, Long> {
     List<MessageTemplate> findByBranchSeqOrderBySeqDesc(Long branchSeq);
+    List<MessageTemplate> findByBranchSeqOrderByIsDefaultDescLastUpdateDateDesc(Long branchSeq);
     List<MessageTemplate> findByBranchSeqAndIsActiveTrueOrderByIsDefaultDescLastUpdateDateDesc(Long branchSeq);
 }

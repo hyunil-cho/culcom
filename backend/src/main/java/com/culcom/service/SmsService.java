@@ -60,14 +60,14 @@ public class SmsService {
                                 String senderPhone, String receiverPhone,
                                 String message, String subject) {
         // local 프로필이면 Mock 모드
-        if (isMockMode()) {
-            log.info("[Mock Mode] 실제 SMS 발송 없이 성공 응답 반환");
-            return SmsSendResponse.builder()
-                    .success(true)
-                    .message("테스트 메시지가 발송되었습니다 (Mock)")
-                    .code("0000").nums("1").cols("9999").msgType("SMS")
-                    .build();
-        }
+//        if (isMockMode()) {
+//            log.info("[Mock Mode] 실제 SMS 발송 없이 성공 응답 반환");
+//            return SmsSendResponse.builder()
+//                    .success(true)
+//                    .message("테스트 메시지가 발송되었습니다 (Mock)")
+//                    .code("0000").nums("1").cols("9999").msgType("SMS")
+//                    .build();
+//        }
 
         senderPhone = normalizePhone(senderPhone);
         receiverPhone = normalizePhone(receiverPhone);
@@ -174,7 +174,8 @@ public class SmsService {
     }
 
     private MymunjaConfigInfo findSmsConfig(Long branchSeq) {
-        return mappingRepository.findByBranchSeq(branchSeq).stream()
+        return mappingRepository.findByBranchSeq(branchSeq)
+                .stream()
                 .filter(m -> m.getThirdPartyService().getExternalServiceType() != null
                         && "SMS".equals(m.getThirdPartyService().getExternalServiceType().getCodeName()))
                 .findFirst()

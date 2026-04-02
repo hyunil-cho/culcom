@@ -22,6 +22,8 @@ public class LocalDataInitializer implements ApplicationRunner {
     private final ThirdPartyServiceRepository thirdPartyServiceRepository;
     private final BranchThirdPartyMappingRepository mappingRepository;
     private final PlaceholderRepository placeholderRepository;
+    private final MessageTemplateRepository messageTemplateRepository;
+    private final CustomerRepository customerRepository;
 
     @Override
     public void run(ApplicationArguments args) {
@@ -61,6 +63,7 @@ public class LocalDataInitializer implements ApplicationRunner {
 
         initThirdPartyServices();
         initPlaceholders();
+        initSampleData();
     }
 
     private void initThirdPartyServices() {
@@ -119,5 +122,60 @@ public class LocalDataInitializer implements ApplicationRunner {
         placeholderRepository.save(Placeholder.builder().name("{{오시는길}}").comment("지점 오시는 길 안내").examples("2호선 강남역 3번 출구 도보 5분").value("{branch.directions}").build());
 
         log.info("초기 플레이스홀더 11건 생성 완료");
+    }
+
+    private void initSampleData() {
+        branchRepository.findByAlias("gangnam").ifPresent(branch -> {
+            // 샘플 메시지 템플릿
+            if (messageTemplateRepository.findByBranchSeqOrderByIsDefaultDescLastUpdateDateDesc(branch.getSeq()).isEmpty()) {
+                messageTemplateRepository.save(MessageTemplate.builder()
+                        .branch(branch)
+                        .templateName("예약 확인 안내")
+                        .description("예약 확정 시 고객에게 보내는 안내 메시지")
+                        .messageContext("안녕하세요 {{고객명}}님, {{지점명}}입니다.\n{{예약일자}}에 예약이 확정되었습니다.\n주소: {{지점주소}}\n오시는 길: {{오시는길}}\n감사합니다.")
+                        .isDefault(true)
+                        .isActive(true)
+                        .build());
+
+                messageTemplateRepository.save(MessageTemplate.builder()
+                        .branch(branch)
+                        .templateName("방문 안내")
+                        .description("첫 방문 고객에게 보내는 안내 메시지")
+                        .messageContext("{{고객명}}님 안녕하세요.\n{{지점명}}에 관심을 가져주셔서 감사합니다.\n궁금하신 점은 담당자 {{담당자}}에게 연락 주세요.\n감사합니다.")
+                        .isActive(true)
+                        .build());
+
+                log.info("초기 메시지 템플릿 2건 생성 완료");
+            }
+
+            // 샘플 고객
+            if (customerRepository.findByBranchSeq(branch.getSeq(), org.springframework.data.domain.PageRequest.of(0, 1)).isEmpty()) {
+                customerRepository.save(Customer.builder()
+                        .branch(branch)
+                        .name("홍길동")
+                        .phoneNumber("01099321967")
+                        .commercialName("네이버 광고")
+                        .adSource("블로그")
+                        .build());
+
+                customerRepository.save(Customer.builder()
+                        .branch(branch)
+                        .name("김철수")
+                        .phoneNumber("01012345678")
+                        .commercialName("인스타그램")
+                        .adSource("SNS")
+                        .build());
+
+                customerRepository.save(Customer.builder()
+                        .branch(branch)
+                        .name("이영희")
+                        .phoneNumber("01098765432")
+                        .commercialName("카카오 광고")
+                        .adSource("검색")
+                        .build());
+
+                log.info("초기 샘플 고객 3건 생성 완료");
+            }
+        });
     }
 }

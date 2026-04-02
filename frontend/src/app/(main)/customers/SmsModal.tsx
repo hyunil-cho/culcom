@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { branchApi, messageTemplateApi, settingsApi, MessageTemplateItem, PlaceholderItem, Branch } from '@/lib/api';
+import { branchApi, messageTemplateApi, settingsApi, externalApi, MessageTemplateItem, PlaceholderItem, Branch } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
 import { resolvePlaceholders } from '@/lib/commonUtils';
 
@@ -97,10 +97,19 @@ export default function SmsModal({ customerName, customerPhone, interviewDate, o
     if (!senderPhone) { onResult(false, '발신번호를 선택해주세요.'); return; }
 
     setSending(true);
-    // TODO: 실제 SMS 발송 API 연동
+    const res = await externalApi.sendSms({
+      senderPhone,
+      receiverPhone: customerPhone,
+      message,
+    });
     setSending(false);
-    onResult(false, 'SMS 발송 API가 아직 구현되지 않았습니다.');
-  };
+
+    if (res.success && res.data?.success) {
+      onResult(true, `메시지가 전송되었습니다. (${res.data.msgType})`);
+    } else {
+      onResult(false, res.data?.message || res.message || '메시지 전송에 실패했습니다.');
+    }
+  };``
 
   return (
     <div
