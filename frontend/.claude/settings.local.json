@@ -8,7 +8,11 @@
       "Bash(./gradlew build:*)",
       "Bash(npm run:*)",
       "Bash(npx tsc:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Read(//c/Users/lookh/IdeaProjects/culcom/legacy-culcom/static/css/**)",
+      "Bash(./gradlew compileJava)",
+      "Bash(find C:\\\\Users\\\\lookh\\\\IdeaProjects\\\\culcom\\\\backend\\\\src\\\\main\\\\java\\\\com\\\\culcom\\\\dto:*)",
+      "Bash(grep -E \"\\\\.java$\")"
     ]
   }
 }

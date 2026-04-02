@@ -12,7 +12,10 @@
       "Bash(java:*)",
       "Bash(find:*)",
       "Bash(ls -la /c/Users/lookh/IdeaProjects/culcom/legacy-culcom/*.go)",
-      "Bash(ls -d /c/Users/lookh/IdeaProjects/culcom/legacy-culcom/handlers/*)"
+      "Bash(ls -d /c/Users/lookh/IdeaProjects/culcom/legacy-culcom/handlers/*)",
+      "Bash(npm install:*)",
+      "Bash(./gradlew build:*)",
+      "Bash(npx next:*)"
     ]
   }
 }

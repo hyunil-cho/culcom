@@ -18,6 +18,18 @@ export default function MainSidebar() {
         ...(SessionRole.canManageUsers(session) ? [{ href: '/users', label: '사용자 관리', icon: '🔑' }] : []),
       ],
     },
+    {
+      title: '연동',
+      items: [
+        { href: '/kakao-sync', label: '카카오싱크', icon: '💬' },
+      ],
+    },
+    ...(SessionRole.canManageUsers(session) ? [{
+      title: '관리',
+      items: [
+        { href: '/settings', label: '설정', icon: '⚙️' },
+      ],
+    }] : []),
   ];
 
   return <SidebarShell groups={groups} />;
