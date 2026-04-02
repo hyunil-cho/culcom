@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { branchApi, SessionRole, type Branch } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
 import ResultModal from '@/components/ui/ResultModal';
@@ -14,6 +15,7 @@ export default function BranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const router = useRouter();
   const canEdit = SessionRole.isManager(session);
 
   const load = () => { branchApi.list().then(res => setBranches(res.data)); };
@@ -25,17 +27,12 @@ export default function BranchesPage() {
     { header: '영문코드', render: (b) => <span className="status-badge status-active">{b.alias}</span> },
     { header: '담당자', render: (b) => b.branchManager ?? '-' },
     { header: '등록일', render: (b) => b.createdDate ?? '-' },
-    { header: '관리', render: (b) => (
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
-        <Link href={`/branches/${b.seq}`} className="btn-table-action">상세</Link>
-        {canEdit && (
-          <>
-            <Link href={`/branches/${b.seq}/edit`} className="btn-table-action">수정</Link>
-            <button className="btn-table-delete" onClick={() => setDeleting(b.seq)}>삭제</button>
-          </>
-        )}
+    { header: '관리', render: (b) => canEdit ? (
+      <div style={{ display: 'flex', gap: '0.5rem' }} onClick={(e) => e.stopPropagation()}>
+        <Link href={`/branches/${b.seq}/edit`} className="btn-table-action">수정</Link>
+        <button className="btn-table-delete" onClick={() => setDeleting(b.seq)}>삭제</button>
       </div>
-    )},
+    ) : null },
   ];
 
   const confirmDelete = async () => {
@@ -62,6 +59,7 @@ export default function BranchesPage() {
         data={branches}
         rowKey={(b) => b.seq}
         headerInfo={<span>총 <strong>{branches.length}</strong>개 지점</span>}
+        onRowClick={(b) => router.push(`/branches/${b.seq}`)}
       />
 
       {deleting !== null && (

@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { memberApi, type ComplexMember, type PageResponse } from '@/lib/api';
+import { useQueryParams } from '@/lib/useQueryParams';
 import SearchBar from '@/components/ui/SearchBar';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 
@@ -13,22 +14,33 @@ const columns: Column<ComplexMember>[] = [
   { header: '차트번호', render: (m) => m.chartNumber ?? '-' },
 ];
 
-export default function MembersPage() {
-  const [members, setMembers] = useState<ComplexMember[]>([]);
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [keyword, setKeyword] = useState('');
+const DEFAULTS = { page: '0', keyword: '' };
 
-  const load = async () => {
-    const params = new URLSearchParams({ page: String(page), size: '20' });
-    if (keyword) params.set('keyword', keyword);
-    const res = await memberApi.list(params.toString());
+export default function MembersPage() {
+  return <Suspense><MembersContent /></Suspense>;
+}
+
+function MembersContent() {
+  const { params, setParams } = useQueryParams(DEFAULTS);
+  const page = Number(params.page);
+  const searchedKeyword = params.keyword;
+
+  const [members, setMembers] = useState<ComplexMember[]>([]);
+  const [totalPages, setTotalPages] = useState(0);
+  const [keyword, setKeyword] = useState(searchedKeyword);
+
+  const load = useCallback(async () => {
+    const apiParams = new URLSearchParams({ page: String(page), size: '20' });
+    if (searchedKeyword) apiParams.set('keyword', searchedKeyword);
+    const res = await memberApi.list(apiParams.toString());
     const data = res.data as PageResponse<ComplexMember>;
     setMembers(data.content);
     setTotalPages(data.totalPages);
-  };
+  }, [page, searchedKeyword]);
 
-  useEffect(() => { load(); }, [page]);
+  useEffect(() => { load(); }, [load]);
+
+  useEffect(() => { setKeyword(searchedKeyword); }, [searchedKeyword]);
 
   return (
     <>
@@ -36,7 +48,8 @@ export default function MembersPage() {
       <SearchBar
         keyword={keyword}
         onKeywordChange={setKeyword}
-        onSearch={load}
+        onSearch={() => setParams({ page: '0', keyword })}
+        onReset={keyword ? () => { setKeyword(''); setParams({ page: '0', keyword: '' }); } : undefined}
         placeholder="이름/전화번호 검색"
       />
 
@@ -46,7 +59,7 @@ export default function MembersPage() {
         rowKey={(m) => m.seq}
         page={page}
         totalPages={totalPages}
-        onPageChange={setPage}
+        onPageChange={(p) => setParams({ page: String(p) })}
       />
     </>
   );

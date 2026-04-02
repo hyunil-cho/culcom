@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { customerApi, type Customer, type PageResponse } from '@/lib/api';
 import { toServerDateTime, formatDateTime } from '@/lib/dateUtils';
+import { useQueryParams } from '@/lib/useQueryParams';
 import ResultModal from '@/components/ui/ResultModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import SearchBar from '@/components/ui/SearchBar';
@@ -23,14 +24,23 @@ interface InterviewModal {
   caller: string;
 }
 
+const CUSTOMER_DEFAULTS = { page: '0', filter: 'new', searchType: 'name', keyword: '' };
+
 export default function CustomersPage() {
+  return <Suspense><CustomersContent /></Suspense>;
+}
+
+function CustomersContent() {
+  const { params: qp, setParams } = useQueryParams(CUSTOMER_DEFAULTS);
+  const page = Number(qp.page);
+  const filter = qp.filter;
+  const searchType = qp.searchType;
+  const searchedKeyword = qp.keyword;
+
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
-  const [filter, setFilter] = useState('new');
-  const [searchType, setSearchType] = useState('name');
-  const [keyword, setKeyword] = useState('');
+  const [keyword, setKeyword] = useState(searchedKeyword);
   const [deleting, setDeleting] = useState<number | null>(null);
 
   // 인라인 편집 상태
@@ -47,10 +57,10 @@ export default function CustomersPage() {
   const [interviewModal, setInterviewModal] = useState<InterviewModal | null>(null);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const params = new URLSearchParams({ page: String(page), size: '20', filter });
-    if (keyword) {
-      params.set('keyword', keyword);
+    if (searchedKeyword) {
+      params.set('keyword', searchedKeyword);
       params.set('searchType', searchType);
     }
     const res = await customerApi.list(params.toString());
@@ -58,22 +68,19 @@ export default function CustomersPage() {
     setCustomers(data.content);
     setTotalPages(data.totalPages);
     setTotalCount(data.totalElements);
+  }, [page, filter, searchedKeyword, searchType]);
+
+  useEffect(() => { load(); }, [load]);
+
+  useEffect(() => { setKeyword(searchedKeyword); }, [searchedKeyword]);
+
+  const handleSearch = () => {
+    setParams({ page: '0', keyword, searchType });
   };
-
-  useEffect(() => { load(); }, [page, filter]);
-
-  const handleSearch = () => { setPage(0); load(); };
 
   const handleReset = () => {
     setKeyword('');
-    setPage(0);
-    const params = new URLSearchParams({ page: '0', size: '20', filter });
-    customerApi.list(params.toString()).then(res => {
-      const data = res.data as PageResponse<Customer>;
-      setCustomers(data.content);
-      setTotalPages(data.totalPages);
-      setTotalCount(data.totalElements);
-    });
+    setParams({ page: '0', keyword: '' });
   };
 
   // 이름 수정
@@ -270,7 +277,7 @@ export default function CustomersPage() {
           { value: 'phone', label: '전화번호' },
         ]}
         searchType={searchType}
-        onSearchTypeChange={setSearchType}
+        onSearchTypeChange={(v) => setParams({ searchType: v })}
         actions={<Link href="/customers/add" className="btn-primary btn-nav">+ 워크인 추가</Link>}
       />
 
@@ -289,7 +296,7 @@ export default function CustomersPage() {
               <button
                 key={f}
                 className={`btn-filter ${filter === f ? 'btn-filter-active' : 'btn-filter-inactive'}`}
-                onClick={() => { setFilter(f); setPage(0); }}
+                onClick={() => setParams({ filter: f, page: '0' })}
               >
                 {f === 'new' ? '처리중' : '전체'}
               </button>
@@ -300,7 +307,7 @@ export default function CustomersPage() {
         emptyMessage="고객이 없습니다."
         page={page}
         totalPages={totalPages}
-        onPageChange={setPage}
+        onPageChange={(p) => setParams({ page: String(p) })}
       />
 
       {/* CALLER 확인 모달 */}

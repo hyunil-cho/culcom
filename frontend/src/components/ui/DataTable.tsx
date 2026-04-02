@@ -17,6 +17,8 @@ interface DataTableProps<T> {
   headerRight?: ReactNode;
   /** 행별 스타일 */
   rowStyle?: (item: T) => React.CSSProperties | undefined;
+  /** 행 클릭 핸들러 */
+  onRowClick?: (item: T) => void;
   /** 빈 데이터 메시지 */
   emptyMessage?: string;
   /** 페이지네이션 */
@@ -32,6 +34,7 @@ export default function DataTable<T>({
   headerInfo,
   headerRight,
   rowStyle,
+  onRowClick,
   emptyMessage = '데이터가 없습니다.',
   page,
   totalPages,
@@ -61,7 +64,11 @@ export default function DataTable<T>({
             </thead>
             <tbody>
               {data.map((item) => (
-                <tr key={rowKey(item)} style={rowStyle?.(item)}>
+                <tr
+                  key={rowKey(item)}
+                  style={{ ...rowStyle?.(item), ...(onRowClick ? { cursor: 'pointer' } : {}) }}
+                  onClick={onRowClick ? () => onRowClick(item) : undefined}
+                >
                   {columns.map((col, i) => (
                     <td key={i}>{col.render(item)}</td>
                   ))}
