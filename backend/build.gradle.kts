@@ -17,7 +17,17 @@ repositories {
     mavenCentral()
 }
 
+dependencyManagement {
+    imports {
+        mavenBom("software.amazon.awssdk:bom:2.25.60")
+    }
+}
+
 dependencies {
+    implementation("software.amazon.awssdk:lambda")
+    implementation("software.amazon.awssdk:apigatewayv2")
+    implementation("software.amazon.awssdk:sts")
+
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4")

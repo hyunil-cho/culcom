@@ -15,11 +15,18 @@ const R = {
   KAKAO_SYNC: '/kakao-sync',
   SETTINGS: '/settings',
   COMPLEX: '/complex',
+  WEBHOOKS: '/webhooks',
 } as const;
 
 export const ROUTES = {
   LOGIN: '/login',
   DASHBOARD: '/dashboard',
+
+  // 웹훅
+  WEBHOOKS: R.WEBHOOKS,
+  WEBHOOKS_ADD: `${R.WEBHOOKS}/add`,
+  WEBHOOK_EDIT: (seq: number) => `${R.WEBHOOKS}/${seq}/edit`,
+  WEBHOOK_LOGS: `${R.WEBHOOKS}/logs`,
 
   // 공개 페이지
   PUBLIC_POSTPONEMENT: '/public/postponement',
@@ -62,6 +69,7 @@ export const ROUTES = {
   SETTINGS_RESERVATION_SMS: `${R.SETTINGS}/reservation-sms`,
 
   // 복합시설
+  COMPLEX: R.COMPLEX,
   COMPLEX_CLASSES: `${R.COMPLEX}/classes`,
   COMPLEX_CLASSES_ADD: `${R.COMPLEX}/classes/add`,
   COMPLEX_CLASS_EDIT: (seq: number) => `${R.COMPLEX}/classes/${seq}/edit`,
@@ -184,6 +192,11 @@ export const API = {
   MESSAGE_TEMPLATE: (seq: number) => `${A.MESSAGE_TEMPLATES}/${seq}`,
   MESSAGE_TEMPLATE_SET_DEFAULT: (seq: number) => `${A.MESSAGE_TEMPLATES}/${seq}/set-default`,
   MESSAGE_TEMPLATE_PLACEHOLDERS: `${A.MESSAGE_TEMPLATES}/placeholders`,
+
+  // 웹훅
+  WEBHOOKS: '/webhooks',
+  WEBHOOK: (seq: number) => `/webhooks/${seq}`,
+  WEBHOOK_LOGS: '/webhooks/logs',
 
   // 외부 서비스
   EXTERNAL_SMS_SEND: `${A.EXTERNAL}/sms/send`,
