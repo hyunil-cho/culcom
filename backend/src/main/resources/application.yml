@@ -17,6 +17,13 @@ spring:
       initialize-schema: always
     timeout: 3600
 
+sms:
+  api-base-url: ${SMS_API_BASE_URL:https://www.mymunja.co.kr/Remote}
+  sms-endpoint: ${SMS_ENDPOINT:/RemoteSms.html}
+  lms-endpoint: ${LMS_ENDPOINT:/RemoteMms.html}
+  check-endpoint: ${SMS_CHECK_ENDPOINT:/RemoteCheck.html}
+  max-sms-bytes: ${SMS_MAX_BYTES:90}
+
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml
   configuration:
