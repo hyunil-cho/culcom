@@ -5,6 +5,7 @@ import { postponementApi, type PostponementRequest } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { useRouter } from 'next/navigation';
 import DataTable, { type Column } from '@/components/ui/DataTable';
+import SearchBar from '@/components/ui/SearchBar';
 import ModalOverlay from '@/components/ui/ModalOverlay';
 import ResultModal from '@/components/ui/ResultModal';
 
@@ -20,15 +21,17 @@ export default function PostponementsPage() {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [statusFilter, setStatusFilter] = useState('');
+  const [keyword, setKeyword] = useState('');
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
 
   // 반려 모달
   const [rejectTarget, setRejectTarget] = useState<PostponementRequest | null>(null);
   const [rejectReason, setRejectReason] = useState('');
 
-  const load = (p = page, status = statusFilter) => {
+  const load = (p = page, status = statusFilter, kw = keyword) => {
     const params = [`page=${p}`, 'size=20'];
     if (status) params.push(`status=${status}`);
+    if (kw) params.push(`keyword=${encodeURIComponent(kw)}`);
     postponementApi.list(params.join('&')).then(res => {
       setRequests(res.data.content);
       setTotalPages(res.data.totalPages);
@@ -46,6 +49,11 @@ export default function PostponementsPage() {
     setStatusFilter(status);
     setPage(0);
     load(0, status);
+  };
+
+  const handleSearch = () => {
+    setPage(0);
+    load(0, statusFilter, keyword);
   };
 
   const handleStatusChange = async (req: PostponementRequest, newStatus: string) => {
@@ -120,23 +128,31 @@ export default function PostponementsPage() {
         </button>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={requests}
-        rowKey={(r) => r.seq}
-        rowStyle={(r) => r.status === '승인' ? { backgroundColor: '#f0fdf4' } : undefined}
-        headerRight={
+      <SearchBar
+        keyword={keyword}
+        onKeywordChange={setKeyword}
+        onSearch={handleSearch}
+        onReset={keyword ? () => { setKeyword(''); setPage(0); load(0, statusFilter, ''); } : undefined}
+        placeholder="회원명 또는 연락처 검색"
+        actions={
           <select
             value={statusFilter}
             onChange={(e) => handleStatusFilter(e.target.value)}
             style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #ddd', fontSize: '0.9rem' }}
           >
-            <option value="">전체</option>
+            <option value="">전체 상태</option>
             <option value="대기">대기</option>
             <option value="승인">승인</option>
             <option value="반려">반려</option>
           </select>
         }
+      />
+
+      <DataTable
+        columns={columns}
+        data={requests}
+        rowKey={(r) => r.seq}
+        rowStyle={(r) => r.status === '승인' ? { backgroundColor: '#f0fdf4' } : undefined}
         emptyMessage="새로운 연기 요청이 없습니다."
         page={page}
         totalPages={totalPages}

@@ -513,6 +513,32 @@ export const timeslotApi = {
   delete: (seq: number) => api.delete<void>(API.COMPLEX_TIMESLOT(seq)),
 };
 
+// ── Refunds ──
+
+export interface RefundRequest {
+  seq: number;
+  memberName: string;
+  phoneNumber: string;
+  membershipName: string;
+  price: string | null;
+  reason: string;
+  bankName: string;
+  accountNumber: string;
+  accountHolder: string;
+  status: '대기' | '승인' | '반려';
+  rejectReason: string | null;
+  createdDate: string;
+}
+
+export const refundApi = {
+  list: (params?: string) =>
+    api.get<PageResponse<RefundRequest>>(`${API.COMPLEX_REFUNDS}${params ? `?${params}` : ''}`),
+  updateStatus: (seq: number, status: string, rejectReason?: string) =>
+    api.put<RefundRequest>(
+      `${API.COMPLEX_REFUND_STATUS(seq)}?status=${encodeURIComponent(status)}${rejectReason ? `&rejectReason=${encodeURIComponent(rejectReason)}` : ''}`
+    ),
+};
+
 // ── Postponements ──
 
 export interface PostponementRequest {

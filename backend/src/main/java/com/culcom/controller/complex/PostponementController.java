@@ -32,14 +32,20 @@ public class PostponementController {
             HttpSession session,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String keyword) {
         Long branchSeq = authService.getSessionBranchSeq(session);
         var pageable = PageRequest.of(page, size);
+        boolean hasKeyword = keyword != null && !keyword.isBlank();
+        boolean hasStatus = status != null && !status.isBlank();
 
         Page<ComplexPostponementRequest> result;
-        if (status != null && !status.isBlank()) {
-            result = postponementRepository.findByBranchSeqAndStatusOrderByCreatedDateDesc(
-                    branchSeq, RequestStatus.valueOf(status), pageable);
+        if (hasKeyword && hasStatus) {
+            result = postponementRepository.searchByBranchSeqAndStatus(branchSeq, RequestStatus.valueOf(status), keyword, pageable);
+        } else if (hasKeyword) {
+            result = postponementRepository.searchByBranchSeq(branchSeq, keyword, pageable);
+        } else if (hasStatus) {
+            result = postponementRepository.findByBranchSeqAndStatusOrderByCreatedDateDesc(branchSeq, RequestStatus.valueOf(status), pageable);
         } else {
             result = postponementRepository.findByBranchSeqOrderByCreatedDateDesc(branchSeq, pageable);
         }

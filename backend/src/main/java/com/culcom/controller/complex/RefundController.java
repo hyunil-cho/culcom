@@ -27,14 +27,20 @@ public class RefundController {
             HttpSession session,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String keyword) {
         Long branchSeq = authService.getSessionBranchSeq(session);
         var pageable = PageRequest.of(page, size);
+        boolean hasKeyword = keyword != null && !keyword.isBlank();
+        boolean hasStatus = status != null && !status.isBlank();
 
         Page<ComplexRefundRequest> result;
-        if (status != null && !status.isBlank()) {
-            result = refundRepository.findByBranchSeqAndStatusOrderByCreatedDateDesc(
-                    branchSeq, RequestStatus.valueOf(status), pageable);
+        if (hasKeyword && hasStatus) {
+            result = refundRepository.searchByBranchSeqAndStatus(branchSeq, RequestStatus.valueOf(status), keyword, pageable);
+        } else if (hasKeyword) {
+            result = refundRepository.searchByBranchSeq(branchSeq, keyword, pageable);
+        } else if (hasStatus) {
+            result = refundRepository.findByBranchSeqAndStatusOrderByCreatedDateDesc(branchSeq, RequestStatus.valueOf(status), pageable);
         } else {
             result = refundRepository.findByBranchSeqOrderByCreatedDateDesc(branchSeq, pageable);
         }

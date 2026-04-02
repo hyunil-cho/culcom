@@ -138,6 +138,10 @@ export const API = {
   COMPLEX_TIMESLOTS: '/complex/timeslots',
   COMPLEX_TIMESLOT: (seq: number) => `/complex/timeslots/${seq}`,
 
+  // 환불 요청
+  COMPLEX_REFUNDS: '/complex/refunds',
+  COMPLEX_REFUND_STATUS: (seq: number) => `/complex/refunds/${seq}/status`,
+
   // 연기 요청
   COMPLEX_POSTPONEMENTS: '/complex/postponements',
   COMPLEX_POSTPONEMENT_STATUS: (seq: number) => `/complex/postponements/${seq}/status`,
