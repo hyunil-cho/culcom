@@ -15,10 +15,10 @@ public class ThirdPartyService {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seq;
 
-    @Column(name = "createdDate", nullable = false, updatable = false)
+    @Column(name = "created_date", nullable = false, updatable = false)
     private LocalDate createdDate;
 
-    @Column(name = "updateDate", nullable = false)
+    @Column(name = "update_date", nullable = false)
     private LocalDate updateDate;
 
     @Column(nullable = false, length = 50)
