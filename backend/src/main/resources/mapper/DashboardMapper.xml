@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.culcom.mapper.DashboardMapper">
+
+    <!-- 금일 총 예약자 수 -->
+    <select id="countTodayCustomers" resultType="int">
+        SELECT COUNT(*)
+        FROM customers
+        WHERE CAST(created_date AS DATE) = CURRENT_DATE
+        <if test="branchSeq != null">
+            AND branch_seq = #{branchSeq}
+        </if>
+    </select>
+
+    <!-- 최근 N일간 일별 고객/예약 통계 -->
+    <select id="selectDailyStats" resultType="com.culcom.dto.dashboard.DailyStatsResponse">
+        SELECT
+            dates.dt AS date,
+            COALESCE(c.cnt, 0) AS count,
+            COALESCE(r.cnt, 0) AS reservationCount
+        FROM (
+            SELECT DATEADD(DAY, -n, CURRENT_DATE) AS dt
+            FROM (
+                SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2
+                UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
+                UNION ALL SELECT 6
+            ) nums
+            WHERE n &lt; #{days}
+        ) dates
+        LEFT JOIN (
+            SELECT CAST(created_date AS DATE) AS dt, COUNT(*) AS cnt
+            FROM customers
+            WHERE created_date >= DATEADD(DAY, -(#{days} - 1), CURRENT_DATE)
+            <if test="branchSeq != null">
+                AND branch_seq = #{branchSeq}
+            </if>
+            GROUP BY CAST(created_date AS DATE)
+        ) c ON dates.dt = c.dt
+        LEFT JOIN (
+            SELECT CAST(created_date AS DATE) AS dt, COUNT(*) AS cnt
+            FROM reservation_info
+            WHERE created_date >= DATEADD(DAY, -(#{days} - 1), CURRENT_DATE)
+            <if test="branchSeq != null">
+                AND branch_seq = #{branchSeq}
+            </if>
+            GROUP BY CAST(created_date AS DATE)
+        ) r ON dates.dt = r.dt
+        ORDER BY dates.dt ASC
+    </select>
+
+    <!-- SMS 잔여건수 -->
+    <select id="selectSmsRemaining" resultType="int">
+        SELECT COALESCE(mci.remaining_count_sms, 0)
+        FROM mymunja_config_info mci
+        INNER JOIN `branch-third-party-mapping` btpm ON mci.mapping_id = btpm.mapping_seq
+        INNER JOIN third_party_services tps ON btpm.third_party_id = tps.seq
+        INNER JOIN external_service_type est ON tps.code_seq = est.seq
+        WHERE btpm.branch_id = #{branchSeq}
+          AND est.code_name = 'SMS'
+        LIMIT 1
+    </select>
+
+    <!-- LMS 잔여건수 -->
+    <select id="selectLmsRemaining" resultType="int">
+        SELECT COALESCE(mci.remaining_count_lms, 0)
+        FROM mymunja_config_info mci
+        INNER JOIN `branch-third-party-mapping` btpm ON mci.mapping_id = btpm.mapping_seq
+        INNER JOIN third_party_services tps ON btpm.third_party_id = tps.seq
+        INNER JOIN external_service_type est ON tps.code_seq = est.seq
+        WHERE btpm.branch_id = #{branchSeq}
+          AND est.code_name = 'SMS'
+        LIMIT 1
+    </select>
+
+    <!-- CALLER별 날짜 조건 SQL fragment -->
+    <sql id="callerDateCondition">
+        <choose>
+            <when test="period == 'week'">
+                selected_date >= DATEADD(DAY, -7, CURRENT_DATE)
+            </when>
+            <when test="period == 'month'">
+                selected_date >= DATEADD(DAY, -30, CURRENT_DATE)
+            </when>
+            <otherwise>
+                CAST(selected_date AS DATE) = CURRENT_DATE
+            </otherwise>
+        </choose>
+    </sql>
+
+    <sql id="reservationDateCondition">
+        <choose>
+            <when test="period == 'week'">
+                r.created_date >= DATEADD(DAY, -7, CURRENT_DATE)
+            </when>
+            <when test="period == 'month'">
+                r.created_date >= DATEADD(DAY, -30, CURRENT_DATE)
+            </when>
+            <otherwise>
+                CAST(r.created_date AS DATE) = CURRENT_DATE
+            </otherwise>
+        </choose>
+    </sql>
+
+    <!-- CALLER별 통계 (A~P) -->
+    <select id="selectCallerStats" resultType="com.culcom.dto.dashboard.CallerStatsResponse">
+        SELECT
+            cal.caller,
+            COALESCE(sel.selection_count, 0) AS selectionCount,
+            COALESCE(res.reservation_confirm, 0) AS reservationConfirm,
+            CASE
+                WHEN COALESCE(sel.selection_count, 0) > 0
+                THEN ROUND(COALESCE(res.reservation_confirm, 0) * 100.0 / sel.selection_count, 2)
+                ELSE 0
+            END AS confirmRate
+        FROM (
+            SELECT 'A' AS caller UNION ALL SELECT 'B' UNION ALL SELECT 'C' UNION ALL SELECT 'D'
+            UNION ALL SELECT 'E' UNION ALL SELECT 'F' UNION ALL SELECT 'G' UNION ALL SELECT 'H'
+            UNION ALL SELECT 'I' UNION ALL SELECT 'J' UNION ALL SELECT 'K' UNION ALL SELECT 'L'
+            UNION ALL SELECT 'M' UNION ALL SELECT 'N' UNION ALL SELECT 'O' UNION ALL SELECT 'P'
+        ) cal
+        LEFT JOIN (
+            SELECT caller, COUNT(*) AS selection_count
+            FROM caller_selection_history
+            WHERE <include refid="callerDateCondition"/>
+            <if test="branchSeq != null">
+                AND branch_seq = #{branchSeq}
+            </if>
+            GROUP BY caller
+        ) sel ON cal.caller = sel.caller
+        LEFT JOIN (
+            SELECT r.caller, COUNT(DISTINCT r.seq) AS reservation_confirm
+            FROM reservation_info r
+            WHERE <include refid="reservationDateCondition"/>
+            <if test="branchSeq != null">
+                AND r.branch_seq = #{branchSeq}
+            </if>
+            GROUP BY r.caller
+        ) res ON cal.caller = res.caller
+        ORDER BY cal.caller
+    </select>
+
+</mapper>
