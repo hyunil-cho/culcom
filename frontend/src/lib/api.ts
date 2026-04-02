@@ -461,6 +461,33 @@ export const messageTemplateApi = {
   placeholders: () => api.get<PlaceholderItem[]>(API.MESSAGE_TEMPLATE_PLACEHOLDERS),
 };
 
+// ── Memberships ──
+
+export interface Membership {
+  seq: number;
+  name: string;
+  duration: number;
+  count: number;
+  price: number;
+  createdDate: string | null;
+  lastUpdateDate: string | null;
+}
+
+export interface MembershipRequest {
+  name: string;
+  duration: number;
+  count: number;
+  price: number;
+}
+
+export const membershipApi = {
+  list: () => api.get<Membership[]>(API.MEMBERSHIPS),
+  get: (seq: number) => api.get<Membership>(API.MEMBERSHIP(seq)),
+  create: (data: MembershipRequest) => api.post<Membership>(API.MEMBERSHIPS, data),
+  update: (seq: number, data: MembershipRequest) => api.put<Membership>(API.MEMBERSHIP(seq), data),
+  delete: (seq: number) => api.delete<void>(API.MEMBERSHIP(seq)),
+};
+
 // ── External Services ──
 
 export interface SmsSendRequest {

@@ -63,6 +63,8 @@ export const ROUTES = {
   COMPLEX_STAFFS: `${R.COMPLEX}/staffs`,
   COMPLEX_ATTENDANCE: `${R.COMPLEX}/attendance`,
   COMPLEX_MEMBERSHIPS: `${R.COMPLEX}/memberships`,
+  COMPLEX_MEMBERSHIPS_ADD: `${R.COMPLEX}/memberships/add`,
+  COMPLEX_MEMBERSHIP_EDIT: (seq: number) => `${R.COMPLEX}/memberships/${seq}/edit`,
   COMPLEX_TIMESLOTS: `${R.COMPLEX}/timeslots`,
   COMPLEX_POSTPONEMENTS: `${R.COMPLEX}/postponements`,
   COMPLEX_REFUNDS: `${R.COMPLEX}/refunds`,
@@ -120,6 +122,10 @@ export const API = {
   COMPLEX_MEMBER: (seq: number) => `${A.COMPLEX_MEMBERS}/${seq}`,
   COMPLEX_STAFFS: A.COMPLEX_STAFFS,
   COMPLEX_STAFF: (seq: number) => `${A.COMPLEX_STAFFS}/${seq}`,
+
+  // 멤버십
+  MEMBERSHIPS: '/memberships',
+  MEMBERSHIP: (seq: number) => `/memberships/${seq}`,
 
   // 사용자
   USERS: A.USERS,
