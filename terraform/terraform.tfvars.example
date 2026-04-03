@@ -1,0 +1,15 @@
+# ─── 필수 변수 ───
+db_password    = "CHANGE_ME_strong_password_here"
+backend_image  = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/culcom-backend:latest"
+frontend_image = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/culcom-frontend:latest"
+lambda_s3_bucket = "culcom-deploy-bucket"
+
+# ─── 선택 변수 (기본값 존재) ───
+# aws_region          = "ap-northeast-2"
+# environment         = "stg"
+# db_instance_class   = "db.t3.medium"
+# backend_cpu         = 512
+# backend_memory      = 1024
+# frontend_cpu        = 256
+# frontend_memory     = 512
+# domain_name         = "culcom.example.com"
