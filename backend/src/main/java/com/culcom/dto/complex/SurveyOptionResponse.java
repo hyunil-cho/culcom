@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 public class SurveyOptionResponse {
     private Long seq;
     private Long templateSeq;
-    private String questionKey;
+    private Long questionSeq;
     private String groupName;
     private String label;
     private Integer sortOrder;
@@ -21,7 +21,7 @@ public class SurveyOptionResponse {
         return SurveyOptionResponse.builder()
                 .seq(entity.getSeq())
                 .templateSeq(entity.getTemplate().getSeq())
-                .questionKey(entity.getQuestionKey())
+                .questionSeq(entity.getQuestion().getSeq())
                 .groupName(entity.getGroupName())
                 .label(entity.getLabel())
                 .sortOrder(entity.getSortOrder())

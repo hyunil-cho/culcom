@@ -19,6 +19,10 @@ public class SurveyTemplateQuestion {
     @JoinColumn(name = "template_seq", nullable = false)
     private SurveyTemplate template;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "section_seq")
+    private SurveyTemplateSection section;
+
     @Column(name = "question_key", nullable = false, length = 50)
     private String questionKey;
 
@@ -27,17 +31,6 @@ public class SurveyTemplateQuestion {
 
     @Column(length = 500)
     private String description;
-
-    @Column(nullable = false)
-    @Builder.Default
-    private Integer section = 1;
-
-    @Column(name = "section_title", length = 100)
-    private String sectionTitle;
-
-    @Column(name = "show_divider", nullable = false)
-    @Builder.Default
-    private Boolean showDivider = false;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "input_type", nullable = false)
@@ -54,4 +47,8 @@ public class SurveyTemplateQuestion {
     @Column(name = "sort_order", nullable = false)
     @Builder.Default
     private Integer sortOrder = 0;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean required = false;
 }

@@ -6,8 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class SurveyOptionRequest {
-    private String questionKey;
+    private Long questionSeq;
     private String groupName;
     private String label;
-    private Integer sortOrder;
 }

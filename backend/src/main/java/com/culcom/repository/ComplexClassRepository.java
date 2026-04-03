@@ -15,4 +15,19 @@ public interface ComplexClassRepository extends JpaRepository<ComplexClass, Long
 
     @Query("SELECT c FROM ComplexClass c LEFT JOIN c.staff s LEFT JOIN c.timeSlot t WHERE c.branch.seq = :branchSeq AND (c.name LIKE %:keyword% OR s.name LIKE %:keyword% OR t.name LIKE %:keyword%) ORDER BY c.sortOrder")
     Page<ComplexClass> searchByBranchSeq(@Param("branchSeq") Long branchSeq, @Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT c FROM ComplexClass c " +
+           "JOIN FETCH c.timeSlot t " +
+           "LEFT JOIN FETCH c.staff " +
+           "WHERE c.branch.seq = :branchSeq " +
+           "ORDER BY t.seq, c.sortOrder")
+    List<ComplexClass> findAllWithTimeSlotByBranch(@Param("branchSeq") Long branchSeq);
+
+    @Query("SELECT c FROM ComplexClass c " +
+           "JOIN FETCH c.timeSlot t " +
+           "LEFT JOIN FETCH c.staff " +
+           "WHERE t.seq = :timeSlotSeq AND c.branch.seq = :branchSeq " +
+           "ORDER BY c.sortOrder")
+    List<ComplexClass> findByTimeSlotAndBranch(
+            @Param("branchSeq") Long branchSeq, @Param("timeSlotSeq") Long timeSlotSeq);
 }

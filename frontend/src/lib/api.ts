@@ -751,3 +751,158 @@ export const externalApi = {
   sendSms: (data: SmsSendRequest) => api.post<SmsSendResponse>(API.EXTERNAL_SMS_SEND, data),
   createCalendarEvent: (data: CalendarEventRequest) => api.post<CalendarEventResponse>(API.EXTERNAL_CALENDAR_CREATE, data),
 };
+
+// ── Survey ──
+
+export interface SurveyTemplate {
+  seq: number;
+  name: string;
+  description: string | null;
+  status: '작성중' | '활성' | '비활성';
+  createdDate: string;
+  lastUpdateDate: string | null;
+  optionCount: number;
+}
+
+export interface SurveySection {
+  seq: number;
+  templateSeq: number;
+  title: string;
+  sortOrder: number;
+}
+
+export interface SurveyQuestion {
+  seq: number;
+  templateSeq: number;
+  sectionSeq: number | null;
+  questionKey: string;
+  title: string;
+  description: string | null;
+  inputType: 'radio' | 'checkbox' | 'text';
+  isGrouped: boolean;
+  groups: string | null;
+  sortOrder: number;
+  required: boolean;
+}
+
+export interface SurveyOption {
+  seq: number;
+  templateSeq: number;
+  questionSeq: number;
+  groupName: string;
+  label: string;
+  sortOrder: number;
+  createdDate: string;
+}
+
+export const surveyApi = {
+  // 템플릿
+  listTemplates: () => api.get<SurveyTemplate[]>(API.SURVEY_TEMPLATES),
+  getTemplate: (seq: number) => api.get<SurveyTemplate>(API.SURVEY_TEMPLATE(seq)),
+  createTemplate: (data: { name: string; description?: string }) =>
+    api.post<SurveyTemplate>(API.SURVEY_TEMPLATES, data),
+  updateTemplate: (seq: number, data: { name?: string; description?: string }) =>
+    api.put<SurveyTemplate>(API.SURVEY_TEMPLATE(seq), data),
+  updateStatus: (seq: number, status: string) =>
+    api.put<SurveyTemplate>(API.SURVEY_TEMPLATE_STATUS(seq), { status }),
+  copyTemplate: (seq: number) => api.post<SurveyTemplate>(API.SURVEY_TEMPLATE_COPY(seq)),
+  deleteTemplate: (seq: number) => api.delete<void>(API.SURVEY_TEMPLATE(seq)),
+
+  // 섹션
+  listSections: (templateSeq: number) =>
+    api.get<SurveySection[]>(API.SURVEY_SECTIONS(templateSeq)),
+  createSection: (templateSeq: number, data: { title: string }) =>
+    api.post<SurveySection>(API.SURVEY_SECTIONS(templateSeq), data),
+  updateSection: (templateSeq: number, sectionSeq: number, data: { title: string }) =>
+    api.put<SurveySection>(API.SURVEY_SECTION(templateSeq, sectionSeq), data),
+  deleteSection: (templateSeq: number, sectionSeq: number) =>
+    api.delete<void>(API.SURVEY_SECTION(templateSeq, sectionSeq)),
+
+  // 질문
+  listQuestions: (templateSeq: number) =>
+    api.get<SurveyQuestion[]>(API.SURVEY_QUESTIONS(templateSeq)),
+  createQuestion: (templateSeq: number, data: Partial<SurveyQuestion> & { sectionSeq?: number }) =>
+    api.post<SurveyQuestion>(API.SURVEY_QUESTIONS(templateSeq), data),
+  updateQuestion: (templateSeq: number, questionSeq: number, data: Partial<SurveyQuestion>) =>
+    api.put<SurveyQuestion>(API.SURVEY_QUESTION(templateSeq, questionSeq), data),
+  deleteQuestion: (templateSeq: number, questionSeq: number) =>
+    api.delete<void>(API.SURVEY_QUESTION(templateSeq, questionSeq)),
+  reorderQuestions: (templateSeq: number, items: { seq: number; sortOrder: number; newQuestionKey: string }[]) =>
+    api.put<SurveyQuestion[]>(`${API.SURVEY_QUESTIONS(templateSeq)}/reorder`, { items }),
+
+  // 선택지
+  listOptions: (templateSeq: number, questionSeq?: number) =>
+    api.get<SurveyOption[]>(`${API.SURVEY_OPTIONS(templateSeq)}${questionSeq ? `?questionSeq=${questionSeq}` : ''}`),
+  createOption: (templateSeq: number, data: { questionSeq: number; groupName?: string; label: string }) =>
+    api.post<SurveyOption>(API.SURVEY_OPTIONS(templateSeq), data),
+  deleteOption: (templateSeq: number, optionSeq: number) =>
+    api.delete<void>(API.SURVEY_OPTION(templateSeq, optionSeq)),
+};
+
+// ── Calendar ──
+
+export interface CalendarReservation {
+  seq: number;
+  customerSeq: number | null;
+  interviewDate: string;
+  customerName: string;
+  customerPhone: string;
+  caller: string;
+  status: string;
+  memo?: string;
+}
+
+export const calendarApi = {
+  getReservations: (startDate: string, endDate: string) =>
+    api.get<CalendarReservation[]>(`${API.CALENDAR_RESERVATIONS}?startDate=${startDate}&endDate=${endDate}`),
+  updateReservationStatus: (seq: number, status: string) =>
+    api.put<CalendarReservation>(API.CALENDAR_RESERVATION_STATUS(seq), { status }),
+};
+
+// ── Attendance View (등록현황) ──
+
+export interface AttendanceViewMember {
+  memberSeq: number;
+  name: string;
+  phoneNumber: string;
+  level?: string;
+  info?: string;
+  joinDate?: string;
+  expiryDate?: string;
+  totalCount?: number;
+  usedCount?: number;
+  grade?: string;
+  staff: boolean;
+  postponed: boolean;
+  status: string;
+  attendanceHistory?: string[];
+}
+
+export interface AttendanceViewClass {
+  classSeq: number;
+  name: string;
+  capacity: number;
+  members: AttendanceViewMember[];
+}
+
+export interface AttendanceViewSlot {
+  timeSlotSeq: number;
+  slotName: string;
+  classes: AttendanceViewClass[];
+}
+
+export interface BulkAttendanceResult {
+  memberSeq: number;
+  name: string;
+  status: string;
+}
+
+export const attendanceViewApi = {
+  getView: () => api.get<AttendanceViewSlot[]>(API.COMPLEX_ATTENDANCE_VIEW),
+  getDetail: (slotSeq: number) =>
+    api.get<AttendanceViewClass[]>(`${API.COMPLEX_ATTENDANCE_VIEW_DETAIL}?slotSeq=${slotSeq}`),
+  bulkAttendance: (classSeq: number, members: { memberSeq: number; staff: boolean; attended: boolean }[]) =>
+    api.post<BulkAttendanceResult[]>(API.COMPLEX_ATTENDANCE_BULK, { classSeq, members }),
+  reorderClasses: (classOrders: { id: number; sortOrder: number }[]) =>
+    api.post<void>(API.COMPLEX_ATTENDANCE_REORDER, { classOrders }),
+};

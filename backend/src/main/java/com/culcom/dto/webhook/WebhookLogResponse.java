@@ -17,6 +17,7 @@ public class WebhookLogResponse {
     private String rawRequest;
     private String parsedParams;
     private String mappedData;
+    private Integer httpStatusCode;
     private String status;
     private String errorMessage;
     private String remoteIp;
@@ -32,6 +33,7 @@ public class WebhookLogResponse {
                 .rawRequest(entity.getRawRequest())
                 .parsedParams(entity.getParsedParams())
                 .mappedData(entity.getMappedData())
+                .httpStatusCode(entity.getHttpStatusCode())
                 .status(entity.getStatus())
                 .errorMessage(entity.getErrorMessage())
                 .remoteIp(entity.getRemoteIp())

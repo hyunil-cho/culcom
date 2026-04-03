@@ -16,7 +16,7 @@ public class WebhookLog {
     private Long seq;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "webhook_config_seq", nullable = false)
+    @JoinColumn(name = "webhook_config_seq")
     private WebhookConfig webhookConfig;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -24,11 +24,11 @@ public class WebhookLog {
     private Customer customer;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "branch_seq", nullable = false)
+    @JoinColumn(name = "branch_seq")
     private Branch branch;
 
     /** 웹훅 소스 이름 (WebhookConfig.sourceName 스냅샷) */
-    @Column(name = "source_name", nullable = false, length = 100)
+    @Column(name = "source_name", length = 100)
     private String sourceName;
 
     /** 수신된 원본 요청 Body */
@@ -43,7 +43,11 @@ public class WebhookLog {
     @Column(name = "mapped_data", columnDefinition = "text")
     private String mappedData;
 
-    /** 처리 결과 (SUCCESS, FAILED, DUPLICATE 등) */
+    /** 응답 HTTP 상태 코드 — 통계/집계용 */
+    @Column(name = "http_status_code")
+    private Integer httpStatusCode;
+
+    /** 처리 결과 (SUCCESS, FAILED 등) */
     @Column(nullable = false, length = 20)
     @Builder.Default
     private String status = "SUCCESS";

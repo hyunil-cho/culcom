@@ -66,14 +66,29 @@ def handler(event, context):
 
     webhook_id = (event.get("pathParameters") or {}).get("id")
     if not webhook_id:
+        _save_log(None, None, None, None, raw_body,
+                  None, None, 400, "FAILED", "webhook id 누락", remote_ip)
         return _error_response(400, "webhook id is required")
+
+    # config 조회 전 실패 시에도 로그를 남기기 위해 변수 초기화
+    config_seq = None
+    branch_seq = None
+    source_name = None
 
     try:
         config = _load_config(webhook_id)
         if config is None:
+            _save_log(None, None, None, None, raw_body,
+                      None, None, 404, "FAILED",
+                      f"webhook 미존재: id={webhook_id}", remote_ip)
             return _error_response(404, "webhook not found")
 
         if not config["is_active"]:
+            config_seq = config["seq"]
+            branch_seq = config["branch_seq"]
+            source_name = config["source_name"]
+            _save_log(config_seq, branch_seq, source_name, None, raw_body,
+                      None, None, 403, "FAILED", "webhook 비활성 상태", remote_ip)
             return _error_response(403, "webhook is disabled")
 
         config_seq = config["seq"]
@@ -96,7 +111,7 @@ def handler(event, context):
         auth_error = check_auth(event, raw_body, auth_type, auth_config)
         if auth_error:
             _save_log(config_seq, branch_seq, source_name, None, raw_body,
-                      None, None, "FAILED", auth_error, remote_ip)
+                      None, None, 401, "FAILED", auth_error, remote_ip)
             return _error_response(401, "Unauthorized")
 
         # 요청 파싱
@@ -112,7 +127,7 @@ def handler(event, context):
 
         if not customer_data.get("name"):
             _save_log(config_seq, branch_seq, source_name, None, raw_body,
-                      source_params, customer_data,
+                      source_params, customer_data, 400,
                       "FAILED", "필수 필드 누락: name", remote_ip)
             return _response(400, resp_content_type,
                              json.dumps({"error": "missing required field: name"}))
@@ -122,14 +137,14 @@ def handler(event, context):
         logger.info("Customer inserted: seq=%s", customer_seq)
 
         _save_log(config_seq, branch_seq, source_name, customer_seq, raw_body,
-                  source_params, customer_data, "SUCCESS", None, remote_ip)
+                  source_params, customer_data, resp_status, "SUCCESS", None, remote_ip)
 
         return _response(resp_status, resp_content_type, resp_body)
 
     except Exception as e:
         logger.exception("Webhook processing failed")
-        _save_log(None, None, "", None, raw_body,
-                  None, None, "FAILED", str(e)[:500], remote_ip)
+        _save_log(config_seq, branch_seq, source_name, None, raw_body,
+                  None, None, 500, "FAILED", str(e)[:500], remote_ip)
         return _error_response(500, "internal server error")
 
 
@@ -212,7 +227,7 @@ def _insert_customer(branch_seq, customer_data):
 
 def _save_log(config_seq, branch_seq, source_name, customer_seq,
               raw_request, parsed_params, mapped_data,
-              status, error_message, remote_ip):
+              http_status_code, status, error_message, remote_ip):
     """webhook_logs 테이블에 수신 이력 기록."""
     try:
         conn = get_connection()
@@ -220,8 +235,8 @@ def _save_log(config_seq, branch_seq, source_name, customer_seq,
             INSERT INTO webhook_logs
             (webhook_config_seq, branch_seq, source_name, customer_seq,
              raw_request, parsed_params, mapped_data,
-             status, error_message, remote_ip, createdDate)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+             http_status_code, status, error_message, remote_ip, createdDate)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         with conn.cursor() as cursor:
             cursor.execute(sql, (
@@ -229,6 +244,7 @@ def _save_log(config_seq, branch_seq, source_name, customer_seq,
                 (raw_request or "")[:5000],
                 json.dumps(parsed_params, ensure_ascii=False)[:5000] if parsed_params else None,
                 json.dumps(mapped_data, ensure_ascii=False)[:2000] if mapped_data else None,
+                http_status_code,
                 status,
                 (error_message or "")[:500] if error_message else None,
                 remote_ip,

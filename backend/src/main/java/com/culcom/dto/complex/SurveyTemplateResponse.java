@@ -15,14 +15,22 @@ public class SurveyTemplateResponse {
     private String description;
     private SurveyStatus status;
     private LocalDateTime createdDate;
+    private LocalDateTime lastUpdateDate;
+    private int optionCount;
 
     public static SurveyTemplateResponse from(SurveyTemplate entity) {
+        return from(entity, 0);
+    }
+
+    public static SurveyTemplateResponse from(SurveyTemplate entity, int optionCount) {
         return SurveyTemplateResponse.builder()
                 .seq(entity.getSeq())
                 .name(entity.getName())
                 .description(entity.getDescription())
                 .status(entity.getStatus())
                 .createdDate(entity.getCreatedDate())
+                .lastUpdateDate(entity.getLastUpdateDate())
+                .optionCount(optionCount)
                 .build();
     }
 }

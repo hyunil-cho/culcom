@@ -19,8 +19,9 @@ public class SurveyTemplateOption {
     @JoinColumn(name = "template_seq", nullable = false)
     private SurveyTemplate template;
 
-    @Column(name = "question_key", nullable = false, length = 50)
-    private String questionKey;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_seq", nullable = false)
+    private SurveyTemplateQuestion question;
 
     @Column(name = "group_name", length = 100, columnDefinition = "varchar(100) default ''")
     @Builder.Default

@@ -16,11 +16,15 @@ const R = {
   SETTINGS: '/settings',
   COMPLEX: '/complex',
   WEBHOOKS: '/webhooks',
+  CALENDAR: '/calendar',
 } as const;
 
 export const ROUTES = {
   LOGIN: '/login',
   DASHBOARD: '/dashboard',
+
+  // 상담 예약 캘린더
+  CALENDAR: R.CALENDAR,
 
   // 웹훅
   WEBHOOKS: R.WEBHOOKS,
@@ -83,6 +87,7 @@ export const ROUTES = {
   COMPLEX_STAFFS_ADD: `${R.COMPLEX}/staffs/add`,
   COMPLEX_STAFF_EDIT: (seq: number) => `${R.COMPLEX}/staffs/${seq}/edit`,
   COMPLEX_ATTENDANCE: `${R.COMPLEX}/attendance`,
+  COMPLEX_ATTENDANCE_DETAIL: (slotSeq: number) => `${R.COMPLEX}/attendance/${slotSeq}`,
   COMPLEX_MEMBERSHIPS: `${R.COMPLEX}/memberships`,
   COMPLEX_MEMBERSHIPS_ADD: `${R.COMPLEX}/memberships/add`,
   COMPLEX_MEMBERSHIP_EDIT: (seq: number) => `${R.COMPLEX}/memberships/${seq}/edit`,
@@ -93,6 +98,9 @@ export const ROUTES = {
   COMPLEX_POSTPONEMENT_REASONS: `${R.COMPLEX}/postponements/reasons`,
   COMPLEX_REFUNDS: `${R.COMPLEX}/refunds`,
   COMPLEX_SURVEY: `${R.COMPLEX}/survey`,
+  COMPLEX_SURVEY_OPTIONS: (seq: number) => `${R.COMPLEX}/survey/${seq}/options`,
+  COMPLEX_SURVEY_PREVIEW: (seq: number) => `${R.COMPLEX}/survey/${seq}/preview`,
+  COMPLEX_SURVEY_FILL: (seq: number) => `${R.COMPLEX}/survey/${seq}/fill`,
 } as const;
 
 /**
@@ -117,6 +125,7 @@ const A = {
   DASHBOARD: '/dashboard',
   MESSAGE_TEMPLATES: '/message-templates',
   EXTERNAL: '/external',
+  CALENDAR: '/calendar',
 } as const;
 
 export const API = {
@@ -146,6 +155,12 @@ export const API = {
   COMPLEX_MEMBER: (seq: number) => `${A.COMPLEX_MEMBERS}/${seq}`,
   COMPLEX_STAFFS: A.COMPLEX_STAFFS,
   COMPLEX_STAFF: (seq: number) => `${A.COMPLEX_STAFFS}/${seq}`,
+
+  // 출석 등록현황
+  COMPLEX_ATTENDANCE_VIEW: '/complex/attendance/view',
+  COMPLEX_ATTENDANCE_VIEW_DETAIL: '/complex/attendance/view/detail',
+  COMPLEX_ATTENDANCE_BULK: '/complex/attendance/bulk',
+  COMPLEX_ATTENDANCE_REORDER: '/complex/attendance/reorder',
 
   // 멤버십
   MEMBERSHIPS: '/memberships',
@@ -204,6 +219,22 @@ export const API = {
   WEBHOOKS: '/webhooks',
   WEBHOOK: (seq: number) => `/webhooks/${seq}`,
   WEBHOOK_LOGS: '/webhooks/logs',
+
+  // 설문
+  SURVEY_TEMPLATES: '/complex/survey/templates',
+  SURVEY_TEMPLATE: (seq: number) => `/complex/survey/templates/${seq}`,
+  SURVEY_TEMPLATE_STATUS: (seq: number) => `/complex/survey/templates/${seq}/status`,
+  SURVEY_TEMPLATE_COPY: (seq: number) => `/complex/survey/templates/${seq}/copy`,
+  SURVEY_SECTIONS: (templateSeq: number) => `/complex/survey/templates/${templateSeq}/sections`,
+  SURVEY_SECTION: (templateSeq: number, sectionSeq: number) => `/complex/survey/templates/${templateSeq}/sections/${sectionSeq}`,
+  SURVEY_QUESTIONS: (templateSeq: number) => `/complex/survey/templates/${templateSeq}/questions`,
+  SURVEY_QUESTION: (templateSeq: number, questionSeq: number) => `/complex/survey/templates/${templateSeq}/questions/${questionSeq}`,
+  SURVEY_OPTIONS: (templateSeq: number) => `/complex/survey/templates/${templateSeq}/options`,
+  SURVEY_OPTION: (templateSeq: number, optionSeq: number) => `/complex/survey/templates/${templateSeq}/options/${optionSeq}`,
+
+  // 캘린더
+  CALENDAR_RESERVATIONS: `${A.CALENDAR}/reservations`,
+  CALENDAR_RESERVATION_STATUS: (seq: number) => `${A.CALENDAR}/reservations/${seq}/status`,
 
   // 외부 서비스
   EXTERNAL_SMS_SEND: `${A.EXTERNAL}/sms/send`,

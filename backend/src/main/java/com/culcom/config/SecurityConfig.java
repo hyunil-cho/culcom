@@ -28,6 +28,8 @@ public class SecurityConfig {
             .securityContext(sc -> sc.securityContextRepository(securityContextRepository()))
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .formLogin(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/auth/login",
