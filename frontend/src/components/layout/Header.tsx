@@ -18,7 +18,7 @@ const pageTitles: Record<string, string> = {
   [ROUTES.COMPLEX_TIMESLOTS]: '시간대 설정',
   [ROUTES.COMPLEX_POSTPONEMENTS]: '연기 요청',
   [ROUTES.COMPLEX_REFUNDS]: '환불 요청',
-  [ROUTES.COMPLEX_SURVEY]: '설문 관리',
+  [ROUTES.SURVEY]: '설문 관리',
   [ROUTES.USERS]: '사용자 관리',
   [ROUTES.WEBHOOKS]: '웹훅 관리',
 };

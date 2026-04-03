@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { attendanceViewApi, AttendanceViewClass, AttendanceViewMember } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import { useHighlightSearch, rateBadgeClass } from '@/lib/useHighlightSearch';
+import HighlightSearchBar from '@/components/ui/HighlightSearchBar';
 
 export default function AttendanceDetailPage() {
   const params = useParams();
@@ -16,8 +18,13 @@ export default function AttendanceDetailPage() {
   const today = new Date().toISOString().split('T')[0];
 
   // 검색
-  const [matchedRows, setMatchedRows] = useState<HTMLElement[]>([]);
-  const [currentMatchIndex, setCurrentMatchIndex] = useState(-1);
+  const { matchedItems, currentMatchIndex, performSearch, navigateMatch } = useHighlightSearch({
+    rowSelector: '.staff-table tbody tr',
+    nameSelector: '.col-name',
+    phoneSelector: '.col-phone',
+    highlightClass: 'row-highlight',
+    activeHighlightClass: 'row-active-highlight',
+  });
 
   const fetchData = useCallback(async () => {
     const res = await attendanceViewApi.getDetail(slotSeq);
@@ -26,51 +33,6 @@ export default function AttendanceDetailPage() {
   }, [slotSeq]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-
-  // 검색 실행
-  const performSearch = (type: 'name' | 'phone') => {
-    document.querySelectorAll('.row-highlight, .row-active-highlight').forEach(el => {
-      el.classList.remove('row-highlight', 'row-active-highlight');
-    });
-
-    const input = type === 'name'
-      ? (document.getElementById('nameSearchInput') as HTMLInputElement)
-      : (document.getElementById('phoneSearchInput') as HTMLInputElement);
-    const keyword = input?.value.trim();
-    if (!keyword) return;
-
-    const selector = type === 'name' ? '.col-name' : '.col-phone';
-    const allRows = Array.from(document.querySelectorAll('.staff-table tbody tr')) as HTMLElement[];
-    const matched: HTMLElement[] = [];
-
-    allRows.forEach(row => {
-      const target = row.querySelector(selector);
-      if (target && target.textContent?.includes(keyword)) {
-        row.classList.add('row-highlight');
-        matched.push(row);
-      }
-    });
-
-    if (matched.length > 0) {
-      setMatchedRows(matched);
-      setCurrentMatchIndex(0);
-      matched[0].classList.add('row-active-highlight');
-      matched[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    } else {
-      setMatchedRows([]);
-      setCurrentMatchIndex(-1);
-      alert('검색 결과가 없습니다.');
-    }
-  };
-
-  const navigateMatch = (dir: number) => {
-    if (matchedRows.length === 0) return;
-    matchedRows.forEach(el => el.classList.remove('row-active-highlight'));
-    const next = (currentMatchIndex + dir + matchedRows.length) % matchedRows.length;
-    setCurrentMatchIndex(next);
-    matchedRows[next].classList.add('row-active-highlight');
-    matchedRows[next].scrollIntoView({ behavior: 'smooth', block: 'center' });
-  };
 
   // 클래스별 출석률 계산
   const calcClassRate = (members: AttendanceViewMember[]) => {
@@ -85,12 +47,6 @@ export default function AttendanceDetailPage() {
     return { text: `최근 ${presentCells}/${totalCells}회 · ${pct}%`, pct };
   };
 
-  const rateBadgeClass = (pct: number) => {
-    if (pct >= 80) return 'rate-high';
-    if (pct >= 60) return 'rate-mid';
-    return 'rate-low';
-  };
-
   if (loading) return <div style={{ padding: 20 }}>로딩 중...</div>;
 
   return (
@@ -99,10 +55,6 @@ export default function AttendanceDetailPage() {
         .staff-view-container { padding: 20px; background: #f4f7f6; min-height: 100vh; font-family: 'Malgun Gothic', sans-serif; }
         .staff-header { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .staff-title { color: #2c3e50; font-size: 1.5rem; font-weight: bold; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .search-bar-group { display: flex; gap: 10px; flex-wrap: wrap; background: #f8f9fa; padding: 15px; border-radius: 6px; }
-        .search-item { display: flex; align-items: center; gap: 5px; }
-        .search-input { padding: 6px 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.9rem; }
-        .btn-search { padding: 6px 12px; background: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
         .staff-table-wrapper { background: #fff; border-radius: 8px; overflow-x: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .staff-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 1200px; }
         .staff-table th { background: #f8f9fa; color: #495057; font-weight: 600; padding: 12px 8px; border-bottom: 2px solid #dee2e6; text-align: center; white-space: nowrap; }
@@ -110,9 +62,6 @@ export default function AttendanceDetailPage() {
         .staff-table tr:hover { background-color: #f1f8ff; }
         .row-highlight { background-color: #fff9c4 !important; transition: background-color 0.3s ease; }
         .row-active-highlight { background-color: #ffd600 !important; outline: 2px solid #fbc02d; transition: all 0.2s ease; }
-        .search-result-info { display: flex; align-items: center; gap: 10px; background: #e3f2fd; padding: 5px 15px; border-radius: 20px; font-size: 0.85rem; color: #1976d2; font-weight: 600; margin-left: auto; }
-        .btn-nav { background: #fff; border: 1px solid #bbdefb; border-radius: 4px; padding: 2px 8px; cursor: pointer; color: #1976d2; font-size: 0.75rem; }
-        .btn-nav:hover { background: #1976d2; color: #fff; }
         .col-index { width: 40px; color: #adb5bd; }
         .col-name { font-weight: bold; color: #4a90e2; min-width: 80px; }
         .col-phone { font-family: monospace; min-width: 110px; }
@@ -147,28 +96,12 @@ export default function AttendanceDetailPage() {
             <span style={{ fontSize: '0.9rem', color: '#888', fontWeight: 'normal' }}>오늘 날짜: {today}</span>
           </div>
 
-          <div className="search-bar-group">
-            <div className="search-item">
-              이름 검색 <input type="text" id="nameSearchInput" className="search-input" placeholder="이름 입력"
-                onKeyDown={e => e.key === 'Enter' && performSearch('name')} />
-              <button className="btn-search" onClick={() => performSearch('name')}>회원 이름 검색</button>
-            </div>
-            <div className="search-item">
-              전화번호 4자리 <input type="text" id="phoneSearchInput" className="search-input" placeholder="번호 4자리"
-                onKeyDown={e => e.key === 'Enter' && performSearch('phone')} />
-              <button className="btn-search" onClick={() => performSearch('phone')}>검색</button>
-            </div>
-
-            {matchedRows.length > 0 && (
-              <div className="search-result-info">
-                <span>{currentMatchIndex + 1} / {matchedRows.length}</span>
-                <div style={{ display: 'flex', gap: 5 }}>
-                  <button className="btn-nav" onClick={() => navigateMatch(-1)}>◀ 이전</button>
-                  <button className="btn-nav" onClick={() => navigateMatch(1)}>다음 ▶</button>
-                </div>
-              </div>
-            )}
-          </div>
+          <HighlightSearchBar
+            onSearch={performSearch}
+            matchCount={matchedItems.length}
+            currentIndex={currentMatchIndex}
+            onNavigate={navigateMatch}
+          />
         </div>
 
         {classes.map(cls => {

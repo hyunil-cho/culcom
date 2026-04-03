@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react';
 import Link from 'next/link';
+import { Button, LinkButton } from './Button';
 
 interface FormLayoutProps {
   title: string;
@@ -31,8 +32,8 @@ export default function FormLayout({
         <Link href={backHref} className="btn-back">{backLabel}</Link>
         {isEdit && (
           <div className="action-group" style={{ display: 'flex', gap: 8 }}>
-            <button className="btn-primary" onClick={onSubmit}>{submitLabel}</button>
-            <Link href={backHref} className="btn-secondary">취소</Link>
+            <Button onClick={onSubmit}>{submitLabel}</Button>
+            <LinkButton href={backHref} variant="secondary">취소</LinkButton>
           </div>
         )}
       </div>
@@ -48,8 +49,8 @@ export default function FormLayout({
 
       {!isEdit && (
         <div className="form-actions">
-          <button className="btn-primary-large" onClick={onSubmit}>{submitLabel}</button>
-          <Link href={backHref} className="btn-secondary-large">취소</Link>
+          <Button size="lg" onClick={onSubmit}>{submitLabel}</Button>
+          <LinkButton href={backHref} variant="secondary" size="lg">취소</LinkButton>
         </div>
       )}
     </>

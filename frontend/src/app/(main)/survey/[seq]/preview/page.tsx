@@ -44,10 +44,23 @@ export default function SurveyPreviewPage() {
   const questionsForSection = (sectionSeq: number) =>
     questions.filter(q => q.sectionSeq === sectionSeq);
 
+  // 총 페이지 = 1(고객 기본 정보) + sections.length
+  const totalPages = sections.length + 1;
+
   const goToPage = (idx: number) => {
     setCurrentPage(idx);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const BASIC_INFO_FIELDS = [
+    { key: 'name', title: '성함', type: 'text', placeholder: '홍길동' },
+    { key: 'phone', title: '연락처', type: 'tel', placeholder: '010-0000-0000' },
+    { key: 'gender', title: '성별', type: 'radio', options: ['남성', '여성'] },
+    { key: 'location', title: '사는 곳', type: 'text', placeholder: '예) 서울 강남구 역삼동', hint: '동까지만 입력' },
+    { key: 'age_group', title: '연령대', type: 'radio', options: ['10대', '20대', '30대', '40대', '50대 이상'] },
+    { key: 'occupation', title: '현재 직군', type: 'radio', options: ['학생', '직장인', '자영업', '프리랜서', '주부', '기타'] },
+    { key: 'ad_source', title: 'E-UT를 어떻게 알고 오셨나요?', type: 'radio', options: ['인스타그램', '블로그', '유튜브', '지인 추천', '기타'] },
+  ] as const;
 
   const renderInput = (q: SurveyQuestion) => {
     const opts = optionsByQ[q.seq] || [];
@@ -121,21 +134,34 @@ export default function SurveyPreviewPage() {
         </div>
 
         {/* 프로그레스 바 */}
-        {sections.length > 1 && (
+        {totalPages > 1 && (
           <div style={styles.progressBar}>
+            {/* 고객 기본 정보 스텝 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
+              <div style={{
+                ...styles.stepDot,
+                ...(currentPage === 0 ? styles.stepDotActive : styles.stepDotDone),
+              }}>
+                {currentPage > 0 ? '\u2713' : 1}
+              </div>
+              <span style={{
+                fontSize: '0.85rem', fontWeight: currentPage === 0 ? 700 : 500,
+                color: currentPage === 0 ? '#2d7a4f' : '#666',
+              }}>고객 기본 정보</span>
+            </div>
             {sections.map((sec, i) => (
               <div key={sec.seq} style={{ display: 'contents' }}>
-                {i > 0 && <div style={styles.stepLine} />}
+                <div style={styles.stepLine} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
                   <div style={{
                     ...styles.stepDot,
-                    ...(i === currentPage ? styles.stepDotActive : i < currentPage ? styles.stepDotDone : {}),
+                    ...(i + 1 === currentPage ? styles.stepDotActive : i + 1 < currentPage ? styles.stepDotDone : {}),
                   }}>
-                    {i < currentPage ? '\u2713' : i + 1}
+                    {i + 1 < currentPage ? '\u2713' : i + 2}
                   </div>
                   <span style={{
-                    fontSize: '0.85rem', fontWeight: i === currentPage ? 700 : 500,
-                    color: i === currentPage ? '#2d7a4f' : '#666',
+                    fontSize: '0.85rem', fontWeight: i + 1 === currentPage ? 700 : 500,
+                    color: i + 1 === currentPage ? '#2d7a4f' : '#666',
                   }}>{sec.title}</span>
                 </div>
               </div>
@@ -143,8 +169,52 @@ export default function SurveyPreviewPage() {
           </div>
         )}
 
+        {/* 고객 기본 정보 페이지 (항상 첫 페이지) */}
+        {currentPage === 0 && (
+          <div>
+            <div style={styles.card}>
+              <div style={styles.sectionHeader}>
+                <span style={styles.sectionBadge}>Section 1</span>
+                <span style={styles.sectionTitle}>고객 기본 정보</span>
+              </div>
+
+              {BASIC_INFO_FIELDS.map(field => (
+                <div key={field.key} style={styles.fieldGroup}>
+                  <label style={styles.fieldLabel}>
+                    {field.title}
+                    <span style={{ color: '#e53e3e', marginLeft: 3 }}>*</span>
+                    {'hint' in field && field.hint && <span style={styles.hint}>{field.hint}</span>}
+                  </label>
+                  {field.type === 'radio' && 'options' in field ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      {field.options.map(opt => (
+                        <label key={opt} style={styles.chip}>
+                          <input type="radio" name={field.key} value={opt} disabled style={{ display: 'none' }} />
+                          {opt}
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <input type={field.type === 'tel' ? 'tel' : 'text'} placeholder={'placeholder' in field ? field.placeholder : ''} disabled
+                      style={{ ...styles.textInput, minHeight: 'auto', resize: 'none', padding: '0.75rem 1rem' } as React.CSSProperties} />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div style={styles.formNav}>
+              {totalPages > 1 && (
+                <button type="button" style={styles.btnNext} onClick={() => goToPage(1)}>
+                  다음 단계 &rarr;
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* 섹션 페이지들 */}
-        {sections.map((sec, pageIdx) => {
+        {sections.map((sec, i) => {
+          const pageIdx = i + 1;
           if (pageIdx !== currentPage) return null;
           const secQuestions = questionsForSection(sec.seq);
 
@@ -174,12 +244,10 @@ export default function SurveyPreviewPage() {
 
               {/* 네비게이션 버튼 */}
               <div style={styles.formNav}>
-                {pageIdx > 0 && (
-                  <button type="button" style={styles.btnPrev} onClick={() => goToPage(pageIdx - 1)}>
-                    &larr; 이전
-                  </button>
-                )}
-                {pageIdx < sections.length - 1 ? (
+                <button type="button" style={styles.btnPrev} onClick={() => goToPage(pageIdx - 1)}>
+                  &larr; 이전
+                </button>
+                {pageIdx < totalPages - 1 ? (
                   <button type="button" style={styles.btnNext} onClick={() => goToPage(pageIdx + 1)}>
                     다음 단계 &rarr;
                   </button>
@@ -193,7 +261,7 @@ export default function SurveyPreviewPage() {
           );
         })}
 
-        {sections.length === 0 && (
+        {sections.length === 0 && currentPage !== 0 && (
           <div style={styles.card}>
             <p style={{ color: '#aaa', textAlign: 'center', padding: '2rem 0' }}>섹션이 없습니다. 편집 페이지에서 섹션과 질문을 추가하세요.</p>
           </div>

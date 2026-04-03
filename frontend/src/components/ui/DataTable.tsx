@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { Button } from './Button';
 
 export interface Column<T> {
   header: string;
@@ -84,9 +85,9 @@ export default function DataTable<T>({
 
       {showPagination && (
         <div className="pagination">
-          <button className="btn-secondary" disabled={page === 0} onClick={() => onPageChange(page - 1)}>이전</button>
+          <Button variant="secondary" disabled={page === 0} onClick={() => onPageChange(page - 1)}>이전</Button>
           <span className="pagination-info">{page + 1} / {totalPages}</span>
-          <button className="btn-secondary" disabled={page >= totalPages - 1} onClick={() => onPageChange(page + 1)}>다음</button>
+          <Button variant="secondary" disabled={page >= totalPages - 1} onClick={() => onPageChange(page + 1)}>다음</Button>
         </div>
       )}
     </>

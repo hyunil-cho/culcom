@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Button, LinkButton } from '@/components/ui/Button';
 import { customerApi, type Customer } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { formatDateTime } from '@/lib/dateUtils';
@@ -39,8 +40,8 @@ export default function CustomerDetailPage() {
       <div className="detail-actions">
         <Link href={ROUTES.CUSTOMERS} className="btn-back">← 목록으로</Link>
         <div className="action-group" style={{ display: 'flex', gap: 8 }}>
-          <Link href={ROUTES.CUSTOMER_EDIT(seq)} className="btn-primary btn-nav">수정</Link>
-          <button className="btn-secondary" style={{ color: 'var(--danger)' }} onClick={() => setDeleting(true)}>삭제</button>
+          <LinkButton href={ROUTES.CUSTOMER_EDIT(seq)}>수정</LinkButton>
+          <Button variant="danger" onClick={() => setDeleting(true)}>삭제</Button>
         </div>
       </div>
 

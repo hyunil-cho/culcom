@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { noticeApi, NoticeListItem } from '@/lib/api';
 import { useQueryParams } from '@/lib/useQueryParams';
@@ -10,6 +9,7 @@ import SearchBar from '@/components/ui/SearchBar';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { ROUTES } from '@/lib/routes';
 import ResultModal from '@/components/ui/ResultModal';
+import { Button, LinkButton } from '@/components/ui/Button';
 
 const CATEGORY_FILTERS = [
   { value: 'all', label: '전체' },
@@ -126,23 +126,23 @@ function NoticesContent() {
     <>
       <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>공지사항 · 이벤트 관리</h1>
-        <Link href={ROUTES.NOTICES_ADD} className="btn-primary" style={{ padding: '0.6rem 1.2rem', textDecoration: 'none' }}>
+        <LinkButton href={ROUTES.NOTICES_ADD} style={{ padding: '0.6rem 1.2rem' }}>
           새 글 작성
-        </Link>
+        </LinkButton>
       </div>
 
       {/* 카테고리 필터 */}
       <div className="content-card" style={{ marginBottom: '1rem', padding: '0.75rem 1rem' }}>
         <div style={{ display: 'flex', gap: 8 }}>
           {CATEGORY_FILTERS.map((f) => (
-            <button
+            <Button
               key={f.value}
-              className={filter === f.value ? 'btn-primary' : 'btn-secondary'}
+              variant={filter === f.value ? undefined : 'secondary'}
               style={{ padding: '6px 16px', fontSize: '0.85rem' }}
               onClick={() => handleFilterChange(f.value)}
             >
               {f.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>

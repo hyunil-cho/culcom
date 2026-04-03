@@ -7,6 +7,7 @@ import { noticeApi, NoticeDetail } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import ResultModal from '@/components/ui/ResultModal';
+import { Button, LinkButton } from '@/components/ui/Button';
 
 export default function NoticeDetailPage() {
   const params = useParams();
@@ -87,16 +88,16 @@ export default function NoticeDetailPage() {
         {/* 하단 액션 */}
         <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Link href={ROUTES.NOTICE_EDIT(seq)} className="btn-primary" style={{ padding: '0.6rem 1.2rem', textDecoration: 'none' }}>
+            <LinkButton href={ROUTES.NOTICE_EDIT(seq)} style={{ padding: '0.6rem 1.2rem' }}>
               수정
-            </Link>
-            <button
-              className="btn-secondary"
-              style={{ padding: '0.6rem 1.2rem', color: 'var(--danger)' }}
+            </LinkButton>
+            <Button
+              variant="danger"
+              style={{ padding: '0.6rem 1.2rem' }}
               onClick={() => setDeleting(true)}
             >
               삭제
-            </button>
+            </Button>
           </div>
           {notice.lastUpdateDate && (
             <span style={{ fontSize: '0.8rem', color: '#999' }}>최종 수정: {notice.lastUpdateDate}</span>

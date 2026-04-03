@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { staffApi, type ComplexStaff } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 
 export default function StaffsPage() {
@@ -33,7 +34,7 @@ export default function StaffsPage() {
     <>
       <div className="page-toolbar">
         <h2 className="page-title" style={{ marginBottom: 0 }}>스태프 관리</h2>
-        <button className="btn-primary" onClick={() => router.push(ROUTES.COMPLEX_STAFFS_ADD)}>+ 스태프 추가</button>
+        <Button onClick={() => router.push(ROUTES.COMPLEX_STAFFS_ADD)}>+ 스태프 추가</Button>
       </div>
 
       <DataTable

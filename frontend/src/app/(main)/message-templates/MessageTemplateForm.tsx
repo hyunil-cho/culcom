@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import Link from 'next/link';
 import { messageTemplateApi, PlaceholderItem } from '@/lib/api';
 import { Input, Textarea } from '@/components/ui/FormInput';
+import { Button, LinkButton } from '@/components/ui/Button';
 
 export interface MessageTemplateFormData {
   templateName: string;
@@ -182,12 +182,12 @@ export default function MessageTemplateForm({
           )}
 
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', borderTop: '1px solid #e0e0e0', paddingTop: 20 }}>
-            <Link href={cancelHref} className="btn-secondary" style={{ padding: '0.6rem 1.5rem', textDecoration: 'none' }}>
+            <LinkButton href={cancelHref} variant="secondary" style={{ padding: '0.6rem 1.5rem' }}>
               취소
-            </Link>
-            <button type="submit" className="btn-primary" style={{ padding: '0.6rem 1.5rem' }} disabled={submitting}>
+            </LinkButton>
+            <Button type="submit" style={{ padding: '0.6rem 1.5rem' }} disabled={submitting}>
               {submitting ? submittingLabel : submitLabel}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

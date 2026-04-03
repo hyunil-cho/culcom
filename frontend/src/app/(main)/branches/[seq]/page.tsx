@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Button, LinkButton } from '@/components/ui/Button';
 import { branchApi, SessionRole, type Branch } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
 import { ROUTES } from '@/lib/routes';
@@ -32,8 +33,8 @@ export default function BranchDetailPage() {
         <Link href={ROUTES.BRANCHES} className="btn-back">← 목록으로</Link>
         {SessionRole.isManager(session) && (
           <div className="action-group" style={{ display: 'flex', gap: 8 }}>
-            <Link href={ROUTES.BRANCH_EDIT(seq)} className="btn-primary btn-nav">수정</Link>
-            <button className="btn-secondary" style={{ color: 'var(--danger)' }} onClick={() => setDeleting(true)}>삭제</button>
+            <LinkButton href={ROUTES.BRANCH_EDIT(seq)}>수정</LinkButton>
+            <Button variant="danger" onClick={() => setDeleting(true)}>삭제</Button>
           </div>
         )}
       </div>

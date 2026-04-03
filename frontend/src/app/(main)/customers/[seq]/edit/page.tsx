@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Button, LinkButton } from '@/components/ui/Button';
 import { customerApi, type Customer } from '@/lib/api';
 import { cleanPhoneNumber, verifyPhoneNumber } from '@/lib/commonUtils';
 import { ROUTES } from '@/lib/routes';
@@ -53,8 +54,8 @@ export default function CustomerEditPage() {
       <div className="detail-actions">
         <Link href={ROUTES.CUSTOMER_DETAIL(seq)} className="btn-back">← 상세로</Link>
         <div className="action-group" style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-primary" onClick={handleSubmit}>수정</button>
-          <Link href={ROUTES.CUSTOMER_DETAIL(seq)} className="btn-secondary">취소</Link>
+          <Button onClick={handleSubmit}>수정</Button>
+          <LinkButton href={ROUTES.CUSTOMER_DETAIL(seq)} variant="secondary">취소</LinkButton>
         </div>
       </div>
 

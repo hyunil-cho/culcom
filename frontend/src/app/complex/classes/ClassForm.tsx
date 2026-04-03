@@ -83,10 +83,12 @@ export default function ClassForm({
           value={form.description} onChange={(e) => onChange({ ...form, description: e.target.value })} />
       </FormField>
 
-      <FormField label="정렬 순서">
-        <NumberInput value={form.sortOrder}
-          onChange={(e) => onChange({ ...form, sortOrder: Number(e.target.value) })} />
-      </FormField>
+      {isEdit && (
+        <FormField label="정렬 순서">
+          <NumberInput value={form.sortOrder}
+            onChange={(e) => onChange({ ...form, sortOrder: Number(e.target.value) })} />
+        </FormField>
+      )}
     </FormLayout>
   );
 }

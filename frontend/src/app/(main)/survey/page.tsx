@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { surveyApi, SurveyTemplate } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import { Button } from '@/components/ui/Button';
 
 export default function SurveyPage() {
   const router = useRouter();
@@ -67,7 +68,7 @@ export default function SurveyPage() {
     <>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
         <h2 className="page-title" style={{ margin: 0 }}>설문지 관리</h2>
-        <button className="btn-primary" onClick={() => setShowCreate(!showCreate)}>+ 새 설문지</button>
+        <Button onClick={() => setShowCreate(!showCreate)}>+ 새 설문지</Button>
       </div>
 
       {showCreate && (
@@ -95,8 +96,8 @@ export default function SurveyPage() {
             />
           </div>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-            <button className="btn-secondary" onClick={() => setShowCreate(false)}>취소</button>
-            <button className="btn-primary" onClick={handleCreate}>생성</button>
+            <Button variant="secondary" onClick={() => setShowCreate(false)}>취소</Button>
+            <Button onClick={handleCreate}>생성</Button>
           </div>
         </div>
       )}
@@ -116,7 +117,7 @@ export default function SurveyPage() {
             <div key={t.seq} className="card" style={{ padding: '20px 24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <a
-                  onClick={() => router.push(ROUTES.COMPLEX_SURVEY_OPTIONS(t.seq))}
+                  onClick={() => router.push(ROUTES.SURVEY_OPTIONS(t.seq))}
                   style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1a1a1a', cursor: 'pointer', textDecoration: 'none' }}
                 >
                   {t.name}
@@ -134,29 +135,29 @@ export default function SurveyPage() {
                 {t.lastUpdateDate && <span>수정일 {formatDate(t.lastUpdateDate)}</span>}
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <button className="btn-primary" style={{ fontSize: '0.8rem', padding: '5px 14px' }}
-                  onClick={() => router.push(ROUTES.COMPLEX_SURVEY_OPTIONS(t.seq))}>
+                <Button style={{ fontSize: '0.8rem', padding: '5px 14px' }}
+                  onClick={() => router.push(ROUTES.SURVEY_OPTIONS(t.seq))}>
                   선택지 편집
-                </button>
+                </Button>
                 {t.status === '작성중' || t.status === '비활성' ? (
-                  <button className="btn-secondary" style={{ fontSize: '0.8rem', padding: '5px 14px', background: '#2d7a4f', color: 'white', borderColor: '#2d7a4f' }}
+                  <Button variant="secondary" style={{ fontSize: '0.8rem', padding: '5px 14px', background: '#2d7a4f', color: 'white', borderColor: '#2d7a4f' }}
                     onClick={() => handleStatusChange(t.seq, '활성')}>
                     활성화
-                  </button>
+                  </Button>
                 ) : (
-                  <button className="btn-secondary" style={{ fontSize: '0.8rem', padding: '5px 14px' }}
+                  <Button variant="secondary" style={{ fontSize: '0.8rem', padding: '5px 14px' }}
                     onClick={() => handleStatusChange(t.seq, '비활성')}>
                     비활성화
-                  </button>
+                  </Button>
                 )}
-                <button className="btn-secondary" style={{ fontSize: '0.8rem', padding: '5px 14px' }}
+                <Button variant="secondary" style={{ fontSize: '0.8rem', padding: '5px 14px' }}
                   onClick={() => handleCopy(t.seq)}>
                   복제
-                </button>
-                <button className="btn-secondary" style={{ fontSize: '0.8rem', padding: '5px 14px', borderColor: '#ffa8a8', color: '#e03131' }}
+                </Button>
+                <Button variant="secondary" style={{ fontSize: '0.8rem', padding: '5px 14px', borderColor: '#ffa8a8', color: '#e03131' }}
                   onClick={() => handleDelete(t.seq, t.name)}>
                   삭제
-                </button>
+                </Button>
               </div>
             </div>
           ))}

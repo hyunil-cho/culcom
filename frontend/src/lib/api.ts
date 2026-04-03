@@ -219,11 +219,20 @@ export interface ComplexStaff {
   status: string;
 }
 
+export interface ComplexClassRequest {
+  name: string;
+  description?: string;
+  capacity?: number;
+  sortOrder?: number;
+  timeSlotSeq?: number;
+  staffSeq?: number;
+}
+
 export const classApi = {
   list: (params?: string) => api.get<PageResponse<ComplexClass>>(`${API.COMPLEX_CLASSES}${params ? `?${params}` : ''}`),
   get: (seq: number) => api.get<ComplexClass>(API.COMPLEX_CLASS(seq)),
-  create: (data: Partial<ComplexClass>) => api.post<ComplexClass>(API.COMPLEX_CLASSES, data),
-  update: (seq: number, data: Partial<ComplexClass>) => api.put<ComplexClass>(API.COMPLEX_CLASS(seq), data),
+  create: (data: ComplexClassRequest) => api.post<ComplexClass>(API.COMPLEX_CLASSES, data),
+  update: (seq: number, data: ComplexClassRequest) => api.put<ComplexClass>(API.COMPLEX_CLASS(seq), data),
   delete: (seq: number) => api.delete<void>(API.COMPLEX_CLASS(seq)),
 };
 

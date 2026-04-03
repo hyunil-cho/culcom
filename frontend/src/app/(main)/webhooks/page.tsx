@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { webhookApi, type WebhookConfig } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import ResultModal from '@/components/ui/ResultModal';
 
@@ -52,8 +53,8 @@ export default function WebhooksPage() {
       <div className="page-toolbar">
         <h2 className="page-title" style={{ marginBottom: 0 }}>웹훅 관리</h2>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-secondary" onClick={() => router.push(ROUTES.WEBHOOK_LOGS)}>수신 이력</button>
-          <button className="btn-primary" onClick={() => router.push(ROUTES.WEBHOOKS_ADD)}>+ 웹훅 추가</button>
+          <Button variant="secondary" onClick={() => router.push(ROUTES.WEBHOOK_LOGS)}>수신 이력</Button>
+          <Button onClick={() => router.push(ROUTES.WEBHOOKS_ADD)}>+ 웹훅 추가</Button>
         </div>
       </div>
 

@@ -14,8 +14,7 @@ const groups = [
       { href: ROUTES.COMPLEX_MEMBERSHIPS, label: '멤버십', icon: '🎫' },
       { href: ROUTES.COMPLEX_TIMESLOTS, label: '시간대 설정', icon: '⏰' },
       { href: ROUTES.COMPLEX_POSTPONEMENTS, label: '연기 요청', icon: '⏸️' },
-      { href: ROUTES.COMPLEX_REFUNDS, label: '환불 요청', icon: '💰' },
-      { href: ROUTES.COMPLEX_SURVEY, label: '설문 관리', icon: '📋' },
+      { href: ROUTES.COMPLEX_REFUNDS, label: '환불 요청', icon: '💰' }
     ],
   },
 ];

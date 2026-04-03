@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { timeslotApi, type ClassTimeSlot } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import ResultModal from '@/components/ui/ResultModal';
 
@@ -28,7 +29,7 @@ export default function TimeslotsPage() {
     <>
       <div className="page-toolbar">
         <h2 className="page-title" style={{ marginBottom: 0 }}>시간대 설정</h2>
-        <button className="btn-primary" onClick={() => router.push(ROUTES.COMPLEX_TIMESLOTS_ADD)}>+ 시간대 추가</button>
+        <Button onClick={() => router.push(ROUTES.COMPLEX_TIMESLOTS_ADD)}>+ 시간대 추가</Button>
       </div>
 
       <DataTable

@@ -127,19 +127,18 @@ function ReservationChip({ r, compact }: { r: Reservation; compact?: boolean }) 
     >
       <span style={{ fontWeight: 600, color: '#374151', minWidth: compact ? 30 : 36 }}>{r.time}</span>
       <span style={{ color: '#111827', fontWeight: 500 }}>{r.name}</span>
-      {!compact && (
-        <span style={{
-          marginLeft: 'auto',
-          padding: '1px 6px',
-          borderRadius: 10,
-          fontSize: 10,
-          fontWeight: 600,
-          backgroundColor: st.bg,
-          color: st.color,
-        }}>
-          {r.status}
-        </span>
-      )}
+      <span style={{
+        marginLeft: 'auto',
+        padding: '1px 6px',
+        borderRadius: 10,
+        fontSize: compact ? 9 : 10,
+        fontWeight: 600,
+        backgroundColor: st.bg,
+        color: st.color,
+        whiteSpace: 'nowrap',
+      }}>
+        {r.status}
+      </span>
     </div>
   );
 }
@@ -277,10 +276,12 @@ function ReservationStatusModal({ reservation, onClose, onStatusChanged }: {
   };
 
   const handleSurveySelect = (surveySeq: number) => {
-    const url = ROUTES.COMPLEX_SURVEY_FILL(surveySeq)
-      + `?name=${encodeURIComponent(reservation.name)}`
-      + `&phone=${encodeURIComponent(reservation.phone)}`
-      + `&reservationSeq=${reservation.seq}`;
+    const payload = btoa(encodeURIComponent(JSON.stringify({
+      name: reservation.name,
+      phone: reservation.phone,
+      reservationSeq: reservation.seq,
+    })));
+    const url = ROUTES.SURVEY_FILL(surveySeq) + `?d=${payload}`;
     window.open(url, '_blank');
     onClose();
   };

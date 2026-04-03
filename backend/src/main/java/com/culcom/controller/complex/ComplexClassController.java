@@ -52,16 +52,20 @@ public class ComplexClassController {
     public ResponseEntity<ApiResponse<ComplexClassResponse>> create(
             @RequestBody ComplexClassRequest req, @AuthenticationPrincipal CustomUserPrincipal principal) {
         Long branchSeq = principal.getSelectedBranchSeq();
+        if (req.getTimeSlotSeq() == null) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("시간대를 선택해주세요."));
+        }
         ComplexClass entity = ComplexClass.builder()
                 .name(req.getName())
                 .description(req.getDescription())
                 .capacity(req.getCapacity())
-                .sortOrder(req.getSortOrder())
+                .sortOrder(req.getSortOrder() != null ? req.getSortOrder() : classRepository.findMaxSortOrderByBranchSeq(branchSeq) + 1)
                 .branch(branchRepository.getReferenceById(branchSeq))
                 .timeSlot(timeSlotRepository.getReferenceById(req.getTimeSlotSeq()))
                 .staff(req.getStaffSeq() != null ? staffRepository.getReferenceById(req.getStaffSeq()) : null)
                 .build();
-        return ResponseEntity.ok(ApiResponse.ok("수업 추가 완료", ComplexClassResponse.from(classRepository.save(entity))));
+        ComplexClass result = classRepository.save(entity);
+        return ResponseEntity.ok(ApiResponse.ok("수업 추가 완료", ComplexClassResponse.from(result)));
     }
 
     @PutMapping("/{seq}")

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { surveyApi, SurveyTemplate, SurveySection, SurveyQuestion, SurveyOption } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import { Button } from '@/components/ui/Button';
 
 type InputType = 'radio' | 'checkbox' | 'text';
 
@@ -13,6 +14,16 @@ interface QuestionForm {
   inputType: InputType;
   required: boolean;
 }
+
+const DEFAULT_CUSTOMER_FIELDS = [
+  { title: '성함', type: '텍스트' },
+  { title: '연락처', type: '텍스트' },
+  { title: '성별', type: '단일선택' },
+  { title: '사는 곳 (주소)', type: '텍스트' },
+  { title: '연령대', type: '단일선택' },
+  { title: '현재 직군', type: '단일선택' },
+  { title: 'E-UT를 어떻게 알고 오셨나요?', type: '단일선택' },
+];
 
 export default function SurveyEditorPage() {
   const params = useParams();
@@ -411,10 +422,10 @@ export default function SurveyEditorPage() {
                   </label>
                 </div>
                 <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                  <button className="btn-secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.82rem' }}
-                    onClick={() => toggleEditQuestion(q)}>취소</button>
-                  <button className="btn-primary" style={{ padding: '0.35rem 0.8rem', fontSize: '0.82rem' }}
-                    onClick={() => handleUpdateQuestion(q)}>저장</button>
+                  <Button variant="secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.82rem' }}
+                    onClick={() => toggleEditQuestion(q)}>취소</Button>
+                  <Button style={{ padding: '0.35rem 0.8rem', fontSize: '0.82rem' }}
+                    onClick={() => handleUpdateQuestion(q)}>저장</Button>
                 </div>
               </div>
             ) : (
@@ -493,10 +504,10 @@ export default function SurveyEditorPage() {
           </label>
         </div>
         <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-          <button className="btn-secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.84rem' }}
-            onClick={() => toggleQuestionAddForm(sectionSeq)}>취소</button>
-          <button className="btn-primary" style={{ padding: '0.35rem 0.8rem', fontSize: '0.84rem' }}
-            onClick={() => handleAddQuestion(sectionSeq)}>추가</button>
+          <Button variant="secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.84rem' }}
+            onClick={() => toggleQuestionAddForm(sectionSeq)}>취소</Button>
+          <Button style={{ padding: '0.35rem 0.8rem', fontSize: '0.84rem' }}
+            onClick={() => handleAddQuestion(sectionSeq)}>추가</Button>
         </div>
       </div>
     );
@@ -505,7 +516,7 @@ export default function SurveyEditorPage() {
   return (
     <>
       <div style={{ marginBottom: '1rem' }}>
-        <a onClick={() => router.push(ROUTES.COMPLEX_SURVEY)}
+        <a onClick={() => router.push(ROUTES.SURVEY)}
           style={{ color: '#666', textDecoration: 'none', fontSize: '0.9rem', cursor: 'pointer' }}>
           &larr; 설문지 목록
         </a>
@@ -518,10 +529,10 @@ export default function SurveyEditorPage() {
               onChange={e => setEditTemplateName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleUpdateTemplateName(); if (e.key === 'Escape') setEditTemplateName(null); }}
               style={{ ...inp, fontSize: '1.1rem', fontWeight: 700, maxWidth: 350 }} />
-            <button className="btn-primary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.82rem' }}
-              onClick={handleUpdateTemplateName}>저장</button>
-            <button className="btn-secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.82rem' }}
-              onClick={() => setEditTemplateName(null)}>취소</button>
+            <Button style={{ padding: '0.35rem 0.7rem', fontSize: '0.82rem' }}
+              onClick={handleUpdateTemplateName}>저장</Button>
+            <Button variant="secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.82rem' }}
+              onClick={() => setEditTemplateName(null)}>취소</Button>
           </div>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -533,20 +544,47 @@ export default function SurveyEditorPage() {
           </div>
         )}
         <div style={{ display: 'flex', gap: 8 }}>
-          <a href={ROUTES.COMPLEX_SURVEY_PREVIEW(templateSeq)} target="_blank" rel="noopener noreferrer"
-            style={{
+          <a href={ROUTES.SURVEY_PREVIEW(templateSeq)} target="_blank" rel="noopener noreferrer"
+             style={{
               padding: '0.45rem 0.9rem', fontSize: '0.88rem', fontWeight: 600,
               color: 'var(--primary)', border: '1px solid var(--primary)',
               borderRadius: 6, textDecoration: 'none', cursor: 'pointer',
             }}>미리보기</a>
-          <button className="btn-primary" onClick={() => setAddSectionForm(addSectionForm ? null : { title: '' })}>
+          <Button onClick={() => setAddSectionForm(addSectionForm ? null : { title: '' })}>
             + 섹션 추가
-          </button>
+          </Button>
         </div>
       </div>
       <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '1.5rem' }}>
         섹션을 나누고, 각 섹션에 질문을 추가하세요. 같은 섹션 안에서 질문을 드래그하여 순서를 변경할 수 있습니다.
       </p>
+
+      {/* ── 고객 기본 정보 (고정 섹션) ── */}
+      <div style={{ marginBottom: '1.75rem' }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '0.6rem',
+          marginBottom: '0.6rem', paddingBottom: '0.5rem', borderBottom: '2px solid #2d7a4f',
+        }}>
+          <span style={{ background: '#2d7a4f', color: 'white', fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: 4 }}>고정</span>
+          <span style={{ fontSize: '1rem', fontWeight: 700, color: '#333' }}>고객 기본 정보</span>
+          <span style={{ fontSize: '0.78rem', color: '#2d7a4f', fontWeight: 600 }}>항상 첫 페이지에 표시됩니다</span>
+        </div>
+        {DEFAULT_CUSTOMER_FIELDS.map((field, i) => (
+          <div key={i} className="card" style={{ padding: 0, marginBottom: '0.6rem', overflow: 'hidden' }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '0.65rem 1rem', background: '#f6faf8',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: 0 }}>
+                <span style={{ color: '#2d7a4f', fontSize: '0.85rem', flexShrink: 0 }}>&#9679;</span>
+                <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>{field.title}</span>
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#e03131', background: '#fff0f0', border: '1px solid #ffc9c9', padding: '1px 5px', borderRadius: 3 }}>필수</span>
+              </div>
+              <span style={{ fontSize: '0.72rem', fontWeight: 600, padding: '2px 7px', borderRadius: 4, background: '#e8f5ee', color: '#2d7a4f' }}>{field.type}</span>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {addSectionForm && (
         <div className="card" style={{ borderColor: 'var(--primary)', background: '#f8fafe', marginBottom: '1.25rem', padding: '1rem 1.25rem' }}>
@@ -559,8 +597,8 @@ export default function SurveyEditorPage() {
               style={{ ...inp, maxWidth: 400 }} />
           </div>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-            <button className="btn-secondary" onClick={() => setAddSectionForm(null)}>취소</button>
-            <button className="btn-primary" onClick={handleAddSection}>추가</button>
+            <Button variant="secondary" onClick={() => setAddSectionForm(null)}>취소</Button>
+            <Button onClick={handleAddSection}>추가</Button>
           </div>
         </div>
       )}
@@ -587,8 +625,8 @@ export default function SurveyEditorPage() {
                       onChange={e => setEditSectionTitle(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') handleUpdateSection(); if (e.key === 'Escape') setEditSectionSeq(null); }}
                       style={{ ...inp, maxWidth: 250, fontSize: '0.95rem', fontWeight: 700 }} />
-                    <button className="btn-primary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }} onClick={handleUpdateSection}>저장</button>
-                    <button className="btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }} onClick={() => setEditSectionSeq(null)}>취소</button>
+                    <Button style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }} onClick={handleUpdateSection}>저장</Button>
+                    <Button variant="secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }} onClick={() => setEditSectionSeq(null)}>취소</Button>
                   </>
                 ) : (
                   <>

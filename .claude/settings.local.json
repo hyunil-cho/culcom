@@ -19,7 +19,10 @@
       "Bash(npx tsc:*)",
       "Bash(./gradlew compileJava)",
       "WebSearch",
-      "WebFetch(domain:developers.facebook.com)"
+      "WebFetch(domain:developers.facebook.com)",
+      "Bash(cp:*)",
+      "Bash(rm \"C:/Users/lookh/IdeaProjects/culcom/frontend/src/app/\\(main\\)/survey/[seq]/fill/page.tsx\")",
+      "Bash(rmdir \"C:/Users/lookh/IdeaProjects/culcom/frontend/src/app/\\(main\\)/survey/[seq]/fill\")"
     ]
   }
 }

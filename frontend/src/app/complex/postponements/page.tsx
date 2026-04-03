@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { postponementApi, type PostponementRequest } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import { Button } from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import SearchBar from '@/components/ui/SearchBar';
@@ -123,9 +124,9 @@ export default function PostponementsPage() {
     <>
       <div className="page-toolbar">
         <h2 className="page-title" style={{ marginBottom: 0 }}>연기 요청 관리</h2>
-        <button className="btn-secondary" onClick={() => router.push(ROUTES.COMPLEX_POSTPONEMENT_REASONS)}>
+        <Button variant="secondary" onClick={() => router.push(ROUTES.COMPLEX_POSTPONEMENT_REASONS)}>
           연기사유 관리
-        </button>
+        </Button>
       </div>
 
       <SearchBar

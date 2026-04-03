@@ -10,6 +10,8 @@ import {
   BulkAttendanceResult,
 } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import { useHighlightSearch, rateBadgeClass } from '@/lib/useHighlightSearch';
+import HighlightSearchBar from '@/components/ui/HighlightSearchBar';
 
 export default function AttendancePage() {
   const router = useRouter();
@@ -17,10 +19,13 @@ export default function AttendancePage() {
   const [loading, setLoading] = useState(true);
 
   // 검색
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchType, setSearchType] = useState<'name' | 'phone'>('name');
-  const [matchedItems, setMatchedItems] = useState<HTMLElement[]>([]);
-  const [currentMatchIndex, setCurrentMatchIndex] = useState(-1);
+  const { matchedItems, currentMatchIndex, performSearch, navigateMatch } = useHighlightSearch({
+    rowSelector: '.member-item',
+    nameSelector: '.member-name',
+    phoneSelector: '.member-phone',
+    highlightClass: 'member-highlight',
+    activeHighlightClass: 'member-active-highlight',
+  });
 
   // 일괄출석 모달
   const [bulkModal, setBulkModal] = useState<{ classSeq: number; className: string; members: AttendanceViewMember[] } | null>(null);
@@ -44,55 +49,6 @@ export default function AttendancePage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // 검색 실행
-  const performSearch = (type: 'name' | 'phone') => {
-    // 이전 하이라이트 제거
-    document.querySelectorAll('.member-highlight, .member-active-highlight').forEach(el => {
-      el.classList.remove('member-highlight', 'member-active-highlight');
-    });
-
-    const input = type === 'name'
-      ? (document.getElementById('mainNameSearchInput') as HTMLInputElement)
-      : (document.getElementById('mainPhoneSearchInput') as HTMLInputElement);
-    const keyword = input?.value.trim();
-    if (!keyword) return;
-
-    setSearchType(type);
-    setSearchKeyword(keyword);
-
-    const selector = type === 'name' ? '.member-name' : '.member-phone';
-    const items = Array.from(document.querySelectorAll('.member-item')) as HTMLElement[];
-    const matched: HTMLElement[] = [];
-
-    items.forEach(item => {
-      const target = item.querySelector(selector);
-      if (target && target.textContent?.includes(keyword)) {
-        item.classList.add('member-highlight');
-        matched.push(item);
-      }
-    });
-
-    if (matched.length > 0) {
-      setMatchedItems(matched);
-      setCurrentMatchIndex(0);
-      matched[0].classList.add('member-active-highlight');
-      matched[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    } else {
-      setMatchedItems([]);
-      setCurrentMatchIndex(-1);
-      alert('검색 결과가 없습니다.');
-    }
-  };
-
-  const navigateMatch = (dir: number) => {
-    if (matchedItems.length === 0) return;
-    matchedItems.forEach(el => el.classList.remove('member-active-highlight'));
-    const next = (currentMatchIndex + dir + matchedItems.length) % matchedItems.length;
-    setCurrentMatchIndex(next);
-    matchedItems[next].classList.add('member-active-highlight');
-    matchedItems[next].scrollIntoView({ behavior: 'smooth', block: 'center' });
-  };
-
   // 출석률 계산
   const calcRate = (members: AttendanceViewMember[]) => {
     let total = 0, present = 0, postponed = 0;
@@ -104,12 +60,6 @@ export default function AttendancePage() {
     const pct = total > 0 ? Math.round(present / total * 100) : 0;
     const suffix = postponed > 0 ? ` (연기 ${postponed})` : '';
     return { text: `${present}/${total}명 · ${pct}%${suffix}`, pct };
-  };
-
-  const rateBadgeClass = (pct: number) => {
-    if (pct >= 80) return 'rate-high';
-    if (pct >= 60) return 'rate-mid';
-    return 'rate-low';
   };
 
   // 일괄출석 모달 열기
@@ -240,15 +190,6 @@ export default function AttendancePage() {
         .rate-low { background: #fff5f5; color: #c92a2a; border-color: #ffa8a8; }
         .btn-bulk-attend { background: #fff; color: #2e7d32; border: 1px solid #2e7d32; padding: 2px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
         .btn-bulk-attend:hover { background: #2e7d32; color: white; }
-        .search-container { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: center; }
-        .search-bar-group { display: flex; gap: 10px; flex-wrap: wrap; background: #f8f9fa; padding: 15px; border-radius: 8px; align-items: center; width: 100%; max-width: 1000px; }
-        .search-item { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; font-weight: 600; color: #555; }
-        .search-input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; width: 180px; }
-        .btn-search { padding: 8px 16px; background: #4a90e2; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: background 0.2s; }
-        .btn-search:hover { background: #357abd; }
-        .search-result-info { display: flex; align-items: center; gap: 12px; background: #e3f2fd; padding: 6px 15px; border-radius: 20px; font-size: 0.85rem; color: #1976d2; font-weight: 700; margin-left: auto; }
-        .btn-nav { background: #fff; border: 1px solid #bbdefb; border-radius: 4px; padding: 3px 10px; cursor: pointer; color: #1976d2; font-size: 0.75rem; font-weight: 600; }
-        .btn-nav:hover { background: #1976d2; color: #fff; }
         .member-highlight { background-color: #fff9c4 !important; transition: background-color 0.3s ease; }
         .member-active-highlight { background-color: #ffd600 !important; outline: 2px solid #fbc02d; z-index: 1; transition: all 0.2s ease; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center; }
@@ -263,29 +204,12 @@ export default function AttendancePage() {
         <h1 className="complex-title">지점 통합 등록현황</h1>
 
         {/* 검색 바 */}
-        <div className="search-container">
-          <div className="search-bar-group">
-            <div className="search-item">
-              이름 <input type="text" id="mainNameSearchInput" className="search-input" placeholder="회원 이름 입력"
-                onKeyDown={e => e.key === 'Enter' && performSearch('name')} />
-              <button className="btn-search" onClick={() => performSearch('name')}>검색</button>
-            </div>
-            <div className="search-item">
-              전화번호 <input type="text" id="mainPhoneSearchInput" className="search-input" placeholder="번호 4자리"
-                onKeyDown={e => e.key === 'Enter' && performSearch('phone')} />
-              <button className="btn-search" onClick={() => performSearch('phone')}>검색</button>
-            </div>
-            {matchedItems.length > 0 && (
-              <div className="search-result-info">
-                <span>{currentMatchIndex + 1} / {matchedItems.length}</span>
-                <div style={{ display: 'flex', gap: 5 }}>
-                  <button className="btn-nav" onClick={() => navigateMatch(-1)}>◀ 이전</button>
-                  <button className="btn-nav" onClick={() => navigateMatch(1)}>다음 ▶</button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <HighlightSearchBar
+          onSearch={performSearch}
+          matchCount={matchedItems.length}
+          currentIndex={currentMatchIndex}
+          onNavigate={navigateMatch}
+        />
 
         {slots.map(slot => (
           <section key={slot.timeSlotSeq} className="slot-section">

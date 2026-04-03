@@ -1,7 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { Input, Select, Textarea } from '@/components/ui/FormInput';
+import { Button, LinkButton } from '@/components/ui/Button';
 
 export interface NoticeFormData {
   title: string;
@@ -93,12 +93,12 @@ export default function NoticeForm({
         </div>
 
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <Link href={cancelHref} className="btn-secondary" style={{ padding: '0.6rem 1.5rem', textDecoration: 'none' }}>
+          <LinkButton href={cancelHref} variant="secondary" style={{ padding: '0.6rem 1.5rem' }}>
             취소
-          </Link>
-          <button type="submit" className="btn-primary" style={{ padding: '0.6rem 1.5rem' }} disabled={submitting}>
+          </LinkButton>
+          <Button type="submit" style={{ padding: '0.6rem 1.5rem' }} disabled={submitting}>
             {submitting ? submittingLabel : submitLabel}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

@@ -46,8 +46,8 @@ export default function ClassEditPage() {
       description: form.description || undefined,
       capacity: form.capacity,
       sortOrder: form.sortOrder,
-      timeSlot: { seq: form.timeSlotSeq as number } as any,
-      staff: form.staffSeq ? { seq: form.staffSeq as number } as any : undefined,
+      timeSlotSeq: form.timeSlotSeq as number,
+      staffSeq: form.staffSeq ? (form.staffSeq as number) : undefined,
     });
     if (res.success) {
       setResult({ success: true, message: '수업이 수정되었습니다.' });

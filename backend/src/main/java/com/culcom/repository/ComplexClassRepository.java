@@ -30,4 +30,7 @@ public interface ComplexClassRepository extends JpaRepository<ComplexClass, Long
            "ORDER BY c.sortOrder")
     List<ComplexClass> findByTimeSlotAndBranch(
             @Param("branchSeq") Long branchSeq, @Param("timeSlotSeq") Long timeSlotSeq);
+
+    @Query("SELECT COALESCE(MAX(c.sortOrder), 0) FROM ComplexClass c WHERE c.branch.seq = :branchSeq")
+    int findMaxSortOrderByBranchSeq(@Param("branchSeq") Long branchSeq);
 }

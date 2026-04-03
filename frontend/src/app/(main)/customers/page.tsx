@@ -7,6 +7,7 @@ import { customerApi, externalApi, settingsApi, messageTemplateApi, type Custome
 import { usePlaceholderResolver } from '@/lib/usePlaceholderResolver';
 import { ROUTES } from '@/lib/routes';
 import { toServerDateTime, formatDateTime } from '@/lib/dateUtils';
+import TimePicker from '@/components/ui/TimePicker';
 import { useQueryParams } from '@/lib/useQueryParams';
 import ResultModal from '@/components/ui/ResultModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
@@ -271,18 +272,33 @@ function CustomersContent() {
         ))}
       </div>
     )},
-    { header: '인터뷰확정일시', render: (c) => (
-      <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
-        <input
-          type="datetime-local"
-          value={interviewInputs[c.seq] ?? ''}
-          onChange={(e) => setInterviewInputs(prev => ({ ...prev, [c.seq]: e.target.value }))}
-          style={{ padding: '0.4rem 0.6rem', border: '1px solid #ddd', borderRadius: 4, fontSize: '0.85rem', width: 180 }}
-        />
-        <button className="btn-inline btn-inline-info" onClick={() => handleInterviewConfirm(c.seq)}>확정</button>
-        <button className="btn-inline btn-inline-purple" onClick={() => handleMarkNoPhone(c.seq)}>전화상안함</button>
-      </div>
-    )},
+    { header: '인터뷰확정일시', render: (c) => {
+      const val = interviewInputs[c.seq] ?? '';
+      const datePart = val.includes('T') ? val.split('T')[0] : val.split(' ')[0] || '';
+      const timePart = val.includes('T') ? val.split('T')[1] || '' : val.split(' ')[1] || '';
+      const updateParts = (date: string, time: string) => {
+        setInterviewInputs(prev => ({ ...prev, [c.seq]: date && time ? `${date}T${time}` : date ? `${date}T` : '' }));
+      };
+      return (
+        <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+          <input
+            type="date"
+            value={datePart}
+            onChange={(e) => updateParts(e.target.value, timePart)}
+            style={{ padding: '0.4rem 0.6rem', border: '1px solid #ddd', borderRadius: 4, fontSize: '0.85rem', width: 140 }}
+          />
+          <div style={{ width: 120 }}>
+            <TimePicker
+              value={timePart}
+              onChange={(t) => updateParts(datePart, t)}
+              placeholder="시간"
+            />
+          </div>
+          <button className="btn-inline btn-inline-info" onClick={() => handleInterviewConfirm(c.seq)}>확정</button>
+          <button className="btn-inline btn-inline-purple" onClick={() => handleMarkNoPhone(c.seq)}>전화상안함</button>
+        </div>
+      );
+    }},
     { header: '광고명', render: (c) => c.commercialName ?? '-' },
     { header: '지원경로', render: (c) => c.adSource ?? '-' },
     { header: '등록일', render: (c) => c.createdDate?.split('T')[0] },

@@ -24,6 +24,8 @@ public class LocalDataInitializer implements ApplicationRunner {
     private final PlaceholderRepository placeholderRepository;
     private final MessageTemplateRepository messageTemplateRepository;
     private final CustomerRepository customerRepository;
+    private final ClassTimeSlotRepository classTimeSlotRepository;
+    private final ComplexClassRepository complexClassRepository;
 
     @Override
     public void run(ApplicationArguments args) {
@@ -175,6 +177,28 @@ public class LocalDataInitializer implements ApplicationRunner {
                         .build());
 
                 log.info("초기 샘플 고객 3건 생성 완료");
+            }
+
+            // 샘플 시간대 + 수업
+            if (classTimeSlotRepository.findByBranchSeq(branch.getSeq()).isEmpty()) {
+                ClassTimeSlot timeSlot = classTimeSlotRepository.save(ClassTimeSlot.builder()
+                        .branch(branch)
+                        .name("평일 오전반")
+                        .daysOfWeek("월,수,금")
+                        .startTime(java.time.LocalTime.of(10, 0))
+                        .endTime(java.time.LocalTime.of(11, 30))
+                        .build());
+                log.info("초기 시간대 생성: 평일 오전반");
+
+                complexClassRepository.save(ComplexClass.builder()
+                        .branch(branch)
+                        .timeSlot(timeSlot)
+                        .name("기초 영어회화")
+                        .description("왕초보를 위한 기초 영어회화 수업")
+                        .capacity(15)
+                        .sortOrder(1)
+                        .build());
+                log.info("초기 수업 생성: 기초 영어회화 (시간대: 평일 오전반)");
             }
         });
     }

@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { kakaoSyncApi } from '@/lib/api';
+import { Button } from '@/components/ui/Button';
 
 export default function KakaoSyncPage() {
   const [kakaoSyncUrl, setKakaoSyncUrl] = useState('');
@@ -111,13 +112,12 @@ export default function KakaoSyncPage() {
                 fontSize: '0.9rem', color: '#374151',
               }}
             />
-            <button
-              className="btn-primary"
+            <Button
               onClick={copyUrl}
               style={{ padding: '0 1.25rem', whiteSpace: 'nowrap' }}
             >
               {copied ? '복사됨!' : 'URL 복사'}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -151,33 +151,32 @@ export default function KakaoSyncPage() {
           {/* 프리셋 버튼 */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginBottom: '2rem' }}>
             {presetSizes.map((p) => (
-              <button
+              <Button
                 key={p.value}
-                className="btn-secondary"
+                variant="secondary"
                 style={{ padding: '6px 16px', fontSize: '0.85rem' }}
                 onClick={() => setQrSize(p.value)}
               >
                 {p.label}
-              </button>
+              </Button>
             ))}
           </div>
 
           {/* 액션 버튼 */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <button
-              className="btn-secondary"
+            <Button
+              variant="secondary"
               onClick={() => setPreviewOpen(true)}
               style={{ padding: '1rem', fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
             >
               실제 크기 미리보기
-            </button>
-            <button
-              className="btn-primary"
+            </Button>
+            <Button
               onClick={downloadQR}
               style={{ padding: '1rem', fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
             >
               PNG 다운로드
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -244,16 +243,16 @@ export default function KakaoSyncPage() {
               <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '1rem' }}>
                 ※ 화면보다 큰 경우 스크롤하여 확인할 수 있습니다.
               </p>
-              <button className="btn-primary" onClick={downloadQR} style={{ padding: '0.75rem 2rem' }}>
+              <Button onClick={downloadQR} style={{ padding: '0.75rem 2rem' }}>
                 이 크기로 다운로드
-              </button>
-              <button
-                className="btn-secondary"
+              </Button>
+              <Button
+                variant="secondary"
                 onClick={() => setPreviewOpen(false)}
                 style={{ padding: '0.75rem 2rem', marginLeft: 8 }}
               >
                 닫기
-              </button>
+              </Button>
             </div>
           </div>
         </div>

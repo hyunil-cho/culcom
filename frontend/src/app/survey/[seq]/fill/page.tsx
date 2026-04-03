@@ -9,9 +9,18 @@ export default function SurveyFillPage() {
   const searchParams = useSearchParams();
   const templateSeq = Number(params.seq);
 
-  const customerName = searchParams.get('name') || '';
-  const customerPhone = searchParams.get('phone') || '';
-  const reservationSeq = searchParams.get('reservationSeq') || '';
+  const decoded = (() => {
+    try {
+      const d = searchParams.get('d');
+      if (!d) return { name: '', phone: '', reservationSeq: '' };
+      return JSON.parse(decodeURIComponent(atob(d))) as { name: string; phone: string; reservationSeq: string | number };
+    } catch {
+      return { name: '', phone: '', reservationSeq: '' };
+    }
+  })();
+  const customerName = decoded.name || '';
+  const customerPhone = decoded.phone || '';
+  const reservationSeq = String(decoded.reservationSeq || '');
 
   const [template, setTemplate] = useState<SurveyTemplate | null>(null);
   const [sections, setSections] = useState<SurveySection[]>([]);
@@ -20,6 +29,15 @@ export default function SurveyFillPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
+  const [basicInfo, setBasicInfo] = useState({
+    name: customerName || '',
+    phone: customerPhone || '',
+    gender: '',
+    location: '',
+    age_group: '',
+    occupation: '',
+    ad_source: '',
+  });
 
   const load = useCallback(async () => {
     const [tplRes, secRes, qRes, oRes] = await Promise.all([
@@ -44,8 +62,44 @@ export default function SurveyFillPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  // 고객용 페이지 — 백오피스 타이틀 숨김
+  useEffect(() => {
+    document.title = template ? template.name : '설문';
+  }, [template]);
+
   if (loading) return <div style={S.loading}>로딩 중...</div>;
   if (!template) return <div style={S.loading}>설문지를 찾을 수 없습니다.</div>;
+
+  // 총 페이지 = 1(고객 기본 정보) + sections.length
+  const totalPages = sections.length + 1;
+
+  const BASIC_INFO_FIELDS = [
+    { key: 'name' as const, title: '성함', type: 'text', placeholder: '홍길동' },
+    { key: 'phone' as const, title: '연락처', type: 'tel', placeholder: '010-0000-0000' },
+    { key: 'gender' as const, title: '성별', type: 'radio', options: ['남성', '여성'] },
+    { key: 'location' as const, title: '사는 곳', type: 'text', placeholder: '예) 서울 강남구 역삼동', hint: '동까지만 입력' },
+    { key: 'age_group' as const, title: '연령대', type: 'radio', options: ['10대', '20대', '30대', '40대', '50대 이상'] },
+    { key: 'occupation' as const, title: '현재 직군', type: 'radio', options: ['학생', '직장인', '자영업', '프리랜서', '주부', '기타'] },
+    { key: 'ad_source' as const, title: 'E-UT를 어떻게 알고 오셨나요?', type: 'radio', options: ['인스타그램', '블로그', '유튜브', '지인 추천', '기타'] },
+  ];
+
+  const validateBasicInfo = (): boolean => {
+    for (const field of BASIC_INFO_FIELDS) {
+      const val = basicInfo[field.key];
+      if (!val || !val.trim()) {
+        alert(`"${field.title}" 항목은 필수입니다.`);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const formatPhone = (v: string) => {
+    const digits = v.replace(/[^0-9]/g, '');
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 7) return digits.slice(0, 3) + '-' + digits.slice(3);
+    return digits.slice(0, 3) + '-' + digits.slice(3, 7) + '-' + digits.slice(7, 11);
+  };
 
   const questionsForSection = (sectionSeq: number) =>
     questions.filter(q => q.sectionSeq === sectionSeq);
@@ -64,14 +118,19 @@ export default function SurveyFillPage() {
   const goToPage = (idx: number) => {
     // 현재 페이지 필수 검증
     if (idx > currentPage) {
-      const sec = sections[currentPage];
-      const secQ = questionsForSection(sec.seq);
-      for (const q of secQ) {
-        if (!q.required) continue;
-        const ans = answers[q.questionKey];
-        if (!ans || (Array.isArray(ans) && ans.length === 0) || (typeof ans === 'string' && !ans.trim())) {
-          alert(`"${q.title}" 항목은 필수입니다.`);
-          return;
+      if (currentPage === 0) {
+        // 고객 기본 정보 검증
+        if (!validateBasicInfo()) return;
+      } else {
+        const sec = sections[currentPage - 1];
+        const secQ = questionsForSection(sec.seq);
+        for (const q of secQ) {
+          if (!q.required) continue;
+          const ans = answers[q.questionKey];
+          if (!ans || (Array.isArray(ans) && ans.length === 0) || (typeof ans === 'string' && !ans.trim())) {
+            alert(`"${q.title}" 항목은 필수입니다.`);
+            return;
+          }
         }
       }
     }
@@ -81,14 +140,16 @@ export default function SurveyFillPage() {
 
   const handleSubmit = () => {
     // 마지막 페이지 필수 검증
-    const sec = sections[currentPage];
-    const secQ = questionsForSection(sec.seq);
-    for (const q of secQ) {
-      if (!q.required) continue;
-      const ans = answers[q.questionKey];
-      if (!ans || (Array.isArray(ans) && ans.length === 0) || (typeof ans === 'string' && !ans.trim())) {
-        alert(`"${q.title}" 항목은 필수입니다.`);
-        return;
+    const sec = sections[currentPage - 1];
+    if (sec) {
+      const secQ = questionsForSection(sec.seq);
+      for (const q of secQ) {
+        if (!q.required) continue;
+        const ans = answers[q.questionKey];
+        if (!ans || (Array.isArray(ans) && ans.length === 0) || (typeof ans === 'string' && !ans.trim())) {
+          alert(`"${q.title}" 항목은 필수입니다.`);
+          return;
+        }
       }
     }
     // TODO: 실제 제출 API 연동
@@ -186,21 +247,34 @@ export default function SurveyFillPage() {
         </div>
 
         {/* 프로그레스 바 */}
-        {sections.length > 1 && (
+        {totalPages > 1 && (
           <div style={S.progressBar}>
+            {/* 고객 기본 정보 스텝 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
+              <div style={{
+                ...S.stepDot,
+                ...(currentPage === 0 ? S.stepDotActive : S.stepDotDone),
+              }}>
+                {currentPage > 0 ? '\u2713' : 1}
+              </div>
+              <span style={{
+                fontSize: '0.85rem', fontWeight: currentPage === 0 ? 700 : 500,
+                color: currentPage === 0 ? '#2d7a4f' : '#666',
+              }}>고객 기본 정보</span>
+            </div>
             {sections.map((sec, i) => (
               <div key={sec.seq} style={{ display: 'contents' }}>
-                {i > 0 && <div style={S.stepLine} />}
+                <div style={S.stepLine} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
                   <div style={{
                     ...S.stepDot,
-                    ...(i === currentPage ? S.stepDotActive : i < currentPage ? S.stepDotDone : {}),
+                    ...(i + 1 === currentPage ? S.stepDotActive : i + 1 < currentPage ? S.stepDotDone : {}),
                   }}>
-                    {i < currentPage ? '\u2713' : i + 1}
+                    {i + 1 < currentPage ? '\u2713' : i + 2}
                   </div>
                   <span style={{
-                    fontSize: '0.85rem', fontWeight: i === currentPage ? 700 : 500,
-                    color: i === currentPage ? '#2d7a4f' : '#666',
+                    fontSize: '0.85rem', fontWeight: i + 1 === currentPage ? 700 : 500,
+                    color: i + 1 === currentPage ? '#2d7a4f' : '#666',
                   }}>{sec.title}</span>
                 </div>
               </div>
@@ -213,8 +287,63 @@ export default function SurveyFillPage() {
         <input type="hidden" name="customer_name" value={customerName} />
         <input type="hidden" name="customer_phone" value={customerPhone} />
 
+        {/* 고객 기본 정보 페이지 (항상 첫 페이지) */}
+        {currentPage === 0 && (
+          <div>
+            <div style={S.card}>
+              <div style={S.sectionHeader}>
+                <span style={S.sectionBadge}>Section 1</span>
+                <span style={S.sectionTitle}>고객 기본 정보</span>
+              </div>
+
+              {BASIC_INFO_FIELDS.map(field => (
+                <div key={field.key} style={S.fieldGroup}>
+                  <label style={S.fieldLabel}>
+                    {field.title}
+                    <span style={{ color: '#e53e3e', marginLeft: 3 }}>*</span>
+                    {'hint' in field && field.hint && <span style={S.hint}>{field.hint}</span>}
+                  </label>
+                  {field.type === 'radio' && 'options' in field && field.options ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      {field.options.map(opt => {
+                        const checked = basicInfo[field.key] === opt;
+                        return (
+                          <label key={opt} style={{ ...S.chip, ...(checked ? S.chipChecked : {}) }}
+                            onClick={() => setBasicInfo(prev => ({ ...prev, [field.key]: opt }))}>
+                            {opt}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <input
+                      type={field.type === 'tel' ? 'tel' : 'text'}
+                      value={basicInfo[field.key]}
+                      placeholder={'placeholder' in field ? field.placeholder : ''}
+                      onChange={e => {
+                        const val = field.key === 'phone' ? formatPhone(e.target.value) : e.target.value;
+                        setBasicInfo(prev => ({ ...prev, [field.key]: val }));
+                      }}
+                      style={{ ...S.textInput, minHeight: 'auto', resize: 'none', padding: '0.75rem 1rem' } as React.CSSProperties}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div style={S.formNav}>
+              {totalPages > 1 && (
+                <button type="button" style={S.btnNext} onClick={() => goToPage(1)}>
+                  다음 단계 &rarr;
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* 섹션 페이지 */}
-        {sections.map((sec, pageIdx) => {
+        {sections.map((sec, i) => {
+          const pageIdx = i + 1;
           if (pageIdx !== currentPage) return null;
           const secQuestions = questionsForSection(sec.seq);
 
@@ -243,12 +372,10 @@ export default function SurveyFillPage() {
               </div>
 
               <div style={S.formNav}>
-                {pageIdx > 0 && (
-                  <button type="button" style={S.btnPrev} onClick={() => goToPage(pageIdx - 1)}>
-                    &larr; 이전
-                  </button>
-                )}
-                {pageIdx < sections.length - 1 ? (
+                <button type="button" style={S.btnPrev} onClick={() => goToPage(pageIdx - 1)}>
+                  &larr; 이전
+                </button>
+                {pageIdx < totalPages - 1 ? (
                   <button type="button" style={S.btnNext} onClick={() => goToPage(pageIdx + 1)}>
                     다음 단계 &rarr;
                   </button>
@@ -262,7 +389,7 @@ export default function SurveyFillPage() {
           );
         })}
 
-        {sections.length === 0 && (
+        {sections.length === 0 && currentPage !== 0 && (
           <div style={S.card}>
             <p style={{ color: '#aaa', textAlign: 'center', padding: '2rem 0' }}>섹션이 없습니다.</p>
           </div>

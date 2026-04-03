@@ -10,6 +10,7 @@ import {
 } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import ResultModal from '@/components/ui/ResultModal';
+import { Button, LinkButton } from '@/components/ui/Button';
 
 export default function ReservationSmsConfigPage() {
   const router = useRouter();
@@ -184,21 +185,20 @@ export default function ReservationSmsConfigPage() {
               borderTop: '1px solid #e0e0e0',
             }}
           >
-            <button
+            <Button
               type="submit"
               disabled={saving}
-              className="btn-primary"
               style={{ padding: '12px 24px', fontSize: 14 }}
             >
               {saving ? '저장 중...' : '저장'}
-            </button>
-            <Link
+            </Button>
+            <LinkButton
               href={ROUTES.SETTINGS}
-              className="btn-secondary"
-              style={{ padding: '12px 24px', fontSize: 14, textDecoration: 'none' }}
+              variant="secondary"
+              style={{ padding: '12px 24px', fontSize: 14 }}
             >
               취소
-            </Link>
+            </LinkButton>
           </div>
         </form>
       </div>

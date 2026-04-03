@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Button, LinkButton } from '@/components/ui/Button';
 import FormField from '@/components/ui/FormField';
 import { Input, NumberInput, Select, Textarea } from '@/components/ui/FormInput';
 
@@ -222,8 +223,8 @@ export default function WebhookForm({
         <Link href={backHref} className="btn-back">← 목록으로</Link>
         {isEdit && (
           <div className="action-group" style={{ display: 'flex', gap: 8 }}>
-            <button className="btn-primary" onClick={onSubmit}>{submitLabel}</button>
-            <Link href={backHref} className="btn-secondary">취소</Link>
+            <Button onClick={onSubmit}>{submitLabel}</Button>
+            <LinkButton href={backHref} variant="secondary">취소</LinkButton>
           </div>
         )}
       </div>

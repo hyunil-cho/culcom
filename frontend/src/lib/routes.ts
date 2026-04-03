@@ -97,10 +97,10 @@ export const ROUTES = {
   COMPLEX_POSTPONEMENTS: `${R.COMPLEX}/postponements`,
   COMPLEX_POSTPONEMENT_REASONS: `${R.COMPLEX}/postponements/reasons`,
   COMPLEX_REFUNDS: `${R.COMPLEX}/refunds`,
-  COMPLEX_SURVEY: `${R.COMPLEX}/survey`,
-  COMPLEX_SURVEY_OPTIONS: (seq: number) => `${R.COMPLEX}/survey/${seq}/options`,
-  COMPLEX_SURVEY_PREVIEW: (seq: number) => `${R.COMPLEX}/survey/${seq}/preview`,
-  COMPLEX_SURVEY_FILL: (seq: number) => `${R.COMPLEX}/survey/${seq}/fill`,
+  SURVEY: '/survey',
+  SURVEY_OPTIONS: (seq: number) => `/survey/${seq}/options`,
+  SURVEY_PREVIEW: (seq: number) => `/survey/${seq}/preview`,
+  SURVEY_FILL: (seq: number) => `/survey/${seq}/fill`,
 } as const;
 
 /**

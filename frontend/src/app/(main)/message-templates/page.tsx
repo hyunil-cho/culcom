@@ -1,11 +1,11 @@
 'use client';
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
-import Link from 'next/link';
 import { messageTemplateApi, MessageTemplateItem } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import ResultModal from '@/components/ui/ResultModal';
+import { Button, LinkButton } from '@/components/ui/Button';
 
 export default function MessageTemplatesPage() {
   return <Suspense><MessageTemplatesContent /></Suspense>;
@@ -48,9 +48,9 @@ function MessageTemplatesContent() {
     <>
       <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>메시지 템플릿 관리</h1>
-        <Link href={ROUTES.MESSAGE_TEMPLATES_ADD} className="btn-primary" style={{ padding: '0.6rem 1.2rem', textDecoration: 'none' }}>
+        <LinkButton href={ROUTES.MESSAGE_TEMPLATES_ADD} style={{ padding: '0.6rem 1.2rem' }}>
           새 템플릿 만들기
-        </Link>
+        </LinkButton>
       </div>
 
       {templates.length === 0 ? (
@@ -152,28 +152,27 @@ function MessageTemplatesContent() {
               {/* 액션 버튼 */}
               <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
                 {!t.isDefault && t.isActive && (
-                  <button
-                    className="btn-secondary"
+                  <Button
+                    variant="secondary"
                     style={{ flex: 1, padding: '8px 16px', fontSize: 13, background: '#fff8e1', borderColor: '#ffc107', color: '#333' }}
                     onClick={() => setDefaultTarget(t)}
                   >
                     기본 설정
-                  </button>
+                  </Button>
                 )}
-                <Link
+                <LinkButton
                   href={ROUTES.MESSAGE_TEMPLATE_EDIT(t.seq)}
-                  className="btn-primary"
-                  style={{ flex: 1, padding: '8px 16px', fontSize: 13, textDecoration: 'none', textAlign: 'center' }}
+                  style={{ flex: 1, padding: '8px 16px', fontSize: 13, textAlign: 'center' }}
                 >
                   수정
-                </Link>
-                <button
-                  className="btn-secondary"
+                </LinkButton>
+                <Button
+                  variant="secondary"
                   style={{ flex: 1, padding: '8px 16px', fontSize: 13, background: '#ffebee', borderColor: '#f44336', color: '#d32f2f' }}
                   onClick={() => setDeleteTarget(t)}
                 >
                   삭제
-                </button>
+                </Button>
               </div>
             </div>
           ))}

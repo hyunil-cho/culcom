@@ -18,6 +18,7 @@ export default function MainSidebar() {
         { href: ROUTES.CUSTOMERS, label: '지원자 회신 관리', icon: '👥' },
         { href: ROUTES.NOTICES, label: '공지사항', icon: '📢' },
         { href: ROUTES.MESSAGE_TEMPLATES, label: '메시지 템플릿 관리', icon: '📝' },
+        { href: ROUTES.SURVEY, label: '설문 관리', icon: '📋' },
         ...(SessionRole.canManageUsers(session) ? [{ href: ROUTES.BRANCHES, label: '지점 관리', icon: '🏢' }] : []),
         ...(SessionRole.canManageUsers(session) ? [{ href: ROUTES.USERS, label: '사용자 관리', icon: '🔑' }] : []),
       ],

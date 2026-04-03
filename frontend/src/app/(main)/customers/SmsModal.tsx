@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { messageTemplateApi, settingsApi, externalApi, MessageTemplateItem } from '@/lib/api';
 import { usePlaceholderResolver } from '@/lib/usePlaceholderResolver';
 import { Select, Textarea } from '@/components/ui/FormInput';
+import { Button } from '@/components/ui/Button';
 
 interface SmsModalProps {
   customerName: string;
@@ -190,9 +191,9 @@ export default function SmsModal({ customerName, customerPhone, interviewDate, o
           padding: '1rem 1.5rem', borderTop: '1px solid #e0e0e0',
           display: 'flex', justifyContent: 'flex-end', gap: 8,
         }}>
-          <button onClick={onClose} className="btn-secondary" style={{ padding: '0.6rem 1.5rem' }}>
+          <Button onClick={onClose} variant="secondary" style={{ padding: '0.6rem 1.5rem' }}>
             닫기
-          </button>
+          </Button>
           <button
             onClick={handleSend}
             disabled={sending}
