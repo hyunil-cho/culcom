@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Suspense, useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { customerApi, externalApi, settingsApi, messageTemplateApi, type Customer, type PageResponse } from '@/lib/api';
 import { usePlaceholderResolver } from '@/lib/usePlaceholderResolver';
 import { ROUTES } from '@/lib/routes';
@@ -34,6 +35,7 @@ export default function CustomersPage() {
 }
 
 function CustomersContent() {
+  const router = useRouter();
   const { resolve } = usePlaceholderResolver();
   const { params: qp, setParams } = useQueryParams(CUSTOMER_DEFAULTS);
   const page = Number(qp.page);
@@ -45,11 +47,6 @@ function CustomersContent() {
   const [totalPages, setTotalPages] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [keyword, setKeyword] = useState(searchedKeyword);
-  const [deleting, setDeleting] = useState<number | null>(null);
-
-  // 인라인 편집 상태
-  const [nameInputs, setNameInputs] = useState<Record<number, string>>({});
-  const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
 
   // CALLER 선택 상태
   const [selectedCallers, setSelectedCallers] = useState<Record<number, string>>({});
@@ -88,25 +85,6 @@ function CustomersContent() {
   const handleReset = () => {
     setKeyword('');
     setParams({ page: '0', keyword: '' });
-  };
-
-  // 이름 수정
-  const handleNameUpdate = async (seq: number) => {
-    const newName = nameInputs[seq]?.trim();
-    if (!newName) { alert('이름을 입력해주세요.'); return; }
-    const customer = customers.find(c => c.seq === seq);
-    if (customer?.name === newName) { alert('변경된 내용이 없습니다.'); return; }
-    await customerApi.updateName(seq, newName);
-    setCustomers(prev => prev.map(c => c.seq === seq ? { ...c, name: newName } : c));
-    setNameInputs(prev => ({ ...prev, [seq]: '' }));
-  };
-
-  // 코멘트 등록
-  const handleCommentUpdate = async (seq: number) => {
-    const comment = commentInputs[seq]?.trim() ?? '';
-    await customerApi.updateComment(seq, comment);
-    setCustomers(prev => prev.map(c => c.seq === seq ? { ...c, comment } : c));
-    setCommentInputs(prev => ({ ...prev, [seq]: '' }));
   };
 
   // CALLER 선택
@@ -256,50 +234,10 @@ function CustomersContent() {
     }
   };
 
-  // 삭제
-  const confirmDelete = async () => {
-    if (deleting === null) return;
-    const res = await customerApi.delete(deleting);
-    setDeleting(null);
-    if (res.success) setResult({ success: true, message: '고객이 삭제되었습니다.' });
-  };
-
   const customerColumns: Column<Customer>[] = [
     { header: '누적콜수', render: (c) => <strong>{c.callCount}회</strong> },
-    { header: '이름', render: (c) => (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-        <div style={{ padding: '0.4rem 0.6rem', background: '#f8f9fa', borderRadius: 4, fontSize: '1.3rem', fontWeight: 700, minWidth: 120 }}>
-          {c.name}
-        </div>
-        <div style={{ display: 'flex', gap: '0.3rem' }}>
-          <input
-            placeholder="이름 입력"
-            value={nameInputs[c.seq] ?? ''}
-            onChange={(e) => setNameInputs(prev => ({ ...prev, [c.seq]: e.target.value }))}
-            style={{ padding: '0.4rem 0.6rem', border: '1px solid #ddd', borderRadius: 4, fontSize: '0.85rem', width: 120 }}
-          />
-          <button className="btn-inline btn-inline-success" onClick={() => handleNameUpdate(c.seq)}>수정</button>
-        </div>
-      </div>
-    )},
-    { header: '코멘트', render: (c) => (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-        {c.comment && (
-          <div style={{ padding: '0.4rem 0.6rem', background: '#f8f9fa', borderRadius: 4, fontSize: '0.85rem', minWidth: 120 }}>
-            {c.comment}
-          </div>
-        )}
-        <div style={{ display: 'flex', gap: '0.3rem' }}>
-          <input
-            placeholder="코멘트 입력"
-            value={commentInputs[c.seq] ?? ''}
-            onChange={(e) => setCommentInputs(prev => ({ ...prev, [c.seq]: e.target.value }))}
-            style={{ padding: '0.4rem 0.6rem', border: '1px solid #ddd', borderRadius: 4, fontSize: '0.85rem', width: 120 }}
-          />
-          <button className="btn-inline btn-inline-primary" onClick={() => handleCommentUpdate(c.seq)}>등록</button>
-        </div>
-      </div>
-    )},
+    { header: '이름', render: (c) => <strong style={{ fontSize: '1.1rem' }}>{c.name}</strong> },
+    { header: '코멘트', render: (c) => c.comment || '-' },
     { header: '전화번호', render: (c) => (
       <div style={{ textAlign: 'center' }}>
         {phoneVisible[c.seq]
@@ -310,7 +248,7 @@ function CustomersContent() {
     )},
     { header: 'TEXT', render: (c) => (
       <button
-        onClick={() => setSmsTarget({ name: c.name, phone: c.phoneNumber, interviewDate: interviewInputs[c.seq] || undefined })}
+        onClick={(e) => { e.stopPropagation(); setSmsTarget({ name: c.name, phone: c.phoneNumber, interviewDate: interviewInputs[c.seq] || undefined }); }}
         style={{
           padding: '0.4rem 0.8rem', background: '#10b981', color: 'white',
           border: 'none', borderRadius: 4, cursor: 'pointer',
@@ -321,7 +259,7 @@ function CustomersContent() {
       </button>
     )},
     { header: 'CALLER', render: (c) => (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, width: 'fit-content' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, width: 'fit-content' }} onClick={(e) => e.stopPropagation()}>
         {CALLERS.map(letter => (
           <button
             key={letter}
@@ -334,7 +272,7 @@ function CustomersContent() {
       </div>
     )},
     { header: '인터뷰확정일시', render: (c) => (
-      <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
         <input
           type="datetime-local"
           value={interviewInputs[c.seq] ?? ''}
@@ -349,9 +287,6 @@ function CustomersContent() {
     { header: '지원경로', render: (c) => c.adSource ?? '-' },
     { header: '등록일', render: (c) => c.createdDate?.split('T')[0] },
     { header: '회신일시', render: (c) => formatDateTime(c.lastUpdateDate) },
-    { header: '삭제', render: (c) => (
-      <button className="btn-table-delete" onClick={() => setDeleting(c.seq)}>삭제</button>
-    )},
   ];
 
   return (
@@ -392,6 +327,7 @@ function CustomersContent() {
             ))}
           </div>
         }
+        onRowClick={(c) => router.push(ROUTES.CUSTOMER_DETAIL(c.seq))}
         rowStyle={(c) => c.lastUpdateDate ? { backgroundColor: '#f3e8ff' } : undefined}
         emptyMessage="고객이 없습니다."
         page={page}
@@ -432,20 +368,6 @@ function CustomersContent() {
           CALLER: <strong style={{ color: '#667eea' }}>{interviewModal.caller}</strong>
           <br />
           일시: <strong>{interviewInputs[interviewModal.customerSeq]}</strong>
-        </ConfirmModal>
-      )}
-
-      {/* 삭제 확인 모달 */}
-      {deleting !== null && (
-        <ConfirmModal
-          title="삭제 확인"
-          onCancel={() => setDeleting(null)}
-          onConfirm={confirmDelete}
-          confirmLabel="삭제"
-          confirmColor="#f44336"
-        >
-          <strong>{customers.find(c => c.seq === deleting)?.name}</strong> 고객을 삭제하시겠습니까?
-          <br /><br />이 작업은 되돌릴 수 없습니다.
         </ConfirmModal>
       )}
 

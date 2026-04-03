@@ -26,13 +26,6 @@ export default function MembershipsPage() {
 
   const load = () => { membershipApi.list().then(res => setMemberships(res.data)); };
 
-  const handleDelete = async (seq: number) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
-    const res = await membershipApi.delete(seq);
-    if (res.success) {
-      setResult({ success: true, message: '멤버십이 삭제되었습니다.' });
-    }
-  };
 
   const columns: Column<Membership>[] = [
     { header: '멤버십 이름', render: (m) => m.name },
@@ -40,15 +33,6 @@ export default function MembershipsPage() {
     { header: '수강 횟수', render: (m) => `${m.count}회` },
     { header: '판매 가격', render: (m) => formatPrice(m.price) },
     { header: '등록일', render: (m) => m.createdDate?.split('T')[0] ?? '-' },
-    {
-      header: '관리',
-      render: (m) => (
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-          <button className="btn-table-edit" onClick={() => router.push(ROUTES.COMPLEX_MEMBERSHIP_EDIT(m.seq))}>수정</button>
-          <button className="btn-table-delete" onClick={() => handleDelete(m.seq)}>삭제</button>
-        </div>
-      ),
-    },
   ];
 
   return (
@@ -63,6 +47,7 @@ export default function MembershipsPage() {
         data={memberships}
         rowKey={(m) => m.seq}
         emptyMessage="등록된 멤버십 정보가 없습니다."
+        onRowClick={(m) => router.push(ROUTES.COMPLEX_MEMBERSHIP_EDIT(m.seq))}
       />
 
       {result && (

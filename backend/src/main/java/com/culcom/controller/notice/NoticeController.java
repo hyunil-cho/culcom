@@ -1,5 +1,6 @@
 package com.culcom.controller.notice;
 
+import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.notice.NoticeCreateRequest;
 import com.culcom.dto.notice.NoticeDetailResponse;
@@ -9,12 +10,11 @@ import com.culcom.entity.Notice;
 import com.culcom.entity.enums.NoticeCategory;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.NoticeRepository;
-import com.culcom.service.AuthService;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,17 +28,16 @@ public class NoticeController {
 
     private final NoticeRepository noticeRepository;
     private final BranchRepository branchRepository;
-    private final AuthService authService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<NoticeListResponse>>> list(
-            HttpSession session,
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "all") String filter,
             @RequestParam(required = false) String searchKeyword) {
 
-        Long branchSeq = authService.getSessionBranchSeq(session);
+        Long branchSeq = principal.getSelectedBranchSeq();
         var pageable = PageRequest.of(page, size);
 
         Page<Notice> notices;
@@ -75,8 +74,9 @@ public class NoticeController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<NoticeDetailResponse>> create(
-            @RequestBody NoticeCreateRequest request, HttpSession session) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
+            @RequestBody NoticeCreateRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long branchSeq = principal.getSelectedBranchSeq();
 
         Notice notice = Notice.builder()
                 .title(request.getTitle())

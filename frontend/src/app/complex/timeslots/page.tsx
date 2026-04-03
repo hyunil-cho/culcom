@@ -16,28 +16,12 @@ export default function TimeslotsPage() {
 
   const load = () => { timeslotApi.list().then(res => setSlots(res.data)); };
 
-  const handleDelete = async (seq: number) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
-    const res = await timeslotApi.delete(seq);
-    if (res.success) {
-      setResult({ success: true, message: '시간대가 삭제되었습니다.' });
-    }
-  };
 
   const columns: Column<ClassTimeSlot>[] = [
     { header: '시간대 이름', render: (s) => s.name },
     { header: '요일', render: (s) => <span className="badge badge-success">{s.daysOfWeek.replace(/,/g, ', ')}요일</span> },
     { header: '시작 시간', render: (s) => s.startTime },
     { header: '종료 시간', render: (s) => s.endTime },
-    {
-      header: '관리',
-      render: (s) => (
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-          <button className="btn-table-edit" onClick={() => router.push(ROUTES.COMPLEX_TIMESLOT_EDIT(s.seq))}>수정</button>
-          <button className="btn-table-delete" onClick={() => handleDelete(s.seq)}>삭제</button>
-        </div>
-      ),
-    },
   ];
 
   return (
@@ -53,6 +37,7 @@ export default function TimeslotsPage() {
         rowKey={(s) => s.seq}
         headerInfo={<span>총 <strong>{slots.length}</strong>개 시간대</span>}
         emptyMessage="등록된 수업 시간대가 없습니다."
+        onRowClick={(s) => router.push(ROUTES.COMPLEX_TIMESLOT_EDIT(s.seq))}
       />
 
       {result && (

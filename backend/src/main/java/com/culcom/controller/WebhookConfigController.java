@@ -1,17 +1,19 @@
 package com.culcom.controller;
 
+import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
+import com.culcom.dto.webhook.WebhookConfigRequest;
+import com.culcom.dto.webhook.WebhookConfigResponse;
+import com.culcom.dto.webhook.WebhookLogResponse;
 import com.culcom.entity.WebhookConfig;
-import com.culcom.entity.WebhookLog;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.WebhookConfigRepository;
 import com.culcom.repository.WebhookLogRepository;
-import com.culcom.service.AuthService;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,32 +26,53 @@ public class WebhookConfigController {
     private final WebhookConfigRepository webhookRepository;
     private final WebhookLogRepository logRepository;
     private final BranchRepository branchRepository;
-    private final AuthService authService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<WebhookConfig>>> list(HttpSession session) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
-        return ResponseEntity.ok(ApiResponse.ok(webhookRepository.findByBranchSeqOrderByCreatedDateDesc(branchSeq)));
+    public ResponseEntity<ApiResponse<List<WebhookConfigResponse>>> list(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long branchSeq = principal.getSelectedBranchSeq();
+        List<WebhookConfigResponse> responses = webhookRepository.findByBranchSeqOrderByCreatedDateDesc(branchSeq)
+                .stream()
+                .map(WebhookConfigResponse::from)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.ok(responses));
     }
 
     @GetMapping("/{seq}")
-    public ResponseEntity<ApiResponse<WebhookConfig>> get(@PathVariable Long seq) {
+    public ResponseEntity<ApiResponse<WebhookConfigResponse>> get(@PathVariable Long seq) {
         return webhookRepository.findById(seq)
-                .map(w -> ResponseEntity.ok(ApiResponse.ok(w)))
+                .map(w -> ResponseEntity.ok(ApiResponse.ok(WebhookConfigResponse.from(w))))
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<WebhookConfig>> create(
-            @RequestBody WebhookConfig request, HttpSession session) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
-        branchRepository.findById(branchSeq).ifPresent(request::setBranch);
-        return ResponseEntity.ok(ApiResponse.ok("웹훅이 등록되었습니다.", webhookRepository.save(request)));
+    public ResponseEntity<ApiResponse<WebhookConfigResponse>> create(
+            @RequestBody WebhookConfigRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long branchSeq = principal.getSelectedBranchSeq();
+        WebhookConfig config = WebhookConfig.builder()
+                .name(request.getName())
+                .sourceName(request.getSourceName())
+                .sourceDescription(request.getSourceDescription())
+                .httpMethod(request.getHttpMethod())
+                .requestContentType(request.getRequestContentType())
+                .requestHeaders(request.getRequestHeaders())
+                .requestBodySchema(request.getRequestBodySchema())
+                .responseStatusCode(request.getResponseStatusCode())
+                .responseContentType(request.getResponseContentType())
+                .responseBodyTemplate(request.getResponseBodyTemplate())
+                .fieldMapping(request.getFieldMapping())
+                .authType(request.getAuthType())
+                .authConfig(request.getAuthConfig())
+                .isActive(request.getIsActive())
+                .build();
+        branchRepository.findById(branchSeq).ifPresent(config::setBranch);
+        return ResponseEntity.ok(ApiResponse.ok("웹훅이 등록되었습니다.", WebhookConfigResponse.from(webhookRepository.save(config))));
     }
 
     @PutMapping("/{seq}")
-    public ResponseEntity<ApiResponse<WebhookConfig>> update(
-            @PathVariable Long seq, @RequestBody WebhookConfig request) {
+    public ResponseEntity<ApiResponse<WebhookConfigResponse>> update(
+            @PathVariable Long seq, @RequestBody WebhookConfigRequest request) {
         return webhookRepository.findById(seq)
                 .map(w -> {
                     w.setName(request.getName());
@@ -64,9 +87,9 @@ public class WebhookConfigController {
                     w.setResponseBodyTemplate(request.getResponseBodyTemplate());
                     w.setFieldMapping(request.getFieldMapping());
                     w.setAuthType(request.getAuthType());
-                    w.setAuthKey(request.getAuthKey());
+                    w.setAuthConfig(request.getAuthConfig());
                     w.setIsActive(request.getIsActive());
-                    return ResponseEntity.ok(ApiResponse.ok("웹훅이 수정되었습니다.", webhookRepository.save(w)));
+                    return ResponseEntity.ok(ApiResponse.ok("웹훅이 수정되었습니다.", WebhookConfigResponse.from(webhookRepository.save(w))));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -78,22 +101,25 @@ public class WebhookConfigController {
     }
 
     @GetMapping("/logs")
-    public ResponseEntity<ApiResponse<Page<WebhookLog>>> logs(
-            HttpSession session,
+    public ResponseEntity<ApiResponse<Page<WebhookLogResponse>>> logs(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) Long webhookSeq,
             @RequestParam(required = false) String status) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
+        Long branchSeq = principal.getSelectedBranchSeq();
         var pageable = PageRequest.of(page, size);
 
-        Page<WebhookLog> result;
+        Page<WebhookLogResponse> result;
         if (webhookSeq != null) {
-            result = logRepository.findByWebhookConfigSeqOrderByCreatedDateDesc(webhookSeq, pageable);
+            result = logRepository.findByWebhookConfigSeqOrderByCreatedDateDesc(webhookSeq, pageable)
+                    .map(WebhookLogResponse::from);
         } else if (status != null && !status.isBlank()) {
-            result = logRepository.findByBranchSeqAndStatusOrderByCreatedDateDesc(branchSeq, status, pageable);
+            result = logRepository.findByBranchSeqAndStatusOrderByCreatedDateDesc(branchSeq, status, pageable)
+                    .map(WebhookLogResponse::from);
         } else {
-            result = logRepository.findByBranchSeqOrderByCreatedDateDesc(branchSeq, pageable);
+            result = logRepository.findByBranchSeqOrderByCreatedDateDesc(branchSeq, pageable)
+                    .map(WebhookLogResponse::from);
         }
         return ResponseEntity.ok(ApiResponse.ok(result));
     }

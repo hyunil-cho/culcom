@@ -1,15 +1,15 @@
 package com.culcom.controller.message;
 
+import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.message.*;
 import com.culcom.entity.MessageTemplate;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.MessageTemplateRepository;
 import com.culcom.repository.PlaceholderRepository;
-import com.culcom.service.AuthService;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,11 +22,11 @@ public class MessageTemplateController {
     private final MessageTemplateRepository templateRepository;
     private final BranchRepository branchRepository;
     private final PlaceholderRepository placeholderRepository;
-    private final AuthService authService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<MessageTemplateResponse>>> list(HttpSession session) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
+    public ResponseEntity<ApiResponse<List<MessageTemplateResponse>>> list(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long branchSeq = principal.getSelectedBranchSeq();
         List<MessageTemplateResponse> templates = templateRepository
                 .findByBranchSeqOrderByIsDefaultDescLastUpdateDateDesc(branchSeq)
                 .stream()
@@ -44,8 +44,9 @@ public class MessageTemplateController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<MessageTemplateResponse>> create(
-            @RequestBody MessageTemplateCreateRequest request, HttpSession session) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
+            @RequestBody MessageTemplateCreateRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long branchSeq = principal.getSelectedBranchSeq();
         MessageTemplate template = MessageTemplate.builder()
                 .templateName(request.getTemplateName())
                 .description(request.getDescription())
@@ -81,8 +82,9 @@ public class MessageTemplateController {
     }
 
     @PostMapping("/{seq}/set-default")
-    public ResponseEntity<ApiResponse<Void>> setDefault(@PathVariable Long seq, HttpSession session) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
+    public ResponseEntity<ApiResponse<Void>> setDefault(@PathVariable Long seq,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long branchSeq = principal.getSelectedBranchSeq();
 
         // 해당 지점의 기존 기본 템플릿 해제
         templateRepository.findByBranchSeqOrderBySeqDesc(branchSeq).forEach(t -> {

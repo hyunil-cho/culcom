@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { messageTemplateApi, PlaceholderItem } from '@/lib/api';
+import { Input, Textarea } from '@/components/ui/FormInput';
 
 export interface MessageTemplateFormData {
   templateName: string;
@@ -96,12 +97,11 @@ export default function MessageTemplateForm({
         <form onSubmit={onSubmit}>
           <div style={{ marginBottom: '1rem' }}>
             <label className="form-label">템플릿 이름 <span style={{ color: 'var(--danger)' }}>*</span></label>
-            <input
+            <Input
               type="text"
               name="templateName"
               value={form.templateName}
               onChange={onChange}
-              className="form-input"
               placeholder="예: 예약 확인 메시지"
               required
               style={{ width: '100%' }}
@@ -113,12 +113,11 @@ export default function MessageTemplateForm({
 
           <div style={{ marginBottom: '1rem' }}>
             <label className="form-label">설명</label>
-            <input
+            <Input
               type="text"
               name="description"
               value={form.description}
               onChange={onChange}
-              className="form-input"
               placeholder="이 템플릿의 용도를 간단히 설명하세요"
               style={{ width: '100%' }}
             />
@@ -126,12 +125,11 @@ export default function MessageTemplateForm({
 
           <div style={{ marginBottom: '1rem' }}>
             <label className="form-label">메시지 내용 <span style={{ color: 'var(--danger)' }}>*</span></label>
-            <textarea
+            <Textarea
               ref={textareaRef}
               name="messageContext"
               value={form.messageContext}
               onChange={onChange}
-              className="form-input"
               rows={8}
               placeholder="메시지 내용을 입력하세요. 오른쪽 패널에서 플레이스홀더를 클릭하여 삽입할 수 있습니다."
               required

@@ -17,7 +17,9 @@
       "Bash(./gradlew build:*)",
       "Bash(npx next:*)",
       "Bash(npx tsc:*)",
-      "Bash(./gradlew compileJava)"
+      "Bash(./gradlew compileJava)",
+      "WebSearch",
+      "WebFetch(domain:developers.facebook.com)"
     ]
   }
 }

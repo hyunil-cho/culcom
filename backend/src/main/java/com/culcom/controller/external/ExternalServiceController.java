@@ -1,5 +1,6 @@
 package com.culcom.controller.external;
 
+import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.external.CalendarEventRequest;
 import com.culcom.dto.external.CalendarEventResponse;
@@ -7,13 +8,12 @@ import com.culcom.dto.integration.SmsSendRequest;
 import com.culcom.dto.integration.SmsSendResponse;
 import com.culcom.entity.Branch;
 import com.culcom.repository.BranchRepository;
-import com.culcom.service.AuthService;
 import com.culcom.service.SmsService;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URLEncoder;
@@ -31,7 +31,6 @@ import java.time.format.DateTimeParseException;
 public class ExternalServiceController {
 
     private final SmsService smsService;
-    private final AuthService authService;
     private final BranchRepository branchRepository;
 
     // ── SMS ──
@@ -42,8 +41,9 @@ public class ExternalServiceController {
      */
     @PostMapping("/sms/send")
     public ResponseEntity<ApiResponse<SmsSendResponse>> sendSms(
-            @Valid @RequestBody SmsSendRequest request, HttpSession session) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
+            @Valid @RequestBody SmsSendRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long branchSeq = principal.getSelectedBranchSeq();
 
         log.info("SMS 발송 요청 - 지점: {}, 수신: {}, 발신: {}", branchSeq, request.getReceiverPhone(), request.getSenderPhone());
 
@@ -74,8 +74,9 @@ public class ExternalServiceController {
      */
     @PostMapping("/calendar/create-event")
     public ResponseEntity<ApiResponse<CalendarEventResponse>> createCalendarEvent(
-            @Valid @RequestBody CalendarEventRequest request, HttpSession session) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
+            @Valid @RequestBody CalendarEventRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long branchSeq = principal.getSelectedBranchSeq();
 
         // 인터뷰 일시 파싱 (yyyy-MM-dd HH:mm:ss, yyyy-MM-dd HH:mm, yyyy-MM-ddTHH:mm 순으로 시도)
         LocalDateTime interviewTime = null;

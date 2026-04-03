@@ -1,15 +1,19 @@
 package com.culcom.service;
 
+import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.entity.Branch;
 import com.culcom.entity.UserInfo;
 import com.culcom.entity.enums.UserRole;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.UserInfoRepository;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,9 +25,7 @@ public class AuthService {
 
     private final UserInfoRepository userInfoRepository;
     private final BranchRepository branchRepository;
-    private final String USER_SEQ = "userSeq";
-    private final String ROLE = "role";
-    private final String CUR_BRANCH_SEQ = "selectedBranchSeq";
+    private final SecurityContextRepository securityContextRepository;
 
     /**
      * 기존 Go 앱과의 호환성을 위해 평문 비밀번호도 지원.
@@ -34,40 +36,32 @@ public class AuthService {
                 .filter(user -> user.getUserPassword().equals(password));
     }
 
-    public void loginSession(HttpSession session, UserInfo user) {
-        session.setAttribute(USER_SEQ, user.getSeq());
-        session.setAttribute(ROLE, user.getRole());
+    public void loginSession(HttpServletRequest request, HttpServletResponse response,
+                             UserInfo user, Long initialBranchSeq) {
+        var principal = new CustomUserPrincipal(
+                user.getSeq(), user.getUserId(), user.getName(),
+                user.getRole(), initialBranchSeq
+        );
 
         var auth = new UsernamePasswordAuthenticationToken(
-                user.getUserId(),
+                principal,
                 null,
                 List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
         );
-        var context = SecurityContextHolder.createEmptyContext();
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(auth);
         SecurityContextHolder.setContext(context);
-        session.setAttribute("SPRING_SECURITY_CONTEXT", context);
+        securityContextRepository.saveContext(context, request, response);
     }
 
-    public Long getSessionUserSeq(HttpSession session) {
-        return (Long) session.getAttribute(USER_SEQ);
-    }
-
-    public UserRole getSessionRole(HttpSession session) {
-        return (UserRole) session.getAttribute(ROLE);
-    }
-
-    public Long getSessionBranchSeq(HttpSession session) {
-        return (Long) session.getAttribute(CUR_BRANCH_SEQ);
-    }
-
-    public void setSelectedBranch(HttpSession session, Long branchSeq) {
-        session.setAttribute(CUR_BRANCH_SEQ, branchSeq);
-    }
-
-    public UserInfo getUserInfo(HttpSession session){
-        Long sessionUserSeq = this.getSessionUserSeq(session);
-        return this.userInfoRepository.findById(sessionUserSeq).orElseThrow(()->new RuntimeException("user not found"));
+    public void updateSelectedBranch(HttpServletRequest request, HttpServletResponse response,
+                                     Long branchSeq) {
+        SecurityContext context = SecurityContextHolder.getContext();
+        var auth = (UsernamePasswordAuthenticationToken) context.getAuthentication();
+        var principal = (CustomUserPrincipal) auth.getPrincipal();
+        principal.setSelectedBranchSeq(branchSeq);
+        securityContextRepository.saveContext(context, request, response);
     }
 
     /**

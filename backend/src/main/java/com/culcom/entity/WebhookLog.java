@@ -35,6 +35,14 @@ public class WebhookLog {
     @Column(name = "raw_request", columnDefinition = "text")
     private String rawRequest;
 
+    /** 파싱된 요청 파라미터 (JSON) — 통계/집계용 */
+    @Column(name = "parsed_params", columnDefinition = "text")
+    private String parsedParams;
+
+    /** 필드 매핑 후 추출된 고객 데이터 (JSON) — 통계/집계용 */
+    @Column(name = "mapped_data", columnDefinition = "text")
+    private String mappedData;
+
     /** 처리 결과 (SUCCESS, FAILED, DUPLICATE 등) */
     @Column(nullable = false, length = 20)
     @Builder.Default

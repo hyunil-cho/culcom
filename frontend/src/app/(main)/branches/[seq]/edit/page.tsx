@@ -46,7 +46,6 @@ export default function BranchEditPage() {
         onSubmit={handleSubmit}
         backHref={ROUTES.BRANCH_DETAIL(seq)}
         backLabel="← 상세로"
-        cancelHref={ROUTES.BRANCH_DETAIL(seq)}
         seq={seq}
       />
       {result && (

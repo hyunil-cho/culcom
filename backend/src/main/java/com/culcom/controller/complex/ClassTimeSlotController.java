@@ -6,8 +6,8 @@ import com.culcom.dto.complex.ClassTimeSlotResponse;
 import com.culcom.entity.ClassTimeSlot;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ClassTimeSlotRepository;
-import com.culcom.service.AuthService;
-import jakarta.servlet.http.HttpSession;
+import com.culcom.config.security.CustomUserPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,11 +21,10 @@ public class ClassTimeSlotController {
 
     private final ClassTimeSlotRepository timeSlotRepository;
     private final BranchRepository branchRepository;
-    private final AuthService authService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ClassTimeSlotResponse>>> list(HttpSession session) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
+    public ResponseEntity<ApiResponse<List<ClassTimeSlotResponse>>> list(@AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long branchSeq = principal.getSelectedBranchSeq();
         List<ClassTimeSlotResponse> result = timeSlotRepository.findByBranchSeq(branchSeq)
                 .stream().map(ClassTimeSlotResponse::from).toList();
         return ResponseEntity.ok(ApiResponse.ok(result));
@@ -33,8 +32,8 @@ public class ClassTimeSlotController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<ClassTimeSlotResponse>> create(
-            @RequestBody ClassTimeSlotRequest request, HttpSession session) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
+            @RequestBody ClassTimeSlotRequest request, @AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long branchSeq = principal.getSelectedBranchSeq();
         ClassTimeSlot timeSlot = ClassTimeSlot.builder()
                 .name(request.getName())
                 .daysOfWeek(request.getDaysOfWeek())

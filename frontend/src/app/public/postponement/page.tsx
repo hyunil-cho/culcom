@@ -8,6 +8,7 @@ import {
   type PublicMembershipInfo,
 } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import { Input, PhoneInput, Select, Textarea } from '@/components/ui/FormInput';
 
 export default function PublicPostponementPage() {
   const router = useRouter();
@@ -128,11 +129,11 @@ export default function PublicPostponementPage() {
         {step === 1 && (
           <div>
             <FormGroup label="이름">
-              <input className="form-input" placeholder="성함을 입력하세요" value={searchName}
+              <Input placeholder="성함을 입력하세요" value={searchName}
                 onChange={(e) => setSearchName(e.target.value)} onKeyDown={handleKeyPress} />
             </FormGroup>
             <FormGroup label="연락처">
-              <input className="form-input" type="tel" placeholder="01000000000" value={searchPhone}
+              <PhoneInput placeholder="01000000000" value={searchPhone}
                 onChange={(e) => setSearchPhone(e.target.value)} onKeyDown={handleKeyPress} />
             </FormGroup>
             <button onClick={handleSearch} style={btnStyle('#10b981', '#059669')}>회원 검색</button>
@@ -182,33 +183,33 @@ export default function PublicPostponementPage() {
 
             <form onSubmit={handleSubmit}>
               <FormGroup label="수강 중인 수업">
-                <select className="form-input" value={currentClass} onChange={(e) => handleClassChange(e.target.value)} required>
+                <Select value={currentClass} onChange={(e) => handleClassChange(e.target.value)} required>
                   <option value="">수업을 선택해 주세요</option>
                   {member.classes.map(c => (
                     <option key={c.name} value={c.name}>{c.name} [{c.timeSlotName}]</option>
                   ))}
-                </select>
+                </Select>
               </FormGroup>
 
               <FormGroup label="연기 요청 기간">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <input type="date" className="form-input" value={startDate}
+                  <Input type="date" value={startDate}
                     onChange={(e) => setStartDate(e.target.value)} required />
                   <span>~</span>
-                  <input type="date" className="form-input" value={endDate}
+                  <Input type="date" value={endDate}
                     onChange={(e) => setEndDate(e.target.value)} required />
                 </div>
               </FormGroup>
 
               <FormGroup label="연기 사유">
-                <select className="form-input" value={reasonSelect}
+                <Select value={reasonSelect}
                   onChange={(e) => { setReasonSelect(e.target.value); setReasonCustom(''); }} required>
                   <option value="">사유를 선택해 주세요</option>
                   {reasons.map(r => <option key={r} value={r}>{r}</option>)}
                   <option value="기타">기타 (직접 입력)</option>
-                </select>
+                </Select>
                 {reasonSelect === '기타' && (
-                  <textarea className="form-input" placeholder="연기 사유를 직접 입력해주세요."
+                  <Textarea placeholder="연기 사유를 직접 입력해주세요."
                     value={reasonCustom} onChange={(e) => setReasonCustom(e.target.value)}
                     required style={{ marginTop: 10, minHeight: 90, resize: 'vertical', fontFamily: 'inherit' }} />
                 )}

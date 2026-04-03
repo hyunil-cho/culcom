@@ -35,6 +35,8 @@ export const ROUTES = {
   // 고객 관리
   CUSTOMERS: R.CUSTOMERS,
   CUSTOMERS_ADD: `${R.CUSTOMERS}/add`,
+  CUSTOMER_DETAIL: (seq: number) => `${R.CUSTOMERS}/${seq}`,
+  CUSTOMER_EDIT: (seq: number) => `${R.CUSTOMERS}/${seq}/edit`,
 
   // 지점 관리
   BRANCHES: R.BRANCHES,
@@ -45,6 +47,7 @@ export const ROUTES = {
   // 사용자 관리
   USERS: R.USERS,
   USERS_CREATE: `${R.USERS}/create`,
+  USER_EDIT: (seq: number) => `${R.USERS}/${seq}/edit`,
 
   // 공지사항
   NOTICES: R.NOTICES,
@@ -74,7 +77,11 @@ export const ROUTES = {
   COMPLEX_CLASSES_ADD: `${R.COMPLEX}/classes/add`,
   COMPLEX_CLASS_EDIT: (seq: number) => `${R.COMPLEX}/classes/${seq}/edit`,
   COMPLEX_MEMBERS: `${R.COMPLEX}/members`,
+  COMPLEX_MEMBERS_ADD: `${R.COMPLEX}/members/add`,
+  COMPLEX_MEMBER_EDIT: (seq: number) => `${R.COMPLEX}/members/${seq}/edit`,
   COMPLEX_STAFFS: `${R.COMPLEX}/staffs`,
+  COMPLEX_STAFFS_ADD: `${R.COMPLEX}/staffs/add`,
+  COMPLEX_STAFF_EDIT: (seq: number) => `${R.COMPLEX}/staffs/${seq}/edit`,
   COMPLEX_ATTENDANCE: `${R.COMPLEX}/attendance`,
   COMPLEX_MEMBERSHIPS: `${R.COMPLEX}/memberships`,
   COMPLEX_MEMBERSHIPS_ADD: `${R.COMPLEX}/memberships/add`,

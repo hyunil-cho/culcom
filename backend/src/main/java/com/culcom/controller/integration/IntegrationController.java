@@ -1,5 +1,6 @@
 package com.culcom.controller.integration;
 
+import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.integration.IntegrationServiceResponse;
 import com.culcom.dto.integration.SmsConfigResponse;
@@ -10,11 +11,10 @@ import com.culcom.entity.ThirdPartyService;
 import com.culcom.repository.BranchThirdPartyMappingRepository;
 import com.culcom.repository.MymunjaConfigInfoRepository;
 import com.culcom.repository.ThirdPartyServiceRepository;
-import com.culcom.service.AuthService;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,11 +30,11 @@ public class IntegrationController {
     private final BranchThirdPartyMappingRepository mappingRepository;
     private final ThirdPartyServiceRepository thirdPartyServiceRepository;
     private final MymunjaConfigInfoRepository mymunjaConfigInfoRepository;
-    private final AuthService authService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<IntegrationServiceResponse>>> list(HttpSession session) {
-        Long sessionBranchSeq = this.authService.getSessionBranchSeq(session);
+    public ResponseEntity<ApiResponse<List<IntegrationServiceResponse>>> list(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long sessionBranchSeq = principal.getSelectedBranchSeq();
 
         List<BranchThirdPartyMapping> mappings = mappingRepository.findByBranchSeq(sessionBranchSeq);
 
@@ -83,8 +83,9 @@ public class IntegrationController {
     }
 
     @GetMapping("/sms-config")
-    public ResponseEntity<ApiResponse<SmsConfigResponse>> getSmsConfig(HttpSession session) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
+    public ResponseEntity<ApiResponse<SmsConfigResponse>> getSmsConfig(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long branchSeq = principal.getSelectedBranchSeq();
 
         List<BranchThirdPartyMapping> mappings = mappingRepository.findByBranchSeq(branchSeq);
         BranchThirdPartyMapping smsMapping = mappings.stream()
@@ -129,8 +130,9 @@ public class IntegrationController {
     @PostMapping("/sms-config")
     @Transactional
     public ResponseEntity<ApiResponse<Void>> saveSmsConfig(
-            @Valid @RequestBody SmsConfigSaveRequest request, HttpSession session) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
+            @Valid @RequestBody SmsConfigSaveRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long branchSeq = principal.getSelectedBranchSeq();
 
         BranchThirdPartyMapping mapping = mappingRepository
                 .findByBranchSeqAndThirdPartyServiceSeq(branchSeq, request.getServiceId())

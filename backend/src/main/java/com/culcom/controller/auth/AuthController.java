@@ -1,5 +1,6 @@
 package com.culcom.controller.auth;
 
+import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.auth.LoginRequest;
 import com.culcom.dto.auth.SessionInfo;
@@ -9,10 +10,12 @@ import com.culcom.entity.enums.UserRole;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.UserInfoRepository;
 import com.culcom.service.AuthService;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,12 +32,11 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<SessionInfo>> login(
             @Valid @RequestBody LoginRequest request,
-            HttpSession session) {
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
 
         return authService.authenticate(request.getUserId(), request.getPassword())
                 .map(user -> {
-                    authService.loginSession(session, user);
-
                     Long branchSeq = null;
                     String branchName = null;
 
@@ -44,9 +46,7 @@ public class AuthController {
                         branchName = managedBranches.get(0).getBranchName();
                     }
 
-                    if (branchSeq != null) {
-                        authService.setSelectedBranch(session, branchSeq);
-                    }
+                    authService.loginSession(httpRequest, httpResponse, user, branchSeq);
 
                     var info = SessionInfo.builder()
                             .userSeq(user.getSeq())
@@ -63,19 +63,13 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<SessionInfo>> me(HttpSession session) {
-        Long userSeq = authService.getSessionUserSeq(session);
-        if (userSeq == null) {
+    public ResponseEntity<ApiResponse<SessionInfo>> me(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        if (principal == null) {
             return ResponseEntity.status(401).body(ApiResponse.error("인증되지 않았습니다."));
         }
 
-        UserInfo user = userInfoRepository.findById(userSeq)
-                .orElse(null);
-        if (user == null) {
-            return ResponseEntity.status(401).body(ApiResponse.error("인증되지 않았습니다."));
-        }
-
-        Long branchSeq = authService.getSessionBranchSeq(session);
+        Long branchSeq = principal.getSelectedBranchSeq();
         String branchName = null;
         if (branchSeq != null) {
             branchName = branchRepository.findById(branchSeq)
@@ -83,10 +77,10 @@ public class AuthController {
         }
 
         var info = SessionInfo.builder()
-                .userSeq(userSeq)
-                .userId(user.getUserId())
-                .name(user.getName())
-                .role(user.getRole().name())
+                .userSeq(principal.getUserSeq())
+                .userId(principal.getUserId())
+                .name(principal.getName())
+                .role(principal.getRole().name())
                 .selectedBranchSeq(branchSeq)
                 .selectedBranchName(branchName)
                 .build();
@@ -96,14 +90,15 @@ public class AuthController {
 
     @PostMapping("/branch/{branchSeq}")
     public ResponseEntity<ApiResponse<Void>> selectBranch(
-            @PathVariable Long branchSeq, HttpSession session) {
+            @PathVariable Long branchSeq,
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
         if (!branchRepository.existsById(branchSeq)) {
             return ResponseEntity.badRequest().body(ApiResponse.error("존재하지 않는 지점입니다."));
         }
-        UserRole role = authService.getSessionRole(session);
-        if (!UserRole.ROOT.equals(role)) {
-            // BRANCH_MANAGER / STAFF: 관리 지점만 전환 가능
-            UserInfo user = userInfoRepository.findById(authService.getSessionUserSeq(session))
+        if (!UserRole.ROOT.equals(principal.getRole())) {
+            UserInfo user = userInfoRepository.findById(principal.getUserSeq())
                     .orElseThrow(() -> new RuntimeException("user not found"));
             List<Long> managedBranchSeqs = authService.getManagedBranches(user).stream()
                     .map(Branch::getSeq).toList();
@@ -111,7 +106,7 @@ public class AuthController {
                 return ResponseEntity.status(403).body(ApiResponse.error("접근 권한이 없는 지점입니다."));
             }
         }
-        authService.setSelectedBranch(session, branchSeq);
+        authService.updateSelectedBranch(httpRequest, httpResponse, branchSeq);
         return ResponseEntity.ok(ApiResponse.ok("지점 변경 완료", null));
     }
 }

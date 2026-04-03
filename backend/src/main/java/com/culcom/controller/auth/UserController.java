@@ -1,5 +1,6 @@
 package com.culcom.controller.auth;
 
+import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.auth.UserCreateRequest;
 import com.culcom.dto.auth.UserResponse;
@@ -7,12 +8,11 @@ import com.culcom.entity.UserInfo;
 import com.culcom.entity.enums.UserRole;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.UserInfoRepository;
-import com.culcom.service.AuthService;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,13 +24,13 @@ public class UserController {
 
     private final UserInfoRepository userInfoRepository;
     private final BranchRepository branchRepository;
-    private final AuthService authService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<UserResponse>>> list(HttpSession session) {
-        UserRole role = authService.getSessionRole(session);
-        Long callerSeq = authService.getSessionUserSeq(session);
-        UserInfo creator = userInfoRepository.findById(callerSeq).orElseThrow(()->new RuntimeException("creator is not present"));
+    public ResponseEntity<ApiResponse<List<UserResponse>>> list(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        UserRole role = principal.getRole();
+        UserInfo creator = userInfoRepository.findById(principal.getUserSeq())
+                .orElseThrow(() -> new RuntimeException("creator is not present"));
 
         List<UserInfo> users;
         if (UserRole.ROOT.equals(role)) {
@@ -47,10 +47,11 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<UserResponse>> create(
-            @Valid @RequestBody UserCreateRequest request, HttpSession session) {
-        UserRole role = authService.getSessionRole(session);
-        Long callerSeq = authService.getSessionUserSeq(session);
-        UserInfo creator = userInfoRepository.findById(callerSeq).orElseThrow(()->new RuntimeException("creator is not present"));
+            @Valid @RequestBody UserCreateRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        UserRole role = principal.getRole();
+        UserInfo creator = userInfoRepository.findById(principal.getUserSeq())
+                .orElseThrow(() -> new RuntimeException("creator is not present"));
 
         if (userInfoRepository.findByUserId(request.getUserId()).isPresent()) {
             return ResponseEntity.badRequest().body(ApiResponse.error("이미 존재하는 아이디입니다."));
@@ -64,7 +65,6 @@ public class UserController {
                 .createdBy(creator);
 
         if (UserRole.ROOT.equals(role)) {
-            // ROOT → BRANCH_MANAGER 생성 (지점 선택은 선택사항)
             builder.role(UserRole.BRANCH_MANAGER);
         } else if (UserRole.BRANCH_MANAGER.equals(role)) {
             builder.role(UserRole.STAFF);
@@ -78,9 +78,9 @@ public class UserController {
 
     @PutMapping("/{seq}")
     public ResponseEntity<ApiResponse<UserResponse>> update(
-            @PathVariable Long seq, @RequestBody UserCreateRequest request, HttpSession session) {
-        UserInfo subject = getUserInfo(session);
-
+            @PathVariable Long seq, @RequestBody UserCreateRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        UserInfo subject = getUserInfo(principal.getUserSeq());
 
         return userInfoRepository.findById(seq)
                 .map(user -> {
@@ -97,14 +97,15 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    private @NonNull UserInfo getUserInfo(HttpSession session) {
-        Long sessionUserSeq = authService.getSessionUserSeq(session);
-        return this.userInfoRepository.findById(sessionUserSeq).orElseThrow(()->new RuntimeException("user not found"));
+    private @NonNull UserInfo getUserInfo(Long userSeq) {
+        return this.userInfoRepository.findById(userSeq)
+                .orElseThrow(() -> new RuntimeException("user not found"));
     }
 
     @DeleteMapping("/{seq}")
-    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long seq, HttpSession session) {
-        UserInfo subject = getUserInfo(session);
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long seq,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        UserInfo subject = getUserInfo(principal.getUserSeq());
 
         return userInfoRepository.findById(seq)
                 .map(user -> {

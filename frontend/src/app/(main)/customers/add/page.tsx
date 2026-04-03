@@ -7,6 +7,7 @@ import { cleanPhoneNumber, verifyPhoneNumber } from '@/lib/commonUtils';
 import { ROUTES } from '@/lib/routes';
 import ResultModal from '@/components/ui/ResultModal';
 import FormField from '@/components/ui/FormField';
+import { Input, PhoneInput, Textarea } from '@/components/ui/FormInput';
 
 export default function CustomerAddPage() {
   const [form, setForm] = useState({
@@ -46,36 +47,19 @@ export default function CustomerAddPage() {
         </div>
         <div className="form-body">
           <FormField label="이름" required>
-            <input
-              className="form-input"
-              placeholder="이름을 입력하세요"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-            />
+            <Input placeholder="이름을 입력하세요" value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })} required />
           </FormField>
 
           <FormField label="전화번호" required hint="하이픈 없이 숫자만 입력해주세요 (예: 01012345678)">
-            <input
-              className="form-input"
-              type="tel"
-              placeholder="01012345678"
-              maxLength={11}
-              value={form.phoneNumber}
-              onChange={(e) => handlePhoneChange(e.target.value)}
-              required
-            />
+            <PhoneInput value={form.phoneNumber}
+              onChange={(e) => handlePhoneChange(e.target.value)} required />
           </FormField>
 
           <FormField label="코멘트" hint="최대 200자까지 입력 가능합니다.">
-            <textarea
-              className="form-input"
-              rows={4}
-              placeholder="고객에 대한 메모를 입력하세요 (선택사항)"
-              maxLength={200}
-              value={form.comment}
-              onChange={(e) => setForm({ ...form, comment: e.target.value })}
-            />
+            <Textarea rows={4} placeholder="고객에 대한 메모를 입력하세요 (선택사항)"
+              maxLength={200} value={form.comment}
+              onChange={(e) => setForm({ ...form, comment: e.target.value })} />
           </FormField>
         </div>
       </div>

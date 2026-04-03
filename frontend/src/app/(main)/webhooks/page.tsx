@@ -20,20 +20,9 @@ export default function WebhooksPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleDelete = async (seq: number) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
-    const res = await webhookApi.delete(seq);
-    if (res.success) setResult({ success: true, message: '웹훅이 삭제되었습니다.' });
-  };
 
   const columns: Column<WebhookConfig>[] = [
-    {
-      header: '이름',
-      render: (w) => (
-        <a href={ROUTES.WEBHOOK_EDIT(w.seq)} style={{ color: '#4a90e2', textDecoration: 'none', fontWeight: 'bold' }}
-          onClick={(e) => { e.preventDefault(); router.push(ROUTES.WEBHOOK_EDIT(w.seq)); }}>{w.name}</a>
-      ),
-    },
+    { header: '이름', render: (w) => <strong>{w.name}</strong> },
     { header: '소스', render: (w) => <span style={{ fontWeight: 600 }}>{w.sourceName}</span> },
     {
       header: '메서드',
@@ -56,15 +45,6 @@ export default function WebhooksPage() {
         </span>
       ),
     },
-    {
-      header: '관리',
-      render: (w) => (
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-          <button className="btn-table-edit" onClick={() => router.push(ROUTES.WEBHOOK_EDIT(w.seq))}>수정</button>
-          <button className="btn-table-delete" onClick={() => handleDelete(w.seq)}>삭제</button>
-        </div>
-      ),
-    },
   ];
 
   return (
@@ -82,6 +62,7 @@ export default function WebhooksPage() {
         data={webhooks}
         rowKey={(w) => w.seq}
         emptyMessage="등록된 웹훅이 없습니다."
+        onRowClick={(w) => router.push(ROUTES.WEBHOOK_EDIT(w.seq))}
       />
 
       {result && (

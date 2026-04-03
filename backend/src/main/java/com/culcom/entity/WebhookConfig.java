@@ -60,8 +60,9 @@ public class WebhookConfig {
     @Column(name = "auth_type", length = 20)
     private String authType;
 
-    @Column(name = "auth_key", length = 200)
-    private String authKey;
+    /** 인증 타입별 설정 (JSON). 예: {"key":"xxx"}, {"secret":"xxx","verify_token":"yyy"} */
+    @Column(name = "auth_config", columnDefinition = "text")
+    private String authConfig;
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default

@@ -30,7 +30,6 @@ export default function BranchAddPage() {
         onSubmit={handleSubmit}
         backHref={ROUTES.BRANCHES}
         backLabel="← 목록으로"
-        cancelHref={ROUTES.BRANCHES}
       />
       {result && (
         <ResultModal

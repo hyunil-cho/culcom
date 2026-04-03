@@ -163,6 +163,7 @@ export interface Customer {
 
 export const customerApi = {
   list: (params?: string) => api.get<PageResponse<Customer>>(`${API.CUSTOMERS}${params ? `?${params}` : ''}`),
+  get: (seq: number) => api.get<Customer>(API.CUSTOMER(seq)),
   create: (data: Partial<Customer>) => api.post<Customer>(API.CUSTOMERS, data),
   update: (seq: number, data: Partial<Customer>) => api.put<Customer>(API.CUSTOMER(seq), data),
   delete: (seq: number) => api.delete<void>(API.CUSTOMER(seq)),
@@ -659,7 +660,6 @@ export interface WebhookConfig {
   name: string;
   sourceName: string;
   sourceDescription: string | null;
-  endpointPath: string;
   httpMethod: string;
   requestContentType: string;
   requestHeaders: string | null;
@@ -669,10 +669,8 @@ export interface WebhookConfig {
   responseBodyTemplate: string | null;
   fieldMapping: string | null;
   authType: string | null;
-  authKey: string | null;
+  authConfig: string | null;
   isActive: boolean;
-  lambdaFunctionName: string | null;
-  lambdaStatus: string | null;
   createdDate: string;
 }
 
@@ -680,7 +678,6 @@ export interface WebhookConfigRequest {
   name: string;
   sourceName: string;
   sourceDescription?: string;
-  endpointPath: string;
   httpMethod: string;
   requestContentType: string;
   requestHeaders?: string;
@@ -690,7 +687,7 @@ export interface WebhookConfigRequest {
   responseBodyTemplate?: string;
   fieldMapping?: string;
   authType?: string;
-  authKey?: string;
+  authConfig?: string;
   isActive: boolean;
 }
 

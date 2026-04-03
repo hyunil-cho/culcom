@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { webhookApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
-import WebhookForm, { emptyWebhookForm, validateWebhookForm, fieldMappingsToJson, type WebhookFormData } from '../WebhookForm';
+import WebhookForm, { emptyWebhookForm, validateWebhookForm, fieldMappingsToJson, authConfigToJson, type WebhookFormData } from '../WebhookForm';
 import ResultModal from '@/components/ui/ResultModal';
 
 export default function WebhookAddPage() {
@@ -26,7 +26,7 @@ export default function WebhookAddPage() {
       responseBodyTemplate: form.responseBodyTemplate || undefined,
       fieldMapping: fieldMappingsToJson(form.fieldMappings),
       authType: form.authType || undefined,
-      authKey: form.authKey || undefined,
+      authConfig: form.authType ? authConfigToJson(form.authConfig) : undefined,
       isActive: form.isActive,
     });
     if (res.success) {

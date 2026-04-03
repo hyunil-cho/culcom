@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { messageTemplateApi, settingsApi, externalApi, MessageTemplateItem } from '@/lib/api';
 import { usePlaceholderResolver } from '@/lib/usePlaceholderResolver';
+import { Select, Textarea } from '@/components/ui/FormInput';
 
 interface SmsModalProps {
   customerName: string;
@@ -138,10 +139,9 @@ export default function SmsModal({ customerName, customerPhone, interviewDate, o
           {mode === 'template' && (
             <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, fontSize: '0.9rem' }}>템플릿 선택</label>
-              <select
+              <Select
                 value={selectedTemplateSeq}
                 onChange={(e) => setSelectedTemplateSeq(e.target.value ? Number(e.target.value) : '')}
-                className="form-input"
                 style={{ width: '100%' }}
               >
                 <option value="">템플릿을 선택하세요</option>
@@ -150,35 +150,33 @@ export default function SmsModal({ customerName, customerPhone, interviewDate, o
                     {t.templateName}{t.isDefault ? ' (기본)' : ''}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           )}
 
           {/* 발신번호 */}
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, fontSize: '0.9rem' }}>발신번호</label>
-            <select
+            <Select
               value={senderPhone}
               onChange={(e) => setSenderPhone(e.target.value)}
-              className="form-input"
               style={{ width: '100%' }}
             >
               <option value="">발신번호를 선택하세요</option>
               {senderNumbers.map(p => (
                 <option key={p} value={p}>{p}</option>
               ))}
-            </select>
+            </Select>
           </div>
 
           {/* 메시지 내용 */}
           <div style={{ marginBottom: '0.5rem' }}>
             <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, fontSize: '0.9rem' }}>메시지 내용</label>
-            <textarea
+            <Textarea
               ref={textareaRef}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="메시지 내용을 입력하세요..."
-              className="form-input"
               rows={7}
               style={{ width: '100%', resize: 'vertical', lineHeight: 1.6 }}
             />

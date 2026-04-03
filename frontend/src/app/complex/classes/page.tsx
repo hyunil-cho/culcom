@@ -31,23 +31,9 @@ export default function ClassesPage() {
 
   const handlePageChange = (p: number) => { setPage(p); load(p); };
 
-  const handleDelete = async (seq: number) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
-    const res = await classApi.delete(seq);
-    if (res.success) setResult({ success: true, message: '수업이 삭제되었습니다.' });
-  };
 
   const columns: Column<ComplexClass>[] = [
-    {
-      header: '수업 이름',
-      render: (c) => (
-        <a
-          href={ROUTES.COMPLEX_CLASS_EDIT(c.seq)}
-          style={{ color: '#4a90e2', textDecoration: 'none', fontWeight: 'bold' }}
-          onClick={(e) => { e.preventDefault(); router.push(ROUTES.COMPLEX_CLASS_EDIT(c.seq)); }}
-        >{c.name}</a>
-      ),
-    },
+    { header: '수업 이름', render: (c) => <strong>{c.name}</strong> },
     {
       header: '담당 강사',
       render: (c) => c.staff?.name
@@ -70,15 +56,6 @@ export default function ClassesPage() {
         <span style={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block' }}>
           {c.description ?? '-'}
         </span>
-      ),
-    },
-    {
-      header: '관리',
-      render: (c) => (
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-          <button className="btn-table-edit" onClick={() => router.push(ROUTES.COMPLEX_CLASS_EDIT(c.seq))}>수정</button>
-          <button className="btn-table-delete" onClick={() => handleDelete(c.seq)}>삭제</button>
-        </div>
       ),
     },
   ];
@@ -106,6 +83,7 @@ export default function ClassesPage() {
         page={page}
         totalPages={totalPages}
         onPageChange={handlePageChange}
+        onRowClick={(c) => router.push(ROUTES.COMPLEX_CLASS_EDIT(c.seq))}
       />
 
       {result && (

@@ -1,6 +1,8 @@
 package com.culcom.controller.complex;
 
 import com.culcom.dto.ApiResponse;
+import com.culcom.dto.complex.MembershipRequest;
+import com.culcom.dto.complex.MembershipResponse;
 import com.culcom.entity.Membership;
 import com.culcom.repository.MembershipRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,32 +19,40 @@ public class MembershipController {
     private final MembershipRepository membershipRepository;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Membership>>> list() {
-        return ResponseEntity.ok(ApiResponse.ok(membershipRepository.findAll()));
+    public ResponseEntity<ApiResponse<List<MembershipResponse>>> list() {
+        List<MembershipResponse> result = membershipRepository.findAll()
+                .stream().map(MembershipResponse::from).toList();
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
     @GetMapping("/{seq}")
-    public ResponseEntity<ApiResponse<Membership>> get(@PathVariable Long seq) {
+    public ResponseEntity<ApiResponse<MembershipResponse>> get(@PathVariable Long seq) {
         return membershipRepository.findById(seq)
-                .map(m -> ResponseEntity.ok(ApiResponse.ok(m)))
+                .map(m -> ResponseEntity.ok(ApiResponse.ok(MembershipResponse.from(m))))
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Membership>> create(@RequestBody Membership membership) {
-        return ResponseEntity.ok(ApiResponse.ok("멤버십 추가 완료", membershipRepository.save(membership)));
+    public ResponseEntity<ApiResponse<MembershipResponse>> create(@RequestBody MembershipRequest req) {
+        Membership membership = Membership.builder()
+                .name(req.getName())
+                .duration(req.getDuration())
+                .count(req.getCount())
+                .price(req.getPrice())
+                .build();
+        return ResponseEntity.ok(ApiResponse.ok("멤버십 추가 완료", MembershipResponse.from(membershipRepository.save(membership))));
     }
 
     @PutMapping("/{seq}")
-    public ResponseEntity<ApiResponse<Membership>> update(
-            @PathVariable Long seq, @RequestBody Membership request) {
+    public ResponseEntity<ApiResponse<MembershipResponse>> update(
+            @PathVariable Long seq, @RequestBody MembershipRequest req) {
         return membershipRepository.findById(seq)
                 .map(m -> {
-                    m.setName(request.getName());
-                    m.setDuration(request.getDuration());
-                    m.setCount(request.getCount());
-                    m.setPrice(request.getPrice());
-                    return ResponseEntity.ok(ApiResponse.ok("멤버십 수정 완료", membershipRepository.save(m)));
+                    m.setName(req.getName());
+                    m.setDuration(req.getDuration());
+                    m.setCount(req.getCount());
+                    m.setPrice(req.getPrice());
+                    return ResponseEntity.ok(ApiResponse.ok("멤버십 수정 완료", MembershipResponse.from(membershipRepository.save(m))));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }

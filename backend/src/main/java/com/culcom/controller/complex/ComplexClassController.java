@@ -1,21 +1,21 @@
 package com.culcom.controller.complex;
 
 import com.culcom.dto.ApiResponse;
+import com.culcom.dto.complex.ComplexClassRequest;
+import com.culcom.dto.complex.ComplexClassResponse;
 import com.culcom.entity.ComplexClass;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ClassTimeSlotRepository;
 import com.culcom.repository.ComplexClassRepository;
 import com.culcom.repository.ComplexStaffRepository;
-import com.culcom.service.AuthService;
-import jakarta.servlet.http.HttpSession;
+import com.culcom.config.security.CustomUserPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/complex/classes")
@@ -26,53 +26,60 @@ public class ComplexClassController {
     private final BranchRepository branchRepository;
     private final ClassTimeSlotRepository timeSlotRepository;
     private final ComplexStaffRepository staffRepository;
-    private final AuthService authService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<ComplexClass>>> list(
-            HttpSession session,
+    public ResponseEntity<ApiResponse<Page<ComplexClassResponse>>> list(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String keyword) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
+        Long branchSeq = principal.getSelectedBranchSeq();
         var pageable = PageRequest.of(page, size);
         Page<ComplexClass> result = (keyword != null && !keyword.isBlank())
                 ? classRepository.searchByBranchSeq(branchSeq, keyword, pageable)
                 : classRepository.findByBranchSeqOrderBySortOrder(branchSeq, pageable);
-        return ResponseEntity.ok(ApiResponse.ok(result));
+        return ResponseEntity.ok(ApiResponse.ok(result.map(ComplexClassResponse::from)));
     }
 
     @GetMapping("/{seq}")
-    public ResponseEntity<ApiResponse<ComplexClass>> get(@PathVariable Long seq) {
+    public ResponseEntity<ApiResponse<ComplexClassResponse>> get(@PathVariable Long seq) {
         return classRepository.findById(seq)
-                .map(c -> ResponseEntity.ok(ApiResponse.ok(c)))
+                .map(c -> ResponseEntity.ok(ApiResponse.ok(ComplexClassResponse.from(c))))
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<ComplexClass>> create(
-            @RequestBody ComplexClass request, HttpSession session) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
-        branchRepository.findById(branchSeq).ifPresent(request::setBranch);
-        return ResponseEntity.ok(ApiResponse.ok("수업 추가 완료", classRepository.save(request)));
+    public ResponseEntity<ApiResponse<ComplexClassResponse>> create(
+            @RequestBody ComplexClassRequest req, @AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long branchSeq = principal.getSelectedBranchSeq();
+        ComplexClass entity = ComplexClass.builder()
+                .name(req.getName())
+                .description(req.getDescription())
+                .capacity(req.getCapacity())
+                .sortOrder(req.getSortOrder())
+                .branch(branchRepository.getReferenceById(branchSeq))
+                .timeSlot(timeSlotRepository.getReferenceById(req.getTimeSlotSeq()))
+                .staff(req.getStaffSeq() != null ? staffRepository.getReferenceById(req.getStaffSeq()) : null)
+                .build();
+        return ResponseEntity.ok(ApiResponse.ok("수업 추가 완료", ComplexClassResponse.from(classRepository.save(entity))));
     }
 
     @PutMapping("/{seq}")
-    public ResponseEntity<ApiResponse<ComplexClass>> update(
-            @PathVariable Long seq, @RequestBody ComplexClass request) {
+    public ResponseEntity<ApiResponse<ComplexClassResponse>> update(
+            @PathVariable Long seq, @RequestBody ComplexClassRequest req) {
         return classRepository.findById(seq)
                 .map(cls -> {
-                    cls.setName(request.getName());
-                    cls.setDescription(request.getDescription());
-                    cls.setCapacity(request.getCapacity());
-                    cls.setSortOrder(request.getSortOrder());
-                    if (request.getTimeSlot() != null && request.getTimeSlot().getSeq() != null) {
-                        timeSlotRepository.findById(request.getTimeSlot().getSeq()).ifPresent(cls::setTimeSlot);
+                    cls.setName(req.getName());
+                    cls.setDescription(req.getDescription());
+                    cls.setCapacity(req.getCapacity());
+                    cls.setSortOrder(req.getSortOrder());
+                    if (req.getTimeSlotSeq() != null) {
+                        timeSlotRepository.findById(req.getTimeSlotSeq()).ifPresent(cls::setTimeSlot);
                     }
-                    if (request.getStaff() != null && request.getStaff().getSeq() != null) {
-                        staffRepository.findById(request.getStaff().getSeq()).ifPresent(cls::setStaff);
+                    if (req.getStaffSeq() != null) {
+                        staffRepository.findById(req.getStaffSeq()).ifPresent(cls::setStaff);
                     }
-                    return ResponseEntity.ok(ApiResponse.ok("수업 수정 완료", classRepository.save(cls)));
+                    return ResponseEntity.ok(ApiResponse.ok("수업 수정 완료", ComplexClassResponse.from(classRepository.save(cls))));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }

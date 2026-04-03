@@ -15,7 +15,7 @@ spring:
     store-type: jdbc
     jdbc:
       initialize-schema: always
-    timeout: 3600
+    timeout: 1800
 
 sms:
   api-base-url: ${SMS_API_BASE_URL:https://www.mymunja.co.kr/Remote}

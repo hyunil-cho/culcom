@@ -1,13 +1,13 @@
 package com.culcom.controller.dashboard;
 
+import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.dashboard.CallerStatsResponse;
 import com.culcom.dto.dashboard.DashboardResponse;
 import com.culcom.mapper.DashboardMapper;
-import com.culcom.service.AuthService;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,11 +18,11 @@ import java.util.List;
 public class DashboardController {
 
     private final DashboardMapper dashboardMapper;
-    private final AuthService authService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<DashboardResponse>> getDashboard(HttpSession session) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
+    public ResponseEntity<ApiResponse<DashboardResponse>> getDashboard(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long branchSeq = principal.getSelectedBranchSeq();
 
         int todayCustomers = dashboardMapper.countTodayCustomers(branchSeq);
         var dailyStats = dashboardMapper.selectDailyStats(branchSeq, 7);
@@ -50,7 +50,7 @@ public class DashboardController {
 
     @GetMapping("/caller-stats")
     public ResponseEntity<ApiResponse<List<CallerStatsResponse>>> getCallerStats(
-            HttpSession session,
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestParam(defaultValue = "day") String period) {
 
         if (!period.equals("day") && !period.equals("week") && !period.equals("month")) {
@@ -58,7 +58,7 @@ public class DashboardController {
                     .body(ApiResponse.error("유효하지 않은 기간입니다."));
         }
 
-        Long branchSeq = authService.getSessionBranchSeq(session);
+        Long branchSeq = principal.getSelectedBranchSeq();
         List<CallerStatsResponse> stats = dashboardMapper.selectCallerStats(branchSeq, period);
 
         return ResponseEntity.ok(ApiResponse.ok(stats));

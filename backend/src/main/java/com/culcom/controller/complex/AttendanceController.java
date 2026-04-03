@@ -1,8 +1,12 @@
 package com.culcom.controller.complex;
 
 import com.culcom.dto.ApiResponse;
+import com.culcom.dto.complex.AttendanceRequest;
+import com.culcom.dto.complex.AttendanceResponse;
 import com.culcom.entity.ComplexMemberAttendance;
+import com.culcom.repository.ComplexClassRepository;
 import com.culcom.repository.ComplexMemberAttendanceRepository;
+import com.culcom.repository.ComplexMemberMembershipRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -17,28 +21,39 @@ import java.util.List;
 public class AttendanceController {
 
     private final ComplexMemberAttendanceRepository attendanceRepository;
+    private final ComplexMemberMembershipRepository memberMembershipRepository;
+    private final ComplexClassRepository classRepository;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ComplexMemberAttendance>>> listByClassAndDate(
+    public ResponseEntity<ApiResponse<List<AttendanceResponse>>> listByClassAndDate(
             @RequestParam Long classSeq,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(ApiResponse.ok(attendanceRepository.findByClassAndDate(classSeq, date)));
+        List<AttendanceResponse> result = attendanceRepository.findByClassAndDate(classSeq, date)
+                .stream().map(AttendanceResponse::from).toList();
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<ComplexMemberAttendance>> record(
-            @RequestBody ComplexMemberAttendance attendance) {
-        return ResponseEntity.ok(ApiResponse.ok("출석 기록 완료", attendanceRepository.save(attendance)));
+    public ResponseEntity<ApiResponse<AttendanceResponse>> record(
+            @RequestBody AttendanceRequest req) {
+        ComplexMemberAttendance attendance = ComplexMemberAttendance.builder()
+                .memberMembership(memberMembershipRepository.getReferenceById(req.getMemberMembershipSeq()))
+                .complexClass(req.getClassSeq() != null ? classRepository.getReferenceById(req.getClassSeq()) : null)
+                .attendanceDate(req.getAttendanceDate())
+                .status(req.getStatus())
+                .note(req.getNote())
+                .build();
+        return ResponseEntity.ok(ApiResponse.ok("출석 기록 완료", AttendanceResponse.from(attendanceRepository.save(attendance))));
     }
 
     @PutMapping("/{seq}")
-    public ResponseEntity<ApiResponse<ComplexMemberAttendance>> update(
-            @PathVariable Long seq, @RequestBody ComplexMemberAttendance request) {
+    public ResponseEntity<ApiResponse<AttendanceResponse>> update(
+            @PathVariable Long seq, @RequestBody AttendanceRequest req) {
         return attendanceRepository.findById(seq)
                 .map(att -> {
-                    att.setStatus(request.getStatus());
-                    att.setNote(request.getNote());
-                    return ResponseEntity.ok(ApiResponse.ok("출석 수정 완료", attendanceRepository.save(att)));
+                    att.setStatus(req.getStatus());
+                    att.setNote(req.getNote());
+                    return ResponseEntity.ok(ApiResponse.ok("출석 수정 완료", AttendanceResponse.from(attendanceRepository.save(att))));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }

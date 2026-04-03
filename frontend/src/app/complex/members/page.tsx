@@ -1,7 +1,9 @@
 'use client';
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { memberApi, type ComplexMember, type PageResponse } from '@/lib/api';
+import { ROUTES } from '@/lib/routes';
 import { useQueryParams } from '@/lib/useQueryParams';
 import SearchBar from '@/components/ui/SearchBar';
 import DataTable, { type Column } from '@/components/ui/DataTable';
@@ -21,6 +23,7 @@ export default function MembersPage() {
 }
 
 function MembersContent() {
+  const router = useRouter();
   const { params, setParams } = useQueryParams(DEFAULTS);
   const page = Number(params.page);
   const searchedKeyword = params.keyword;
@@ -44,7 +47,10 @@ function MembersContent() {
 
   return (
     <>
-      <h2 className="page-title">회원 관리</h2>
+      <div className="page-toolbar">
+        <h2 className="page-title" style={{ marginBottom: 0 }}>회원 관리</h2>
+        <button className="btn-primary" onClick={() => router.push(ROUTES.COMPLEX_MEMBERS_ADD)}>+ 회원 추가</button>
+      </div>
       <SearchBar
         keyword={keyword}
         onKeywordChange={setKeyword}
@@ -60,6 +66,7 @@ function MembersContent() {
         page={page}
         totalPages={totalPages}
         onPageChange={(p) => setParams({ page: String(p) })}
+        onRowClick={(m) => router.push(ROUTES.COMPLEX_MEMBER_EDIT(m.seq))}
       />
     </>
   );

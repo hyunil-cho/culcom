@@ -11,8 +11,8 @@ import com.culcom.repository.CallerSelectionHistoryRepository;
 import com.culcom.repository.CustomerRepository;
 import com.culcom.repository.ReservationInfoRepository;
 import com.culcom.repository.UserInfoRepository;
-import com.culcom.service.AuthService;
-import jakarta.servlet.http.HttpSession;
+import com.culcom.config.security.CustomUserPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,18 +35,17 @@ public class CustomerController {
     private final CallerSelectionHistoryRepository callerSelectionHistoryRepository;
     private final ReservationInfoRepository reservationInfoRepository;
     private final UserInfoRepository userInfoRepository;
-    private final AuthService authService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<CustomerResponse>>> list(
-            HttpSession session,
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "all") String filter,
             @RequestParam(required = false) String searchType,
             @RequestParam(required = false) String keyword) {
 
-        Long branchSeq = authService.getSessionBranchSeq(session);
+        Long branchSeq = principal.getSelectedBranchSeq();
         var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdDate"));
 
         Page<Customer> result;
@@ -66,10 +65,17 @@ public class CustomerController {
         return ResponseEntity.ok(ApiResponse.ok(result.map(CustomerResponse::from)));
     }
 
+    @GetMapping("/{seq}")
+    public ResponseEntity<ApiResponse<CustomerResponse>> get(@PathVariable Long seq) {
+        return customerRepository.findById(seq)
+                .map(customer -> ResponseEntity.ok(ApiResponse.ok(CustomerResponse.from(customer))))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping
     public ResponseEntity<ApiResponse<CustomerResponse>> create(
-            @RequestBody CustomerCreateRequest request, HttpSession session) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
+            @RequestBody CustomerCreateRequest request, @AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long branchSeq = principal.getSelectedBranchSeq();
         if (branchSeq == null) {
             return ResponseEntity.badRequest().body(ApiResponse.error("지점을 먼저 선택해주세요."));
         }
@@ -144,8 +150,8 @@ public class CustomerController {
     @PostMapping("/process-call")
     @Transactional
     public ResponseEntity<ApiResponse<CustomerProcessCallResponse>> processCall(
-            @RequestBody CustomerProcessCallRequest request, HttpSession session) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
+            @RequestBody CustomerProcessCallRequest request, @AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long branchSeq = principal.getSelectedBranchSeq();
 
         if (request.getCaller() == null || request.getCaller().isBlank()) {
             return ResponseEntity.badRequest()
@@ -188,9 +194,9 @@ public class CustomerController {
     @PostMapping("/reservation")
     @Transactional
     public ResponseEntity<ApiResponse<CustomerReservationResponse>> createReservation(
-            @RequestBody CustomerReservationRequest request, HttpSession session) {
-        Long branchSeq = authService.getSessionBranchSeq(session);
-        Long userSeq = authService.getSessionUserSeq(session);
+            @RequestBody CustomerReservationRequest request, @AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long branchSeq = principal.getSelectedBranchSeq();
+        Long userSeq = principal.getUserSeq();
 
         if (request.getCaller() == null || request.getCaller().isBlank()) {
             return ResponseEntity.badRequest()
