@@ -29,6 +29,12 @@ export default function MainSidebar() {
         { href: ROUTES.WEBHOOKS, label: '웹훅 관리', icon: '🪝' },
       ],
     },
+    {
+      title: '하위사이트',
+      items: [
+        { href: ROUTES.COMPLEX, label: 'complex 관리', icon: '🏠' },
+      ],
+    },
     ...(SessionRole.canManageUsers(session) ? [{
       title: '관리',
       items: [
