@@ -1,6 +1,6 @@
 package com.culcom.repository;
 
-import com.culcom.entity.ComplexStaff;
+import com.culcom.entity.complex.staff.ComplexStaff;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 

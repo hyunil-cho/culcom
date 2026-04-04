@@ -1,6 +1,6 @@
 package com.culcom.repository;
 
-import com.culcom.entity.ExternalServiceType;
+import com.culcom.entity.integration.ExternalServiceType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

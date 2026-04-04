@@ -1,6 +1,6 @@
 package com.culcom.dto.branch;
 
-import com.culcom.entity.Branch;
+import com.culcom.entity.branch.Branch;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

@@ -5,7 +5,7 @@ import com.culcom.dto.ApiResponse;
 import com.culcom.dto.settings.MessageTemplateSimpleResponse;
 import com.culcom.dto.settings.ReservationSmsConfigRequest;
 import com.culcom.dto.settings.ReservationSmsConfigResponse;
-import com.culcom.entity.ReservationSmsConfig;
+import com.culcom.entity.reservation.ReservationSmsConfig;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.MessageTemplateRepository;
 import com.culcom.repository.MymunjaConfigInfoRepository;

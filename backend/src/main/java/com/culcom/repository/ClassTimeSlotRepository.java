@@ -1,6 +1,6 @@
 package com.culcom.repository;
 
-import com.culcom.entity.ClassTimeSlot;
+import com.culcom.entity.complex.clazz.ClassTimeSlot;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 

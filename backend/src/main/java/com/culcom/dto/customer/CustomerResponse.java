@@ -1,13 +1,15 @@
 package com.culcom.dto.customer;
 
-import com.culcom.entity.Customer;
+import com.culcom.entity.customer.Customer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class CustomerResponse {

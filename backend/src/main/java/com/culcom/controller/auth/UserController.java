@@ -4,7 +4,7 @@ import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.auth.UserCreateRequest;
 import com.culcom.dto.auth.UserResponse;
-import com.culcom.entity.UserInfo;
+import com.culcom.entity.auth.UserInfo;
 import com.culcom.entity.enums.UserRole;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.UserInfoRepository;

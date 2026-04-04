@@ -3,7 +3,7 @@ package com.culcom.controller.calendar;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.calendar.CalendarReservationResponse;
 import com.culcom.config.security.CustomUserPrincipal;
-import com.culcom.entity.ReservationInfo;
+import com.culcom.entity.reservation.ReservationInfo;
 import com.culcom.entity.enums.CustomerStatus;
 import com.culcom.repository.ReservationInfoRepository;
 import com.culcom.util.DateTimeUtils;

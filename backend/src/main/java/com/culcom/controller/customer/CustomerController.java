@@ -2,9 +2,9 @@ package com.culcom.controller.customer;
 
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.customer.*;
-import com.culcom.entity.CallerSelectionHistory;
-import com.culcom.entity.Customer;
-import com.culcom.entity.ReservationInfo;
+import com.culcom.entity.reservation.CallerSelectionHistory;
+import com.culcom.entity.customer.Customer;
+import com.culcom.entity.reservation.ReservationInfo;
 import com.culcom.entity.enums.CustomerStatus;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.CallerSelectionHistoryRepository;
@@ -14,9 +14,6 @@ import com.culcom.repository.UserInfoRepository;
 import com.culcom.config.security.CustomUserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -35,35 +32,6 @@ public class CustomerController {
     private final CallerSelectionHistoryRepository callerSelectionHistoryRepository;
     private final ReservationInfoRepository reservationInfoRepository;
     private final UserInfoRepository userInfoRepository;
-
-    @GetMapping
-    public ResponseEntity<ApiResponse<Page<CustomerResponse>>> list(
-            @AuthenticationPrincipal CustomUserPrincipal principal,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "all") String filter,
-            @RequestParam(required = false) String searchType,
-            @RequestParam(required = false) String keyword) {
-
-        Long branchSeq = principal.getSelectedBranchSeq();
-        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdDate"));
-
-        Page<Customer> result;
-        if (keyword != null && !keyword.isBlank()) {
-            if ("phone".equals(searchType)) {
-                result = customerRepository.findByBranchSeqAndPhoneNumberContaining(branchSeq, keyword, pageable);
-            } else {
-                result = customerRepository.findByBranchSeqAndNameContaining(branchSeq, keyword, pageable);
-            }
-        } else if ("new".equals(filter)) {
-            result = customerRepository.findByBranchSeqAndStatusIn(branchSeq,
-                    java.util.List.of(CustomerStatus.신규, CustomerStatus.진행중), pageable);
-        } else {
-            result = customerRepository.findByBranchSeq(branchSeq, pageable);
-        }
-
-        return ResponseEntity.ok(ApiResponse.ok(result.map(CustomerResponse::from)));
-    }
 
     @GetMapping("/{seq}")
     public ResponseEntity<ApiResponse<CustomerResponse>> get(@PathVariable Long seq) {

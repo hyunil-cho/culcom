@@ -1,6 +1,6 @@
 package com.culcom.repository;
 
-import com.culcom.entity.ComplexMemberAttendance;
+import com.culcom.entity.complex.member.ComplexMemberAttendance;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

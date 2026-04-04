@@ -1,9 +1,9 @@
 package com.culcom.controller.complex.classes;
 
 import com.culcom.dto.ApiResponse;
-import com.culcom.dto.complex.ComplexClassRequest;
-import com.culcom.dto.complex.ComplexClassResponse;
-import com.culcom.entity.ComplexClass;
+import com.culcom.dto.complex.classes.ComplexClassRequest;
+import com.culcom.dto.complex.classes.ComplexClassResponse;
+import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ClassTimeSlotRepository;
 import com.culcom.repository.ComplexClassRepository;
@@ -14,9 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-
 @RestController
 @RequestMapping("/api/complex/classes")
 @RequiredArgsConstructor
@@ -26,20 +23,6 @@ public class ComplexClassController {
     private final BranchRepository branchRepository;
     private final ClassTimeSlotRepository timeSlotRepository;
     private final ComplexStaffRepository staffRepository;
-
-    @GetMapping
-    public ResponseEntity<ApiResponse<Page<ComplexClassResponse>>> list(
-            @AuthenticationPrincipal CustomUserPrincipal principal,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String keyword) {
-        Long branchSeq = principal.getSelectedBranchSeq();
-        var pageable = PageRequest.of(page, size);
-        Page<ComplexClass> result = (keyword != null && !keyword.isBlank())
-                ? classRepository.searchByBranchSeq(branchSeq, keyword, pageable)
-                : classRepository.findByBranchSeqOrderBySortOrder(branchSeq, pageable);
-        return ResponseEntity.ok(ApiResponse.ok(result.map(ComplexClassResponse::from)));
-    }
 
     @GetMapping("/{seq}")
     public ResponseEntity<ApiResponse<ComplexClassResponse>> get(@PathVariable Long seq) {

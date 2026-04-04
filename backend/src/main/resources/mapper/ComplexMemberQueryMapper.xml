@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.culcom.mapper.ComplexMemberQueryMapper">
+
+    <sql id="searchCondition">
+        WHERE m.branch_seq = #{branchSeq}
+        <if test="keyword != null and keyword != ''">
+            AND (m.name LIKE CONCAT('%', #{keyword}, '%')
+              OR m.phone_number LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </sql>
+
+    <select id="search" resultType="com.culcom.dto.complex.member.ComplexMemberResponse">
+        SELECT
+            m.seq,
+            m.name,
+            m.phone_number AS phoneNumber,
+            m.level,
+            m.language,
+            m.info,
+            m.chart_number AS chartNumber,
+            m.comment,
+            m.join_date AS joinDate,
+            m.signup_channel AS signupChannel,
+            m.interviewer,
+            m.created_date AS createdDate,
+            m.last_update_date AS lastUpdateDate
+        FROM complex_members m
+        <include refid="searchCondition"/>
+        ORDER BY m.created_date DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="int">
+        SELECT COUNT(*)
+        FROM complex_members m
+        <include refid="searchCondition"/>
+    </select>
+
+</mapper>

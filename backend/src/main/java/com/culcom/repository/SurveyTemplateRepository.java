@@ -1,6 +1,6 @@
 package com.culcom.repository;
 
-import com.culcom.entity.SurveyTemplate;
+import com.culcom.entity.survey.SurveyTemplate;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 

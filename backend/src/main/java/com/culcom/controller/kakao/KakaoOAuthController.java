@@ -1,7 +1,7 @@
 package com.culcom.controller.kakao;
 
-import com.culcom.entity.Branch;
-import com.culcom.entity.Customer;
+import com.culcom.entity.branch.Branch;
+import com.culcom.entity.customer.Customer;
 import com.culcom.entity.enums.CustomerStatus;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.CustomerRepository;

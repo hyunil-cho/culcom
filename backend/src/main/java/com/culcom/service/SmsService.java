@@ -2,8 +2,8 @@ package com.culcom.service;
 
 import com.culcom.config.SmsProperties;
 import com.culcom.dto.integration.SmsSendResponse;
-import com.culcom.entity.BranchThirdPartyMapping;
-import com.culcom.entity.MymunjaConfigInfo;
+import com.culcom.entity.branch.BranchThirdPartyMapping;
+import com.culcom.entity.integration.MymunjaConfigInfo;
 import com.culcom.repository.BranchThirdPartyMappingRepository;
 import com.culcom.repository.MymunjaConfigInfoRepository;
 import lombok.RequiredArgsConstructor;

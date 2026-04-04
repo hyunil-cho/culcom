@@ -1,6 +1,6 @@
 package com.culcom.repository;
 
-import com.culcom.entity.WebhookLog;
+import com.culcom.entity.webhook.WebhookLog;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

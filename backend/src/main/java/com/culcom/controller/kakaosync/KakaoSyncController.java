@@ -4,7 +4,7 @@ import com.culcom.config.KakaoSyncProperties;
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.kakaosync.KakaoSyncUrlResponse;
-import com.culcom.entity.Branch;
+import com.culcom.entity.branch.Branch;
 import com.culcom.repository.BranchRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

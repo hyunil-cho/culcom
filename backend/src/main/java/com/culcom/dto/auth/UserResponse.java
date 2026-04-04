@@ -1,7 +1,7 @@
 package com.culcom.dto.auth;
 
-import com.culcom.entity.Branch;
-import com.culcom.entity.UserInfo;
+import com.culcom.entity.branch.Branch;
+import com.culcom.entity.auth.UserInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

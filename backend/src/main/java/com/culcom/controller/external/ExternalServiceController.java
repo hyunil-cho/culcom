@@ -6,7 +6,7 @@ import com.culcom.dto.external.CalendarEventRequest;
 import com.culcom.dto.external.CalendarEventResponse;
 import com.culcom.dto.integration.SmsSendRequest;
 import com.culcom.dto.integration.SmsSendResponse;
-import com.culcom.entity.Branch;
+import com.culcom.entity.branch.Branch;
 import com.culcom.repository.BranchRepository;
 import com.culcom.service.SmsService;
 import jakarta.validation.Valid;

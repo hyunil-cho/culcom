@@ -1,6 +1,6 @@
 package com.culcom.repository;
 
-import com.culcom.entity.ReservationSmsConfig;
+import com.culcom.entity.reservation.ReservationSmsConfig;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

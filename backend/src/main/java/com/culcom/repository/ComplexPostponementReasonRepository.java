@@ -1,6 +1,6 @@
 package com.culcom.repository;
 
-import com.culcom.entity.ComplexPostponementReason;
+import com.culcom.entity.complex.postponement.ComplexPostponementReason;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 

@@ -1,6 +1,6 @@
 package com.culcom.dto.settings;
 
-import com.culcom.entity.ReservationSmsConfig;
+import com.culcom.entity.reservation.ReservationSmsConfig;
 import lombok.Builder;
 import lombok.Getter;
 

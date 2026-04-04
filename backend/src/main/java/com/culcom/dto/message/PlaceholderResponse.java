@@ -1,6 +1,6 @@
 package com.culcom.dto.message;
 
-import com.culcom.entity.Placeholder;
+import com.culcom.entity.message.Placeholder;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

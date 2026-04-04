@@ -1,6 +1,6 @@
 package com.culcom.repository;
 
-import com.culcom.entity.ComplexRefundRequest;
+import com.culcom.entity.complex.refund.ComplexRefundRequest;
 import com.culcom.entity.enums.RequestStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

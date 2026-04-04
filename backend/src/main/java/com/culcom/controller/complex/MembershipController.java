@@ -1,9 +1,9 @@
 package com.culcom.controller.complex;
 
 import com.culcom.dto.ApiResponse;
-import com.culcom.dto.complex.MembershipRequest;
-import com.culcom.dto.complex.MembershipResponse;
-import com.culcom.entity.Membership;
+import com.culcom.dto.complex.member.MembershipRequest;
+import com.culcom.dto.complex.member.MembershipResponse;
+import com.culcom.entity.complex.member.Membership;
 import com.culcom.repository.MembershipRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

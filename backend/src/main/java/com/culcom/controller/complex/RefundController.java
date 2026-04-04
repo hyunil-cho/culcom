@@ -1,9 +1,9 @@
 package com.culcom.controller.complex;
 
 import com.culcom.dto.ApiResponse;
-import com.culcom.dto.complex.RefundCreateRequest;
-import com.culcom.dto.complex.RefundResponse;
-import com.culcom.entity.ComplexRefundRequest;
+import com.culcom.dto.complex.refund.RefundCreateRequest;
+import com.culcom.dto.complex.refund.RefundResponse;
+import com.culcom.entity.complex.refund.ComplexRefundRequest;
 import com.culcom.entity.enums.RequestStatus;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ComplexMemberMembershipRepository;
@@ -12,8 +12,6 @@ import com.culcom.repository.ComplexRefundRequestRepository;
 import com.culcom.config.security.CustomUserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,31 +24,6 @@ public class RefundController {
     private final BranchRepository branchRepository;
     private final ComplexMemberRepository complexMemberRepository;
     private final ComplexMemberMembershipRepository complexMemberMembershipRepository;
-
-    @GetMapping
-    public ResponseEntity<ApiResponse<Page<RefundResponse>>> list(
-            @AuthenticationPrincipal CustomUserPrincipal principal,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String keyword) {
-        Long branchSeq = principal.getSelectedBranchSeq();
-        var pageable = PageRequest.of(page, size);
-        boolean hasKeyword = keyword != null && !keyword.isBlank();
-        boolean hasStatus = status != null && !status.isBlank();
-
-        Page<ComplexRefundRequest> result;
-        if (hasKeyword && hasStatus) {
-            result = refundRepository.searchByBranchSeqAndStatus(branchSeq, RequestStatus.valueOf(status), keyword, pageable);
-        } else if (hasKeyword) {
-            result = refundRepository.searchByBranchSeq(branchSeq, keyword, pageable);
-        } else if (hasStatus) {
-            result = refundRepository.findByBranchSeqAndStatusOrderByCreatedDateDesc(branchSeq, RequestStatus.valueOf(status), pageable);
-        } else {
-            result = refundRepository.findByBranchSeqOrderByCreatedDateDesc(branchSeq, pageable);
-        }
-        return ResponseEntity.ok(ApiResponse.ok(result.map(RefundResponse::from)));
-    }
 
     @PostMapping
     public ResponseEntity<ApiResponse<RefundResponse>> create(

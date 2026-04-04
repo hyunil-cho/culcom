@@ -1,9 +1,9 @@
 package com.culcom.controller.complex.timeslot;
 
 import com.culcom.dto.ApiResponse;
-import com.culcom.dto.complex.ClassTimeSlotRequest;
-import com.culcom.dto.complex.ClassTimeSlotResponse;
-import com.culcom.entity.ClassTimeSlot;
+import com.culcom.dto.complex.classes.ClassTimeSlotRequest;
+import com.culcom.dto.complex.classes.ClassTimeSlotResponse;
+import com.culcom.entity.complex.clazz.ClassTimeSlot;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ClassTimeSlotRepository;
 import com.culcom.config.security.CustomUserPrincipal;

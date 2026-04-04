@@ -6,13 +6,11 @@ import com.culcom.dto.notice.NoticeCreateRequest;
 import com.culcom.dto.notice.NoticeDetailResponse;
 import com.culcom.dto.notice.NoticeListResponse;
 import com.culcom.dto.notice.NoticeUpdateRequest;
-import com.culcom.entity.Notice;
+import com.culcom.entity.notice.Notice;
 import com.culcom.entity.enums.NoticeCategory;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.NoticeRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,37 +27,6 @@ public class NoticeController {
 
     private final NoticeRepository noticeRepository;
     private final BranchRepository branchRepository;
-
-    @GetMapping
-    public ResponseEntity<ApiResponse<Page<NoticeListResponse>>> list(
-            @AuthenticationPrincipal CustomUserPrincipal principal,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "all") String filter,
-            @RequestParam(required = false) String searchKeyword) {
-
-        Long branchSeq = principal.getSelectedBranchSeq();
-        var pageable = PageRequest.of(page, size);
-
-        Page<Notice> notices;
-        boolean hasKeyword = searchKeyword != null && !searchKeyword.isBlank();
-        boolean hasCategory = !"all".equals(filter);
-
-        if (hasCategory && hasKeyword) {
-            notices = noticeRepository.findByBranchSeqAndCategoryAndTitleContaining(
-                    branchSeq, NoticeCategory.valueOf(filter), searchKeyword, pageable);
-        } else if (hasCategory) {
-            notices = noticeRepository.findByBranchSeqAndCategoryOrderByIsPinnedDescCreatedDateDesc(
-                    branchSeq, NoticeCategory.valueOf(filter), pageable);
-        } else if (hasKeyword) {
-            notices = noticeRepository.findByBranchSeqAndTitleContaining(branchSeq, searchKeyword, pageable);
-        } else {
-            notices = noticeRepository.findByBranchSeqOrderByIsPinnedDescCreatedDateDesc(branchSeq, pageable);
-        }
-
-        Page<NoticeListResponse> result = notices.map(NoticeListResponse::from);
-        return ResponseEntity.ok(ApiResponse.ok(result));
-    }
 
     @GetMapping("/{seq}")
     @Transactional

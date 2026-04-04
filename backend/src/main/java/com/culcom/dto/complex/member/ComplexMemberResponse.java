@@ -1,0 +1,47 @@
+package com.culcom.dto.complex.member;
+
+import com.culcom.entity.complex.member.ComplexMember;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ComplexMemberResponse {
+    private Long seq;
+    private String name;
+    private String phoneNumber;
+    private String level;
+    private String language;
+    private String info;
+    private String chartNumber;
+    private String comment;
+    private LocalDateTime joinDate;
+    private String signupChannel;
+    private String interviewer;
+    private LocalDateTime createdDate;
+    private LocalDateTime lastUpdateDate;
+
+    public static ComplexMemberResponse from(ComplexMember entity) {
+        return ComplexMemberResponse.builder()
+                .seq(entity.getSeq())
+                .name(entity.getName())
+                .phoneNumber(entity.getPhoneNumber())
+                .level(entity.getLevel())
+                .language(entity.getLanguage())
+                .info(entity.getInfo())
+                .chartNumber(entity.getChartNumber())
+                .comment(entity.getComment())
+                .joinDate(entity.getJoinDate())
+                .signupChannel(entity.getSignupChannel())
+                .interviewer(entity.getInterviewer())
+                .createdDate(entity.getCreatedDate())
+                .lastUpdateDate(entity.getLastUpdateDate())
+                .build();
+    }
+}

@@ -1,6 +1,6 @@
 package com.culcom.dto.board;
 
-import com.culcom.entity.Notice;
+import com.culcom.entity.notice.Notice;
 import com.culcom.entity.enums.NoticeCategory;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

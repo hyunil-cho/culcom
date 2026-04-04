@@ -1,6 +1,6 @@
 package com.culcom.repository;
 
-import com.culcom.entity.WebhookConfig;
+import com.culcom.entity.webhook.WebhookConfig;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 

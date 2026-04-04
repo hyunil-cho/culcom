@@ -1,6 +1,6 @@
 package com.culcom.repository;
 
-import com.culcom.entity.BranchThirdPartyMapping;
+import com.culcom.entity.branch.BranchThirdPartyMapping;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;

@@ -1,9 +1,9 @@
 package com.culcom.controller.complex;
 
 import com.culcom.dto.ApiResponse;
-import com.culcom.dto.complex.ComplexStaffRequest;
-import com.culcom.dto.complex.ComplexStaffResponse;
-import com.culcom.entity.ComplexStaff;
+import com.culcom.dto.complex.member.ComplexStaffRequest;
+import com.culcom.dto.complex.member.ComplexStaffResponse;
+import com.culcom.entity.complex.staff.ComplexStaff;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ComplexStaffRepository;
 import com.culcom.config.security.CustomUserPrincipal;

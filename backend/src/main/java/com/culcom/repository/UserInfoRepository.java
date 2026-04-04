@@ -1,6 +1,6 @@
 package com.culcom.repository;
 
-import com.culcom.entity.UserInfo;
+import com.culcom.entity.auth.UserInfo;
 import com.culcom.entity.enums.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

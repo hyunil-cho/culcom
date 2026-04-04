@@ -1,7 +1,7 @@
 package com.culcom.repository;
 
-import com.culcom.entity.Branch;
-import com.culcom.entity.UserInfo;
+import com.culcom.entity.branch.Branch;
+import com.culcom.entity.auth.UserInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

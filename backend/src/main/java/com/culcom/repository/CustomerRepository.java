@@ -1,6 +1,6 @@
 package com.culcom.repository;
 
-import com.culcom.entity.Customer;
+import com.culcom.entity.customer.Customer;
 import com.culcom.entity.enums.CustomerStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

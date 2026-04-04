@@ -1,6 +1,6 @@
 package com.culcom.repository;
 
-import com.culcom.entity.MymunjaConfigInfo;
+import com.culcom.entity.integration.MymunjaConfigInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

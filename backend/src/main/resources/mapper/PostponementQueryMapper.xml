@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.culcom.mapper.PostponementQueryMapper">
+
+    <sql id="searchCondition">
+        WHERE p.branch_seq = #{branchSeq}
+        <if test="status != null and status != ''">
+            AND p.status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (p.member_name LIKE CONCAT('%', #{keyword}, '%')
+              OR p.phone_number LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </sql>
+
+    <select id="search" resultType="com.culcom.dto.complex.postponement.PostponementResponse">
+        SELECT
+            p.seq,
+            p.member_name AS memberName,
+            p.phone_number AS phoneNumber,
+            p.time_slot AS timeSlot,
+            p.current_class AS currentClass,
+            p.start_date AS startDate,
+            p.end_date AS endDate,
+            p.reason,
+            p.status,
+            p.reject_reason AS rejectReason,
+            p.created_date AS createdDate
+        FROM complex_postponement_requests p
+        <include refid="searchCondition"/>
+        ORDER BY p.created_date DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="int">
+        SELECT COUNT(*)
+        FROM complex_postponement_requests p
+        <include refid="searchCondition"/>
+    </select>
+
+</mapper>

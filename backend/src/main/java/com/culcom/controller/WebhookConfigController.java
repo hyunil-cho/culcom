@@ -4,14 +4,10 @@ import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.webhook.WebhookConfigRequest;
 import com.culcom.dto.webhook.WebhookConfigResponse;
-import com.culcom.dto.webhook.WebhookLogResponse;
-import com.culcom.entity.WebhookConfig;
+import com.culcom.entity.webhook.WebhookConfig;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.WebhookConfigRepository;
-import com.culcom.repository.WebhookLogRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +20,6 @@ import java.util.List;
 public class WebhookConfigController {
 
     private final WebhookConfigRepository webhookRepository;
-    private final WebhookLogRepository logRepository;
     private final BranchRepository branchRepository;
 
     @GetMapping
@@ -100,27 +95,4 @@ public class WebhookConfigController {
         return ResponseEntity.ok(ApiResponse.ok("웹훅이 삭제되었습니다.", null));
     }
 
-    @GetMapping("/logs")
-    public ResponseEntity<ApiResponse<Page<WebhookLogResponse>>> logs(
-            @AuthenticationPrincipal CustomUserPrincipal principal,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) Long webhookSeq,
-            @RequestParam(required = false) String status) {
-        Long branchSeq = principal.getSelectedBranchSeq();
-        var pageable = PageRequest.of(page, size);
-
-        Page<WebhookLogResponse> result;
-        if (webhookSeq != null) {
-            result = logRepository.findByWebhookConfigSeqOrderByCreatedDateDesc(webhookSeq, pageable)
-                    .map(WebhookLogResponse::from);
-        } else if (status != null && !status.isBlank()) {
-            result = logRepository.findByBranchSeqAndStatusOrderByCreatedDateDesc(branchSeq, status, pageable)
-                    .map(WebhookLogResponse::from);
-        } else {
-            result = logRepository.findByBranchSeqOrderByCreatedDateDesc(branchSeq, pageable)
-                    .map(WebhookLogResponse::from);
-        }
-        return ResponseEntity.ok(ApiResponse.ok(result));
-    }
 }

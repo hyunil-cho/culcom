@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.culcom.mapper.NoticeQueryMapper">
+
+    <sql id="columns">
+        n.seq,
+        b.branch_name AS branchName,
+        n.title,
+        n.category,
+        n.is_pinned AS isPinned,
+        n.view_count AS viewCount,
+        COALESCE(n.created_by, '관리자') AS createdBy,
+        n.created_date AS createdDate,
+        n.event_start_date AS eventStartDate,
+        n.event_end_date AS eventEndDate
+    </sql>
+
+    <sql id="adminCondition">
+        WHERE n.branch_seq = #{branchSeq}
+        <if test="category != null and category != '' and category != 'all'">
+            AND n.category = #{category}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND n.title LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+    </sql>
+
+    <sql id="publicCondition">
+        WHERE n.is_active = true
+        <if test="category != null and category != '' and category != 'all'">
+            AND n.category = #{category}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND n.title LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+    </sql>
+
+    <!-- 관리자용 -->
+    <select id="search" resultType="com.culcom.dto.notice.NoticeListResponse">
+        SELECT <include refid="columns"/>
+        FROM notices n
+        LEFT JOIN branches b ON n.branch_seq = b.seq
+        <include refid="adminCondition"/>
+        ORDER BY n.is_pinned DESC, n.created_date DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="int">
+        SELECT COUNT(*)
+        FROM notices n
+        <include refid="adminCondition"/>
+    </select>
+
+    <!-- 공개 게시판용 -->
+    <select id="searchPublic" resultType="com.culcom.dto.notice.NoticeListResponse">
+        SELECT <include refid="columns"/>
+        FROM notices n
+        LEFT JOIN branches b ON n.branch_seq = b.seq
+        <include refid="publicCondition"/>
+        ORDER BY n.is_pinned DESC, n.created_date DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPublic" resultType="int">
+        SELECT COUNT(*)
+        FROM notices n
+        <include refid="publicCondition"/>
+    </select>
+
+</mapper>

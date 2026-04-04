@@ -1,8 +1,8 @@
 package com.culcom.service;
 
 import com.culcom.config.security.CustomUserPrincipal;
-import com.culcom.entity.Branch;
-import com.culcom.entity.UserInfo;
+import com.culcom.entity.branch.Branch;
+import com.culcom.entity.auth.UserInfo;
 import com.culcom.entity.enums.UserRole;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.UserInfoRepository;

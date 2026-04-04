@@ -1,6 +1,6 @@
 package com.culcom.repository;
 
-import com.culcom.entity.MessageTemplate;
+import com.culcom.entity.message.MessageTemplate;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 

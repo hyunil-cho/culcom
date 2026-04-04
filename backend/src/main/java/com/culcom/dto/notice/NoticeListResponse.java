@@ -1,15 +1,17 @@
 package com.culcom.dto.notice;
 
-import com.culcom.entity.Notice;
+import com.culcom.entity.notice.Notice;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 @Getter
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
 public class NoticeListResponse {
     private Long seq;

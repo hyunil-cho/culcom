@@ -1,6 +1,6 @@
 package com.culcom.repository;
 
-import com.culcom.entity.Notice;
+import com.culcom.entity.notice.Notice;
 import com.culcom.entity.enums.NoticeCategory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

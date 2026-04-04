@@ -1,6 +1,6 @@
 package com.culcom.dto.webhook;
 
-import com.culcom.entity.WebhookConfig;
+import com.culcom.entity.webhook.WebhookConfig;
 import lombok.Builder;
 import lombok.Getter;
 

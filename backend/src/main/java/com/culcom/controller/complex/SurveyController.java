@@ -1,11 +1,11 @@
 package com.culcom.controller.complex;
 
 import com.culcom.dto.ApiResponse;
-import com.culcom.dto.complex.*;
-import com.culcom.entity.SurveyTemplate;
-import com.culcom.entity.SurveyTemplateOption;
-import com.culcom.entity.SurveyTemplateQuestion;
-import com.culcom.entity.SurveyTemplateSection;
+import com.culcom.dto.complex.survey.*;
+import com.culcom.entity.survey.SurveyTemplate;
+import com.culcom.entity.survey.SurveyTemplateOption;
+import com.culcom.entity.survey.SurveyTemplateQuestion;
+import com.culcom.entity.survey.SurveyTemplateSection;
 import com.culcom.entity.enums.InputType;
 import com.culcom.entity.enums.SurveyStatus;
 import com.culcom.repository.*;

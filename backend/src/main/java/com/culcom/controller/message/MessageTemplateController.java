@@ -3,7 +3,7 @@ package com.culcom.controller.message;
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.message.*;
-import com.culcom.entity.MessageTemplate;
+import com.culcom.entity.message.MessageTemplate;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.MessageTemplateRepository;
 import com.culcom.repository.PlaceholderRepository;

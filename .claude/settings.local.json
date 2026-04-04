@@ -23,7 +23,31 @@
       "Bash(cp:*)",
       "Bash(rm \"C:/Users/lookh/IdeaProjects/culcom/frontend/src/app/\\(main\\)/survey/[seq]/fill/page.tsx\")",
       "Bash(rmdir \"C:/Users/lookh/IdeaProjects/culcom/frontend/src/app/\\(main\\)/survey/[seq]/fill\")",
-      "Bash(xargs wc:*)"
+      "Bash(xargs wc:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv AttendanceRequest.java AttendanceResponse.java AttendanceViewClassResponse.java AttendanceViewMemberResponse.java AttendanceViewSlotResponse.java BulkAttendanceRequest.java BulkAttendanceResultResponse.java attendance/)",
+      "Bash(mv ComplexClassRequest.java ComplexClassResponse.java ClassReorderRequest.java ClassTimeSlotRequest.java ClassTimeSlotResponse.java classes/)",
+      "Bash(mv ComplexMemberRequest.java ComplexMemberResponse.java ComplexMemberMembershipResponse.java ComplexStaffRequest.java ComplexStaffResponse.java MembershipRequest.java MembershipResponse.java member/)",
+      "Bash(mv PostponementCreateRequest.java PostponementReasonRequest.java PostponementReasonResponse.java PostponementResponse.java postponement/)",
+      "Bash(mv RefundCreateRequest.java RefundResponse.java refund/)",
+      "Bash(./gradlew clean:*)",
+      "Bash(sed -i 's|import com.culcom.dto.complex.ComplexMemberMembershipResponse;|import com.culcom.dto.complex.member.ComplexMemberMembershipResponse;|' controller/complex/ComplexMemberController.java)",
+      "Bash(sed -i 's|import com.culcom.dto.complex.ComplexMemberRequest;|import com.culcom.dto.complex.member.ComplexMemberRequest;|' controller/complex/ComplexMemberController.java)",
+      "Bash(sed -i 's|import com.culcom.dto.complex.ComplexMemberResponse;|import com.culcom.dto.complex.member.ComplexMemberResponse;|' controller/complex/ComplexMemberController.java)",
+      "Bash(sed -i 's|import com.culcom.dto.complex.ComplexMemberResponse;|import com.culcom.dto.complex.member.ComplexMemberResponse;|' controller/complex/ComplexMemberQueryController.java)",
+      "Bash(sed -i 's|import com.culcom.dto.complex.ComplexStaffRequest;|import com.culcom.dto.complex.member.ComplexStaffRequest;|' controller/complex/ComplexStaffController.java)",
+      "Bash(sed -i 's|import com.culcom.dto.complex.\\\\*;|import com.culcom.dto.complex.survey.*;|' controller/complex/SurveyController.java)",
+      "Bash(sed -i 's|import com.culcom.dto.complex.\\\\*;|import com.culcom.dto.complex.attendance.*;|' controller/complex/attendance/AttendanceController.java)",
+      "Bash(./gradlew test:*)",
+      "Bash(sed -i 's|com.culcom.dto.complex.ComplexClassResponse|com.culcom.dto.complex.classes.ComplexClassResponse|' ComplexClassQueryMapper.xml)",
+      "Bash(sed -i 's|com.culcom.dto.complex.ComplexMemberResponse|com.culcom.dto.complex.member.ComplexMemberResponse|' ComplexMemberQueryMapper.xml)",
+      "Bash(sed -i 's|com.culcom.dto.complex.PostponementResponse|com.culcom.dto.complex.postponement.PostponementResponse|' PostponementQueryMapper.xml)",
+      "Bash(sed -i 's|com.culcom.dto.complex.RefundResponse|com.culcom.dto.complex.refund.RefundResponse|' RefundQueryMapper.xml)",
+      "Bash(sed -i 's|import com.culcom.dto.complex.ComplexClassResponse;|import com.culcom.dto.complex.classes.ComplexClassResponse;|' QueryMapperTest.java)",
+      "Bash(sed -i 's|import com.culcom.dto.complex.ComplexMemberResponse;|import com.culcom.dto.complex.member.ComplexMemberResponse;|' QueryMapperTest.java)",
+      "Bash(sed -i 's|import com.culcom.dto.complex.PostponementResponse;|import com.culcom.dto.complex.postponement.PostponementResponse;|' QueryMapperTest.java)",
+      "Bash(sed -i 's|import com.culcom.dto.complex.RefundResponse;|import com.culcom.dto.complex.refund.RefundResponse;|' QueryMapperTest.java)",
+      "Bash(cat \"C:/Users/lookh/IdeaProjects/culcom/backend/build/test-results/test/\"*.xml)"
     ]
   }
 }

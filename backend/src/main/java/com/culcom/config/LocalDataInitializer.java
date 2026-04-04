@@ -1,6 +1,15 @@
 package com.culcom.config;
 
-import com.culcom.entity.*;
+import com.culcom.entity.auth.UserInfo;
+import com.culcom.entity.branch.Branch;
+import com.culcom.entity.branch.BranchThirdPartyMapping;
+import com.culcom.entity.complex.clazz.ClassTimeSlot;
+import com.culcom.entity.complex.clazz.ComplexClass;
+import com.culcom.entity.customer.Customer;
+import com.culcom.entity.integration.ExternalServiceType;
+import com.culcom.entity.integration.ThirdPartyService;
+import com.culcom.entity.message.MessageTemplate;
+import com.culcom.entity.message.Placeholder;
 import com.culcom.entity.enums.UserRole;
 import com.culcom.repository.*;
 import lombok.RequiredArgsConstructor;

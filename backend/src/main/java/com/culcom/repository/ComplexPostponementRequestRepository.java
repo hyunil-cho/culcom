@@ -1,6 +1,6 @@
 package com.culcom.repository;
 
-import com.culcom.entity.ComplexPostponementRequest;
+import com.culcom.entity.complex.postponement.ComplexPostponementRequest;
 import com.culcom.entity.enums.RequestStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

@@ -1,12 +1,12 @@
 package com.culcom.controller.complex;
 
 import com.culcom.dto.ApiResponse;
-import com.culcom.dto.complex.PostponementCreateRequest;
-import com.culcom.dto.complex.PostponementReasonRequest;
-import com.culcom.dto.complex.PostponementReasonResponse;
-import com.culcom.dto.complex.PostponementResponse;
-import com.culcom.entity.ComplexPostponementReason;
-import com.culcom.entity.ComplexPostponementRequest;
+import com.culcom.dto.complex.postponement.PostponementCreateRequest;
+import com.culcom.dto.complex.postponement.PostponementReasonRequest;
+import com.culcom.dto.complex.postponement.PostponementReasonResponse;
+import com.culcom.dto.complex.postponement.PostponementResponse;
+import com.culcom.entity.complex.postponement.ComplexPostponementReason;
+import com.culcom.entity.complex.postponement.ComplexPostponementRequest;
 import com.culcom.entity.enums.RequestStatus;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ComplexMemberMembershipRepository;
@@ -16,8 +16,6 @@ import com.culcom.repository.ComplexPostponementRequestRepository;
 import com.culcom.config.security.CustomUserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,31 +32,6 @@ public class PostponementController {
     private final BranchRepository branchRepository;
     private final ComplexMemberRepository complexMemberRepository;
     private final ComplexMemberMembershipRepository complexMemberMembershipRepository;
-
-    @GetMapping
-    public ResponseEntity<ApiResponse<Page<PostponementResponse>>> list(
-            @AuthenticationPrincipal CustomUserPrincipal principal,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String keyword) {
-        Long branchSeq = principal.getSelectedBranchSeq();
-        var pageable = PageRequest.of(page, size);
-        boolean hasKeyword = keyword != null && !keyword.isBlank();
-        boolean hasStatus = status != null && !status.isBlank();
-
-        Page<ComplexPostponementRequest> result;
-        if (hasKeyword && hasStatus) {
-            result = postponementRepository.searchByBranchSeqAndStatus(branchSeq, RequestStatus.valueOf(status), keyword, pageable);
-        } else if (hasKeyword) {
-            result = postponementRepository.searchByBranchSeq(branchSeq, keyword, pageable);
-        } else if (hasStatus) {
-            result = postponementRepository.findByBranchSeqAndStatusOrderByCreatedDateDesc(branchSeq, RequestStatus.valueOf(status), pageable);
-        } else {
-            result = postponementRepository.findByBranchSeqOrderByCreatedDateDesc(branchSeq, pageable);
-        }
-        return ResponseEntity.ok(ApiResponse.ok(result.map(PostponementResponse::from)));
-    }
 
     @PostMapping
     public ResponseEntity<ApiResponse<PostponementResponse>> create(
