@@ -6,12 +6,12 @@ import { timeslotApi, type ClassTimeSlot } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 
 export default function TimeslotsPage() {
   const router = useRouter();
   const [slots, setSlots] = useState<ClassTimeSlot[]>([]);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { modal } = useResultModal({ onConfirm: () => load() });
 
   useEffect(() => { load(); }, []);
 
@@ -41,13 +41,7 @@ export default function TimeslotsPage() {
         onRowClick={(s) => router.push(ROUTES.COMPLEX_TIMESLOT_EDIT(s.seq))}
       />
 
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          onConfirm={() => { setResult(null); load(); }}
-        />
-      )}
+      {modal}
     </>
   );
 }

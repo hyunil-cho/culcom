@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button, LinkButton } from '@/components/ui/Button';
 import { customerApi, type Customer } from '@/lib/api';
@@ -9,7 +9,7 @@ import { ROUTES } from '@/lib/routes';
 import { formatDateTime } from '@/lib/dateUtils';
 import DetailCard from '@/components/ui/DetailCard';
 import ConfirmModal from '@/components/ui/ConfirmModal';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 
 const STATUS_BADGE: Record<string, string> = {
   '신규': 'status-active',
@@ -21,11 +21,10 @@ const STATUS_BADGE: Record<string, string> = {
 
 export default function CustomerDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const seq = Number(params.seq);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.CUSTOMERS });
 
   useEffect(() => {
     customerApi.get(seq).then(res => {
@@ -65,9 +64,8 @@ export default function CustomerDetailPage() {
           title="삭제 확인"
           onCancel={() => setDeleting(false)}
           onConfirm={async () => {
-            const res = await customerApi.delete(seq);
             setDeleting(false);
-            if (res.success) setResult({ success: true, message: '고객이 삭제되었습니다.' });
+            await run(customerApi.delete(seq), '고객이 삭제되었습니다.');
           }}
           confirmLabel="삭제"
           confirmColor="#f44336"
@@ -76,9 +74,7 @@ export default function CustomerDetailPage() {
         </ConfirmModal>
       )}
 
-      {result && (
-        <ResultModal success={result.success} message={result.message} redirectPath={ROUTES.CUSTOMERS} />
-      )}
+      {modal}
     </>
   );
 }

@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { noticeApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 import NoticeForm, { NoticeFormData } from '../../NoticeForm';
 
 export default function NoticeEditPage() {
@@ -23,7 +23,7 @@ export default function NoticeEditPage() {
   });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, showError, modal } = useResultModal({ redirectPath: ROUTES.NOTICE_DETAIL(seq) });
 
   useEffect(() => {
     noticeApi.get(seq).then((res) => {
@@ -55,23 +55,19 @@ export default function NoticeEditPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim() || !form.content.trim()) {
-      setResult({ success: false, message: '제목과 내용은 필수 입력 항목입니다.' });
+      showError('제목과 내용은 필수 입력 항목입니다.');
       return;
     }
     setSubmitting(true);
-    const res = await noticeApi.update(seq, {
+    await run(noticeApi.update(seq, {
       title: form.title,
       content: form.content,
       category: form.category,
       isPinned: form.isPinned,
       eventStartDate: form.eventStartDate || undefined,
       eventEndDate: form.eventEndDate || undefined,
-    });
+    }), '공지사항이 수정되었습니다.');
     setSubmitting(false);
-    setResult({
-      success: res.success,
-      message: res.success ? '공지사항이 수정되었습니다.' : '수정에 실패했습니다.',
-    });
   };
 
   if (loading) {
@@ -98,13 +94,7 @@ export default function NoticeEditPage() {
         disableCreatedBy
       />
 
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          {...(result.success ? { redirectPath: ROUTES.NOTICE_DETAIL(seq) } : { onConfirm: () => setResult(null) })}
-        />
-      )}
+      {modal}
     </>
   );
 }

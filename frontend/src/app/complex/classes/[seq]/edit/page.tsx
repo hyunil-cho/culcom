@@ -6,7 +6,7 @@ import { classApi, timeslotApi, staffApi, type ClassTimeSlot, type ComplexStaff 
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { ROUTES } from '@/lib/routes';
 import ClassForm, { emptyClassForm, validateClassForm, type ClassFormData } from '../../ClassForm';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 
 export default function ClassEditPage() {
   const params = useParams();
@@ -15,7 +15,7 @@ export default function ClassEditPage() {
   const [form, setForm] = useState<ClassFormData>(emptyClassForm);
   const [timeSlots, setTimeSlots] = useState<ClassTimeSlot[]>([]);
   const [staffs, setStaffs] = useState<ComplexStaff[]>([]);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_CLASSES });
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -41,17 +41,14 @@ export default function ClassEditPage() {
   const handleSubmit = async () => {
     const error = validateClassForm(form);
     if (error) { alert(error); return; }
-    const res = await classApi.update(seq, {
+    await run(classApi.update(seq, {
       name: form.name,
       description: form.description || undefined,
       capacity: form.capacity,
       sortOrder: form.sortOrder,
       timeSlotSeq: form.timeSlotSeq as number,
       staffSeq: form.staffSeq ? (form.staffSeq as number) : undefined,
-    });
-    if (res.success) {
-      setResult({ success: true, message: '수업이 수정되었습니다.' });
-    }
+    }), '수업이 수정되었습니다.');
   };
 
   return (
@@ -71,9 +68,8 @@ export default function ClassEditPage() {
           title="삭제 확인"
           onCancel={() => setDeleting(false)}
           onConfirm={async () => {
-            const res = await classApi.delete(seq);
             setDeleting(false);
-            if (res.success) setResult({ success: true, message: '수업이 삭제되었습니다.' });
+            await run(classApi.delete(seq), '수업이 삭제되었습니다.');
           }}
           confirmLabel="삭제"
           confirmColor="#f44336"
@@ -81,9 +77,7 @@ export default function ClassEditPage() {
           이 수업을 삭제하시겠습니까?<br />이 작업은 되돌릴 수 없습니다.
         </ConfirmModal>
       )}
-      {result && (
-        <ResultModal success={result.success} message={result.message} redirectPath={ROUTES.COMPLEX_CLASSES} />
-      )}
+      {modal}
     </>
   );
 }

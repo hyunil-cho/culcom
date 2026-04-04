@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { integrationApi, SmsConfig } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 
 export default function SmsConfigPage() {
   const router = useRouter();
@@ -18,7 +18,7 @@ export default function SmsConfigPage() {
   const [active, setActive] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const [result, setResult] = useState<{ success: boolean; message: string; redirect?: boolean } | null>(null);
+  const { run, showError, modal } = useResultModal({ redirectPath: ROUTES.INTEGRATIONS });
 
   useEffect(() => {
     integrationApi.getSmsConfig().then((res) => {
@@ -34,29 +34,23 @@ export default function SmsConfigPage() {
 
   const handleSave = async () => {
     if (!accountId.trim() || !password.trim() || !senderPhone.trim()) {
-      setResult({ success: false, message: '모든 필수 항목을 입력해주세요.' });
+      showError('모든 필수 항목을 입력해주세요.');
       return;
     }
     if (!config?.serviceId) {
-      setResult({ success: false, message: 'SMS 서비스 정보를 찾을 수 없습니다.' });
+      showError('SMS 서비스 정보를 찾을 수 없습니다.');
       return;
     }
 
     setSaving(true);
-    const res = await integrationApi.saveSmsConfig({
+    await run(integrationApi.saveSmsConfig({
       serviceId: config.serviceId,
       accountId: accountId.trim(),
       password: password.trim(),
       senderPhone: senderPhone.trim(),
       active,
-    });
+    }), 'SMS 설정이 저장되었습니다.');
     setSaving(false);
-
-    setResult({
-      success: res.success,
-      message: res.success ? 'SMS 설정이 저장되었습니다.' : (res.message ?? '저장에 실패했습니다.'),
-      redirect: res.success,
-    });
   };
 
   if (loading) {
@@ -217,15 +211,7 @@ export default function SmsConfigPage() {
         </div>
       </div>
 
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          {...(result.redirect
-            ? { redirectPath: ROUTES.INTEGRATIONS }
-            : { onConfirm: () => setResult(null) })}
-        />
-      )}
+      {modal}
     </>
   );
 }

@@ -6,14 +6,14 @@ import { branchApi } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
 import { ROUTES } from '@/lib/routes';
 import BranchForm, { emptyBranchForm, validateBranchForm, type BranchFormData } from '../../BranchForm';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 
 export default function BranchEditPage() {
   const params = useParams();
   const seq = Number(params.seq);
   const refreshBranches = useSessionStore((s) => s.refreshBranches);
   const [form, setForm] = useState<BranchFormData>(emptyBranchForm);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.BRANCH_DETAIL(seq) });
 
   useEffect(() => {
     branchApi.get(seq).then(res => {
@@ -31,11 +31,8 @@ export default function BranchEditPage() {
   const handleSubmit = async () => {
     const error = validateBranchForm(form);
     if (error) { alert(error); return; }
-    const res = await branchApi.update(seq, form);
-    if (res.success) {
-      await refreshBranches();
-      setResult({ success: true, message: '지점 정보가 수정되었습니다.' });
-    }
+    const res = await run(branchApi.update(seq, form), '지점 정보가 수정되었습니다.');
+    if (res.success) await refreshBranches();
   };
 
   return (
@@ -48,13 +45,7 @@ export default function BranchEditPage() {
         backLabel="← 상세로"
         seq={seq}
       />
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          redirectPath={ROUTES.BRANCH_DETAIL(seq)}
-        />
-      )}
+      {modal}
     </>
   );
 }

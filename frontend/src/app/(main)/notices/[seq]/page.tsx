@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { noticeApi, NoticeDetail } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import ConfirmModal from '@/components/ui/ConfirmModal';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 import { Button, LinkButton } from '@/components/ui/Button';
 
 export default function NoticeDetailPage() {
@@ -16,7 +16,7 @@ export default function NoticeDetailPage() {
 
   const [notice, setNotice] = useState<NoticeDetail | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.NOTICES });
 
   useEffect(() => {
     noticeApi.get(seq).then((res) => {
@@ -26,11 +26,7 @@ export default function NoticeDetailPage() {
 
   const handleDelete = async () => {
     setDeleting(false);
-    const res = await noticeApi.delete(seq);
-    setResult({
-      success: res.success,
-      message: res.success ? '공지사항이 삭제되었습니다.' : '삭제에 실패했습니다.',
-    });
+    await run(noticeApi.delete(seq), '공지사항이 삭제되었습니다.');
   };
 
   if (!notice) {
@@ -117,13 +113,7 @@ export default function NoticeDetailPage() {
         </ConfirmModal>
       )}
 
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          redirectPath={ROUTES.NOTICES}
-        />
-      )}
+      {modal}
     </>
   );
 }

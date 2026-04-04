@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { messageTemplateApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 import MessageTemplateForm, { MessageTemplateFormData } from '../../MessageTemplateForm';
 
 export default function MessageTemplateEditPage() {
@@ -20,7 +20,7 @@ export default function MessageTemplateEditPage() {
   });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, showError, modal } = useResultModal({ redirectPath: ROUTES.MESSAGE_TEMPLATES });
 
   useEffect(() => {
     messageTemplateApi.get(seq).then((res) => {
@@ -49,21 +49,17 @@ export default function MessageTemplateEditPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.templateName.trim() || !form.messageContext.trim()) {
-      setResult({ success: false, message: '템플릿 이름과 메시지 내용은 필수 입력 항목입니다.' });
+      showError('템플릿 이름과 메시지 내용은 필수 입력 항목입니다.');
       return;
     }
     setSubmitting(true);
-    const res = await messageTemplateApi.update(seq, {
+    await run(messageTemplateApi.update(seq, {
       templateName: form.templateName,
       description: form.description || undefined,
       messageContext: form.messageContext,
       isActive: form.isActive,
-    });
+    }), '템플릿이 수정되었습니다.');
     setSubmitting(false);
-    setResult({
-      success: res.success,
-      message: res.success ? '템플릿이 수정되었습니다.' : '수정에 실패했습니다.',
-    });
   };
 
   if (loading) {
@@ -89,13 +85,7 @@ export default function MessageTemplateEditPage() {
         cancelHref={ROUTES.MESSAGE_TEMPLATES}
       />
 
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          {...(result.success ? { redirectPath: ROUTES.MESSAGE_TEMPLATES } : { onConfirm: () => setResult(null) })}
-        />
-      )}
+      {modal}
     </>
   );
 }

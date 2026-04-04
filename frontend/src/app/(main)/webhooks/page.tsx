@@ -6,7 +6,7 @@ import { webhookApi, type WebhookConfig } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 
 const METHOD_COLORS: Record<string, string> = {
   POST: '#49cc90', PUT: '#fca130', PATCH: '#50e3c2', GET: '#61affe', DELETE: '#f93e3e',
@@ -15,7 +15,7 @@ const METHOD_COLORS: Record<string, string> = {
 export default function WebhooksPage() {
   const router = useRouter();
   const [webhooks, setWebhooks] = useState<WebhookConfig[]>([]);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { modal } = useResultModal({ onConfirm: () => load() });
 
   const load = () => { webhookApi.list().then(res => setWebhooks(res.data)); };
 
@@ -66,10 +66,7 @@ export default function WebhooksPage() {
         onRowClick={(w) => router.push(ROUTES.WEBHOOK_EDIT(w.seq))}
       />
 
-      {result && (
-        <ResultModal success={result.success} message={result.message}
-          onConfirm={() => { setResult(null); load(); }} />
-      )}
+      {modal}
     </>
   );
 }

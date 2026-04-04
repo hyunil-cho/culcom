@@ -2,24 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   settingsApi,
   type MessageTemplateSimple,
   type ReservationSmsConfig,
 } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 import { Button, LinkButton } from '@/components/ui/Button';
 
 export default function ReservationSmsConfigPage() {
-  const router = useRouter();
   const [templates, setTemplates] = useState<MessageTemplateSimple[]>([]);
   const [senderNumbers, setSenderNumbers] = useState<string[]>([]);
   const [config, setConfig] = useState<ReservationSmsConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, showError, modal } = useResultModal({ redirectPath: ROUTES.SETTINGS });
 
   const [templateSeq, setTemplateSeq] = useState<number | ''>('');
   const [senderNumber, setSenderNumber] = useState('');
@@ -46,19 +44,16 @@ export default function ReservationSmsConfigPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (templateSeq === '' || !senderNumber) {
-      setResult({ success: false, message: '필수 항목을 모두 입력해주세요.' });
+      showError('필수 항목을 모두 입력해주세요.');
       return;
     }
     setSaving(true);
-    const res = await settingsApi.saveReservationSmsConfig({
+    await run(settingsApi.saveReservationSmsConfig({
       templateSeq: templateSeq as number,
       senderNumber,
       autoSend,
-    });
+    }), '설정이 성공적으로 저장되었습니다.');
     setSaving(false);
-    if (res.success) {
-      setResult({ success: true, message: '설정이 성공적으로 저장되었습니다.' });
-    }
   };
 
   if (loading) return <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>로딩 중...</div>;
@@ -203,16 +198,7 @@ export default function ReservationSmsConfigPage() {
         </form>
       </div>
 
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          onConfirm={() => {
-            if (result.success) router.push(ROUTES.SETTINGS);
-            setResult(null);
-          }}
-        />
-      )}
+      {modal}
     </div>
   );
 }

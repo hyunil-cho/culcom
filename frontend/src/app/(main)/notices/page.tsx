@@ -8,7 +8,7 @@ import DataTable from '@/components/ui/DataTable';
 import SearchBar from '@/components/ui/SearchBar';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { ROUTES } from '@/lib/routes';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 import { Button, LinkButton } from '@/components/ui/Button';
 
 const CATEGORY_FILTERS = [
@@ -35,7 +35,7 @@ function NoticesContent() {
   const [totalElements, setTotalElements] = useState(0);
   const [keyword, setKeyword] = useState(searchKeyword);
   const [deleteTarget, setDeleteTarget] = useState<NoticeListItem | null>(null);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal();
 
   const fetchNotices = useCallback(async () => {
     const apiParams = new URLSearchParams();
@@ -79,9 +79,8 @@ function NoticesContent() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    const res = await noticeApi.delete(deleteTarget.seq);
     setDeleteTarget(null);
-    setResult({ success: res.success, message: res.success ? '공지사항이 삭제되었습니다.' : '삭제에 실패했습니다.' });
+    const res = await run(noticeApi.delete(deleteTarget.seq), '공지사항이 삭제되었습니다.');
     if (res.success) fetchNotices();
   };
 
@@ -181,13 +180,7 @@ function NoticesContent() {
         </ConfirmModal>
       )}
 
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          onConfirm={() => setResult(null)}
-        />
-      )}
+      {modal}
     </>
   );
 }

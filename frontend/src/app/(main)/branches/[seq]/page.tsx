@@ -9,7 +9,7 @@ import { useSessionStore } from '@/lib/store';
 import { ROUTES } from '@/lib/routes';
 import DetailCard from '@/components/ui/DetailCard';
 import ConfirmModal from '@/components/ui/ConfirmModal';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 
 export default function BranchDetailPage() {
   const params = useParams();
@@ -19,7 +19,7 @@ export default function BranchDetailPage() {
   const refreshBranches = useSessionStore((s) => s.refreshBranches);
   const [branch, setBranch] = useState<Branch | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal({ onConfirm: async () => { await refreshBranches(); router.push(ROUTES.BRANCHES); } });
 
   useEffect(() => {
     branchApi.get(seq).then(res => setBranch(res.data));
@@ -55,9 +55,8 @@ export default function BranchDetailPage() {
           title="삭제 확인"
           onCancel={() => setDeleting(false)}
           onConfirm={async () => {
-            const res = await branchApi.delete(seq);
             setDeleting(false);
-            if (res.success) setResult({ success: true, message: '지점이 삭제되었습니다.' });
+            await run(branchApi.delete(seq), '지점이 삭제되었습니다.');
           }}
           confirmLabel="삭제"
           confirmColor="#f44336"
@@ -66,13 +65,7 @@ export default function BranchDetailPage() {
         </ConfirmModal>
       )}
 
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          onConfirm={async () => { setResult(null); await refreshBranches(); router.push(ROUTES.BRANCHES); }}
-        />
-      )}
+      {modal}
     </>
   );
 }

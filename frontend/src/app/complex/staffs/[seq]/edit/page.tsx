@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { staffApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import StaffForm, { emptyStaffForm, validateStaffForm, type StaffFormData } from '../../StaffForm';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 
 export default function StaffEditPage() {
@@ -13,7 +13,7 @@ export default function StaffEditPage() {
   const router = useRouter();
   const seq = Number(params.seq);
   const [form, setForm] = useState<StaffFormData>(emptyStaffForm);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_STAFFS });
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -32,14 +32,13 @@ export default function StaffEditPage() {
   const handleSubmit = async () => {
     const error = validateStaffForm(form);
     if (error) { alert(error); return; }
-    const res = await staffApi.update(seq, {
+    await run(staffApi.update(seq, {
       name: form.name,
       phoneNumber: form.phoneNumber || undefined,
       email: form.email || undefined,
       subject: form.subject || undefined,
       status: form.status,
-    });
-    if (res.success) setResult({ success: true, message: '스태프 정보가 수정되었습니다.' });
+    }), '스태프 정보가 수정되었습니다.');
   };
 
   return (
@@ -49,14 +48,13 @@ export default function StaffEditPage() {
       {deleting && (
         <ConfirmModal title="삭제 확인" onCancel={() => setDeleting(false)}
           onConfirm={async () => {
-            const res = await staffApi.delete(seq);
             setDeleting(false);
-            if (res.success) setResult({ success: true, message: '스태프가 삭제되었습니다.' });
+            await run(staffApi.delete(seq), '스태프가 삭제되었습니다.');
           }} confirmLabel="삭제" confirmColor="#f44336">
           이 스태프를 삭제하시겠습니까?<br />이 작업은 되돌릴 수 없습니다.
         </ConfirmModal>
       )}
-      {result && <ResultModal success={result.success} message={result.message} redirectPath={ROUTES.COMPLEX_STAFFS} />}
+      {modal}
     </>
   );
 }

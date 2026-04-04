@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { messageTemplateApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 import MessageTemplateForm, { MessageTemplateFormData } from '../MessageTemplateForm';
 
 export default function MessageTemplateAddPage() {
@@ -14,7 +14,7 @@ export default function MessageTemplateAddPage() {
     messageContext: '',
     isActive: true,
   });
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, showError, modal } = useResultModal({ redirectPath: ROUTES.MESSAGE_TEMPLATES });
   const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -29,21 +29,17 @@ export default function MessageTemplateAddPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.templateName.trim() || !form.messageContext.trim()) {
-      setResult({ success: false, message: '템플릿 이름과 메시지 내용은 필수 입력 항목입니다.' });
+      showError('템플릿 이름과 메시지 내용은 필수 입력 항목입니다.');
       return;
     }
     setSubmitting(true);
-    const res = await messageTemplateApi.create({
+    await run(messageTemplateApi.create({
       templateName: form.templateName,
       description: form.description || undefined,
       messageContext: form.messageContext,
       isActive: form.isActive,
-    });
+    }), '템플릿이 등록되었습니다.');
     setSubmitting(false);
-    setResult({
-      success: res.success,
-      message: res.success ? '템플릿이 등록되었습니다.' : '등록에 실패했습니다.',
-    });
   };
 
   return (
@@ -65,13 +61,7 @@ export default function MessageTemplateAddPage() {
         cancelHref={ROUTES.MESSAGE_TEMPLATES}
       />
 
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          {...(result.success ? { redirectPath: ROUTES.MESSAGE_TEMPLATES } : { onConfirm: () => setResult(null) })}
-        />
-      )}
+      {modal}
     </>
   );
 }

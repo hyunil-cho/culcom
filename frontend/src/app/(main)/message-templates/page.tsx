@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState, useCallback } from 'react';
 import { messageTemplateApi, MessageTemplateItem } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import ConfirmModal from '@/components/ui/ConfirmModal';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 import { Button, LinkButton } from '@/components/ui/Button';
 
 export default function MessageTemplatesPage() {
@@ -15,7 +15,7 @@ function MessageTemplatesContent() {
   const [templates, setTemplates] = useState<MessageTemplateItem[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<MessageTemplateItem | null>(null);
   const [defaultTarget, setDefaultTarget] = useState<MessageTemplateItem | null>(null);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal();
 
   const fetchTemplates = useCallback(async () => {
     const res = await messageTemplateApi.list();
@@ -30,17 +30,15 @@ function MessageTemplatesContent() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    const res = await messageTemplateApi.delete(deleteTarget.seq);
+    const res = await run(messageTemplateApi.delete(deleteTarget.seq), '템플릿이 삭제되었습니다.');
     setDeleteTarget(null);
-    setResult({ success: res.success, message: res.success ? '템플릿이 삭제되었습니다.' : '삭제에 실패했습니다.' });
     if (res.success) fetchTemplates();
   };
 
   const handleSetDefault = async () => {
     if (!defaultTarget) return;
-    const res = await messageTemplateApi.setDefault(defaultTarget.seq);
+    const res = await run(messageTemplateApi.setDefault(defaultTarget.seq), '기본 템플릿이 설정되었습니다.');
     setDefaultTarget(null);
-    setResult({ success: res.success, message: res.success ? '기본 템플릿이 설정되었습니다.' : '설정에 실패했습니다.' });
     if (res.success) fetchTemplates();
   };
 
@@ -205,13 +203,7 @@ function MessageTemplatesContent() {
         </ConfirmModal>
       )}
 
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          onConfirm={() => setResult(null)}
-        />
-      )}
+      {modal}
     </>
   );
 }

@@ -4,16 +4,16 @@ import { useState } from 'react';
 import { webhookApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import WebhookForm, { emptyWebhookForm, validateWebhookForm, fieldMappingsToJson, authConfigToJson, type WebhookFormData } from '../WebhookForm';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 
 export default function WebhookAddPage() {
   const [form, setForm] = useState<WebhookFormData>(emptyWebhookForm);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.WEBHOOKS });
 
   const handleSubmit = async () => {
     const error = validateWebhookForm(form);
     if (error) { alert(error); return; }
-    const res = await webhookApi.create({
+    await run(webhookApi.create({
       name: form.name,
       sourceName: form.sourceName,
       sourceDescription: form.sourceDescription || undefined,
@@ -28,17 +28,14 @@ export default function WebhookAddPage() {
       authType: form.authType || undefined,
       authConfig: form.authType ? authConfigToJson(form.authConfig) : undefined,
       isActive: form.isActive,
-    });
-    if (res.success) {
-      setResult({ success: true, message: '웹훅이 등록되었습니다.' });
-    }
+    }), '웹훅이 등록되었습니다.');
   };
 
   return (
     <>
       <WebhookForm form={form} onChange={setForm} onSubmit={handleSubmit}
         backHref={ROUTES.WEBHOOKS} submitLabel="등록" />
-      {result && <ResultModal success={result.success} message={result.message} redirectPath={ROUTES.WEBHOOKS} />}
+      {modal}
     </>
   );
 }

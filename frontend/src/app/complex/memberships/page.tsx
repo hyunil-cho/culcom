@@ -6,7 +6,7 @@ import { membershipApi, type Membership } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 
 function formatDuration(days: number): string {
   if (days > 0 && days % 365 === 0) return `${days / 365}년`;
@@ -21,7 +21,7 @@ function formatPrice(price: number): string {
 export default function MembershipsPage() {
   const router = useRouter();
   const [memberships, setMemberships] = useState<Membership[]>([]);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { modal } = useResultModal({ onConfirm: () => load() });
 
   useEffect(() => { load(); }, []);
 
@@ -51,13 +51,7 @@ export default function MembershipsPage() {
         onRowClick={(m) => router.push(ROUTES.COMPLEX_MEMBERSHIP_EDIT(m.seq))}
       />
 
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          onConfirm={() => { setResult(null); load(); }}
-        />
-      )}
+      {modal}
     </>
   );
 }

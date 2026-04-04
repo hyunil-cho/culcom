@@ -130,13 +130,9 @@ public class SmsService {
 
     /**
      * SMS/LMS 잔여건수 조회.
+     * 인증 실패 시 IllegalArgumentException을 던진다.
      */
     public int[] checkRemainingCount(String accountId, String password) {
-        if (isMockMode()) {
-            log.info("[Mock Mode] 잔여건수 조회 없이 테스트 값 반환");
-            return new int[]{9999, 9999};
-        }
-
         String endpoint = smsProperties.getApiBaseUrl() + smsProperties.getCheckEndpoint();
         int smsCount = checkRemainingByType(endpoint, accountId, password, "sms");
         int lmsCount = checkRemainingByType(endpoint, accountId, password, "lms");
@@ -249,17 +245,24 @@ public class SmsService {
         form.add("remote_request", type);
 
         String responseText = postForm(endpoint, form);
-        if (responseText.isBlank()) return 0;
+        if (responseText.isBlank()) {
+            throw new IllegalArgumentException("마이문자 API 응답이 없습니다.");
+        }
 
         // 응답 형식: 결과코드|결과메시지|잔여건수
         String[] parts = responseText.split("\\|");
         if (parts.length >= 3) {
+            String code = parts[0].trim();
+            if (!"0000".equals(code)) {
+                String errorMsg = RESPONSE_CODES.getOrDefault(code, "알 수 없는 오류");
+                throw new IllegalArgumentException("마이문자 " + type.toUpperCase() + " 잔여건수 조회 실패: " + errorMsg);
+            }
             try {
                 return Integer.parseInt(parts[2].trim());
             } catch (NumberFormatException e) {
                 log.warn("{} 잔여건수 파싱 오류: {}", type.toUpperCase(), responseText);
             }
         }
-        return 0;
+        throw new IllegalArgumentException("마이문자 API 응답 형식 오류: " + responseText);
     }
 }

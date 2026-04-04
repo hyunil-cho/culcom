@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { postponementApi, type PostponementReason } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 
 export default function PostponementReasonsPage() {
   const [reasons, setReasons] = useState<PostponementReason[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [reasonText, setReasonText] = useState('');
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal({ onConfirm: () => load() });
 
   const load = () => {
     postponementApi.reasons().then(res => setReasons(res.data));
@@ -20,20 +20,13 @@ export default function PostponementReasonsPage() {
 
   const handleAdd = async () => {
     if (!reasonText.trim()) { alert('사유 텍스트를 입력하세요.'); return; }
-    const res = await postponementApi.addReason(reasonText.trim());
-    if (res.success) {
-      setReasonText('');
-      setShowForm(false);
-      setResult({ success: true, message: '연기사유가 추가되었습니다.' });
-    }
+    const res = await run(postponementApi.addReason(reasonText.trim()), '연기사유가 추가되었습니다.');
+    if (res.success) { setReasonText(''); setShowForm(false); }
   };
 
   const handleDelete = async (seq: number) => {
     if (!confirm('이 사유를 삭제하시겠습니까?')) return;
-    const res = await postponementApi.deleteReason(seq);
-    if (res.success) {
-      setResult({ success: true, message: '연기사유가 삭제되었습니다.' });
-    }
+    await run(postponementApi.deleteReason(seq), '연기사유가 삭제되었습니다.');
   };
 
   return (
@@ -146,13 +139,7 @@ export default function PostponementReasonsPage() {
         &quot;기타 (직접 입력)&quot; 옵션은 자동으로 포함됩니다.
       </div>
 
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          onConfirm={() => { setResult(null); load(); }}
-        />
-      )}
+      {modal}
     </>
   );
 }

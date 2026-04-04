@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { userApi, SessionRole } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
 import { ROUTES } from '@/lib/routes';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 
 export default function UserCreatePage() {
   const router = useRouter();
@@ -13,7 +13,7 @@ export default function UserCreatePage() {
   const creatingRole = SessionRole.isRoot(session) ? '지점장' : '직원';
 
   const [form, setForm] = useState({ userId: '', password: '', name: '', phone: '' });
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.USERS });
 
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [field]: e.target.value });
@@ -21,10 +21,7 @@ export default function UserCreatePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await userApi.create(form);
-    if (res.success) {
-      setResult({ success: true, message: '사용자가 생성되었습니다.' });
-    }
+    await run(userApi.create(form), '사용자가 생성되었습니다.');
   };
 
   return (
@@ -85,13 +82,7 @@ export default function UserCreatePage() {
         </form>
       </div>
 
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          onConfirm={() => router.push(ROUTES.USERS)}
-        />
-      )}
+      {modal}
     </>
   );
 }

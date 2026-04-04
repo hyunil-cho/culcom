@@ -5,7 +5,7 @@ import { refundApi, type RefundRequest } from '@/lib/api';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import SearchBar from '@/components/ui/SearchBar';
 import ModalOverlay from '@/components/ui/ModalOverlay';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 
 const STATUS_BADGE: Record<string, string> = {
   '대기': 'badge-warning',
@@ -19,7 +19,7 @@ export default function RefundsPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [statusFilter, setStatusFilter] = useState('');
   const [keyword, setKeyword] = useState('');
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal({ onConfirm: () => load() });
 
   const [rejectTarget, setRejectTarget] = useState<RefundRequest | null>(null);
   const [rejectReason, setRejectReason] = useState('');
@@ -59,20 +59,14 @@ export default function RefundsPage() {
     }
 
     if (!confirm(`${req.memberName} 회원의 환불 요청 상태를 "${newStatus}"(으)로 변경하시겠습니까?`)) return;
-    const res = await refundApi.updateStatus(req.seq, newStatus);
-    if (res.success) {
-      setResult({ success: true, message: '상태가 변경되었습니다.' });
-    }
+    await run(refundApi.updateStatus(req.seq, newStatus), '상태가 변경되었습니다.');
   };
 
   const handleRejectSubmit = async () => {
     if (!rejectReason.trim()) { alert('반려 사유를 입력해주세요.'); return; }
     if (!rejectTarget) return;
-    const res = await refundApi.updateStatus(rejectTarget.seq, '반려', rejectReason);
     setRejectTarget(null);
-    if (res.success) {
-      setResult({ success: true, message: '반려 처리되었습니다.' });
-    }
+    await run(refundApi.updateStatus(rejectTarget.seq, '반려', rejectReason), '반려 처리되었습니다.');
   };
 
   const columns: Column<RefundRequest>[] = [
@@ -217,13 +211,7 @@ export default function RefundsPage() {
         </ModalOverlay>
       )}
 
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          onConfirm={() => { setResult(null); load(); }}
-        />
-      )}
+      {modal}
     </>
   );
 }

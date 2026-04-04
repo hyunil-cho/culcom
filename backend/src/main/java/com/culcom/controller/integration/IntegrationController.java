@@ -11,8 +11,10 @@ import com.culcom.entity.integration.ThirdPartyService;
 import com.culcom.repository.BranchThirdPartyMappingRepository;
 import com.culcom.repository.MymunjaConfigInfoRepository;
 import com.culcom.repository.ThirdPartyServiceRepository;
+import com.culcom.service.SmsService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/integrations")
 @RequiredArgsConstructor
@@ -30,6 +33,7 @@ public class IntegrationController {
     private final BranchThirdPartyMappingRepository mappingRepository;
     private final ThirdPartyServiceRepository thirdPartyServiceRepository;
     private final MymunjaConfigInfoRepository mymunjaConfigInfoRepository;
+    private final SmsService smsService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<IntegrationServiceResponse>>> list(
@@ -142,6 +146,15 @@ public class IntegrationController {
             return ResponseEntity.badRequest().body(ApiResponse.error("SMS 매핑 정보를 찾을 수 없습니다."));
         }
 
+        // 저장 전 잔여건수 조회로 계정 유효성 검증
+        int[] remainingCounts;
+        try {
+            remainingCounts = smsService.checkRemainingCount(request.getAccountId(), request.getPassword());
+        } catch (Exception e) {
+            log.error("마이문자 잔여건수 조회 실패: {}", e.getMessage());
+            return ResponseEntity.ok(ApiResponse.error("마이문자 계정 인증에 실패했습니다. 계정 ID와 비밀번호를 확인해주세요."));
+        }
+
         mapping.setIsActive(request.isActive());
         mappingRepository.save(mapping);
 
@@ -149,15 +162,16 @@ public class IntegrationController {
                 .findByMappingMappingSeq(mapping.getMappingSeq())
                 .orElseGet(() -> MymunjaConfigInfo.builder()
                         .mapping(mapping)
-                        .remainingCountSms(0)
-                        .remainingCountLms(0)
                         .build());
 
         config.setMymunjaId(request.getAccountId());
         config.setMymunjaPassword(request.getPassword());
         config.setCallbackNumber(request.getSenderPhone());
+        config.setRemainingCountSms(remainingCounts[0]);
+        config.setRemainingCountLms(remainingCounts[1]);
         mymunjaConfigInfoRepository.save(config);
 
+        log.info("SMS 설정 저장 완료 - 잔여건수 SMS: {}, LMS: {}", remainingCounts[0], remainingCounts[1]);
         return ResponseEntity.ok(ApiResponse.ok("SMS 설정이 저장되었습니다.", null));
     }
 }

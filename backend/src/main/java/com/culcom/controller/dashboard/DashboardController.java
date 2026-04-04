@@ -32,9 +32,9 @@ public class DashboardController {
         if (branchSeq != null) {
             try {
                 smsRemaining = dashboardMapper.selectSmsRemaining(branchSeq);
+                lmsRemaining = dashboardMapper.selectLmsRemaining(branchSeq);
             } catch (Exception ignored) {}
             try {
-                lmsRemaining = dashboardMapper.selectLmsRemaining(branchSeq);
             } catch (Exception ignored) {}
         }
 

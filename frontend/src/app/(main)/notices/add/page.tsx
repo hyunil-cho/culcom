@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { noticeApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 import NoticeForm, { NoticeFormData } from '../NoticeForm';
 
 export default function NoticeAddPage() {
@@ -17,8 +17,8 @@ export default function NoticeAddPage() {
     eventStartDate: '',
     eventEndDate: '',
   });
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const { run, showError, modal } = useResultModal({ redirectPath: ROUTES.NOTICES });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -32,11 +32,11 @@ export default function NoticeAddPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim() || !form.content.trim()) {
-      setResult({ success: false, message: '제목과 내용은 필수 입력 항목입니다.' });
+      showError('제목과 내용은 필수 입력 항목입니다.');
       return;
     }
     setSubmitting(true);
-    const res = await noticeApi.create({
+    await run(noticeApi.create({
       title: form.title,
       content: form.content,
       category: form.category,
@@ -44,12 +44,8 @@ export default function NoticeAddPage() {
       createdBy: form.createdBy || undefined,
       eventStartDate: form.eventStartDate || undefined,
       eventEndDate: form.eventEndDate || undefined,
-    });
+    }), '공지사항이 등록되었습니다.');
     setSubmitting(false);
-    setResult({
-      success: res.success,
-      message: res.success ? '공지사항이 등록되었습니다.' : '등록에 실패했습니다.',
-    });
   };
 
   return (
@@ -71,13 +67,7 @@ export default function NoticeAddPage() {
         cancelHref={ROUTES.NOTICES}
       />
 
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          {...(result.success ? { redirectPath: ROUTES.NOTICES } : { onConfirm: () => setResult(null) })}
-        />
-      )}
+      {modal}
     </>
   );
 }

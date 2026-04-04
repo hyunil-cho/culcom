@@ -12,14 +12,14 @@ import MembershipForm, {
   fromDurationDays,
   type MembershipFormData,
 } from '../../MembershipForm';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 
 export default function MembershipEditPage() {
   const params = useParams();
   const router = useRouter();
   const seq = Number(params.seq);
   const [form, setForm] = useState<MembershipFormData>(emptyMembershipForm);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_MEMBERSHIPS });
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -39,15 +39,12 @@ export default function MembershipEditPage() {
   const handleSubmit = async () => {
     const error = validateMembershipForm(form);
     if (error) { alert(error); return; }
-    const res = await membershipApi.update(seq, {
+    await run(membershipApi.update(seq, {
       name: form.name,
       duration: toDurationDays(form),
       count: form.count,
       price: form.price,
-    });
-    if (res.success) {
-      setResult({ success: true, message: '멤버십이 수정되었습니다.' });
-    }
+    }), '멤버십이 수정되었습니다.');
   };
 
   return (
@@ -65,9 +62,8 @@ export default function MembershipEditPage() {
           title="삭제 확인"
           onCancel={() => setDeleting(false)}
           onConfirm={async () => {
-            const res = await membershipApi.delete(seq);
             setDeleting(false);
-            if (res.success) setResult({ success: true, message: '멤버십이 삭제되었습니다.' });
+            await run(membershipApi.delete(seq), '멤버십이 삭제되었습니다.');
           }}
           confirmLabel="삭제"
           confirmColor="#f44336"
@@ -75,13 +71,7 @@ export default function MembershipEditPage() {
           이 멤버십을 삭제하시겠습니까?<br />이 작업은 되돌릴 수 없습니다.
         </ConfirmModal>
       )}
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          redirectPath={ROUTES.COMPLEX_MEMBERSHIPS}
-        />
-      )}
+      {modal}
     </>
   );
 }

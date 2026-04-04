@@ -5,21 +5,18 @@ import { branchApi } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
 import { ROUTES } from '@/lib/routes';
 import BranchForm, { emptyBranchForm, validateBranchForm, type BranchFormData } from '../BranchForm';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 
 export default function BranchAddPage() {
   const refreshBranches = useSessionStore((s) => s.refreshBranches);
   const [form, setForm] = useState<BranchFormData>(emptyBranchForm);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.BRANCHES });
 
   const handleSubmit = async () => {
     const error = validateBranchForm(form);
     if (error) { alert(error); return; }
-    const res = await branchApi.create(form);
-    if (res.success) {
-      await refreshBranches();
-      setResult({ success: true, message: '지점이 등록되었습니다.' });
-    }
+    const res = await run(branchApi.create(form), '지점이 등록되었습니다.');
+    if (res.success) await refreshBranches();
   };
 
   return (
@@ -31,13 +28,7 @@ export default function BranchAddPage() {
         backHref={ROUTES.BRANCHES}
         backLabel="← 목록으로"
       />
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          redirectPath={ROUTES.BRANCHES}
-        />
-      )}
+      {modal}
     </>
   );
 }

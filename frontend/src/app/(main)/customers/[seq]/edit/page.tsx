@@ -1,24 +1,23 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button, LinkButton } from '@/components/ui/Button';
-import { customerApi, type Customer } from '@/lib/api';
+import { customerApi } from '@/lib/api';
 import { cleanPhoneNumber, verifyPhoneNumber } from '@/lib/commonUtils';
 import { ROUTES } from '@/lib/routes';
 import FormField from '@/components/ui/FormField';
 import { Input, PhoneInput, Textarea } from '@/components/ui/FormInput';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 
 export default function CustomerEditPage() {
   const params = useParams();
-  const router = useRouter();
   const seq = Number(params.seq);
 
   const [form, setForm] = useState({ name: '', phoneNumber: '', comment: '', commercialName: '', adSource: '' });
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.CUSTOMERS });
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -39,14 +38,13 @@ export default function CustomerEditPage() {
   const handleSubmit = async () => {
     if (!form.name.trim()) { alert('이름을 입력해주세요.'); return; }
     if (verifyPhoneNumber(form.phoneNumber)) { alert('전화번호는 010으로 시작하는 11자리 숫자여야 합니다.'); return; }
-    const res = await customerApi.update(seq, {
+    await run(customerApi.update(seq, {
       name: form.name,
       phoneNumber: form.phoneNumber,
       comment: form.comment || undefined,
       commercialName: form.commercialName || undefined,
       adSource: form.adSource || undefined,
-    });
-    if (res.success) setResult({ success: true, message: '고객 정보가 수정되었습니다.' });
+    }), '고객 정보가 수정되었습니다.');
   };
 
   return (
@@ -88,15 +86,14 @@ export default function CustomerEditPage() {
       {deleting && (
         <ConfirmModal title="삭제 확인" onCancel={() => setDeleting(false)}
           onConfirm={async () => {
-            const res = await customerApi.delete(seq);
             setDeleting(false);
-            if (res.success) setResult({ success: true, message: '고객이 삭제되었습니다.' });
+            await run(customerApi.delete(seq), '고객이 삭제되었습니다.');
           }} confirmLabel="삭제" confirmColor="#f44336">
           이 고객을 삭제하시겠습니까?<br />이 작업은 되돌릴 수 없습니다.
         </ConfirmModal>
       )}
 
-      {result && <ResultModal success={result.success} message={result.message} redirectPath={ROUTES.CUSTOMERS} />}
+      {modal}
     </>
   );
 }

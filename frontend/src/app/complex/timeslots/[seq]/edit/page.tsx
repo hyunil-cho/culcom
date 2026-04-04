@@ -12,14 +12,14 @@ import TimeslotForm, {
   fromDaysOfWeek,
   type TimeslotFormData,
 } from '../../TimeslotForm';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 
 export default function TimeslotEditPage() {
   const params = useParams();
   const router = useRouter();
   const seq = Number(params.seq);
   const [form, setForm] = useState<TimeslotFormData>(emptyTimeslotForm);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_TIMESLOTS });
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -39,15 +39,12 @@ export default function TimeslotEditPage() {
   const handleSubmit = async () => {
     const error = validateTimeslotForm(form);
     if (error) { alert(error); return; }
-    const res = await timeslotApi.update(seq, {
+    await run(timeslotApi.update(seq, {
       name: form.name,
       daysOfWeek: toDaysOfWeek(form.days),
       startTime: form.startTime,
       endTime: form.endTime,
-    });
-    if (res.success) {
-      setResult({ success: true, message: '시간대가 수정되었습니다.' });
-    }
+    }), '시간대가 수정되었습니다.');
   };
 
   return (
@@ -65,9 +62,8 @@ export default function TimeslotEditPage() {
           title="삭제 확인"
           onCancel={() => setDeleting(false)}
           onConfirm={async () => {
-            const res = await timeslotApi.delete(seq);
             setDeleting(false);
-            if (res.success) setResult({ success: true, message: '시간대가 삭제되었습니다.' });
+            await run(timeslotApi.delete(seq), '시간대가 삭제되었습니다.');
           }}
           confirmLabel="삭제"
           confirmColor="#f44336"
@@ -75,13 +71,7 @@ export default function TimeslotEditPage() {
           이 시간대를 삭제하시겠습니까?<br />이 작업은 되돌릴 수 없습니다.
         </ConfirmModal>
       )}
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          redirectPath={ROUTES.COMPLEX_TIMESLOTS}
-        />
-      )}
+      {modal}
     </>
   );
 }

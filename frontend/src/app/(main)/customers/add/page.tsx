@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { customerApi } from '@/lib/api';
 import { cleanPhoneNumber, verifyPhoneNumber } from '@/lib/commonUtils';
 import { ROUTES } from '@/lib/routes';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 import FormField from '@/components/ui/FormField';
 import { Input, PhoneInput, Textarea } from '@/components/ui/FormInput';
 
@@ -15,7 +15,7 @@ export default function CustomerAddPage() {
     phoneNumber: '',
     comment: '',
   });
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.CUSTOMERS });
 
   const handlePhoneChange = (value: string) => {
     const cleaned = cleanPhoneNumber(value);
@@ -31,8 +31,7 @@ export default function CustomerAddPage() {
       alert('전화번호는 010으로 시작하는 11자리 숫자여야 합니다.');
       return;
     }
-    const res = await customerApi.create(form);
-    if (res.success) setResult({ success: true, message: '고객이 등록되었습니다.' });
+    await run(customerApi.create(form), '고객이 등록되었습니다.');
   };
 
   return (
@@ -69,13 +68,7 @@ export default function CustomerAddPage() {
         <Link href={ROUTES.CUSTOMERS} className="btn-secondary-large">취소</Link>
       </div>
 
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          redirectPath={ROUTES.CUSTOMERS}
-        />
-      )}
+      {modal}
     </>
   );
 }

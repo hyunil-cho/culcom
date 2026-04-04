@@ -9,24 +9,21 @@ import MembershipForm, {
   toDurationDays,
   type MembershipFormData,
 } from '../MembershipForm';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 
 export default function MembershipAddPage() {
   const [form, setForm] = useState<MembershipFormData>(emptyMembershipForm);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_MEMBERSHIPS });
 
   const handleSubmit = async () => {
     const error = validateMembershipForm(form);
     if (error) { alert(error); return; }
-    const res = await membershipApi.create({
+    await run(membershipApi.create({
       name: form.name,
       duration: toDurationDays(form),
       count: form.count,
       price: form.price,
-    });
-    if (res.success) {
-      setResult({ success: true, message: '멤버십이 등록되었습니다.' });
-    }
+    }), '멤버십이 등록되었습니다.');
   };
 
   return (
@@ -38,13 +35,7 @@ export default function MembershipAddPage() {
         backHref={ROUTES.COMPLEX_MEMBERSHIPS}
         submitLabel="등록"
       />
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          redirectPath={ROUTES.COMPLEX_MEMBERSHIPS}
-        />
-      )}
+      {modal}
     </>
   );
 }
