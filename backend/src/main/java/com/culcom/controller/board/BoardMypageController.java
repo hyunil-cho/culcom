@@ -13,14 +13,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.format.DateTimeFormatter;
+import com.culcom.util.DateTimeUtils;
 
 @RestController
 @RequestMapping("/api/public/board")
 @RequiredArgsConstructor
 public class BoardMypageController {
-
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private final CustomerRepository customerRepository;
     private final BoardSessionService boardSessionService;
@@ -39,8 +37,7 @@ public class BoardMypageController {
                     BoardMypageResponse mypageResponse = BoardMypageResponse.builder()
                             .name(customer.getName())
                             .phoneNumber(customer.getPhoneNumber())
-                            .createdDate(customer.getCreatedDate() != null
-                                    ? customer.getCreatedDate().format(DATE_FORMATTER) : null)
+                            .createdDate(DateTimeUtils.formatDate(customer.getCreatedDate()))
                             .loginMethod("카카오 로그인")
                             .build();
                     return ResponseEntity.ok(ApiResponse.ok(mypageResponse));

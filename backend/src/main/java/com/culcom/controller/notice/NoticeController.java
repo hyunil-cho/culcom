@@ -18,7 +18,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
+import com.culcom.util.DateTimeUtils;
+
 import java.time.LocalDateTime;
 
 @RestController
@@ -84,8 +85,8 @@ public class NoticeController {
                 .category(NoticeCategory.valueOf(request.getCategory()))
                 .isPinned(request.getIsPinned() != null && request.getIsPinned())
                 .createdBy(request.getCreatedBy())
-                .eventStartDate(parseDate(request.getEventStartDate()))
-                .eventEndDate(parseDate(request.getEventEndDate()))
+                .eventStartDate(DateTimeUtils.parseDate(request.getEventStartDate()))
+                .eventEndDate(DateTimeUtils.parseDate(request.getEventEndDate()))
                 .branch(branchRepository.findById(branchSeq).orElseThrow(
                         () -> new RuntimeException("지점을 찾을 수 없습니다.")))
                 .build();
@@ -103,8 +104,8 @@ public class NoticeController {
                     notice.setContent(request.getContent());
                     notice.setCategory(NoticeCategory.valueOf(request.getCategory()));
                     notice.setIsPinned(request.getIsPinned() != null && request.getIsPinned());
-                    notice.setEventStartDate(parseDate(request.getEventStartDate()));
-                    notice.setEventEndDate(parseDate(request.getEventEndDate()));
+                    notice.setEventStartDate(DateTimeUtils.parseDate(request.getEventStartDate()));
+                    notice.setEventEndDate(DateTimeUtils.parseDate(request.getEventEndDate()));
                     notice.setLastUpdateDate(LocalDateTime.now());
                     Notice saved = noticeRepository.save(notice);
                     return ResponseEntity.ok(ApiResponse.ok("공지사항이 수정되었습니다.", NoticeDetailResponse.from(saved)));
@@ -118,8 +119,4 @@ public class NoticeController {
         return ResponseEntity.ok(ApiResponse.ok("공지사항이 삭제되었습니다.", null));
     }
 
-    private LocalDate parseDate(String dateStr) {
-        if (dateStr == null || dateStr.isBlank()) return null;
-        return LocalDate.parse(dateStr);
-    }
 }

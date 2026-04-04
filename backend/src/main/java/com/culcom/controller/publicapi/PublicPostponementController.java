@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
+import com.culcom.util.DateTimeUtils;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -101,8 +101,8 @@ public class PublicPostponementController {
                 .phoneNumber(req.getPhone())
                 .timeSlot(req.getTimeSlot())
                 .currentClass(req.getCurrentClass())
-                .startDate(LocalDate.parse(req.getStartDate()))
-                .endDate(LocalDate.parse(req.getEndDate()))
+                .startDate(DateTimeUtils.parseDate(req.getStartDate()))
+                .endDate(DateTimeUtils.parseDate(req.getEndDate()))
                 .reason(req.getReason())
                 .status(RequestStatus.대기)
                 .build();

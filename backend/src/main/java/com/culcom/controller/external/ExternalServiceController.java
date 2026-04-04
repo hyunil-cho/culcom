@@ -18,11 +18,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import com.culcom.util.DateTimeUtils;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 
 @Slf4j
 @RestController
@@ -78,21 +79,8 @@ public class ExternalServiceController {
             @AuthenticationPrincipal CustomUserPrincipal principal) {
         Long branchSeq = principal.getSelectedBranchSeq();
 
-        // 인터뷰 일시 파싱 (yyyy-MM-dd HH:mm:ss, yyyy-MM-dd HH:mm, yyyy-MM-ddTHH:mm 순으로 시도)
-        LocalDateTime interviewTime = null;
-        String[] patterns = {"yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm", "yyyy-MM-dd'T'HH:mm"};
-        for (String pattern : patterns) {
-            try {
-                interviewTime = LocalDateTime.parse(request.getInterviewDate(),
-                        DateTimeFormatter.ofPattern(pattern));
-                break;
-            } catch (DateTimeParseException ignored) {
-            }
-        }
-        if (interviewTime == null) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("날짜 형식이 올바르지 않습니다. (예: 2026-04-02 14:30)"));
-        }
+        // 인터뷰 일시 파싱
+        LocalDateTime interviewTime = DateTimeUtils.parseFlexible(request.getInterviewDate());
 
         int duration = request.getDuration() != null ? request.getDuration() : 60;
 
