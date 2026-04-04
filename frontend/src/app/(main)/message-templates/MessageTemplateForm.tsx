@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { messageTemplateApi, PlaceholderItem } from '@/lib/api';
-import { Input, Textarea } from '@/components/ui/FormInput';
+import { Input, Textarea, Checkbox } from '@/components/ui/FormInput';
 import { Button, LinkButton } from '@/components/ui/Button';
 
 export interface MessageTemplateFormData {
@@ -144,13 +144,13 @@ export default function MessageTemplateForm({
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-              <input type="checkbox" name="isActive" checked={form.isActive} onChange={onChange} />
-              이 템플릿을 활성화
-            </label>
-            <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
-              활성화된 템플릿만 발송 시 사용할 수 있습니다
-            </div>
+            <Checkbox
+              label="이 템플릿을 활성화"
+              name="isActive"
+              checked={form.isActive}
+              onChange={onChange}
+              hint="활성화된 템플릿만 발송 시 사용할 수 있습니다"
+            />
           </div>
 
           {/* 미리보기 */}

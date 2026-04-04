@@ -1,6 +1,6 @@
 'use client';
 
-import { Input, Select, Textarea } from '@/components/ui/FormInput';
+import { Input, Select, Textarea, Checkbox } from '@/components/ui/FormInput';
 import { Button, LinkButton } from '@/components/ui/Button';
 
 export interface NoticeFormData {
@@ -86,10 +86,7 @@ export default function NoticeForm({
         )}
 
         <div style={{ marginBottom: '1.5rem' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-            <input type="checkbox" name="isPinned" checked={form.isPinned} onChange={onChange} />
-            상단 고정
-          </label>
+          <Checkbox label="상단 고정" name="isPinned" checked={form.isPinned} onChange={onChange} />
         </div>
 
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>

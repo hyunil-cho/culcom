@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Button, LinkButton } from '@/components/ui/Button';
 import FormField from '@/components/ui/FormField';
-import { Input, NumberInput, Select, Textarea } from '@/components/ui/FormInput';
+import { Input, NumberInput, Select, Textarea, Checkbox } from '@/components/ui/FormInput';
 
 const HTTP_METHODS = ['POST', 'PUT', 'PATCH', 'GET', 'DELETE'] as const;
 const CONTENT_TYPES = ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data', 'text/plain'] as const;
@@ -246,11 +246,8 @@ export default function WebhookForm({
               onChange={(e) => set('sourceDescription', e.target.value)} />
           </FormField>
           <FormField label="활성 상태">
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-              <input type="checkbox" checked={form.isActive}
-                onChange={(e) => set('isActive', e.target.checked)} />
-              활성화
-            </label>
+            <Checkbox label="활성화" checked={form.isActive}
+              onChange={(e) => set('isActive', (e.target as HTMLInputElement).checked)} />
           </FormField>
         </div>
       </div>

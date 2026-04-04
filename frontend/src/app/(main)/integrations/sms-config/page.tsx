@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { integrationApi, SmsConfig } from '@/lib/api';
+import { Checkbox } from '@/components/ui/FormInput';
 import { ROUTES } from '@/lib/routes';
 import { useResultModal } from '@/hooks/useResultModal';
 
@@ -170,15 +171,8 @@ export default function SmsConfigPage() {
         </div>
 
         <div style={{ marginBottom: 24 }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={active}
-              onChange={(e) => setActive(e.target.checked)}
-              style={{ width: 18, height: 18 }}
-            />
-            <span style={{ fontWeight: 600, fontSize: 14 }}>활성화</span>
-          </label>
+          <Checkbox label="활성화" checked={active}
+            onChange={(e) => setActive((e.target as HTMLInputElement).checked)} />
         </div>
 
         {config?.updatedAt && (

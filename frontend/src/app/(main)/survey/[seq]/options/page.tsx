@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { surveyApi, SurveyTemplate, SurveySection, SurveyQuestion, SurveyOption } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
+import { Checkbox } from '@/components/ui/FormInput';
 
 type InputType = 'radio' | 'checkbox' | 'text';
 
@@ -415,11 +416,10 @@ export default function SurveyEditorPage() {
                       <option value="text">주관식</option>
                     </select>
                   </div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', marginTop: 16 }}>
-                    <input type="checkbox" checked={editForm.required}
-                      onChange={e => setQuestionEditForms(p => ({ ...p, [q.seq]: { ...p[q.seq], required: e.target.checked } }))} />
-                    <span style={{ fontSize: '0.84rem', fontWeight: 600 }}>필수</span>
-                  </label>
+                  <div style={{ marginTop: 16 }}>
+                    <Checkbox label="필수" checked={editForm.required}
+                      onChange={e => setQuestionEditForms(p => ({ ...p, [q.seq]: { ...p[q.seq], required: (e.target as HTMLInputElement).checked } }))} />
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                   <Button variant="secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.82rem' }}
@@ -497,11 +497,10 @@ export default function SurveyEditorPage() {
               <option value="text">주관식</option>
             </select>
           </div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', marginTop: 16 }}>
-            <input type="checkbox" checked={form.required}
-              onChange={e => setQuestionAddForms(p => ({ ...p, [sectionSeq]: { ...p[sectionSeq], required: e.target.checked } }))} />
-            <span style={{ fontSize: '0.84rem', fontWeight: 600 }}>필수</span>
-          </label>
+          <div style={{ marginTop: 16 }}>
+            <Checkbox label="필수" checked={form.required}
+              onChange={e => setQuestionAddForms(p => ({ ...p, [sectionSeq]: { ...p[sectionSeq], required: (e.target as HTMLInputElement).checked } }))} />
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
           <Button variant="secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.84rem' }}

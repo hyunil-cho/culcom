@@ -7,6 +7,7 @@ import {
   type MessageTemplateSimple,
   type ReservationSmsConfig,
 } from '@/lib/api';
+import { Checkbox } from '@/components/ui/FormInput';
 import { ROUTES } from '@/lib/routes';
 import { useResultModal } from '@/hooks/useResultModal';
 import { Button, LinkButton } from '@/components/ui/Button';
@@ -160,15 +161,8 @@ export default function ReservationSmsConfigPage() {
           </div>
 
           <div style={{ marginBottom: 24 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={autoSend}
-                onChange={(e) => setAutoSend(e.target.checked)}
-                style={{ width: 18, height: 18, cursor: 'pointer' }}
-              />
-              <span style={{ fontSize: 14, color: '#333' }}>예약 확정 시 자동으로 문자 발송</span>
-            </label>
+            <Checkbox label="예약 확정 시 자동으로 문자 발송" checked={autoSend}
+              onChange={(e) => setAutoSend((e.target as HTMLInputElement).checked)} />
           </div>
 
           <div

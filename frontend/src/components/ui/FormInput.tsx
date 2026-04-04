@@ -34,3 +34,26 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<H
   (props, ref) => <textarea ref={ref} {...props} className={`form-input ${props.className ?? ''}`} />
 );
 Textarea.displayName = 'Textarea';
+
+interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
+  label: string;
+  hint?: string;
+}
+
+export function Checkbox({ label, hint, ...props }: CheckboxProps) {
+  return (
+    <div>
+      <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+        <input
+          type="checkbox"
+          {...props}
+          style={{ width: 18, height: 18, margin: 0, ...props.style }}
+        />
+        <span style={{ fontSize: 14, fontWeight: 600 }}>{label}</span>
+      </label>
+      {hint && (
+        <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>{hint}</div>
+      )}
+    </div>
+  );
+}
