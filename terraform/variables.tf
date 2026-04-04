@@ -107,6 +107,13 @@ variable "frontend_desired_count" {
   default = 2
 }
 
+# ─── Secrets ───
+variable "kakao_api_key" {
+  description = "카카오 API 키"
+  type        = string
+  sensitive   = true
+}
+
 # ─── Lambda ───
 variable "lambda_s3_bucket" {
   description = "Lambda 배포 패키지가 저장된 S3 버킷"

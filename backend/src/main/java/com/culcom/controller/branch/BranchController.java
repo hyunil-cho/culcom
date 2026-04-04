@@ -8,6 +8,7 @@ import com.culcom.dto.branch.BranchListResponse;
 import com.culcom.entity.branch.Branch;
 import com.culcom.entity.auth.UserInfo;
 import com.culcom.entity.enums.UserRole;
+import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.UserInfoRepository;
 import com.culcom.service.AuthService;
@@ -33,7 +34,7 @@ public class BranchController {
     public ResponseEntity<ApiResponse<List<BranchListResponse>>> list(
             @AuthenticationPrincipal CustomUserPrincipal principal) {
         UserInfo user = userInfoRepository.findById(principal.getUserSeq())
-                .orElseThrow(() -> new RuntimeException("user not found"));
+                .orElseThrow(() -> new EntityNotFoundException("사용자"));
         List<Branch> branches = authService.getManagedBranches(user);
         List<BranchListResponse> result = branches.stream().map(BranchListResponse::from).toList();
         return ResponseEntity.ok(ApiResponse.ok(result));
@@ -57,7 +58,7 @@ public class BranchController {
         }
 
         UserInfo manager = userInfoRepository.findById(principal.getUserSeq())
-                .orElseThrow(() -> new RuntimeException("user not found"));
+                .orElseThrow(() -> new EntityNotFoundException("사용자"));
 
         Branch branch = Branch.builder()
                 .branchName(request.getBranchName())

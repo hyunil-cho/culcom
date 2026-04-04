@@ -1,7 +1,8 @@
 # ─── 필수 변수 ───
-db_password    = "CHANGE_ME_strong_password_here"
-backend_image  = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/culcom-backend:latest"
-frontend_image = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/culcom-frontend:latest"
+db_password      = "CHANGE_ME_strong_password_here"
+kakao_api_key    = "CHANGE_ME_kakao_api_key"
+backend_image    = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/culcom-backend:latest"
+frontend_image   = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/culcom-frontend:latest"
 lambda_s3_bucket = "culcom-deploy-bucket"
 
 # ─── 선택 변수 (기본값 존재) ───

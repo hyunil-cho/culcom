@@ -79,8 +79,12 @@ resource "aws_ecs_task_definition" "backend" {
     environment = [
       { name = "SPRING_PROFILES_ACTIVE", value = var.environment },
       { name = "SPRING_DATASOURCE_URL", value = "jdbc:mysql://${aws_db_instance.main.endpoint}/${var.db_name}?useSSL=true&serverTimezone=Asia/Seoul" },
-      { name = "SPRING_DATASOURCE_USERNAME", value = var.db_username },
-      { name = "SPRING_DATASOURCE_PASSWORD", value = var.db_password },
+    ]
+
+    secrets = [
+      { name = "SPRING_DATASOURCE_USERNAME", valueFrom = aws_ssm_parameter.db_username.arn },
+      { name = "SPRING_DATASOURCE_PASSWORD", valueFrom = aws_ssm_parameter.db_password.arn },
+      { name = "KAKAO_API_KEY", valueFrom = aws_ssm_parameter.kakao_api_key.arn },
     ]
 
     logConfiguration = {

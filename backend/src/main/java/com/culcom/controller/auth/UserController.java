@@ -6,6 +6,7 @@ import com.culcom.dto.auth.UserCreateRequest;
 import com.culcom.dto.auth.UserResponse;
 import com.culcom.entity.auth.UserInfo;
 import com.culcom.entity.enums.UserRole;
+import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.UserInfoRepository;
 import jakarta.validation.Valid;
@@ -30,7 +31,7 @@ public class UserController {
             @AuthenticationPrincipal CustomUserPrincipal principal) {
         UserRole role = principal.getRole();
         UserInfo creator = userInfoRepository.findById(principal.getUserSeq())
-                .orElseThrow(() -> new RuntimeException("creator is not present"));
+                .orElseThrow(() -> new EntityNotFoundException("사용자"));
 
         List<UserInfo> users;
         if (UserRole.ROOT.equals(role)) {
@@ -51,7 +52,7 @@ public class UserController {
             @AuthenticationPrincipal CustomUserPrincipal principal) {
         UserRole role = principal.getRole();
         UserInfo creator = userInfoRepository.findById(principal.getUserSeq())
-                .orElseThrow(() -> new RuntimeException("creator is not present"));
+                .orElseThrow(() -> new EntityNotFoundException("사용자"));
 
         if (userInfoRepository.findByUserId(request.getUserId()).isPresent()) {
             return ResponseEntity.badRequest().body(ApiResponse.error("이미 존재하는 아이디입니다."));
@@ -99,7 +100,7 @@ public class UserController {
 
     private @NonNull UserInfo getUserInfo(Long userSeq) {
         return this.userInfoRepository.findById(userSeq)
-                .orElseThrow(() -> new RuntimeException("user not found"));
+                .orElseThrow(() -> new EntityNotFoundException("사용자"));
     }
 
     @DeleteMapping("/{seq}")

@@ -5,6 +5,7 @@ import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.kakaosync.KakaoSyncUrlResponse;
 import com.culcom.entity.branch.Branch;
+import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +31,7 @@ public class KakaoSyncController {
         Long branchSeq = principal.getSelectedBranchSeq();
 
         Branch branch = branchRepository.findById(branchSeq)
-                .orElseThrow(() -> new RuntimeException("지점을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("지점"));
 
         String kakaoSyncUrl = kakaoSyncProperties.getBaseUrl()
                 + "?query=" + URLEncoder.encode("state=" + branchSeq, StandardCharsets.UTF_8);

@@ -8,6 +8,7 @@ import com.culcom.dto.notice.NoticeListResponse;
 import com.culcom.dto.notice.NoticeUpdateRequest;
 import com.culcom.entity.notice.Notice;
 import com.culcom.entity.enums.NoticeCategory;
+import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.NoticeRepository;
 import lombok.RequiredArgsConstructor;
@@ -55,7 +56,7 @@ public class NoticeController {
                 .eventStartDate(DateTimeUtils.parseDate(request.getEventStartDate()))
                 .eventEndDate(DateTimeUtils.parseDate(request.getEventEndDate()))
                 .branch(branchRepository.findById(branchSeq).orElseThrow(
-                        () -> new RuntimeException("지점을 찾을 수 없습니다.")))
+                        () -> new EntityNotFoundException("지점")))
                 .build();
 
         Notice saved = noticeRepository.save(notice);

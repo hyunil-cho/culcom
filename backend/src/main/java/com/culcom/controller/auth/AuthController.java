@@ -9,6 +9,7 @@ import com.culcom.entity.auth.UserInfo;
 import com.culcom.entity.enums.UserRole;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.UserInfoRepository;
+import com.culcom.exception.EntityNotFoundException;
 import com.culcom.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -99,7 +100,7 @@ public class AuthController {
         }
         if (!UserRole.ROOT.equals(principal.getRole())) {
             UserInfo user = userInfoRepository.findById(principal.getUserSeq())
-                    .orElseThrow(() -> new RuntimeException("user not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("사용자"));
             List<Long> managedBranchSeqs = authService.getManagedBranches(user).stream()
                     .map(Branch::getSeq).toList();
             if (!managedBranchSeqs.contains(branchSeq)) {
