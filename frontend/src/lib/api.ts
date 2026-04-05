@@ -162,7 +162,10 @@ export interface ComplexMember {
   phoneNumber: string;
   level?: string;
   language?: string;
+  info?: string;
   chartNumber?: string;
+  signupChannel?: string;
+  interviewer?: string;
   comment?: string;
 }
 
@@ -173,6 +176,10 @@ export interface ComplexStaff {
   email?: string;
   subject?: string;
   status: string;
+  joinDate?: string;
+  comment?: string;
+  interviewer?: string;
+  paymentMethod?: string;
 }
 
 export interface ComplexClassRequest {
@@ -198,7 +205,55 @@ export const memberApi = {
   create: (data: Partial<ComplexMember>) => api.post<ComplexMember>(API.COMPLEX_MEMBERS, data),
   update: (seq: number, data: Partial<ComplexMember>) => api.put<ComplexMember>(API.COMPLEX_MEMBER(seq), data),
   delete: (seq: number) => api.delete<void>(API.COMPLEX_MEMBER(seq)),
+  getMemberships: (seq: number) => api.get<MemberMembershipResponse[]>(API.COMPLEX_MEMBER_MEMBERSHIPS(seq)),
+  assignMembership: (seq: number, data: MemberMembershipRequest) =>
+    api.post<MemberMembershipResponse>(API.COMPLEX_MEMBER_MEMBERSHIPS(seq), data),
+  updateMembership: (seq: number, mmSeq: number, data: MemberMembershipRequest) =>
+    api.put<MemberMembershipResponse>(API.COMPLEX_MEMBER_MEMBERSHIP(seq, mmSeq), data),
+  deleteMembership: (seq: number, mmSeq: number) =>
+    api.delete<void>(API.COMPLEX_MEMBER_MEMBERSHIP(seq, mmSeq)),
 };
+
+export interface MemberMembershipRequest {
+  membershipSeq: number;
+  startDate?: string;
+  expiryDate?: string;
+  price?: string;
+  depositAmount?: string;
+  paymentMethod?: string;
+  paymentDate?: string;
+  status?: string;
+}
+
+export interface MemberMembershipResponse {
+  seq: number;
+  memberSeq: number;
+  membershipSeq: number;
+  membershipName: string;
+  startDate: string;
+  expiryDate: string;
+  totalCount: number;
+  usedCount: number;
+  postponeTotal: number;
+  postponeUsed: number;
+  price: string | null;
+  depositAmount: string | null;
+  paymentMethod: string | null;
+  paymentDate: string | null;
+  status: string;
+  createdDate: string;
+}
+
+export interface StaffRefundInfo {
+  seq: number;
+  staffSeq: number;
+  depositAmount?: string;
+  refundableDeposit?: string;
+  nonRefundableDeposit?: string;
+  refundBank?: string;
+  refundAccount?: string;
+  refundAmount?: string;
+}
 
 export const staffApi = {
   list: () => api.get<ComplexStaff[]>(API.COMPLEX_STAFFS),
@@ -206,6 +261,10 @@ export const staffApi = {
   create: (data: Partial<ComplexStaff>) => api.post<ComplexStaff>(API.COMPLEX_STAFFS, data),
   update: (seq: number, data: Partial<ComplexStaff>) => api.put<ComplexStaff>(API.COMPLEX_STAFF(seq), data),
   delete: (seq: number) => api.delete<void>(API.COMPLEX_STAFF(seq)),
+  getRefund: (staffSeq: number) => api.get<StaffRefundInfo | null>(API.COMPLEX_STAFF_REFUND(staffSeq)),
+  saveRefund: (staffSeq: number, data: Partial<StaffRefundInfo>) =>
+    api.post<StaffRefundInfo>(API.COMPLEX_STAFF_REFUND(staffSeq), data),
+  deleteRefund: (staffSeq: number) => api.delete<void>(API.COMPLEX_STAFF_REFUND(staffSeq)),
 };
 
 // ── User ──

@@ -1,9 +1,9 @@
-package com.culcom.controller.complex;
+package com.culcom.controller.complex.refund;
 
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
-import com.culcom.dto.complex.postponement.PostponementResponse;
-import com.culcom.mapper.PostponementQueryMapper;
+import com.culcom.dto.complex.refund.RefundResponse;
+import com.culcom.mapper.RefundQueryMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -15,14 +15,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/complex/postponements")
+@RequestMapping("/api/complex/refunds")
 @RequiredArgsConstructor
-public class PostponementQueryController {
+public class RefundQueryController {
 
-    private final PostponementQueryMapper postponementQueryMapper;
+    private final RefundQueryMapper refundQueryMapper;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<PostponementResponse>>> list(
+    public ResponseEntity<ApiResponse<Page<RefundResponse>>> list(
             @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -32,10 +32,10 @@ public class PostponementQueryController {
         Long branchSeq = principal.getSelectedBranchSeq();
         int offset = page * size;
 
-        List<PostponementResponse> list = postponementQueryMapper.search(branchSeq, status, keyword, offset, size);
-        int total = postponementQueryMapper.count(branchSeq, status, keyword);
+        List<RefundResponse> list = refundQueryMapper.search(branchSeq, status, keyword, offset, size);
+        int total = refundQueryMapper.count(branchSeq, status, keyword);
 
-        Page<PostponementResponse> result = new PageImpl<>(list, PageRequest.of(page, size), total);
+        Page<RefundResponse> result = new PageImpl<>(list, PageRequest.of(page, size), total);
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 }

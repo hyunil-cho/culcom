@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.culcom.mapper.AttendanceViewQueryMapper">
+
+    <!--
+      등록현황 통합 뷰
+      스태프(UNION 상단) + 회원(UNION 하단)을 한 쿼리로 조회.
+      결과는 timeSlotSeq, classSeq, staff DESC 순으로 정렬되어 컨트롤러에서 그룹핑만 하면 됨.
+    -->
+    <select id="selectAttendanceView" resultType="com.culcom.dto.complex.attendance.AttendanceViewRow">
+        /* 스태프 */
+        SELECT
+            ts.seq              AS timeSlotSeq,
+            CONCAT(ts.name, ' ', ts.days_of_week, ' (', ts.start_time, ' ~ ', ts.end_time, ')') AS slotName,
+            c.seq               AS classSeq,
+            c.name              AS className,
+            c.capacity          AS capacity,
+            s.seq               AS memberSeq,
+            s.name              AS name,
+            s.phone_number      AS phoneNumber,
+            TRUE                AS staff,
+            FALSE               AS postponed,
+            CASE sa.status
+                WHEN '출석' THEN 'O'
+                WHEN '결석' THEN 'X'
+                ELSE ''
+            END                 AS status
+        FROM complex_classes c
+        JOIN class_time_slots ts ON ts.seq = c.time_slot_seq
+        JOIN complex_staffs s    ON s.seq = c.staff_seq
+        LEFT JOIN complex_staff_attendance sa
+               ON sa.staff_seq = s.seq
+              AND sa.class_seq = c.seq
+              AND sa.attendance_date = #{today}
+        WHERE c.branch_seq = #{branchSeq}
+
+        UNION ALL
+
+        /* 회원 */
+        SELECT
+            ts.seq              AS timeSlotSeq,
+            CONCAT(ts.name, ' ', ts.days_of_week, ' (', ts.start_time, ' ~ ', ts.end_time, ')') AS slotName,
+            c.seq               AS classSeq,
+            c.name              AS className,
+            c.capacity          AS capacity,
+            m.seq               AS memberSeq,
+            m.name              AS name,
+            m.phone_number      AS phoneNumber,
+            FALSE               AS staff,
+            CASE WHEN mm.status = '연기' THEN TRUE ELSE FALSE END AS postponed,
+            CASE
+                WHEN mm.status = '연기' THEN '△'
+                WHEN a.status = '출석'  THEN 'O'
+                WHEN a.status = '결석'  THEN 'X'
+                ELSE ''
+            END                 AS status
+        FROM complex_member_class_mapping mcm
+        JOIN complex_classes c           ON c.seq = mcm.class_seq
+        JOIN class_time_slots ts         ON ts.seq = c.time_slot_seq
+        JOIN complex_members m           ON m.seq = mcm.member_seq
+        LEFT JOIN complex_member_memberships mm
+               ON mm.member_seq = m.seq
+              AND mm.status IN ('활성', '연기')
+        LEFT JOIN complex_member_attendance a
+               ON a.member_membership_seq = mm.seq
+              AND a.class_seq = c.seq
+              AND a.attendance_date = #{today}
+        WHERE c.branch_seq = #{branchSeq}
+
+        ORDER BY timeSlotSeq, classSeq, staff DESC, name
+    </select>
+
+    <!--
+      등록현황 상세 뷰 (특정 시간대)
+      멤버십 정보(시작일/만료일/횟수 등) 포함.
+    -->
+    <select id="selectAttendanceDetail" resultType="com.culcom.dto.complex.attendance.AttendanceViewRow">
+        /* 스태프 */
+        SELECT
+            c.seq               AS classSeq,
+            c.name              AS className,
+            c.capacity          AS capacity,
+            s.seq               AS memberSeq,
+            s.name              AS name,
+            s.phone_number      AS phoneNumber,
+            TRUE                AS staff,
+            FALSE               AS postponed,
+            ''                  AS status,
+            NULL                AS level,
+            NULL                AS info,
+            NULL                AS joinDate,
+            NULL                AS expiryDate,
+            NULL                AS totalCount,
+            NULL                AS usedCount,
+            NULL                AS grade
+        FROM complex_classes c
+        JOIN class_time_slots ts ON ts.seq = c.time_slot_seq
+        JOIN complex_staffs s    ON s.seq = c.staff_seq
+        WHERE c.branch_seq = #{branchSeq}
+          AND c.time_slot_seq = #{slotSeq}
+
+        UNION ALL
+
+        /* 회원 */
+        SELECT
+            c.seq               AS classSeq,
+            c.name              AS className,
+            c.capacity          AS capacity,
+            m.seq               AS memberSeq,
+            m.name              AS name,
+            m.phone_number      AS phoneNumber,
+            FALSE               AS staff,
+            CASE WHEN mm.status = '연기' THEN TRUE ELSE FALSE END AS postponed,
+            CASE WHEN mm.status = '연기' THEN '△' ELSE '' END     AS status,
+            m.level             AS level,
+            m.info              AS info,
+            mm.start_date       AS joinDate,
+            mm.expiry_date      AS expiryDate,
+            mm.total_count      AS totalCount,
+            mm.used_count       AS usedCount,
+            NULL                AS grade
+        FROM complex_member_class_mapping mcm
+        JOIN complex_classes c           ON c.seq = mcm.class_seq
+        JOIN complex_members m           ON m.seq = mcm.member_seq
+        LEFT JOIN complex_member_memberships mm
+               ON mm.member_seq = m.seq
+              AND mm.status IN ('활성', '연기')
+        WHERE c.branch_seq = #{branchSeq}
+          AND c.time_slot_seq = #{slotSeq}
+
+        ORDER BY classSeq, staff DESC, name
+    </select>
+
+    <!--
+      상세 뷰의 최근 출석기록 (회원별 최대 10건, 최신순)
+      ROW_NUMBER() 윈도우 함수 사용.
+    -->
+    <select id="selectRecentHistory" resultType="com.culcom.dto.complex.attendance.AttendanceHistoryRow">
+        SELECT sub.classSeq, sub.memberSeq, sub.status
+        FROM (
+            SELECT
+                a.class_seq                         AS classSeq,
+                mm.member_seq                       AS memberSeq,
+                CASE a.status WHEN '출석' THEN 'O' ELSE 'X' END AS status,
+                ROW_NUMBER() OVER (
+                    PARTITION BY a.class_seq, mm.member_seq
+                    ORDER BY a.attendance_date DESC
+                ) AS rn
+            FROM complex_member_attendance a
+            JOIN complex_member_memberships mm ON mm.seq = a.member_membership_seq
+            JOIN complex_classes c             ON c.seq = a.class_seq
+            WHERE c.branch_seq = #{branchSeq}
+              AND c.time_slot_seq = #{slotSeq}
+        ) sub
+        WHERE sub.rn &lt;= 10
+        ORDER BY sub.classSeq, sub.memberSeq, sub.rn
+    </select>
+
+</mapper>

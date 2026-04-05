@@ -153,8 +153,11 @@ export const API = {
   COMPLEX_CLASS: (seq: number) => `${A.COMPLEX_CLASSES}/${seq}`,
   COMPLEX_MEMBERS: A.COMPLEX_MEMBERS,
   COMPLEX_MEMBER: (seq: number) => `${A.COMPLEX_MEMBERS}/${seq}`,
+  COMPLEX_MEMBER_MEMBERSHIPS: (seq: number) => `${A.COMPLEX_MEMBERS}/${seq}/memberships`,
+  COMPLEX_MEMBER_MEMBERSHIP: (seq: number, mmSeq: number) => `${A.COMPLEX_MEMBERS}/${seq}/memberships/${mmSeq}`,
   COMPLEX_STAFFS: A.COMPLEX_STAFFS,
   COMPLEX_STAFF: (seq: number) => `${A.COMPLEX_STAFFS}/${seq}`,
+  COMPLEX_STAFF_REFUND: (staffSeq: number) => `${A.COMPLEX_STAFFS}/${staffSeq}/refund`,
 
   // 출석 등록현황
   COMPLEX_ATTENDANCE_VIEW: '/complex/attendance/view',

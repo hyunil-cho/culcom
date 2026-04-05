@@ -1,5 +1,7 @@
 package com.culcom.mapper;
 
+import com.culcom.dto.complex.attendance.AttendanceHistoryRow;
+import com.culcom.dto.complex.attendance.AttendanceViewRow;
 import com.culcom.dto.complex.classes.ComplexClassResponse;
 import com.culcom.dto.complex.member.ComplexMemberResponse;
 import com.culcom.dto.complex.postponement.PostponementResponse;
@@ -12,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +35,7 @@ class QueryMapperTest {
     @Autowired ComplexMemberQueryMapper complexMemberQueryMapper;
     @Autowired ComplexClassQueryMapper complexClassQueryMapper;
     @Autowired WebhookLogQueryMapper webhookLogQueryMapper;
+    @Autowired AttendanceViewQueryMapper attendanceViewQueryMapper;
 
     // ── Customer ──
 
@@ -209,5 +213,25 @@ class QueryMapperTest {
     void webhookLogCount() {
         int count = webhookLogQueryMapper.count(1L, null, null);
         assertThat(count).isGreaterThanOrEqualTo(0);
+    }
+
+    // ── AttendanceView ──
+
+    @Test
+    void attendanceView_selectAttendanceView() {
+        List<AttendanceViewRow> result = attendanceViewQueryMapper.selectAttendanceView(1L, LocalDate.now());
+        assertThat(result).isNotNull();
+    }
+
+    @Test
+    void attendanceView_selectAttendanceDetail() {
+        List<AttendanceViewRow> result = attendanceViewQueryMapper.selectAttendanceDetail(1L, 1L);
+        assertThat(result).isNotNull();
+    }
+
+    @Test
+    void attendanceView_selectRecentHistory() {
+        List<AttendanceHistoryRow> result = attendanceViewQueryMapper.selectRecentHistory(1L, 1L);
+        assertThat(result).isNotNull();
     }
 }

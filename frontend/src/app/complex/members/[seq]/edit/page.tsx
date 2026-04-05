@@ -24,7 +24,10 @@ export default function MemberEditPage() {
         phoneNumber: m.phoneNumber,
         level: m.level ?? '',
         language: m.language ?? '',
+        info: m.info ?? '',
         chartNumber: m.chartNumber ?? '',
+        signupChannel: m.signupChannel ?? '',
+        interviewer: m.interviewer ?? '',
         comment: m.comment ?? '',
       });
     });
@@ -38,7 +41,10 @@ export default function MemberEditPage() {
       phoneNumber: form.phoneNumber,
       level: form.level || undefined,
       language: form.language || undefined,
+      info: form.info || undefined,
       chartNumber: form.chartNumber || undefined,
+      signupChannel: (form.signupChannel && form.signupChannel !== '기타') ? form.signupChannel : undefined,
+      interviewer: form.interviewer || undefined,
       comment: form.comment || undefined,
     }), '회원 정보가 수정되었습니다.');
   };

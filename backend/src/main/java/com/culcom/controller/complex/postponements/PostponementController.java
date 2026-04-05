@@ -1,4 +1,4 @@
-package com.culcom.controller.complex;
+package com.culcom.controller.complex.postponements;
 
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.complex.postponement.PostponementCreateRequest;

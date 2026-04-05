@@ -1,17 +1,23 @@
-package com.culcom.controller.complex;
+package com.culcom.controller.complex.staff;
 
 import com.culcom.dto.ApiResponse;
+import com.culcom.dto.complex.member.ComplexStaffRefundInfoRequest;
+import com.culcom.dto.complex.member.ComplexStaffRefundInfoResponse;
 import com.culcom.dto.complex.member.ComplexStaffRequest;
 import com.culcom.dto.complex.member.ComplexStaffResponse;
 import com.culcom.entity.complex.staff.ComplexStaff;
+import com.culcom.entity.complex.staff.ComplexStaffRefundInfo;
 import com.culcom.repository.BranchRepository;
+import com.culcom.repository.ComplexStaffRefundInfoRepository;
 import com.culcom.repository.ComplexStaffRepository;
 import com.culcom.config.security.CustomUserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -20,6 +26,7 @@ import java.util.List;
 public class ComplexStaffController {
 
     private final ComplexStaffRepository staffRepository;
+    private final ComplexStaffRefundInfoRepository refundInfoRepository;
     private final BranchRepository branchRepository;
 
     @GetMapping
@@ -76,8 +83,48 @@ public class ComplexStaffController {
     }
 
     @DeleteMapping("/{seq}")
+    @Transactional
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long seq) {
+        refundInfoRepository.deleteByStaffSeq(seq);
         staffRepository.deleteById(seq);
         return ResponseEntity.ok(ApiResponse.ok("스태프 삭제 완료", null));
+    }
+
+    // ── 환급 정보 ──
+
+    @GetMapping("/{staffSeq}/refund")
+    public ResponseEntity<ApiResponse<ComplexStaffRefundInfoResponse>> getRefundInfo(@PathVariable Long staffSeq) {
+        return refundInfoRepository.findByStaffSeq(staffSeq)
+                .map(r -> ResponseEntity.ok(ApiResponse.ok(ComplexStaffRefundInfoResponse.from(r))))
+                .orElse(ResponseEntity.ok(ApiResponse.ok(null)));
+    }
+
+    @PostMapping("/{staffSeq}/refund")
+    public ResponseEntity<ApiResponse<ComplexStaffRefundInfoResponse>> createOrUpdateRefundInfo(
+            @PathVariable Long staffSeq, @RequestBody ComplexStaffRefundInfoRequest req) {
+        ComplexStaff staff = staffRepository.findById(staffSeq)
+                .orElse(null);
+        if (staff == null) return ResponseEntity.notFound().build();
+
+        ComplexStaffRefundInfo refund = refundInfoRepository.findByStaffSeq(staffSeq)
+                .orElse(ComplexStaffRefundInfo.builder().staff(staff).build());
+
+        refund.setDepositAmount(req.getDepositAmount());
+        refund.setRefundableDeposit(req.getRefundableDeposit());
+        refund.setNonRefundableDeposit(req.getNonRefundableDeposit());
+        refund.setRefundBank(req.getRefundBank());
+        refund.setRefundAccount(req.getRefundAccount());
+        refund.setRefundAmount(req.getRefundAmount());
+        refund.setLastUpdateDate(LocalDateTime.now());
+
+        return ResponseEntity.ok(ApiResponse.ok("환급 정보 저장 완료",
+                ComplexStaffRefundInfoResponse.from(refundInfoRepository.save(refund))));
+    }
+
+    @DeleteMapping("/{staffSeq}/refund")
+    @Transactional
+    public ResponseEntity<ApiResponse<Void>> deleteRefundInfo(@PathVariable Long staffSeq) {
+        refundInfoRepository.deleteByStaffSeq(staffSeq);
+        return ResponseEntity.ok(ApiResponse.ok("환급 정보 삭제 완료", null));
     }
 }

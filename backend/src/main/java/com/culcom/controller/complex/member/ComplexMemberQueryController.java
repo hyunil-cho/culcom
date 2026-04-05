@@ -1,4 +1,4 @@
-package com.culcom.controller.complex;
+package com.culcom.controller.complex.member;
 
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;

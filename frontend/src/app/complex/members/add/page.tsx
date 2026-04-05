@@ -18,7 +18,10 @@ export default function MemberAddPage() {
       phoneNumber: form.phoneNumber,
       level: form.level || undefined,
       language: form.language || undefined,
+      info: form.info || undefined,
       chartNumber: form.chartNumber || undefined,
+      signupChannel: (form.signupChannel && form.signupChannel !== '기타') ? form.signupChannel : undefined,
+      interviewer: form.interviewer || undefined,
       comment: form.comment || undefined,
     }), '회원이 등록되었습니다.');
   };
