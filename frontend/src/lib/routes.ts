@@ -164,6 +164,8 @@ export const API = {
   COMPLEX_ATTENDANCE_VIEW_DETAIL: '/complex/attendance/view/detail',
   COMPLEX_ATTENDANCE_BULK: '/complex/attendance/bulk',
   COMPLEX_ATTENDANCE_REORDER: '/complex/attendance/reorder',
+  COMPLEX_ATTENDANCE_MEMBER_HISTORY: (memberSeq: number) => `/complex/attendance/history/member/${memberSeq}`,
+  COMPLEX_ATTENDANCE_STAFF_HISTORY: (staffSeq: number) => `/complex/attendance/history/staff/${staffSeq}`,
 
   // 멤버십
   MEMBERSHIPS: '/memberships',

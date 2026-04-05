@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import SearchBar from '@/components/ui/SearchBar';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import MembershipInfoModal from './components/MembershipInfoModal';
+import AttendanceHistoryModal from '@/components/ui/AttendanceHistoryModal';
 
 const DEFAULTS = { page: '0', keyword: '' };
 
@@ -26,6 +27,7 @@ function MembersContent() {
   const [totalPages, setTotalPages] = useState(0);
   const [keyword, setKeyword] = useState(searchedKeyword);
   const [membershipModal, setMembershipModal] = useState<{ seq: number; name: string } | null>(null);
+  const [historyModal, setHistoryModal] = useState<{ seq: number; name: string } | null>(null);
 
   const load = useCallback(async () => {
     const apiParams = new URLSearchParams({ page: String(page), size: '20' });
@@ -50,6 +52,14 @@ function MembersContent() {
         <button onClick={(e) => { e.stopPropagation(); setMembershipModal({ seq: m.seq, name: m.name }); }}
           style={{ background: '#6366f1', color: '#fff', border: 'none', borderRadius: 3, padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}>
           멤버십 정보
+        </button>
+      ),
+    },
+    {
+      header: '히스토리', render: (m) => (
+        <button onClick={(e) => { e.stopPropagation(); setHistoryModal({ seq: m.seq, name: m.name }); }}
+          style={{ background: '#4a90e2', color: '#fff', border: 'none', borderRadius: 3, padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}>
+          히스토리
         </button>
       ),
     },
@@ -96,6 +106,15 @@ function MembersContent() {
           memberSeq={membershipModal.seq}
           memberName={membershipModal.name}
           onClose={() => setMembershipModal(null)}
+        />
+      )}
+
+      {historyModal && (
+        <AttendanceHistoryModal
+          seq={historyModal.seq}
+          name={historyModal.name}
+          type="member"
+          onClose={() => setHistoryModal(null)}
         />
       )}
     </>

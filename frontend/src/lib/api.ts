@@ -920,6 +920,14 @@ export interface BulkAttendanceResult {
   status: string;
 }
 
+export interface AttendanceHistoryDetail {
+  seq: number;
+  attendanceDate: string;
+  status: string;
+  className: string;
+  note: string | null;
+}
+
 export const attendanceViewApi = {
   getView: () => api.get<AttendanceViewSlot[]>(API.COMPLEX_ATTENDANCE_VIEW),
   getDetail: (slotSeq: number) =>
@@ -928,4 +936,8 @@ export const attendanceViewApi = {
     api.post<BulkAttendanceResult[]>(API.COMPLEX_ATTENDANCE_BULK, { classSeq, members }),
   reorderClasses: (classOrders: { id: number; sortOrder: number }[]) =>
     api.post<void>(API.COMPLEX_ATTENDANCE_REORDER, { classOrders }),
+  memberHistory: (memberSeq: number, page: number = 0, size: number = 20) =>
+    api.get<PageResponse<AttendanceHistoryDetail>>(`${API.COMPLEX_ATTENDANCE_MEMBER_HISTORY(memberSeq)}?page=${page}&size=${size}`),
+  staffHistory: (staffSeq: number, page: number = 0, size: number = 20) =>
+    api.get<PageResponse<AttendanceHistoryDetail>>(`${API.COMPLEX_ATTENDANCE_STAFF_HISTORY(staffSeq)}?page=${page}&size=${size}`),
 };
