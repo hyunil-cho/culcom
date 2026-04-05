@@ -286,3 +286,39 @@ export const publicPostponementApi = {
   reasons: (branchSeq: number) =>
     api.get<string[]>(`${API.PUBLIC_POSTPONEMENT_REASONS}?branchSeq=${branchSeq}`),
 };
+
+// ── 공개 환불 요청 ──
+
+export interface RefundSubmitRequest {
+  branchSeq: number; memberSeq: number; memberMembershipSeq: number;
+  memberName: string; phoneNumber: string; membershipName: string;
+  price: string; reason: string; bankName: string; accountNumber: string; accountHolder: string;
+}
+
+export const publicRefundApi = {
+  searchMember: (name: string, phone: string) =>
+    api.get<{ members: PublicMemberInfo[] }>(
+      `${API.PUBLIC_REFUND_SEARCH}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`
+    ),
+  submit: (data: RefundSubmitRequest) => api.post<void>(API.PUBLIC_REFUND_SUBMIT, data),
+};
+
+// ── 공개 멤버십 조회 ──
+
+export interface MembershipCheckMember {
+  name: string; phoneNumber: string; branchName: string; level: string | null;
+  memberships: MembershipCheckDetail[];
+}
+
+export interface MembershipCheckDetail {
+  membershipName: string; status: string; startDate: string; expiryDate: string;
+  totalCount: number; usedCount: number; postponeTotal: number; postponeUsed: number;
+  presentCount: number; absentCount: number; totalAttendance: number; attendanceRate: number;
+}
+
+export const publicMembershipApi = {
+  check: (name: string, phone: string) =>
+    api.get<{ member: MembershipCheckMember | null }>(
+      `${API.PUBLIC_MEMBERSHIP_CHECK}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`
+    ),
+};

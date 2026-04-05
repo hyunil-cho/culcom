@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { surveyApi, SurveyTemplate, SurveySection, SurveyQuestion, SurveyOption } from '@/lib/api';
+import { surveyApi, publicSurveyApi, SurveyTemplate, SurveySection, SurveyQuestion, SurveyOption } from '@/lib/api';
 import SurveyComplete from './SurveyComplete';
 import s from './page.module.css';
 
@@ -113,7 +113,7 @@ export default function SurveyFillPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const sec = sections[currentPage - 1];
     if (sec) {
       const secQ = questionsForSection(sec.seq);
@@ -125,6 +125,18 @@ export default function SurveyFillPage() {
         }
       }
     }
+    await publicSurveyApi.submit({
+      templateSeq,
+      reservationSeq: reservationSeq ? Number(reservationSeq) : undefined,
+      name: basicInfo.name,
+      phoneNumber: basicInfo.phone,
+      gender: basicInfo.gender,
+      location: basicInfo.location,
+      ageGroup: basicInfo.age_group,
+      occupation: basicInfo.occupation,
+      adSource: basicInfo.ad_source,
+      answers,
+    });
     setSubmitted(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

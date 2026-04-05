@@ -19,6 +19,8 @@ export {
   type RefundRequest, type PostponementRequest, type PostponementReason,
   type PublicMemberInfo, type PublicMembershipInfo, type PublicClassInfo,
   type PostponementSubmitRequest, type PostponementSubmitResponse,
+  publicRefundApi, type RefundSubmitRequest,
+  publicMembershipApi, type MembershipCheckMember, type MembershipCheckDetail,
 } from './complex';
 export {
   attendanceViewApi,
@@ -26,8 +28,9 @@ export {
   type BulkAttendanceResult, type AttendanceHistoryDetail,
 } from './attendance';
 export {
-  surveyApi,
+  surveyApi, publicSurveyApi,
   type SurveyTemplate, type SurveySection, type SurveyQuestion, type SurveyOption,
+  type SurveySubmitData,
 } from './survey';
 export {
   noticeApi,

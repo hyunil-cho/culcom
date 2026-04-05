@@ -60,3 +60,20 @@ export const surveyApi = {
   deleteOption: (templateSeq: number, optionSeq: number) =>
     api.delete<void>(API.SURVEY_OPTION(templateSeq, optionSeq)),
 };
+
+export interface SurveySubmitData {
+  templateSeq: number;
+  reservationSeq?: number;
+  name: string;
+  phoneNumber: string;
+  gender: string;
+  location: string;
+  ageGroup: string;
+  occupation: string;
+  adSource: string;
+  answers: Record<string, string | string[]>;
+}
+
+export const publicSurveyApi = {
+  submit: (data: SurveySubmitData) => api.post<void>(API.PUBLIC_SURVEY_SUBMIT, data),
+};

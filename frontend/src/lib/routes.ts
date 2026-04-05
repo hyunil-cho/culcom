@@ -35,6 +35,9 @@ export const ROUTES = {
   // 공개 페이지
   PUBLIC_POSTPONEMENT: '/public/postponement',
   PUBLIC_POSTPONEMENT_SUCCESS: '/public/postponement/success',
+  PUBLIC_REFUND: '/public/refund',
+  PUBLIC_REFUND_SUCCESS: '/public/refund/success',
+  PUBLIC_MEMBERSHIP: '/public/membership',
 
   // 고객 관리
   CUSTOMERS: R.CUSTOMERS,
@@ -189,6 +192,16 @@ export const API = {
   PUBLIC_POSTPONEMENT_SEARCH: '/public/postponement/search-member',
   PUBLIC_POSTPONEMENT_SUBMIT: '/public/postponement/submit',
   PUBLIC_POSTPONEMENT_REASONS: '/public/postponement/reasons',
+
+  // 공개 설문 제출
+  PUBLIC_SURVEY_SUBMIT: '/public/survey/submit',
+
+  // 공개 환불 요청
+  PUBLIC_REFUND_SEARCH: '/public/refund/search-member',
+  PUBLIC_REFUND_SUBMIT: '/public/refund/submit',
+
+  // 공개 멤버십 조회
+  PUBLIC_MEMBERSHIP_CHECK: '/public/membership/check',
 
   // 사용자
   USERS: A.USERS,
