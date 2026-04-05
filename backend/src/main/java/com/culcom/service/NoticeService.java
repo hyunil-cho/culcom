@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -57,7 +56,6 @@ public class NoticeService {
         notice.setIsPinned(request.getIsPinned() != null && request.getIsPinned());
         notice.setEventStartDate(DateTimeUtils.parseDate(request.getEventStartDate()));
         notice.setEventEndDate(DateTimeUtils.parseDate(request.getEventEndDate()));
-        notice.setLastUpdateDate(LocalDateTime.now());
         Notice saved = noticeRepository.save(notice);
         return NoticeDetailResponse.from(saved);
     }

@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -55,7 +54,6 @@ public class SurveyService {
                 .orElseThrow(() -> new EntityNotFoundException("설문지"));
         if (req.getName() != null) t.setName(req.getName());
         if (req.getDescription() != null) t.setDescription(req.getDescription());
-        t.setLastUpdateDate(LocalDateTime.now());
         SurveyTemplate saved = templateRepository.save(t);
         return SurveyTemplateResponse.from(saved, optionRepository.countByTemplateSeq(saved.getSeq()));
     }
@@ -165,17 +163,19 @@ public class SurveyService {
 
     @Transactional
     public List<SurveyQuestionResponse> reorderQuestions(QuestionReorderRequest req) {
-        List<SurveyQuestionResponse> results = new ArrayList<>();
+        List<Long> seqs = req.getItems().stream().map(QuestionReorderRequest.QuestionReorderItem::getSeq).toList();
+        Map<Long, SurveyTemplateQuestion> questionMap = new HashMap<>();
+        questionRepository.findAllById(seqs).forEach(q -> questionMap.put(q.getSeq(), q));
+
         for (QuestionReorderRequest.QuestionReorderItem item : req.getItems()) {
-            questionRepository.findById(item.getSeq()).ifPresent(q -> {
+            SurveyTemplateQuestion q = questionMap.get(item.getSeq());
+            if (q != null) {
                 q.setSortOrder(item.getSortOrder());
-                if (item.getNewQuestionKey() != null) {
-                    q.setQuestionKey(item.getNewQuestionKey());
-                }
-                results.add(SurveyQuestionResponse.from(questionRepository.save(q)));
-            });
+                if (item.getNewQuestionKey() != null) q.setQuestionKey(item.getNewQuestionKey());
+            }
         }
-        return results;
+        List<SurveyTemplateQuestion> saved = questionRepository.saveAll(questionMap.values());
+        return saved.stream().map(SurveyQuestionResponse::from).toList();
     }
 
     // ── 선택지 CRUD ──
@@ -224,18 +224,26 @@ public class SurveyService {
         branchRepository.findById(branchSeq).ifPresent(copy::setBranch);
         SurveyTemplate savedTemplate = templateRepository.save(copy);
 
-        // 섹션 복제
+        // 섹션 배치 복제
         Map<Long, SurveyTemplateSection> sectionMap = new HashMap<>();
-        for (SurveyTemplateSection s : sectionRepository.findByTemplateSeqOrderBySortOrder(sourceSeq)) {
+        List<SurveyTemplateSection> sectionCopies = new ArrayList<>();
+        List<SurveyTemplateSection> sourceSections = sectionRepository.findByTemplateSeqOrderBySortOrder(sourceSeq);
+        for (SurveyTemplateSection s : sourceSections) {
             SurveyTemplateSection sCopy = SurveyTemplateSection.builder()
                     .title(s.getTitle()).sortOrder(s.getSortOrder()).build();
             sCopy.setTemplate(savedTemplate);
-            sectionMap.put(s.getSeq(), sectionRepository.save(sCopy));
+            sectionCopies.add(sCopy);
+        }
+        List<SurveyTemplateSection> savedSections = sectionRepository.saveAll(sectionCopies);
+        for (int i = 0; i < sourceSections.size(); i++) {
+            sectionMap.put(sourceSections.get(i).getSeq(), savedSections.get(i));
         }
 
-        // 질문 복제
+        // 질문 배치 복제
         Map<Long, SurveyTemplateQuestion> questionMap = new HashMap<>();
-        for (SurveyTemplateQuestion q : questionRepository.findByTemplateSeqOrderBySortOrder(sourceSeq)) {
+        List<SurveyTemplateQuestion> questionCopies = new ArrayList<>();
+        List<SurveyTemplateQuestion> sourceQuestions = questionRepository.findByTemplateSeqOrderBySortOrder(sourceSeq);
+        for (SurveyTemplateQuestion q : sourceQuestions) {
             SurveyTemplateQuestion qCopy = SurveyTemplateQuestion.builder()
                     .questionKey(q.getQuestionKey()).title(q.getTitle()).description(q.getDescription())
                     .inputType(q.getInputType()).isGrouped(q.getIsGrouped()).groups(q.getGroups())
@@ -245,10 +253,15 @@ public class SurveyService {
                 SurveyTemplateSection mapped = sectionMap.get(q.getSection().getSeq());
                 if (mapped != null) qCopy.setSection(mapped);
             }
-            questionMap.put(q.getSeq(), questionRepository.save(qCopy));
+            questionCopies.add(qCopy);
+        }
+        List<SurveyTemplateQuestion> savedQuestions = questionRepository.saveAll(questionCopies);
+        for (int i = 0; i < sourceQuestions.size(); i++) {
+            questionMap.put(sourceQuestions.get(i).getSeq(), savedQuestions.get(i));
         }
 
-        // 선택지 복제
+        // 선택지 배치 복제
+        List<SurveyTemplateOption> optionCopies = new ArrayList<>();
         for (SurveyTemplateOption o : optionRepository.findByTemplateSeqOrderBySortOrder(sourceSeq)) {
             SurveyTemplateOption oCopy = SurveyTemplateOption.builder()
                     .groupName(o.getGroupName()).label(o.getLabel()).sortOrder(o.getSortOrder()).build();
@@ -257,8 +270,9 @@ public class SurveyService {
                 SurveyTemplateQuestion mapped = questionMap.get(o.getQuestion().getSeq());
                 if (mapped != null) oCopy.setQuestion(mapped);
             }
-            optionRepository.save(oCopy);
+            optionCopies.add(oCopy);
         }
+        optionRepository.saveAll(optionCopies);
 
         return SurveyTemplateResponse.from(savedTemplate, optionRepository.countByTemplateSeq(savedTemplate.getSeq()));
     }

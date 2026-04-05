@@ -8,6 +8,7 @@ import { ROUTES } from '@/lib/routes';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useResultModal } from '@/hooks/useResultModal';
 import { Button, LinkButton } from '@/components/ui/Button';
+import s from './page.module.css';
 
 export default function NoticeDetailPage() {
   const params = useParams();
@@ -18,97 +19,50 @@ export default function NoticeDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.NOTICES });
 
-  useEffect(() => {
-    noticeApi.get(seq).then((res) => {
-      if (res.success) setNotice(res.data);
-    });
-  }, [seq]);
+  useEffect(() => { noticeApi.get(seq).then((res) => { if (res.success) setNotice(res.data); }); }, [seq]);
 
-  const handleDelete = async () => {
-    setDeleting(false);
-    await run(noticeApi.delete(seq), '공지사항이 삭제되었습니다.');
-  };
+  const handleDelete = async () => { setDeleting(false); await run(noticeApi.delete(seq), '공지사항이 삭제되었습니다.'); };
 
-  if (!notice) {
-    return <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>로딩 중...</div>;
-  }
+  if (!notice) return <div className={s.loading}>로딩 중...</div>;
 
   return (
     <>
-      {/* 뒤로가기 */}
-      <div style={{ marginBottom: '1rem' }}>
-        <Link href={ROUTES.NOTICES} style={{ color: '#666', textDecoration: 'none', fontSize: '0.9rem' }}>
-          &larr; 목록으로
-        </Link>
+      <div className={s.backRow}>
+        <Link href={ROUTES.NOTICES} className={s.backLink}>&larr; 목록으로</Link>
       </div>
 
-      <div className="content-card" style={{ padding: '2rem' }}>
-        {/* 상단 메타 */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+      <div className={`content-card ${s.detailCard}`}>
+        <div className={s.metaSection}>
+          <div className={s.badges}>
             <span className={`status-badge ${notice.category === '이벤트' ? 'status-warning' : 'status-active'}`}>
               {notice.category}
             </span>
-            {notice.isPinned && (
-              <span className="status-badge" style={{ background: '#fff3e0', color: '#e65100' }}>📌 고정글</span>
-            )}
-            <span className="status-badge" style={{ background: '#e8f5e9', color: '#2e7d32' }}>
-              {notice.branchName}
-            </span>
+            {notice.isPinned && <span className={`status-badge ${s.pinnedBadge}`}>📌 고정글</span>}
+            <span className={`status-badge ${s.branchBadge}`}>{notice.branchName}</span>
           </div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 0.75rem' }}>{notice.title}</h1>
-          <div style={{ display: 'flex', gap: 16, color: '#888', fontSize: '0.85rem', flexWrap: 'wrap' }}>
+          <h1 className={s.title}>{notice.title}</h1>
+          <div className={s.metaInfo}>
             <span>{notice.createdBy}</span>
             <span>{notice.createdDate}</span>
             <span>조회 {notice.viewCount}</span>
-            {notice.eventStartDate && (
-              <span>이벤트 기간: {notice.eventStartDate} ~ {notice.eventEndDate}</span>
-            )}
+            {notice.eventStartDate && <span>이벤트 기간: {notice.eventStartDate} ~ {notice.eventEndDate}</span>}
           </div>
         </div>
 
-        {/* 본문 */}
-        <div style={{
-          padding: '1.5rem 0',
-          borderTop: '1px solid #eee',
-          borderBottom: '1px solid #eee',
-          minHeight: 200,
-          whiteSpace: 'pre-wrap',
-          lineHeight: 1.8,
-          fontSize: '0.95rem',
-          color: '#333',
-        }}>
-          {notice.content}
-        </div>
+        <div className={s.content}>{notice.content}</div>
 
-        {/* 하단 액션 */}
-        <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <LinkButton href={ROUTES.NOTICE_EDIT(seq)} style={{ padding: '0.6rem 1.2rem' }}>
-              수정
-            </LinkButton>
-            <Button
-              variant="danger"
-              style={{ padding: '0.6rem 1.2rem' }}
-              onClick={() => setDeleting(true)}
-            >
-              삭제
-            </Button>
+        <div className={s.actionsRow}>
+          <div className={s.actionBtns}>
+            <LinkButton href={ROUTES.NOTICE_EDIT(seq)} style={{ padding: '0.6rem 1.2rem' }}>수정</LinkButton>
+            <Button variant="danger" style={{ padding: '0.6rem 1.2rem' }} onClick={() => setDeleting(true)}>삭제</Button>
           </div>
-          {notice.lastUpdateDate && (
-            <span style={{ fontSize: '0.8rem', color: '#999' }}>최종 수정: {notice.lastUpdateDate}</span>
-          )}
+          {notice.lastUpdateDate && <span className={s.lastUpdate}>최종 수정: {notice.lastUpdateDate}</span>}
         </div>
       </div>
 
       {deleting && (
-        <ConfirmModal
-          title="공지사항 삭제"
-          onCancel={() => setDeleting(false)}
-          onConfirm={handleDelete}
-          confirmLabel="삭제"
-          confirmColor="var(--danger)"
-        >
+        <ConfirmModal title="공지사항 삭제" onCancel={() => setDeleting(false)} onConfirm={handleDelete}
+          confirmLabel="삭제" confirmColor="var(--danger)">
           <p>삭제된 게시글은 복구할 수 없습니다.</p>
         </ConfirmModal>
       )}

@@ -6,6 +6,7 @@ import com.culcom.dto.complex.refund.RefundResponse;
 import com.culcom.entity.enums.RequestStatus;
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.service.RefundService;
+import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class RefundController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<RefundResponse>> create(
-            @RequestBody RefundCreateRequest req, @AuthenticationPrincipal CustomUserPrincipal principal) {
+            @Valid @RequestBody RefundCreateRequest req, @AuthenticationPrincipal CustomUserPrincipal principal) {
         RefundResponse result = refundService.create(req, principal.getSelectedBranchSeq());
         return ResponseEntity.ok(ApiResponse.ok("환불 요청 등록 완료", result));
     }

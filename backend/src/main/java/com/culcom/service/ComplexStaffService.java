@@ -14,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -92,7 +91,6 @@ public class ComplexStaffService {
         refund.setRefundBank(req.getRefundBank());
         refund.setRefundAccount(req.getRefundAccount());
         refund.setRefundAmount(req.getRefundAmount());
-        refund.setLastUpdateDate(LocalDateTime.now());
 
         return ComplexStaffRefundInfoResponse.from(refundInfoRepository.save(refund));
     }

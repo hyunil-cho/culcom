@@ -4,6 +4,7 @@ import com.culcom.dto.ApiResponse;
 import com.culcom.dto.complex.member.MembershipRequest;
 import com.culcom.dto.complex.member.MembershipResponse;
 import com.culcom.service.MembershipService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +29,7 @@ public class MembershipController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<MembershipResponse>> create(@RequestBody MembershipRequest req) {
+    public ResponseEntity<ApiResponse<MembershipResponse>> create(@Valid @RequestBody MembershipRequest req) {
         return ResponseEntity.ok(ApiResponse.ok("멤버십 추가 완료", membershipService.create(req)));
     }
 

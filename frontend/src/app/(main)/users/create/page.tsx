@@ -6,10 +6,11 @@ import { userApi, SessionRole } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
 import { ROUTES } from '@/lib/routes';
 import { useResultModal } from '@/hooks/useResultModal';
+import s from './page.module.css';
 
 export default function UserCreatePage() {
   const router = useRouter();
-  const session = useSessionStore((s) => s.session);
+  const session = useSessionStore((st) => st.session);
   const creatingRole = SessionRole.isRoot(session) ? '지점장' : '직원';
 
   const [form, setForm] = useState({ userId: '', password: '', name: '', phone: '' });
@@ -26,62 +27,29 @@ export default function UserCreatePage() {
 
   return (
     <>
-      <div className="content-card" style={{ maxWidth: 520, margin: '0 auto' }}>
-        <div style={{ padding: '1.5rem 2rem', borderBottom: '2px solid #4a90e2' }}>
-          <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#2c3e50' }}>{creatingRole} 계정 생성</h3>
+      <div className={`content-card ${s.card}`}>
+        <div className={s.header}>
+          <h3 className={s.title}>{creatingRole} 계정 생성</h3>
         </div>
-        <form onSubmit={handleSubmit} style={{ padding: '2rem' }}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: 4, fontSize: 14, fontWeight: 500 }}>아이디</label>
-            <input
-              type="text"
-              value={form.userId}
-              onChange={handleChange('userId')}
-              placeholder="아이디를 입력하세요"
-              required
-              style={{ width: '100%', padding: '0.75rem', borderRadius: 6, border: '1px solid #ddd', fontSize: '0.95rem', boxSizing: 'border-box' }}
-            />
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: 4, fontSize: 14, fontWeight: 500 }}>비밀번호</label>
-            <input
-              type="password"
-              value={form.password}
-              onChange={handleChange('password')}
-              placeholder="비밀번호를 입력하세요"
-              required
-              style={{ width: '100%', padding: '0.75rem', borderRadius: 6, border: '1px solid #ddd', fontSize: '0.95rem', boxSizing: 'border-box' }}
-            />
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: 4, fontSize: 14, fontWeight: 500 }}>이름</label>
-            <input
-              type="text"
-              value={form.name}
-              onChange={handleChange('name')}
-              placeholder="이름을 입력하세요"
-              required
-              style={{ width: '100%', padding: '0.75rem', borderRadius: 6, border: '1px solid #ddd', fontSize: '0.95rem', boxSizing: 'border-box' }}
-            />
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: 4, fontSize: 14, fontWeight: 500 }}>전화번호</label>
-            <input
-              type="tel"
-              value={form.phone}
-              onChange={handleChange('phone')}
-              placeholder="전화번호를 입력하세요"
-              required
-              style={{ width: '100%', padding: '0.75rem', borderRadius: 6, border: '1px solid #ddd', fontSize: '0.95rem', boxSizing: 'border-box' }}
-            />
-          </div>
-          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
+        <form onSubmit={handleSubmit} className={s.form}>
+          {[
+            { field: 'userId', label: '아이디', type: 'text', placeholder: '아이디를 입력하세요' },
+            { field: 'password', label: '비밀번호', type: 'password', placeholder: '비밀번호를 입력하세요' },
+            { field: 'name', label: '이름', type: 'text', placeholder: '이름을 입력하세요' },
+            { field: 'phone', label: '전화번호', type: 'tel', placeholder: '전화번호를 입력하세요' },
+          ].map(({ field, label, type, placeholder }) => (
+            <div key={field} className={s.fieldGroup}>
+              <label className={s.label}>{label}</label>
+              <input type={type} value={form[field as keyof typeof form]} onChange={handleChange(field)}
+                placeholder={placeholder} required className={s.input} />
+            </div>
+          ))}
+          <div className={s.actions}>
             <button type="button" className="btn-modal btn-modal-cancel" onClick={() => router.push(ROUTES.USERS)}>취소</button>
             <button type="submit" className="btn-modal btn-modal-confirm" style={{ background: '#4a90e2' }}>생성</button>
           </div>
         </form>
       </div>
-
       {modal}
     </>
   );

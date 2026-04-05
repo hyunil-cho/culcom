@@ -4,6 +4,7 @@ import com.culcom.dto.ApiResponse;
 import com.culcom.dto.complex.attendance.*;
 import com.culcom.dto.complex.classes.ClassReorderRequest;
 import com.culcom.service.AttendanceService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +31,7 @@ public class AttendanceController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<AttendanceResponse>> record(@RequestBody AttendanceRequest req) {
+    public ResponseEntity<ApiResponse<AttendanceResponse>> record(@Valid @RequestBody AttendanceRequest req) {
         return ResponseEntity.ok(ApiResponse.ok("출석 기록 완료", attendanceService.record(req)));
     }
 

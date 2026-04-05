@@ -4,6 +4,7 @@ import com.culcom.dto.ApiResponse;
 import com.culcom.dto.complex.survey.*;
 import com.culcom.service.SurveyService;
 import com.culcom.config.security.CustomUserPrincipal;
+import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +34,7 @@ public class SurveyController {
 
     @PostMapping("/templates")
     public ResponseEntity<ApiResponse<SurveyTemplateResponse>> createTemplate(
-            @RequestBody SurveyTemplateRequest req,
+            @Valid @RequestBody SurveyTemplateRequest req,
             @AuthenticationPrincipal CustomUserPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.ok("설문지 생성 완료",
                 surveyService.createTemplate(req, principal.getSelectedBranchSeq())));
@@ -79,14 +80,14 @@ public class SurveyController {
 
     @PostMapping("/templates/{templateSeq}/sections")
     public ResponseEntity<ApiResponse<SurveySectionResponse>> createSection(
-            @PathVariable Long templateSeq, @RequestBody SurveySectionRequest req) {
+            @PathVariable Long templateSeq, @Valid @RequestBody SurveySectionRequest req) {
         return ResponseEntity.ok(ApiResponse.ok("섹션 추가 완료",
                 surveyService.createSection(templateSeq, req)));
     }
 
     @PutMapping("/templates/{templateSeq}/sections/{sectionSeq}")
     public ResponseEntity<ApiResponse<SurveySectionResponse>> updateSection(
-            @PathVariable Long templateSeq, @PathVariable Long sectionSeq, @RequestBody SurveySectionRequest req) {
+            @PathVariable Long templateSeq, @PathVariable Long sectionSeq, @Valid @RequestBody SurveySectionRequest req) {
         return ResponseEntity.ok(ApiResponse.ok("섹션이 수정되었습니다.",
                 surveyService.updateSection(sectionSeq, req)));
     }
@@ -107,14 +108,14 @@ public class SurveyController {
 
     @PostMapping("/templates/{templateSeq}/questions")
     public ResponseEntity<ApiResponse<SurveyQuestionResponse>> createQuestion(
-            @PathVariable Long templateSeq, @RequestBody SurveyQuestionRequest req) {
+            @PathVariable Long templateSeq, @Valid @RequestBody SurveyQuestionRequest req) {
         return ResponseEntity.ok(ApiResponse.ok("질문 추가 완료",
                 surveyService.createQuestion(templateSeq, req)));
     }
 
     @PutMapping("/templates/{templateSeq}/questions/{questionSeq}")
     public ResponseEntity<ApiResponse<SurveyQuestionResponse>> updateQuestion(
-            @PathVariable Long templateSeq, @PathVariable Long questionSeq, @RequestBody SurveyQuestionRequest req) {
+            @PathVariable Long templateSeq, @PathVariable Long questionSeq, @Valid @RequestBody SurveyQuestionRequest req) {
         return ResponseEntity.ok(ApiResponse.ok("질문이 수정되었습니다.",
                 surveyService.updateQuestion(questionSeq, req)));
     }
@@ -144,7 +145,7 @@ public class SurveyController {
 
     @PostMapping("/templates/{templateSeq}/options")
     public ResponseEntity<ApiResponse<SurveyOptionResponse>> createOption(
-            @PathVariable Long templateSeq, @RequestBody SurveyOptionRequest req) {
+            @PathVariable Long templateSeq, @Valid @RequestBody SurveyOptionRequest req) {
         return ResponseEntity.ok(ApiResponse.ok("선택지 추가 완료",
                 surveyService.createOption(templateSeq, req)));
     }

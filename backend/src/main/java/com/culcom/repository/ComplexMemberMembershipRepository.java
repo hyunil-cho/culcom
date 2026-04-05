@@ -22,4 +22,9 @@ public interface ComplexMemberMembershipRepository extends JpaRepository<Complex
            "WHERE mm.member.seq IN :memberSeqs AND mm.status = :status")
     List<ComplexMemberMembership> findByMemberSeqsAndStatus(
             @Param("memberSeqs") List<Long> memberSeqs, @Param("status") MembershipStatus status);
+
+    @Query("SELECT mm FROM ComplexMemberMembership mm " +
+           "JOIN FETCH mm.membership " +
+           "WHERE mm.member.seq IN :memberSeqs")
+    List<ComplexMemberMembership> findByMemberSeqIn(@Param("memberSeqs") List<Long> memberSeqs);
 }

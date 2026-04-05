@@ -19,9 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -61,35 +60,66 @@ public class AttendanceService {
 
     @Transactional
     public void reorderClasses(ClassReorderRequest req) {
+        List<Long> ids = req.getClassOrders().stream().map(ClassReorderRequest.ClassOrder::getId).toList();
+        Map<Long, ComplexClass> classMap = new HashMap<>();
+        classRepository.findAllById(ids).forEach(c -> classMap.put(c.getSeq(), c));
+
         for (ClassReorderRequest.ClassOrder order : req.getClassOrders()) {
-            classRepository.findById(order.getId()).ifPresent(c -> {
-                c.setSortOrder(order.getSortOrder());
-                classRepository.save(c);
-            });
+            ComplexClass c = classMap.get(order.getId());
+            if (c != null) c.setSortOrder(order.getSortOrder());
         }
+        classRepository.saveAll(classMap.values());
     }
 
     @Transactional
     public List<BulkAttendanceResultResponse> processBulkAttendance(BulkAttendanceRequest req) {
         LocalDate today = LocalDate.now();
-        List<BulkAttendanceResultResponse> results = new ArrayList<>();
+        Long classSeq = req.getClassSeq();
 
+        // 회원 seq 추출 (스태프 제외)
+        List<Long> memberSeqs = req.getMembers().stream()
+                .filter(bm -> !bm.isStaff())
+                .map(BulkAttendanceRequest.BulkMember::getMemberSeq).toList();
+
+        // 배치 프리로드: 멤버십(연기+활성) + 오늘 출석 기록
+        Map<Long, ComplexMemberMembership> postponedMap = new HashMap<>();
+        Map<Long, ComplexMemberMembership> activeMap = new HashMap<>();
+        if (!memberSeqs.isEmpty()) {
+            memberMembershipRepository.findByMemberSeqsAndStatus(memberSeqs, MembershipStatus.연기)
+                    .forEach(mm -> postponedMap.putIfAbsent(mm.getMember().getSeq(), mm));
+            memberMembershipRepository.findByMemberSeqsAndStatus(memberSeqs, MembershipStatus.활성)
+                    .forEach(mm -> activeMap.putIfAbsent(mm.getMember().getSeq(), mm));
+        }
+        Set<String> existingAttendanceKeys = attendanceRepository
+                .findByClassSeqsAndDate(List.of(classSeq), today).stream()
+                .map(a -> a.getMemberMembership().getMember().getSeq() + "-" + classSeq)
+                .collect(Collectors.toSet());
+
+        // 스태프 기존 출석 프리로드
+        List<Long> staffSeqs = req.getMembers().stream()
+                .filter(BulkAttendanceRequest.BulkMember::isStaff)
+                .map(BulkAttendanceRequest.BulkMember::getMemberSeq).toList();
+        Set<Long> existingStaffAttendance = staffAttendanceRepository
+                .findByClassSeqsAndDate(List.of(classSeq), today).stream()
+                .map(a -> a.getStaff().getSeq())
+                .collect(Collectors.toSet());
+
+        List<BulkAttendanceResultResponse> results = new ArrayList<>();
         for (BulkAttendanceRequest.BulkMember bm : req.getMembers()) {
             if (bm.isStaff()) {
-                results.add(processStaffAttendance(bm, req.getClassSeq(), today));
+                results.add(processStaffAttendance(bm, classSeq, today, existingStaffAttendance));
             } else {
-                results.add(processMemberAttendance(bm, req.getClassSeq(), today));
+                results.add(processMemberAttendance(bm, classSeq, today, postponedMap, activeMap, existingAttendanceKeys));
             }
         }
         return results;
     }
 
     private BulkAttendanceResultResponse processStaffAttendance(
-            BulkAttendanceRequest.BulkMember bm, Long classSeq, LocalDate today) {
+            BulkAttendanceRequest.BulkMember bm, Long classSeq, LocalDate today,
+            Set<Long> existingStaffAttendance) {
 
-        Optional<ComplexStaffAttendance> existing = staffAttendanceRepository
-                .findByStaffSeqAndComplexClassSeqAndAttendanceDate(bm.getMemberSeq(), classSeq, today);
-        if (existing.isPresent()) {
+        if (existingStaffAttendance.contains(bm.getMemberSeq())) {
             return BulkAttendanceResultResponse.builder()
                     .memberSeq(bm.getMemberSeq()).name("").status("skip_already").build();
         }
@@ -98,17 +128,14 @@ public class AttendanceService {
         staffAttendanceRepository.save(ComplexStaffAttendance.builder()
                 .staff(ComplexStaff.builder().seq(bm.getMemberSeq()).build())
                 .complexClass(ComplexClass.builder().seq(classSeq).build())
-                .attendanceDate(today)
-                .status(saStatus)
-                .build());
+                .attendanceDate(today).status(saStatus).build());
 
         activityLogRepository.save(MembershipActivityLog.builder()
                 .staff(ComplexStaff.builder().seq(bm.getMemberSeq()).build())
                 .complexClass(ComplexClass.builder().seq(classSeq).build())
                 .activityDate(today)
                 .status(bm.isAttended() ? AttendanceStatus.출석 : AttendanceStatus.결석)
-                .usedCountDelta(0)
-                .build());
+                .usedCountDelta(0).build());
 
         return BulkAttendanceResultResponse.builder()
                 .memberSeq(bm.getMemberSeq()).name("")
@@ -116,53 +143,43 @@ public class AttendanceService {
     }
 
     private BulkAttendanceResultResponse processMemberAttendance(
-            BulkAttendanceRequest.BulkMember bm, Long classSeq, LocalDate today) {
+            BulkAttendanceRequest.BulkMember bm, Long classSeq, LocalDate today,
+            Map<Long, ComplexMemberMembership> postponedMap,
+            Map<Long, ComplexMemberMembership> activeMap,
+            Set<String> existingAttendanceKeys) {
 
-        // 연기 상태 확인
-        List<ComplexMemberMembership> postponedList = memberMembershipRepository
-                .findByMemberSeqAndStatus(bm.getMemberSeq(), MembershipStatus.연기);
-        if (!postponedList.isEmpty()) {
-            ComplexMemberMembership pmm = postponedList.get(0);
+        // 연기 확인 (프리로드 맵)
+        ComplexMemberMembership pmm = postponedMap.get(bm.getMemberSeq());
+        if (pmm != null) {
             activityLogRepository.save(MembershipActivityLog.builder()
                     .member(ComplexMember.builder().seq(bm.getMemberSeq()).build())
                     .membership(pmm)
                     .complexClass(ComplexClass.builder().seq(classSeq).build())
-                    .activityDate(today)
-                    .status(AttendanceStatus.연기)
-                    .usedCountDelta(0)
-                    .usedCountAfter(pmm.getUsedCount())
-                    .note("멤버십 연기 중 — 출석 불가")
-                    .build());
+                    .activityDate(today).status(AttendanceStatus.연기)
+                    .usedCountDelta(0).usedCountAfter(pmm.getUsedCount())
+                    .note("멤버십 연기 중 — 출석 불가").build());
             return BulkAttendanceResultResponse.builder()
                     .memberSeq(bm.getMemberSeq()).name("").status("연기").build();
         }
 
-        // 활성 멤버십 확인
-        List<ComplexMemberMembership> memberships = memberMembershipRepository
-                .findByMemberSeqAndStatus(bm.getMemberSeq(), MembershipStatus.활성);
-        if (memberships.isEmpty()) {
+        // 활성 멤버십 확인 (프리로드 맵)
+        ComplexMemberMembership mm = activeMap.get(bm.getMemberSeq());
+        if (mm == null) {
             return BulkAttendanceResultResponse.builder()
                     .memberSeq(bm.getMemberSeq()).name("").status("skip_no_membership").build();
         }
 
-        ComplexMemberMembership mm = memberships.get(0);
-
-        // 중복 출석 확인
-        Optional<ComplexMemberAttendance> existing = attendanceRepository
-                .findByMembershipAndClassAndDate(mm.getSeq(), classSeq, today);
-        if (existing.isPresent()) {
+        // 중복 출석 확인 (프리로드 셋)
+        if (existingAttendanceKeys.contains(bm.getMemberSeq() + "-" + classSeq)) {
             return BulkAttendanceResultResponse.builder()
                     .memberSeq(bm.getMemberSeq()).name("").status("skip_already").build();
         }
 
-        // 출석/결석 기록
         AttendanceStatus status = bm.isAttended() ? AttendanceStatus.출석 : AttendanceStatus.결석;
         attendanceRepository.save(ComplexMemberAttendance.builder()
                 .memberMembership(mm)
                 .complexClass(classRepository.getReferenceById(classSeq))
-                .attendanceDate(today)
-                .status(status)
-                .build());
+                .attendanceDate(today).status(status).build());
 
         int delta = 0;
         if (bm.isAttended()) {
@@ -175,11 +192,8 @@ public class AttendanceService {
                 .member(ComplexMember.builder().seq(bm.getMemberSeq()).build())
                 .membership(mm)
                 .complexClass(ComplexClass.builder().seq(classSeq).build())
-                .activityDate(today)
-                .status(status)
-                .usedCountDelta(delta)
-                .usedCountAfter(mm.getUsedCount())
-                .build());
+                .activityDate(today).status(status)
+                .usedCountDelta(delta).usedCountAfter(mm.getUsedCount()).build());
 
         return BulkAttendanceResultResponse.builder()
                 .memberSeq(bm.getMemberSeq()).name("")

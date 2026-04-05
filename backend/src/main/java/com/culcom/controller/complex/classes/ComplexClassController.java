@@ -5,6 +5,7 @@ import com.culcom.dto.complex.classes.ComplexClassRequest;
 import com.culcom.dto.complex.classes.ComplexClassResponse;
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.service.ComplexClassService;
+import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,10 +26,7 @@ public class ComplexClassController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<ComplexClassResponse>> create(
-            @RequestBody ComplexClassRequest req, @AuthenticationPrincipal CustomUserPrincipal principal) {
-        if (req.getTimeSlotSeq() == null) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("시간대를 선택해주세요."));
-        }
+            @Valid @RequestBody ComplexClassRequest req, @AuthenticationPrincipal CustomUserPrincipal principal) {
         ComplexClassResponse result = complexClassService.create(req, principal.getSelectedBranchSeq());
         return ResponseEntity.ok(ApiResponse.ok("수업 추가 완료", result));
     }

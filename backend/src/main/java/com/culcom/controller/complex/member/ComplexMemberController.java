@@ -7,6 +7,7 @@ import com.culcom.dto.complex.member.ComplexMemberRequest;
 import com.culcom.dto.complex.member.ComplexMemberResponse;
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.service.ComplexMemberService;
+import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +34,7 @@ public class ComplexMemberController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<ComplexMemberResponse>> create(
-            @RequestBody ComplexMemberRequest req, @AuthenticationPrincipal CustomUserPrincipal principal) {
+            @Valid @RequestBody ComplexMemberRequest req, @AuthenticationPrincipal CustomUserPrincipal principal) {
         Long branchSeq = principal.getSelectedBranchSeq();
         return ResponseEntity.ok(ApiResponse.ok("회원 추가 완료", complexMemberService.create(req, branchSeq)));
     }
@@ -46,13 +47,13 @@ public class ComplexMemberController {
 
     @PostMapping("/{seq}/memberships")
     public ResponseEntity<ApiResponse<ComplexMemberMembershipResponse>> assignMembership(
-            @PathVariable Long seq, @RequestBody ComplexMemberMembershipRequest req) {
+            @PathVariable Long seq, @Valid @RequestBody ComplexMemberMembershipRequest req) {
         return ResponseEntity.ok(ApiResponse.ok("멤버십 할당 완료", complexMemberService.assignMembership(seq, req)));
     }
 
     @PutMapping("/{seq}/memberships/{mmSeq}")
     public ResponseEntity<ApiResponse<ComplexMemberMembershipResponse>> updateMembership(
-            @PathVariable Long seq, @PathVariable Long mmSeq, @RequestBody ComplexMemberMembershipRequest req) {
+            @PathVariable Long seq, @PathVariable Long mmSeq, @Valid @RequestBody ComplexMemberMembershipRequest req) {
         return ResponseEntity.ok(ApiResponse.ok("멤버십 수정 완료", complexMemberService.updateMembership(seq, mmSeq, req)));
     }
 

@@ -4,6 +4,7 @@ import com.culcom.dto.ApiResponse;
 import com.culcom.dto.customer.*;
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.service.CustomerService;
+import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,7 @@ public class CustomerController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<CustomerResponse>> create(
-            @RequestBody CustomerCreateRequest request, @AuthenticationPrincipal CustomUserPrincipal principal) {
+            @Valid @RequestBody CustomerCreateRequest request, @AuthenticationPrincipal CustomUserPrincipal principal) {
         Long branchSeq = principal.getSelectedBranchSeq();
         if (branchSeq == null) {
             return ResponseEntity.badRequest().body(ApiResponse.error("지점을 먼저 선택해주세요."));
@@ -44,46 +45,34 @@ public class CustomerController {
     }
 
     @PostMapping("/update-name")
-    public ResponseEntity<ApiResponse<Void>> updateName(@RequestBody CustomerUpdateNameRequest request) {
-        if (request.getName() == null || request.getName().isBlank()) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("이름을 입력해주세요"));
-        }
+    public ResponseEntity<ApiResponse<Void>> updateName(@Valid @RequestBody CustomerUpdateNameRequest request) {
         customerService.updateName(request.getCustomerSeq(), request.getName());
         return ResponseEntity.ok(ApiResponse.<Void>ok("이름 변경 완료", null));
     }
 
     @PostMapping("/comment")
-    public ResponseEntity<ApiResponse<CustomerCommentResponse>> updateComment(@RequestBody CustomerCommentRequest request) {
+    public ResponseEntity<ApiResponse<CustomerCommentResponse>> updateComment(@Valid @RequestBody CustomerCommentRequest request) {
         return ResponseEntity.ok(ApiResponse.ok("코멘트 업데이트 완료",
                 customerService.updateComment(request.getCustomerSeq(), request.getComment())));
     }
 
     @PostMapping("/process-call")
     public ResponseEntity<ApiResponse<CustomerProcessCallResponse>> processCall(
-            @RequestBody CustomerProcessCallRequest request, @AuthenticationPrincipal CustomUserPrincipal principal) {
-        if (request.getCaller() == null || request.getCaller().isBlank()) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("Caller를 선택해주세요"));
-        }
+            @Valid @RequestBody CustomerProcessCallRequest request, @AuthenticationPrincipal CustomUserPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.ok("통화 처리 완료",
                 customerService.processCall(request.getCustomerSeq(), request.getCaller(), principal.getSelectedBranchSeq())));
     }
 
     @PostMapping("/reservation")
     public ResponseEntity<ApiResponse<CustomerReservationResponse>> createReservation(
-            @RequestBody CustomerReservationRequest request, @AuthenticationPrincipal CustomUserPrincipal principal) {
-        if (request.getCaller() == null || request.getCaller().isBlank()) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("Caller를 선택해주세요"));
-        }
-        if (request.getInterviewDate() == null || request.getInterviewDate().isBlank()) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("인터뷰 일시를 입력해주세요"));
-        }
+            @Valid @RequestBody CustomerReservationRequest request, @AuthenticationPrincipal CustomUserPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.ok("예약이 생성되었습니다",
                 customerService.createReservation(request.getCustomerSeq(), request.getCaller(),
                         request.getInterviewDate(), principal.getSelectedBranchSeq(), principal.getUserSeq())));
     }
 
     @PostMapping("/mark-no-phone-interview")
-    public ResponseEntity<ApiResponse<Void>> markNoPhoneInterview(@RequestBody CustomerSeqRequest request) {
+    public ResponseEntity<ApiResponse<Void>> markNoPhoneInterview(@Valid @RequestBody CustomerSeqRequest request) {
         customerService.markNoPhoneInterview(request.getCustomerSeq());
         return ResponseEntity.ok(ApiResponse.ok("전화상안함으로 처리되었습니다", null));
     }

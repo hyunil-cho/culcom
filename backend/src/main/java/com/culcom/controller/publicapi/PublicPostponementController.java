@@ -5,6 +5,7 @@ import com.culcom.dto.publicapi.MemberSearchResponse;
 import com.culcom.dto.publicapi.PostponementSubmitRequest;
 import com.culcom.dto.publicapi.PostponementSubmitResponse;
 import com.culcom.service.PublicPostponementService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,7 @@ public class PublicPostponementController {
 
     @PostMapping("/submit")
     public ResponseEntity<ApiResponse<PostponementSubmitResponse>> submit(
-            @RequestBody PostponementSubmitRequest req) {
+            @Valid @RequestBody PostponementSubmitRequest req) {
         PostponementSubmitResponse result = publicPostponementService.submit(req);
         return ResponseEntity.ok(ApiResponse.ok("연기 요청이 접수되었습니다.", result));
     }

@@ -5,6 +5,7 @@ import com.culcom.dto.complex.classes.ClassTimeSlotRequest;
 import com.culcom.dto.complex.classes.ClassTimeSlotResponse;
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.service.ClassTimeSlotService;
+import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +28,7 @@ public class ClassTimeSlotController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<ClassTimeSlotResponse>> create(
-            @RequestBody ClassTimeSlotRequest request, @AuthenticationPrincipal CustomUserPrincipal principal) {
+            @Valid @RequestBody ClassTimeSlotRequest request, @AuthenticationPrincipal CustomUserPrincipal principal) {
         ClassTimeSlotResponse result = classTimeSlotService.create(request, principal.getSelectedBranchSeq());
         return ResponseEntity.ok(ApiResponse.ok("시간대 추가 완료", result));
     }

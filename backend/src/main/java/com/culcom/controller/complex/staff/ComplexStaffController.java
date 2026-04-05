@@ -7,6 +7,7 @@ import com.culcom.dto.complex.member.ComplexStaffRequest;
 import com.culcom.dto.complex.member.ComplexStaffResponse;
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.service.ComplexStaffService;
+import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +36,7 @@ public class ComplexStaffController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<ComplexStaffResponse>> create(
-            @RequestBody ComplexStaffRequest req, @AuthenticationPrincipal CustomUserPrincipal principal) {
+            @Valid @RequestBody ComplexStaffRequest req, @AuthenticationPrincipal CustomUserPrincipal principal) {
         ComplexStaffResponse result = complexStaffService.create(req, principal.getSelectedBranchSeq());
         return ResponseEntity.ok(ApiResponse.ok("스태프 추가 완료", result));
     }

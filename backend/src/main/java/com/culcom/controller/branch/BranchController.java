@@ -10,6 +10,7 @@ import com.culcom.service.AuthService;
 import com.culcom.service.BranchService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -40,7 +41,7 @@ public class BranchController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<BranchDetailResponse>> create(
-            @RequestBody BranchCreateRequest request,
+            @Valid @RequestBody BranchCreateRequest request,
             @AuthenticationPrincipal CustomUserPrincipal principal,
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {

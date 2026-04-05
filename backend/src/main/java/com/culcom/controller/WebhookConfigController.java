@@ -5,6 +5,7 @@ import com.culcom.dto.ApiResponse;
 import com.culcom.dto.webhook.WebhookConfigRequest;
 import com.culcom.dto.webhook.WebhookConfigResponse;
 import com.culcom.service.WebhookConfigService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -34,7 +35,7 @@ public class WebhookConfigController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<WebhookConfigResponse>> create(
-            @RequestBody WebhookConfigRequest request,
+            @Valid @RequestBody WebhookConfigRequest request,
             @AuthenticationPrincipal CustomUserPrincipal principal) {
         WebhookConfigResponse result = webhookConfigService.create(request, principal.getSelectedBranchSeq());
         return ResponseEntity.ok(ApiResponse.ok("웹훅이 등록되었습니다.", result));

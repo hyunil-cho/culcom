@@ -1,11 +1,6 @@
 package com.culcom.service;
 
-import com.culcom.dto.publicapi.ClassInfo;
-import com.culcom.dto.publicapi.MemberInfo;
-import com.culcom.dto.publicapi.MemberSearchResponse;
-import com.culcom.dto.publicapi.MembershipInfo;
-import com.culcom.dto.publicapi.PostponementSubmitRequest;
-import com.culcom.dto.publicapi.PostponementSubmitResponse;
+import com.culcom.dto.publicapi.*;
 import com.culcom.entity.branch.Branch;
 import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.member.ComplexMember;
@@ -20,7 +15,7 @@ import com.culcom.util.DateTimeUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,9 +35,20 @@ public class PublicPostponementService {
             return new MemberSearchResponse(List.of());
         }
 
+        // 배치 프리로드: 회원 seq 목록으로 한 번에 조회
+        List<Long> memberSeqs = members.stream().map(ComplexMember::getSeq).toList();
+        List<ComplexMemberMembership> allMemberships = memberMembershipRepository.findByMemberSeqIn(memberSeqs);
+
+        // 멤버십을 memberSeq 기준으로 그룹핑
+        Map<Long, List<ComplexMemberMembership>> membershipMap = allMemberships.stream()
+                .collect(Collectors.groupingBy(mm -> mm.getMember().getSeq()));
+
+        // 지점별 수업 캐싱 (같은 지점 회원이 여러 명일 수 있음)
+        Map<Long, List<ComplexClass>> classCache = new HashMap<>();
+
         List<MemberInfo> memberInfos = members.stream().map(m -> {
-            List<ComplexMemberMembership> memberships = memberMembershipRepository.findByMemberSeq(m.getSeq());
-            List<MembershipInfo> msInfos = memberships.stream()
+            // 멤버십: 맵에서 조회 (추가 쿼리 없음)
+            List<MembershipInfo> msInfos = membershipMap.getOrDefault(m.getSeq(), List.of()).stream()
                     .filter(ms -> ms.getStatus() == MembershipStatus.활성)
                     .map(ms -> new MembershipInfo(
                             ms.getSeq(),
@@ -56,7 +62,10 @@ public class PublicPostponementService {
                     ))
                     .collect(Collectors.toList());
 
-            List<ComplexClass> classes = classRepository.findByBranchSeqOrderBySortOrder(m.getBranch().getSeq());
+            // 수업: 지점별 캐싱 (같은 지점이면 쿼리 1회)
+            Long branchSeq = m.getBranch().getSeq();
+            List<ComplexClass> classes = classCache.computeIfAbsent(branchSeq,
+                    bSeq -> classRepository.findAllWithTimeSlotByBranch(bSeq));
             List<ClassInfo> classInfos = classes.stream()
                     .map(c -> new ClassInfo(
                             c.getName(),
@@ -67,14 +76,9 @@ public class PublicPostponementService {
                     .collect(Collectors.toList());
 
             return new MemberInfo(
-                    m.getSeq(),
-                    m.getName(),
-                    m.getPhoneNumber(),
-                    m.getBranch().getSeq(),
-                    m.getBranch().getBranchName(),
-                    m.getLevel(),
-                    msInfos,
-                    classInfos
+                    m.getSeq(), m.getName(), m.getPhoneNumber(),
+                    branchSeq, m.getBranch().getBranchName(),
+                    m.getLevel(), msInfos, classInfos
             );
         }).collect(Collectors.toList());
 
@@ -114,8 +118,7 @@ public class PublicPostponementService {
     }
 
     public List<String> reasons(Long branchSeq) {
-        List<ComplexPostponementReason> reasons = reasonRepository.findByBranchSeq(branchSeq);
-        return reasons.stream()
+        return reasonRepository.findByBranchSeq(branchSeq).stream()
                 .map(ComplexPostponementReason::getReason)
                 .collect(Collectors.toList());
     }

@@ -6,6 +6,7 @@ import com.culcom.dto.notice.NoticeCreateRequest;
 import com.culcom.dto.notice.NoticeDetailResponse;
 import com.culcom.dto.notice.NoticeUpdateRequest;
 import com.culcom.service.NoticeService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,7 +27,7 @@ public class NoticeController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<NoticeDetailResponse>> create(
-            @RequestBody NoticeCreateRequest request,
+            @Valid @RequestBody NoticeCreateRequest request,
             @AuthenticationPrincipal CustomUserPrincipal principal) {
         NoticeDetailResponse result = noticeService.create(request, principal.getSelectedBranchSeq());
         return ResponseEntity.ok(ApiResponse.ok("공지사항이 등록되었습니다.", result));

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Button, LinkButton } from '@/components/ui/Button';
 import FormField from '@/components/ui/FormField';
 import { Input, NumberInput, Select, Textarea, Checkbox } from '@/components/ui/FormInput';
+import s from './WebhookForm.module.css';
 
 const HTTP_METHODS = ['POST', 'PUT', 'PATCH', 'GET', 'DELETE'] as const;
 const CONTENT_TYPES = ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data', 'text/plain'] as const;
@@ -222,7 +223,7 @@ export default function WebhookForm({
       <div className="detail-actions">
         <Link href={backHref} className="btn-back">← 목록으로</Link>
         {isEdit && (
-          <div className="action-group" style={{ display: 'flex', gap: 8 }}>
+          <div className={`action-group ${s.actionGroup}`}>
             <Button onClick={onSubmit}>{submitLabel}</Button>
             <LinkButton href={backHref} variant="secondary">취소</LinkButton>
           </div>
@@ -253,7 +254,7 @@ export default function WebhookForm({
       </div>
 
       {/* 요청 인터페이스 */}
-      <div className="content-card" style={{ marginTop: 16 }}>
+      <div className={`content-card ${s.sectionCard}`}>
         <div className="form-header"><h2>요청 (Request) 인터페이스</h2></div>
         <div className="form-body">
           <FormField label="HTTP 메서드" required>
@@ -288,21 +289,17 @@ export default function WebhookForm({
       </div>
 
       {/* 필드 매핑 */}
-      <div className="content-card" style={{ marginTop: 16 }}>
+      <div className={`content-card ${s.sectionCard}`}>
         <div className="form-header">
           <h2>필드 매핑 (소스 → Customer)</h2>
         </div>
         <div className="form-body">
-          <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: 16 }}>
+          <p className={s.mappingHint}>
             소스가 보내는 {form.httpMethod === 'GET' ? '쿼리 파라미터' : 'Body 필드'}를 Customer 필드에 매핑합니다.
-            <strong style={{ color: '#e53e3e' }}> *</strong> 표시된 필드는 필수입니다.
+            <strong className={s.requiredMark}> *</strong> 표시된 필드는 필수입니다.
           </p>
-          <div style={{ border: '1px solid #e0e0e0', borderRadius: 8, overflow: 'hidden' }}>
-            <div style={{
-              display: 'grid', gridTemplateColumns: '1fr 40px 1fr',
-              background: '#f3f4f6', padding: '10px 16px', gap: 8,
-              fontSize: '0.82rem', fontWeight: 700, color: '#444',
-            }}>
+          <div className={s.mappingTable}>
+            <div className={s.mappingHeader}>
               <span>Customer 필드</span>
               <span></span>
               <span>소스 {paramHint}</span>
@@ -310,17 +307,13 @@ export default function WebhookForm({
             {form.fieldMappings.map(m => {
               const field = CUSTOMER_FIELDS.find(f => f.key === m.customerField);
               return (
-                <div key={m.customerField} style={{
-                  display: 'grid', gridTemplateColumns: '1fr 40px 1fr',
-                  padding: '8px 16px', gap: 8, alignItems: 'center',
-                  borderTop: '1px solid #f0f0f0',
-                }}>
-                  <span style={{ fontSize: '0.9rem', color: '#333' }}>
+                <div key={m.customerField} className={s.mappingRow}>
+                  <span className={s.fieldName}>
                     {field?.label ?? m.customerField}
-                    {field?.required && <span style={{ color: '#e53e3e' }}> *</span>}
-                    <span style={{ color: '#aaa', fontSize: '0.78rem', marginLeft: 4 }}>({m.customerField})</span>
+                    {field?.required && <span className={s.requiredMark}> *</span>}
+                    <span className={s.fieldKey}>({m.customerField})</span>
                   </span>
-                  <span style={{ textAlign: 'center', color: '#aaa' }}>←</span>
+                  <span className={s.arrowCol}>←</span>
                   <Input
                     style={{ margin: 0, padding: '6px 10px', fontSize: '0.88rem' }}
                     placeholder={`소스의 ${paramHint}`}
@@ -335,7 +328,7 @@ export default function WebhookForm({
       </div>
 
       {/* 응답 인터페이스 */}
-      <div className="content-card" style={{ marginTop: 16 }}>
+      <div className={`content-card ${s.sectionCard}`}>
         <div className="form-header"><h2>응답 (Response) 인터페이스</h2></div>
         <div className="form-body">
           <FormField label="응답 상태 코드">
@@ -349,7 +342,7 @@ export default function WebhookForm({
             </Select>
           </FormField>
           <FormField label="응답 Body 템플릿" hint="웹훅 호출 후 소스에 반환할 응답">
-            <Textarea style={{ height: 100, fontFamily: 'monospace', fontSize: '0.85rem' }}
+            <Textarea style={{ height: 100, fontFamily: 'monospace' }}
               placeholder={'{"success": true, "message": "received"}'}
               value={form.responseBodyTemplate} onChange={(e) => set('responseBodyTemplate', e.target.value)} />
           </FormField>

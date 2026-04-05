@@ -8,6 +8,7 @@ import com.culcom.dto.complex.postponement.PostponementResponse;
 import com.culcom.entity.enums.RequestStatus;
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.service.PostponementService;
+import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,7 @@ public class PostponementController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<PostponementResponse>> create(
-            @RequestBody PostponementCreateRequest req, @AuthenticationPrincipal CustomUserPrincipal principal) {
+            @Valid @RequestBody PostponementCreateRequest req, @AuthenticationPrincipal CustomUserPrincipal principal) {
         PostponementResponse result = postponementService.create(req, principal.getSelectedBranchSeq());
         return ResponseEntity.ok(ApiResponse.ok("연기 요청 등록 완료", result));
     }

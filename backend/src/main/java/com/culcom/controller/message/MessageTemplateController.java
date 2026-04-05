@@ -4,6 +4,7 @@ import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.message.*;
 import com.culcom.service.MessageTemplateService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,7 +32,7 @@ public class MessageTemplateController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<MessageTemplateResponse>> create(
-            @RequestBody MessageTemplateCreateRequest request,
+            @Valid @RequestBody MessageTemplateCreateRequest request,
             @AuthenticationPrincipal CustomUserPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.ok("템플릿 추가 완료",
                 messageTemplateService.create(request, principal.getSelectedBranchSeq())));
