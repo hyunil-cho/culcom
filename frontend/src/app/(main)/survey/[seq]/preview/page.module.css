@@ -1,0 +1,14 @@
+.previewNote { margin-top: 0.75rem; font-size: 0.82rem; color: #e03131; font-weight: 600; }
+.noOptions { color: #aaa; font-size: 0.9rem; }
+.emptySection { color: #aaa; text-align: center; padding: 2rem 0; }
+.chipRow { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.groupItems { display: flex; flex-direction: column; gap: 0.4rem; }
+.groupGrid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+.groupGrid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.hiddenInput { display: none; }
+
+.btnSubmit {
+  flex: 1; padding: 1rem; border-radius: 10px; font-size: 1rem; font-weight: 700;
+  font-family: inherit; cursor: not-allowed; background: #999; color: white; border: none;
+  opacity: 0.7;
+}
