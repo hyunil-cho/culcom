@@ -1,15 +1,15 @@
 package com.culcom.entity.complex.staff;
 
+import com.culcom.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "complex_staff_refund_info")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class ComplexStaffRefundInfo {
+public class ComplexStaffRefundInfo extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,14 +37,4 @@ public class ComplexStaffRefundInfo {
     @Column(name = "refund_amount", length = 50)
     private String refundAmount;
 
-    @Column(name = "createdDate", nullable = false, updatable = false)
-    private LocalDateTime createdDate;
-
-    @Column(name = "lastUpdateDate")
-    private LocalDateTime lastUpdateDate;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDateTime.now();
-    }
 }

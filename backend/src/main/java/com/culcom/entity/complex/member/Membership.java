@@ -1,15 +1,15 @@
 package com.culcom.entity.complex.member;
 
+import com.culcom.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "memberships")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class Membership {
+public class Membership extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,14 +27,4 @@ public class Membership {
     @Column(nullable = false)
     private Integer price;
 
-    @Column(name = "createdDate", nullable = false, updatable = false)
-    private LocalDateTime createdDate;
-
-    @Column(name = "lastUpdateDate")
-    private LocalDateTime lastUpdateDate;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDateTime.now();
-    }
 }

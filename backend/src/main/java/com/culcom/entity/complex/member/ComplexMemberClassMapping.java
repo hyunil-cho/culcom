@@ -1,9 +1,9 @@
 package com.culcom.entity.complex.member;
 
+import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.complex.clazz.ComplexClass;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "complex_member_class_mapping",
@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class ComplexMemberClassMapping {
+public class ComplexMemberClassMapping extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,11 +25,4 @@ public class ComplexMemberClassMapping {
     @JoinColumn(name = "class_seq", nullable = false)
     private ComplexClass complexClass;
 
-    @Column(name = "createdDate", nullable = false, updatable = false)
-    private LocalDateTime createdDate;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDateTime.now();
-    }
 }

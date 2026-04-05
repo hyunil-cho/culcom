@@ -1,17 +1,17 @@
 package com.culcom.entity.customer;
 
+import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.branch.Branch;
 import com.culcom.entity.enums.CustomerStatus;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "customers")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class Customer {
+public class Customer extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,12 +39,6 @@ public class Customer {
     @Column(name = "kakao_id", unique = true)
     private Long kakaoId;
 
-    @Column(name = "createdDate", nullable = false, updatable = false)
-    private LocalDateTime createdDate;
-
-    @Column(name = "lastUpdateDate")
-    private LocalDateTime lastUpdateDate;
-
     @Column(name = "call_count", columnDefinition = "int unsigned default 0")
     @Builder.Default
     private Integer callCount = 0;
@@ -53,9 +47,4 @@ public class Customer {
     @Column(nullable = false)
     @Builder.Default
     private CustomerStatus status = CustomerStatus.신규;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDateTime.now();
-    }
 }

@@ -1,17 +1,16 @@
 package com.culcom.entity.branch;
 
+import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.auth.UserInfo;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.LocalDate;
 
 @Entity
 @Table(name = "branches")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class Branch {
+public class Branch extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,20 +35,4 @@ public class Branch {
     @ManyToOne
     private UserInfo createdBy;
 
-    @Column(name = "createdDate", nullable = false, updatable = false)
-    private LocalDate createdDate;
-
-    @Column(name = "lastUpdateDate", nullable = false)
-    private LocalDate lastUpdateDate;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDate.now();
-        lastUpdateDate = LocalDate.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        lastUpdateDate = LocalDate.now();
-    }
 }

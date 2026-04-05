@@ -1,18 +1,18 @@
 package com.culcom.entity.notice;
 
+import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.branch.Branch;
 import com.culcom.entity.enums.NoticeCategory;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "notices")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class Notice {
+public class Notice extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,14 +54,4 @@ public class Notice {
     @Column(name = "created_by", length = 100)
     private String createdBy;
 
-    @Column(name = "createdDate", nullable = false, updatable = false)
-    private LocalDateTime createdDate;
-
-    @Column(name = "lastUpdateDate")
-    private LocalDateTime lastUpdateDate;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDateTime.now();
-    }
 }

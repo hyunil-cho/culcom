@@ -1,17 +1,17 @@
 package com.culcom.entity.survey;
 
+import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.branch.Branch;
 import com.culcom.entity.enums.SurveyStatus;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "survey_templates")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class SurveyTemplate {
+public class SurveyTemplate extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,14 +32,4 @@ public class SurveyTemplate {
     @Builder.Default
     private SurveyStatus status = SurveyStatus.작성중;
 
-    @Column(name = "createdDate", nullable = false, updatable = false)
-    private LocalDateTime createdDate;
-
-    @Column(name = "lastUpdateDate")
-    private LocalDateTime lastUpdateDate;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDateTime.now();
-    }
 }

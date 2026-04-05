@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
@@ -18,8 +18,8 @@ public class BranchDetailResponse {
     private String address;
     private String directions;
     private String createdBy;
-    private LocalDate createdDate;
-    private LocalDate lastUpdateDate;
+    private LocalDateTime createdDate;
+    private LocalDateTime lastUpdateDate;
 
     public static BranchDetailResponse from(Branch branch) {
         return BranchDetailResponse.builder()

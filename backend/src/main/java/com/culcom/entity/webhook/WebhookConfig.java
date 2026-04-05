@@ -1,16 +1,16 @@
 package com.culcom.entity.webhook;
 
+import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.branch.Branch;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "webhook_configs")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class WebhookConfig {
+public class WebhookConfig extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -69,19 +69,4 @@ public class WebhookConfig {
     @Builder.Default
     private Boolean isActive = false;
 
-    @Column(name = "createdDate", nullable = false, updatable = false)
-    private LocalDateTime createdDate;
-
-    @Column(name = "lastUpdateDate")
-    private LocalDateTime lastUpdateDate;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        lastUpdateDate = LocalDateTime.now();
-    }
 }

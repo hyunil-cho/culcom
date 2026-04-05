@@ -1,18 +1,18 @@
 package com.culcom.entity.complex.staff;
 
+import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.branch.Branch;
 import com.culcom.entity.enums.StaffStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "complex_staffs")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class ComplexStaff {
+public class ComplexStaff extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -51,14 +51,4 @@ public class ComplexStaff {
     @Column(name = "payment_method", length = 50)
     private String paymentMethod;
 
-    @Column(name = "createdDate", nullable = false, updatable = false)
-    private LocalDateTime createdDate;
-
-    @Column(name = "lastUpdateDate")
-    private LocalDateTime lastUpdateDate;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDateTime.now();
-    }
 }

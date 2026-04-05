@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -18,7 +18,7 @@ public class UserResponse {
     private String role;
     private String name;
     private String phone;
-    private LocalDate createdDate;
+    private LocalDateTime createdDate;
 
     public static UserResponse from(UserInfo user) {
         return UserResponse.builder()

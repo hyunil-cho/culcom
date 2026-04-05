@@ -1,9 +1,9 @@
 package com.culcom.entity.complex.staff;
 
+import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.complex.clazz.ClassTimeSlot;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "complex_staff_class_mapping",
@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class ComplexStaffClassMapping {
+public class ComplexStaffClassMapping extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,11 +25,4 @@ public class ComplexStaffClassMapping {
     @JoinColumn(name = "class_time_slot_seq", nullable = false)
     private ClassTimeSlot classTimeSlot;
 
-    @Column(name = "createdDate", nullable = false, updatable = false)
-    private LocalDateTime createdDate;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDateTime.now();
-    }
 }

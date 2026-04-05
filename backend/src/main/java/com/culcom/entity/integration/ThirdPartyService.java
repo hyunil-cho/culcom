@@ -1,25 +1,19 @@
 package com.culcom.entity.integration;
 
+import com.culcom.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDate;
 
 @Entity
 @Table(name = "third_party_services")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class ThirdPartyService {
+public class ThirdPartyService extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seq;
-
-    @Column(name = "created_date", nullable = false, updatable = false)
-    private LocalDate createdDate;
-
-    @Column(name = "update_date", nullable = false)
-    private LocalDate updateDate;
 
     @Column(nullable = false, length = 50, unique = true)
     private String name;
@@ -30,15 +24,4 @@ public class ThirdPartyService {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "code_seq")
     private ExternalServiceType externalServiceType;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDate.now();
-        updateDate = LocalDate.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updateDate = LocalDate.now();
-    }
 }

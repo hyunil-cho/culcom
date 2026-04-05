@@ -1,18 +1,16 @@
 package com.culcom.entity.auth;
 
+import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "user_info")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class UserInfo {
+public class UserInfo extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,23 +35,6 @@ public class UserInfo {
 
     @Column(name = "phone", length = 20)
     private String phone;
-
-    @Column(name = "createdDate", nullable = false, updatable = false)
-    private LocalDate createdDate;
-
-    @Column(name = "lastUpdateDate", nullable = false)
-    private LocalDate lastUpdateDate;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDate.now();
-        lastUpdateDate = LocalDate.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        lastUpdateDate = LocalDate.now();
-    }
 
     public boolean isManager() {
         return this.role.equals(UserRole.BRANCH_MANAGER);

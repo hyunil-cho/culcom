@@ -1,9 +1,9 @@
 package com.culcom.entity.complex.clazz;
 
+import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.branch.Branch;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Entity
@@ -11,7 +11,7 @@ import java.time.LocalTime;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class ClassTimeSlot {
+public class ClassTimeSlot extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,14 +33,4 @@ public class ClassTimeSlot {
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
 
-    @Column(name = "createdDate", nullable = false, updatable = false)
-    private LocalDateTime createdDate;
-
-    @Column(name = "lastUpdateDate")
-    private LocalDateTime lastUpdateDate;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDateTime.now();
-    }
 }

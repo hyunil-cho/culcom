@@ -1,12 +1,12 @@
 package com.culcom.entity.complex.member;
 
+import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.staff.ComplexStaff;
 import com.culcom.entity.enums.AttendanceStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
  * 출석 활동 히스토리.
@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class MembershipActivityLog {
+public class MembershipActivityLog extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -59,11 +59,4 @@ public class MembershipActivityLog {
     @Column(length = 300)
     private String note;
 
-    @Column(name = "created_date", nullable = false, updatable = false)
-    private LocalDateTime createdDate;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDateTime.now();
-    }
 }

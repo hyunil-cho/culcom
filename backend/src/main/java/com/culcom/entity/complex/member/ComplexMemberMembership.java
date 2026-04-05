@@ -1,5 +1,6 @@
 package com.culcom.entity.complex.member;
 
+import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.enums.MembershipStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class ComplexMemberMembership {
+public class ComplexMemberMembership extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -63,14 +64,4 @@ public class ComplexMemberMembership {
     @Builder.Default
     private MembershipStatus status = MembershipStatus.활성;
 
-    @Column(name = "createdDate", nullable = false, updatable = false)
-    private LocalDateTime createdDate;
-
-    @Column(name = "lastUpdateDate")
-    private LocalDateTime lastUpdateDate;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDateTime.now();
-    }
 }

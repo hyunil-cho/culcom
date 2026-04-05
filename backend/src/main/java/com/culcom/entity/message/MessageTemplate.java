@@ -1,16 +1,16 @@
 package com.culcom.entity.message;
 
+import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.branch.Branch;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDate;
 
 @Entity
 @Table(name = "message_templates")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class MessageTemplate {
+public class MessageTemplate extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,12 +26,6 @@ public class MessageTemplate {
     @Column(length = 300)
     private String description;
 
-    @Column(name = "createdDate", nullable = false, updatable = false)
-    private LocalDate createdDate;
-
-    @Column(name = "lastUpdateDate", nullable = false)
-    private LocalDate lastUpdateDate;
-
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
@@ -42,15 +36,4 @@ public class MessageTemplate {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "branch_seq", nullable = false)
     private Branch branch;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDate.now();
-        lastUpdateDate = LocalDate.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        lastUpdateDate = LocalDate.now();
-    }
 }

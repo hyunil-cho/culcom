@@ -1,11 +1,11 @@
 package com.culcom.entity.complex.staff;
 
+import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.enums.StaffAttendanceStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "complex_staff_attendance",
@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class ComplexStaffAttendance {
+public class ComplexStaffAttendance extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,11 +35,4 @@ public class ComplexStaffAttendance {
     @Builder.Default
     private StaffAttendanceStatus status = StaffAttendanceStatus.출석;
 
-    @Column(name = "createdDate", nullable = false, updatable = false)
-    private LocalDateTime createdDate;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDateTime.now();
-    }
 }

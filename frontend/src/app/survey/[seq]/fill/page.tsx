@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { surveyApi, SurveyTemplate, SurveySection, SurveyQuestion, SurveyOption } from '@/lib/api';
+import SurveyComplete from './SurveyComplete';
 
 export default function SurveyFillPage() {
   const params = useParams();
@@ -28,6 +29,7 @@ export default function SurveyFillPage() {
   const [optionsByQ, setOptionsByQ] = useState<Record<number, SurveyOption[]>>({});
   const [currentPage, setCurrentPage] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [submitted, setSubmitted] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const [basicInfo, setBasicInfo] = useState({
     name: customerName || '',
@@ -69,6 +71,10 @@ export default function SurveyFillPage() {
 
   if (loading) return <div style={S.loading}>로딩 중...</div>;
   if (!template) return <div style={S.loading}>설문지를 찾을 수 없습니다.</div>;
+
+  if (submitted) {
+    return <SurveyComplete name={basicInfo.name || customerName} />;
+  }
 
   // 총 페이지 = 1(고객 기본 정보) + sections.length
   const totalPages = sections.length + 1;
@@ -153,7 +159,8 @@ export default function SurveyFillPage() {
       }
     }
     // TODO: 실제 제출 API 연동
-    alert('설문이 제출되었습니다. 감사합니다!');
+    setSubmitted(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const hintText = (q: SurveyQuestion) => {

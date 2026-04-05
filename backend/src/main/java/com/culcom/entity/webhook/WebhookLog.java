@@ -1,17 +1,17 @@
 package com.culcom.entity.webhook;
 
+import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.branch.Branch;
 import com.culcom.entity.customer.Customer;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "webhook_logs")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class WebhookLog {
+public class WebhookLog extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -62,11 +62,4 @@ public class WebhookLog {
     @Column(name = "remote_ip", length = 50)
     private String remoteIp;
 
-    @Column(name = "createdDate", nullable = false, updatable = false)
-    private LocalDateTime createdDate;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDateTime.now();
-    }
 }
