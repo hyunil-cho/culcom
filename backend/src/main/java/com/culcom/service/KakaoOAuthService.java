@@ -6,17 +6,13 @@ import com.culcom.entity.customer.Customer;
 import com.culcom.entity.enums.CustomerStatus;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.CustomerRepository;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.culcom.service.external.KakaoOAuthClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.net.URLEncoder;
@@ -34,7 +30,7 @@ public class KakaoOAuthService {
     private final ObjectMapper objectMapper;
     private final CustomerRepository customerRepository;
     private final BranchRepository branchRepository;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final KakaoOAuthClient kakaoOAuthClient;
 
     public String buildAuthUrl(String branchSeq) throws Exception {
         String state = generateState(branchSeq);
@@ -50,7 +46,7 @@ public class KakaoOAuthService {
 
     public void validateState(String state) throws Exception {
         String json = new String(Base64.getUrlDecoder().decode(state), StandardCharsets.UTF_8);
-        JsonNode node = objectMapper.readTree(json);
+        var node = objectMapper.readTree(json);
 
         if (!"board".equals(node.path("source").asText())) {
             throw new IllegalArgumentException("invalid_state");
@@ -62,62 +58,19 @@ public class KakaoOAuthService {
         }
     }
 
+    /** 외부 API 호출 위임 */
     public String exchangeToken(String code) throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type", "authorization_code");
-        params.add("client_id", properties.getClientId());
-        params.add("client_secret", properties.getClientSecret());
-        params.add("redirect_uri", buildCallbackUri());
-        params.add("code", code);
-
-        ResponseEntity<String> response = restTemplate.postForEntity(
-                "https://kauth.kakao.com/oauth/token",
-                new HttpEntity<>(params, headers), String.class);
-
-        return objectMapper.readTree(response.getBody()).path("access_token").asText();
+        return kakaoOAuthClient.exchangeToken(code);
     }
 
+    /** 외부 API 호출 위임 */
     public KakaoUserInfo fetchUserInfo(String accessToken) throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
-
-        ResponseEntity<String> response = restTemplate.exchange(
-                "https://kapi.kakao.com/v2/user/me", HttpMethod.GET,
-                new HttpEntity<>(headers), String.class);
-
-        JsonNode root = objectMapper.readTree(response.getBody());
-        JsonNode account = root.path("kakao_account");
-        JsonNode props = root.path("properties");
-
-        String name = account.path("name").asText(null);
-        if (name == null || name.isEmpty()) name = props.path("nickname").asText(null);
-        if (name == null || name.isEmpty()) name = "카카오 사용자";
-
-        String phone = account.path("phone_number").asText("").replaceAll("[^0-9]", "");
-
-        return new KakaoUserInfo(root.path("id").asLong(), name, phone);
+        return kakaoOAuthClient.fetchUserInfo(accessToken);
     }
 
+    /** 외부 API 호출 위임 */
     public void unlinkUser(Long kakaoId) {
-        if (kakaoId == null || properties.getAdminKey() == null || properties.getAdminKey().isEmpty()) return;
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        headers.set("Authorization", "KakaoAK " + properties.getAdminKey());
-
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("target_id_type", "user_id");
-        params.add("target_id", String.valueOf(kakaoId));
-
-        try {
-            restTemplate.postForEntity("https://kapi.kakao.com/v1/user/unlink",
-                    new HttpEntity<>(params, headers), String.class);
-        } catch (Exception e) {
-            log.error("카카오 연결 해제 실패 (kakaoId: {}): {}", kakaoId, e.getMessage());
-        }
+        kakaoOAuthClient.unlinkUser(kakaoId);
     }
 
     @Transactional

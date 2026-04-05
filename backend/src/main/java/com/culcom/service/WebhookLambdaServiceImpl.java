@@ -14,6 +14,7 @@ import java.util.Map;
 
 @Slf4j
 @Service
+@org.springframework.context.annotation.Profile("!test")
 public class WebhookLambdaServiceImpl implements WebhookLambdaService {
 
     private final AwsWebhookProperties props;

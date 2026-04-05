@@ -56,7 +56,8 @@
       "Bash(xargs ls:*)",
       "Bash(sort -t: -k2 -rn)",
       "Bash(mkdir -p /c/Users/lookh/IdeaProjects/culcom/frontend/src/app/public/refund/success)",
-      "Bash(mkdir -p /c/Users/lookh/IdeaProjects/culcom/frontend/src/app/public/membership)"
+      "Bash(mkdir -p /c/Users/lookh/IdeaProjects/culcom/frontend/src/app/public/membership)",
+      "Bash(ls:*)"
     ]
   }
 }
