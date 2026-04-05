@@ -2,9 +2,9 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  background: #f8f9fa;
+  background: var(--bg-secondary);
   padding: 15px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   align-items: center;
 }
 
@@ -12,7 +12,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.9rem;
+  font-size: var(--font-sm);
   font-weight: 600;
   color: #555;
 }
@@ -20,7 +20,7 @@
 .input {
   padding: 8px 12px;
   width: 180px;
-  font-size: 0.9rem;
+  font-size: var(--font-sm);
 }
 
 .matchInfo {
@@ -30,8 +30,8 @@
   background: #e3f2fd;
   padding: 6px 15px;
   border-radius: 20px;
-  font-size: 0.85rem;
-  color: #1976d2;
+  font-size: var(--font-sm);
+  color: var(--info);
   font-weight: 700;
   margin-left: auto;
 }
@@ -47,7 +47,7 @@
   border-radius: 4px;
   padding: 3px 10px;
   cursor: pointer;
-  color: #1976d2;
+  color: var(--info);
   font-size: 0.75rem;
   font-weight: 600;
 }

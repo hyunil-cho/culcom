@@ -1,6 +1,6 @@
 /* ── 공통 인라인 ── */
 .lbl { display: block; font-size: 0.76rem; font-weight: 700; color: #555; margin-bottom: 3px; }
-.inp { width: 100%; padding: 0.35rem 0.6rem; border: 1.5px solid #ddd; border-radius: 5px; font-size: 0.88rem; }
+.inp { width: 100%; padding: 0.35rem 0.6rem; border: 1.5px solid var(--border-input); border-radius: 5px; font-size: 0.88rem; }
 .inpAuto { composes: inp; width: auto; }
 .requiredMark { color: #e53e3e; }
 .flexEnd { display: flex; gap: 6px; justify-content: flex-end; }
@@ -8,11 +8,11 @@
 
 /* ── 로딩/빈 ── */
 .loadingCard { text-align: center; color: var(--text-secondary); padding: 2rem; }
-.emptyCard { text-align: center; padding: 3rem; color: #aaa; border: 1.5px dashed var(--border); }
-.emptySection { text-align: center; padding: 1.5rem; color: #ccc; font-size: 0.88rem; border: 1px dashed #e0e0e0; border-radius: 8px; background: #fcfcfc; }
+.emptyCard { text-align: center; padding: 3rem; color: var(--text-placeholder); border: 1.5px dashed var(--border); }
+.emptySection { text-align: center; padding: 1.5rem; color: #ccc; font-size: 0.88rem; border: 1px dashed #e0e0e0; border-radius: var(--radius-md); background: #fcfcfc; }
 
 /* ── 네비게이션 ── */
-.backLink { color: #666; text-decoration: none; font-size: 0.9rem; cursor: pointer; }
+.backLink { color: var(--text-secondary); text-decoration: none; font-size: var(--font-sm); cursor: pointer; }
 .backRow { margin-bottom: 1rem; }
 
 /* ── 헤더 ── */
@@ -21,27 +21,27 @@
 .editNameRow { display: flex; align-items: center; gap: 8px; }
 .editNameInput { composes: inp; font-size: 1.1rem; font-weight: 700; max-width: 350px; }
 .actionRow { display: flex; gap: 8px; }
-.previewLink { padding: 0.45rem 0.9rem; font-size: 0.88rem; font-weight: 600; color: var(--primary); border: 1px solid var(--primary); border-radius: 6px; text-decoration: none; cursor: pointer; }
+.previewLink { padding: 0.45rem 0.9rem; font-size: 0.88rem; font-weight: 600; color: var(--primary); border: 1px solid var(--primary); border-radius: var(--radius); text-decoration: none; cursor: pointer; }
 .desc { color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 1.5rem; }
 
 /* ── 섹션 ── */
 .sectionWrap { margin-bottom: 1.75rem; }
 .sectionHeader { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e0e0e0; }
-.sectionHeaderFixed { composes: sectionHeader; border-bottom-color: #2d7a4f; }
+.sectionHeaderFixed { composes: sectionHeader; border-bottom-color: var(--green); }
 .sectionBadge { background: #1a1a1a; color: white; font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 4px; }
-.sectionBadgeFixed { composes: sectionBadge; background: #2d7a4f; }
-.sectionTitle { font-size: 1rem; font-weight: 700; color: #333; }
-.sectionMeta { font-size: 0.78rem; color: #999; }
-.sectionMetaFixed { font-size: 0.78rem; color: #2d7a4f; font-weight: 600; }
-.editSectionInput { composes: inp; max-width: 250px; font-size: 0.95rem; font-weight: 700; }
+.sectionBadgeFixed { composes: sectionBadge; background: var(--green); }
+.sectionTitle { font-size: 1rem; font-weight: 700; color: var(--text-body); }
+.sectionMeta { font-size: 0.78rem; color: var(--text-muted); }
+.sectionMetaFixed { font-size: 0.78rem; color: var(--green); font-weight: 600; }
+.editSectionInput { composes: inp; max-width: 250px; font-size: var(--font-base); font-weight: 700; }
 
 /* ── 버튼 (소형 액션) ── */
-.btnEdit { background: none; border: 1px solid #b0c4de; color: #4a90e2; padding: 2px 8px; border-radius: 4px; font-size: 0.73rem; font-weight: 600; cursor: pointer; }
-.btnDelete { background: none; border: 1px solid #ffa8a8; color: #e03131; padding: 2px 8px; border-radius: 4px; font-size: 0.73rem; font-weight: 600; cursor: pointer; }
+.btnEdit { background: none; border: 1px solid #b0c4de; color: var(--accent); padding: 2px 8px; border-radius: 4px; font-size: 0.73rem; font-weight: 600; cursor: pointer; }
+.btnDelete { background: none; border: 1px solid #ffa8a8; color: var(--red); padding: 2px 8px; border-radius: 4px; font-size: 0.73rem; font-weight: 600; cursor: pointer; }
 .btnAddQuestion { font-size: 0.78rem; padding: 0.25rem 0.6rem; background: white; color: var(--primary); border: 1px dashed var(--primary); border-radius: 5px; font-weight: 600; cursor: pointer; }
 .btnAddOption { padding: 0.25rem 0.65rem; background: none; color: var(--primary); border: 1px dashed var(--primary); border-radius: 5px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
 .btnOptionSubmit { padding: 0.3rem 0.6rem; background: var(--primary); color: white; border: none; border-radius: 5px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
-.btnOptionCancel { padding: 0.3rem 0.5rem; background: none; color: #888; border: 1px solid #ddd; border-radius: 5px; font-size: 0.8rem; cursor: pointer; }
+.btnOptionCancel { padding: 0.3rem 0.5rem; background: none; color: var(--text-muted); border: 1px solid var(--border-input); border-radius: 5px; font-size: 0.8rem; cursor: pointer; }
 
 /* ── 새 섹션/질문 폼 ── */
 .addCard { border-color: var(--primary); background: #f8fafe; margin-bottom: 1.25rem; padding: 1rem 1.25rem; }
@@ -61,41 +61,41 @@
 .questionHeaderOpen { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 1rem; background: #f8fafe; border-bottom: 1px solid #eee; cursor: pointer; user-select: none; }
 .questionHeaderClosed { composes: questionHeaderOpen; background: #fafafa; border-bottom: none; }
 .questionHeaderLeft { display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0; }
-.dragHandle { color: #ccc; font-size: 0.85rem; cursor: grab; user-select: none; flex-shrink: 0; }
-.arrowOpen { color: #aaa; font-size: 0.75rem; transition: transform 0.15s; transform: rotate(90deg); }
+.dragHandle { color: #ccc; font-size: var(--font-sm); cursor: grab; user-select: none; flex-shrink: 0; }
+.arrowOpen { color: var(--text-placeholder); font-size: 0.75rem; transition: transform 0.15s; transform: rotate(90deg); }
 .arrowClosed { composes: arrowOpen; transform: none; }
-.questionKey { font-size: 0.72rem; color: #999; font-family: monospace; flex-shrink: 0; }
+.questionKey { font-size: 0.72rem; color: var(--text-muted); font-family: monospace; flex-shrink: 0; }
 .questionTitle { font-weight: 600; font-size: 0.92rem; }
-.requiredBadge { font-size: 0.68rem; font-weight: 700; color: #e03131; background: #fff0f0; border: 1px solid #ffc9c9; padding: 1px 5px; border-radius: 3px; }
+.requiredBadge { font-size: 0.68rem; font-weight: 700; color: var(--red); background: #fff0f0; border: 1px solid #ffc9c9; padding: 1px 5px; border-radius: 3px; }
 .questionHeaderRight { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
 .typeBadge { font-size: 0.72rem; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
-.optionCount { font-size: 0.72rem; color: #999; }
+.optionCount { font-size: 0.72rem; color: var(--text-muted); }
 .questionBody { padding: 0.85rem 1rem; }
 
 /* ── 질문 편집 ── */
-.editFormBox { background: #f0f7ff; border: 1px solid #c4d8f0; border-radius: 8px; padding: 0.85rem; margin-bottom: 0.75rem; }
-.toolbar { display: flex; gap: 6px; margin-bottom: 0.65rem; align-items: center; padding-bottom: 0.65rem; border-bottom: 1px solid #f0f0f0; }
+.editFormBox { background: #f0f7ff; border: 1px solid #c4d8f0; border-radius: var(--radius-md); padding: 0.85rem; margin-bottom: 0.75rem; }
+.toolbar { display: flex; gap: 6px; margin-bottom: 0.65rem; align-items: center; padding-bottom: 0.65rem; border-bottom: 1px solid var(--border-light); }
 .typeToggle { display: inline-flex; border: 1px solid #d0d0d0; border-radius: 5px; overflow: hidden; }
 .typeBtn { padding: 0.2rem 0.55rem; font-size: 0.74rem; font-weight: 600; border: none; cursor: pointer; }
 .typeBtnActive { composes: typeBtn; }
-.typeBtnInactive { composes: typeBtn; background: white; color: #aaa; }
+.typeBtnInactive { composes: typeBtn; background: white; color: var(--text-placeholder); }
 .requiredToggle { padding: 0.2rem 0.55rem; font-size: 0.74rem; font-weight: 600; cursor: pointer; border-radius: 5px; }
-.requiredToggleOn { composes: requiredToggle; background: #fff0f0; color: #e03131; border: 1px solid #ffc9c9; }
-.requiredToggleOff { composes: requiredToggle; background: #f5f5f5; color: #999; border: 1px solid #d0d0d0; }
+.requiredToggleOn { composes: requiredToggle; background: #fff0f0; color: var(--red); border: 1px solid #ffc9c9; }
+.requiredToggleOff { composes: requiredToggle; background: #f5f5f5; color: var(--text-muted); border: 1px solid #d0d0d0; }
 
 /* ── 선택지 ── */
 .optionTags { display: flex; flex-wrap: wrap; gap: 0.45rem; min-height: 30px; margin-bottom: 0.5rem; }
-.optionTag { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; background: #f0f4f8; border: 1px solid #d0d8e0; border-radius: 6px; font-size: 0.84rem; color: #333; }
-.optionDeleteBtn { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; background: none; border: none; cursor: pointer; color: #999; font-size: 0.7rem; padding: 0; }
+.optionTag { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; background: #f0f4f8; border: 1px solid #d0d8e0; border-radius: var(--radius); font-size: 0.84rem; color: var(--text-body); }
+.optionDeleteBtn { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 0.7rem; padding: 0; }
 .optionEmpty { font-size: 0.84rem; color: #bbb; font-style: italic; }
 .optionInputRow { display: flex; gap: 6px; align-items: center; }
 .optionInput { composes: inp; width: 180px; border-width: 1.5px; border-color: var(--primary); outline: none; }
-.textHint { color: #999; font-size: 0.85rem; font-style: italic; padding: 0.25rem 0; }
-.groupTitle { font-size: 0.78rem; font-weight: 700; color: #2d7a4f; margin-bottom: 0.4rem; }
+.textHint { color: var(--text-muted); font-size: var(--font-sm); font-style: italic; padding: 0.25rem 0; }
+.groupTitle { font-size: 0.78rem; font-weight: 700; color: var(--green); margin-bottom: 0.4rem; }
 .groupWrap { margin-bottom: 0.75rem; }
 
 /* ── 고정 필드 카드 ── */
 .fixedCardHeader { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 1rem; background: #f6faf8; }
 .fixedCardLeft { display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0; }
-.fixedDot { color: #2d7a4f; font-size: 0.85rem; flex-shrink: 0; }
-.fixedTypeBadge { font-size: 0.72rem; font-weight: 600; padding: 2px 7px; border-radius: 4px; background: #e8f5ee; color: #2d7a4f; }
+.fixedDot { color: var(--green); font-size: var(--font-sm); flex-shrink: 0; }
+.fixedTypeBadge { font-size: 0.72rem; font-weight: 600; padding: 2px 7px; border-radius: 4px; background: #e8f5ee; color: var(--green); }

@@ -1,8 +1,8 @@
-.loading { text-align: center; padding: 60px; color: #999; }
+.loading { text-align: center; padding: 60px; color: var(--text-muted); }
 
 .backBtn {
-  padding: 8px 16px; border-radius: 6px; border: 1px solid #ddd;
-  background: white; cursor: pointer; margin-bottom: 20px; font-size: 14px;
+  padding: 8px 16px; border-radius: var(--radius); border: 1px solid var(--border-input);
+  background: white; cursor: pointer; margin-bottom: 20px; font-size: var(--font-sm);
 }
 
 .heroCard {
@@ -16,7 +16,7 @@
 
 .heroBadge {
   display: inline-block; margin-top: 8px; padding: 4px 12px;
-  border-radius: 12px; font-size: 12px; font-weight: 500; color: white;
+  border-radius: var(--radius-lg); font-size: 12px; font-weight: 500; color: white;
 }
 
 .heroBadgeActive { composes: heroBadge; background: rgba(76,175,80,0.3); }
@@ -27,7 +27,7 @@
   padding: 16px; margin-bottom: 24px;
 }
 
-.infoText { margin: 0; font-size: 14px; color: #1565c0; }
+.infoText { margin: 0; font-size: var(--font-sm); color: #1565c0; }
 
 .formCard { padding: 24px; }
 
@@ -35,14 +35,14 @@
 .fieldGroupLg { margin-bottom: 24px; }
 
 .fieldLabel {
-  display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;
+  display: block; margin-bottom: 8px; font-weight: 600; font-size: var(--font-sm);
 }
 
-.requiredMark { color: #f44336; }
+.requiredMark { color: var(--danger); }
 
 .textInput {
-  width: 100%; padding: 10px 12px; border: 1px solid #ddd;
-  border-radius: 6px; font-size: 14px; box-sizing: border-box;
+  width: 100%; padding: 10px 12px; border: 1px solid var(--border-input);
+  border-radius: var(--radius); font-size: var(--font-sm); box-sizing: border-box;
 }
 
 .passwordWrap { position: relative; }
@@ -54,21 +54,21 @@
 
 .togglePasswordBtn {
   position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
-  background: none; border: none; cursor: pointer; font-size: 13px; color: #666;
+  background: none; border: none; cursor: pointer; font-size: 13px; color: var(--text-secondary);
 }
 
-.lastModified { margin-bottom: 16px; font-size: 13px; color: #999; }
+.lastModified { margin-bottom: 16px; font-size: 13px; color: var(--text-muted); }
 
 .actions { display: flex; gap: 10px; }
 
 .saveBtn {
-  padding: 12px 32px; border-radius: 6px; font-size: 14px; font-weight: 600;
-  background: #2196f3; color: white; border: none; cursor: pointer;
+  padding: 12px 32px; border-radius: var(--radius); font-size: var(--font-sm); font-weight: 600;
+  background: var(--info); color: white; border: none; cursor: pointer;
 }
 
 .saveBtn:disabled { opacity: 0.6; }
 
 .cancelBtn {
-  padding: 12px 32px; border-radius: 6px; font-size: 14px;
-  background: white; color: #666; border: 1px solid #ddd; cursor: pointer;
+  padding: 12px 32px; border-radius: var(--radius); font-size: var(--font-sm);
+  background: white; color: var(--text-secondary); border: 1px solid var(--border-input); cursor: pointer;
 }

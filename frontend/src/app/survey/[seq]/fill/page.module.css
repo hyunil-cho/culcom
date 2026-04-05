@@ -4,15 +4,15 @@
 }
 
 .wrapper { max-width: 720px; margin: 0 auto; }
-.loading { text-align: center; padding: 3rem; color: #888; }
+.loading { text-align: center; padding: 3rem; color: var(--text-muted); }
 .header { text-align: center; margin-bottom: 2.5rem; }
 
-.templateTitle { font-size: 2.2rem; font-weight: 900; color: #2d7a4f; letter-spacing: -1px; margin-bottom: 0.5rem; }
+.templateTitle { font-size: 2.2rem; font-weight: 900; color: var(--green); letter-spacing: -1px; margin-bottom: 0.5rem; }
 
 .notice {
-  background: #e8f5ee; border-left: 4px solid #2d7a4f; border-radius: 8px;
-  padding: 1rem 1.25rem; text-align: left; font-size: 0.95rem;
-  color: #2d7a4f; line-height: 1.6; margin-top: 1rem;
+  background: #e8f5ee; border-left: 4px solid var(--green); border-radius: var(--radius-md);
+  padding: 1rem 1.25rem; text-align: left; font-size: var(--font-base);
+  color: var(--green); line-height: 1.6; margin-top: 1rem;
 }
 
 .noticeCustomer {
@@ -23,20 +23,20 @@
 .progressBar { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 2rem; }
 
 .stepDot {
-  width: 32px; height: 32px; border-radius: 50%; background: #dde8e3; color: #666;
+  width: 32px; height: 32px; border-radius: 50%; background: #dde8e3; color: var(--text-secondary);
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.85rem; font-weight: 700; flex-shrink: 0;
+  font-size: var(--font-sm); font-weight: 700; flex-shrink: 0;
 }
 
-.stepDotActive { composes: stepDot; background: #2d7a4f; color: white; }
+.stepDotActive { composes: stepDot; background: var(--green); color: white; }
 .stepDotDone { composes: stepDot; background: #4caf78; color: white; }
 .stepLine { flex: 1; height: 2px; background: #dde8e3; border-radius: 2px; }
 
-.stepLabel { font-size: 0.85rem; font-weight: 500; color: #666; }
-.stepLabelActive { composes: stepLabel; font-weight: 700; color: #2d7a4f; }
+.stepLabel { font-size: var(--font-sm); font-weight: 500; color: var(--text-secondary); }
+.stepLabelActive { composes: stepLabel; font-weight: 700; color: var(--green); }
 
 .card {
-  background: white; border-radius: 12px; box-shadow: 0 2px 16px rgba(45,122,79,0.08);
+  background: white; border-radius: var(--radius-lg); box-shadow: 0 2px 16px rgba(45,122,79,0.08);
   padding: 2rem; margin-bottom: 1.5rem; border: 1px solid #dde8e3;
 }
 
@@ -46,18 +46,18 @@
 }
 
 .sectionBadge {
-  background: #2d7a4f; color: white; font-size: 0.75rem; font-weight: 700;
+  background: var(--green); color: white; font-size: 0.75rem; font-weight: 700;
   padding: 0.3rem 0.75rem; border-radius: 20px;
 }
 
-.sectionTitle { font-size: 1.15rem; font-weight: 700; }
+.sectionTitle { font-size: var(--font-lg); font-weight: 700; }
 .fieldGroup { margin-bottom: 1.75rem; }
-.fieldLabel { display: block; font-size: 0.95rem; font-weight: 700; margin-bottom: 0.6rem; }
+.fieldLabel { display: block; font-size: var(--font-base); font-weight: 700; margin-bottom: 0.6rem; }
 .requiredMark { color: #e53e3e; margin-left: 3px; }
-.hint { font-size: 0.8rem; color: #666; font-weight: 400; margin-left: 6px; }
+.hint { font-size: 0.8rem; color: var(--text-secondary); font-weight: 400; margin-left: 6px; }
 
 .textInput {
-  width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #dde8e3; border-radius: 8px;
+  width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #dde8e3; border-radius: var(--radius-md);
   font-size: 1rem; font-family: inherit; color: #1a1a1a; resize: vertical;
   min-height: 80px; line-height: 1.6;
 }
@@ -71,24 +71,24 @@
 
 .chip {
   display: inline-flex; align-items: center; padding: 0.45rem 0.9rem;
-  border: 1.5px solid #dde8e3; border-radius: 24px; font-size: 0.9rem;
+  border: 1.5px solid #dde8e3; border-radius: 24px; font-size: var(--font-sm);
   cursor: pointer; background: white; user-select: none; transition: all 0.2s;
 }
 
 .chipChecked {
   composes: chip;
-  background: #2d7a4f; border-color: #2d7a4f; color: white; font-weight: 600;
+  background: var(--green); border-color: var(--green); color: white; font-weight: 600;
 }
 
 .chipInGroup {
   display: inline-flex; align-items: center; padding: 0.4rem 0.75rem;
-  border-radius: 8px; font-size: 0.85rem; background: white; border: 1px solid transparent;
+  border-radius: var(--radius-md); font-size: var(--font-sm); background: white; border: 1px solid transparent;
   cursor: pointer; transition: all 0.2s;
 }
 
 .chipInGroupChecked {
   composes: chipInGroup;
-  background: #2d7a4f; border-color: #2d7a4f; color: white; font-weight: 600;
+  background: var(--green); border-color: var(--green); color: white; font-weight: 600;
 }
 
 .groupGrid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
@@ -96,7 +96,7 @@
 
 .groupCol { background: #e8f5ee; border-radius: 10px; padding: 1rem; }
 .groupColTitle {
-  font-size: 0.8rem; font-weight: 700; color: #2d7a4f;
+  font-size: 0.8rem; font-weight: 700; color: var(--green);
   margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px;
 }
 .groupItems { display: flex; flex-direction: column; gap: 0.4rem; }
@@ -105,15 +105,15 @@
 
 .btnPrev {
   flex: 1; padding: 1rem; border-radius: 10px; font-size: 1rem; font-weight: 700;
-  font-family: inherit; cursor: pointer; background: white; color: #666;
+  font-family: inherit; cursor: pointer; background: white; color: var(--text-secondary);
   border: 1.5px solid #dde8e3;
 }
 
 .btnNext {
   flex: 1; padding: 1rem; border-radius: 10px; font-size: 1rem; font-weight: 700;
-  font-family: inherit; cursor: pointer; background: #2d7a4f; color: white; border: none;
+  font-family: inherit; cursor: pointer; background: var(--green); color: white; border: none;
 }
 
-.emptySection { color: #aaa; text-align: center; padding: 2rem 0; }
-.footer { text-align: center; margin-top: 2rem; font-size: 0.82rem; color: #666; }
-.noOptions { color: #aaa; font-size: 0.9rem; }
+.emptySection { color: var(--text-placeholder); text-align: center; padding: 2rem 0; }
+.footer { text-align: center; margin-top: 2rem; font-size: 0.82rem; color: var(--text-secondary); }
+.noOptions { color: var(--text-placeholder); font-size: var(--font-sm); }

@@ -6,28 +6,28 @@
 }
 
 .checkCircle {
-  width: 72px; height: 72px; border-radius: 50%; background: #2d7a4f;
+  width: 72px; height: 72px; border-radius: 50%; background: var(--green);
   display: flex; align-items: center; justify-content: center;
   margin: 0 auto 1.75rem;
 }
 
 .title { font-size: 1.35rem; font-weight: 800; color: #1a1a1a; margin-bottom: 0.75rem; }
-.name { font-size: 1.5rem; font-weight: 900; color: #2d7a4f; margin-bottom: 0.75rem; }
+.name { font-size: 1.5rem; font-weight: 900; color: var(--green); margin-bottom: 0.75rem; }
 .thankText { font-size: 1rem; color: #555; margin-bottom: 0.25rem; }
 .contactText { font-size: 1rem; color: #555; margin-bottom: 2rem; }
-.contactHighlight { color: #2d7a4f; }
+.contactHighlight { color: var(--green); }
 
 .nextSteps {
-  background: #f0faf4; border-radius: 12px; padding: 1.5rem 1.75rem;
+  background: #f0faf4; border-radius: var(--radius-lg); padding: 1.5rem 1.75rem;
   text-align: left; margin-bottom: 2rem;
 }
 
-.nextStepsTitle { font-size: 0.95rem; font-weight: 800; color: #1a1a1a; margin-bottom: 1rem; text-align: center; }
+.nextStepsTitle { font-size: var(--font-base); font-weight: 800; color: #1a1a1a; margin-bottom: 1rem; text-align: center; }
 
 .stepItem { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.65rem; }
 .stepItem:last-child { margin-bottom: 0; }
-.stepCheck { color: #2d7a4f; font-weight: 700; font-size: 1rem; }
-.stepText { font-size: 0.92rem; color: #333; }
+.stepCheck { color: var(--green); font-weight: 700; font-size: 1rem; }
+.stepText { font-size: 0.92rem; color: var(--text-body); }
 
-.footer { font-size: 0.88rem; color: #888; line-height: 1.6; }
+.footer { font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; }
 .footerBold { color: #1a1a1a; }

@@ -13,7 +13,7 @@
 }
 
 .noBranchDesc {
-  font-size: 0.9rem;
+  font-size: var(--font-sm);
   color: #856404;
   margin-bottom: 12px;
 }
@@ -21,7 +21,7 @@
 .loading {
   text-align: center;
   padding: 40px;
-  color: #999;
+  color: var(--text-muted);
 }
 
 .statsGrid {
@@ -62,7 +62,7 @@
 .emptyChart {
   text-align: center;
   padding: 60px 20px;
-  color: #999;
+  color: var(--text-muted);
 }
 
 .callerHeader {
@@ -84,7 +84,7 @@
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--font-sm);
 }
 
 .periodBtnActive {
@@ -96,14 +96,14 @@
 
 .periodBtnInactive {
   composes: periodBtn;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-input);
   background: white;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .periodRange {
-  font-size: 14px;
-  color: #666;
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
 }
 
 .tableWrap {

@@ -1,15 +1,15 @@
 .container { max-width: 900px; margin: 0 auto; }
 .header { margin-bottom: 24px; }
-.title { font-size: 24px; font-weight: 600; color: #333; margin-bottom: 8px; }
-.desc { font-size: 14px; color: #666; }
+.title { font-size: 24px; font-weight: 600; color: var(--text-body); margin-bottom: 8px; }
+.desc { font-size: var(--font-sm); color: var(--text-secondary); }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
 
 .card {
   display: block;
   background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   padding: 24px;
   text-decoration: none;
   transition: all 0.2s;
@@ -21,5 +21,5 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.cardTitle { font-size: 18px; font-weight: 600; color: #333; margin-bottom: 8px; }
-.cardDesc { font-size: 14px; color: #666; line-height: 1.6; }
+.cardTitle { font-size: 18px; font-weight: 600; color: var(--text-body); margin-bottom: 8px; }
+.cardDesc { font-size: var(--font-sm); color: var(--text-secondary); line-height: 1.6; }

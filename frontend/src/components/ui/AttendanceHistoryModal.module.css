@@ -6,7 +6,7 @@
 
 .header {
   padding: 1rem 1.5rem;
-  background: #4a90e2;
+  background: var(--accent);
   color: #fff;
   display: flex;
   justify-content: space-between;
@@ -24,7 +24,7 @@
 .empty {
   text-align: center;
   padding: 2rem;
-  color: #999;
+  color: var(--text-muted);
 }
 
 .table {
@@ -45,7 +45,7 @@
 }
 
 .table tbody tr {
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .table td {
@@ -58,13 +58,13 @@
 }
 
 .tdNote {
-  color: #888;
+  color: var(--text-muted);
 }
 
 .statusBadge {
   display: inline-block;
   padding: 2px 10px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   font-size: 0.78rem;
   font-weight: 600;
 }
@@ -89,7 +89,7 @@
 
 .footer {
   padding: 0.75rem 1.5rem;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -102,17 +102,17 @@
 }
 
 .pageInfo {
-  font-size: 0.85rem;
-  color: #666;
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
   margin: 0 8px;
 }
 
 .pageBtn {
   padding: 6px 14px;
   border: 1px solid #ccc;
-  border-radius: 6px;
+  border-radius: var(--radius);
   background: #fff;
-  color: #333;
+  color: var(--text-body);
   cursor: pointer;
   font-size: 0.82rem;
 }
@@ -126,7 +126,7 @@
 .closeFooterBtn {
   padding: 8px 20px;
   border: 1px solid #ccc;
-  border-radius: 6px;
+  border-radius: var(--radius);
   background: #fff;
   cursor: pointer;
 }

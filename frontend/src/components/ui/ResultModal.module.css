@@ -23,16 +23,16 @@
 
 .message {
   margin: 0 0 1.5rem;
-  color: #666;
-  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-size: var(--font-base);
 }
 
 .confirmBtn {
   padding: 0.6rem 2rem;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: white;
-  font-size: 0.95rem;
+  font-size: var(--font-base);
   cursor: pointer;
   font-weight: 500;
 }

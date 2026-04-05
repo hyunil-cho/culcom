@@ -18,7 +18,7 @@
 }
 
 .titleSection { margin-bottom: 2rem; }
-.subtitle { font-size: 0.95rem; color: #666; margin-bottom: 0.5rem; }
+.subtitle { font-size: var(--font-base); color: var(--text-secondary); margin-bottom: 0.5rem; }
 .mainTitle {
   font-size: 2.2rem; font-weight: 800; color: #dc3545;
   margin-bottom: 1.5rem; text-shadow: 2px 2px 0px rgba(255,255,255,0.8);
@@ -27,14 +27,14 @@
 .charSection { margin: 2rem 0; position: relative; }
 .charEmoji { font-size: 6rem; margin-bottom: 1rem; }
 .charRow { display: flex; justify-content: space-around; align-items: center; margin-top: 1rem; }
-.charText { font-size: 0.9rem; font-style: italic; color: #666; }
+.charText { font-size: var(--font-sm); font-style: italic; color: var(--text-secondary); }
 
 .messageBox {
   background: #FFF8DC; border: 3px dashed #666; border-radius: 15px;
   padding: 2rem 1.5rem; margin: 2rem 0;
 }
-.messageTitle { font-size: 1.3rem; font-weight: 700; color: #333; margin-bottom: 1rem; }
-.messageBody { font-size: 0.95rem; color: #666; line-height: 1.6; }
+.messageTitle { font-size: 1.3rem; font-weight: 700; color: var(--text-body); margin-bottom: 1rem; }
+.messageBody { font-size: var(--font-base); color: var(--text-secondary); line-height: 1.6; }
 .userName { color: #dc3545; font-weight: 800; }
 
 .photoGrid {

@@ -7,19 +7,61 @@
 }
 
 :root {
+  /* ── 브랜드 ── */
   --primary: #4f46e5;
   --primary-hover: #4338ca;
+  --accent: #4a90e2;
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  /* ── 시맨틱 ── */
+  --success: #10b981;
+  --success-dark: #2e7d32;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --danger-dark: #d32f2f;
+  --info: #2196f3;
+
+  /* ── 배경 ── */
   --bg: #f9fafb;
+  --bg-secondary: #f8f9fa;
+  --card-bg: #ffffff;
   --sidebar-bg: #1f2937;
   --sidebar-text: #d1d5db;
   --sidebar-active: #4f46e5;
-  --card-bg: #ffffff;
-  --border: #e5e7eb;
+
+  /* ── 텍스트 ── */
   --text: #111827;
+  --text-dark: #2c3e50;
+  --text-body: #333;
   --text-secondary: #6b7280;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  --text-muted: #999;
+  --text-placeholder: #aaa;
+
+  /* ── 보더 ── */
+  --border: #e5e7eb;
+  --border-light: #f0f0f0;
+  --border-input: #ddd;
+
+  /* ── 폰트 사이즈 ── */
+  --font-xs: 0.75rem;
+  --font-sm: 0.85rem;
+  --font-base: 0.95rem;
+  --font-md: 1rem;
+  --font-lg: 1.15rem;
+  --font-xl: 1.25rem;
+  --font-2xl: 1.5rem;
+
+  /* ── 도메인 색상 ── */
+  --green: #2d7a4f;
+  --green-dark: #2e7d32;
+  --red: #e03131;
+  --red-dark: #c92a2a;
+
+  /* ── 간격 ── */
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
 }
 
 body {

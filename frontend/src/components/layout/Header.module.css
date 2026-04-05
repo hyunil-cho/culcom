@@ -10,8 +10,8 @@
 
 .title {
   margin: 0;
-  font-size: 1.25rem;
-  color: #2c3e50;
+  font-size: var(--font-xl);
+  color: var(--text-dark);
 }
 
 .headerRight {
@@ -28,20 +28,20 @@
 .branchLabel {
   margin-right: 0.5rem;
   color: #5a6c7d;
-  font-size: 0.9rem;
+  font-size: var(--font-sm);
 }
 
 .branchSelect {
   padding: 0.5rem 1rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 0.9rem;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius);
+  font-size: var(--font-sm);
   cursor: pointer;
   background: white;
 }
 
 .noBranchText {
-  font-size: 0.9rem;
+  font-size: var(--font-sm);
   color: #e74c3c;
   font-weight: 500;
   margin-right: 0.75rem;
@@ -49,12 +49,12 @@
 
 .registerBtn {
   padding: 0.4rem 1rem;
-  font-size: 0.85rem;
+  font-size: var(--font-sm);
   font-weight: 500;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius);
   cursor: pointer;
-  background: #4a90e2;
+  background: var(--accent);
   color: white;
 }
 
@@ -65,15 +65,15 @@
 }
 
 .userName {
-  font-size: 0.9rem;
-  color: #2c3e50;
+  font-size: var(--font-sm);
+  color: var(--text-dark);
 }
 
 .logoutLink {
   margin-left: 0.5rem;
-  color: #4a90e2;
+  color: var(--accent);
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: var(--font-sm);
   cursor: pointer;
 }
 
@@ -85,25 +85,25 @@
 
 .logoutModalHeader {
   padding: 1.5rem 2rem;
-  border-bottom: 2px solid #4a90e2;
+  border-bottom: 2px solid var(--accent);
 }
 
 .logoutModalTitle {
   margin: 0;
-  font-size: 1.25rem;
-  color: #2c3e50;
+  font-size: var(--font-xl);
+  color: var(--text-dark);
 }
 
 .logoutModalBody {
   padding: 2rem;
   text-align: center;
-  color: #666;
-  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-size: var(--font-base);
 }
 
 .logoutModalFooter {
   padding: 1rem 2rem;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--border);
   display: flex;
   gap: 0.75rem;
 }
@@ -112,10 +112,10 @@
   flex: 1;
   padding: 0.75rem;
   font-size: 1rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-input);
   background: white;
-  color: #666;
-  border-radius: 6px;
+  color: var(--text-secondary);
+  border-radius: var(--radius);
   cursor: pointer;
 }
 
@@ -124,8 +124,8 @@
   padding: 0.75rem;
   font-size: 1rem;
   border: none;
-  background: #4a90e2;
+  background: var(--accent);
   color: white;
-  border-radius: 6px;
+  border-radius: var(--radius);
   cursor: pointer;
 }

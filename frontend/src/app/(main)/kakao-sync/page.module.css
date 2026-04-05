@@ -1,7 +1,7 @@
 .loading {
   padding: 2rem;
   text-align: center;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .header {
@@ -16,8 +16,8 @@
 }
 
 .subtitle {
-  color: #666;
-  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-size: var(--font-base);
 }
 
 .section {
@@ -28,7 +28,7 @@
 .sectionTitle {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #333;
+  color: var(--text-body);
   margin-bottom: 1.2rem;
   display: flex;
   align-items: center;
@@ -36,9 +36,9 @@
 }
 
 .urlBox {
-  background: #f8f9fa;
+  background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 1.25rem;
 }
 
@@ -51,10 +51,10 @@
   flex: 1;
   padding: 0.75rem;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border-radius: var(--radius);
   background: white;
   font-family: monospace;
-  font-size: 0.9rem;
+  font-size: var(--font-sm);
   color: #374151;
 }
 
@@ -63,7 +63,7 @@
   margin: 0 auto;
   background: #fafafa;
   padding: 2rem;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   border: 1px solid #eee;
 }
 
@@ -147,7 +147,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #f8f9fa;
+  background: var(--bg-secondary);
 }
 
 .previewTitle {
@@ -161,7 +161,7 @@
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #999;
+  color: var(--text-muted);
 }
 
 .previewBody {
@@ -177,7 +177,7 @@
 .previewQrWrap {
   background: white;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   display: inline-block;
 }
 
@@ -189,7 +189,7 @@
 }
 
 .previewHint {
-  font-size: 0.85rem;
-  color: #666;
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
   margin-bottom: 1rem;
 }

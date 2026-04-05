@@ -49,13 +49,9 @@ public class SurveyController {
 
     @PutMapping("/templates/{seq}/status")
     public ResponseEntity<ApiResponse<SurveyTemplateResponse>> updateStatus(
-            @PathVariable Long seq, @RequestBody Map<String, String> body) {
-        String statusStr = body.get("status");
-        if (statusStr == null) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("상태 값이 필요합니다."));
-        }
+            @PathVariable Long seq, @Valid @RequestBody SurveyStatusRequest req) {
         return ResponseEntity.ok(ApiResponse.ok("설문지 상태가 변경되었습니다.",
-                surveyService.updateStatus(seq, statusStr)));
+                surveyService.updateStatus(seq, req.getStatus())));
     }
 
     @PostMapping("/templates/{seq}/copy")

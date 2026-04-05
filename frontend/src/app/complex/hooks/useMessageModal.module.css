@@ -9,7 +9,7 @@
 
 .headerDark {
   background: #2c3e50;
-  border-color: #2c3e50;
+  border-color: var(--text-dark);
 }
 
 /* ── Step 1: 그룹 선택 ── */
@@ -20,22 +20,22 @@
 .titleBanner {
   background: #f1f7fe;
   padding: 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   margin-bottom: 20px;
   text-align: center;
   border: 1px solid #d0e3ff;
 }
 
 .titleBannerText {
-  color: #4a90e2;
+  color: var(--accent);
   font-weight: 700;
   font-size: 1rem;
 }
 
 .groupDesc {
   margin-bottom: 20px;
-  color: #666;
-  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
   text-align: center;
 }
 
@@ -52,7 +52,7 @@
   gap: 8px;
   padding: 15px;
   border: 1px solid #dee2e6;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: #fff;
   cursor: pointer;
   transition: all 0.2s;
@@ -63,12 +63,12 @@
 }
 
 .groupBtnLabel {
-  font-size: 0.9rem;
+  font-size: var(--font-sm);
 }
 
 .groupBtnDesc {
   font-size: 0.75rem;
-  color: #888;
+  color: var(--text-muted);
 }
 
 /* ── Step 2: 메시지 작성 ── */
@@ -82,7 +82,7 @@
 .step2Banner {
   background: #f1f7fe;
   padding: 10px 15px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   margin-bottom: 15px;
   border: 1px solid #d0e3ff;
   display: flex;
@@ -91,13 +91,13 @@
 }
 
 .step2Title {
-  color: #4a90e2;
+  color: var(--accent);
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: var(--font-base);
 }
 
 .step2Badge {
-  background: #4a90e2;
+  background: var(--accent);
   color: white;
   padding: 3px 10px;
   border-radius: 20px;
@@ -108,11 +108,11 @@
 .backBtn {
   background: none;
   border: none;
-  color: #4a90e2;
+  color: var(--accent);
   cursor: pointer;
   font-weight: 600;
   padding: 0;
-  font-size: 0.85rem;
+  font-size: var(--font-sm);
   margin-bottom: 12px;
 }
 
@@ -133,7 +133,7 @@
   font-weight: 600;
   margin-bottom: 6px;
   display: block;
-  font-size: 0.85rem;
+  font-size: var(--font-sm);
   color: #555;
 }
 
@@ -141,24 +141,24 @@
   flex: 1;
   width: 100%;
   padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius);
   resize: none;
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: var(--font-sm);
   line-height: 1.5;
 }
 
 .byteCount {
   margin-top: 5px;
   font-size: 0.75rem;
-  color: #888;
+  color: var(--text-muted);
   text-align: right;
 }
 
 .byteCountValue {
   font-weight: 600;
-  color: #4a90e2;
+  color: var(--accent);
 }
 
 .recipientCol {
@@ -177,7 +177,7 @@
 }
 
 .recipientCount {
-  color: #4a90e2;
+  color: var(--accent);
 }
 
 .recipientActions {
@@ -188,7 +188,7 @@
 .linkBtn {
   background: none;
   border: none;
-  color: #4a90e2;
+  color: var(--accent);
   font-size: 0.7rem;
   cursor: pointer;
   padding: 0;
@@ -197,25 +197,25 @@
 
 .linkBtnMuted {
   composes: linkBtn;
-  color: #888;
+  color: var(--text-muted);
 }
 
 .recipientList {
   flex: 1;
   overflow-y: auto;
   border: 1px solid #f0f0f0;
-  border-radius: 6px;
+  border-radius: var(--radius);
   padding: 3px;
   background: #fafafa;
 }
 
 .recipientItem {
   padding: 8px 10px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-light);
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 0.85rem;
+  font-size: var(--font-sm);
 }
 
 .checkbox {
@@ -234,7 +234,7 @@
 }
 
 .phoneCol {
-  color: #666;
+  color: var(--text-secondary);
   font-family: monospace;
   font-size: 0.8rem;
 }
@@ -243,8 +243,8 @@
 .sendBtn {
   padding: 8px 20px;
   border: none;
-  border-radius: 6px;
-  background: #4a90e2;
+  border-radius: var(--radius);
+  background: var(--accent);
   color: white;
   cursor: pointer;
   font-weight: 600;
@@ -257,7 +257,7 @@
 .cancelBtn {
   padding: 8px 20px;
   border: 1px solid #ccc;
-  border-radius: 6px;
+  border-radius: var(--radius);
   background: white;
   cursor: pointer;
 }
@@ -271,7 +271,7 @@
 
 .resultStatCard {
   flex: 1;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 12px 16px;
   text-align: center;
 }
@@ -288,7 +288,7 @@
 
 .resultStatFailNone {
   composes: resultStatCard;
-  background: #f8f9fa;
+  background: var(--bg-secondary);
 }
 
 .resultStatNumber {
@@ -305,7 +305,7 @@
 }
 
 .failColor {
-  color: #c92a2a;
+  color: var(--red-dark);
 }
 
 .mutedColor {
@@ -318,7 +318,7 @@
 }
 
 .resultSectionTitle {
-  font-size: 0.85rem;
+  font-size: var(--font-sm);
   font-weight: 700;
   margin-bottom: 6px;
 }
@@ -332,8 +332,8 @@
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
-  border-bottom: 1px solid #f0f0f0;
-  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border-light);
+  font-size: var(--font-sm);
 }
 
 .resultRowFail {
@@ -351,21 +351,21 @@
 }
 
 .resultPhone {
-  color: #888;
+  color: var(--text-muted);
   font-family: monospace;
   font-size: 0.8rem;
 }
 
 .resultReason {
   margin-left: auto;
-  color: #c92a2a;
+  color: var(--red-dark);
   font-size: 0.78rem;
 }
 
 .confirmBtn {
   padding: 8px 20px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius);
   background: #2c3e50;
   color: white;
   cursor: pointer;

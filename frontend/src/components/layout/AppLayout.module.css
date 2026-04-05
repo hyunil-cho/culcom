@@ -19,21 +19,21 @@
 
 .noBranchModalTitle {
   margin: 0;
-  font-size: 1.25rem;
-  color: #2c3e50;
+  font-size: var(--font-xl);
+  color: var(--text-dark);
 }
 
 .noBranchModalBody {
   padding: 2rem;
   text-align: center;
-  color: #666;
-  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-size: var(--font-base);
   line-height: 1.6;
 }
 
 .noBranchModalFooter {
   padding: 1rem 2rem;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--border);
   display: flex;
   justify-content: center;
 }
@@ -42,8 +42,8 @@
   padding: 0.75rem 2rem;
   font-size: 1rem;
   border: none;
-  background: #4a90e2;
+  background: var(--accent);
   color: white;
-  border-radius: 6px;
+  border-radius: var(--radius);
   cursor: pointer;
 }

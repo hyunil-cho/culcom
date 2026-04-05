@@ -58,7 +58,7 @@
   padding: 8px 0;
   text-align: center;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--font-sm);
   font-weight: 400;
   background: transparent;
   color: var(--text);

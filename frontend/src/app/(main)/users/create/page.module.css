@@ -1,8 +1,8 @@
 .card { max-width: 520px; margin: 0 auto; }
-.header { padding: 1.5rem 2rem; border-bottom: 2px solid #4a90e2; }
-.title { margin: 0; font-size: 1.25rem; color: #2c3e50; }
+.header { padding: 1.5rem 2rem; border-bottom: 2px solid var(--accent); }
+.title { margin: 0; font-size: var(--font-xl); color: var(--text-dark); }
 .form { padding: 2rem; }
 .fieldGroup { margin-bottom: 1rem; }
-.label { display: block; margin-bottom: 4px; font-size: 14px; font-weight: 500; }
-.input { width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid #ddd; font-size: 0.95rem; box-sizing: border-box; }
+.label { display: block; margin-bottom: 4px; font-size: var(--font-sm); font-weight: 500; }
+.input { width: 100%; padding: 0.75rem; border-radius: var(--radius); border: 1px solid var(--border-input); font-size: var(--font-base); box-sizing: border-box; }
 .actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }

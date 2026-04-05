@@ -1,7 +1,7 @@
 .narrow { max-width: 440px; }
 .small { max-width: 400px; }
 
-.headerGreen { background: #2e7d32; border-color: #2e7d32; }
+.headerGreen { background: var(--green-dark); border-color: var(--green-dark); }
 
 .toolbar {
   display: flex;
@@ -17,15 +17,15 @@
 
 .selectAllBtn {
   font-size: 0.75rem; padding: 3px 10px;
-  border: 1px solid #2e7d32; border-radius: 4px;
-  background: white; color: #2e7d32;
+  border: 1px solid var(--green-dark); border-radius: 4px;
+  background: white; color: var(--green-dark);
   cursor: pointer; font-weight: 700;
 }
 
 .deselectAllBtn {
   font-size: 0.75rem; padding: 3px 10px;
   border: 1px solid #ccc; border-radius: 4px;
-  background: white; color: #888;
+  background: white; color: var(--text-muted);
   cursor: pointer; font-weight: 600;
 }
 
@@ -34,7 +34,7 @@
 /* 일반 행 */
 .memberRow {
   display: flex; align-items: center; gap: 12px;
-  padding: 10px 14px; border-bottom: 1px solid #f0f0f0;
+  padding: 10px 14px; border-bottom: 1px solid var(--border-light);
 }
 
 .memberRowStaff { composes: memberRow; background: #fff8f0; }
@@ -59,18 +59,18 @@
 .staffLabel { color: #e67e22; font-size: 0.72rem; font-weight: 800; white-space: nowrap; }
 .indexLabel { color: #adb5bd; font-size: 0.8rem; width: 18px; text-align: right; flex-shrink: 0; }
 .postponedName { color: #b8860b; white-space: nowrap; }
-.normalName { color: #333; white-space: nowrap; }
-.phone { color: #999; font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.normalName { color: var(--text-body); white-space: nowrap; }
+.phone { color: var(--text-muted); font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .postponedBadge { font-size: 0.7rem; color: #e67700; background: #fff3cd; padding: 1px 6px; border-radius: 10px; white-space: nowrap; }
 
-.checkbox { width: 17px; height: 17px; cursor: pointer; accent-color: #2e7d32; }
+.checkbox { width: 17px; height: 17px; cursor: pointer; accent-color: var(--green-dark); }
 .checkLabel { flex: 1; cursor: pointer; display: flex; align-items: center; gap: 8px; min-width: 0; }
 
 /* 푸터 버튼 */
-.cancelBtn { padding: 8px 20px; border: 1px solid #ccc; border-radius: 6px; background: white; cursor: pointer; }
-.saveBtn { padding: 8px 20px; border: none; border-radius: 6px; background: #2e7d32; color: white; cursor: pointer; font-weight: 600; }
+.cancelBtn { padding: 8px 20px; border: 1px solid #ccc; border-radius: var(--radius); background: white; cursor: pointer; }
+.saveBtn { padding: 8px 20px; border: none; border-radius: var(--radius); background: var(--green-dark); color: white; cursor: pointer; font-weight: 600; }
 
 /* 결과 */
 .resultBody { padding: 10px; }
-.resultInner { padding: 10px; font-size: 0.9rem; line-height: 1.8; }
+.resultInner { padding: 10px; font-size: var(--font-sm); line-height: 1.8; }
 .resultGroup { margin-bottom: 10px; }

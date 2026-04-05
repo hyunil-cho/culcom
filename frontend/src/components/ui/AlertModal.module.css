@@ -5,18 +5,18 @@
 
 .message {
   margin: 0 0 1.5rem;
-  color: #333;
-  font-size: 0.95rem;
+  color: var(--text-body);
+  font-size: var(--font-base);
   line-height: 1.6;
 }
 
 .confirmBtn {
   padding: 0.6rem 2rem;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--primary);
   color: white;
-  font-size: 0.95rem;
+  font-size: var(--font-base);
   cursor: pointer;
   font-weight: 500;
 }

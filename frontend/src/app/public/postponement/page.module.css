@@ -10,7 +10,7 @@
 .card {
   background: white;
   padding: 40px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 520px;
@@ -23,19 +23,19 @@
 }
 
 .title {
-  color: #4a90e2;
+  color: var(--accent);
   font-size: 1.8rem;
   margin-bottom: 10px;
 }
 
 .subtitle {
-  color: #666;
-  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-size: var(--font-base);
 }
 
 .searchError {
   color: #dc2626;
-  font-size: 0.9rem;
+  font-size: var(--font-sm);
   margin-top: 8px;
 }
 
@@ -48,7 +48,7 @@
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-body);
 }
 
 .requiredMark {
@@ -90,7 +90,7 @@
   display: flex;
   gap: 8px;
   margin-bottom: 4px;
-  font-size: 0.9rem;
+  font-size: var(--font-sm);
 }
 
 .infoLabel {
@@ -100,7 +100,7 @@
 }
 
 .infoValue {
-  color: #333;
+  color: var(--text-body);
 }
 
 /* 날짜 범위 */
@@ -112,7 +112,7 @@
 
 /* 멤버십 카드 */
 .membershipCard {
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 12px;
   margin-bottom: 10px;
   transition: all 0.2s;
@@ -126,8 +126,8 @@
 
 .membershipName {
   font-weight: 700;
-  color: #333;
-  font-size: 0.95rem;
+  color: var(--text-body);
+  font-size: var(--font-base);
 }
 
 .postponeBadge {
@@ -140,7 +140,7 @@
 
 .membershipMeta {
   font-size: 0.82rem;
-  color: #666;
+  color: var(--text-secondary);
   margin-top: 4px;
 }
 
@@ -152,7 +152,7 @@
 .emptyMembership {
   text-align: center;
   padding: 20px;
-  color: #999;
+  color: var(--text-muted);
 }
 
 .divider {
@@ -167,7 +167,7 @@
   padding: 14px;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius);
   font-size: 1.1rem;
   font-weight: bold;
   cursor: pointer;
@@ -183,9 +183,9 @@
   width: 100%;
   padding: 10px;
   background: none;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  color: #666;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
   cursor: pointer;
   margin-top: 8px;
 }
@@ -194,10 +194,10 @@
 .noticeBox {
   background: #fff9db;
   padding: 15px;
-  border-radius: 6px;
+  border-radius: var(--radius);
   border-left: 4px solid #fcc419;
   margin-top: 25px;
-  font-size: 0.85rem;
+  font-size: var(--font-sm);
   color: #856404;
 }
 
