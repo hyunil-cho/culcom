@@ -10,21 +10,32 @@ interface MessageModalState {
   members: AttendanceViewMember[];
 }
 
+interface SendResult {
+  name: string;
+  phoneNumber: string;
+  success: boolean;
+  reason?: string;
+}
+
+const memberKey = (m: AttendanceViewMember) => `${m.staff ? 's' : 'm'}-${m.memberSeq}`;
+
 export function useMessageModal() {
   const [modal, setModal] = useState<MessageModalState | null>(null);
   const [step, setStep] = useState<1 | 2>(1);
   const [groupType, setGroupType] = useState<GroupType>('all');
-  const [checked, setChecked] = useState<Record<number, boolean>>({});
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [content, setContent] = useState('');
   const [senderNumbers, setSenderNumbers] = useState<string[]>([]);
   const [selectedSender, setSelectedSender] = useState('');
   const [sending, setSending] = useState(false);
+  const [sendResults, setSendResults] = useState<SendResult[] | null>(null);
 
   const open = async (title: string, members: AttendanceViewMember[]) => {
     setModal({ title, members });
     setStep(1);
     setContent('');
     setChecked({});
+    setSendResults(null);
     try {
       const res = await settingsApi.getSenderNumbers();
       if (res.success && res.data.length > 0) {
@@ -34,47 +45,133 @@ export function useMessageModal() {
     } catch { /* ignore */ }
   };
 
-  const close = () => setModal(null);
+  const close = () => { setModal(null); setSendResults(null); };
 
   const selectGroup = (type: GroupType) => {
     if (!modal) return;
     setGroupType(type);
-    const next: Record<number, boolean> = {};
+    const next: Record<string, boolean> = {};
     modal.members.forEach(m => {
-      if (type === 'all' || type === 'direct') next[m.memberSeq] = type !== 'direct';
-      else if (type === 'staff' && m.staff) next[m.memberSeq] = true;
-      else if (type === 'member' && !m.staff) next[m.memberSeq] = true;
+      const belongs =
+        type === 'all' || type === 'direct'
+          ? true
+          : type === 'staff'
+            ? m.staff
+            : !m.staff;
+      if (belongs) {
+        next[memberKey(m)] = type !== 'direct';
+      }
     });
     setChecked(next);
     setStep(2);
   };
 
+  const visibleMembers = modal?.members.filter(m => memberKey(m) in checked) ?? [];
+  const checkedCount = Object.values(checked).filter(Boolean).length;
+
   const send = async () => {
     if (!modal || !content.trim()) { alert('메시지 내용을 입력해주세요.'); return; }
-    const recipients = modal.members.filter(m => checked[m.memberSeq]);
+    const recipients = visibleMembers.filter(m => checked[memberKey(m)]);
     if (recipients.length === 0) { alert('수신자를 최소 한 명 이상 선택해주세요.'); return; }
     if (!selectedSender) { alert('발신번호가 설정되지 않았습니다.'); return; }
 
     setSending(true);
-    let successCount = 0;
+    const results: SendResult[] = [];
+
     for (const m of recipients) {
       try {
-        const res = await externalApi.sendSms({ senderPhone: selectedSender, receiverPhone: m.phoneNumber, message: content });
-        if (res.success) successCount++;
-      } catch { /* ignore */ }
+        const res = await externalApi.sendSms({
+          senderPhone: selectedSender,
+          receiverPhone: m.phoneNumber,
+          message: content,
+        });
+        if (res.success) {
+          results.push({ name: m.name, phoneNumber: m.phoneNumber, success: true });
+        } else {
+          results.push({ name: m.name, phoneNumber: m.phoneNumber, success: false, reason: res.message || '발송 실패' });
+        }
+      } catch (e) {
+        results.push({ name: m.name, phoneNumber: m.phoneNumber, success: false, reason: e instanceof Error ? e.message : '네트워크 오류' });
+      }
     }
+
     setSending(false);
-    alert(`${recipients.length}명 중 ${successCount}명에게 메시지를 발송했습니다.`);
-    close();
+    setSendResults(results);
   };
 
   const selectAll = () => {
-    const next: Record<number, boolean> = {};
-    Object.keys(checked).forEach(k => next[Number(k)] = true);
+    const next: Record<string, boolean> = {};
+    for (const key of Object.keys(checked)) next[key] = true;
     setChecked(next);
   };
 
-  const rendered = modal ? (
+  const deselectAll = () => {
+    const next: Record<string, boolean> = {};
+    for (const key of Object.keys(checked)) next[key] = false;
+    setChecked(next);
+  };
+
+  // ── 결과 모달 ──
+  const resultModal = sendResults ? (() => {
+    const successes = sendResults.filter(r => r.success);
+    const failures = sendResults.filter(r => !r.success);
+    return (
+      <div className="modal-overlay" onClick={e => e.target === e.currentTarget && close()}>
+        <div className="modal-content" style={{ maxWidth: 500 }}>
+          <div className="modal-header" style={{ background: '#2c3e50', borderColor: '#2c3e50' }}>
+            <h3>메시지 발송 결과</h3>
+          </div>
+          <div className="modal-body" style={{ padding: '16px 20px' }}>
+            <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+              <div style={{ flex: 1, background: '#ebfbee', borderRadius: 8, padding: '12px 16px', textAlign: 'center' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#2b8a3e' }}>{successes.length}</div>
+                <div style={{ fontSize: '0.8rem', color: '#2b8a3e' }}>발송 성공</div>
+              </div>
+              <div style={{ flex: 1, background: failures.length > 0 ? '#fff5f5' : '#f8f9fa', borderRadius: 8, padding: '12px 16px', textAlign: 'center' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: failures.length > 0 ? '#c92a2a' : '#adb5bd' }}>{failures.length}</div>
+                <div style={{ fontSize: '0.8rem', color: failures.length > 0 ? '#c92a2a' : '#adb5bd' }}>발송 실패</div>
+              </div>
+            </div>
+
+            <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+              {successes.length > 0 && (
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#2b8a3e', marginBottom: 6 }}>발송 성공 ({successes.length}명)</div>
+                  {successes.map((r, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderBottom: '1px solid #f0f0f0', fontSize: '0.85rem' }}>
+                      <span style={{ color: '#2b8a3e', fontWeight: 700, fontSize: '0.8rem' }}>OK</span>
+                      <span style={{ fontWeight: 600 }}>{r.name}</span>
+                      <span style={{ color: '#888', fontFamily: 'monospace', fontSize: '0.8rem' }}>{r.phoneNumber}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {failures.length > 0 && (
+                <div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#c92a2a', marginBottom: 6 }}>발송 실패 ({failures.length}명)</div>
+                  {failures.map((r, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderBottom: '1px solid #f0f0f0', fontSize: '0.85rem', background: '#fff5f5' }}>
+                      <span style={{ color: '#c92a2a', fontWeight: 700, fontSize: '0.8rem' }}>FAIL</span>
+                      <span style={{ fontWeight: 600 }}>{r.name}</span>
+                      <span style={{ color: '#888', fontFamily: 'monospace', fontSize: '0.8rem' }}>{r.phoneNumber}</span>
+                      <span style={{ marginLeft: 'auto', color: '#c92a2a', fontSize: '0.78rem' }}>({r.reason})</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="modal-footer">
+            <button onClick={close} style={{ padding: '8px 20px', border: 'none', borderRadius: 6, background: '#2c3e50', color: 'white', cursor: 'pointer', fontWeight: 600 }}>확인</button>
+          </div>
+        </div>
+      </div>
+    );
+  })() : null;
+
+  // ── 발송 폼 모달 ──
+  const formModal = modal && !sendResults ? (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && close()}>
       <div className="modal-content" style={{ maxWidth: step === 2 ? 850 : 500 }}>
         <div className="modal-header" style={{ background: '#2c3e50', borderColor: '#2c3e50' }}>
@@ -129,24 +226,31 @@ export function useMessageModal() {
                 <div style={{ width: 240, display: 'flex', flexDirection: 'column', borderLeft: '1px solid #eee', paddingLeft: 15 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                     <label style={{ fontWeight: 600, fontSize: '0.85rem', color: '#555' }}>
-                      수신자 (<span style={{ color: '#4a90e2' }}>{Object.values(checked).filter(Boolean).length}</span>명)
+                      수신자 (<span style={{ color: '#4a90e2' }}>{checkedCount}</span>/{visibleMembers.length}명)
                     </label>
-                    <button type="button" onClick={selectAll}
-                      style={{ background: 'none', border: 'none', color: '#4a90e2', fontSize: '0.7rem', cursor: 'pointer', padding: 0, fontWeight: 600 }}>전체선택</button>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button type="button" onClick={selectAll}
+                        style={{ background: 'none', border: 'none', color: '#4a90e2', fontSize: '0.7rem', cursor: 'pointer', padding: 0, fontWeight: 600 }}>전체선택</button>
+                      <button type="button" onClick={deselectAll}
+                        style={{ background: 'none', border: 'none', color: '#888', fontSize: '0.7rem', cursor: 'pointer', padding: 0, fontWeight: 600 }}>해제</button>
+                    </div>
                   </div>
                   <div style={{ flex: 1, overflowY: 'auto', border: '1px solid #f0f0f0', borderRadius: 6, padding: 3, background: '#fafafa' }}>
-                    {modal.members.filter(m => m.memberSeq in checked).map(m => (
-                      <div key={m.memberSeq} style={{ padding: '8px 10px', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.85rem' }}>
-                        <input type="checkbox" checked={checked[m.memberSeq] ?? false}
-                          onChange={e => setChecked(prev => ({ ...prev, [m.memberSeq]: e.target.checked }))}
-                          style={{ width: 16, height: 16, cursor: 'pointer' }} />
-                        <span style={{ flex: 1 }}>
-                          <strong>{m.name}</strong>
-                          {m.staff && <small style={{ color: '#e67e22', marginLeft: 5 }}>[STAFF]</small>}
-                        </span>
-                        <span style={{ color: '#666', fontFamily: 'monospace', fontSize: '0.8rem' }}>{m.phoneNumber}</span>
-                      </div>
-                    ))}
+                    {visibleMembers.map(m => {
+                      const key = memberKey(m);
+                      return (
+                        <div key={key} style={{ padding: '8px 10px', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.85rem' }}>
+                          <input type="checkbox" checked={checked[key] ?? false}
+                            onChange={e => setChecked(prev => ({ ...prev, [key]: e.target.checked }))}
+                            style={{ width: 16, height: 16, cursor: 'pointer' }} />
+                          <span style={{ flex: 1 }}>
+                            <strong>{m.name}</strong>
+                            {m.staff && <small style={{ color: '#e67e22', marginLeft: 5 }}>[STAFF]</small>}
+                          </span>
+                          <span style={{ color: '#666', fontFamily: 'monospace', fontSize: '0.8rem' }}>{m.phoneNumber}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -157,16 +261,18 @@ export function useMessageModal() {
           {step === 2 && (
             <button onClick={send} disabled={sending}
               style={{ padding: '8px 20px', border: 'none', borderRadius: 6, background: '#4a90e2', color: 'white', cursor: 'pointer', fontWeight: 600, opacity: sending ? 0.6 : 1 }}>
-              {sending ? '발송 중...' : '메시지 발송'}
+              {sending ? `발송 중... (${checkedCount}명)` : '메시지 발송'}
             </button>
           )}
-          <button onClick={close} style={{ padding: '8px 20px', border: '1px solid #ccc', borderRadius: 6, background: 'white', cursor: 'pointer' }}>
+          <button onClick={close} disabled={sending} style={{ padding: '8px 20px', border: '1px solid #ccc', borderRadius: 6, background: 'white', cursor: 'pointer' }}>
             {step === 1 ? '취소' : '닫기'}
           </button>
         </div>
       </div>
     </div>
   ) : null;
+
+  const rendered = <>{formModal}{resultModal}</>;
 
   return { open, rendered };
 }

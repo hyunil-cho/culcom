@@ -86,3 +86,9 @@ Frontend (port 3000) → Next.js rewrite → Backend (port 8081) → H2/MySQL
 - 비밀번호는 현재 평문 비교 (`AuthService.authenticate()`), SecurityConfig에 BCryptPasswordEncoder 빈은 등록됨
 - 엔티티 PK 필드명은 `seq` (sequence)
 - 새 컨트롤러/DTO 추가 시 도메인별 하위 패키지에 배치 (예: `controller/complex/`, `dto/auth/`)
+
+## 작업 완료 시 규칙
+
+- **모든 작업이 완료되면, 반드시 한글로 git commit 메시지를 제안할 것.** 커밋하지 말고 메시지만 보여줄 것.
+- 커밋 메시지는 첫 줄에 변경 요약 (50자 이내), 필요 시 본문에 상세 내역을 bullet point로 작성.
+- 커밋 메시지 스타일은 기존 git log를 따를 것.

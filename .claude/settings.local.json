@@ -48,7 +48,11 @@
       "Bash(sed -i 's|import com.culcom.dto.complex.PostponementResponse;|import com.culcom.dto.complex.postponement.PostponementResponse;|' QueryMapperTest.java)",
       "Bash(sed -i 's|import com.culcom.dto.complex.RefundResponse;|import com.culcom.dto.complex.refund.RefundResponse;|' QueryMapperTest.java)",
       "Bash(cat \"C:/Users/lookh/IdeaProjects/culcom/backend/build/test-results/test/\"*.xml)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(timeout 5 node mock/server.js)",
+      "Bash(timeout 3 node mock/server.js)",
+      "Bash(node -e ':*)",
+      "Skill(update-config)"
     ]
   }
 }
