@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 import SearchBar from '@/components/ui/SearchBar';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import MembershipInfoModal from './components/MembershipInfoModal';
-import AttendanceHistoryModal from '@/components/ui/AttendanceHistoryModal';
+import { useAttendanceHistory } from '@/lib/useAttendanceHistory';
 
 const DEFAULTS = { page: '0', keyword: '' };
 
@@ -27,7 +27,7 @@ function MembersContent() {
   const [totalPages, setTotalPages] = useState(0);
   const [keyword, setKeyword] = useState(searchedKeyword);
   const [membershipModal, setMembershipModal] = useState<{ seq: number; name: string } | null>(null);
-  const [historyModal, setHistoryModal] = useState<{ seq: number; name: string } | null>(null);
+  const { column: historyColumn, modal: historyModal } = useAttendanceHistory<ComplexMember>('member');
 
   const load = useCallback(async () => {
     const apiParams = new URLSearchParams({ page: String(page), size: '20' });
@@ -55,14 +55,7 @@ function MembersContent() {
         </button>
       ),
     },
-    {
-      header: '히스토리', render: (m) => (
-        <button onClick={(e) => { e.stopPropagation(); setHistoryModal({ seq: m.seq, name: m.name }); }}
-          style={{ background: '#4a90e2', color: '#fff', border: 'none', borderRadius: 3, padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}>
-          히스토리
-        </button>
-      ),
-    },
+    historyColumn,
     { header: '가입경로', render: (m) => <span style={{ color: '#555' }}>{m.signupChannel || ''}</span> },
     { header: '인터뷰어', render: (m) => <span style={{ color: '#333', fontWeight: 600 }}>{m.interviewer || ''}</span> },
     { header: '등록일자', render: (m) => <span style={{ fontSize: '0.75rem', color: '#666' }}>{m.createdDate?.split('T')[0] ?? ''}</span> },
@@ -109,14 +102,7 @@ function MembersContent() {
         />
       )}
 
-      {historyModal && (
-        <AttendanceHistoryModal
-          seq={historyModal.seq}
-          name={historyModal.name}
-          type="member"
-          onClose={() => setHistoryModal(null)}
-        />
-      )}
+      {historyModal}
     </>
   );
 }

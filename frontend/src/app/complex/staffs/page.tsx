@@ -6,12 +6,12 @@ import { staffApi, type ComplexStaff } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
-import AttendanceHistoryModal from '@/components/ui/AttendanceHistoryModal';
+import { useAttendanceHistory } from '@/lib/useAttendanceHistory';
 
 export default function StaffsPage() {
   const router = useRouter();
   const [staffs, setStaffs] = useState<ComplexStaff[]>([]);
-  const [historyModal, setHistoryModal] = useState<{ seq: number; name: string } | null>(null);
+  const { column: historyColumn, modal: historyModal } = useAttendanceHistory<ComplexStaff>('staff');
 
   useEffect(() => {
     staffApi.list().then(res => setStaffs(res.data));
@@ -30,14 +30,7 @@ export default function StaffsPage() {
     { header: '이메일', render: (s) => s.email ?? '-' },
     { header: '담당 과목', render: (s) => s.subject ?? '-' },
     { header: '상태', render: (s) => statusBadge(s.status) },
-    {
-      header: '히스토리', render: (s) => (
-        <button onClick={(e) => { e.stopPropagation(); setHistoryModal({ seq: s.seq, name: s.name }); }}
-          style={{ background: '#4a90e2', color: '#fff', border: 'none', borderRadius: 3, padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}>
-          히스토리
-        </button>
-      ),
-    },
+    historyColumn,
   ];
 
   return (
@@ -54,14 +47,7 @@ export default function StaffsPage() {
         onRowClick={(s) => router.push(ROUTES.COMPLEX_STAFF_EDIT(s.seq))}
       />
 
-      {historyModal && (
-        <AttendanceHistoryModal
-          seq={historyModal.seq}
-          name={historyModal.name}
-          type="staff"
-          onClose={() => setHistoryModal(null)}
-        />
-      )}
+      {historyModal}
     </>
   );
 }
