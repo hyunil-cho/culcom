@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
+import styles from './page.module.css';
 
 type Period = 'day' | 'week' | 'month';
 
@@ -73,42 +74,33 @@ export default function DashboardPage() {
       <h2 className="page-title">대시보드</h2>
 
       {noBranch && (
-        <div className="card" style={{
-          backgroundColor: '#fff3cd', border: '1px solid #ffc107',
-          padding: '1.5rem', marginBottom: 24,
-        }}>
-          <div style={{ fontSize: '1rem', fontWeight: 600, color: '#856404', marginBottom: 8 }}>
-            등록된 지점이 없습니다
-          </div>
-          <div style={{ fontSize: '0.9rem', color: '#856404', marginBottom: 12 }}>
+        <div className={`card ${styles.noBranchCard}`}>
+          <div className={styles.noBranchTitle}>등록된 지점이 없습니다</div>
+          <div className={styles.noBranchDesc}>
             지점을 등록해야 고객 관리 등 주요 기능을 이용할 수 있습니다.
           </div>
-          <Button onClick={() => router.push(ROUTES.BRANCHES)}>
-            지점 등록하러 가기
-          </Button>
+          <Button onClick={() => router.push(ROUTES.BRANCHES)}>지점 등록하러 가기</Button>
         </div>
       )}
 
-      {/* 통계 카드 */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>로딩 중...</div>
+        <div className={styles.loading}>로딩 중...</div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+        <div className={styles.statsGrid}>
           {statCards.map((card) => (
-            <div key={card.title} className="card" style={{ borderLeft: `4px solid ${card.color}`, display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ fontSize: 28 }}>{card.icon}</div>
+            <div key={card.title} className={`card ${styles.statCard}`} style={{ borderLeft: `4px solid ${card.color}` }}>
+              <div className={styles.statIcon}>{card.icon}</div>
               <div>
-                <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{card.title}</div>
-                <div style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>{card.value}</div>
+                <div className={styles.statTitle}>{card.title}</div>
+                <div className={styles.statValue}>{card.value}</div>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* 최근 7일 예약자 추이 차트 */}
-      <div className="card" style={{ marginTop: 24 }}>
-        <h3 style={{ marginBottom: 16 }}>최근 7일 예약자 추이</h3>
+      <div className={`card ${styles.section}`}>
+        <h3 className={styles.sectionTitle}>최근 7일 예약자 추이</h3>
         {chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={chartData}>
@@ -125,70 +117,52 @@ export default function DashboardPage() {
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          <div style={{ textAlign: 'center', padding: '60px 20px', color: '#999' }}>
-            최근 7일간 예약 데이터가 없습니다.
-          </div>
+          <div className={styles.emptyChart}>최근 7일간 예약 데이터가 없습니다.</div>
         )}
       </div>
 
-      {/* CALLER별 예약 확정 비율 */}
-      <div className="card" style={{ marginTop: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+      <div className={`card ${styles.section}`}>
+        <div className={styles.callerHeader}>
           <h3>CALLER별 예약 확정 비율</h3>
           <div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <div className={styles.periodButtons}>
               {(['day', 'week', 'month'] as Period[]).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPeriod(p)}
-                  style={{
-                    padding: '8px 16px',
-                    border: `1px solid ${period === p ? '#3498db' : '#ddd'}`,
-                    background: period === p ? '#3498db' : 'white',
-                    color: period === p ? 'white' : '#666',
-                    borderRadius: 4,
-                    cursor: 'pointer',
-                    fontSize: 14,
-                  }}
-                >
+                <button key={p} onClick={() => setPeriod(p)}
+                  className={period === p ? styles.periodBtnActive : styles.periodBtnInactive}>
                   {p === 'day' ? '일간' : p === 'week' ? '주간' : '월간'}
                 </button>
               ))}
             </div>
-            <div style={{ fontSize: 14, color: '#666' }}>기간: {formatDateRange(period)}</div>
+            <div className={styles.periodRange}>기간: {formatDateRange(period)}</div>
           </div>
         </div>
 
         {callerLoading ? (
-          <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>데이터를 불러오는 중...</div>
+          <div className={styles.loading}>데이터를 불러오는 중...</div>
         ) : callerStats.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>해당 기간에 데이터가 없습니다.</div>
+          <div className={styles.loading}>해당 기간에 데이터가 없습니다.</div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div className={styles.tableWrap}>
+            <table>
               <thead>
                 <tr>
                   {['CALLER', '선택 횟수', '예약 확정 수', '확정 비율'].map((h) => (
-                    <th key={h} style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #eee', background: '#f8f9fa', fontWeight: 600, color: '#333' }}>
-                      {h}
-                    </th>
+                    <th key={h}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {callerStats.map((stat) => (
-                  <tr key={stat.caller} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={{ padding: 12, fontWeight: 600 }}>{stat.caller}</td>
-                    <td style={{ padding: 12 }}>{stat.selectionCount}회</td>
-                    <td style={{ padding: 12 }}>{stat.reservationConfirm}명</td>
-                    <td style={{ padding: 12 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ flex: 1, height: 8, background: '#e9ecef', borderRadius: 4, overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${stat.confirmRate}%`, background: 'linear-gradient(90deg, #3498db, #2ecc71)', transition: 'width 0.3s' }} />
+                  <tr key={stat.caller}>
+                    <td className={styles.callerName}>{stat.caller}</td>
+                    <td>{stat.selectionCount}회</td>
+                    <td>{stat.reservationConfirm}명</td>
+                    <td>
+                      <div className={styles.progressBar}>
+                        <div className={styles.progressTrack}>
+                          <div className={styles.progressFill} style={{ width: `${stat.confirmRate}%` }} />
                         </div>
-                        <span style={{ fontWeight: 600, color: '#3498db', minWidth: 60, textAlign: 'right' }}>
-                          {stat.confirmRate.toFixed(1)}%
-                        </span>
+                        <span className={styles.progressRate}>{stat.confirmRate.toFixed(1)}%</span>
                       </div>
                     </td>
                   </tr>

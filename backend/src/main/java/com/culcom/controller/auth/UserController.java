@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class UserController {
 
     private final UserInfoRepository userInfoRepository;
     private final BranchRepository branchRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<UserResponse>>> list(
@@ -60,7 +62,7 @@ public class UserController {
 
         var builder = UserInfo.builder()
                 .userId(request.getUserId())
-                .userPassword(request.getPassword())
+                .userPassword(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
                 .phone(request.getPhone())
                 .createdBy(creator);
@@ -90,7 +92,7 @@ public class UserController {
                                 .body(ApiResponse.<UserResponse>error("수정 권한이 없습니다."));
                     }
                     if (request.getPassword() != null && !request.getPassword().isBlank()) {
-                        user.setUserPassword(request.getPassword());
+                        user.setUserPassword(passwordEncoder.encode(request.getPassword()));
                     }
                     return ResponseEntity.ok(ApiResponse.ok("사용자 수정 완료",
                             UserResponse.from(userInfoRepository.save(user))));

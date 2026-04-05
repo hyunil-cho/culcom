@@ -1,0 +1,373 @@
+/* ── 공통 ── */
+.modalNarrow {
+  max-width: 500px;
+}
+
+.modalWide {
+  max-width: 850px;
+}
+
+.headerDark {
+  background: #2c3e50;
+  border-color: #2c3e50;
+}
+
+/* ── Step 1: 그룹 선택 ── */
+.step1Body {
+  padding: 10px;
+}
+
+.titleBanner {
+  background: #f1f7fe;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+  border: 1px solid #d0e3ff;
+}
+
+.titleBannerText {
+  color: #4a90e2;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.groupDesc {
+  margin-bottom: 20px;
+  color: #666;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.groupGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.groupBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 15px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.groupBtnIcon {
+  font-size: 1.4rem;
+}
+
+.groupBtnLabel {
+  font-size: 0.9rem;
+}
+
+.groupBtnDesc {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+/* ── Step 2: 메시지 작성 ── */
+.step2Body {
+  display: flex;
+  flex-direction: column;
+  height: 420px;
+  padding: 10px;
+}
+
+.step2Banner {
+  background: #f1f7fe;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  border: 1px solid #d0e3ff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.step2Title {
+  color: #4a90e2;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.step2Badge {
+  background: #4a90e2;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  color: #4a90e2;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}
+
+.step2Content {
+  display: flex;
+  flex: 1;
+  gap: 15px;
+  min-height: 0;
+}
+
+.messageCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.colLabel {
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: block;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.textarea {
+  flex: 1;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  resize: none;
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.byteCount {
+  margin-top: 5px;
+  font-size: 0.75rem;
+  color: #888;
+  text-align: right;
+}
+
+.byteCountValue {
+  font-weight: 600;
+  color: #4a90e2;
+}
+
+.recipientCol {
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #eee;
+  padding-left: 15px;
+}
+
+.recipientHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.recipientCount {
+  color: #4a90e2;
+}
+
+.recipientActions {
+  display: flex;
+  gap: 6px;
+}
+
+.linkBtn {
+  background: none;
+  border: none;
+  color: #4a90e2;
+  font-size: 0.7rem;
+  cursor: pointer;
+  padding: 0;
+  font-weight: 600;
+}
+
+.linkBtnMuted {
+  composes: linkBtn;
+  color: #888;
+}
+
+.recipientList {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  padding: 3px;
+  background: #fafafa;
+}
+
+.recipientItem {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.nameCol {
+  flex: 1;
+}
+
+.staffTag {
+  color: #e67e22;
+  margin-left: 5px;
+}
+
+.phoneCol {
+  color: #666;
+  font-family: monospace;
+  font-size: 0.8rem;
+}
+
+/* ── 푸터 버튼 ── */
+.sendBtn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 6px;
+  background: #4a90e2;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.sendBtn:disabled {
+  opacity: 0.6;
+}
+
+.cancelBtn {
+  padding: 8px 20px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+}
+
+/* ── 결과 모달 ── */
+.resultStats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.resultStatCard {
+  flex: 1;
+  border-radius: 8px;
+  padding: 12px 16px;
+  text-align: center;
+}
+
+.resultStatSuccess {
+  composes: resultStatCard;
+  background: #ebfbee;
+}
+
+.resultStatFail {
+  composes: resultStatCard;
+  background: #fff5f5;
+}
+
+.resultStatFailNone {
+  composes: resultStatCard;
+  background: #f8f9fa;
+}
+
+.resultStatNumber {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.resultStatLabel {
+  font-size: 0.8rem;
+}
+
+.successColor {
+  color: #2b8a3e;
+}
+
+.failColor {
+  color: #c92a2a;
+}
+
+.mutedColor {
+  color: #adb5bd;
+}
+
+.resultScrollArea {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.resultSectionTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.resultSection {
+  margin-bottom: 12px;
+}
+
+.resultRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.85rem;
+}
+
+.resultRowFail {
+  composes: resultRow;
+  background: #fff5f5;
+}
+
+.resultTag {
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.resultName {
+  font-weight: 600;
+}
+
+.resultPhone {
+  color: #888;
+  font-family: monospace;
+  font-size: 0.8rem;
+}
+
+.resultReason {
+  margin-left: auto;
+  color: #c92a2a;
+  font-size: 0.78rem;
+}
+
+.confirmBtn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 6px;
+  background: #2c3e50;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+}

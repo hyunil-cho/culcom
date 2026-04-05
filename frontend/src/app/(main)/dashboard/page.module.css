@@ -1,0 +1,142 @@
+.noBranchCard {
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  padding: 1.5rem;
+  margin-bottom: 24px;
+}
+
+.noBranchTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #856404;
+  margin-bottom: 8px;
+}
+
+.noBranchDesc {
+  font-size: 0.9rem;
+  color: #856404;
+  margin-bottom: 12px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.statCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.statIcon {
+  font-size: 28px;
+}
+
+.statTitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.statValue {
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.section {
+  margin-top: 24px;
+}
+
+.sectionTitle {
+  margin-bottom: 16px;
+}
+
+.emptyChart {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+}
+
+.callerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.periodButtons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.periodBtn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.periodBtnActive {
+  composes: periodBtn;
+  border: 1px solid #3498db;
+  background: #3498db;
+  color: white;
+}
+
+.periodBtnInactive {
+  composes: periodBtn;
+  border: 1px solid #ddd;
+  background: white;
+  color: #666;
+}
+
+.periodRange {
+  font-size: 14px;
+  color: #666;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.callerName {
+  font-weight: 600;
+}
+
+.progressBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progressTrack {
+  flex: 1;
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #3498db, #2ecc71);
+  transition: width 0.3s;
+}
+
+.progressRate {
+  font-weight: 600;
+  color: #3498db;
+  min-width: 60px;
+  text-align: right;
+}

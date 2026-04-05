@@ -132,6 +132,7 @@ public class CustomerController {
             return ResponseEntity.notFound().build();
         }
 
+        // getReferenceById: branchSeq는 인증된 세션에서 가져온 값이므로 존재가 보장됨
         callerSelectionHistoryRepository.save(CallerSelectionHistory.builder()
                 .customer(customer)
                 .caller(request.getCaller())
@@ -182,6 +183,7 @@ public class CustomerController {
 
         LocalDateTime interviewDate = DateTimeUtils.parse(request.getInterviewDate());
 
+        // getReferenceById: branchSeq/userSeq는 인증된 세션에서 가져온 값이므로 존재가 보장됨
         ReservationInfo reservation = ReservationInfo.builder()
                 .branch(branchRepository.getReferenceById(branchSeq))
                 .customer(customer)

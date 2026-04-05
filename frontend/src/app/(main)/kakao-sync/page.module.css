@@ -1,0 +1,195 @@
+.loading {
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.section {
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.urlBox {
+  background: #f8f9fa;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.urlRow {
+  display: flex;
+  gap: 8px;
+}
+
+.urlInput {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.qrContainer {
+  max-width: 600px;
+  margin: 0 auto;
+  background: #fafafa;
+  padding: 2rem;
+  border-radius: 12px;
+  border: 1px solid #eee;
+}
+
+.sizeLabel {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #4b5563;
+  text-align: center;
+}
+
+.sizeValue {
+  color: #007bff;
+  font-size: 1.2rem;
+}
+
+.slider {
+  width: 100%;
+  cursor: pointer;
+}
+
+.sliderRange {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-top: 8px;
+}
+
+.presetRow {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 2rem;
+}
+
+.actionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.sizeGroup {
+  margin-bottom: 2rem;
+}
+
+.hiddenQr {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+}
+
+/* 미리보기 모달 */
+.previewOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.previewModal {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.previewHeader {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8f9fa;
+}
+
+.previewTitle {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.previewCloseBtn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #999;
+}
+
+.previewBody {
+  flex: 1;
+  overflow: auto;
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: #f0f0f0;
+}
+
+.previewQrWrap {
+  background: white;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.previewFooter {
+  padding: 1rem;
+  border-top: 1px solid #eee;
+  text-align: center;
+  background: #fff;
+}
+
+.previewHint {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 1rem;
+}

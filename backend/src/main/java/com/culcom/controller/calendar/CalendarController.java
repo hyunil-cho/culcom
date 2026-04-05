@@ -2,6 +2,8 @@ package com.culcom.controller.calendar;
 
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.calendar.CalendarReservationResponse;
+import com.culcom.dto.calendar.ReservationStatusRequest;
+import jakarta.validation.Valid;
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.entity.reservation.ReservationInfo;
 import com.culcom.entity.enums.CustomerStatus;
@@ -16,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/calendar")
@@ -56,13 +57,12 @@ public class CalendarController {
 
     @PutMapping("/reservations/{seq}/status")
     public ResponseEntity<ApiResponse<CalendarReservationResponse>> updateReservationStatus(
-            @PathVariable Long seq, @RequestBody Map<String, String> body) {
+            @PathVariable Long seq, @Valid @RequestBody ReservationStatusRequest request) {
         return reservationInfoRepository.findById(seq).map(r -> {
             if (r.getCustomer() == null) {
                 return ResponseEntity.ok(ApiResponse.<CalendarReservationResponse>error("고객 정보가 없습니다."));
             }
-            String status = body.get("status");
-            r.getCustomer().setStatus(CustomerStatus.valueOf(status));
+            r.getCustomer().setStatus(CustomerStatus.valueOf(request.getStatus()));
 
             reservationInfoRepository.save(r);
 

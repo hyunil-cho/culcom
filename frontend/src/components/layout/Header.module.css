@@ -1,0 +1,131 @@
+.header {
+  height: 56px;
+  background-color: white;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #2c3e50;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+}
+
+.branchSection {
+  margin-right: 2rem;
+  display: flex;
+  align-items: center;
+}
+
+.branchLabel {
+  margin-right: 0.5rem;
+  color: #5a6c7d;
+  font-size: 0.9rem;
+}
+
+.branchSelect {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  background: white;
+}
+
+.noBranchText {
+  font-size: 0.9rem;
+  color: #e74c3c;
+  font-weight: 500;
+  margin-right: 0.75rem;
+}
+
+.registerBtn {
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #4a90e2;
+  color: white;
+}
+
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.userName {
+  font-size: 0.9rem;
+  color: #2c3e50;
+}
+
+.logoutLink {
+  margin-left: 0.5rem;
+  color: #4a90e2;
+  text-decoration: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+/* 로그아웃 모달 */
+.logoutModalContent {
+  width: 90%;
+  max-width: 400px;
+}
+
+.logoutModalHeader {
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid #4a90e2;
+}
+
+.logoutModalTitle {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #2c3e50;
+}
+
+.logoutModalBody {
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.logoutModalFooter {
+  padding: 1rem 2rem;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.logoutCancelBtn {
+  flex: 1;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  background: white;
+  color: #666;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.logoutConfirmBtn {
+  flex: 1;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: none;
+  background: #4a90e2;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}

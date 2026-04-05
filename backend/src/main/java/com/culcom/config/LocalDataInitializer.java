@@ -13,6 +13,7 @@ import com.culcom.entity.message.Placeholder;
 import com.culcom.entity.enums.UserRole;
 import com.culcom.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -35,13 +36,14 @@ public class LocalDataInitializer implements ApplicationRunner {
     private final CustomerRepository customerRepository;
     private final ClassTimeSlotRepository classTimeSlotRepository;
     private final ComplexClassRepository complexClassRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(ApplicationArguments args) {
         if (userInfoRepository.findByUserId("root").isEmpty()) {
             UserInfo root = UserInfo.builder()
                     .userId("root")
-                    .userPassword("root")
+                    .userPassword(passwordEncoder.encode("root"))
                     .role(UserRole.ROOT)
                     .build();
             userInfoRepository.save(root);
@@ -51,7 +53,7 @@ public class LocalDataInitializer implements ApplicationRunner {
         if (userInfoRepository.findByUserId("user").isEmpty()) {
             UserInfo manager = UserInfo.builder()
                     .userId("user")
-                    .userPassword("user")
+                    .userPassword(passwordEncoder.encode("user"))
                     .role(UserRole.BRANCH_MANAGER)
                     .name("조현일")
                     .phone("01099321967")

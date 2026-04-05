@@ -1,0 +1,22 @@
+.body {
+  text-align: center;
+  padding: 2rem 1.5rem;
+}
+
+.message {
+  margin: 0 0 1.5rem;
+  color: #333;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.confirmBtn {
+  padding: 0.6rem 2rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary);
+  color: white;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-weight: 500;
+}

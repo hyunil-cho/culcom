@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { authApi, SessionRole } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
 import { ROUTES } from '@/lib/routes';
+import styles from './Header.module.css';
 
 const pageTitles: Record<string, string> = {
   [ROUTES.DASHBOARD]: '대시보드',
@@ -53,36 +54,19 @@ export default function Header() {
 
   return (
     <>
-      <header className="top-header" style={{
-        height: 56,
-        backgroundColor: 'white',
-        borderBottom: '1px solid var(--border)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 24px',
-      }}>
-        <div className="header-left">
-          <h1 style={{ margin: 0, fontSize: '1.25rem', color: '#2c3e50' }}>
-            {getPageTitle(pathname)}
-          </h1>
+      <header className={styles.header}>
+        <div>
+          <h1 className={styles.title}>{getPageTitle(pathname)}</h1>
         </div>
-        <div className="header-right" style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{ marginRight: '2rem', display: 'flex', alignItems: 'center' }}>
+        <div className={styles.headerRight}>
+          <div className={styles.branchSection}>
             {branches.length >= 1 ? (
               <>
-                <label style={{ marginRight: '0.5rem', color: '#5a6c7d', fontSize: '0.9rem' }}>지점 선택:</label>
+                <label className={styles.branchLabel}>지점 선택:</label>
                 <select
                   value={session?.selectedBranchSeq ?? ''}
                   onChange={(e) => handleBranchChange(Number(e.target.value))}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    border: '1px solid #ddd',
-                    borderRadius: 6,
-                    fontSize: '0.9rem',
-                    cursor: 'pointer',
-                    background: 'white',
-                  }}
+                  className={styles.branchSelect}
                 >
                   {branches.map((b) => (
                     <option key={b.seq} value={b.seq}>{b.branchName}</option>
@@ -91,108 +75,46 @@ export default function Header() {
               </>
             ) : (
               <>
-                <span style={{ fontSize: '0.9rem', color: '#e74c3c', fontWeight: 500, marginRight: '0.75rem' }}>
-                  등록된 지점이 없습니다.
-                </span>
+                <span className={styles.noBranchText}>등록된 지점이 없습니다.</span>
                 {SessionRole.isManager(session) && (
-                  <button
-                    onClick={() => router.push(ROUTES.BRANCHES_ADD)}
-                    style={{
-                      padding: '0.4rem 1rem', fontSize: '0.85rem', fontWeight: 500,
-                      border: 'none', borderRadius: 6, cursor: 'pointer',
-                      background: '#4a90e2', color: 'white',
-                    }}
-                  >
+                  <button onClick={() => router.push(ROUTES.BRANCHES_ADD)} className={styles.registerBtn}>
                     등록하기
                   </button>
                 )}
               </>
             )}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className={styles.userSection}>
             <span>👤</span>
-            <span style={{ fontSize: '0.9rem', color: '#2c3e50' }}>
-              {SessionRole.displayName(session)}
-            </span>
+            <span className={styles.userName}>{SessionRole.displayName(session)}</span>
             <a
               href="javascript:void(0);"
               onClick={() => setShowLogoutModal(true)}
-              style={{
-                marginLeft: '0.5rem',
-                color: '#4a90e2',
-                textDecoration: 'none',
-                fontSize: '0.9rem',
-                cursor: 'pointer',
-              }}
+              className={styles.logoutLink}
             >
               로그아웃
             </a>
           </div>
         </div>
       </header>
+
       {showLogoutModal && (
         <div
+          className="modal-overlay"
           onClick={(e) => { if (e.target === e.currentTarget) setShowLogoutModal(false); }}
-          style={{
-            display: 'flex',
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            background: 'rgba(0, 0, 0, 0.5)',
-            zIndex: 10000,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
         >
-          <div style={{
-            background: 'white',
-            borderRadius: 12,
-            width: '90%',
-            maxWidth: 400,
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
-          }}>
-            <div style={{ padding: '1.5rem 2rem', borderBottom: '2px solid #4a90e2' }}>
-              <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#2c3e50' }}>로그아웃 확인</h3>
+          <div className={`modal-content ${styles.logoutModalContent}`}>
+            <div className={styles.logoutModalHeader}>
+              <h3 className={styles.logoutModalTitle}>로그아웃 확인</h3>
             </div>
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#666', fontSize: '0.95rem' }}>
+            <div className={styles.logoutModalBody}>
               정말로 로그아웃 하시겠습니까?
             </div>
-            <div style={{
-              padding: '1rem 2rem',
-              borderTop: '1px solid #e0e0e0',
-              display: 'flex',
-              gap: '0.75rem',
-            }}>
-              <button
-                onClick={() => setShowLogoutModal(false)}
-                style={{
-                  flex: 1,
-                  padding: '0.75rem',
-                  fontSize: '1rem',
-                  border: '1px solid #ddd',
-                  background: 'white',
-                  color: '#666',
-                  borderRadius: 6,
-                  cursor: 'pointer',
-                }}
-              >
+            <div className={styles.logoutModalFooter}>
+              <button onClick={() => setShowLogoutModal(false)} className={styles.logoutCancelBtn}>
                 취소
               </button>
-              <button
-                onClick={handleLogout}
-                style={{
-                  flex: 1,
-                  padding: '0.75rem',
-                  fontSize: '1rem',
-                  border: 'none',
-                  background: '#4a90e2',
-                  color: 'white',
-                  borderRadius: 6,
-                  cursor: 'pointer',
-                }}
-              >
+              <button onClick={handleLogout} className={styles.logoutConfirmBtn}>
                 확인
               </button>
             </div>

@@ -1,0 +1,53 @@
+.bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  align-items: center;
+}
+
+.fieldGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.input {
+  padding: 8px 12px;
+  width: 180px;
+  font-size: 0.9rem;
+}
+
+.matchInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #e3f2fd;
+  padding: 6px 15px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  color: #1976d2;
+  font-weight: 700;
+  margin-left: auto;
+}
+
+.navButtons {
+  display: flex;
+  gap: 5px;
+}
+
+.navBtn {
+  background: #fff;
+  border: 1px solid #bbdefb;
+  border-radius: 4px;
+  padding: 3px 10px;
+  cursor: pointer;
+  color: #1976d2;
+  font-size: 0.75rem;
+  font-weight: 600;
+}

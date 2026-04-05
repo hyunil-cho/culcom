@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import styles from './ModalOverlay.module.css';
 
 interface ModalOverlayProps {
   children: ReactNode;
@@ -10,19 +11,10 @@ interface ModalOverlayProps {
 export default function ModalOverlay({ children, onClose }: ModalOverlayProps) {
   return (
     <div
+      className="modal-overlay"
       onClick={(e) => { if (e.target === e.currentTarget) onClose?.(); }}
-      style={{
-        display: 'flex', position: 'fixed', top: 0, left: 0,
-        width: '100%', height: '100%',
-        background: 'rgba(0,0,0,0.5)', zIndex: 10000,
-        alignItems: 'center', justifyContent: 'center',
-      }}
     >
-      <div style={{
-        background: 'white', borderRadius: 12,
-        width: '90%', maxWidth: 400,
-        boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-      }}>
+      <div className={`modal-content ${styles.inner}`}>
         {children}
       </div>
     </div>

@@ -17,6 +17,7 @@ import com.culcom.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -73,6 +74,7 @@ public class AttendanceController {
 
     // ── 일괄 출석 저장 ──
 
+    @Transactional
     @PostMapping("/bulk")
     public ResponseEntity<ApiResponse<List<BulkAttendanceResultResponse>>> bulkAttendance(
             @RequestBody BulkAttendanceRequest req) {

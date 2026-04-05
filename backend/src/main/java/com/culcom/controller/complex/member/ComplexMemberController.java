@@ -21,6 +21,7 @@ import com.culcom.config.security.CustomUserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -67,7 +68,7 @@ public class ComplexMemberController {
                 .comment(req.getComment())
                 .signupChannel(req.getSignupChannel())
                 .interviewer(req.getInterviewer())
-                .branch(branchRepository.getReferenceById(branchSeq))
+                .branch(branchRepository.getReferenceById(branchSeq)) // branchSeq는 인증된 세션 값이므로 존재 보장
                 .build();
         return ResponseEntity.ok(ApiResponse.ok("회원 추가 완료", ComplexMemberResponse.from(memberRepository.save(member))));
     }
@@ -91,6 +92,7 @@ public class ComplexMemberController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Transactional
     @PostMapping("/{seq}/memberships")
     public ResponseEntity<ApiResponse<ComplexMemberMembershipResponse>> assignMembership(
             @PathVariable Long seq, @RequestBody ComplexMemberMembershipRequest req) {
@@ -109,7 +111,7 @@ public class ComplexMemberController {
                 ? LocalDateTime.parse(req.getPaymentDate()) : null;
         MembershipStatus status = MembershipStatus.활성;
         if (req.getStatus() != null && !req.getStatus().isEmpty()) {
-            try { status = MembershipStatus.valueOf(req.getStatus()); } catch (IllegalArgumentException ignored) {}
+            status = MembershipStatus.valueOf(req.getStatus());
         }
 
         ComplexMemberMembership mm = ComplexMemberMembership.builder()
@@ -138,7 +140,8 @@ public class ComplexMemberController {
     public ResponseEntity<ApiResponse<ComplexMemberMembershipResponse>> updateMembership(
             @PathVariable Long seq, @PathVariable Long mmSeq, @RequestBody ComplexMemberMembershipRequest req) {
         ComplexMemberMembership mm = memberMembershipRepository.findById(mmSeq).orElse(null);
-        if (mm == null || !mm.getMember().getSeq().equals(seq)) return ResponseEntity.notFound().build();
+        if (mm == null || mm.getMember() == null || !mm.getMember().getSeq().equals(seq))
+            return ResponseEntity.notFound().build();
 
         if (req.getStartDate() != null && !req.getStartDate().isEmpty())
             mm.setStartDate(LocalDate.parse(req.getStartDate()));
@@ -150,9 +153,8 @@ public class ComplexMemberController {
         if (req.getPaymentDate() != null && !req.getPaymentDate().isEmpty())
             mm.setPaymentDate(LocalDateTime.parse(req.getPaymentDate()));
         if (req.getStatus() != null && !req.getStatus().isEmpty()) {
-            try { mm.setStatus(MembershipStatus.valueOf(req.getStatus())); } catch (IllegalArgumentException ignored) {}
+            mm.setStatus(MembershipStatus.valueOf(req.getStatus()));
         }
-        mm.setLastUpdateDate(LocalDateTime.now());
 
         return ResponseEntity.ok(ApiResponse.ok("멤버십 수정 완료",
                 ComplexMemberMembershipResponse.from(memberMembershipRepository.save(mm))));
@@ -161,7 +163,8 @@ public class ComplexMemberController {
     @DeleteMapping("/{seq}/memberships/{mmSeq}")
     public ResponseEntity<ApiResponse<Void>> deleteMembership(@PathVariable Long seq, @PathVariable Long mmSeq) {
         ComplexMemberMembership mm = memberMembershipRepository.findById(mmSeq).orElse(null);
-        if (mm == null || !mm.getMember().getSeq().equals(seq)) return ResponseEntity.notFound().build();
+        if (mm == null || mm.getMember() == null || !mm.getMember().getSeq().equals(seq))
+            return ResponseEntity.notFound().build();
         memberMembershipRepository.delete(mm);
         return ResponseEntity.ok(ApiResponse.ok("멤버십 삭제 완료", null));
     }

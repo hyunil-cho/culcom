@@ -10,6 +10,7 @@ import com.culcom.repository.PlaceholderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -81,6 +82,7 @@ public class MessageTemplateController {
         return ResponseEntity.ok(ApiResponse.ok("템플릿 삭제 완료", null));
     }
 
+    @Transactional
     @PostMapping("/{seq}/set-default")
     public ResponseEntity<ApiResponse<Void>> setDefault(@PathVariable Long seq,
             @AuthenticationPrincipal CustomUserPrincipal principal) {

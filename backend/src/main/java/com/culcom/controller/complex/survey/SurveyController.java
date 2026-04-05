@@ -83,8 +83,11 @@ public class SurveyController {
     public ResponseEntity<ApiResponse<SurveyTemplateResponse>> updateStatus(
             @PathVariable Long seq, @RequestBody Map<String, String> body) {
         return templateRepository.findById(seq).map(t -> {
-            t.setStatus(SurveyStatus.valueOf(body.get("status")));
-            t.setLastUpdateDate(LocalDateTime.now());
+            String statusStr = body.get("status");
+            if (statusStr == null) {
+                return ResponseEntity.badRequest().body(ApiResponse.<SurveyTemplateResponse>error("상태 값이 필요합니다."));
+            }
+            t.setStatus(SurveyStatus.valueOf(statusStr));
             SurveyTemplate saved = templateRepository.save(t);
             return ResponseEntity.ok(ApiResponse.ok("설문지 상태가 변경되었습니다.",
                     SurveyTemplateResponse.from(saved, optionRepository.countByTemplateSeq(saved.getSeq()))));
@@ -122,7 +125,10 @@ public class SurveyController {
                         .inputType(q.getInputType()).isGrouped(q.getIsGrouped()).groups(q.getGroups())
                         .sortOrder(q.getSortOrder()).required(q.getRequired()).build();
                 qCopy.setTemplate(savedTemplate);
-                if (q.getSection() != null) qCopy.setSection(sectionMap.get(q.getSection().getSeq()));
+                if (q.getSection() != null) {
+                    SurveyTemplateSection mappedSection = sectionMap.get(q.getSection().getSeq());
+                    if (mappedSection != null) qCopy.setSection(mappedSection);
+                }
                 questionMap.put(q.getSeq(), questionRepository.save(qCopy));
             }
 
@@ -131,7 +137,10 @@ public class SurveyController {
                 SurveyTemplateOption oCopy = SurveyTemplateOption.builder()
                         .groupName(o.getGroupName()).label(o.getLabel()).sortOrder(o.getSortOrder()).build();
                 oCopy.setTemplate(savedTemplate);
-                oCopy.setQuestion(questionMap.get(o.getQuestion().getSeq()));
+                if (o.getQuestion() != null) {
+                    SurveyTemplateQuestion mappedQuestion = questionMap.get(o.getQuestion().getSeq());
+                    if (mappedQuestion != null) oCopy.setQuestion(mappedQuestion);
+                }
                 optionRepository.save(oCopy);
             }
 

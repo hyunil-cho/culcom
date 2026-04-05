@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,14 +27,11 @@ public class AuthService {
     private final UserInfoRepository userInfoRepository;
     private final BranchRepository branchRepository;
     private final SecurityContextRepository securityContextRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    /**
-     * 기존 Go 앱과의 호환성을 위해 평문 비밀번호도 지원.
-     * 추후 BCrypt로 전환 시 passwordEncoder.matches() 사용.
-     */
     public Optional<UserInfo> authenticate(String userId, String password) {
         return userInfoRepository.findByUserId(userId)
-                .filter(user -> user.getUserPassword().equals(password));
+                .filter(user -> passwordEncoder.matches(password, user.getUserPassword()));
     }
 
     public void loginSession(HttpServletRequest request, HttpServletResponse response,

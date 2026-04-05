@@ -6,12 +6,14 @@ import com.culcom.dto.dashboard.CallerStatsResponse;
 import com.culcom.dto.dashboard.DashboardResponse;
 import com.culcom.mapper.DashboardMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/dashboard")
 @RequiredArgsConstructor
@@ -33,9 +35,9 @@ public class DashboardController {
             try {
                 smsRemaining = dashboardMapper.selectSmsRemaining(branchSeq);
                 lmsRemaining = dashboardMapper.selectLmsRemaining(branchSeq);
-            } catch (Exception ignored) {}
-            try {
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                log.warn("SMS/LMS 잔여건수 조회 실패 (branchSeq={}): {}", branchSeq, e.getMessage());
+            }
         }
 
         DashboardResponse response = DashboardResponse.builder()

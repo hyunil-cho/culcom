@@ -1,0 +1,49 @@
+.container {
+  display: flex;
+}
+
+.mainArea {
+  margin-left: 240px;
+  flex: 1;
+  min-height: 100vh;
+}
+
+.content {
+  padding: 24px;
+}
+
+.noBranchModalHeader {
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid #e74c3c;
+}
+
+.noBranchModalTitle {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #2c3e50;
+}
+
+.noBranchModalBody {
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.noBranchModalFooter {
+  padding: 1rem 2rem;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: center;
+}
+
+.noBranchBtn {
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  border: none;
+  background: #4a90e2;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}

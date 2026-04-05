@@ -1,6 +1,7 @@
 'use client';
 
 import { forwardRef, InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
+import styles from './FormInput.module.css';
 
 export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={`form-input ${props.className ?? ''}`} />;
@@ -43,17 +44,11 @@ interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'typ
 export function Checkbox({ label, hint, ...props }: CheckboxProps) {
   return (
     <div>
-      <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-        <input
-          type="checkbox"
-          {...props}
-          style={{ width: 18, height: 18, margin: 0, ...props.style }}
-        />
-        <span style={{ fontSize: 14, fontWeight: 600 }}>{label}</span>
+      <label className={styles.checkboxLabel}>
+        <input type="checkbox" {...props} className={styles.checkboxInput} />
+        <span className={styles.checkboxText}>{label}</span>
       </label>
-      {hint && (
-        <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>{hint}</div>
-      )}
+      {hint && <div className={styles.checkboxHint}>{hint}</div>}
     </div>
   );
 }

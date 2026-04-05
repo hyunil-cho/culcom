@@ -1,10 +1,4 @@
-/* ── 공통: 모달 ── */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center; }
-.modal-content { background: white; border-radius: 12px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.2); overflow: hidden; }
-.modal-header { padding: 1rem 1.5rem; border-bottom: 2px solid; display: flex; justify-content: space-between; align-items: center; }
-.modal-header h3 { margin: 0; font-size: 1.1rem; color: #fff; }
-.modal-body { max-height: 60vh; overflow-y: auto; }
-.modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #e0e0e0; display: flex; gap: 10px; justify-content: flex-end; }
+/* 모달 공통 클래스는 globals.css로 이동됨 */
 
 /* ── 공통: 출석률 배지 ── */
 .attend-rate-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; background: #e9ecef; color: #868e96; border: 1px solid #dee2e6; vertical-align: middle; }

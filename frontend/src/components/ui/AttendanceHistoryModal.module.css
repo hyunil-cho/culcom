@@ -1,0 +1,132 @@
+.content {
+  width: 90%;
+  max-width: 640px;
+  max-height: 85vh;
+}
+
+.header {
+  padding: 1rem 1.5rem;
+  background: #4a90e2;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.empty {
+  text-align: center;
+  padding: 2rem;
+  color: #999;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.table thead tr {
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.table th {
+  text-align: left;
+  padding: 10px 8px;
+  font-weight: 700;
+  color: #555;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.table td {
+  padding: 10px 8px;
+  vertical-align: middle;
+}
+
+.tdCenter {
+  text-align: center;
+}
+
+.tdNote {
+  color: #888;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.statusPresent {
+  composes: statusBadge;
+  background: #d4edda;
+  color: #155724;
+}
+
+.statusAbsent {
+  composes: statusBadge;
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.statusOther {
+  composes: statusBadge;
+  background: #fff3cd;
+  color: #856404;
+}
+
+.footer {
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.paging {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.pageInfo {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0 8px;
+}
+
+.pageBtn {
+  padding: 6px 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.pageBtn:disabled {
+  background: #f5f5f5;
+  color: #bbb;
+  cursor: default;
+}
+
+.closeFooterBtn {
+  padding: 8px 20px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
