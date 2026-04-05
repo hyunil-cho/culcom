@@ -4,8 +4,10 @@ import com.culcom.dto.ApiResponse;
 import com.culcom.dto.complex.attendance.*;
 import com.culcom.dto.complex.classes.ClassReorderRequest;
 import com.culcom.entity.complex.clazz.ComplexClass;
+import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberAttendance;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
+import com.culcom.entity.complex.member.MembershipActivityLog;
 import com.culcom.entity.complex.staff.ComplexStaff;
 import com.culcom.entity.complex.staff.ComplexStaffAttendance;
 import com.culcom.entity.enums.AttendanceStatus;
@@ -33,6 +35,7 @@ public class AttendanceController {
     private final ComplexMemberMembershipRepository memberMembershipRepository;
     private final ComplexClassRepository classRepository;
     private final ComplexStaffAttendanceRepository staffAttendanceRepository;
+    private final MembershipActivityLogRepository activityLogRepository;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<AttendanceResponse>>> listByClassAndDate(
@@ -88,17 +91,50 @@ public class AttendanceController {
                             .build());
                     continue;
                 }
-                if (bm.isAttended()) {
-                    ComplexStaffAttendance sa = ComplexStaffAttendance.builder()
-                            .staff(ComplexStaff.builder().seq(bm.getMemberSeq()).build())
-                            .complexClass(ComplexClass.builder().seq(req.getClassSeq()).build())
-                            .attendanceDate(today)
-                            .status(StaffAttendanceStatus.출석)
-                            .build();
-                    staffAttendanceRepository.save(sa);
-                    results.add(BulkAttendanceResultResponse.builder()
-                            .memberSeq(bm.getMemberSeq()).name("").status("출석").build());
-                }
+
+                AttendanceStatus staffStatus = bm.isAttended() ? AttendanceStatus.출석 : AttendanceStatus.결석;
+                StaffAttendanceStatus saStatus = bm.isAttended() ? StaffAttendanceStatus.출석 : StaffAttendanceStatus.결석;
+
+                ComplexStaffAttendance sa = ComplexStaffAttendance.builder()
+                        .staff(ComplexStaff.builder().seq(bm.getMemberSeq()).build())
+                        .complexClass(ComplexClass.builder().seq(req.getClassSeq()).build())
+                        .attendanceDate(today)
+                        .status(saStatus)
+                        .build();
+                staffAttendanceRepository.save(sa);
+
+                // 스태프 활동 로그
+                activityLogRepository.save(MembershipActivityLog.builder()
+                        .staff(ComplexStaff.builder().seq(bm.getMemberSeq()).build())
+                        .complexClass(ComplexClass.builder().seq(req.getClassSeq()).build())
+                        .activityDate(today)
+                        .status(staffStatus)
+                        .usedCountDelta(0)
+                        .build());
+
+                results.add(BulkAttendanceResultResponse.builder()
+                        .memberSeq(bm.getMemberSeq()).name("")
+                        .status(bm.isAttended() ? "출석" : "결석").build());
+                continue;
+            }
+
+            // 연기 상태 먼저 확인 — 연기 중이면 출석 불가
+            List<ComplexMemberMembership> postponedList = memberMembershipRepository
+                    .findByMemberSeqAndStatus(bm.getMemberSeq(), MembershipStatus.연기);
+            if (!postponedList.isEmpty()) {
+                ComplexMemberMembership pmm = postponedList.get(0);
+                activityLogRepository.save(MembershipActivityLog.builder()
+                        .member(ComplexMember.builder().seq(bm.getMemberSeq()).build())
+                        .membership(pmm)
+                        .complexClass(ComplexClass.builder().seq(req.getClassSeq()).build())
+                        .activityDate(today)
+                        .status(AttendanceStatus.연기)
+                        .usedCountDelta(0)
+                        .usedCountAfter(pmm.getUsedCount())
+                        .note("멤버십 연기 중 — 출석 불가")
+                        .build());
+                results.add(BulkAttendanceResultResponse.builder()
+                        .memberSeq(bm.getMemberSeq()).name("").status("연기").build());
                 continue;
             }
 
@@ -106,15 +142,8 @@ public class AttendanceController {
                     .findByMemberSeqAndStatus(bm.getMemberSeq(), MembershipStatus.활성);
 
             if (memberships.isEmpty()) {
-                List<ComplexMemberMembership> postponedList = memberMembershipRepository
-                        .findByMemberSeqAndStatus(bm.getMemberSeq(), MembershipStatus.연기);
-                if (!postponedList.isEmpty()) {
-                    results.add(BulkAttendanceResultResponse.builder()
-                            .memberSeq(bm.getMemberSeq()).name("").status("연기").build());
-                } else {
-                    results.add(BulkAttendanceResultResponse.builder()
-                            .memberSeq(bm.getMemberSeq()).name("").status("skip_no_membership").build());
-                }
+                results.add(BulkAttendanceResultResponse.builder()
+                        .memberSeq(bm.getMemberSeq()).name("").status("skip_no_membership").build());
                 continue;
             }
 
@@ -137,10 +166,23 @@ public class AttendanceController {
                     .build();
             attendanceRepository.save(attendance);
 
+            int delta = 0;
             if (bm.isAttended()) {
+                delta = 1;
                 mm.setUsedCount(mm.getUsedCount() + 1);
                 memberMembershipRepository.save(mm);
             }
+
+            // 활동 로그 기록
+            activityLogRepository.save(MembershipActivityLog.builder()
+                    .member(ComplexMember.builder().seq(bm.getMemberSeq()).build())
+                    .membership(mm)
+                    .complexClass(ComplexClass.builder().seq(req.getClassSeq()).build())
+                    .activityDate(today)
+                    .status(status)
+                    .usedCountDelta(delta)
+                    .usedCountAfter(mm.getUsedCount())
+                    .build());
 
             results.add(BulkAttendanceResultResponse.builder()
                     .memberSeq(bm.getMemberSeq())
