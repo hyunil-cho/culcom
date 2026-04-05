@@ -6,6 +6,7 @@ import { surveyApi, SurveyTemplate, SurveySection, SurveyQuestion, SurveyOption 
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/FormInput';
+import s from './page.module.css';
 
 type InputType = 'radio' | 'checkbox' | 'text';
 
@@ -38,7 +39,6 @@ export default function SurveyEditorPage() {
   const [openCards, setOpenCards] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
 
-  // 폼 상태
   const [addSectionForm, setAddSectionForm] = useState<{ title: string } | null>(null);
   const [editSectionSeq, setEditSectionSeq] = useState<number | null>(null);
   const [editSectionTitle, setEditSectionTitle] = useState('');
@@ -47,7 +47,6 @@ export default function SurveyEditorPage() {
   const [questionEditForms, setQuestionEditForms] = useState<Record<number, QuestionForm>>({});
   const [optionAddForms, setOptionAddForms] = useState<Record<string, string>>({});
 
-  // 드래그 상태
   const dragItem = useRef<{ seq: number; sectionSeq: number } | null>(null);
   const dragOverItem = useRef<{ seq: number; sectionSeq: number } | null>(null);
 
@@ -90,177 +89,110 @@ export default function SurveyEditorPage() {
     });
   };
 
-  // ── 드래그앤드롭 ──
   const handleDragStart = (q: SurveyQuestion) => {
     dragItem.current = { seq: q.seq, sectionSeq: q.sectionSeq! };
   };
-
   const handleDragOver = (e: React.DragEvent, q: SurveyQuestion) => {
     e.preventDefault();
     dragOverItem.current = { seq: q.seq, sectionSeq: q.sectionSeq! };
   };
-
   const handleDrop = async (e: React.DragEvent, sectionSeq: number) => {
     e.preventDefault();
     if (!dragItem.current || !dragOverItem.current) return;
     if (dragItem.current.sectionSeq !== sectionSeq || dragOverItem.current.sectionSeq !== sectionSeq) return;
     if (dragItem.current.seq === dragOverItem.current.seq) return;
-
     const secQuestions = [...questionsForSection(sectionSeq)];
     const fromIdx = secQuestions.findIndex(q => q.seq === dragItem.current!.seq);
     const toIdx = secQuestions.findIndex(q => q.seq === dragOverItem.current!.seq);
     if (fromIdx === -1 || toIdx === -1) return;
-
-    // 재배열
     const [moved] = secQuestions.splice(fromIdx, 1);
     secQuestions.splice(toIdx, 0, moved);
-
-    // 키 재배정: q1, q2, q3...
-    const items = secQuestions.map((q, i) => ({
-      seq: q.seq,
-      sortOrder: i + 1,
-      newQuestionKey: `q${i + 1}`,
-    }));
-
-    // 즉시 UI 반영 (낙관적 업데이트)
+    const items = secQuestions.map((q, i) => ({ seq: q.seq, sortOrder: i + 1, newQuestionKey: `q${i + 1}` }));
     setQuestions(prev => {
       const otherQuestions = prev.filter(q => q.sectionSeq !== sectionSeq);
-      const reordered = secQuestions.map((q, i) => ({
-        ...q,
-        sortOrder: i + 1,
-        questionKey: `q${i + 1}`,
-      }));
+      const reordered = secQuestions.map((q, i) => ({ ...q, sortOrder: i + 1, questionKey: `q${i + 1}` }));
       return [...otherQuestions, ...reordered].sort((a, b) => a.sortOrder - b.sortOrder);
     });
-
     dragItem.current = null;
     dragOverItem.current = null;
-
     await surveyApi.reorderQuestions(templateSeq, items);
     load();
   };
 
-  // ── 설문지 이름 수정 ──
-  const startEditTemplateName = () => {
-    if (template) setEditTemplateName(template.name);
-  };
+  const startEditTemplateName = () => { if (template) setEditTemplateName(template.name); };
   const handleUpdateTemplateName = async () => {
-    if (editTemplateName == null || !editTemplateName.trim()) {
-      alert('설문지 이름을 입력해주세요.');
-      return;
-    }
+    if (editTemplateName == null || !editTemplateName.trim()) { alert('설문지 이름을 입력해주세요.'); return; }
     const res = await surveyApi.updateTemplate(templateSeq, { name: editTemplateName.trim() });
     if (res.success) { setEditTemplateName(null); load(); }
   };
 
-  // ── 섹션 CRUD ──
   const handleAddSection = async () => {
     if (!addSectionForm || !addSectionForm.title.trim()) { alert('섹션 제목을 입력해주세요.'); return; }
     const res = await surveyApi.createSection(templateSeq, { title: addSectionForm.title.trim() });
     if (res.success) { setAddSectionForm(null); load(); }
   };
-
-  const startEditSection = (sec: SurveySection) => {
-    setEditSectionSeq(sec.seq);
-    setEditSectionTitle(sec.title);
-  };
-
+  const startEditSection = (sec: SurveySection) => { setEditSectionSeq(sec.seq); setEditSectionTitle(sec.title); };
   const handleUpdateSection = async () => {
     if (editSectionSeq == null || !editSectionTitle.trim()) { alert('섹션 제목을 입력해주세요.'); return; }
     const res = await surveyApi.updateSection(templateSeq, editSectionSeq, { title: editSectionTitle.trim() });
     if (res.success) { setEditSectionSeq(null); load(); }
   };
-
   const handleDeleteSection = async (sec: SurveySection) => {
     const qCount = questionsForSection(sec.seq).length;
-    const msg = qCount > 0
-      ? `"${sec.title}" 섹션과 포함된 ${qCount}개 질문을 모두 삭제하시겠습니까?`
-      : `"${sec.title}" 섹션을 삭제하시겠습니까?`;
+    const msg = qCount > 0 ? `"${sec.title}" 섹션과 포함된 ${qCount}개 질문을 모두 삭제하시겠습니까?` : `"${sec.title}" 섹션을 삭제하시겠습니까?`;
     if (!confirm(msg)) return;
     const res = await surveyApi.deleteSection(templateSeq, sec.seq);
     if (res.success) load();
   };
 
-  // ── 질문 CRUD ──
   const toggleQuestionAddForm = (sectionSeq: number) => {
     setQuestionAddForms(prev => {
       if (prev[sectionSeq]) { const next = { ...prev }; delete next[sectionSeq]; return next; }
       return { ...prev, [sectionSeq]: { questionKey: '', title: '', inputType: 'radio', required: false } };
     });
   };
-
   const handleAddQuestion = async (sectionSeq: number) => {
     const form = questionAddForms[sectionSeq];
     if (!form) return;
     if (!form.questionKey.trim()) { alert('질문 키를 입력해주세요.'); return; }
     if (!form.title.trim()) { alert('질문 제목을 입력해주세요.'); return; }
-    const res = await surveyApi.createQuestion(templateSeq, {
-      sectionSeq,
-      questionKey: form.questionKey.trim(),
-      title: form.title.trim(),
-      inputType: form.inputType,
-      required: form.required,
-    });
+    const res = await surveyApi.createQuestion(templateSeq, { sectionSeq, questionKey: form.questionKey.trim(), title: form.title.trim(), inputType: form.inputType, required: form.required });
     if (res.success) { toggleQuestionAddForm(sectionSeq); load(); }
   };
-
   const toggleEditQuestion = (q: SurveyQuestion) => {
     setQuestionEditForms(prev => {
       if (prev[q.seq]) { const next = { ...prev }; delete next[q.seq]; return next; }
       return { ...prev, [q.seq]: { questionKey: q.questionKey, title: q.title, inputType: q.inputType, required: q.required } };
     });
   };
-
   const handleUpdateQuestion = async (q: SurveyQuestion) => {
     const form = questionEditForms[q.seq];
     if (!form) return;
     if (!form.title.trim()) { alert('질문 제목을 입력해주세요.'); return; }
-    const res = await surveyApi.updateQuestion(templateSeq, q.seq, {
-      questionKey: form.questionKey, title: form.title, inputType: form.inputType, required: form.required,
-    });
-    if (res.success) {
-      setQuestionEditForms(prev => { const next = { ...prev }; delete next[q.seq]; return next; });
-      load();
-    }
+    const res = await surveyApi.updateQuestion(templateSeq, q.seq, { questionKey: form.questionKey, title: form.title, inputType: form.inputType, required: form.required });
+    if (res.success) { setQuestionEditForms(prev => { const next = { ...prev }; delete next[q.seq]; return next; }); load(); }
   };
-
   const handleDeleteQuestion = async (q: SurveyQuestion) => {
     if (!confirm(`"${q.title}" 질문과 모든 선택지를 삭제하시겠습니까?`)) return;
     await surveyApi.deleteQuestion(templateSeq, q.seq);
     load();
   };
+  const handleToggleRequired = async (q: SurveyQuestion) => { await surveyApi.updateQuestion(templateSeq, q.seq, { required: !q.required }); load(); };
+  const handleTypeChange = async (q: SurveyQuestion, inputType: InputType) => { await surveyApi.updateQuestion(templateSeq, q.seq, { inputType }); load(); };
 
-  const handleToggleRequired = async (q: SurveyQuestion) => {
-    await surveyApi.updateQuestion(templateSeq, q.seq, { required: !q.required });
-    load();
-  };
-
-  const handleTypeChange = async (q: SurveyQuestion, inputType: InputType) => {
-    await surveyApi.updateQuestion(templateSeq, q.seq, { inputType });
-    load();
-  };
-
-  // ── 선택지 CRUD ──
   const handleAddOption = async (questionSeq: number, groupName: string, formId: string) => {
     const label = optionAddForms[formId];
     if (!label?.trim()) return;
-    const res = await surveyApi.createOption(templateSeq, {
-      questionSeq, groupName: groupName || undefined, label: label.trim(),
-    });
-    if (res.success) {
-      setOptionAddForms(prev => { const n = { ...prev }; delete n[formId]; return n; });
-      load();
-    }
+    const res = await surveyApi.createOption(templateSeq, { questionSeq, groupName: groupName || undefined, label: label.trim() });
+    if (res.success) { setOptionAddForms(prev => { const n = { ...prev }; delete n[formId]; return n; }); load(); }
   };
-
   const handleDeleteOption = async (optionSeq: number, label: string) => {
     if (!confirm(`"${label}" 선택지를 삭제하시겠습니까?`)) return;
     await surveyApi.deleteOption(templateSeq, optionSeq);
     load();
   };
 
-  // ── 렌더 ──
-  if (loading) return <div className="card" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>로딩 중...</div>;
+  if (loading) return <div className={`card ${s.loadingCard}`}>로딩 중...</div>;
   if (!template) return <div className="card">설문지를 찾을 수 없습니다.</div>;
 
   const typeLabel: Record<InputType, string> = { radio: '단일선택', checkbox: '다중선택', text: '주관식' };
@@ -271,52 +203,32 @@ export default function SurveyEditorPage() {
   };
 
   const renderOptionTags = (opts: SurveyOption[]) => (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', minHeight: 30, marginBottom: '0.5rem' }}>
+    <div className={s.optionTags}>
       {opts.length > 0 ? opts.map(o => (
-        <span key={o.seq} style={{
-          display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-          padding: '0.25rem 0.65rem', background: '#f0f4f8', border: '1px solid #d0d8e0',
-          borderRadius: 6, fontSize: '0.84rem', color: '#333',
-        }}>
+        <span key={o.seq} className={s.optionTag}>
           {o.label}
-          <button onClick={() => handleDeleteOption(o.seq, o.label)} title="삭제" style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: 15, height: 15, background: 'none', border: 'none', cursor: 'pointer',
-            color: '#999', fontSize: '0.7rem', padding: 0,
-          }}>x</button>
+          <button onClick={() => handleDeleteOption(o.seq, o.label)} title="삭제" className={s.optionDeleteBtn}>x</button>
         </span>
-      )) : <span style={{ fontSize: '0.84rem', color: '#bbb', fontStyle: 'italic' }}>선택지 없음</span>}
+      )) : <span className={s.optionEmpty}>선택지 없음</span>}
     </div>
   );
 
   const renderOptionAddInput = (formId: string, questionSeq: number, groupName: string) => {
     const value = optionAddForms[formId];
     if (value === undefined) {
-      return (
-        <button onClick={() => setOptionAddForms(prev => ({ ...prev, [formId]: '' }))} style={{
-          padding: '0.25rem 0.65rem', background: 'none', color: 'var(--primary)',
-          border: '1px dashed var(--primary)', borderRadius: 5, fontSize: '0.8rem',
-          fontWeight: 600, cursor: 'pointer',
-        }}>+ 선택지</button>
-      );
+      return <button onClick={() => setOptionAddForms(prev => ({ ...prev, [formId]: '' }))} className={s.btnAddOption}>+ 선택지</button>;
     }
     return (
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+      <div className={s.optionInputRow}>
         <input type="text" value={value} autoFocus placeholder="선택지 입력 후 Enter"
           onChange={e => setOptionAddForms(prev => ({ ...prev, [formId]: e.target.value }))}
           onKeyDown={e => {
             if (e.key === 'Enter') handleAddOption(questionSeq, groupName, formId);
             if (e.key === 'Escape') setOptionAddForms(prev => { const n = { ...prev }; delete n[formId]; return n; });
           }}
-          style={{ padding: '0.3rem 0.6rem', border: '1.5px solid var(--primary)', borderRadius: 5, fontSize: '0.84rem', outline: 'none', width: 180 }} />
-        <button onClick={() => handleAddOption(questionSeq, groupName, formId)} style={{
-          padding: '0.3rem 0.6rem', background: 'var(--primary)', color: 'white', border: 'none',
-          borderRadius: 5, fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
-        }}>추가</button>
-        <button onClick={() => setOptionAddForms(prev => { const n = { ...prev }; delete n[formId]; return n; })} style={{
-          padding: '0.3rem 0.5rem', background: 'none', color: '#888', border: '1px solid #ddd',
-          borderRadius: 5, fontSize: '0.8rem', cursor: 'pointer',
-        }}>취소</button>
+          className={s.optionInput} />
+        <button onClick={() => handleAddOption(questionSeq, groupName, formId)} className={s.btnOptionSubmit}>추가</button>
+        <button onClick={() => setOptionAddForms(prev => { const n = { ...prev }; delete n[formId]; return n; })} className={s.btnOptionCancel}>취소</button>
       </div>
     );
   };
@@ -324,9 +236,7 @@ export default function SurveyEditorPage() {
   const renderOptions = (q: SurveyQuestion) => {
     const opts = optionsByQ[q.seq] || [];
     if (q.inputType === 'text') {
-      return <div style={{ color: '#999', fontSize: '0.85rem', fontStyle: 'italic', padding: '0.25rem 0' }}>
-        주관식 -- 사용자가 직접 입력합니다.
-      </div>;
+      return <div className={s.textHint}>주관식 -- 사용자가 직접 입력합니다.</div>;
     }
     const groups = q.isGrouped && q.groups ? q.groups.split(',').map(g => g.trim()).filter(Boolean) : [];
     if (groups.length > 0) {
@@ -334,18 +244,15 @@ export default function SurveyEditorPage() {
         const groupOpts = opts.filter(o => o.groupName === group);
         const formId = `${q.seq}-g${gi}`;
         return (
-          <div key={group} style={{ marginBottom: gi < groups.length - 1 ? '0.75rem' : 0 }}>
-            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#2d7a4f', marginBottom: '0.4rem' }}>{group}</div>
+          <div key={group} className={gi < groups.length - 1 ? s.groupWrap : undefined}>
+            <div className={s.groupTitle}>{group}</div>
             {renderOptionTags(groupOpts)}
             {renderOptionAddInput(formId, q.seq, group)}
           </div>
         );
       });
     }
-    return <>
-      {renderOptionTags(opts)}
-      {renderOptionAddInput(`q${q.seq}`, q.seq, '')}
-    </>;
+    return <>{renderOptionTags(opts)}{renderOptionAddInput(`q${q.seq}`, q.seq, '')}</>;
   };
 
   const renderQuestionCard = (q: SurveyQuestion, sectionSeq: number) => {
@@ -355,108 +262,82 @@ export default function SurveyEditorPage() {
     const tc = typeColor[q.inputType];
 
     return (
-      <div key={q.seq}
-        draggable
-        onDragStart={() => handleDragStart(q)}
-        onDragOver={e => handleDragOver(e, q)}
-        onDrop={e => handleDrop(e, sectionSeq)}
-        className="card" style={{ padding: 0, marginBottom: '0.6rem', overflow: 'hidden', cursor: 'grab' }}
-      >
-        {/* 헤더 */}
-        <div onClick={() => toggleCard(q.seq)} style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0.65rem 1rem', background: isOpen ? '#f8fafe' : '#fafafa',
-          borderBottom: isOpen ? '1px solid #eee' : 'none',
-          cursor: 'pointer', userSelect: 'none',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: 0 }}>
-            {/* 드래그 핸들 */}
-            <span style={{ color: '#ccc', fontSize: '0.85rem', cursor: 'grab', userSelect: 'none', flexShrink: 0 }}
-              onMouseDown={e => e.stopPropagation()}>&#8942;&#8942;</span>
-            <span style={{ color: '#aaa', fontSize: '0.75rem', transition: 'transform 0.15s', transform: isOpen ? 'rotate(90deg)' : 'none' }}>&#9654;</span>
-            <span style={{ fontSize: '0.72rem', color: '#999', fontFamily: 'monospace', flexShrink: 0 }}>{q.questionKey}</span>
-            <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>{q.title}</span>
-            {q.required && (
-              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#e03131', background: '#fff0f0', border: '1px solid #ffc9c9', padding: '1px 5px', borderRadius: 3 }}>필수</span>
-            )}
+      <div key={q.seq} draggable onDragStart={() => handleDragStart(q)}
+        onDragOver={e => handleDragOver(e, q)} onDrop={e => handleDrop(e, sectionSeq)}
+        className={`card ${s.questionCard}`}>
+        <div onClick={() => toggleCard(q.seq)} className={isOpen ? s.questionHeaderOpen : s.questionHeaderClosed}>
+          <div className={s.questionHeaderLeft}>
+            <span className={s.dragHandle} onMouseDown={e => e.stopPropagation()}>&#8942;&#8942;</span>
+            <span className={isOpen ? s.arrowOpen : s.arrowClosed}>&#9654;</span>
+            <span className={s.questionKey}>{q.questionKey}</span>
+            <span className={s.questionTitle}>{q.title}</span>
+            {q.required && <span className={s.requiredBadge}>필수</span>}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 600, padding: '2px 7px', borderRadius: 4, background: tc.bg, color: tc.fg }}>{typeLabel[q.inputType]}</span>
-            {q.inputType !== 'text' && <span style={{ fontSize: '0.72rem', color: '#999' }}>{opts.length}개</span>}
+          <div className={s.questionHeaderRight} onClick={e => e.stopPropagation()}>
+            <span className={s.typeBadge} style={{ background: tc.bg, color: tc.fg }}>{typeLabel[q.inputType]}</span>
+            {q.inputType !== 'text' && <span className={s.optionCount}>{opts.length}개</span>}
           </div>
         </div>
 
-        {/* 본문 */}
         {isOpen && (
-          <div style={{ padding: '0.85rem 1rem' }}>
+          <div className={s.questionBody}>
             {editForm ? (
-              <div style={{ background: '#f0f7ff', border: '1px solid #c4d8f0', borderRadius: 8, padding: '0.85rem', marginBottom: '0.75rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: 8, marginBottom: 8 }}>
+              <div className={s.editFormBox}>
+                <div className={s.formGrid}>
                   <div>
-                    <label style={lbl}>질문 키</label>
+                    <label className={s.lbl}>질문 키</label>
                     <input type="text" value={editForm.questionKey}
                       onChange={e => setQuestionEditForms(p => ({ ...p, [q.seq]: { ...p[q.seq], questionKey: e.target.value } }))}
-                      style={inp} />
+                      className={s.inp} />
                   </div>
                   <div>
-                    <label style={lbl}>질문 제목</label>
+                    <label className={s.lbl}>질문 제목</label>
                     <input type="text" value={editForm.title}
                       onChange={e => setQuestionEditForms(p => ({ ...p, [q.seq]: { ...p[q.seq], title: e.target.value } }))}
-                      style={inp} />
+                      className={s.inp} />
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginBottom: 10 }}>
+                <div className={s.formRow}>
                   <div>
-                    <label style={lbl}>응답 형식</label>
+                    <label className={s.lbl}>응답 형식</label>
                     <select value={editForm.inputType}
                       onChange={e => setQuestionEditForms(p => ({ ...p, [q.seq]: { ...p[q.seq], inputType: e.target.value as InputType } }))}
-                      style={{ ...inp, width: 'auto' }}>
-                      <option value="radio">단일선택</option>
-                      <option value="checkbox">다중선택</option>
-                      <option value="text">주관식</option>
+                      className={s.inpAuto}>
+                      <option value="radio">단일선택</option><option value="checkbox">다중선택</option><option value="text">주관식</option>
                     </select>
                   </div>
-                  <div style={{ marginTop: 16 }}>
+                  <div className={s.formCheckboxWrap}>
                     <Checkbox label="필수" checked={editForm.required}
                       onChange={e => setQuestionEditForms(p => ({ ...p, [q.seq]: { ...p[q.seq], required: (e.target as HTMLInputElement).checked } }))} />
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                  <Button variant="secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.82rem' }}
-                    onClick={() => toggleEditQuestion(q)}>취소</Button>
-                  <Button style={{ padding: '0.35rem 0.8rem', fontSize: '0.82rem' }}
-                    onClick={() => handleUpdateQuestion(q)}>저장</Button>
+                <div className={s.flexEnd}>
+                  <Button variant="secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.82rem' }} onClick={() => toggleEditQuestion(q)}>취소</Button>
+                  <Button style={{ padding: '0.35rem 0.8rem', fontSize: '0.82rem' }} onClick={() => handleUpdateQuestion(q)}>저장</Button>
                 </div>
               </div>
             ) : (
-              <div style={{ display: 'flex', gap: 6, marginBottom: '0.65rem', alignItems: 'center', paddingBottom: '0.65rem', borderBottom: '1px solid #f0f0f0' }}>
-                <div style={{ display: 'inline-flex', border: '1px solid #d0d0d0', borderRadius: 5, overflow: 'hidden' }}>
+              <div className={s.toolbar}>
+                <div className={s.typeToggle}>
                   {(['radio', 'checkbox', 'text'] as InputType[]).map(type => {
                     const active = q.inputType === type;
                     const c = typeColor[type];
                     return (
-                      <button key={type} onClick={() => handleTypeChange(q, type)} style={{
-                        padding: '0.2rem 0.55rem', fontSize: '0.74rem', fontWeight: 600,
-                        border: 'none', cursor: 'pointer',
-                        background: active ? c.bg : 'white', color: active ? c.fg : '#aaa',
-                      }}>{typeLabel[type]}</button>
+                      <button key={type} onClick={() => handleTypeChange(q, type)}
+                        className={active ? s.typeBtnActive : s.typeBtnInactive}
+                        style={active ? { background: c.bg, color: c.fg } : undefined}>
+                        {typeLabel[type]}
+                      </button>
                     );
                   })}
                 </div>
-                <button onClick={() => handleToggleRequired(q)} style={{
-                  padding: '0.2rem 0.55rem', fontSize: '0.74rem', fontWeight: 600, cursor: 'pointer', borderRadius: 5,
-                  background: q.required ? '#fff0f0' : '#f5f5f5', color: q.required ? '#e03131' : '#999',
-                  border: `1px solid ${q.required ? '#ffc9c9' : '#d0d0d0'}`,
-                }}>{q.required ? '필수' : '선택'}</button>
-                <div style={{ flex: 1 }} />
-                <button onClick={() => toggleEditQuestion(q)} style={{
-                  background: 'none', border: '1px solid #b0c4de', color: '#4a90e2',
-                  padding: '2px 8px', borderRadius: 4, fontSize: '0.73rem', fontWeight: 600, cursor: 'pointer',
-                }}>수정</button>
-                <button onClick={() => handleDeleteQuestion(q)} style={{
-                  background: 'none', border: '1px solid #ffa8a8', color: '#e03131',
-                  padding: '2px 8px', borderRadius: 4, fontSize: '0.73rem', fontWeight: 600, cursor: 'pointer',
-                }}>삭제</button>
+                <button onClick={() => handleToggleRequired(q)}
+                  className={q.required ? s.requiredToggleOn : s.requiredToggleOff}>
+                  {q.required ? '필수' : '선택'}
+                </button>
+                <div className={s.spacer} />
+                <button onClick={() => toggleEditQuestion(q)} className={s.btnEdit}>수정</button>
+                <button onClick={() => handleDeleteQuestion(q)} className={s.btnDelete}>삭제</button>
               </div>
             )}
             {renderOptions(q)}
@@ -470,43 +351,39 @@ export default function SurveyEditorPage() {
     const form = questionAddForms[sectionSeq];
     if (!form) return null;
     return (
-      <div className="card" style={{ borderColor: 'var(--primary)', background: '#f8fafe', marginBottom: '0.6rem', padding: '0.85rem 1rem' }}>
-        <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--primary)', marginBottom: 10 }}>새 질문</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: 8, marginBottom: 8 }}>
+      <div className={`card ${s.questionAddCard}`}>
+        <div className={s.questionAddTitle}>새 질문</div>
+        <div className={s.formGrid}>
           <div>
-            <label style={lbl}>질문 키 <span style={{ color: '#e53e3e' }}>*</span></label>
+            <label className={s.lbl}>질문 키 <span className={s.requiredMark}>*</span></label>
             <input type="text" value={form.questionKey} placeholder="q1"
               onChange={e => setQuestionAddForms(p => ({ ...p, [sectionSeq]: { ...p[sectionSeq], questionKey: e.target.value } }))}
-              style={inp} />
+              className={s.inp} />
           </div>
           <div>
-            <label style={lbl}>질문 제목 <span style={{ color: '#e53e3e' }}>*</span></label>
+            <label className={s.lbl}>질문 제목 <span className={s.requiredMark}>*</span></label>
             <input type="text" value={form.title} placeholder="질문 내용을 입력하세요"
               onChange={e => setQuestionAddForms(p => ({ ...p, [sectionSeq]: { ...p[sectionSeq], title: e.target.value } }))}
-              style={inp} />
+              className={s.inp} />
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginBottom: 10 }}>
+        <div className={s.formRow}>
           <div>
-            <label style={lbl}>응답 형식</label>
+            <label className={s.lbl}>응답 형식</label>
             <select value={form.inputType}
               onChange={e => setQuestionAddForms(p => ({ ...p, [sectionSeq]: { ...p[sectionSeq], inputType: e.target.value as InputType } }))}
-              style={{ ...inp, width: 'auto' }}>
-              <option value="radio">단일선택</option>
-              <option value="checkbox">다중선택</option>
-              <option value="text">주관식</option>
+              className={s.inpAuto}>
+              <option value="radio">단일선택</option><option value="checkbox">다중선택</option><option value="text">주관식</option>
             </select>
           </div>
-          <div style={{ marginTop: 16 }}>
+          <div className={s.formCheckboxWrap}>
             <Checkbox label="필수" checked={form.required}
               onChange={e => setQuestionAddForms(p => ({ ...p, [sectionSeq]: { ...p[sectionSeq], required: (e.target as HTMLInputElement).checked } }))} />
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-          <Button variant="secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.84rem' }}
-            onClick={() => toggleQuestionAddForm(sectionSeq)}>취소</Button>
-          <Button style={{ padding: '0.35rem 0.8rem', fontSize: '0.84rem' }}
-            onClick={() => handleAddQuestion(sectionSeq)}>추가</Button>
+        <div className={s.flexEnd}>
+          <Button variant="secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.84rem' }} onClick={() => toggleQuestionAddForm(sectionSeq)}>취소</Button>
+          <Button style={{ padding: '0.35rem 0.8rem', fontSize: '0.84rem' }} onClick={() => handleAddQuestion(sectionSeq)}>추가</Button>
         </div>
       </div>
     );
@@ -514,88 +391,65 @@ export default function SurveyEditorPage() {
 
   return (
     <>
-      <div style={{ marginBottom: '1rem' }}>
-        <a onClick={() => router.push(ROUTES.SURVEY)}
-          style={{ color: '#666', textDecoration: 'none', fontSize: '0.9rem', cursor: 'pointer' }}>
-          &larr; 설문지 목록
-        </a>
+      <div className={s.backRow}>
+        <a onClick={() => router.push(ROUTES.SURVEY)} className={s.backLink}>&larr; 설문지 목록</a>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+      <div className={s.headerRow}>
         {editTemplateName !== null ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className={s.editNameRow}>
             <input type="text" value={editTemplateName} autoFocus
               onChange={e => setEditTemplateName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleUpdateTemplateName(); if (e.key === 'Escape') setEditTemplateName(null); }}
-              style={{ ...inp, fontSize: '1.1rem', fontWeight: 700, maxWidth: 350 }} />
-            <Button style={{ padding: '0.35rem 0.7rem', fontSize: '0.82rem' }}
-              onClick={handleUpdateTemplateName}>저장</Button>
-            <Button variant="secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.82rem' }}
-              onClick={() => setEditTemplateName(null)}>취소</Button>
+              className={s.editNameInput} />
+            <Button style={{ padding: '0.35rem 0.7rem', fontSize: '0.82rem' }} onClick={handleUpdateTemplateName}>저장</Button>
+            <Button variant="secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.82rem' }} onClick={() => setEditTemplateName(null)}>취소</Button>
           </div>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className={s.titleRow}>
             <h2 className="page-title" style={{ margin: 0 }}>{template.name} 편집</h2>
-            <button onClick={startEditTemplateName} style={{
-              background: 'none', border: '1px solid #b0c4de', color: '#4a90e2',
-              padding: '2px 8px', borderRadius: 4, fontSize: '0.73rem', fontWeight: 600, cursor: 'pointer',
-            }}>이름 변경</button>
+            <button onClick={startEditTemplateName} className={s.btnEdit}>이름 변경</button>
           </div>
         )}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <a href={ROUTES.SURVEY_PREVIEW(templateSeq)} target="_blank" rel="noopener noreferrer"
-             style={{
-              padding: '0.45rem 0.9rem', fontSize: '0.88rem', fontWeight: 600,
-              color: 'var(--primary)', border: '1px solid var(--primary)',
-              borderRadius: 6, textDecoration: 'none', cursor: 'pointer',
-            }}>미리보기</a>
-          <Button onClick={() => setAddSectionForm(addSectionForm ? null : { title: '' })}>
-            + 섹션 추가
-          </Button>
+        <div className={s.actionRow}>
+          <a href={ROUTES.SURVEY_PREVIEW(templateSeq)} target="_blank" rel="noopener noreferrer" className={s.previewLink}>미리보기</a>
+          <Button onClick={() => setAddSectionForm(addSectionForm ? null : { title: '' })}>+ 섹션 추가</Button>
         </div>
       </div>
-      <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '1.5rem' }}>
-        섹션을 나누고, 각 섹션에 질문을 추가하세요. 같은 섹션 안에서 질문을 드래그하여 순서를 변경할 수 있습니다.
-      </p>
+      <p className={s.desc}>섹션을 나누고, 각 섹션에 질문을 추가하세요. 같은 섹션 안에서 질문을 드래그하여 순서를 변경할 수 있습니다.</p>
 
-      {/* ── 고객 기본 정보 (고정 섹션) ── */}
-      <div style={{ marginBottom: '1.75rem' }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '0.6rem',
-          marginBottom: '0.6rem', paddingBottom: '0.5rem', borderBottom: '2px solid #2d7a4f',
-        }}>
-          <span style={{ background: '#2d7a4f', color: 'white', fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: 4 }}>고정</span>
-          <span style={{ fontSize: '1rem', fontWeight: 700, color: '#333' }}>고객 기본 정보</span>
-          <span style={{ fontSize: '0.78rem', color: '#2d7a4f', fontWeight: 600 }}>항상 첫 페이지에 표시됩니다</span>
+      {/* 고객 기본 정보 (고정 섹션) */}
+      <div className={s.sectionWrap}>
+        <div className={s.sectionHeaderFixed}>
+          <span className={s.sectionBadgeFixed}>고정</span>
+          <span className={s.sectionTitle}>고객 기본 정보</span>
+          <span className={s.sectionMetaFixed}>항상 첫 페이지에 표시됩니다</span>
         </div>
         {DEFAULT_CUSTOMER_FIELDS.map((field, i) => (
-          <div key={i} className="card" style={{ padding: 0, marginBottom: '0.6rem', overflow: 'hidden' }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '0.65rem 1rem', background: '#f6faf8',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: 0 }}>
-                <span style={{ color: '#2d7a4f', fontSize: '0.85rem', flexShrink: 0 }}>&#9679;</span>
-                <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>{field.title}</span>
-                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#e03131', background: '#fff0f0', border: '1px solid #ffc9c9', padding: '1px 5px', borderRadius: 3 }}>필수</span>
+          <div key={i} className={`card ${s.questionCard}`}>
+            <div className={s.fixedCardHeader}>
+              <div className={s.fixedCardLeft}>
+                <span className={s.fixedDot}>&#9679;</span>
+                <span className={s.questionTitle}>{field.title}</span>
+                <span className={s.requiredBadge}>필수</span>
               </div>
-              <span style={{ fontSize: '0.72rem', fontWeight: 600, padding: '2px 7px', borderRadius: 4, background: '#e8f5ee', color: '#2d7a4f' }}>{field.type}</span>
+              <span className={s.fixedTypeBadge}>{field.type}</span>
             </div>
           </div>
         ))}
       </div>
 
       {addSectionForm && (
-        <div className="card" style={{ borderColor: 'var(--primary)', background: '#f8fafe', marginBottom: '1.25rem', padding: '1rem 1.25rem' }}>
-          <div style={{ fontWeight: 700, color: 'var(--primary)', marginBottom: 10 }}>새 섹션</div>
-          <div style={{ marginBottom: 10 }}>
-            <label style={lbl}>섹션 제목 <span style={{ color: '#e53e3e' }}>*</span></label>
+        <div className={`card ${s.addCard}`}>
+          <div className={s.addCardTitle}>새 섹션</div>
+          <div className={s.addCardBody}>
+            <label className={s.lbl}>섹션 제목 <span className={s.requiredMark}>*</span></label>
             <input type="text" value={addSectionForm.title} autoFocus placeholder="예: 기본 정보"
               onChange={e => setAddSectionForm({ title: e.target.value })}
               onKeyDown={e => { if (e.key === 'Enter') handleAddSection(); }}
-              style={{ ...inp, maxWidth: 400 }} />
+              className={s.addSectionInput} />
           </div>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <div className={s.flexEnd}>
             <Button variant="secondary" onClick={() => setAddSectionForm(null)}>취소</Button>
             <Button onClick={handleAddSection}>추가</Button>
           </div>
@@ -603,48 +457,33 @@ export default function SurveyEditorPage() {
       )}
 
       {sections.length === 0 && !addSectionForm ? (
-        <div className="card" style={{ textAlign: 'center', padding: '3rem', color: '#aaa', border: '1.5px dashed var(--border)' }}>
-          섹션이 없습니다. &apos;+ 섹션 추가&apos; 버튼으로 시작하세요.
-        </div>
+        <div className={`card ${s.emptyCard}`}>섹션이 없습니다. &apos;+ 섹션 추가&apos; 버튼으로 시작하세요.</div>
       ) : (
         sections.map(sec => {
           const secQuestions = questionsForSection(sec.seq);
           const isEditing = editSectionSeq === sec.seq;
 
           return (
-            <div key={sec.seq} style={{ marginBottom: '1.75rem' }}>
-              {/* 섹션 헤더 */}
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '0.6rem',
-                marginBottom: '0.6rem', paddingBottom: '0.5rem', borderBottom: '2px solid #e0e0e0',
-              }}>
+            <div key={sec.seq} className={s.sectionWrap}>
+              <div className={s.sectionHeader}>
                 {isEditing ? (
                   <>
                     <input type="text" value={editSectionTitle} autoFocus
                       onChange={e => setEditSectionTitle(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') handleUpdateSection(); if (e.key === 'Escape') setEditSectionSeq(null); }}
-                      style={{ ...inp, maxWidth: 250, fontSize: '0.95rem', fontWeight: 700 }} />
+                      className={s.editSectionInput} />
                     <Button style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }} onClick={handleUpdateSection}>저장</Button>
                     <Button variant="secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }} onClick={() => setEditSectionSeq(null)}>취소</Button>
                   </>
                 ) : (
                   <>
-                    <span style={{ background: '#1a1a1a', color: 'white', fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: 4 }}>섹션 {sec.sortOrder}</span>
-                    <span style={{ fontSize: '1rem', fontWeight: 700, color: '#333' }}>{sec.title}</span>
-                    <span style={{ fontSize: '0.78rem', color: '#999' }}>({secQuestions.length}개 질문)</span>
-                    <div style={{ flex: 1 }} />
-                    <button onClick={() => startEditSection(sec)} style={{
-                      background: 'none', border: '1px solid #b0c4de', color: '#4a90e2',
-                      padding: '2px 8px', borderRadius: 4, fontSize: '0.73rem', fontWeight: 600, cursor: 'pointer',
-                    }}>이름 변경</button>
-                    <button onClick={() => handleDeleteSection(sec)} style={{
-                      background: 'none', border: '1px solid #ffa8a8', color: '#e03131',
-                      padding: '2px 8px', borderRadius: 4, fontSize: '0.73rem', fontWeight: 600, cursor: 'pointer',
-                    }}>섹션 삭제</button>
-                    <button onClick={() => toggleQuestionAddForm(sec.seq)} style={{
-                      fontSize: '0.78rem', padding: '0.25rem 0.6rem', background: 'white', color: 'var(--primary)',
-                      border: '1px dashed var(--primary)', borderRadius: 5, fontWeight: 600, cursor: 'pointer',
-                    }}>+ 질문 추가</button>
+                    <span className={s.sectionBadge}>섹션 {sec.sortOrder}</span>
+                    <span className={s.sectionTitle}>{sec.title}</span>
+                    <span className={s.sectionMeta}>({secQuestions.length}개 질문)</span>
+                    <div className={s.spacer} />
+                    <button onClick={() => startEditSection(sec)} className={s.btnEdit}>이름 변경</button>
+                    <button onClick={() => handleDeleteSection(sec)} className={s.btnDelete}>섹션 삭제</button>
+                    <button onClick={() => toggleQuestionAddForm(sec.seq)} className={s.btnAddQuestion}>+ 질문 추가</button>
                   </>
                 )}
               </div>
@@ -652,12 +491,7 @@ export default function SurveyEditorPage() {
               {renderQuestionAddForm(sec.seq)}
 
               {secQuestions.length === 0 && !questionAddForms[sec.seq] ? (
-                <div style={{
-                  textAlign: 'center', padding: '1.5rem', color: '#ccc', fontSize: '0.88rem',
-                  border: '1px dashed #e0e0e0', borderRadius: 8, background: '#fcfcfc',
-                }}>
-                  이 섹션에 질문이 없습니다.
-                </div>
+                <div className={s.emptySection}>이 섹션에 질문이 없습니다.</div>
               ) : (
                 secQuestions.map(q => renderQuestionCard(q, sec.seq))
               )}
@@ -668,6 +502,3 @@ export default function SurveyEditorPage() {
     </>
   );
 }
-
-const lbl: React.CSSProperties = { display: 'block', fontSize: '0.76rem', fontWeight: 700, color: '#555', marginBottom: 3 };
-const inp: React.CSSProperties = { width: '100%', padding: '0.35rem 0.6rem', border: '1.5px solid #ddd', borderRadius: 5, fontSize: '0.88rem' };

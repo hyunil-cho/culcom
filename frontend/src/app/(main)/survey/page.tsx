@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { surveyApi, SurveyTemplate } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
+import styles from './page.module.css';
 
 export default function SurveyPage() {
   const router = useRouter();
@@ -49,14 +50,10 @@ export default function SurveyPage() {
     if (res.success) load();
   };
 
-  const statusBadgeStyle = (status: string): React.CSSProperties => {
-    const base: React.CSSProperties = {
-      display: 'inline-block', padding: '3px 12px', borderRadius: 20,
-      fontSize: '0.75rem', fontWeight: 700,
-    };
-    if (status === '활성') return { ...base, background: '#d4edda', color: '#155724' };
-    if (status === '비활성') return { ...base, background: '#f0f0f0', color: '#666' };
-    return { ...base, background: '#fff3cd', color: '#856404' }; // 작성중
+  const statusBadgeClass = (status: string) => {
+    if (status === '활성') return styles.badgeActive;
+    if (status === '비활성') return styles.badgeInactive;
+    return styles.badgeDraft;
   };
 
   const formatDate = (d: string | null) => {
@@ -66,36 +63,29 @@ export default function SurveyPage() {
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+      <div className="page-toolbar">
         <h2 className="page-title" style={{ margin: 0 }}>설문지 관리</h2>
         <Button onClick={() => setShowCreate(!showCreate)}>+ 새 설문지</Button>
       </div>
 
       {showCreate && (
-        <div className="card" style={{ borderColor: 'var(--primary)', marginBottom: '1.25rem', background: '#f8fafe' }}>
-          <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 14, color: 'var(--primary)' }}>새 설문지 생성</div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.4rem' }}>
-              설문지 이름 <span style={{ color: 'var(--danger)' }}>*</span>
+        <div className={`card ${styles.createCard}`}>
+          <div className={styles.createTitle}>새 설문지 생성</div>
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel}>
+              설문지 이름 <span className={styles.requiredMark}>*</span>
             </label>
-            <input
-              type="text" value={createName} onChange={e => setCreateName(e.target.value)}
-              placeholder="예: 2026년 4월 설문"
-              style={{ width: '100%', padding: '0.55rem 0.85rem', border: '1.5px solid var(--border)', borderRadius: 7, fontSize: '0.92rem' }}
-              autoFocus
-            />
+            <input type="text" value={createName} onChange={e => setCreateName(e.target.value)}
+              placeholder="예: 2026년 4월 설문" className={styles.textInput} autoFocus />
           </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.4rem' }}>
-              설명 <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>(선택)</span>
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel}>
+              설명 <span className={styles.optionalMark}>(선택)</span>
             </label>
-            <input
-              type="text" value={createDesc} onChange={e => setCreateDesc(e.target.value)}
-              placeholder="설문지에 대한 간단한 설명"
-              style={{ width: '100%', padding: '0.55rem 0.85rem', border: '1.5px solid var(--border)', borderRadius: 7, fontSize: '0.92rem' }}
-            />
+            <input type="text" value={createDesc} onChange={e => setCreateDesc(e.target.value)}
+              placeholder="설문지에 대한 간단한 설명" className={styles.textInput} />
           </div>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <div className={styles.createActions}>
             <Button variant="secondary" onClick={() => setShowCreate(false)}>취소</Button>
             <Button onClick={handleCreate}>생성</Button>
           </div>
@@ -103,59 +93,48 @@ export default function SurveyPage() {
       )}
 
       {loading ? (
-        <div className="card" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>로딩 중...</div>
+        <div className={`card ${styles.loadingCard}`}>로딩 중...</div>
       ) : templates.length === 0 ? (
-        <div className="card" style={{
-          textAlign: 'center', padding: '3rem', color: '#aaa',
-          border: '1.5px dashed var(--border)', background: 'var(--card-bg)',
-        }}>
+        <div className={`card ${styles.emptyCard}`}>
           설문지가 없습니다. 위의 &apos;+ 새 설문지&apos; 버튼으로 생성하세요.
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className={styles.templateList}>
           {templates.map(t => (
-            <div key={t.seq} className="card" style={{ padding: '20px 24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <a
-                  onClick={() => router.push(ROUTES.SURVEY_OPTIONS(t.seq))}
-                  style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1a1a1a', cursor: 'pointer', textDecoration: 'none' }}
-                >
+            <div key={t.seq} className={`card ${styles.templateCard}`}>
+              <div className={styles.templateHeader}>
+                <a onClick={() => router.push(ROUTES.SURVEY_OPTIONS(t.seq))} className={styles.templateName}>
                   {t.name}
                 </a>
-                <span style={statusBadgeStyle(t.status)}>{t.status}</span>
+                <span className={statusBadgeClass(t.status)}>{t.status}</span>
               </div>
               {t.description && (
-                <div style={{ fontSize: '0.88rem', color: '#555', marginBottom: 14, lineHeight: 1.5 }}>
-                  {t.description}
-                </div>
+                <div className={styles.templateDesc}>{t.description}</div>
               )}
-              <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.83rem', color: '#888', marginBottom: 12 }}>
+              <div className={styles.templateMeta}>
                 <span>선택지 {t.optionCount}개</span>
                 <span>생성일 {formatDate(t.createdDate)}</span>
                 {t.lastUpdateDate && <span>수정일 {formatDate(t.lastUpdateDate)}</span>}
               </div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Button style={{ fontSize: '0.8rem', padding: '5px 14px' }}
-                  onClick={() => router.push(ROUTES.SURVEY_OPTIONS(t.seq))}>
+              <div className={styles.templateActions}>
+                <Button className={styles.smallBtn} onClick={() => router.push(ROUTES.SURVEY_OPTIONS(t.seq))}>
                   선택지 편집
                 </Button>
                 {t.status === '작성중' || t.status === '비활성' ? (
-                  <Button variant="secondary" style={{ fontSize: '0.8rem', padding: '5px 14px', background: '#2d7a4f', color: 'white', borderColor: '#2d7a4f' }}
+                  <Button variant="secondary" className={styles.activateBtn}
                     onClick={() => handleStatusChange(t.seq, '활성')}>
                     활성화
                   </Button>
                 ) : (
-                  <Button variant="secondary" style={{ fontSize: '0.8rem', padding: '5px 14px' }}
+                  <Button variant="secondary" className={styles.smallBtn}
                     onClick={() => handleStatusChange(t.seq, '비활성')}>
                     비활성화
                   </Button>
                 )}
-                <Button variant="secondary" style={{ fontSize: '0.8rem', padding: '5px 14px' }}
-                  onClick={() => handleCopy(t.seq)}>
+                <Button variant="secondary" className={styles.smallBtn} onClick={() => handleCopy(t.seq)}>
                   복제
                 </Button>
-                <Button variant="secondary" style={{ fontSize: '0.8rem', padding: '5px 14px', borderColor: '#ffa8a8', color: '#e03131' }}
-                  onClick={() => handleDelete(t.seq, t.name)}>
+                <Button variant="secondary" className={styles.deleteBtn} onClick={() => handleDelete(t.seq, t.name)}>
                   삭제
                 </Button>
               </div>

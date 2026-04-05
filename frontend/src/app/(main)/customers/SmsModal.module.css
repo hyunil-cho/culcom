@@ -1,0 +1,121 @@
+.content {
+  width: 90%;
+  max-width: 560px;
+}
+
+.header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 2px solid var(--success);
+}
+
+.title {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #2c3e50;
+}
+
+.body {
+  padding: 1.25rem 1.5rem;
+}
+
+.recipientInfo {
+  background: #f0f8ff;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border-left: 4px solid #4a90e2;
+  display: flex;
+  gap: 2rem;
+}
+
+.infoLabel {
+  font-size: 0.85rem;
+  color: #666;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.infoValue {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.modeRow {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.modeBtn {
+  flex: 1;
+  padding: 0.7rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.modeBtnActive {
+  composes: modeBtn;
+  border: 2px solid #4a90e2;
+  background: #4a90e2;
+  color: white;
+}
+
+.modeBtnInactive {
+  composes: modeBtn;
+  border: 2px solid #ddd;
+  background: white;
+  color: #666;
+}
+
+.fieldGroup {
+  margin-bottom: 1rem;
+}
+
+.fieldGroupSm {
+  margin-bottom: 0.5rem;
+}
+
+.fieldLabel {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.charCount {
+  text-align: right;
+  font-size: 0.85rem;
+  color: #999;
+  margin-top: 4px;
+}
+
+.charCountValue {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.sendBtn {
+  padding: 0.6rem 1.5rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  background: var(--success);
+  color: white;
+}
+
+.sendBtn:disabled {
+  opacity: 0.6;
+}

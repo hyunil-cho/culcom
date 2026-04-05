@@ -1,0 +1,168 @@
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 24px;
+  align-items: start;
+}
+
+.formCard {
+  padding: 2rem;
+}
+
+.heading {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.infoBox {
+  background: #e3f2fd;
+  border-left: 4px solid #2196f3;
+  padding: 16px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.infoTitle {
+  font-weight: 600;
+  color: #1976d2;
+  margin-bottom: 8px;
+}
+
+.infoDesc {
+  color: #424242;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.fieldGroup {
+  margin-bottom: 1rem;
+}
+
+.fieldGroupLg {
+  margin-bottom: 1.5rem;
+}
+
+.hint {
+  font-size: 12px;
+  color: #666;
+  margin-top: 6px;
+}
+
+.charCount {
+  text-align: right;
+  font-size: 12px;
+  color: #666;
+  margin-top: 6px;
+}
+
+.charCountValue {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.previewBox {
+  background: #f5f7ff;
+  border: 2px solid var(--primary);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.previewTitle {
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 12px;
+}
+
+.previewContent {
+  background: white;
+  border: 1px solid #e0e7ff;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.formActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 20px;
+}
+
+/* 플레이스홀더 패널 */
+.placeholderPanel {
+  padding: 1.5rem;
+  position: sticky;
+  top: 20px;
+}
+
+.panelTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f5f5f5;
+}
+
+.panelScroll {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.phCard {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.phCard:hover {
+  background: #f5f7ff;
+  border-color: var(--primary);
+}
+
+.phValue {
+  display: inline-block;
+  background: #fff3e0;
+  color: #e65100;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 13px;
+  font-family: monospace;
+  margin-bottom: 6px;
+}
+
+.phName {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.phComment {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.phExample {
+  font-size: 11px;
+  color: #999;
+  font-style: italic;
+}
+
+.emptyPh {
+  text-align: center;
+  color: #999;
+  padding: 2rem 0;
+}

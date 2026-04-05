@@ -1,0 +1,149 @@
+.createCard {
+  border-color: var(--primary);
+  margin-bottom: 1.25rem;
+  background: #f8fafe;
+}
+
+.createTitle {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 14px;
+  color: var(--primary);
+}
+
+.fieldGroup {
+  margin-bottom: 1rem;
+}
+
+.fieldLabel {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+.requiredMark {
+  color: var(--danger);
+}
+
+.optionalMark {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.textInput {
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  font-size: 0.92rem;
+}
+
+.createActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.loadingCard {
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.emptyCard {
+  text-align: center;
+  padding: 3rem;
+  color: #aaa;
+  border: 1.5px dashed var(--border);
+  background: var(--card-bg);
+}
+
+.templateList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.templateCard {
+  padding: 20px 24px;
+}
+
+.templateHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.templateName {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.badgeBase {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.badgeActive {
+  composes: badgeBase;
+  background: #d4edda;
+  color: #155724;
+}
+
+.badgeInactive {
+  composes: badgeBase;
+  background: #f0f0f0;
+  color: #666;
+}
+
+.badgeDraft {
+  composes: badgeBase;
+  background: #fff3cd;
+  color: #856404;
+}
+
+.templateDesc {
+  font-size: 0.88rem;
+  color: #555;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.templateMeta {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.83rem;
+  color: #888;
+  margin-bottom: 12px;
+}
+
+.templateActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.smallBtn {
+  font-size: 0.8rem;
+  padding: 5px 14px;
+}
+
+.activateBtn {
+  composes: smallBtn;
+  background: #2d7a4f;
+  color: white;
+  border-color: #2d7a4f;
+}
+
+.deleteBtn {
+  composes: smallBtn;
+  border-color: #ffa8a8;
+  color: #e03131;
+}
