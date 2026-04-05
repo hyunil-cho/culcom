@@ -1,0 +1,22 @@
+.loading { text-align: center; padding: 40px; color: #999; }
+.container { max-width: 800px; margin: 0 auto; }
+.backRow { margin-bottom: 16px; }
+.backLink { font-size: 14px; color: #666; text-decoration: none; }
+
+.headerSection { margin-bottom: 24px; }
+.title { font-size: 24px; font-weight: 600; color: #333; margin-bottom: 8px; }
+.desc { font-size: 14px; color: #666; }
+
+.infoBox { background: #e3f2fd; border-left: 4px solid #2196f3; padding: 16px; border-radius: 4px; margin-bottom: 24px; }
+.infoTitle { font-weight: 600; font-size: 14px; color: #1976d2; margin-bottom: 8px; }
+.infoDesc { font-size: 13px; color: #0d47a1; line-height: 1.6; }
+
+.formCard { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 32px; }
+
+.fieldGroup { margin-bottom: 24px; }
+.fieldLabel { display: block; font-weight: 500; color: #333; margin-bottom: 8px; font-size: 14px; }
+.requiredMark { color: #dc3545; margin-left: 4px; }
+
+.selectInput { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+
+.formActions { display: flex; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid #e0e0e0; }

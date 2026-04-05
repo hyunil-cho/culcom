@@ -1,0 +1,207 @@
+.wrapper {
+  background-color: #f4f7f6;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.card {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 520px;
+  margin-top: 30px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.title {
+  color: #4a90e2;
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.searchError {
+  color: #dc2626;
+  font-size: 0.9rem;
+  margin-top: 8px;
+}
+
+/* 폼 그룹 */
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formLabel {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.requiredMark {
+  color: #e74c3c;
+}
+
+/* 회원 정보 카드 */
+.memberCard {
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.memberCardTitle {
+  margin: 0 0 10px;
+  color: #166534;
+  font-size: 1rem;
+}
+
+/* 요청 요약 */
+.summaryCard {
+  background: #e0f2fe;
+  border: 1.5px solid #93c5fd;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.summaryTitle {
+  margin: 0 0 8px;
+  color: #1e40af;
+  font-size: 1rem;
+}
+
+/* 정보 행 */
+.infoRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+}
+
+.infoLabel {
+  color: #555;
+  font-weight: 600;
+  min-width: 70px;
+}
+
+.infoValue {
+  color: #333;
+}
+
+/* 날짜 범위 */
+.dateRange {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 멤버십 카드 */
+.membershipCard {
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  transition: all 0.2s;
+}
+
+.membershipHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.membershipName {
+  font-weight: 700;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.postponeBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.membershipMeta {
+  font-size: 0.82rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+.exhaustedText {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.emptyMembership {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+}
+
+.divider {
+  border: none;
+  border-top: 1px dashed #ddd;
+  margin: 25px 0;
+}
+
+/* 버튼 */
+.primaryBtn {
+  width: 100%;
+  padding: 14px;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.primaryBtn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.secondaryBtn {
+  width: 100%;
+  padding: 10px;
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  color: #666;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+/* 안내 박스 */
+.noticeBox {
+  background: #fff9db;
+  padding: 15px;
+  border-radius: 6px;
+  border-left: 4px solid #fcc419;
+  margin-top: 25px;
+  font-size: 0.85rem;
+  color: #856404;
+}
+
+.noticeList {
+  margin: 5px 0 0 18px;
+  padding: 0;
+}

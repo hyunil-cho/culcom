@@ -6,6 +6,7 @@ import { ROUTES } from '@/lib/routes';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useResultModal } from '@/hooks/useResultModal';
 import { Button, LinkButton } from '@/components/ui/Button';
+import s from './page.module.css';
 
 export default function MessageTemplatesPage() {
   return <Suspense><MessageTemplatesContent /></Suspense>;
@@ -19,14 +20,10 @@ function MessageTemplatesContent() {
 
   const fetchTemplates = useCallback(async () => {
     const res = await messageTemplateApi.list();
-    if (res.success) {
-      setTemplates(res.data);
-    }
+    if (res.success) setTemplates(res.data);
   }, []);
 
-  useEffect(() => {
-    fetchTemplates();
-  }, [fetchTemplates]);
+  useEffect(() => { fetchTemplates(); }, [fetchTemplates]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -44,133 +41,50 @@ function MessageTemplatesContent() {
 
   return (
     <>
-      <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>메시지 템플릿 관리</h1>
-        <LinkButton href={ROUTES.MESSAGE_TEMPLATES_ADD} style={{ padding: '0.6rem 1.2rem' }}>
-          새 템플릿 만들기
-        </LinkButton>
+      <div className={s.header}>
+        <h1 className={s.title}>메시지 템플릿 관리</h1>
+        <LinkButton href={ROUTES.MESSAGE_TEMPLATES_ADD} style={{ padding: '0.6rem 1.2rem' }}>새 템플릿 만들기</LinkButton>
       </div>
 
       {templates.length === 0 ? (
-        <div className="content-card" style={{ padding: '4rem 2rem', textAlign: 'center', color: '#999' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
-          <h3 style={{ margin: '0 0 8px', color: '#666' }}>등록된 템플릿이 없습니다</h3>
+        <div className={`content-card ${s.emptyCard}`}>
+          <div className={s.emptyIcon}>📭</div>
+          <h3 className={s.emptyTitle}>등록된 템플릿이 없습니다</h3>
           <p>새 템플릿을 만들어 메시지를 효율적으로 관리하세요</p>
         </div>
       ) : (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))',
-          gap: 20,
-        }}>
+        <div className={s.grid}>
           {templates.map((t) => (
-            <div
-              key={t.seq}
-              className="content-card"
-              style={{
-                padding: 20,
-                position: 'relative',
-                opacity: t.isActive ? 1 : 0.7,
-                background: t.isActive ? 'white' : '#f9f9f9',
-              }}
-            >
-              {/* 상태 배지 */}
-              <span
-                style={{
-                  position: 'absolute',
-                  top: 16,
-                  right: 16,
-                  padding: '4px 10px',
-                  borderRadius: 12,
-                  fontSize: 11,
-                  fontWeight: 500,
-                  background: t.isActive ? '#e8f5e9' : '#f5f5f5',
-                  color: t.isActive ? '#2e7d32' : '#666',
-                }}
-              >
+            <div key={t.seq} className={`content-card ${t.isActive ? s.templateCard : s.templateCardInactive}`}>
+              <span className={t.isActive ? s.statusActive : s.statusInactive}>
                 {t.isActive ? '사용 중' : '비활성'}
               </span>
 
-              {/* 제목 */}
-              <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h3 className={s.templateTitle}>
                 {t.templateName}
-                {t.isDefault && (
-                  <span style={{
-                    padding: '3px 10px',
-                    background: 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)',
-                    color: '#8b6914',
-                    borderRadius: 12,
-                    fontSize: 11,
-                    fontWeight: 600,
-                  }}>
-                    기본
-                  </span>
-                )}
+                {t.isDefault && <span className={s.defaultBadge}>기본</span>}
               </h3>
 
-              {/* 설명 */}
-              {t.description && (
-                <p style={{ color: '#666', fontSize: 13, margin: '8px 0 12px', lineHeight: 1.4 }}>
-                  {t.description}
-                </p>
-              )}
+              {t.description && <p className={s.templateDesc}>{t.description}</p>}
 
-              {/* 메시지 내용 */}
-              {t.messageContext && (
-                <div style={{
-                  background: '#f9f9f9',
-                  borderLeft: '3px solid var(--primary, #667eea)',
-                  padding: 12,
-                  borderRadius: 4,
-                  fontSize: 14,
-                  lineHeight: 1.6,
-                  color: '#333',
-                  margin: '12px 0',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                }}>
-                  {t.messageContext}
-                </div>
-              )}
+              {t.messageContext && <div className={s.messageContent}>{t.messageContext}</div>}
 
-              {/* 메타 정보 */}
-              <div style={{
-                display: 'flex',
-                gap: 16,
-                fontSize: 12,
-                color: '#999',
-                marginTop: 12,
-                paddingTop: 12,
-                borderTop: '1px solid #f0f0f0',
-              }}>
+              <div className={s.meta}>
                 <span>생성: {t.createdDate || '-'}</span>
                 <span>수정: {t.lastUpdateDate || '-'}</span>
               </div>
 
-              {/* 액션 버튼 */}
-              <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+              <div className={s.actions}>
                 {!t.isDefault && t.isActive && (
-                  <Button
-                    variant="secondary"
+                  <Button variant="secondary"
                     style={{ flex: 1, padding: '8px 16px', fontSize: 13, background: '#fff8e1', borderColor: '#ffc107', color: '#333' }}
-                    onClick={() => setDefaultTarget(t)}
-                  >
-                    기본 설정
-                  </Button>
+                    onClick={() => setDefaultTarget(t)}>기본 설정</Button>
                 )}
-                <LinkButton
-                  href={ROUTES.MESSAGE_TEMPLATE_EDIT(t.seq)}
-                  style={{ flex: 1, padding: '8px 16px', fontSize: 13, textAlign: 'center' }}
-                >
-                  수정
-                </LinkButton>
-                <Button
-                  variant="secondary"
+                <LinkButton href={ROUTES.MESSAGE_TEMPLATE_EDIT(t.seq)}
+                  style={{ flex: 1, padding: '8px 16px', fontSize: 13, textAlign: 'center' }}>수정</LinkButton>
+                <Button variant="secondary"
                   style={{ flex: 1, padding: '8px 16px', fontSize: 13, background: '#ffebee', borderColor: '#f44336', color: '#d32f2f' }}
-                  onClick={() => setDeleteTarget(t)}
-                >
-                  삭제
-                </Button>
+                  onClick={() => setDeleteTarget(t)}>삭제</Button>
               </div>
             </div>
           ))}
@@ -178,28 +92,18 @@ function MessageTemplatesContent() {
       )}
 
       {deleteTarget && (
-        <ConfirmModal
-          title="템플릿 삭제"
-          onCancel={() => setDeleteTarget(null)}
-          onConfirm={handleDelete}
-          confirmLabel="삭제"
-          confirmColor="var(--danger)"
-        >
+        <ConfirmModal title="템플릿 삭제" onCancel={() => setDeleteTarget(null)} onConfirm={handleDelete}
+          confirmLabel="삭제" confirmColor="var(--danger)">
           <p>&quot;{deleteTarget.templateName}&quot; 템플릿을 삭제하시겠습니까?</p>
-          <p style={{ fontSize: '0.85rem', color: '#999' }}>이 작업은 되돌릴 수 없습니다.</p>
+          <p className={s.subNote}>이 작업은 되돌릴 수 없습니다.</p>
         </ConfirmModal>
       )}
 
       {defaultTarget && (
-        <ConfirmModal
-          title="기본 템플릿 설정"
-          onCancel={() => setDefaultTarget(null)}
-          onConfirm={handleSetDefault}
-          confirmLabel="설정"
-          confirmColor="var(--success, #4caf50)"
-        >
+        <ConfirmModal title="기본 템플릿 설정" onCancel={() => setDefaultTarget(null)} onConfirm={handleSetDefault}
+          confirmLabel="설정" confirmColor="var(--success, #4caf50)">
           <p>&quot;{defaultTarget.templateName}&quot; 템플릿을 기본값으로 설정하시겠습니까?</p>
-          <p style={{ fontSize: '0.85rem', color: '#666' }}>기존 기본값은 자동으로 해제됩니다.</p>
+          <p className={s.subNoteAlt}>기존 기본값은 자동으로 해제됩니다.</p>
         </ConfirmModal>
       )}
 
