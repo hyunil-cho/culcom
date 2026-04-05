@@ -3,15 +3,13 @@ package com.culcom.controller.board;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.board.BoardNoticeResponse;
 import com.culcom.dto.board.BoardSessionResponse;
-import com.culcom.entity.notice.Notice;
-import com.culcom.repository.NoticeRepository;
 import com.culcom.service.BoardSessionService;
 import com.culcom.service.BoardSessionService.BoardSessionData;
+import com.culcom.service.NoticeService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,20 +17,16 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class BoardController {
 
-    private final NoticeRepository noticeRepository;
+    private final NoticeService noticeService;
     private final BoardSessionService boardSessionService;
 
     @GetMapping("/notices/{seq}")
-    @Transactional
     public ResponseEntity<ApiResponse<BoardNoticeResponse>> getNoticeDetail(@PathVariable Long seq) {
-        return noticeRepository.findById(seq)
-                .filter(Notice::getIsActive)
-                .map(notice -> {
-                    notice.setViewCount(notice.getViewCount() + 1);
-                    noticeRepository.save(notice);
-                    return ResponseEntity.ok(ApiResponse.ok(BoardNoticeResponse.fromDetail(notice)));
-                })
-                .orElse(ResponseEntity.ok(ApiResponse.error("공지사항을 찾을 수 없습니다")));
+        BoardNoticeResponse result = noticeService.getBoardNoticeDetail(seq);
+        if (result == null) {
+            return ResponseEntity.ok(ApiResponse.error("공지사항을 찾을 수 없습니다"));
+        }
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
     @GetMapping("/session")

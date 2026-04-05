@@ -5,27 +5,13 @@ import com.culcom.dto.complex.member.ComplexMemberMembershipRequest;
 import com.culcom.dto.complex.member.ComplexMemberMembershipResponse;
 import com.culcom.dto.complex.member.ComplexMemberRequest;
 import com.culcom.dto.complex.member.ComplexMemberResponse;
-import com.culcom.entity.complex.clazz.ComplexClass;
-import com.culcom.entity.complex.member.ComplexMember;
-import com.culcom.entity.complex.member.ComplexMemberClassMapping;
-import com.culcom.entity.complex.member.ComplexMemberMembership;
-import com.culcom.entity.complex.member.Membership;
-import com.culcom.entity.enums.MembershipStatus;
-import com.culcom.repository.BranchRepository;
-import com.culcom.repository.ComplexClassRepository;
-import com.culcom.repository.ComplexMemberClassMappingRepository;
-import com.culcom.repository.ComplexMemberMembershipRepository;
-import com.culcom.repository.ComplexMemberRepository;
-import com.culcom.repository.MembershipRepository;
 import com.culcom.config.security.CustomUserPrincipal;
+import com.culcom.service.ComplexMemberService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -33,161 +19,59 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ComplexMemberController {
 
-    private final ComplexMemberRepository memberRepository;
-    private final ComplexMemberMembershipRepository memberMembershipRepository;
-    private final MembershipRepository membershipRepository;
-    private final ComplexClassRepository classRepository;
-    private final ComplexMemberClassMappingRepository classMappingRepository;
-    private final BranchRepository branchRepository;
+    private final ComplexMemberService complexMemberService;
 
     @GetMapping("/{seq}")
     public ResponseEntity<ApiResponse<ComplexMemberResponse>> get(@PathVariable Long seq) {
-        return memberRepository.findById(seq)
-                .map(m -> ResponseEntity.ok(ApiResponse.ok(ComplexMemberResponse.from(m))))
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(ApiResponse.ok(complexMemberService.get(seq)));
     }
 
     @GetMapping("/{seq}/memberships")
     public ResponseEntity<ApiResponse<List<ComplexMemberMembershipResponse>>> getMemberships(@PathVariable Long seq) {
-        List<ComplexMemberMembershipResponse> result = memberMembershipRepository.findByMemberSeq(seq)
-                .stream().map(ComplexMemberMembershipResponse::from).toList();
-        return ResponseEntity.ok(ApiResponse.ok(result));
+        return ResponseEntity.ok(ApiResponse.ok(complexMemberService.getMemberships(seq)));
     }
 
     @PostMapping
     public ResponseEntity<ApiResponse<ComplexMemberResponse>> create(
             @RequestBody ComplexMemberRequest req, @AuthenticationPrincipal CustomUserPrincipal principal) {
         Long branchSeq = principal.getSelectedBranchSeq();
-        ComplexMember member = ComplexMember.builder()
-                .name(req.getName())
-                .phoneNumber(req.getPhoneNumber())
-                .level(req.getLevel())
-                .language(req.getLanguage())
-                .info(req.getInfo())
-                .chartNumber(req.getChartNumber())
-                .comment(req.getComment())
-                .signupChannel(req.getSignupChannel())
-                .interviewer(req.getInterviewer())
-                .branch(branchRepository.getReferenceById(branchSeq)) // branchSeq는 인증된 세션 값이므로 존재 보장
-                .build();
-        return ResponseEntity.ok(ApiResponse.ok("회원 추가 완료", ComplexMemberResponse.from(memberRepository.save(member))));
+        return ResponseEntity.ok(ApiResponse.ok("회원 추가 완료", complexMemberService.create(req, branchSeq)));
     }
 
     @PutMapping("/{seq}")
     public ResponseEntity<ApiResponse<ComplexMemberResponse>> update(
             @PathVariable Long seq, @RequestBody ComplexMemberRequest req) {
-        return memberRepository.findById(seq)
-                .map(member -> {
-                    member.setName(req.getName());
-                    member.setPhoneNumber(req.getPhoneNumber());
-                    member.setLevel(req.getLevel());
-                    member.setLanguage(req.getLanguage());
-                    member.setInfo(req.getInfo());
-                    member.setChartNumber(req.getChartNumber());
-                    member.setComment(req.getComment());
-                    member.setSignupChannel(req.getSignupChannel());
-                    member.setInterviewer(req.getInterviewer());
-                    return ResponseEntity.ok(ApiResponse.ok("회원 수정 완료", ComplexMemberResponse.from(memberRepository.save(member))));
-                })
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(ApiResponse.ok("회원 수정 완료", complexMemberService.update(seq, req)));
     }
 
-    @Transactional
     @PostMapping("/{seq}/memberships")
     public ResponseEntity<ApiResponse<ComplexMemberMembershipResponse>> assignMembership(
             @PathVariable Long seq, @RequestBody ComplexMemberMembershipRequest req) {
-        ComplexMember member = memberRepository.findById(seq).orElse(null);
-        if (member == null) return ResponseEntity.notFound().build();
-
-        Membership membership = membershipRepository.findById(req.getMembershipSeq()).orElse(null);
-        if (membership == null) return ResponseEntity.badRequest()
-                .body(ApiResponse.error("멤버십을 찾을 수 없습니다."));
-
-        LocalDate startDate = req.getStartDate() != null && !req.getStartDate().isEmpty()
-                ? LocalDate.parse(req.getStartDate()) : LocalDate.now();
-        LocalDate expiryDate = req.getExpiryDate() != null && !req.getExpiryDate().isEmpty()
-                ? LocalDate.parse(req.getExpiryDate()) : startDate.plusDays(membership.getDuration());
-        LocalDateTime paymentDate = req.getPaymentDate() != null && !req.getPaymentDate().isEmpty()
-                ? LocalDateTime.parse(req.getPaymentDate()) : null;
-        MembershipStatus status = MembershipStatus.활성;
-        if (req.getStatus() != null && !req.getStatus().isEmpty()) {
-            status = MembershipStatus.valueOf(req.getStatus());
-        }
-
-        ComplexMemberMembership mm = ComplexMemberMembership.builder()
-                .member(member)
-                .membership(membership)
-                .startDate(startDate)
-                .expiryDate(expiryDate)
-                .totalCount(membership.getCount())
-                .price(req.getPrice())
-                .depositAmount(req.getDepositAmount())
-                .paymentMethod(req.getPaymentMethod())
-                .paymentDate(paymentDate)
-                .status(status)
-                .build();
-
-        if (member.getJoinDate() == null) {
-            member.setJoinDate(startDate.atStartOfDay());
-            memberRepository.save(member);
-        }
-
-        return ResponseEntity.ok(ApiResponse.ok("멤버십 할당 완료",
-                ComplexMemberMembershipResponse.from(memberMembershipRepository.save(mm))));
+        return ResponseEntity.ok(ApiResponse.ok("멤버십 할당 완료", complexMemberService.assignMembership(seq, req)));
     }
 
     @PutMapping("/{seq}/memberships/{mmSeq}")
     public ResponseEntity<ApiResponse<ComplexMemberMembershipResponse>> updateMembership(
             @PathVariable Long seq, @PathVariable Long mmSeq, @RequestBody ComplexMemberMembershipRequest req) {
-        ComplexMemberMembership mm = memberMembershipRepository.findById(mmSeq).orElse(null);
-        if (mm == null || mm.getMember() == null || !mm.getMember().getSeq().equals(seq))
-            return ResponseEntity.notFound().build();
-
-        if (req.getStartDate() != null && !req.getStartDate().isEmpty())
-            mm.setStartDate(LocalDate.parse(req.getStartDate()));
-        if (req.getExpiryDate() != null && !req.getExpiryDate().isEmpty())
-            mm.setExpiryDate(LocalDate.parse(req.getExpiryDate()));
-        if (req.getPrice() != null) mm.setPrice(req.getPrice());
-        if (req.getDepositAmount() != null) mm.setDepositAmount(req.getDepositAmount());
-        if (req.getPaymentMethod() != null) mm.setPaymentMethod(req.getPaymentMethod());
-        if (req.getPaymentDate() != null && !req.getPaymentDate().isEmpty())
-            mm.setPaymentDate(LocalDateTime.parse(req.getPaymentDate()));
-        if (req.getStatus() != null && !req.getStatus().isEmpty()) {
-            mm.setStatus(MembershipStatus.valueOf(req.getStatus()));
-        }
-
-        return ResponseEntity.ok(ApiResponse.ok("멤버십 수정 완료",
-                ComplexMemberMembershipResponse.from(memberMembershipRepository.save(mm))));
+        return ResponseEntity.ok(ApiResponse.ok("멤버십 수정 완료", complexMemberService.updateMembership(seq, mmSeq, req)));
     }
 
     @DeleteMapping("/{seq}/memberships/{mmSeq}")
     public ResponseEntity<ApiResponse<Void>> deleteMembership(@PathVariable Long seq, @PathVariable Long mmSeq) {
-        ComplexMemberMembership mm = memberMembershipRepository.findById(mmSeq).orElse(null);
-        if (mm == null || mm.getMember() == null || !mm.getMember().getSeq().equals(seq))
-            return ResponseEntity.notFound().build();
-        memberMembershipRepository.delete(mm);
+        complexMemberService.deleteMembership(seq, mmSeq);
         return ResponseEntity.ok(ApiResponse.ok("멤버십 삭제 완료", null));
     }
 
     @PostMapping("/{seq}/class/{classSeq}")
     public ResponseEntity<ApiResponse<Void>> assignClass(
             @PathVariable Long seq, @PathVariable Long classSeq) {
-        ComplexMember member = memberRepository.findById(seq).orElse(null);
-        if (member == null) return ResponseEntity.notFound().build();
-        ComplexClass clazz = classRepository.findById(classSeq).orElse(null);
-        if (clazz == null) return ResponseEntity.badRequest().body(ApiResponse.error("수업을 찾을 수 없습니다."));
-
-        ComplexMemberClassMapping mapping = ComplexMemberClassMapping.builder()
-                .member(member)
-                .complexClass(clazz)
-                .build();
-        classMappingRepository.save(mapping);
+        complexMemberService.assignClass(seq, classSeq);
         return ResponseEntity.ok(ApiResponse.ok("수업 배정 완료", null));
     }
 
     @DeleteMapping("/{seq}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long seq) {
-        memberRepository.deleteById(seq);
+        complexMemberService.delete(seq);
         return ResponseEntity.ok(ApiResponse.ok("회원 삭제 완료", null));
     }
 }

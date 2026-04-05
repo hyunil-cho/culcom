@@ -2,42 +2,23 @@ package com.culcom.controller.customer;
 
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.customer.*;
-import com.culcom.entity.reservation.CallerSelectionHistory;
-import com.culcom.entity.customer.Customer;
-import com.culcom.entity.reservation.ReservationInfo;
-import com.culcom.entity.enums.CustomerStatus;
-import com.culcom.repository.BranchRepository;
-import com.culcom.repository.CallerSelectionHistoryRepository;
-import com.culcom.repository.CustomerRepository;
-import com.culcom.repository.ReservationInfoRepository;
-import com.culcom.repository.UserInfoRepository;
 import com.culcom.config.security.CustomUserPrincipal;
+import com.culcom.service.CustomerService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-
-import com.culcom.util.DateTimeUtils;
-
-import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/customers")
 @RequiredArgsConstructor
 public class CustomerController {
 
-    private final CustomerRepository customerRepository;
-    private final BranchRepository branchRepository;
-    private final CallerSelectionHistoryRepository callerSelectionHistoryRepository;
-    private final ReservationInfoRepository reservationInfoRepository;
-    private final UserInfoRepository userInfoRepository;
+    private final CustomerService customerService;
 
     @GetMapping("/{seq}")
     public ResponseEntity<ApiResponse<CustomerResponse>> get(@PathVariable Long seq) {
-        return customerRepository.findById(seq)
-                .map(customer -> ResponseEntity.ok(ApiResponse.ok(CustomerResponse.from(customer))))
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(ApiResponse.ok(customerService.get(seq)));
     }
 
     @PostMapping
@@ -47,174 +28,63 @@ public class CustomerController {
         if (branchSeq == null) {
             return ResponseEntity.badRequest().body(ApiResponse.error("지점을 먼저 선택해주세요."));
         }
-        Customer customer = Customer.builder()
-                .name(request.getName())
-                .phoneNumber(request.getPhoneNumber())
-                .comment(request.getComment())
-                .commercialName(request.getCommercialName())
-                .adSource(request.getAdSource())
-                .build();
-        branchRepository.findById(branchSeq).ifPresent(customer::setBranch);
-        return ResponseEntity.ok(ApiResponse.ok("고객 추가 완료",
-                CustomerResponse.from(customerRepository.save(customer))));
+        return ResponseEntity.ok(ApiResponse.ok("고객 추가 완료", customerService.create(request, branchSeq)));
     }
 
     @PutMapping("/{seq}")
     public ResponseEntity<ApiResponse<CustomerResponse>> update(
             @PathVariable Long seq, @RequestBody CustomerCreateRequest request) {
-        return customerRepository.findById(seq)
-                .map(customer -> {
-                    customer.setName(request.getName());
-                    customer.setPhoneNumber(request.getPhoneNumber());
-                    customer.setComment(request.getComment());
-                    customer.setCommercialName(request.getCommercialName());
-                    customer.setAdSource(request.getAdSource());
-                    if (request.getStatus() != null) {
-                        customer.setStatus(CustomerStatus.valueOf(request.getStatus()));
-                    }
-                    return ResponseEntity.ok(ApiResponse.ok("고객 수정 완료",
-                            CustomerResponse.from(customerRepository.save(customer))));
-                })
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(ApiResponse.ok("고객 수정 완료", customerService.update(seq, request)));
     }
 
     @DeleteMapping("/{seq}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long seq) {
-        customerRepository.deleteById(seq);
+        customerService.delete(seq);
         return ResponseEntity.ok(ApiResponse.ok("고객 삭제 완료", null));
     }
 
     @PostMapping("/update-name")
-    public ResponseEntity<ApiResponse<Void>> updateName(
-            @RequestBody CustomerUpdateNameRequest request) {
+    public ResponseEntity<ApiResponse<Void>> updateName(@RequestBody CustomerUpdateNameRequest request) {
         if (request.getName() == null || request.getName().isBlank()) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("이름을 입력해주세요"));
+            return ResponseEntity.badRequest().body(ApiResponse.error("이름을 입력해주세요"));
         }
-
-        return customerRepository.findById(request.getCustomerSeq())
-                .map(customer -> {
-                    customer.setName(request.getName());
-                    customerRepository.save(customer);
-                    return ResponseEntity.ok(ApiResponse.<Void>ok("이름 변경 완료", null));
-                })
-                .orElse(ResponseEntity.notFound().build());
+        customerService.updateName(request.getCustomerSeq(), request.getName());
+        return ResponseEntity.ok(ApiResponse.<Void>ok("이름 변경 완료", null));
     }
 
     @PostMapping("/comment")
-    public ResponseEntity<ApiResponse<CustomerCommentResponse>> updateComment(
-            @RequestBody CustomerCommentRequest request) {
-        return customerRepository.findById(request.getCustomerSeq())
-                .map(customer -> {
-                    customer.setComment(request.getComment());
-                    customerRepository.save(customer);
-                    String comment = request.getComment() != null ? request.getComment() : "";
-                    return ResponseEntity.ok(ApiResponse.ok("코멘트 업데이트 완료",
-                            new CustomerCommentResponse(comment)));
-                })
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ApiResponse<CustomerCommentResponse>> updateComment(@RequestBody CustomerCommentRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok("코멘트 업데이트 완료",
+                customerService.updateComment(request.getCustomerSeq(), request.getComment())));
     }
 
     @PostMapping("/process-call")
-    @Transactional
     public ResponseEntity<ApiResponse<CustomerProcessCallResponse>> processCall(
             @RequestBody CustomerProcessCallRequest request, @AuthenticationPrincipal CustomUserPrincipal principal) {
-        Long branchSeq = principal.getSelectedBranchSeq();
-
         if (request.getCaller() == null || request.getCaller().isBlank()) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Caller를 선택해주세요"));
+            return ResponseEntity.badRequest().body(ApiResponse.error("Caller를 선택해주세요"));
         }
-
-        Customer customer = customerRepository.findById(request.getCustomerSeq())
-                .orElse(null);
-        if (customer == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        // getReferenceById: branchSeq는 인증된 세션에서 가져온 값이므로 존재가 보장됨
-        callerSelectionHistoryRepository.save(CallerSelectionHistory.builder()
-                .customer(customer)
-                .caller(request.getCaller())
-                .branch(branchRepository.getReferenceById(branchSeq))
-                .build());
-
-        int newCallCount = customer.getCallCount() + 1;
-        customer.setCallCount(newCallCount);
-        customer.setLastUpdateDate(LocalDateTime.now());
-
-        if (newCallCount >= 5) {
-            customer.setStatus(CustomerStatus.콜수초과);
-        } else if (customer.getStatus() == CustomerStatus.신규) {
-            customer.setStatus(CustomerStatus.진행중);
-        }
-
-        customerRepository.save(customer);
-
-        String lastUpdateDate = DateTimeUtils.format(customer.getLastUpdateDate());
-
         return ResponseEntity.ok(ApiResponse.ok("통화 처리 완료",
-                CustomerProcessCallResponse.builder()
-                        .callCount(newCallCount)
-                        .lastUpdateDate(lastUpdateDate)
-                        .build()));
+                customerService.processCall(request.getCustomerSeq(), request.getCaller(), principal.getSelectedBranchSeq())));
     }
 
     @PostMapping("/reservation")
-    @Transactional
     public ResponseEntity<ApiResponse<CustomerReservationResponse>> createReservation(
             @RequestBody CustomerReservationRequest request, @AuthenticationPrincipal CustomUserPrincipal principal) {
-        Long branchSeq = principal.getSelectedBranchSeq();
-        Long userSeq = principal.getUserSeq();
-
         if (request.getCaller() == null || request.getCaller().isBlank()) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Caller를 선택해주세요"));
+            return ResponseEntity.badRequest().body(ApiResponse.error("Caller를 선택해주세요"));
         }
         if (request.getInterviewDate() == null || request.getInterviewDate().isBlank()) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("인터뷰 일시를 입력해주세요"));
+            return ResponseEntity.badRequest().body(ApiResponse.error("인터뷰 일시를 입력해주세요"));
         }
-
-        Customer customer = customerRepository.findById(request.getCustomerSeq()).orElse(null);
-        if (customer == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        LocalDateTime interviewDate = DateTimeUtils.parse(request.getInterviewDate());
-
-        // getReferenceById: branchSeq/userSeq는 인증된 세션에서 가져온 값이므로 존재가 보장됨
-        ReservationInfo reservation = ReservationInfo.builder()
-                .branch(branchRepository.getReferenceById(branchSeq))
-                .customer(customer)
-                .user(userInfoRepository.getReferenceById(userSeq))
-                .caller(request.getCaller())
-                .interviewDate(interviewDate)
-                .build();
-        reservationInfoRepository.save(reservation);
-
-        customer.setStatus(CustomerStatus.예약확정);
-        customerRepository.save(customer);
-
         return ResponseEntity.ok(ApiResponse.ok("예약이 생성되었습니다",
-                CustomerReservationResponse.builder()
-                        .reservationId(reservation.getSeq())
-                        .customerSeq(request.getCustomerSeq())
-                        .interviewDate(DateTimeUtils.format(interviewDate))
-                        .build()));
+                customerService.createReservation(request.getCustomerSeq(), request.getCaller(),
+                        request.getInterviewDate(), principal.getSelectedBranchSeq(), principal.getUserSeq())));
     }
 
     @PostMapping("/mark-no-phone-interview")
-    @Transactional
-    public ResponseEntity<ApiResponse<Void>> markNoPhoneInterview(
-            @RequestBody CustomerSeqRequest request) {
-        return customerRepository.findById(request.getCustomerSeq())
-                .map(customer -> {
-                    customer.setStatus(CustomerStatus.전화상거절);
-                    customer.setLastUpdateDate(LocalDateTime.now());
-                    customerRepository.save(customer);
-                    return ResponseEntity.ok(ApiResponse.<Void>ok("전화상안함으로 처리되었습니다", null));
-                })
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ApiResponse<Void>> markNoPhoneInterview(@RequestBody CustomerSeqRequest request) {
+        customerService.markNoPhoneInterview(request.getCustomerSeq());
+        return ResponseEntity.ok(ApiResponse.ok("전화상안함으로 처리되었습니다", null));
     }
 }

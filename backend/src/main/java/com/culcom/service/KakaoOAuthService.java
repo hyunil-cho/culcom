@@ -1,6 +1,11 @@
 package com.culcom.service;
 
 import com.culcom.config.KakaoOAuthProperties;
+import com.culcom.entity.branch.Branch;
+import com.culcom.entity.customer.Customer;
+import com.culcom.entity.enums.CustomerStatus;
+import com.culcom.repository.BranchRepository;
+import com.culcom.repository.CustomerRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
@@ -8,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
@@ -26,6 +32,8 @@ public class KakaoOAuthService {
 
     private final KakaoOAuthProperties properties;
     private final ObjectMapper objectMapper;
+    private final CustomerRepository customerRepository;
+    private final BranchRepository branchRepository;
     private final RestTemplate restTemplate = new RestTemplate();
 
     public String buildAuthUrl(String branchSeq) throws Exception {
@@ -111,6 +119,32 @@ public class KakaoOAuthService {
             log.error("카카오 연결 해제 실패 (kakaoId: {}): {}", kakaoId, e.getMessage());
         }
     }
+
+    @Transactional
+    public UpsertResult upsertCustomer(KakaoUserInfo info) {
+        return customerRepository.findByKakaoId(info.getKakaoId())
+                .map(existing -> {
+                    existing.setName(info.getName());
+                    existing.setPhoneNumber(info.getPhone());
+                    return new UpsertResult(customerRepository.save(existing), false);
+                })
+                .orElseGet(() -> {
+                    Branch defaultBranch = branchRepository.findById(99999L)
+                            .orElse(branchRepository.findAll().stream().findFirst().orElse(null));
+
+                    Customer created = customerRepository.save(Customer.builder()
+                            .kakaoId(info.getKakaoId())
+                            .name(info.getName())
+                            .phoneNumber(info.getPhone())
+                            .branch(defaultBranch)
+                            .adSource("카카오")
+                            .status(CustomerStatus.신규)
+                            .build());
+                    return new UpsertResult(created, true);
+                });
+    }
+
+    public record UpsertResult(Customer customer, boolean isNew) {}
 
     private String generateState(String branchSeq) throws Exception {
         String json = objectMapper.writeValueAsString(Map.of(

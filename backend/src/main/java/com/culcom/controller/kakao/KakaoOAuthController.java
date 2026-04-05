@@ -1,13 +1,9 @@
 package com.culcom.controller.kakao;
 
-import com.culcom.entity.branch.Branch;
-import com.culcom.entity.customer.Customer;
-import com.culcom.entity.enums.CustomerStatus;
-import com.culcom.repository.BranchRepository;
-import com.culcom.repository.CustomerRepository;
 import com.culcom.service.BoardSessionService;
 import com.culcom.service.KakaoOAuthService;
 import com.culcom.service.KakaoOAuthService.KakaoUserInfo;
+import com.culcom.service.KakaoOAuthService.UpsertResult;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,8 +20,6 @@ import java.net.URI;
 public class KakaoOAuthController {
 
     private final KakaoOAuthService kakaoOAuthService;
-    private final CustomerRepository customerRepository;
-    private final BranchRepository branchRepository;
     private final BoardSessionService boardSessionService;
 
     @GetMapping("/login")
@@ -49,10 +43,10 @@ public class KakaoOAuthController {
             String accessToken = kakaoOAuthService.exchangeToken(code);
             KakaoUserInfo userInfo = kakaoOAuthService.fetchUserInfo(accessToken);
 
-            UpsertResult result = upsertCustomer(userInfo);
-            boardSessionService.login(response, result.customer.getSeq(), result.customer.getName());
+            UpsertResult result = kakaoOAuthService.upsertCustomer(userInfo);
+            boardSessionService.login(response, result.customer().getSeq(), result.customer().getName());
 
-            return redirect(result.isNew ? "/kakao/success" : "/board");
+            return redirect(result.isNew() ? "/kakao/success" : "/board");
         } catch (IllegalArgumentException e) {
             log.error("카카오 콜백 state 검증 실패: {}", e.getMessage());
             return redirect("/board?error=" + e.getMessage());
@@ -62,32 +56,7 @@ public class KakaoOAuthController {
         }
     }
 
-    private UpsertResult upsertCustomer(KakaoUserInfo info) {
-        return customerRepository.findByKakaoId(info.getKakaoId())
-                .map(existing -> {
-                    existing.setName(info.getName());
-                    existing.setPhoneNumber(info.getPhone());
-                    return new UpsertResult(customerRepository.save(existing), false);
-                })
-                .orElseGet(() -> {
-                    Branch defaultBranch = branchRepository.findById(99999L)
-                            .orElse(branchRepository.findAll().stream().findFirst().orElse(null));
-
-                    Customer created = customerRepository.save(Customer.builder()
-                            .kakaoId(info.getKakaoId())
-                            .name(info.getName())
-                            .phoneNumber(info.getPhone())
-                            .branch(defaultBranch)
-                            .adSource("카카오")
-                            .status(CustomerStatus.신규)
-                            .build());
-                    return new UpsertResult(created, true);
-                });
-    }
-
     private ResponseEntity<Void> redirect(String path) {
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(path)).build();
     }
-
-    private record UpsertResult(Customer customer, boolean isNew) {}
 }

@@ -53,7 +53,8 @@
       "Bash(timeout 3 node mock/server.js)",
       "Bash(node -e ':*)",
       "Skill(update-config)",
-      "Bash(xargs ls:*)"
+      "Bash(xargs ls:*)",
+      "Bash(sort -t: -k2 -rn)"
     ]
   }
 }

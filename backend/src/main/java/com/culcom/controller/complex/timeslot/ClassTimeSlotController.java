@@ -3,10 +3,8 @@ package com.culcom.controller.complex.timeslot;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.complex.classes.ClassTimeSlotRequest;
 import com.culcom.dto.complex.classes.ClassTimeSlotResponse;
-import com.culcom.entity.complex.clazz.ClassTimeSlot;
-import com.culcom.repository.BranchRepository;
-import com.culcom.repository.ClassTimeSlotRepository;
 import com.culcom.config.security.CustomUserPrincipal;
+import com.culcom.service.ClassTimeSlotService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,48 +17,31 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ClassTimeSlotController {
 
-    private final ClassTimeSlotRepository timeSlotRepository;
-    private final BranchRepository branchRepository;
+    private final ClassTimeSlotService classTimeSlotService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<ClassTimeSlotResponse>>> list(@AuthenticationPrincipal CustomUserPrincipal principal) {
-        Long branchSeq = principal.getSelectedBranchSeq();
-        List<ClassTimeSlotResponse> result = timeSlotRepository.findByBranchSeq(branchSeq)
-                .stream().map(ClassTimeSlotResponse::from).toList();
+        List<ClassTimeSlotResponse> result = classTimeSlotService.list(principal.getSelectedBranchSeq());
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
     @PostMapping
     public ResponseEntity<ApiResponse<ClassTimeSlotResponse>> create(
             @RequestBody ClassTimeSlotRequest request, @AuthenticationPrincipal CustomUserPrincipal principal) {
-        Long branchSeq = principal.getSelectedBranchSeq();
-        ClassTimeSlot timeSlot = ClassTimeSlot.builder()
-                .name(request.getName())
-                .daysOfWeek(request.getDaysOfWeek())
-                .startTime(request.getStartTime())
-                .endTime(request.getEndTime())
-                .build();
-        branchRepository.findById(branchSeq).ifPresent(timeSlot::setBranch);
-        return ResponseEntity.ok(ApiResponse.ok("시간대 추가 완료", ClassTimeSlotResponse.from(timeSlotRepository.save(timeSlot))));
+        ClassTimeSlotResponse result = classTimeSlotService.create(request, principal.getSelectedBranchSeq());
+        return ResponseEntity.ok(ApiResponse.ok("시간대 추가 완료", result));
     }
 
     @PutMapping("/{seq}")
     public ResponseEntity<ApiResponse<ClassTimeSlotResponse>> update(
             @PathVariable Long seq, @RequestBody ClassTimeSlotRequest request) {
-        return timeSlotRepository.findById(seq)
-                .map(ts -> {
-                    ts.setName(request.getName());
-                    ts.setDaysOfWeek(request.getDaysOfWeek());
-                    ts.setStartTime(request.getStartTime());
-                    ts.setEndTime(request.getEndTime());
-                    return ResponseEntity.ok(ApiResponse.ok("시간대 수정 완료", ClassTimeSlotResponse.from(timeSlotRepository.save(ts))));
-                })
-                .orElse(ResponseEntity.notFound().build());
+        ClassTimeSlotResponse result = classTimeSlotService.update(seq, request);
+        return ResponseEntity.ok(ApiResponse.ok("시간대 수정 완료", result));
     }
 
     @DeleteMapping("/{seq}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long seq) {
-        timeSlotRepository.deleteById(seq);
+        classTimeSlotService.delete(seq);
         return ResponseEntity.ok(ApiResponse.ok("시간대 삭제 완료", null));
     }
 }

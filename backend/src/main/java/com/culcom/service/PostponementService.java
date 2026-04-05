@@ -1,0 +1,79 @@
+package com.culcom.service;
+
+import com.culcom.dto.complex.postponement.PostponementCreateRequest;
+import com.culcom.dto.complex.postponement.PostponementReasonRequest;
+import com.culcom.dto.complex.postponement.PostponementReasonResponse;
+import com.culcom.dto.complex.postponement.PostponementResponse;
+import com.culcom.entity.complex.postponement.ComplexPostponementReason;
+import com.culcom.entity.complex.postponement.ComplexPostponementRequest;
+import com.culcom.entity.enums.RequestStatus;
+import com.culcom.exception.EntityNotFoundException;
+import com.culcom.repository.BranchRepository;
+import com.culcom.repository.ComplexMemberMembershipRepository;
+import com.culcom.repository.ComplexMemberRepository;
+import com.culcom.repository.ComplexPostponementReasonRepository;
+import com.culcom.repository.ComplexPostponementRequestRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class PostponementService {
+
+    private final ComplexPostponementRequestRepository postponementRepository;
+    private final ComplexPostponementReasonRepository reasonRepository;
+    private final BranchRepository branchRepository;
+    private final ComplexMemberRepository complexMemberRepository;
+    private final ComplexMemberMembershipRepository complexMemberMembershipRepository;
+
+    public PostponementResponse create(PostponementCreateRequest req, Long branchSeq) {
+        ComplexPostponementRequest entity = ComplexPostponementRequest.builder()
+                .memberName(req.getMemberName())
+                .phoneNumber(req.getPhoneNumber())
+                .timeSlot(req.getTimeSlot())
+                .currentClass(req.getCurrentClass())
+                .startDate(req.getStartDate())
+                .endDate(req.getEndDate())
+                .reason(req.getReason())
+                .build();
+        if (req.getMemberSeq() != null) {
+            entity.setMember(complexMemberRepository.getReferenceById(req.getMemberSeq()));
+        }
+        if (req.getMemberMembershipSeq() != null) {
+            entity.setMemberMembership(complexMemberMembershipRepository.getReferenceById(req.getMemberMembershipSeq()));
+        }
+        branchRepository.findById(branchSeq).ifPresent(entity::setBranch);
+        return PostponementResponse.from(postponementRepository.save(entity));
+    }
+
+    public PostponementResponse updateStatus(Long seq, RequestStatus status, String rejectReason) {
+        ComplexPostponementRequest req = postponementRepository.findById(seq)
+                .orElseThrow(() -> new EntityNotFoundException("연기 요청"));
+        req.setStatus(status);
+        if (status == RequestStatus.반려) {
+            req.setRejectReason(rejectReason);
+        }
+        return PostponementResponse.from(postponementRepository.save(req));
+    }
+
+    public List<PostponementReasonResponse> reasons(Long branchSeq) {
+        return reasonRepository.findByBranchSeq(branchSeq).stream()
+                .map(PostponementReasonResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    public PostponementReasonResponse addReason(PostponementReasonRequest req, Long branchSeq) {
+        ComplexPostponementReason entity = ComplexPostponementReason.builder()
+                .reason(req.getReason())
+                .build();
+        branchRepository.findById(branchSeq).ifPresent(entity::setBranch);
+        return PostponementReasonResponse.from(reasonRepository.save(entity));
+    }
+
+    public void deleteReason(Long seq) {
+        reasonRepository.deleteById(seq);
+    }
+}

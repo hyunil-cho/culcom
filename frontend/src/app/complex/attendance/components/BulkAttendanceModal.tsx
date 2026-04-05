@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { attendanceViewApi, AttendanceViewClass, AttendanceViewMember, BulkAttendanceResult } from '@/lib/api';
+import s from './BulkAttendanceModal.module.css';
 
 export function useBulkAttendance(onComplete: () => void) {
   const [bulkModal, setBulkModal] = useState<{ classSeq: number; className: string; members: AttendanceViewMember[] } | null>(null);
@@ -36,54 +37,54 @@ export function useBulkAttendance(onComplete: () => void) {
     <>
       {bulkModal && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setBulkModal(null)}>
-          <div className="modal-content" style={{ maxWidth: 440 }}>
-            <div className="modal-header" style={{ background: '#2e7d32', borderColor: '#2e7d32' }}>
+          <div className={`modal-content ${s.narrow}`}>
+            <div className={`modal-header ${s.headerGreen}`}>
               <h3>{bulkModal.className} — 일괄 출석</h3>
             </div>
             <div className="modal-body">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderBottom: '1px solid #e8f5e9', background: '#f9fdf9' }}>
-                <span style={{ fontSize: '0.82rem', color: '#555' }}>총 <strong>{bulkModal.members.length}</strong>명</span>
-                <div style={{ display: 'flex', gap: 6 }}>
+              <div className={s.toolbar}>
+                <span className={s.toolbarCount}>총 <strong>{bulkModal.members.length}</strong>명</span>
+                <div className={s.toolbarBtns}>
                   <button type="button" onClick={() => {
                     const next: Record<number, boolean> = {};
                     bulkModal.members.forEach(m => { if (!m.postponed) next[m.memberSeq] = true; });
                     setBulkChecked(next);
-                  }} style={{ fontSize: '0.75rem', padding: '3px 10px', border: '1px solid #2e7d32', borderRadius: 4, background: 'white', color: '#2e7d32', cursor: 'pointer', fontWeight: 700 }}>전체 출석</button>
+                  }} className={s.selectAllBtn}>전체 출석</button>
                   <button type="button" onClick={() => {
                     const next: Record<number, boolean> = {};
                     bulkModal.members.forEach(m => { if (!m.postponed) next[m.memberSeq] = false; });
                     setBulkChecked(next);
-                  }} style={{ fontSize: '0.75rem', padding: '3px 10px', border: '1px solid #ccc', borderRadius: 4, background: 'white', color: '#888', cursor: 'pointer', fontWeight: 600 }}>전체 해제</button>
+                  }} className={s.deselectAllBtn}>전체 해제</button>
                 </div>
               </div>
-              <div style={{ maxHeight: 340, overflowY: 'auto' }}>
+              <div className={s.scrollArea}>
                 {bulkModal.members.map((m, i) => {
                   const label = m.staff
-                    ? <span style={{ color: '#e67e22', fontSize: '0.72rem', fontWeight: 800, whiteSpace: 'nowrap' }}>STAFF</span>
-                    : <span style={{ color: '#adb5bd', fontSize: '0.8rem', width: 18, textAlign: 'right', flexShrink: 0 }}>{i}</span>;
+                    ? <span className={s.staffLabel}>STAFF</span>
+                    : <span className={s.indexLabel}>{i}</span>;
 
                   if (m.postponed) {
                     return (
-                      <div key={m.memberSeq} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderBottom: '1px solid #f0f0f0', background: '#fffdf5', opacity: 0.75 }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 17, height: 17, background: '#fff9db', border: '1px solid #ffc078', borderRadius: 3, color: '#e67700', fontSize: '0.75rem', fontWeight: 800, flexShrink: 0 }}>△</span>
-                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                      <div key={m.memberSeq} className={s.postponedRow}>
+                        <span className={s.postponedMark}>△</span>
+                        <div className={s.memberInfo}>
                           {label}
-                          <strong style={{ color: '#b8860b', whiteSpace: 'nowrap' }}>{m.name}</strong>
-                          <span style={{ color: '#999', fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.phoneNumber}</span>
-                          <span style={{ fontSize: '0.7rem', color: '#e67700', background: '#fff3cd', padding: '1px 6px', borderRadius: 10, whiteSpace: 'nowrap' }}>연기중</span>
+                          <strong className={s.postponedName}>{m.name}</strong>
+                          <span className={s.phone}>{m.phoneNumber}</span>
+                          <span className={s.postponedBadge}>연기중</span>
                         </div>
                       </div>
                     );
                   }
                   return (
-                    <div key={m.memberSeq} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderBottom: '1px solid #f0f0f0', ...(m.staff ? { background: '#fff8f0' } : {}) }}>
+                    <div key={m.memberSeq} className={m.staff ? s.memberRowStaff : s.memberRow}>
                       <input type="checkbox" checked={bulkChecked[m.memberSeq] ?? false}
                         onChange={e => setBulkChecked(prev => ({ ...prev, [m.memberSeq]: e.target.checked }))}
-                        style={{ width: 17, height: 17, cursor: 'pointer', accentColor: '#2e7d32' }} />
-                      <label style={{ flex: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                        className={s.checkbox} />
+                      <label className={s.checkLabel}>
                         {label}
-                        <strong style={{ color: '#333', whiteSpace: 'nowrap' }}>{m.name}</strong>
-                        <span style={{ color: '#999', fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.phoneNumber}</span>
+                        <strong className={s.normalName}>{m.name}</strong>
+                        <span className={s.phone}>{m.phoneNumber}</span>
                       </label>
                     </div>
                   );
@@ -91,8 +92,8 @@ export function useBulkAttendance(onComplete: () => void) {
               </div>
             </div>
             <div className="modal-footer">
-              <button onClick={() => setBulkModal(null)} style={{ padding: '8px 20px', border: '1px solid #ccc', borderRadius: 6, background: 'white', cursor: 'pointer' }}>취소</button>
-              <button onClick={save} style={{ padding: '8px 20px', border: 'none', borderRadius: 6, background: '#2e7d32', color: 'white', cursor: 'pointer', fontWeight: 600 }}>저장</button>
+              <button onClick={() => setBulkModal(null)} className={s.cancelBtn}>취소</button>
+              <button onClick={save} className={s.saveBtn}>저장</button>
             </div>
           </div>
         </div>
@@ -100,17 +101,17 @@ export function useBulkAttendance(onComplete: () => void) {
 
       {resultModal && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setResultModal(null)}>
-          <div className="modal-content" style={{ maxWidth: 400 }}>
-            <div className="modal-header" style={{ background: '#2e7d32', borderColor: '#2e7d32' }}>
+          <div className={`modal-content ${s.small}`}>
+            <div className={`modal-header ${s.headerGreen}`}>
               <h3>{resultModal.className} — 출석 처리 결과</h3>
             </div>
-            <div className="modal-body" style={{ padding: 10 }}>
-              <div style={{ padding: 10, fontSize: '0.9rem', lineHeight: 1.8 }}>
+            <div className="modal-body">
+              <div className={s.resultInner}>
                 <BulkResultSummary results={resultModal.results} />
               </div>
             </div>
             <div className="modal-footer">
-              <button onClick={() => setResultModal(null)} style={{ padding: '8px 20px', border: 'none', borderRadius: 6, background: '#2e7d32', color: 'white', cursor: 'pointer', fontWeight: 600 }}>확인</button>
+              <button onClick={() => setResultModal(null)} className={s.saveBtn}>확인</button>
             </div>
           </div>
         </div>
@@ -135,7 +136,7 @@ function BulkResultSummary({ results }: { results: BulkAttendanceResult[] }) {
         const items = results.filter(x => x.status === g.filter);
         if (items.length === 0) return null;
         return (
-          <div key={g.filter} style={{ marginBottom: 10, color: g.color }}>
+          <div key={g.filter} className="resultGroup" style={{ marginBottom: 10, color: g.color }}>
             <strong>{g.label} ({items.length}명)</strong><br />
             {items.map(x => x.name).join(', ')}
           </div>

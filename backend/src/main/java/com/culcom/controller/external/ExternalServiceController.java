@@ -6,8 +6,7 @@ import com.culcom.dto.external.CalendarEventRequest;
 import com.culcom.dto.external.CalendarEventResponse;
 import com.culcom.dto.integration.SmsSendRequest;
 import com.culcom.dto.integration.SmsSendResponse;
-import com.culcom.entity.branch.Branch;
-import com.culcom.repository.BranchRepository;
+import com.culcom.service.BranchService;
 import com.culcom.service.SmsService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +31,7 @@ import java.time.format.DateTimeFormatter;
 public class ExternalServiceController {
 
     private final SmsService smsService;
-    private final BranchRepository branchRepository;
+    private final BranchService branchService;
 
     // ── SMS ──
 
@@ -116,9 +115,7 @@ public class ExternalServiceController {
         // 지점 alias를 location으로
         String location = "";
         if (branchSeq != null) {
-            location = branchRepository.findById(branchSeq)
-                    .map(Branch::getAlias)
-                    .orElse("");
+            location = branchService.getAlias(branchSeq);
         }
 
         // URL 생성
