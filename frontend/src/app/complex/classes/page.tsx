@@ -37,14 +37,14 @@ export default function ClassesPage() {
     { header: '수업 이름', render: (c) => <strong>{c.name}</strong> },
     {
       header: '담당 강사',
-      render: (c) => c.staff?.name
-        ? <span style={{ color: '#555', fontWeight: 600 }}>{c.staff.name}</span>
+      render: (c) => c.staffName
+        ? <span style={{ color: '#555', fontWeight: 600 }}>{c.staffName}</span>
         : <small style={{ color: '#ccc' }}>(미배정)</small>,
     },
     {
       header: '시간대',
-      render: (c) => c.timeSlot
-        ? <span className="badge badge-success">{c.timeSlot.name}</span>
+      render: (c) => c.timeSlotName
+        ? <span className="badge badge-success">{c.timeSlotName}</span>
         : '-',
     },
     {

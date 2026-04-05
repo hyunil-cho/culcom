@@ -5,11 +5,15 @@ import com.culcom.dto.complex.member.ComplexMemberMembershipRequest;
 import com.culcom.dto.complex.member.ComplexMemberMembershipResponse;
 import com.culcom.dto.complex.member.ComplexMemberRequest;
 import com.culcom.dto.complex.member.ComplexMemberResponse;
+import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.member.ComplexMember;
+import com.culcom.entity.complex.member.ComplexMemberClassMapping;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.member.Membership;
 import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.repository.BranchRepository;
+import com.culcom.repository.ComplexClassRepository;
+import com.culcom.repository.ComplexMemberClassMappingRepository;
 import com.culcom.repository.ComplexMemberMembershipRepository;
 import com.culcom.repository.ComplexMemberRepository;
 import com.culcom.repository.MembershipRepository;
@@ -31,6 +35,8 @@ public class ComplexMemberController {
     private final ComplexMemberRepository memberRepository;
     private final ComplexMemberMembershipRepository memberMembershipRepository;
     private final MembershipRepository membershipRepository;
+    private final ComplexClassRepository classRepository;
+    private final ComplexMemberClassMappingRepository classMappingRepository;
     private final BranchRepository branchRepository;
 
     @GetMapping("/{seq}")
@@ -158,6 +164,22 @@ public class ComplexMemberController {
         if (mm == null || !mm.getMember().getSeq().equals(seq)) return ResponseEntity.notFound().build();
         memberMembershipRepository.delete(mm);
         return ResponseEntity.ok(ApiResponse.ok("멤버십 삭제 완료", null));
+    }
+
+    @PostMapping("/{seq}/class/{classSeq}")
+    public ResponseEntity<ApiResponse<Void>> assignClass(
+            @PathVariable Long seq, @PathVariable Long classSeq) {
+        ComplexMember member = memberRepository.findById(seq).orElse(null);
+        if (member == null) return ResponseEntity.notFound().build();
+        ComplexClass clazz = classRepository.findById(classSeq).orElse(null);
+        if (clazz == null) return ResponseEntity.badRequest().body(ApiResponse.error("수업을 찾을 수 없습니다."));
+
+        ComplexMemberClassMapping mapping = ComplexMemberClassMapping.builder()
+                .member(member)
+                .complexClass(clazz)
+                .build();
+        classMappingRepository.save(mapping);
+        return ResponseEntity.ok(ApiResponse.ok("수업 배정 완료", null));
     }
 
     @DeleteMapping("/{seq}")

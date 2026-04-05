@@ -5,7 +5,8 @@ import { Button } from './Button';
 
 export interface Column<T> {
   header: string;
-  render: (item: T) => ReactNode;
+  render: (item: T, index?: number) => ReactNode;
+  style?: React.CSSProperties;
 }
 
 interface DataTableProps<T> {
@@ -59,19 +60,19 @@ export default function DataTable<T>({
             <thead>
               <tr>
                 {columns.map((col, i) => (
-                  <th key={i}>{col.header}</th>
+                  <th key={i} style={col.style}>{col.header}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {data.map((item) => (
+              {data.map((item, rowIdx) => (
                 <tr
                   key={rowKey(item)}
                   style={{ ...rowStyle?.(item), ...(onRowClick ? { cursor: 'pointer' } : {}) }}
                   onClick={onRowClick ? () => onRowClick(item) : undefined}
                 >
                   {columns.map((col, i) => (
-                    <td key={i}>{col.render(item)}</td>
+                    <td key={i} style={col.style}>{col.render(item, rowIdx)}</td>
                   ))}
                 </tr>
               ))}

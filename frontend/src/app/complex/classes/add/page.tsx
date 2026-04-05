@@ -1,19 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { classApi, timeslotApi, staffApi, type ClassTimeSlot, type ComplexStaff } from '@/lib/api';
+import { classApi, staffApi, type ComplexStaff } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import ClassForm, { emptyClassForm, validateClassForm, type ClassFormData } from '../ClassForm';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useClassSlots } from '../../hooks/useClassSlots';
 
 export default function ClassAddPage() {
   const [form, setForm] = useState<ClassFormData>(emptyClassForm);
-  const [timeSlots, setTimeSlots] = useState<ClassTimeSlot[]>([]);
+  const { timeSlots } = useClassSlots();
   const [staffs, setStaffs] = useState<ComplexStaff[]>([]);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_CLASSES });
 
   useEffect(() => {
-    timeslotApi.list().then(res => setTimeSlots(res.data));
     staffApi.list().then(res => setStaffs(res.data));
   }, []);
 

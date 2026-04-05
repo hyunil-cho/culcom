@@ -143,17 +143,11 @@ export interface ComplexClass {
   description?: string;
   capacity: number;
   sortOrder: number;
-  timeSlot?: {
-    seq: number;
-    name: string;
-    daysOfWeek: string;
-    startTime: string;
-    endTime: string;
-  };
-  staff?: {
-    seq: number;
-    name: string;
-  };
+  timeSlotSeq?: number;
+  timeSlotName?: string;
+  staffSeq?: number;
+  staffName?: string;
+  createdDate?: string;
 }
 
 export interface ComplexMember {
@@ -167,6 +161,9 @@ export interface ComplexMember {
   signupChannel?: string;
   interviewer?: string;
   comment?: string;
+  joinDate?: string;
+  createdDate?: string;
+  lastUpdateDate?: string;
 }
 
 export interface ComplexStaff {
@@ -212,6 +209,8 @@ export const memberApi = {
     api.put<MemberMembershipResponse>(API.COMPLEX_MEMBER_MEMBERSHIP(seq, mmSeq), data),
   deleteMembership: (seq: number, mmSeq: number) =>
     api.delete<void>(API.COMPLEX_MEMBER_MEMBERSHIP(seq, mmSeq)),
+  assignClass: (seq: number, classSeq: number) =>
+    api.post<void>(`${API.COMPLEX_MEMBER(seq)}/class/${classSeq}`),
 };
 
 export interface MemberMembershipRequest {

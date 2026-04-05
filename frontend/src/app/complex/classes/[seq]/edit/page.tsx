@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { classApi, timeslotApi, staffApi, type ClassTimeSlot, type ComplexStaff } from '@/lib/api';
+import { classApi, staffApi, type ComplexStaff } from '@/lib/api';
+import { useClassSlots } from '../../../hooks/useClassSlots';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { ROUTES } from '@/lib/routes';
 import ClassForm, { emptyClassForm, validateClassForm, type ClassFormData } from '../../ClassForm';
@@ -13,7 +14,7 @@ export default function ClassEditPage() {
   const router = useRouter();
   const seq = Number(params.seq);
   const [form, setForm] = useState<ClassFormData>(emptyClassForm);
-  const [timeSlots, setTimeSlots] = useState<ClassTimeSlot[]>([]);
+  const { timeSlots } = useClassSlots();
   const [staffs, setStaffs] = useState<ComplexStaff[]>([]);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_CLASSES });
   const [deleting, setDeleting] = useState(false);
@@ -21,19 +22,17 @@ export default function ClassEditPage() {
   useEffect(() => {
     Promise.all([
       classApi.get(seq),
-      timeslotApi.list(),
       staffApi.list(),
-    ]).then(([classRes, tsRes, staffRes]) => {
+    ]).then(([classRes, staffRes]) => {
       const c = classRes.data;
       setForm({
         name: c.name,
-        timeSlotSeq: c.timeSlot?.seq ?? '',
-        staffSeq: c.staff?.seq ?? '',
+        timeSlotSeq: c.timeSlotSeq ?? '',
+        staffSeq: c.staffSeq ?? '',
         capacity: c.capacity,
         description: c.description ?? '',
         sortOrder: c.sortOrder,
       });
-      setTimeSlots(tsRes.data);
       setStaffs(staffRes.data);
     });
   }, [seq]);
