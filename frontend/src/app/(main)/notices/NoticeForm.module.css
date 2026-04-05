@@ -1,0 +1,7 @@
+.formCard { padding: 2rem; }
+.heading { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; }
+.twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+.fieldGroup { margin-bottom: 1rem; }
+.fieldGroupLg { margin-bottom: 1.5rem; }
+.requiredMark { color: var(--danger); }
+.formActions { display: flex; gap: 8px; justify-content: flex-end; }

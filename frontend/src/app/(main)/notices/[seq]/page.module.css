@@ -1,0 +1,21 @@
+.loading { padding: 2rem; text-align: center; color: #666; }
+.backRow { margin-bottom: 1rem; }
+.backLink { color: #666; text-decoration: none; font-size: 0.9rem; }
+.detailCard { padding: 2rem; }
+
+.metaSection { margin-bottom: 1.5rem; }
+.badges { display: flex; gap: 8px; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; }
+.pinnedBadge { background: #fff3e0; color: #e65100; }
+.branchBadge { background: #e8f5e9; color: #2e7d32; }
+
+.title { font-size: 1.5rem; font-weight: 700; margin: 0 0 0.75rem; }
+.metaInfo { display: flex; gap: 16px; color: #888; font-size: 0.85rem; flex-wrap: wrap; }
+
+.content {
+  padding: 1.5rem 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee;
+  min-height: 200px; white-space: pre-wrap; line-height: 1.8; font-size: 0.95rem; color: #333;
+}
+
+.actionsRow { margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+.actionBtns { display: flex; gap: 8px; }
+.lastUpdate { font-size: 0.8rem; color: #999; }

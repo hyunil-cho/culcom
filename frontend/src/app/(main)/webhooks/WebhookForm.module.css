@@ -1,0 +1,18 @@
+.actionGroup { display: flex; gap: 8px; }
+.sectionCard { margin-top: 16px; }
+.mappingHint { font-size: 0.85rem; color: #666; margin-bottom: 16px; }
+.requiredMark { color: #e53e3e; }
+.mappingTable { border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
+.mappingHeader {
+  display: grid; grid-template-columns: 1fr 40px 1fr;
+  background: #f3f4f6; padding: 10px 16px; gap: 8px;
+  font-size: 0.82rem; font-weight: 700; color: #444;
+}
+.mappingRow {
+  display: grid; grid-template-columns: 1fr 40px 1fr;
+  padding: 8px 16px; gap: 8px; align-items: center;
+  border-top: 1px solid #f0f0f0;
+}
+.fieldName { font-size: 0.9rem; color: #333; }
+.fieldKey { color: #aaa; font-size: 0.78rem; margin-left: 4px; }
+.arrowCol { text-align: center; color: #aaa; }
