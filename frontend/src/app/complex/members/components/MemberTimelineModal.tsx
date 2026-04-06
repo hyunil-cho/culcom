@@ -12,16 +12,21 @@ interface Props {
 }
 
 const TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  MEMBERSHIP:          { label: '멤버십',   color: '#4338ca', bg: '#eef2ff' },
-  POSTPONEMENT:        { label: '연기요청', color: '#92400e', bg: '#fef3c7' },
-  POSTPONEMENT_RESULT: { label: '연기처리', color: '#78350f', bg: '#fde68a' },
-  REFUND:              { label: '환불요청', color: '#991b1b', bg: '#fef2f2' },
-  REFUND_RESULT:       { label: '환불처리', color: '#7f1d1d', bg: '#fecaca' },
-  ATTENDANCE:          { label: '출석',     color: '#065f46', bg: '#ecfdf5' },
-  STAFF_REGISTER:      { label: '등록',     color: '#1e40af', bg: '#dbeafe' },
-  STATUS_CHANGE:       { label: '상태변경', color: '#7c3aed', bg: '#ede9fe' },
-  INFO_CHANGE:         { label: '정보변경', color: '#0369a1', bg: '#e0f2fe' },
-  REFUND_CHANGE:       { label: '환불정보', color: '#b45309', bg: '#fef3c7' },
+  ATTENDANCE:            { label: '출석',       color: '#065f46', bg: '#ecfdf5' },
+  MEMBER_CREATE:         { label: '회원등록',   color: '#1e40af', bg: '#dbeafe' },
+  MEMBERSHIP_ASSIGN:     { label: '멤버십등록', color: '#4338ca', bg: '#eef2ff' },
+  MEMBERSHIP_UPDATE:     { label: '멤버십변경', color: '#6d28d9', bg: '#f5f3ff' },
+  MEMBERSHIP_DELETE:     { label: '멤버십삭제', color: '#991b1b', bg: '#fef2f2' },
+  POSTPONEMENT_REQUEST:  { label: '연기요청',   color: '#92400e', bg: '#fef3c7' },
+  POSTPONEMENT_APPROVE:  { label: '연기승인',   color: '#78350f', bg: '#fde68a' },
+  POSTPONEMENT_REJECT:   { label: '연기반려',   color: '#78350f', bg: '#fde68a' },
+  REFUND_REQUEST:        { label: '환불요청',   color: '#991b1b', bg: '#fef2f2' },
+  REFUND_APPROVE:        { label: '환불승인',   color: '#7f1d1d', bg: '#fecaca' },
+  REFUND_REJECT:         { label: '환불반려',   color: '#7f1d1d', bg: '#fecaca' },
+  CLASS_ASSIGN:          { label: '수업배정',   color: '#0e7490', bg: '#ecfeff' },
+  STATUS_CHANGE:         { label: '상태변경',   color: '#7c3aed', bg: '#ede9fe' },
+  INFO_CHANGE:           { label: '정보변경',   color: '#0369a1', bg: '#e0f2fe' },
+  REFUND_CHANGE:         { label: '환불정보',   color: '#b45309', bg: '#fef3c7' },
 };
 
 const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
@@ -35,6 +40,9 @@ const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
   '승인': { color: '#065f46', bg: '#ecfdf5' },
   '반려': { color: '#991b1b', bg: '#fef2f2' },
   '변경': { color: '#0369a1', bg: '#e0f2fe' },
+  '등록': { color: '#1e40af', bg: '#dbeafe' },
+  '삭제': { color: '#991b1b', bg: '#fee2e2' },
+  '배정': { color: '#0e7490', bg: '#ecfeff' },
 };
 
 const PAGE_SIZE = 20;
@@ -63,14 +71,17 @@ export default function MemberTimelineModal({ memberSeq, memberName, type = 'mem
   useEffect(() => { load(); }, [load]);
 
   const FILTER_GROUPS: { key: string; label: string; types: string[]; color: string; bg: string }[] = [
-    { key: 'MEMBERSHIP', label: '멤버십', types: ['MEMBERSHIP'], color: '#4338ca', bg: '#eef2ff' },
-    { key: 'POSTPONEMENT', label: '연기', types: ['POSTPONEMENT', 'POSTPONEMENT_RESULT'], color: '#92400e', bg: '#fef3c7' },
-    { key: 'REFUND', label: '환불', types: ['REFUND', 'REFUND_RESULT'], color: '#991b1b', bg: '#fef2f2' },
     { key: 'ATTENDANCE', label: '출석', types: ['ATTENDANCE'], color: '#065f46', bg: '#ecfdf5' },
+    { key: 'MEMBERSHIP', label: '멤버십', types: ['MEMBERSHIP_ASSIGN', 'MEMBERSHIP_UPDATE', 'MEMBERSHIP_DELETE'], color: '#4338ca', bg: '#eef2ff' },
+    { key: 'POSTPONEMENT', label: '연기', types: ['POSTPONEMENT_REQUEST', 'POSTPONEMENT_APPROVE', 'POSTPONEMENT_REJECT'], color: '#92400e', bg: '#fef3c7' },
+    { key: 'REFUND', label: '환불', types: ['REFUND_REQUEST', 'REFUND_APPROVE', 'REFUND_REJECT'], color: '#991b1b', bg: '#fef2f2' },
+    { key: 'INFO_CHANGE', label: '정보변경', types: ['INFO_CHANGE'], color: '#0369a1', bg: '#e0f2fe' },
+    { key: 'CLASS_ASSIGN', label: '수업배정', types: ['CLASS_ASSIGN'], color: '#0e7490', bg: '#ecfeff' },
+    ...(type === 'member' ? [
+      { key: 'MEMBER_CREATE', label: '등록', types: ['MEMBER_CREATE'], color: '#1e40af', bg: '#dbeafe' },
+    ] : []),
     ...(type === 'staff' ? [
-      { key: 'STAFF_REGISTER', label: '등록', types: ['STAFF_REGISTER'], color: '#1e40af', bg: '#dbeafe' },
       { key: 'STATUS_CHANGE', label: '상태변경', types: ['STATUS_CHANGE'], color: '#7c3aed', bg: '#ede9fe' },
-      { key: 'INFO_CHANGE', label: '정보변경', types: ['INFO_CHANGE'], color: '#0369a1', bg: '#e0f2fe' },
       { key: 'REFUND_CHANGE', label: '환불정보', types: ['REFUND_CHANGE'], color: '#b45309', bg: '#fef3c7' },
     ] : []),
   ];

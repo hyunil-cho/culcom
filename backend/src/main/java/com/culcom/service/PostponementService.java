@@ -7,8 +7,10 @@ import com.culcom.dto.complex.postponement.PostponementResponse;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.postponement.ComplexPostponementReason;
 import com.culcom.entity.complex.postponement.ComplexPostponementRequest;
+import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.enums.RequestStatus;
+import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ComplexMemberMembershipRepository;
@@ -16,6 +18,7 @@ import com.culcom.repository.ComplexMemberRepository;
 import com.culcom.repository.ComplexPostponementReasonRepository;
 import com.culcom.repository.ComplexPostponementRequestRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +34,9 @@ public class PostponementService {
     private final BranchRepository branchRepository;
     private final ComplexMemberRepository complexMemberRepository;
     private final ComplexMemberMembershipRepository complexMemberMembershipRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
+    @Transactional
     public PostponementResponse create(PostponementCreateRequest req, Long branchSeq) {
         ComplexPostponementRequest entity = ComplexPostponementRequest.builder()
                 .memberName(req.getMemberName())
@@ -49,7 +54,15 @@ public class PostponementService {
             entity.setMemberMembership(complexMemberMembershipRepository.getReferenceById(req.getMemberMembershipSeq()));
         }
         branchRepository.findById(branchSeq).ifPresent(entity::setBranch);
-        return PostponementResponse.from(postponementRepository.save(entity));
+        postponementRepository.save(entity);
+
+        if (entity.getMember() != null) {
+            eventPublisher.publishEvent(ActivityEvent.of(entity.getMember(),
+                    ActivityEventType.POSTPONEMENT_REQUEST,
+                    "연기 요청: " + entity.getStartDate() + " ~ " + entity.getEndDate() + " / " + entity.getReason()));
+        }
+
+        return PostponementResponse.from(entity);
     }
 
     @Transactional
@@ -68,7 +81,19 @@ public class PostponementService {
                 complexMemberMembershipRepository.save(mm);
             }
         }
-        return PostponementResponse.from(postponementRepository.save(req));
+        postponementRepository.save(req);
+
+        if (req.getMember() != null) {
+            ActivityEventType eventType = status == RequestStatus.승인
+                    ? ActivityEventType.POSTPONEMENT_APPROVE : ActivityEventType.POSTPONEMENT_REJECT;
+            String note = "연기 " + status.name() + ": " + req.getStartDate() + " ~ " + req.getEndDate();
+            if (status == RequestStatus.반려 && rejectReason != null) {
+                note += " (사유: " + rejectReason + ")";
+            }
+            eventPublisher.publishEvent(ActivityEvent.of(req.getMember(), eventType, note));
+        }
+
+        return PostponementResponse.from(req);
     }
 
     public List<PostponementReasonResponse> reasons(Long branchSeq) {

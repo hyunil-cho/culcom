@@ -5,14 +5,17 @@ import com.culcom.dto.publicapi.*;
 import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.refund.ComplexRefundRequest;
+import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.enums.RequestStatus;
+import com.culcom.event.ActivityEvent;
 import com.culcom.repository.ComplexMemberMembershipRepository;
 import com.culcom.repository.ComplexMemberRepository;
 import com.culcom.repository.ComplexRefundReasonRepository;
 import com.culcom.repository.ComplexRefundRequestRepository;
 import com.culcom.entity.complex.refund.ComplexRefundReason;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +31,7 @@ public class PublicRefundController {
     private final ComplexMemberMembershipRepository memberMembershipRepository;
     private final ComplexRefundRequestRepository refundRequestRepository;
     private final ComplexRefundReasonRepository refundReasonRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @GetMapping("/search-member")
     public ResponseEntity<ApiResponse<MemberSearchResponse>> searchMember(
@@ -94,6 +98,11 @@ public class PublicRefundController {
                 .build();
 
         refundRequestRepository.save(refund);
+
+        eventPublisher.publishEvent(ActivityEvent.of(member,
+                ActivityEventType.REFUND_REQUEST,
+                "환불 요청 (공개): " + req.getMembershipName() + " / " + req.getReason()));
+
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 

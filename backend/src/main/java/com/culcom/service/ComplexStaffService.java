@@ -6,19 +6,18 @@ import com.culcom.dto.complex.member.ComplexStaffRequest;
 import com.culcom.dto.complex.member.ComplexStaffResponse;
 import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.member.ComplexMember;
-import com.culcom.entity.complex.member.logs.ChangeDetail;
 import com.culcom.entity.complex.member.ComplexStaffInfo;
-import com.culcom.entity.complex.member.logs.MemberActivityLog;
 import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.ActivityFieldType;
 import com.culcom.entity.enums.StaffStatus;
+import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
@@ -28,9 +27,9 @@ public class ComplexStaffService {
 
     private final ComplexMemberRepository memberRepository;
     private final ComplexStaffInfoRepository staffInfoRepository;
-    private final MemberActivityLogRepository activityLogRepository;
     private final ComplexClassRepository classRepository;
     private final BranchRepository branchRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public List<ComplexStaffResponse> list(Long branchSeq) {
         return memberRepository.findStaffByBranchSeq(branchSeq)
@@ -67,17 +66,24 @@ public class ComplexStaffService {
         ComplexMember member = memberRepository.findById(seq)
                 .orElseThrow(() -> new EntityNotFoundException("스태프"));
         ComplexStaffInfo staffInfo = member.getStaffInfo();
-        if (staffInfo == null) throw new EntityNotFoundException("스태프 정보");
+        if (staffInfo == null) {
+            staffInfo = ComplexStaffInfo.builder()
+                    .member(member)
+                    .status(req.getStatus() != null ? req.getStatus() : StaffStatus.재직)
+                    .build();
+            member.setStaffInfo(staffInfo);
+        }
 
         StaffStatus oldStatus = staffInfo.getStatus();
         StaffStatus newStatus = req.getStatus() != null ? req.getStatus() : oldStatus;
         if (oldStatus != newStatus) {
-            logEvent(member, ActivityEventType.STATUS_CHANGE, ActivityFieldType.STATUS, oldStatus.name(), newStatus.name());
+            eventPublisher.publishEvent(ActivityEvent.withChange(
+                    member, ActivityEventType.STATUS_CHANGE, ActivityFieldType.STATUS, oldStatus.name(), newStatus.name()));
         }
 
-        logIfChanged(member, ActivityFieldType.NAME, member.getName(), req.getName());
-        logIfChanged(member, ActivityFieldType.PHONE_NUMBER, member.getPhoneNumber(), req.getPhoneNumber());
-        logIfChanged(member, ActivityFieldType.INTERVIEWER, member.getInterviewer(), req.getInterviewer());
+        publishIfChanged(member, ActivityFieldType.NAME, member.getName(), req.getName());
+        publishIfChanged(member, ActivityFieldType.PHONE_NUMBER, member.getPhoneNumber(), req.getPhoneNumber());
+        publishIfChanged(member, ActivityFieldType.INTERVIEWER, member.getInterviewer(), req.getInterviewer());
 
         member.setName(req.getName());
         member.setPhoneNumber(req.getPhoneNumber());
@@ -90,29 +96,12 @@ public class ComplexStaffService {
             for (ComplexClass cls : assignedClasses) {
                 cls.setStaff(null);
                 classRepository.save(cls);
-                activityLogRepository.save(MemberActivityLog.builder()
-                        .member(member).eventType(ActivityEventType.CLASS_ASSIGN).eventDate(LocalDate.now())
-                        .changeDetail(ChangeDetail.builder()
-                                .fieldName(ActivityFieldType.CLASS).oldValue(cls.getName()).newValue("해제").build())
-                        .build());
+                eventPublisher.publishEvent(ActivityEvent.withChange(
+                        member, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, cls.getName(), "해제"));
             }
         }
 
         return ComplexStaffResponse.from(memberRepository.save(member));
-    }
-
-    private void logIfChanged(ComplexMember member, ActivityFieldType field, String oldVal, String newVal) {
-        if (!Objects.equals(oldVal, newVal)) {
-            logEvent(member, ActivityEventType.INFO_CHANGE, field, oldVal, newVal);
-        }
-    }
-
-    private void logEvent(ComplexMember member, ActivityEventType eventType, ActivityFieldType field, String oldVal, String newVal) {
-        activityLogRepository.save(MemberActivityLog.builder()
-                .member(member).eventType(eventType).eventDate(LocalDate.now())
-                .changeDetail(ChangeDetail.builder()
-                        .fieldName(field).oldValue(oldVal).newValue(newVal).build())
-                .build());
     }
 
     @Transactional
@@ -133,13 +122,13 @@ public class ComplexStaffService {
         ComplexStaffInfo staffInfo = member.getStaffInfo();
         if (staffInfo == null) throw new EntityNotFoundException("스태프 정보");
 
-        logRefundIfChanged(member, ActivityFieldType.DEPOSIT_AMOUNT, staffInfo.getDepositAmount(), req.getDepositAmount());
-        logRefundIfChanged(member, ActivityFieldType.REFUNDABLE_DEPOSIT, staffInfo.getRefundableDeposit(), req.getRefundableDeposit());
-        logRefundIfChanged(member, ActivityFieldType.NON_REFUNDABLE_DEPOSIT, staffInfo.getNonRefundableDeposit(), req.getNonRefundableDeposit());
-        logRefundIfChanged(member, ActivityFieldType.REFUND_BANK, staffInfo.getRefundBank(), req.getRefundBank());
-        logRefundIfChanged(member, ActivityFieldType.REFUND_ACCOUNT, staffInfo.getRefundAccount(), req.getRefundAccount());
-        logRefundIfChanged(member, ActivityFieldType.REFUND_AMOUNT, staffInfo.getRefundAmount(), req.getRefundAmount());
-        logRefundIfChanged(member, ActivityFieldType.PAYMENT_METHOD, staffInfo.getPaymentMethod(), req.getPaymentMethod());
+        publishRefundIfChanged(member, ActivityFieldType.DEPOSIT_AMOUNT, staffInfo.getDepositAmount(), req.getDepositAmount());
+        publishRefundIfChanged(member, ActivityFieldType.REFUNDABLE_DEPOSIT, staffInfo.getRefundableDeposit(), req.getRefundableDeposit());
+        publishRefundIfChanged(member, ActivityFieldType.NON_REFUNDABLE_DEPOSIT, staffInfo.getNonRefundableDeposit(), req.getNonRefundableDeposit());
+        publishRefundIfChanged(member, ActivityFieldType.REFUND_BANK, staffInfo.getRefundBank(), req.getRefundBank());
+        publishRefundIfChanged(member, ActivityFieldType.REFUND_ACCOUNT, staffInfo.getRefundAccount(), req.getRefundAccount());
+        publishRefundIfChanged(member, ActivityFieldType.REFUND_AMOUNT, staffInfo.getRefundAmount(), req.getRefundAmount());
+        publishRefundIfChanged(member, ActivityFieldType.PAYMENT_METHOD, staffInfo.getPaymentMethod(), req.getPaymentMethod());
 
         staffInfo.setDepositAmount(req.getDepositAmount());
         staffInfo.setRefundableDeposit(req.getRefundableDeposit());
@@ -156,7 +145,8 @@ public class ComplexStaffService {
     public void deleteRefundInfo(Long memberSeq) {
         ComplexMember member = memberRepository.findById(memberSeq)
                 .orElseThrow(() -> new EntityNotFoundException("스태프"));
-        logEvent(member, ActivityEventType.REFUND_CHANGE, ActivityFieldType.REFUND_INFO, "삭제", null);
+        eventPublisher.publishEvent(ActivityEvent.withChange(
+                member, ActivityEventType.REFUND_CHANGE, ActivityFieldType.REFUND_INFO, "삭제", null));
 
         ComplexStaffInfo staffInfo = member.getStaffInfo();
         if (staffInfo != null) {
@@ -171,9 +161,15 @@ public class ComplexStaffService {
         }
     }
 
-    private void logRefundIfChanged(ComplexMember member, ActivityFieldType field, String oldVal, String newVal) {
+    private void publishIfChanged(ComplexMember member, ActivityFieldType field, String oldVal, String newVal) {
         if (!Objects.equals(oldVal, newVal)) {
-            logEvent(member, ActivityEventType.REFUND_CHANGE, field, oldVal, newVal);
+            eventPublisher.publishEvent(ActivityEvent.withChange(member, ActivityEventType.INFO_CHANGE, field, oldVal, newVal));
+        }
+    }
+
+    private void publishRefundIfChanged(ComplexMember member, ActivityFieldType field, String oldVal, String newVal) {
+        if (!Objects.equals(oldVal, newVal)) {
+            eventPublisher.publishEvent(ActivityEvent.withChange(member, ActivityEventType.REFUND_CHANGE, field, oldVal, newVal));
         }
     }
 }

@@ -43,6 +43,10 @@ export function useMemberForm(seq?: number) {
         interviewer: m.interviewer ?? '',
         comment: m.comment ?? '',
       });
+      // staffStatus가 있으면 스태프
+      if (m.staffStatus) {
+        setStaffForm(prev => ({ ...prev, isStaff: true, status: m.staffStatus! }));
+      }
     });
     // 기존 멤버십 로드
     memberApi.getMemberships(seq).then(res => {
@@ -61,32 +65,22 @@ export function useMemberForm(seq?: number) {
         setMemberMembershipSeq(ms.seq);
       }
     });
-    // 스태프 정보 로드
-    staffApi.get(seq).then(res => {
-      if (res.success && res.data?.status) {
-        setStaffForm({
-          isStaff: true,
-          status: res.data.status,
-          refund: emptyRefundForm,
-        });
-        // 환급 정보 로드
-        staffApi.getRefund(seq).then(refRes => {
-          if (refRes.success && refRes.data) {
-            const r = refRes.data;
-            setStaffForm(prev => ({
-              ...prev,
-              refund: {
-                depositAmount: r.depositAmount ?? '',
-                refundableDeposit: r.refundableDeposit ?? '',
-                nonRefundableDeposit: r.nonRefundableDeposit ?? '',
-                refundBank: r.refundBank ?? '',
-                refundAccount: r.refundAccount ?? '',
-                refundAmount: r.refundAmount ?? '',
-                paymentMethod: r.paymentMethod ?? '',
-              },
-            }));
-          }
-        });
+    // 환급 정보 로드
+    staffApi.getRefund(seq).then(refRes => {
+      if (refRes.success && refRes.data) {
+        const r = refRes.data;
+        setStaffForm(prev => ({
+          ...prev,
+          refund: {
+            depositAmount: r.depositAmount ?? '',
+            refundableDeposit: r.refundableDeposit ?? '',
+            nonRefundableDeposit: r.nonRefundableDeposit ?? '',
+            refundBank: r.refundBank ?? '',
+            refundAccount: r.refundAccount ?? '',
+            refundAmount: r.refundAmount ?? '',
+            paymentMethod: r.paymentMethod ?? '',
+          },
+        }));
       }
     }).catch(() => {});
     // 기존 수업 배정 로드

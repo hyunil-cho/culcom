@@ -4,21 +4,19 @@ import com.culcom.dto.complex.classes.ComplexClassRequest;
 import com.culcom.dto.complex.classes.ComplexClassResponse;
 import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.member.ComplexMember;
-import com.culcom.entity.complex.member.logs.ChangeDetail;
-import com.culcom.entity.complex.member.logs.MemberActivityLog;
 import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.ActivityFieldType;
+import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ClassTimeSlotRepository;
 import com.culcom.repository.ComplexClassRepository;
 import com.culcom.repository.ComplexMemberRepository;
-import com.culcom.repository.MemberActivityLogRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.Objects;
 
 @Service
@@ -29,7 +27,7 @@ public class ComplexClassService {
     private final BranchRepository branchRepository;
     private final ClassTimeSlotRepository timeSlotRepository;
     private final ComplexMemberRepository memberRepository;
-    private final MemberActivityLogRepository activityLogRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ComplexClassResponse get(Long seq) {
         ComplexClass cls = classRepository.findById(seq)
@@ -77,17 +75,13 @@ public class ComplexClassService {
         if (!Objects.equals(oldStaffSeq, newStaffSeq)) {
             if (oldStaffSeq != null) {
                 ComplexMember oldStaff = memberRepository.getReferenceById(oldStaffSeq);
-                activityLogRepository.save(MemberActivityLog.builder()
-                        .member(oldStaff).eventType(ActivityEventType.CLASS_ASSIGN).eventDate(LocalDate.now())
-                        .changeDetail(ChangeDetail.builder().fieldName(ActivityFieldType.CLASS).oldValue(cls.getName()).newValue("해제").build())
-                        .build());
+                eventPublisher.publishEvent(ActivityEvent.withChange(
+                        oldStaff, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, cls.getName(), "해제"));
             }
             if (newStaffSeq != null) {
                 ComplexMember newStaff = memberRepository.getReferenceById(newStaffSeq);
-                activityLogRepository.save(MemberActivityLog.builder()
-                        .member(newStaff).eventType(ActivityEventType.CLASS_ASSIGN).eventDate(LocalDate.now())
-                        .changeDetail(ChangeDetail.builder().fieldName(ActivityFieldType.CLASS).oldValue(null).newValue("배정").build())
-                        .build());
+                eventPublisher.publishEvent(ActivityEvent.withChange(
+                        newStaff, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, null, "배정"));
             }
         }
 

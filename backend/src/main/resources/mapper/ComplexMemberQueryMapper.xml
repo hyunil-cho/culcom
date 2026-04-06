@@ -6,6 +6,7 @@
 
     <sql id="searchCondition">
         WHERE m.branch_seq = #{branchSeq}
+          AND NOT EXISTS (SELECT 1 FROM complex_staff_info si WHERE si.member_seq = m.seq)
         <if test="keyword != null and keyword != ''">
             AND (m.name LIKE CONCAT('%', #{keyword}, '%')
               OR m.phone_number LIKE CONCAT('%', #{keyword}, '%'))

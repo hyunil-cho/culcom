@@ -4,194 +4,74 @@
 
 <mapper namespace="com.culcom.mapper.MemberActivityMapper">
 
-    <sql id="timelineUnion">
-        /* 멤버십 등록 */
-        SELECT
-            'MEMBERSHIP' AS type,
-            COALESCE(DATE_FORMAT(mm.payment_date, '%Y-%m-%d'), mm.start_date) AS date,
-            CONCAT(ms.name, ' 멤버십 등록') AS title,
-            CONCAT(mm.start_date, ' ~ ', mm.expiry_date, ' / ', mm.total_count, '회') AS detail,
-            mm.status AS status
-        FROM complex_member_memberships mm
-        JOIN memberships ms ON ms.seq = mm.membership_seq
-        WHERE mm.member_seq = #{memberSeq}
-
-        UNION ALL
-
-        /* 연기 요청 */
-        SELECT
-            'POSTPONEMENT' AS type,
-            DATE_FORMAT(p.created_date, '%Y-%m-%d') AS date,
-            CONCAT('수업 연기 요청', IF(p.current_class != '', CONCAT(' (', p.current_class, ')'), '')) AS title,
-            CONCAT(p.start_date, ' ~ ', p.end_date, ' / ', p.reason) AS detail,
-            '대기' AS status
-        FROM complex_postponement_requests p
-        WHERE p.member_seq = #{memberSeq}
-
-        UNION ALL
-
-        /* 연기 처리 (승인/반려) */
-        SELECT
-            'POSTPONEMENT_RESULT' AS type,
-            DATE_FORMAT(p.last_update_date, '%Y-%m-%d') AS date,
-            CONCAT('수업 연기 ', p.status, IF(p.current_class != '', CONCAT(' (', p.current_class, ')'), '')) AS title,
-            CASE WHEN p.status = '반려' AND p.reject_reason IS NOT NULL THEN CONCAT('반려 사유: ', p.reject_reason)
-                 ELSE CONCAT(p.start_date, ' ~ ', p.end_date)
-            END AS detail,
-            p.status AS status
-        FROM complex_postponement_requests p
-        WHERE p.member_seq = #{memberSeq}
-          AND p.status != '대기'
-          AND p.last_update_date IS NOT NULL
-
-        UNION ALL
-
-        /* 환불 요청 */
-        SELECT
-            'REFUND' AS type,
-            DATE_FORMAT(r.created_date, '%Y-%m-%d') AS date,
-            CONCAT(r.membership_name, ' 환불 요청') AS title,
-            r.reason AS detail,
-            '대기' AS status
-        FROM complex_refund_requests r
-        WHERE r.member_seq = #{memberSeq}
-
-        UNION ALL
-
-        /* 환불 처리 (승인/반려) */
-        SELECT
-            'REFUND_RESULT' AS type,
-            DATE_FORMAT(r.last_update_date, '%Y-%m-%d') AS date,
-            CONCAT(r.membership_name, ' 환불 ', r.status) AS title,
-            CASE WHEN r.status = '반려' AND r.reject_reason IS NOT NULL THEN CONCAT('반려 사유: ', r.reject_reason)
-                 ELSE NULL
-            END AS detail,
-            r.status AS status
-        FROM complex_refund_requests r
-        WHERE r.member_seq = #{memberSeq}
-          AND r.status != '대기'
-          AND r.last_update_date IS NOT NULL
-
-        UNION ALL
-
-        /* 출석 기록 */
-        SELECT
-            'ATTENDANCE' AS type,
-            a.attendance_date AS date,
-            CONCAT(c.name, ' 수업') AS title,
-            a.note AS detail,
-            a.status AS status
-        FROM complex_member_attendance a
-        JOIN complex_classes c ON c.seq = a.class_seq
-        WHERE a.member_seq = #{memberSeq}
-    </sql>
-
     <select id="selectTimeline" resultType="com.culcom.dto.complex.member.MemberActivityTimelineItem">
-        SELECT * FROM (
-            <include refid="timelineUnion"/>
-        ) t
-        ORDER BY t.date DESC, t.type
+        SELECT
+            al.event_type AS type,
+            DATE_FORMAT(al.created_date, '%Y-%m-%d') AS date,
+            COALESCE(al.note, al.event_type) AS title,
+            CASE
+                WHEN al.old_value IS NOT NULL OR al.new_value IS NOT NULL
+                    THEN CONCAT(COALESCE(al.old_value, '(없음)'), ' → ', COALESCE(al.new_value, '(없음)'))
+                ELSE NULL
+            END AS detail,
+            CASE al.event_type
+                WHEN 'ATTENDANCE' THEN COALESCE(al.status, '출석')
+                WHEN 'MEMBER_CREATE' THEN '등록'
+                WHEN 'MEMBERSHIP_ASSIGN' THEN '등록'
+                WHEN 'MEMBERSHIP_UPDATE' THEN '변경'
+                WHEN 'MEMBERSHIP_DELETE' THEN '삭제'
+                WHEN 'CLASS_ASSIGN' THEN '배정'
+                WHEN 'INFO_CHANGE' THEN '변경'
+                WHEN 'POSTPONEMENT_REQUEST' THEN '대기'
+                WHEN 'POSTPONEMENT_APPROVE' THEN '승인'
+                WHEN 'POSTPONEMENT_REJECT' THEN '반려'
+                WHEN 'REFUND_REQUEST' THEN '대기'
+                WHEN 'REFUND_APPROVE' THEN '승인'
+                WHEN 'REFUND_REJECT' THEN '반려'
+                ELSE al.event_type
+            END AS status
+        FROM member_activity_log al
+        WHERE al.member_seq = #{memberSeq}
+        ORDER BY al.created_date DESC
         LIMIT #{size} OFFSET #{offset}
     </select>
 
     <select id="countTimeline" resultType="int">
-        SELECT COUNT(*) FROM (
-            <include refid="timelineUnion"/>
-        ) t
+        SELECT COUNT(*)
+        FROM member_activity_log al
+        WHERE al.member_seq = #{memberSeq}
     </select>
 
-    <!-- 스태프 타임라인 -->
-
-    <sql id="staffTimelineUnion">
-        /* 스태프 등록 */
-        SELECT
-            'STAFF_REGISTER' AS type,
-            COALESCE(s.join_date, DATE_FORMAT(s.created_date, '%Y-%m-%d')) AS date,
-            CONCAT(s.name, ' 스태프 등록') AS title,
-            NULL AS detail,
-            si.status AS status
-        FROM complex_members s
-        JOIN complex_staff_info si ON si.member_seq = s.seq
-        WHERE s.seq = #{staffSeq}
-
-        UNION ALL
-
-        /* 상태 변경 */
-        SELECT
-            'STATUS_CHANGE' AS type,
-            DATE_FORMAT(sl.created_date, '%Y-%m-%d') AS date,
-            CONCAT('상태 변경: ', sl.from_status, ' → ', sl.to_status) AS title,
-            NULL AS detail,
-            sl.to_status AS status
-        FROM complex_staff_status_logs sl
-        WHERE sl.member_seq = #{staffSeq}
-
-        UNION ALL
-
-        /* 출석 기록 */
-        SELECT
-            'ATTENDANCE' AS type,
-            a.attendance_date AS date,
-            CONCAT(c.name, ' 수업') AS title,
-            NULL AS detail,
-            a.status AS status
-        FROM complex_member_attendance a
-        JOIN complex_classes c ON c.seq = a.class_seq
-        WHERE a.member_seq = #{staffSeq}
-
-        UNION ALL
-
-        /* 수업 배정/해제 */
-        SELECT
-            'CLASS_ASSIGN' AS type,
-            DATE_FORMAT(cl.created_date, '%Y-%m-%d') AS date,
-            CONCAT(c.name, ' 수업 ', CASE cl.action WHEN 'ASSIGN' THEN '배정' ELSE '해제' END) AS title,
-            COALESCE(t.name, '') AS detail,
-            cl.action AS status
-        FROM complex_staff_class_logs cl
-        JOIN complex_classes c ON c.seq = cl.class_seq
-        LEFT JOIN class_time_slots t ON t.seq = c.time_slot_seq
-        WHERE cl.member_seq = #{staffSeq}
-
-        UNION ALL
-
-        /* 정보 변경 */
-        SELECT
-            'INFO_CHANGE' AS type,
-            DATE_FORMAT(lg.created_date, '%Y-%m-%d') AS date,
-            CONCAT(lg.field_name, ' 변경') AS title,
-            CONCAT(COALESCE(lg.old_value, '(없음)'), ' → ', COALESCE(lg.new_value, '(없음)')) AS detail,
-            '변경' AS status
-        FROM complex_staff_change_logs lg
-        WHERE lg.member_seq = #{staffSeq}
-          AND lg.change_type = 'INFO_CHANGE'
-
-        UNION ALL
-
-        /* 환불정보 변경 */
-        SELECT
-            'REFUND_CHANGE' AS type,
-            DATE_FORMAT(lg.created_date, '%Y-%m-%d') AS date,
-            CONCAT('환불정보 ', lg.field_name, ' 변경') AS title,
-            CONCAT(COALESCE(lg.old_value, '(없음)'), ' → ', COALESCE(lg.new_value, '(없음)')) AS detail,
-            '변경' AS status
-        FROM complex_staff_change_logs lg
-        WHERE lg.member_seq = #{staffSeq}
-          AND lg.change_type = 'REFUND_CHANGE'
-    </sql>
+    <!-- 스태프 타임라인 (동일 테이블, 동일 쿼리) -->
 
     <select id="selectStaffTimeline" resultType="com.culcom.dto.complex.member.MemberActivityTimelineItem">
-        SELECT * FROM (
-            <include refid="staffTimelineUnion"/>
-        ) t
-        ORDER BY t.date DESC, t.type
+        SELECT
+            al.event_type AS type,
+            DATE_FORMAT(al.created_date, '%Y-%m-%d') AS date,
+            COALESCE(al.note, al.event_type) AS title,
+            CASE
+                WHEN al.old_value IS NOT NULL OR al.new_value IS NOT NULL
+                    THEN CONCAT(COALESCE(al.old_value, '(없음)'), ' → ', COALESCE(al.new_value, '(없음)'))
+                ELSE NULL
+            END AS detail,
+            CASE al.event_type
+                WHEN 'ATTENDANCE' THEN COALESCE(al.status, '출석')
+                WHEN 'STATUS_CHANGE' THEN '변경'
+                WHEN 'CLASS_ASSIGN' THEN '배정'
+                WHEN 'INFO_CHANGE' THEN '변경'
+                WHEN 'REFUND_CHANGE' THEN '변경'
+                ELSE al.event_type
+            END AS status
+        FROM member_activity_log al
+        WHERE al.member_seq = #{staffSeq}
+        ORDER BY al.created_date DESC
         LIMIT #{size} OFFSET #{offset}
     </select>
 
     <select id="countStaffTimeline" resultType="int">
-        SELECT COUNT(*) FROM (
-            <include refid="staffTimelineUnion"/>
-        ) t
+        SELECT COUNT(*)
+        FROM member_activity_log al
+        WHERE al.member_seq = #{staffSeq}
     </select>
 
 </mapper>

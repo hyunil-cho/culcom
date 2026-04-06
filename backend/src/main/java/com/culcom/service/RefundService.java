@@ -7,8 +7,10 @@ import com.culcom.dto.complex.refund.RefundResponse;
 import com.culcom.entity.complex.refund.ComplexRefundReason;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.refund.ComplexRefundRequest;
+import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.enums.RequestStatus;
+import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ComplexMemberMembershipRepository;
@@ -16,6 +18,7 @@ import com.culcom.repository.ComplexMemberRepository;
 import com.culcom.repository.ComplexRefundReasonRepository;
 import com.culcom.repository.ComplexRefundRequestRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +34,9 @@ public class RefundService {
     private final BranchRepository branchRepository;
     private final ComplexMemberRepository complexMemberRepository;
     private final ComplexMemberMembershipRepository complexMemberMembershipRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
+    @Transactional
     public RefundResponse create(RefundCreateRequest req, Long branchSeq) {
         ComplexRefundRequest entity = ComplexRefundRequest.builder()
                 .memberName(req.getMemberName())
@@ -50,7 +55,15 @@ public class RefundService {
             entity.setMemberMembership(complexMemberMembershipRepository.getReferenceById(req.getMemberMembershipSeq()));
         }
         branchRepository.findById(branchSeq).ifPresent(entity::setBranch);
-        return RefundResponse.from(refundRepository.save(entity));
+        refundRepository.save(entity);
+
+        if (entity.getMember() != null) {
+            eventPublisher.publishEvent(ActivityEvent.of(entity.getMember(),
+                    ActivityEventType.REFUND_REQUEST,
+                    "환불 요청: " + entity.getMembershipName() + " / " + entity.getReason()));
+        }
+
+        return RefundResponse.from(entity);
     }
 
     @Transactional
@@ -68,7 +81,19 @@ public class RefundService {
                 complexMemberMembershipRepository.save(mm);
             }
         }
-        return RefundResponse.from(refundRepository.save(req));
+        refundRepository.save(req);
+
+        if (req.getMember() != null) {
+            ActivityEventType eventType = status == RequestStatus.승인
+                    ? ActivityEventType.REFUND_APPROVE : ActivityEventType.REFUND_REJECT;
+            String note = "환불 " + status.name() + ": " + req.getMembershipName();
+            if (status == RequestStatus.반려 && rejectReason != null) {
+                note += " (사유: " + rejectReason + ")";
+            }
+            eventPublisher.publishEvent(ActivityEvent.of(req.getMember(), eventType, note));
+        }
+
+        return RefundResponse.from(req);
     }
 
     public List<RefundReasonResponse> reasons(Long branchSeq) {

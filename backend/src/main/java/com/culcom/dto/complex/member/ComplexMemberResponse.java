@@ -27,6 +27,7 @@ public class ComplexMemberResponse {
     private LocalDateTime joinDate;
     private String signupChannel;
     private String interviewer;
+    private String staffStatus;
     private LocalDateTime createdDate;
     private LocalDateTime lastUpdateDate;
 
@@ -46,6 +47,7 @@ public class ComplexMemberResponse {
                 .joinDate(entity.getJoinDate())
                 .signupChannel(entity.getMetaData() != null ? entity.getMetaData().getSignupChannel() : null)
                 .interviewer(entity.getInterviewer())
+                .staffStatus(entity.getStaffInfo() != null ? entity.getStaffInfo().getStatus().name() : null)
                 .createdDate(entity.getCreatedDate())
                 .lastUpdateDate(entity.getLastUpdateDate())
                 .build();

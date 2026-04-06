@@ -7,13 +7,17 @@ import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.postponement.ComplexPostponementReason;
 import com.culcom.entity.complex.postponement.ComplexPostponementRequest;
+import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.enums.RequestStatus;
+import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.*;
 import com.culcom.util.DateTimeUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,6 +32,7 @@ public class PublicPostponementService {
     private final ComplexPostponementRequestRepository postponementRepository;
     private final ComplexPostponementReasonRepository reasonRepository;
     private final BranchRepository branchRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public MemberSearchResponse searchMember(String name, String phone) {
         List<ComplexMember> members = memberRepository.findByNameAndPhoneNumber(name, phone);
@@ -85,6 +90,7 @@ public class PublicPostponementService {
         return new MemberSearchResponse(memberInfos);
     }
 
+    @Transactional
     public PostponementSubmitResponse submit(PostponementSubmitRequest req) {
         Branch branch = branchRepository.findById(req.getBranchSeq())
                 .orElseThrow(() -> new EntityNotFoundException("지점"));
@@ -109,6 +115,12 @@ public class PublicPostponementService {
                 .build();
 
         postponementRepository.save(postponement);
+
+        if (member != null) {
+            eventPublisher.publishEvent(ActivityEvent.of(member,
+                    ActivityEventType.POSTPONEMENT_REQUEST,
+                    "연기 요청 (공개): " + req.getStartDate() + " ~ " + req.getEndDate() + " / " + req.getReason()));
+        }
 
         return new PostponementSubmitResponse(
                 req.getName(), req.getPhone(), branch.getBranchName(),

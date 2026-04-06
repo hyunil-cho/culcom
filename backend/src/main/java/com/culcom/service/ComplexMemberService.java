@@ -5,16 +5,21 @@ import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.dto.complex.member.ComplexMemberMetaDataRequest;
 import com.culcom.entity.complex.member.*;
 import com.culcom.entity.product.Membership;
+import com.culcom.entity.enums.ActivityEventType;
+import com.culcom.entity.enums.ActivityFieldType;
 import com.culcom.entity.enums.MembershipStatus;
+import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +31,7 @@ public class ComplexMemberService {
     private final ComplexClassRepository classRepository;
     private final ComplexMemberClassMappingRepository classMappingRepository;
     private final BranchRepository branchRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ComplexMemberResponse get(Long seq) {
         ComplexMember member = memberRepository.findById(seq)
@@ -49,13 +55,21 @@ public class ComplexMemberService {
                 .interviewer(req.getInterviewer())
                 .branch(branchRepository.getReferenceById(branchSeq))
                 .build();
-        return ComplexMemberResponse.from(memberRepository.save(member));
+        memberRepository.save(member);
+
+        eventPublisher.publishEvent(ActivityEvent.of(member, ActivityEventType.MEMBER_CREATE, "회원 등록: " + member.getName()));
+
+        return ComplexMemberResponse.from(member);
     }
 
     @Transactional
     public ComplexMemberResponse update(Long seq, ComplexMemberRequest req) {
         ComplexMember member = memberRepository.findById(seq)
                 .orElseThrow(() -> new EntityNotFoundException("회원"));
+        publishIfChanged(member, ActivityFieldType.NAME, member.getName(), req.getName());
+        publishIfChanged(member, ActivityFieldType.PHONE_NUMBER, member.getPhoneNumber(), req.getPhoneNumber());
+        publishIfChanged(member, ActivityFieldType.INTERVIEWER, member.getInterviewer(), req.getInterviewer());
+
         member.setName(req.getName());
         member.setPhoneNumber(req.getPhoneNumber());
         member.setInfo(req.getInfo());
@@ -102,11 +116,21 @@ public class ComplexMemberService {
         if (req.getPaymentMethod() != null) mm.setPaymentMethod(req.getPaymentMethod());
         if (req.getPaymentDate() != null && !req.getPaymentDate().isEmpty())
             mm.setPaymentDate(LocalDateTime.parse(req.getPaymentDate()));
+        String oldStatus = mm.getStatus() != null ? mm.getStatus().name() : null;
         if (req.getStatus() != null && !req.getStatus().isEmpty()) {
             mm.setStatus(MembershipStatus.valueOf(req.getStatus()));
         }
 
-        return ComplexMemberMembershipResponse.from(memberMembershipRepository.save(mm));
+        memberMembershipRepository.save(mm);
+
+        String newStatus = mm.getStatus() != null ? mm.getStatus().name() : null;
+        if (!Objects.equals(oldStatus, newStatus)) {
+            eventPublisher.publishEvent(ActivityEvent.withChange(
+                    mm.getMember(), ActivityEventType.MEMBERSHIP_UPDATE,
+                    ActivityFieldType.STATUS, oldStatus, newStatus));
+        }
+
+        return ComplexMemberMembershipResponse.from(mm);
     }
 
     @Transactional
@@ -116,6 +140,9 @@ public class ComplexMemberService {
         if (mm.getMember() == null || !mm.getMember().getSeq().equals(memberSeq)) {
             throw new EntityNotFoundException("멤버십");
         }
+        eventPublisher.publishEvent(ActivityEvent.of(
+                mm.getMember(), ActivityEventType.MEMBERSHIP_DELETE, mm.getMembership().getName() + " 멤버십 삭제"));
+
         memberMembershipRepository.delete(mm);
     }
 
@@ -155,7 +182,12 @@ public class ComplexMemberService {
             memberRepository.save(member);
         }
 
-        return ComplexMemberMembershipResponse.from(memberMembershipRepository.save(mm));
+        memberMembershipRepository.save(mm);
+
+        eventPublisher.publishEvent(ActivityEvent.of(
+                member, ActivityEventType.MEMBERSHIP_ASSIGN, membership.getName() + " 멤버십 등록"));
+
+        return ComplexMemberMembershipResponse.from(mm);
     }
 
     @Transactional
@@ -169,6 +201,9 @@ public class ComplexMemberService {
                 .member(member)
                 .complexClass(clazz)
                 .build());
+
+        eventPublisher.publishEvent(ActivityEvent.withChange(
+                member, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, null, clazz.getName()));
     }
 
     @Transactional
@@ -178,14 +213,26 @@ public class ComplexMemberService {
         ComplexClass clazz = classRepository.findById(classSeq)
                 .orElseThrow(() -> new EntityNotFoundException("수업"));
 
+        List<ComplexMemberClassMapping> oldMappings = classMappingRepository.findByMemberSeq(memberSeq);
+        String oldClassName = oldMappings.isEmpty() ? null : oldMappings.get(0).getComplexClass().getName();
+
         classMappingRepository.deleteByMemberSeq(memberSeq);
         classMappingRepository.save(ComplexMemberClassMapping.builder()
                 .member(member)
                 .complexClass(clazz)
                 .build());
+
+        eventPublisher.publishEvent(ActivityEvent.withChange(
+                member, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, oldClassName, clazz.getName()));
     }
 
     public List<ComplexMemberClassMapping> getClassMappings(Long memberSeq) {
         return classMappingRepository.findByMemberSeq(memberSeq);
+    }
+
+    private void publishIfChanged(ComplexMember member, ActivityFieldType field, String oldVal, String newVal) {
+        if (!Objects.equals(oldVal, newVal)) {
+            eventPublisher.publishEvent(ActivityEvent.withChange(member, ActivityEventType.INFO_CHANGE, field, oldVal, newVal));
+        }
     }
 }
