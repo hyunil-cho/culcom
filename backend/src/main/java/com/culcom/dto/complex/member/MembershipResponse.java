@@ -1,6 +1,6 @@
 package com.culcom.dto.complex.member;
 
-import com.culcom.entity.complex.member.Membership;
+import com.culcom.entity.product.Membership;
 import lombok.Builder;
 import lombok.Getter;
 

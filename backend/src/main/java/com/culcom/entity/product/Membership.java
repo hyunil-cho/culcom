@@ -1,4 +1,4 @@
-package com.culcom.entity.complex.member;
+package com.culcom.entity.product;
 
 import com.culcom.entity.BaseTimeEntity;
 import jakarta.persistence.*;

@@ -1,6 +1,7 @@
 package com.culcom.entity.complex.member;
 
 import com.culcom.entity.BaseTimeEntity;
+import com.culcom.entity.product.Membership;
 import com.culcom.entity.enums.MembershipStatus;
 import jakarta.persistence.*;
 import lombok.*;

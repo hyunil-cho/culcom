@@ -4,6 +4,7 @@ import com.culcom.dto.complex.member.*;
 import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.dto.complex.member.ComplexMemberMetaDataRequest;
 import com.culcom.entity.complex.member.*;
+import com.culcom.entity.product.Membership;
 import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.*;

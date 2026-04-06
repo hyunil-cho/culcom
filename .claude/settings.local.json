@@ -71,7 +71,8 @@
       "Bash(rmdir /c/Users/lookh/IdeaProjects/culcom/backend/src/main/java/com/culcom/entity/webhook)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(sed:*)"
     ]
   }
 }

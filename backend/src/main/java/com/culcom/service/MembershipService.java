@@ -2,7 +2,7 @@ package com.culcom.service;
 
 import com.culcom.dto.complex.member.MembershipRequest;
 import com.culcom.dto.complex.member.MembershipResponse;
-import com.culcom.entity.complex.member.Membership;
+import com.culcom.entity.product.Membership;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.MembershipRepository;
 import lombok.RequiredArgsConstructor;

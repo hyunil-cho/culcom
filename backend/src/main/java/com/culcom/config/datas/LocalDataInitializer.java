@@ -5,6 +5,7 @@ import com.culcom.entity.branch.Branch;
 import com.culcom.entity.complex.clazz.ClassTimeSlot;
 import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.member.*;
+import com.culcom.entity.product.Membership;
 import com.culcom.entity.complex.staff.ComplexStaff;
 import com.culcom.entity.complex.staff.ComplexStaffAttendance;
 import com.culcom.entity.customer.Customer;
