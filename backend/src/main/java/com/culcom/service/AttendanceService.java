@@ -6,7 +6,9 @@ import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberAttendance;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
-import com.culcom.entity.complex.member.MembershipActivityLog;
+import com.culcom.entity.complex.member.logs.AttendanceDetail;
+import com.culcom.entity.complex.member.logs.MemberActivityLog;
+import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.AttendanceStatus;
 import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.exception.EntityNotFoundException;
@@ -17,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +27,7 @@ public class AttendanceService {
     private final ComplexMemberAttendanceRepository attendanceRepository;
     private final ComplexMemberMembershipRepository memberMembershipRepository;
     private final ComplexClassRepository classRepository;
-    private final MembershipActivityLogRepository activityLogRepository;
+    private final MemberActivityLogRepository activityLogRepository;
 
     public List<AttendanceResponse> listByClassAndDate(Long classSeq, LocalDate date) {
         return attendanceRepository.findByClassAndDate(classSeq, date)
@@ -124,12 +125,13 @@ public class AttendanceService {
                     .attendanceDate(today).status(newStatus).build());
         }
 
-        activityLogRepository.save(MembershipActivityLog.builder()
+        activityLogRepository.save(MemberActivityLog.builder()
                 .member(ComplexMember.builder().seq(bm.getMemberSeq()).build())
-                .complexClass(ComplexClass.builder().seq(classSeq).build())
-                .activityDate(today)
-                .status(newStatus)
-                .usedCountDelta(0).build());
+                .eventType(ActivityEventType.ATTENDANCE).eventDate(today)
+                .attendanceDetail(AttendanceDetail.builder()
+                        .complexClass(ComplexClass.builder().seq(classSeq).build())
+                        .status(newStatus).usedCountDelta(0).build())
+                .build());
 
         String resultStatus = (existing != null ? "변경: " : "") + (bm.isAttended() ? "출석" : "결석");
         return BulkAttendanceResultResponse.builder()
@@ -145,12 +147,13 @@ public class AttendanceService {
         // 연기 확인 (프리로드 맵)
         ComplexMemberMembership pmm = postponedMap.get(bm.getMemberSeq());
         if (pmm != null) {
-            activityLogRepository.save(MembershipActivityLog.builder()
+            activityLogRepository.save(MemberActivityLog.builder()
                     .member(ComplexMember.builder().seq(bm.getMemberSeq()).build())
-                    .membership(pmm)
-                    .complexClass(ComplexClass.builder().seq(classSeq).build())
-                    .activityDate(today).status(AttendanceStatus.연기)
-                    .usedCountDelta(0).usedCountAfter(pmm.getUsedCount())
+                    .eventType(ActivityEventType.ATTENDANCE).eventDate(today)
+                    .attendanceDetail(AttendanceDetail.builder()
+                            .complexClass(ComplexClass.builder().seq(classSeq).build())
+                            .membership(pmm).status(AttendanceStatus.연기)
+                            .usedCountDelta(0).usedCountAfter(pmm.getUsedCount()).build())
                     .note("멤버십 연기 중 — 출석 불가").build());
             return BulkAttendanceResultResponse.builder()
                     .memberSeq(bm.getMemberSeq()).name("").status("연기").build();
@@ -189,12 +192,14 @@ public class AttendanceService {
                 memberMembershipRepository.save(mm);
             }
 
-            activityLogRepository.save(MembershipActivityLog.builder()
+            activityLogRepository.save(MemberActivityLog.builder()
                     .member(ComplexMember.builder().seq(bm.getMemberSeq()).build())
-                    .membership(mm)
-                    .complexClass(ComplexClass.builder().seq(classSeq).build())
-                    .activityDate(today).status(newStatus)
-                    .usedCountDelta(delta).usedCountAfter(mm.getUsedCount()).build());
+                    .eventType(ActivityEventType.ATTENDANCE).eventDate(today)
+                    .attendanceDetail(AttendanceDetail.builder()
+                            .complexClass(ComplexClass.builder().seq(classSeq).build())
+                            .membership(mm).status(newStatus)
+                            .usedCountDelta(delta).usedCountAfter(mm.getUsedCount()).build())
+                    .build());
 
             return BulkAttendanceResultResponse.builder()
                     .memberSeq(bm.getMemberSeq()).name("")
@@ -215,12 +220,14 @@ public class AttendanceService {
             memberMembershipRepository.save(mm);
         }
 
-        activityLogRepository.save(MembershipActivityLog.builder()
+        activityLogRepository.save(MemberActivityLog.builder()
                 .member(ComplexMember.builder().seq(bm.getMemberSeq()).build())
-                .membership(mm)
-                .complexClass(ComplexClass.builder().seq(classSeq).build())
-                .activityDate(today).status(newStatus)
-                .usedCountDelta(delta).usedCountAfter(mm.getUsedCount()).build());
+                .eventType(ActivityEventType.ATTENDANCE).eventDate(today)
+                .attendanceDetail(AttendanceDetail.builder()
+                        .complexClass(ComplexClass.builder().seq(classSeq).build())
+                        .membership(mm).status(newStatus)
+                        .usedCountDelta(delta).usedCountAfter(mm.getUsedCount()).build())
+                .build());
 
         return BulkAttendanceResultResponse.builder()
                 .memberSeq(bm.getMemberSeq()).name("")

@@ -42,7 +42,7 @@ public class LocalDataInitializer implements ApplicationRunner {
     private final ComplexMemberMembershipRepository complexMemberMembershipRepository;
     private final ComplexMemberClassMappingRepository complexMemberClassMappingRepository;
     private final ComplexMemberAttendanceRepository complexMemberAttendanceRepository;
-    private final MembershipActivityLogRepository membershipActivityLogRepository;
+    private final MemberActivityLogRepository activityLogRepository;
     private final NoticeRepository noticeRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -339,10 +339,12 @@ public class LocalDataInitializer implements ApplicationRunner {
                         .note(status == AttendanceStatus.결석 && rand.nextDouble() < 0.3 ? "개인 사정" : null)
                         .build());
 
-                membershipActivityLogRepository.save(MembershipActivityLog.builder()
-                        .member(gMembers.get(i)).membership(gMemberships.get(i)).complexClass(cls)
-                        .activityDate(date).status(status)
-                        .usedCountDelta(status == AttendanceStatus.출석 ? 1 : 0)
+                activityLogRepository.save(MemberActivityLog.builder()
+                        .member(gMembers.get(i))
+                        .eventType(ActivityEventType.ATTENDANCE).eventDate(date)
+                        .attendanceDetail(AttendanceDetail.builder()
+                                .complexClass(cls).membership(gMemberships.get(i)).status(status)
+                                .usedCountDelta(status == AttendanceStatus.출석 ? 1 : 0).build())
                         .build());
             }
         }
@@ -367,10 +369,12 @@ public class LocalDataInitializer implements ApplicationRunner {
                         .member(sMembers.get(i)).memberMembership(sMemberships.get(i)).complexClass(cls)
                         .attendanceDate(date).status(status).build());
 
-                membershipActivityLogRepository.save(MembershipActivityLog.builder()
-                        .member(sMembers.get(i)).membership(sMemberships.get(i)).complexClass(cls)
-                        .activityDate(date).status(status)
-                        .usedCountDelta(status == AttendanceStatus.출석 ? 1 : 0)
+                activityLogRepository.save(MemberActivityLog.builder()
+                        .member(sMembers.get(i))
+                        .eventType(ActivityEventType.ATTENDANCE).eventDate(date)
+                        .attendanceDetail(AttendanceDetail.builder()
+                                .complexClass(cls).membership(sMemberships.get(i)).status(status)
+                                .usedCountDelta(status == AttendanceStatus.출석 ? 1 : 0).build())
                         .build());
             }
         }
@@ -391,10 +395,12 @@ public class LocalDataInitializer implements ApplicationRunner {
                             .member(gangnamStaffs[s]).memberMembership(staffMembershipMap.get(gangnamStaffs[s].getSeq()))
                             .complexClass(cls).attendanceDate(date).status(status).build());
 
-                    membershipActivityLogRepository.save(MembershipActivityLog.builder()
-                            .member(gangnamStaffs[s]).complexClass(cls)
-                            .activityDate(date).status(status)
-                            .usedCountDelta(0).build());
+                    activityLogRepository.save(MemberActivityLog.builder()
+                            .member(gangnamStaffs[s])
+                            .eventType(ActivityEventType.ATTENDANCE).eventDate(date)
+                            .attendanceDetail(AttendanceDetail.builder()
+                                    .complexClass(cls).status(status).usedCountDelta(0).build())
+                            .build());
                 }
             }
         }
@@ -413,10 +419,12 @@ public class LocalDataInitializer implements ApplicationRunner {
                             .member(seochoStaffs[s]).memberMembership(staffMembershipMap.get(seochoStaffs[s].getSeq()))
                             .complexClass(cls).attendanceDate(date).status(status).build());
 
-                    membershipActivityLogRepository.save(MembershipActivityLog.builder()
-                            .member(seochoStaffs[s]).complexClass(cls)
-                            .activityDate(date).status(status)
-                            .usedCountDelta(0).build());
+                    activityLogRepository.save(MemberActivityLog.builder()
+                            .member(seochoStaffs[s])
+                            .eventType(ActivityEventType.ATTENDANCE).eventDate(date)
+                            .attendanceDetail(AttendanceDetail.builder()
+                                    .complexClass(cls).status(status).usedCountDelta(0).build())
+                            .build());
                 }
             }
         }
