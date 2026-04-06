@@ -82,9 +82,8 @@
             a.note AS detail,
             a.status AS status
         FROM complex_member_attendance a
-        JOIN complex_member_memberships mm ON mm.seq = a.member_membership_seq
         JOIN complex_classes c ON c.seq = a.class_seq
-        WHERE mm.member_seq = #{memberSeq}
+        WHERE a.member_seq = #{memberSeq}
     </sql>
 
     <select id="selectTimeline" resultType="com.culcom.dto.complex.member.MemberActivityTimelineItem">
@@ -109,7 +108,7 @@
             'STAFF_REGISTER' AS type,
             COALESCE(s.join_date, DATE_FORMAT(s.created_date, '%Y-%m-%d')) AS date,
             CONCAT(s.name, ' 스태프 등록') AS title,
-            CONCAT('담당과목: ', COALESCE(s.subject, '-')) AS detail,
+            NULL AS detail,
             s.status AS status
         FROM complex_staffs s
         WHERE s.seq = #{staffSeq}

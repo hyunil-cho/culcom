@@ -28,12 +28,6 @@ public class ComplexStaff extends BaseTimeEntity {
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
 
-    @Column(length = 200)
-    private String email;
-
-    @Column(length = 100)
-    private String subject;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
@@ -42,17 +36,7 @@ public class ComplexStaff extends BaseTimeEntity {
     @Column(name = "join_date")
     private LocalDate joinDate;
 
-    @Column(length = 300)
-    private String comment;
-
     @Column(length = 100)
     private String interviewer;
-
-    @Column(name = "payment_method", length = 50)
-    private String paymentMethod;
-
-    /** 인적사항 */
-    @Column(length = 500)
-    private String bio;
 
 }

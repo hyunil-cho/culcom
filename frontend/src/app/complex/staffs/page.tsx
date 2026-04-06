@@ -91,7 +91,6 @@ export default function StaffsPage() {
   const columns: Column<ComplexStaff>[] = [
     { header: '이름', render: (s) => s.name },
     { header: '전화번호', render: (s) => s.phoneNumber ?? '-' },
-    { header: '인적사항', render: (s) => s.bio ?? '-' },
     { header: '팀현황', render: (s) => {
       const count = getClassesForStaff(s.seq).length;
       return (

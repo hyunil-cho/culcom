@@ -2,7 +2,7 @@
 
 import FormField from '@/components/ui/FormField';
 import FormLayout from '@/components/ui/FormLayout';
-import { Input, PhoneInput, Select, Textarea, CurrencyInput } from '@/components/ui/FormInput';
+import { Input, PhoneInput, Select, CurrencyInput } from '@/components/ui/FormInput';
 import { useClassSlots } from '../hooks/useClassSlots';
 
 const STATUS_OPTIONS = ['재직', '휴직', '퇴직'] as const;
@@ -37,9 +37,6 @@ export interface StaffFormData {
   phoneNumber: string;
   status: string;
   interviewer: string;
-  paymentMethod: string;
-  comment: string;
-  bio: string;
   refund: RefundFormData;
 }
 
@@ -63,9 +60,6 @@ export const emptyStaffForm: StaffFormData = {
   phoneNumber: '',
   status: '재직',
   interviewer: '',
-  paymentMethod: '',
-  comment: '',
-  bio: '',
   refund: emptyRefundForm,
 };
 
@@ -117,23 +111,6 @@ export default function StaffForm({
       <FormField label="인터뷰어">
         <Input placeholder="인터뷰어 이름을 입력하세요" value={form.interviewer}
           onChange={(e) => onChange({ ...form, interviewer: e.target.value })} />
-      </FormField>
-      <FormField label="결제방법">
-        <Select value={form.paymentMethod}
-          onChange={(e) => onChange({ ...form, paymentMethod: e.target.value })}>
-          <option value="">-- 선택 --</option>
-          {PAYMENT_OPTIONS.filter(Boolean).map(p => <option key={p} value={p}>{p}</option>)}
-        </Select>
-      </FormField>
-      <FormField label="인적사항">
-        <Textarea placeholder="인적사항을 입력하세요" value={form.bio}
-          onChange={(e) => onChange({ ...form, bio: e.target.value })}
-          style={{ height: 80, resize: 'vertical' }} />
-      </FormField>
-      <FormField label="비고">
-        <Textarea placeholder="스태프 특이사항 입력" value={form.comment}
-          onChange={(e) => onChange({ ...form, comment: e.target.value })}
-          style={{ height: 80, resize: 'vertical' }} />
       </FormField>
 
       {/* ── 수업 배정 (선택사항) ── */}

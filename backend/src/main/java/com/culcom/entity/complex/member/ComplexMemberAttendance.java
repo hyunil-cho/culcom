@@ -9,7 +9,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "complex_member_attendance",
-       uniqueConstraints = @UniqueConstraint(columnNames = {"member_membership_seq", "class_seq", "attendance_date"}))
+       uniqueConstraints = @UniqueConstraint(columnNames = {"member_seq", "class_seq", "attendance_date"}))
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
@@ -20,11 +20,11 @@ public class ComplexMemberAttendance extends BaseTimeEntity {
     private Long seq;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_membership_seq", nullable = false)
-    private ComplexMemberMembership memberMembership;
+    @JoinColumn(name = "member_seq", nullable = false)
+    private ComplexMember member;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "class_seq")
+    @JoinColumn(name = "class_seq", nullable = false)
     private ComplexClass complexClass;
 
     @Column(name = "attendance_date", nullable = false)
@@ -34,6 +34,10 @@ public class ComplexMemberAttendance extends BaseTimeEntity {
     @Column(nullable = false)
     @Builder.Default
     private AttendanceStatus status = AttendanceStatus.출석;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_membership_seq")
+    private ComplexMemberMembership memberMembership;
 
     @Column(length = 200)
     private String note;

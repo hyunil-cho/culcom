@@ -15,14 +15,9 @@ public class ComplexStaffResponse {
     private String name;
     private String phoneNumber;
     private String branchName;
-    private String email;
-    private String subject;
     private StaffStatus status;
     private LocalDate joinDate;
-    private String comment;
     private String interviewer;
-    private String paymentMethod;
-    private String bio;
     private LocalDateTime createdDate;
     private LocalDateTime lastUpdateDate;
 
@@ -32,14 +27,9 @@ public class ComplexStaffResponse {
                 .name(entity.getName())
                 .phoneNumber(entity.getPhoneNumber())
                 .branchName(entity.getBranch() != null ? entity.getBranch().getBranchName() : null)
-                .email(entity.getEmail())
-                .subject(entity.getSubject())
                 .status(entity.getStatus())
                 .joinDate(entity.getJoinDate())
-                .comment(entity.getComment())
                 .interviewer(entity.getInterviewer())
-                .paymentMethod(entity.getPaymentMethod())
-                .bio(entity.getBio())
                 .createdDate(entity.getCreatedDate())
                 .lastUpdateDate(entity.getLastUpdateDate())
                 .build();

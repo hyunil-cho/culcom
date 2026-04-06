@@ -91,7 +91,7 @@
                ON mm.member_seq = m.seq
               AND mm.status IN ('활성', '연기')
         LEFT JOIN complex_member_attendance a
-               ON a.member_membership_seq = mm.seq
+               ON a.member_seq = m.seq
               AND a.class_seq = c.seq
               AND a.attendance_date = #{today}
         WHERE c.branch_seq = #{branchSeq}
@@ -212,11 +212,10 @@
                     ELSE 'X'
                 END AS status,
                 ROW_NUMBER() OVER (
-                    PARTITION BY a.class_seq, mm.member_seq
+                    PARTITION BY a.class_seq, a.member_seq
                     ORDER BY a.attendance_date DESC
                 ) AS rn
             FROM complex_member_attendance a
-            JOIN complex_member_memberships mm ON mm.seq = a.member_membership_seq
             JOIN complex_classes c             ON c.seq = a.class_seq
             WHERE c.branch_seq = #{branchSeq}
               AND c.time_slot_seq = #{slotSeq}
@@ -236,9 +235,8 @@
             c.name              AS className,
             a.note              AS note
         FROM complex_member_attendance a
-        JOIN complex_member_memberships mm ON mm.seq = a.member_membership_seq
         JOIN complex_classes c             ON c.seq = a.class_seq
-        WHERE mm.member_seq = #{memberSeq}
+        WHERE a.member_seq = #{memberSeq}
           AND c.branch_seq  = #{branchSeq}
         ORDER BY a.attendance_date DESC, c.name
         LIMIT #{size} OFFSET #{offset}
@@ -247,9 +245,8 @@
     <select id="countMemberAttendanceHistory" resultType="int">
         SELECT COUNT(*)
         FROM complex_member_attendance a
-        JOIN complex_member_memberships mm ON mm.seq = a.member_membership_seq
         JOIN complex_classes c             ON c.seq = a.class_seq
-        WHERE mm.member_seq = #{memberSeq}
+        WHERE a.member_seq = #{memberSeq}
           AND c.branch_seq  = #{branchSeq}
     </select>
 
@@ -291,9 +288,8 @@
             MIN(a.attendance_date)                      AS startDate,
             MAX(a.attendance_date)                      AS endDate
         FROM complex_member_attendance a
-        JOIN complex_member_memberships mm ON mm.seq = a.member_membership_seq
         JOIN complex_classes c             ON c.seq = a.class_seq
-        WHERE mm.member_seq = #{memberSeq}
+        WHERE a.member_seq = #{memberSeq}
           AND c.branch_seq  = #{branchSeq}
     </select>
 

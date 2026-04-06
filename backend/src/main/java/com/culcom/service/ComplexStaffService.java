@@ -54,14 +54,9 @@ public class ComplexStaffService {
         ComplexStaff staff = ComplexStaff.builder()
                 .name(req.getName())
                 .phoneNumber(req.getPhoneNumber())
-                .email(req.getEmail())
-                .subject(req.getSubject())
                 .status(req.getStatus())
                 .joinDate(req.getJoinDate() != null ? req.getJoinDate() : LocalDate.now())
-                .comment(req.getComment())
                 .interviewer(req.getInterviewer())
-                .paymentMethod(req.getPaymentMethod())
-                .bio(req.getBio())
                 .branch(branchRepository.getReferenceById(branchSeq))
                 .build();
         return ComplexStaffResponse.from(staffRepository.save(staff));
@@ -85,26 +80,16 @@ public class ComplexStaffService {
         // 필드 변경 감지 및 로그 기록
         logIfChanged(staff, "이름", staff.getName(), req.getName());
         logIfChanged(staff, "전화번호", staff.getPhoneNumber(), req.getPhoneNumber());
-        logIfChanged(staff, "이메일", staff.getEmail(), req.getEmail());
-        logIfChanged(staff, "담당과목", staff.getSubject(), req.getSubject());
         logIfChanged(staff, "면접관", staff.getInterviewer(), req.getInterviewer());
-        logIfChanged(staff, "결제방식", staff.getPaymentMethod(), req.getPaymentMethod());
-        logIfChanged(staff, "비고", staff.getComment(), req.getComment());
-        logIfChanged(staff, "인적사항", staff.getBio(), req.getBio());
         logIfChanged(staff, "입사일",
                 staff.getJoinDate() != null ? staff.getJoinDate().toString() : null,
                 req.getJoinDate() != null ? req.getJoinDate().toString() : null);
 
         staff.setName(req.getName());
         staff.setPhoneNumber(req.getPhoneNumber());
-        staff.setEmail(req.getEmail());
-        staff.setSubject(req.getSubject());
         staff.setStatus(newStatus);
         staff.setJoinDate(req.getJoinDate());
-        staff.setComment(req.getComment());
         staff.setInterviewer(req.getInterviewer());
-        staff.setPaymentMethod(req.getPaymentMethod());
-        staff.setBio(req.getBio());
 
         // 휴직/퇴직 시 배정된 수업에서 제외
         if (oldStatus == StaffStatus.재직 && newStatus != StaffStatus.재직) {

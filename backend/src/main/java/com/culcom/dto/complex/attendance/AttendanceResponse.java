@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 public class AttendanceResponse {
     private Long seq;
+    private Long memberSeq;
     private Long memberMembershipSeq;
     private Long classSeq;
     private LocalDate attendanceDate;
@@ -22,7 +23,8 @@ public class AttendanceResponse {
     public static AttendanceResponse from(ComplexMemberAttendance entity) {
         return AttendanceResponse.builder()
                 .seq(entity.getSeq())
-                .memberMembershipSeq(entity.getMemberMembership().getSeq())
+                .memberSeq(entity.getMember().getSeq())
+                .memberMembershipSeq(entity.getMemberMembership() != null ? entity.getMemberMembership().getSeq() : null)
                 .classSeq(entity.getComplexClass() != null ? entity.getComplexClass().getSeq() : null)
                 .attendanceDate(entity.getAttendanceDate())
                 .status(entity.getStatus())

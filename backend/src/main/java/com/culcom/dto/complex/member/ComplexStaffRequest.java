@@ -14,12 +14,7 @@ public class ComplexStaffRequest {
     private String name;
     @NotBlank
     private String phoneNumber;
-    private String email;
-    private String subject;
     private StaffStatus status;
     private LocalDate joinDate;
-    private String comment;
     private String interviewer;
-    private String paymentMethod;
-    private String bio;
 }

@@ -44,16 +44,15 @@
         SELECT sub.memberSeq, sub.status
         FROM (
             SELECT
-                mm.member_seq AS memberSeq,
+                a.member_seq AS memberSeq,
                 CASE a.status
                     WHEN '출석' THEN 'O'
                     WHEN '연기' THEN '△'
                     ELSE 'X'
                 END AS status,
-                ROW_NUMBER() OVER (PARTITION BY mm.member_seq ORDER BY a.attendance_date DESC) AS rn
+                ROW_NUMBER() OVER (PARTITION BY a.member_seq ORDER BY a.attendance_date DESC) AS rn
             FROM complex_member_attendance a
-            JOIN complex_member_memberships mm ON mm.seq = a.member_membership_seq
-            WHERE mm.member_seq IN
+            WHERE a.member_seq IN
             <foreach collection="memberSeqs" item="seq" open="(" separator="," close=")">
                 #{seq}
             </foreach>

@@ -26,12 +26,8 @@ export function useStaffForm(seq?: number) {
       setForm({
         name: s.name,
         phoneNumber: s.phoneNumber ?? '',
-
         status: s.status,
         interviewer: s.interviewer ?? '',
-        paymentMethod: s.paymentMethod ?? '',
-        comment: s.comment ?? '',
-        bio: s.bio ?? '',
         refund: r ? {
           depositAmount: r.depositAmount ?? '',
           refundableDeposit: r.refundableDeposit ?? '',
@@ -97,12 +93,8 @@ export function useStaffForm(seq?: number) {
     const staffData = {
       name: form.name,
       phoneNumber: form.phoneNumber || undefined,
-
       status: form.status,
       interviewer: form.interviewer || undefined,
-      paymentMethod: form.paymentMethod || undefined,
-      comment: form.comment || undefined,
-      bio: form.bio || undefined,
     };
 
     if (isEdit) {

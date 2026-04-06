@@ -10,32 +10,32 @@ import java.util.List;
 public interface ComplexMemberAttendanceRepository extends JpaRepository<ComplexMemberAttendance, Long> {
 
     @Query("SELECT a FROM ComplexMemberAttendance a " +
-           "JOIN FETCH a.memberMembership mm " +
-           "JOIN FETCH mm.member m " +
+           "JOIN FETCH a.member m " +
            "WHERE a.complexClass.seq = :classSeq AND a.attendanceDate = :date")
     List<ComplexMemberAttendance> findByClassAndDate(@Param("classSeq") Long classSeq, @Param("date") LocalDate date);
+
+    List<ComplexMemberAttendance> findByMemberSeq(Long memberSeq);
 
     List<ComplexMemberAttendance> findByMemberMembershipSeq(Long memberMembershipSeq);
 
     @Query("SELECT a FROM ComplexMemberAttendance a " +
-           "JOIN FETCH a.memberMembership mm " +
-           "JOIN FETCH mm.member m " +
+           "JOIN FETCH a.member m " +
            "WHERE a.complexClass.seq IN :classSeqs AND a.attendanceDate = :date")
     List<ComplexMemberAttendance> findByClassSeqsAndDate(
             @Param("classSeqs") List<Long> classSeqs, @Param("date") LocalDate date);
 
     @Query("SELECT a FROM ComplexMemberAttendance a " +
-           "JOIN FETCH a.memberMembership mm " +
+           "JOIN FETCH a.member m " +
            "WHERE a.complexClass.seq IN :classSeqs " +
-           "ORDER BY a.complexClass.seq, mm.member.seq, a.attendanceDate DESC")
+           "ORDER BY a.complexClass.seq, a.member.seq, a.attendanceDate DESC")
     List<ComplexMemberAttendance> findRecentByClassSeqs(@Param("classSeqs") List<Long> classSeqs);
 
     @Query("SELECT a FROM ComplexMemberAttendance a " +
-           "WHERE a.memberMembership.seq = :memberMembershipSeq " +
+           "WHERE a.member.seq = :memberSeq " +
            "AND a.complexClass.seq = :classSeq " +
            "AND a.attendanceDate = :date")
-    java.util.Optional<ComplexMemberAttendance> findByMembershipAndClassAndDate(
-            @Param("memberMembershipSeq") Long memberMembershipSeq,
+    java.util.Optional<ComplexMemberAttendance> findByMemberAndClassAndDate(
+            @Param("memberSeq") Long memberSeq,
             @Param("classSeq") Long classSeq,
             @Param("date") LocalDate date);
 }

@@ -165,23 +165,17 @@ public class LocalDataInitializer implements ApplicationRunner {
 
         // ── 스태프 ──
         ComplexStaff staff1 = complexStaffRepository.save(ComplexStaff.builder()
-                .branch(gangnam).name("이민호").phoneNumber("01077778888")
-                .email("minho@culcom.com").subject("영어").bio("TESOL 자격증 보유, 경력 5년").build());
+                .branch(gangnam).name("이민호").phoneNumber("01077778888").build());
         ComplexStaff staff2 = complexStaffRepository.save(ComplexStaff.builder()
-                .branch(gangnam).name("김수진").phoneNumber("01066669999")
-                .email("sujin@culcom.com").subject("영어").bio("미국 거주 10년, 비즈니스 영어 전문").build());
+                .branch(gangnam).name("김수진").phoneNumber("01066669999").build());
         ComplexStaff staff3 = complexStaffRepository.save(ComplexStaff.builder()
-                .branch(gangnam).name("마이클 존슨").phoneNumber("01055550000")
-                .email("michael@culcom.com").subject("영어").bio("원어민 강사, 캐나다 출신").build());
+                .branch(gangnam).name("마이클 존슨").phoneNumber("01055550000").build());
         ComplexStaff staff4 = complexStaffRepository.save(ComplexStaff.builder()
-                .branch(gangnam).name("박하나").phoneNumber("01044441111")
-                .email("hana@culcom.com").subject("영어").bio("토익 990, 시험 대비 전문").build());
+                .branch(gangnam).name("박하나").phoneNumber("01044441111").build());
         ComplexStaff staff5 = complexStaffRepository.save(ComplexStaff.builder()
-                .branch(seocho).name("정예린").phoneNumber("01033332222")
-                .email("yerin@culcom.com").subject("영어").bio("어린이 영어 전문, 경력 7년").build());
+                .branch(seocho).name("정예린").phoneNumber("01033332222").build());
         ComplexStaff staff6 = complexStaffRepository.save(ComplexStaff.builder()
-                .branch(seocho).name("제임스 리").phoneNumber("01022223333")
-                .email("james@culcom.com").subject("영어").bio("원어민 강사, 호주 출신").build());
+                .branch(seocho).name("제임스 리").phoneNumber("01022223333").build());
         log.info("스태프 6명 생성");
 
         // ── 수업 (팀) ──
@@ -337,7 +331,7 @@ public class LocalDataInitializer implements ApplicationRunner {
                 else status = AttendanceStatus.연기;
 
                 complexMemberAttendanceRepository.save(ComplexMemberAttendance.builder()
-                        .memberMembership(gMemberships.get(i)).complexClass(cls)
+                        .member(gMembers.get(i)).memberMembership(gMemberships.get(i)).complexClass(cls)
                         .attendanceDate(date).status(status)
                         .note(status == AttendanceStatus.결석 && rand.nextDouble() < 0.3 ? "개인 사정" : null)
                         .build());
@@ -367,7 +361,7 @@ public class LocalDataInitializer implements ApplicationRunner {
                 else status = AttendanceStatus.연기;
 
                 complexMemberAttendanceRepository.save(ComplexMemberAttendance.builder()
-                        .memberMembership(sMemberships.get(i)).complexClass(cls)
+                        .member(sMembers.get(i)).memberMembership(sMemberships.get(i)).complexClass(cls)
                         .attendanceDate(date).status(status).build());
 
                 membershipActivityLogRepository.save(MembershipActivityLog.builder()

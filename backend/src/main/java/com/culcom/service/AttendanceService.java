@@ -39,8 +39,10 @@ public class AttendanceService {
 
     @Transactional
     public AttendanceResponse record(AttendanceRequest req) {
+        ComplexMemberMembership mm = memberMembershipRepository.getReferenceById(req.getMemberMembershipSeq());
         ComplexMemberAttendance attendance = ComplexMemberAttendance.builder()
-                .memberMembership(memberMembershipRepository.getReferenceById(req.getMemberMembershipSeq()))
+                .member(mm.getMember())
+                .memberMembership(mm)
                 .complexClass(req.getClassSeq() != null ? classRepository.getReferenceById(req.getClassSeq()) : null)
                 .attendanceDate(req.getAttendanceDate())
                 .status(req.getStatus())
@@ -92,7 +94,7 @@ public class AttendanceService {
         }
         Map<Long, ComplexMemberAttendance> existingAttendanceMap = new HashMap<>();
         attendanceRepository.findByClassSeqsAndDate(List.of(classSeq), today)
-                .forEach(a -> existingAttendanceMap.put(a.getMemberMembership().getMember().getSeq(), a));
+                .forEach(a -> existingAttendanceMap.put(a.getMember().getSeq(), a));
 
         // 스태프 기존 출석 프리로드
         Map<Long, ComplexStaffAttendance> existingStaffAttendanceMap = new HashMap<>();
@@ -210,6 +212,7 @@ public class AttendanceService {
 
         // 신규 기록
         attendanceRepository.save(ComplexMemberAttendance.builder()
+                .member(ComplexMember.builder().seq(bm.getMemberSeq()).build())
                 .memberMembership(mm)
                 .complexClass(classRepository.getReferenceById(classSeq))
                 .attendanceDate(today).status(newStatus).build());

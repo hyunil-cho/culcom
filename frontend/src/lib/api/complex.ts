@@ -128,14 +128,9 @@ export interface ComplexStaff {
   name: string;
   phoneNumber?: string;
   branchName?: string;
-  email?: string;
-  subject?: string;
   status: string;
   joinDate?: string;
-  comment?: string;
   interviewer?: string;
-  paymentMethod?: string;
-  bio?: string;
 }
 
 export interface StaffRefundInfo {
