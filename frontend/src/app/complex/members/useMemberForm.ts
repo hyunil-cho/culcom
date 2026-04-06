@@ -67,13 +67,16 @@ export function useMemberForm(seq?: number) {
   const buildMemberData = () => ({
     name: form.name,
     phoneNumber: form.phoneNumber,
-    level: form.level || undefined,
-    language: form.language || undefined,
     info: form.info || undefined,
     chartNumber: form.chartNumber || undefined,
-    signupChannel: (form.signupChannel && form.signupChannel !== '기타') ? form.signupChannel : undefined,
     interviewer: form.interviewer || undefined,
     comment: form.comment || undefined,
+  });
+
+  const buildMetaData = () => ({
+    level: form.level || undefined,
+    language: form.language || undefined,
+    signupChannel: (form.signupChannel && form.signupChannel !== '기타') ? form.signupChannel : undefined,
   });
 
   const saveMembership = async (memberSeq: number) => {
@@ -109,11 +112,13 @@ export function useMemberForm(seq?: number) {
       if (classAssign.classSeq) {
         await memberApi.reassignClass(seq, Number(classAssign.classSeq));
       }
+      await memberApi.updateMetaData(seq, buildMetaData());
       await run(memberApi.update(seq, buildMemberData()), '회원 정보가 수정되었습니다.');
     } else {
       const res = await memberApi.create(buildMemberData());
       if (!res.success) { alert(res.message || '회원 등록 실패'); return; }
       const memberSeq = res.data.seq;
+      await memberApi.updateMetaData(memberSeq, buildMetaData());
       await saveMembership(memberSeq);
       await saveClassAssign(memberSeq);
       await run(Promise.resolve(res), '회원이 등록되었습니다.');

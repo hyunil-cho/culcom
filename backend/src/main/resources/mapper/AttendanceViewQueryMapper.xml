@@ -174,7 +174,7 @@
             FALSE               AS staff,
             CASE WHEN mm.status = '연기' THEN TRUE ELSE FALSE END AS postponed,
             CASE WHEN mm.status = '연기' THEN '△' ELSE '' END     AS status,
-            m.level             AS level,
+            md.level            AS level,
             m.info              AS info,
             mm.start_date       AS joinDate,
             mm.expiry_date      AS expiryDate,
@@ -184,6 +184,7 @@
         FROM complex_member_class_mapping mcm
         JOIN complex_classes c           ON c.seq = mcm.class_seq
         JOIN complex_members m           ON m.seq = mcm.member_seq
+        LEFT JOIN complex_member_metadata md ON md.member_seq = m.seq
         LEFT JOIN complex_member_memberships mm
                ON mm.member_seq = m.seq
               AND mm.status IN ('활성', '연기')

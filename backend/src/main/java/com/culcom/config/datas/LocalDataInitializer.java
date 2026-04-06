@@ -247,11 +247,13 @@ public class LocalDataInitializer implements ApplicationRunner {
 
         List<ComplexMember> gMembers = new ArrayList<>();
         for (Object[] d : gangnamMembers) {
-            gMembers.add(complexMemberRepository.save(ComplexMember.builder()
+            ComplexMember m = complexMemberRepository.save(ComplexMember.builder()
                     .branch(gangnam).name((String) d[0]).phoneNumber((String) d[1])
-                    .level((String) d[2]).language((String) d[3]).info((String) d[4])
-                    .chartNumber((String) d[5]).signupChannel((String) d[6]).interviewer((String) d[7])
-                    .build()));
+                    .info((String) d[4]).chartNumber((String) d[5]).interviewer((String) d[7])
+                    .build());
+            m.setMetaData(ComplexMemberMetaData.builder()
+                    .member(m).level((String) d[2]).language((String) d[3]).signupChannel((String) d[6]).build());
+            gMembers.add(complexMemberRepository.save(m));
         }
 
         // ── 회원 (서초점) ──
@@ -268,11 +270,13 @@ public class LocalDataInitializer implements ApplicationRunner {
 
         List<ComplexMember> sMembers = new ArrayList<>();
         for (Object[] d : seochoMembers) {
-            sMembers.add(complexMemberRepository.save(ComplexMember.builder()
+            ComplexMember m = complexMemberRepository.save(ComplexMember.builder()
                     .branch(seocho).name((String) d[0]).phoneNumber((String) d[1])
-                    .level((String) d[2]).language((String) d[3]).info((String) d[4])
-                    .chartNumber((String) d[5]).signupChannel((String) d[6]).interviewer((String) d[7])
-                    .build()));
+                    .info((String) d[4]).chartNumber((String) d[5]).interviewer((String) d[7])
+                    .build());
+            m.setMetaData(ComplexMemberMetaData.builder()
+                    .member(m).level((String) d[2]).language((String) d[3]).signupChannel((String) d[6]).build());
+            sMembers.add(complexMemberRepository.save(m));
         }
         log.info("회원 {}명 생성 (강남 {}, 서초 {})", gMembers.size() + sMembers.size(), gMembers.size(), sMembers.size());
 

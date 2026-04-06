@@ -78,7 +78,7 @@ public class PublicPostponementService {
             return new MemberInfo(
                     m.getSeq(), m.getName(), m.getPhoneNumber(),
                     branchSeq, m.getBranch().getBranchName(),
-                    m.getLevel(), msInfos, classInfos
+                    m.getMetaData() != null ? m.getMetaData().getLevel() : null, msInfos, classInfos
             );
         }).collect(Collectors.toList());
 

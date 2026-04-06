@@ -3,6 +3,7 @@ package com.culcom.controller.complex.member;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.complex.member.ComplexMemberMembershipRequest;
 import com.culcom.dto.complex.member.ComplexMemberMembershipResponse;
+import com.culcom.dto.complex.member.ComplexMemberMetaDataRequest;
 import com.culcom.dto.complex.member.ComplexMemberRequest;
 import com.culcom.dto.complex.member.ComplexMemberResponse;
 import com.culcom.config.security.CustomUserPrincipal;
@@ -44,6 +45,12 @@ public class ComplexMemberController {
     public ResponseEntity<ApiResponse<ComplexMemberResponse>> update(
             @PathVariable Long seq, @RequestBody ComplexMemberRequest req) {
         return ResponseEntity.ok(ApiResponse.ok("회원 수정 완료", complexMemberService.update(seq, req)));
+    }
+
+    @PutMapping("/{seq}/metadata")
+    public ResponseEntity<ApiResponse<ComplexMemberResponse>> updateMetaData(
+            @PathVariable Long seq, @RequestBody ComplexMemberMetaDataRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("메타데이터 수정 완료", complexMemberService.updateMetaData(seq, req)));
     }
 
     @PostMapping("/{seq}/memberships")

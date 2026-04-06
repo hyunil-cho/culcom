@@ -52,6 +52,12 @@ export interface ComplexMember {
   attendanceHistory?: string[];
 }
 
+export interface ComplexMemberMetaData {
+  level?: string;
+  language?: string;
+  signupChannel?: string;
+}
+
 export interface MemberMembershipRequest {
   membershipSeq: number;
   startDate?: string;
@@ -95,6 +101,8 @@ export const memberApi = {
   get: (seq: number) => api.get<ComplexMember>(API.COMPLEX_MEMBER(seq)),
   create: (data: Partial<ComplexMember>) => api.post<ComplexMember>(API.COMPLEX_MEMBERS, data),
   update: (seq: number, data: Partial<ComplexMember>) => api.put<ComplexMember>(API.COMPLEX_MEMBER(seq), data),
+  updateMetaData: (seq: number, data: ComplexMemberMetaData) =>
+    api.put<ComplexMember>(`${API.COMPLEX_MEMBER(seq)}/metadata`, data),
   delete: (seq: number) => api.delete<void>(API.COMPLEX_MEMBER(seq)),
   getMemberships: (seq: number) => api.get<MemberMembershipResponse[]>(API.COMPLEX_MEMBER_MEMBERSHIPS(seq)),
   timeline: (seq: number, page: number, size: number) =>

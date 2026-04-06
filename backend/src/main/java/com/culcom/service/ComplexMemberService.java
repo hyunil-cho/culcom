@@ -2,6 +2,7 @@ package com.culcom.service;
 
 import com.culcom.dto.complex.member.*;
 import com.culcom.entity.complex.clazz.ComplexClass;
+import com.culcom.dto.complex.member.ComplexMemberMetaDataRequest;
 import com.culcom.entity.complex.member.*;
 import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.exception.EntityNotFoundException;
@@ -41,12 +42,9 @@ public class ComplexMemberService {
         ComplexMember member = ComplexMember.builder()
                 .name(req.getName())
                 .phoneNumber(req.getPhoneNumber())
-                .level(req.getLevel())
-                .language(req.getLanguage())
                 .info(req.getInfo())
                 .chartNumber(req.getChartNumber())
                 .comment(req.getComment())
-                .signupChannel(req.getSignupChannel())
                 .interviewer(req.getInterviewer())
                 .branch(branchRepository.getReferenceById(branchSeq))
                 .build();
@@ -59,13 +57,25 @@ public class ComplexMemberService {
                 .orElseThrow(() -> new EntityNotFoundException("회원"));
         member.setName(req.getName());
         member.setPhoneNumber(req.getPhoneNumber());
-        member.setLevel(req.getLevel());
-        member.setLanguage(req.getLanguage());
         member.setInfo(req.getInfo());
         member.setChartNumber(req.getChartNumber());
         member.setComment(req.getComment());
-        member.setSignupChannel(req.getSignupChannel());
         member.setInterviewer(req.getInterviewer());
+        return ComplexMemberResponse.from(memberRepository.save(member));
+    }
+
+    @Transactional
+    public ComplexMemberResponse updateMetaData(Long seq, ComplexMemberMetaDataRequest req) {
+        ComplexMember member = memberRepository.findById(seq)
+                .orElseThrow(() -> new EntityNotFoundException("회원"));
+        ComplexMemberMetaData metaData = member.getMetaData();
+        if (metaData == null) {
+            metaData = ComplexMemberMetaData.builder().member(member).build();
+            member.setMetaData(metaData);
+        }
+        metaData.setLevel(req.getLevel());
+        metaData.setLanguage(req.getLanguage());
+        metaData.setSignupChannel(req.getSignupChannel());
         return ComplexMemberResponse.from(memberRepository.save(member));
     }
 

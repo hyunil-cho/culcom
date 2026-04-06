@@ -57,7 +57,7 @@ public class PublicRefundController {
             return new MemberInfo(
                     m.getSeq(), m.getName(), m.getPhoneNumber(),
                     m.getBranch().getSeq(), m.getBranch().getBranchName(),
-                    m.getLevel(), msInfos, List.of());
+                    m.getMetaData() != null ? m.getMetaData().getLevel() : null, msInfos, List.of());
         }).toList();
 
         return ResponseEntity.ok(ApiResponse.ok(new MemberSearchResponse(memberInfos)));

@@ -17,17 +17,18 @@
             m.seq,
             m.name,
             m.phone_number AS phoneNumber,
-            m.level,
-            m.language,
+            md.level,
+            md.language,
             m.info,
             m.chart_number AS chartNumber,
             m.comment,
             m.join_date AS joinDate,
-            m.signup_channel AS signupChannel,
+            md.signup_channel AS signupChannel,
             m.interviewer,
             m.created_date AS createdDate,
             m.last_update_date AS lastUpdateDate
         FROM complex_members m
+        LEFT JOIN complex_member_metadata md ON md.member_seq = m.seq
         <include refid="searchCondition"/>
         ORDER BY m.created_date DESC
         LIMIT #{size} OFFSET #{offset}

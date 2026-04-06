@@ -11,11 +11,8 @@ public class ComplexMemberRequest {
     private String name;
     @NotBlank
     private String phoneNumber;
-    private String level;
-    private String language;
     private String info;
     private String chartNumber;
     private String comment;
-    private String signupChannel;
     private String interviewer;
 }

@@ -59,7 +59,7 @@ public class PublicMembershipController {
 
         MembershipCheckResponse.MemberSummary summary = new MembershipCheckResponse.MemberSummary(
                 member.getName(), member.getPhoneNumber(),
-                member.getBranch().getBranchName(), member.getLevel(), details
+                member.getBranch().getBranchName(), member.getMetaData() != null ? member.getMetaData().getLevel() : null, details
         );
 
         return ResponseEntity.ok(ApiResponse.ok(new MembershipCheckResponse(summary)));

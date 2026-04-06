@@ -27,11 +27,8 @@ public class ComplexMember extends BaseTimeEntity {
     @Column(name = "phone_number", nullable = false, length = 20)
     private String phoneNumber;
 
-    @Column(length = 20)
-    private String level;
-
-    @Column(length = 50)
-    private String language;
+    @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private ComplexMemberMetaData metaData;
 
     @Column(length = 300)
     private String info;
@@ -44,9 +41,6 @@ public class ComplexMember extends BaseTimeEntity {
 
     @Column(name = "join_date")
     private LocalDateTime joinDate;
-
-    @Column(name = "signup_channel", length = 100)
-    private String signupChannel;
 
     @Column(length = 100)
     private String interviewer;
