@@ -25,7 +25,7 @@ export const customerApi = {
   updateComment: (customerSeq: number, comment: string) =>
     api.post<{ comment: string }>(API.CUSTOMERS_COMMENT, { customerSeq, comment }),
   processCall: (customerSeq: number, caller: string) =>
-    api.post<{ call_count: number; last_update_date: string }>(API.CUSTOMERS_PROCESS_CALL, { customerSeq, caller }),
+    api.post<{ callCount: number; lastUpdateDate: string }>(API.CUSTOMERS_PROCESS_CALL, { customerSeq, caller }),
   createReservation: (customerSeq: number, caller: string, interviewDate: string) =>
     api.post<{ reservation_id: number }>(API.CUSTOMERS_RESERVATION, { customerSeq, caller, interviewDate }),
   markNoPhoneInterview: (customerSeq: number) =>

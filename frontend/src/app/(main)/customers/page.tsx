@@ -105,15 +105,15 @@ function CustomersContent() {
     setPhoneVisible(prev => ({ ...prev, [customerSeq]: true }));
     setCustomers(prev => prev.map(c => {
       if (c.seq !== customerSeq) return c;
-      const newCount = data.call_count;
+      const newCount = data.callCount;
       let newStatus = c.status;
       if (newCount >= 5) newStatus = '콜수초과';
       else if (c.status === '신규') newStatus = '진행중';
-      return { ...c, callCount: newCount, status: newStatus, lastUpdateDate: data.last_update_date };
+      return { ...c, callCount: newCount, status: newStatus, lastUpdateDate: data.lastUpdateDate };
     }));
     setCallerModal(null);
 
-    if (filter === 'new' && data.call_count >= 5) {
+    if (filter === 'new' && data.callCount >= 5) {
       setCustomers(prev => prev.filter(c => c.seq !== customerSeq));
     }
   };
