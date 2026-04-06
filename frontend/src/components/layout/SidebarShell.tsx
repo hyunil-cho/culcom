@@ -17,16 +17,20 @@ export interface MenuGroup {
   items: MenuItem[];
 }
 
+function isPathActive(pathname: string, href: string): boolean {
+  return pathname === href || pathname.startsWith(href + '/');
+}
+
 function SidebarItem({ item, pathname }: { item: MenuItem; pathname: string }) {
   const hasChildren = item.children && item.children.length > 0;
-  const isChildActive = hasChildren && item.children!.some(c => pathname.startsWith(c.href));
-  const [open, setOpen] = useState(isChildActive || pathname.startsWith(item.href));
+  const isChildActive = hasChildren && item.children!.some(c => isPathActive(pathname, c.href));
+  const [open, setOpen] = useState(isChildActive || isPathActive(pathname, item.href));
 
   if (!hasChildren) {
     return (
       <Link
         href={item.href}
-        className={pathname.startsWith(item.href) ? styles.linkActive : styles.link}
+        className={isPathActive(pathname, item.href) ? styles.linkActive : styles.link}
       >
         <span>{item.icon}</span>
         {item.label}
