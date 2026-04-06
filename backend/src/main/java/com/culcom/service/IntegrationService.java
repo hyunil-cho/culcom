@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.culcom.repository.BranchRepository;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -26,6 +28,7 @@ public class IntegrationService {
     private final BranchThirdPartyMappingRepository mappingRepository;
     private final ThirdPartyServiceRepository thirdPartyServiceRepository;
     private final MymunjaConfigInfoRepository mymunjaConfigInfoRepository;
+    private final BranchRepository branchRepository;
     private final SmsService smsService;
 
     public List<IntegrationServiceResponse> list(Long branchSeq) {
@@ -116,10 +119,6 @@ public class IntegrationService {
 
     @Transactional
     public void saveSmsConfig(SmsConfigSaveRequest request, Long branchSeq) {
-        BranchThirdPartyMapping mapping = mappingRepository
-                .findByBranchSeqAndThirdPartyServiceSeq(branchSeq, request.getServiceId())
-                .orElseThrow(() -> new IllegalArgumentException("SMS 매핑 정보를 찾을 수 없습니다."));
-
         // 저장 전 잔여건수 조회로 계정 유효성 검증
         int[] remainingCounts;
         try {
@@ -128,6 +127,20 @@ public class IntegrationService {
             log.error("마이문자 잔여건수 조회 실패: {}", e.getMessage());
             throw new IllegalArgumentException("마이문자 계정 인증에 실패했습니다. 계정 ID와 비밀번호를 확인해주세요.");
         }
+
+        BranchThirdPartyMapping mapping = mappingRepository
+                .findByBranchSeqAndThirdPartyServiceSeq(branchSeq, request.getServiceId())
+                .orElseGet(() -> {
+                    var branch = branchRepository.findById(branchSeq)
+                            .orElseThrow(() -> new IllegalArgumentException("지점 정보를 찾을 수 없습니다."));
+                    var service = thirdPartyServiceRepository.findById(request.getServiceId())
+                            .orElseThrow(() -> new IllegalArgumentException("서비스 정보를 찾을 수 없습니다."));
+                    return mappingRepository.save(BranchThirdPartyMapping.builder()
+                            .branch(branch)
+                            .thirdPartyService(service)
+                            .isActive(request.isActive())
+                            .build());
+                });
 
         mapping.setIsActive(request.isActive());
         mappingRepository.save(mapping);
