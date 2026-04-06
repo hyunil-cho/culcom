@@ -88,9 +88,7 @@ function MembersContent() {
         columns={columns}
         data={members}
         rowKey={(m) => m.seq}
-        page={page}
-        totalPages={totalPages}
-        onPageChange={(p) => setParams({ page: String(p) })}
+        pagination={{ page, totalPages, onPageChange: (p) => setParams({ page: String(p) }) }}
         onRowClick={(m) => router.push(ROUTES.COMPLEX_MEMBER_EDIT(m.seq))}
       />
 

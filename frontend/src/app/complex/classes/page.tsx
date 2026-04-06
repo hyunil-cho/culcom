@@ -81,9 +81,7 @@ export default function ClassesPage() {
         data={classes}
         rowKey={(c) => c.seq}
         emptyMessage="등록된 수업이 없습니다."
-        page={page}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
+        pagination={{ page, totalPages, onPageChange: handlePageChange }}
         onRowClick={(c) => router.push(ROUTES.COMPLEX_CLASS_EDIT(c.seq))}
       />
 

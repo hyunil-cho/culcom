@@ -162,9 +162,7 @@ function NoticesContent() {
         rowStyle={(n) => n.isPinned ? { background: '#fffde7' } : undefined}
         onRowClick={(n) => router.push(ROUTES.NOTICE_DETAIL(n.seq))}
         emptyMessage="등록된 게시글이 없습니다."
-        page={page}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
+        pagination={{ page, totalPages, onPageChange: handlePageChange }}
       />
 
       {deleteTarget && (

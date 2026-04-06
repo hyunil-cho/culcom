@@ -16,7 +16,7 @@
                 </otherwise>
             </choose>
         </if>
-        <if test="(keyword == null or keyword == '') and filter == 'new'">
+        <if test="filter == 'new'">
             AND c.status IN ('신규', '진행중')
         </if>
     </sql>

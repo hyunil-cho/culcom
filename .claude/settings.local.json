@@ -57,7 +57,13 @@
       "Bash(sort -t: -k2 -rn)",
       "Bash(mkdir -p /c/Users/lookh/IdeaProjects/culcom/frontend/src/app/public/refund/success)",
       "Bash(mkdir -p /c/Users/lookh/IdeaProjects/culcom/frontend/src/app/public/membership)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(cp \"/c/Users/lookh/IdeaProjects/culcom/frontend/src/app/\\(main\\)/survey/[seq]/preview/page.tsx\" \"/c/Users/lookh/IdeaProjects/culcom/frontend/src/app/survey/[seq]/preview/page.tsx\")",
+      "Bash(cp \"/c/Users/lookh/IdeaProjects/culcom/frontend/src/app/\\(main\\)/survey/[seq]/preview/page.module.css\" \"/c/Users/lookh/IdeaProjects/culcom/frontend/src/app/survey/[seq]/preview/page.module.css\")",
+      "Bash(rm \"/c/Users/lookh/IdeaProjects/culcom/frontend/src/app/\\(main\\)/survey/[seq]/preview/page.tsx\" \"/c/Users/lookh/IdeaProjects/culcom/frontend/src/app/\\(main\\)/survey/[seq]/preview/page.module.css\")",
+      "Bash(rmdir \"/c/Users/lookh/IdeaProjects/culcom/frontend/src/app/\\(main\\)/survey/[seq]/preview\")",
+      "Read(//c/Users/lookh/IdeaProjects/culcom/frontend/src/app/survey/**)",
+      "Read(//c/Users/lookh/IdeaProjects/culcom/frontend/src/app/complex/**)"
     ]
   }
 }

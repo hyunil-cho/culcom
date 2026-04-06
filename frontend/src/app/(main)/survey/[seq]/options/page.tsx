@@ -169,7 +169,7 @@ export default function SurveyEditorPage() {
     const form = questionEditForms[q.seq];
     if (!form) return;
     if (!form.title.trim()) { alert('질문 제목을 입력해주세요.'); return; }
-    const res = await surveyApi.updateQuestion(templateSeq, q.seq, { questionKey: form.questionKey, title: form.title, inputType: form.inputType, required: form.required });
+    const res = await surveyApi.updateQuestion(templateSeq, q.seq, { sectionSeq: q.sectionSeq!, questionKey: form.questionKey, title: form.title, inputType: form.inputType, required: form.required });
     if (res.success) { setQuestionEditForms(prev => { const next = { ...prev }; delete next[q.seq]; return next; }); load(); }
   };
   const handleDeleteQuestion = async (q: SurveyQuestion) => {
@@ -439,23 +439,6 @@ export default function SurveyEditorPage() {
         ))}
       </div>
 
-      {addSectionForm && (
-        <div className={`card ${s.addCard}`}>
-          <div className={s.addCardTitle}>새 섹션</div>
-          <div className={s.addCardBody}>
-            <label className={s.lbl}>섹션 제목 <span className={s.requiredMark}>*</span></label>
-            <input type="text" value={addSectionForm.title} autoFocus placeholder="예: 기본 정보"
-              onChange={e => setAddSectionForm({ title: e.target.value })}
-              onKeyDown={e => { if (e.key === 'Enter') handleAddSection(); }}
-              className={s.addSectionInput} />
-          </div>
-          <div className={s.flexEnd}>
-            <Button variant="secondary" onClick={() => setAddSectionForm(null)}>취소</Button>
-            <Button onClick={handleAddSection}>추가</Button>
-          </div>
-        </div>
-      )}
-
       {sections.length === 0 && !addSectionForm ? (
         <div className={`card ${s.emptyCard}`}>섹션이 없습니다. &apos;+ 섹션 추가&apos; 버튼으로 시작하세요.</div>
       ) : (
@@ -488,16 +471,33 @@ export default function SurveyEditorPage() {
                 )}
               </div>
 
-              {renderQuestionAddForm(sec.seq)}
-
               {secQuestions.length === 0 && !questionAddForms[sec.seq] ? (
                 <div className={s.emptySection}>이 섹션에 질문이 없습니다.</div>
               ) : (
                 secQuestions.map(q => renderQuestionCard(q, sec.seq))
               )}
+
+              {renderQuestionAddForm(sec.seq)}
             </div>
           );
         })
+      )}
+
+      {addSectionForm && (
+        <div className={`card ${s.addCard}`}>
+          <div className={s.addCardTitle}>새 섹션</div>
+          <div className={s.addCardBody}>
+            <label className={s.lbl}>섹션 제목 <span className={s.requiredMark}>*</span></label>
+            <input type="text" value={addSectionForm.title} autoFocus placeholder="예: 기본 정보"
+              onChange={e => setAddSectionForm({ title: e.target.value })}
+              onKeyDown={e => { if (e.key === 'Enter') handleAddSection(); }}
+              className={s.addSectionInput} />
+          </div>
+          <div className={s.flexEnd}>
+            <Button variant="secondary" onClick={() => setAddSectionForm(null)}>취소</Button>
+            <Button onClick={handleAddSection}>추가</Button>
+          </div>
+        </div>
       )}
     </>
   );

@@ -9,6 +9,12 @@ export interface Column<T> {
   style?: React.CSSProperties;
 }
 
+export interface PaginationProps {
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}
+
 interface DataTableProps<T> {
   columns: Column<T>[];
   data: T[];
@@ -23,10 +29,8 @@ interface DataTableProps<T> {
   onRowClick?: (item: T) => void;
   /** 빈 데이터 메시지 */
   emptyMessage?: string;
-  /** 페이지네이션 */
-  page?: number;
-  totalPages?: number;
-  onPageChange?: (page: number) => void;
+  /** 페이지네이션 (usePagination().paginationProps) */
+  pagination?: PaginationProps;
 }
 
 export default function DataTable<T>({
@@ -38,12 +42,10 @@ export default function DataTable<T>({
   rowStyle,
   onRowClick,
   emptyMessage = '데이터가 없습니다.',
-  page,
-  totalPages,
-  onPageChange,
+  pagination,
 }: DataTableProps<T>) {
   const showHeader = headerInfo || headerRight;
-  const showPagination = totalPages !== undefined && totalPages > 1 && page !== undefined && onPageChange;
+  const showPagination = pagination && pagination.totalPages > 1;
 
   return (
     <>
@@ -86,9 +88,9 @@ export default function DataTable<T>({
 
       {showPagination && (
         <div className="pagination">
-          <Button variant="secondary" disabled={page === 0} onClick={() => onPageChange(page - 1)}>이전</Button>
-          <span className="pagination-info">{page + 1} / {totalPages}</span>
-          <Button variant="secondary" disabled={page >= totalPages - 1} onClick={() => onPageChange(page + 1)}>다음</Button>
+          <Button variant="secondary" disabled={pagination.page === 0} onClick={() => pagination.onPageChange(pagination.page - 1)}>이전</Button>
+          <span className="pagination-info">{pagination.page + 1} / {pagination.totalPages}</span>
+          <Button variant="secondary" disabled={pagination.page >= pagination.totalPages - 1} onClick={() => pagination.onPageChange(pagination.page + 1)}>다음</Button>
         </div>
       )}
     </>

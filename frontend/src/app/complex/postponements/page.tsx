@@ -97,7 +97,7 @@ export default function PostponementsPage() {
 
       <DataTable columns={columns} data={requests} rowKey={(r) => r.seq}
         rowStyle={(r) => r.status === '승인' ? { backgroundColor: '#f0fdf4' } : undefined}
-        emptyMessage="새로운 연기 요청이 없습니다." page={page} totalPages={totalPages} onPageChange={handlePageChange} />
+        emptyMessage="새로운 연기 요청이 없습니다." pagination={{ page, totalPages, onPageChange: handlePageChange }} />
 
       {rejectTarget && (
         <ModalOverlay onClose={() => setRejectTarget(null)}>
