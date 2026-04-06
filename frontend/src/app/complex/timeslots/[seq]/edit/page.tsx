@@ -20,7 +20,7 @@ export default function TimeslotEditPage() {
   const seq = Number(params.seq);
   const [form, setForm] = useState<TimeslotFormData>(emptyTimeslotForm);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_TIMESLOTS });
-  const [deleting, setDeleting] = useState(false);
+
 
   useEffect(() => {
     timeslotApi.list().then(res => {
@@ -57,6 +57,7 @@ export default function TimeslotEditPage() {
         backHref={ROUTES.COMPLEX_TIMESLOTS}
         submitLabel="수정"
       />
+      {/* 삭제 기능 비활성화
       {deleting && (
         <ConfirmModal
           title="삭제 확인"
@@ -71,6 +72,7 @@ export default function TimeslotEditPage() {
           이 시간대를 삭제하시겠습니까?<br />이 작업은 되돌릴 수 없습니다.
         </ConfirmModal>
       )}
+      */}
       {modal}
     </>
   );

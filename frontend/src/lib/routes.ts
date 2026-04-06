@@ -95,6 +95,8 @@ export const ROUTES = {
   COMPLEX_REFUNDS: `${R.COMPLEX}/refunds`,
   COMPLEX_REFUND_REASONS: `${R.COMPLEX}/refunds/reasons`,
   SURVEY: '/survey',
+  SURVEY_SUBMISSIONS: '/survey/submissions',
+  SURVEY_SUBMISSION_DETAIL: (seq: number) => `/survey/submissions/${seq}`,
   SURVEY_OPTIONS: (seq: number) => `/survey/${seq}/options`,
   SURVEY_PREVIEW: (seq: number) => `/survey/${seq}/preview`,
   SURVEY_FILL: (seq: number) => `/survey/${seq}/fill`,
@@ -237,6 +239,7 @@ export const API = {
 
   // 설문
   SURVEY_SUBMISSIONS: '/complex/survey/submissions',
+  SURVEY_SUBMISSION: (seq: number) => `/complex/survey/submissions/${seq}`,
   SURVEY_TEMPLATES: '/complex/survey/templates',
   SURVEY_TEMPLATE: (seq: number) => `/complex/survey/templates/${seq}`,
   SURVEY_TEMPLATE_STATUS: (seq: number) => `/complex/survey/templates/${seq}/status`,

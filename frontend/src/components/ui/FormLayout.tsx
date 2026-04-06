@@ -36,7 +36,7 @@ export default function FormLayout({
         {isEdit && (
           <div className="action-group" style={{ display: 'flex', gap: 8 }}>
             <Button onClick={onSubmit}>{submitLabel}</Button>
-            <LinkButton href={backHref} variant="secondary">취소</LinkButton>
+            <LinkButton href={backHref} variant="danger">취소</LinkButton>
           </div>
         )}
       </div>

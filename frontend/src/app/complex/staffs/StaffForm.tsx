@@ -2,7 +2,7 @@
 
 import FormField from '@/components/ui/FormField';
 import FormLayout from '@/components/ui/FormLayout';
-import { Input, PhoneInput, EmailInput, Select, Textarea } from '@/components/ui/FormInput';
+import { Input, PhoneInput, Select, Textarea, CurrencyInput } from '@/components/ui/FormInput';
 import { useClassSlots } from '../hooks/useClassSlots';
 
 const STATUS_OPTIONS = ['재직', '휴직', '퇴직'] as const;
@@ -34,8 +34,6 @@ export interface ClassAssignData {
 export interface StaffFormData {
   name: string;
   phoneNumber: string;
-  email: string;
-  subject: string;
   status: string;
   interviewer: string;
   paymentMethod: string;
@@ -60,8 +58,6 @@ export const emptyClassAssign: ClassAssignData = {
 export const emptyStaffForm: StaffFormData = {
   name: '',
   phoneNumber: '',
-  email: '',
-  subject: '',
   status: '재직',
   interviewer: '',
   paymentMethod: '',
@@ -71,12 +67,13 @@ export const emptyStaffForm: StaffFormData = {
 
 export function validateStaffForm(form: StaffFormData): string | null {
   if (!form.name.trim()) return '이름을 입력하세요.';
+  if (!form.phoneNumber.trim()) return '전화번호를 입력하세요.';
   return null;
 }
 
 export default function StaffForm({
   form, onChange, onSubmit, isEdit, backHref, submitLabel,
-  classAssign, onClassAssignChange,
+  classAssign, onClassAssignChange, currentStaffSeq,
 }: {
   form: StaffFormData;
   onChange: (form: StaffFormData) => void;
@@ -86,9 +83,12 @@ export default function StaffForm({
   submitLabel: string;
   classAssign?: ClassAssignData;
   onClassAssignChange?: (data: ClassAssignData) => void;
+  currentStaffSeq?: number;
 }) {
   const { timeSlots, getClassesBySlot } = useClassSlots();
-  const filteredClasses = classAssign ? getClassesBySlot(classAssign.timeSlotSeq) : [];
+  const filteredClasses = classAssign
+    ? getClassesBySlot(classAssign.timeSlotSeq).filter(c => !c.staffSeq || c.staffSeq === currentStaffSeq)
+    : [];
 
   return (
     <FormLayout
@@ -100,17 +100,9 @@ export default function StaffForm({
         <Input placeholder="이름" value={form.name}
           onChange={(e) => onChange({ ...form, name: e.target.value })} required />
       </FormField>
-      <FormField label="전화번호">
+      <FormField label="전화번호" required>
         <PhoneInput value={form.phoneNumber}
-          onChange={(e) => onChange({ ...form, phoneNumber: e.target.value })} />
-      </FormField>
-      <FormField label="이메일">
-        <EmailInput value={form.email}
-          onChange={(e) => onChange({ ...form, email: e.target.value })} />
-      </FormField>
-      <FormField label="담당 과목">
-        <Input placeholder="예: 영어, 수학" value={form.subject}
-          onChange={(e) => onChange({ ...form, subject: e.target.value })} />
+          onChange={(e) => onChange({ ...form, phoneNumber: e.target.value })} required />
       </FormField>
       <FormField label="상태">
         <Select value={form.status}
@@ -171,16 +163,16 @@ export default function StaffForm({
         <h3 style={{ margin: 0, fontSize: '1rem', color: '#495057' }}>환급 정보</h3>
       </div>
       <FormField label="디파짓 금액">
-        <Input placeholder="예: 500,000" value={form.refund.depositAmount}
-          onChange={(e) => onChange({ ...form, refund: { ...form.refund, depositAmount: e.target.value } })} />
+        <CurrencyInput placeholder="예: 500,000" value={form.refund.depositAmount}
+          onValueChange={(v) => onChange({ ...form, refund: { ...form.refund, depositAmount: v } })} />
       </FormField>
       <FormField label="환급 예정 디파짓" hint="환급이 가능한 디파짓 금액을 입력하세요.">
-        <Input placeholder="예: 300,000" value={form.refund.refundableDeposit}
-          onChange={(e) => onChange({ ...form, refund: { ...form.refund, refundableDeposit: e.target.value } })} />
+        <CurrencyInput placeholder="예: 300,000" value={form.refund.refundableDeposit}
+          onValueChange={(v) => onChange({ ...form, refund: { ...form.refund, refundableDeposit: v } })} />
       </FormField>
       <FormField label="환급불가 디파짓" hint="환급이 불가능한 디파짓 금액을 입력하세요.">
-        <Input placeholder="예: 200,000" value={form.refund.nonRefundableDeposit}
-          onChange={(e) => onChange({ ...form, refund: { ...form.refund, nonRefundableDeposit: e.target.value } })} />
+        <CurrencyInput placeholder="예: 200,000" value={form.refund.nonRefundableDeposit}
+          onValueChange={(v) => onChange({ ...form, refund: { ...form.refund, nonRefundableDeposit: v } })} />
       </FormField>
       <FormField label="환급 은행">
         <Select value={form.refund.refundBank}
@@ -194,8 +186,8 @@ export default function StaffForm({
           onChange={(e) => onChange({ ...form, refund: { ...form.refund, refundAccount: e.target.value } })} />
       </FormField>
       <FormField label="환급 금액">
-        <Input placeholder="예: 200,000" value={form.refund.refundAmount}
-          onChange={(e) => onChange({ ...form, refund: { ...form.refund, refundAmount: e.target.value } })} />
+        <CurrencyInput placeholder="예: 200,000" value={form.refund.refundAmount}
+          onValueChange={(v) => onChange({ ...form, refund: { ...form.refund, refundAmount: v } })} />
       </FormField>
     </FormLayout>
   );

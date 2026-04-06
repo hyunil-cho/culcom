@@ -32,7 +32,7 @@ export interface IntegrationService {
 
 export interface SmsConfig {
   serviceId: number; serviceName: string; accountId: string | null;
-  senderPhones: string[]; active: boolean; updatedAt: string | null;
+  password: string | null; senderPhones: string[]; active: boolean; updatedAt: string | null;
 }
 
 export interface SmsConfigSaveRequest {

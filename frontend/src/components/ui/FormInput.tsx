@@ -41,6 +41,23 @@ interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'typ
   hint?: string;
 }
 
+/** 금액 입력 (천 단위 콤마 자동 포맷) */
+export function CurrencyInput({ value, onValueChange, ...props }: Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'value' | 'onChange'> & {
+  value: string | number;
+  onValueChange: (value: string) => void;
+}) {
+  const numericValue = typeof value === 'number' ? value : Number(String(value).replace(/,/g, ''));
+  const display = numericValue ? numericValue.toLocaleString() : '';
+  return (
+    <Input
+      inputMode="numeric"
+      {...props}
+      value={display}
+      onChange={(e) => onValueChange(e.target.value.replace(/,/g, ''))}
+    />
+  );
+}
+
 export function Checkbox({ label, hint, ...props }: CheckboxProps) {
   return (
     <div>

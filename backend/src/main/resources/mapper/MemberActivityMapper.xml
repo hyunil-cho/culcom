@@ -138,6 +138,20 @@
         FROM complex_staff_attendance a
         JOIN complex_classes c ON c.seq = a.class_seq
         WHERE a.staff_seq = #{staffSeq}
+
+        UNION ALL
+
+        /* 수업 배정/해제 */
+        SELECT
+            'CLASS_ASSIGN' AS type,
+            DATE_FORMAT(cl.created_date, '%Y-%m-%d') AS date,
+            CONCAT(c.name, ' 수업 ', CASE cl.action WHEN 'ASSIGN' THEN '배정' ELSE '해제' END) AS title,
+            COALESCE(t.name, '') AS detail,
+            cl.action AS status
+        FROM complex_staff_class_logs cl
+        JOIN complex_classes c ON c.seq = cl.class_seq
+        LEFT JOIN complex_class_time_slots t ON t.seq = c.time_slot_seq
+        WHERE cl.staff_seq = #{staffSeq}
     </sql>
 
     <select id="selectStaffTimeline" resultType="com.culcom.dto.complex.member.MemberActivityTimelineItem">

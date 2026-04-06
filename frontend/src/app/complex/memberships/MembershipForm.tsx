@@ -2,7 +2,7 @@
 
 import FormField from '@/components/ui/FormField';
 import FormLayout from '@/components/ui/FormLayout';
-import { Input, NumberInput, Select } from '@/components/ui/FormInput';
+import { Input, NumberInput, Select, CurrencyInput } from '@/components/ui/FormInput';
 
 export interface MembershipFormData {
   name: string;
@@ -85,8 +85,8 @@ export default function MembershipForm({
       </FormField>
 
       <FormField label="판매 가격 (원)" required hint="부가세 포함 판매가를 입력하세요.">
-        <NumberInput placeholder="예: 450000" value={form.price}
-          onChange={(e) => set('price', Number(e.target.value))} min={0} required />
+        <CurrencyInput placeholder="예: 450,000" value={form.price}
+          onValueChange={(v) => set('price', Number(v) || 0)} required />
       </FormField>
     </FormLayout>
   );

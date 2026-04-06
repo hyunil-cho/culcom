@@ -30,7 +30,7 @@ export {
 export {
   surveyApi, publicSurveyApi,
   type SurveyTemplate, type SurveySection, type SurveyQuestion, type SurveyOption,
-  type SurveySubmitData, type SurveySubmissionItem,
+  type SurveySubmitData, type SurveySubmissionItem, type SurveySubmissionDetail,
 } from './survey';
 export {
   noticeApi,

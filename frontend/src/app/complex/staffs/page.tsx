@@ -7,15 +7,20 @@ import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import { useAttendanceHistory } from '@/lib/useAttendanceHistory';
+import { useClassSlots } from '../hooks/useClassSlots';
 
 export default function StaffsPage() {
   const router = useRouter();
   const [staffs, setStaffs] = useState<ComplexStaff[]>([]);
   const { column: historyColumn, modal: historyModal } = useAttendanceHistory<ComplexStaff>('staff');
+  const { allClasses } = useClassSlots();
 
   useEffect(() => {
     staffApi.list().then(res => setStaffs(res.data));
   }, []);
+
+  const getClassForStaff = (staffSeq: number) =>
+    allClasses.find(c => c.staffSeq === staffSeq);
 
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
@@ -27,8 +32,8 @@ export default function StaffsPage() {
   const columns: Column<ComplexStaff>[] = [
     { header: '이름', render: (s) => s.name },
     { header: '전화번호', render: (s) => s.phoneNumber ?? '-' },
-    { header: '이메일', render: (s) => s.email ?? '-' },
-    { header: '담당 과목', render: (s) => s.subject ?? '-' },
+    { header: '수업 시간대', render: (s) => getClassForStaff(s.seq)?.timeSlotName ?? '-' },
+    { header: '수업명', render: (s) => getClassForStaff(s.seq)?.name ?? '-' },
     { header: '상태', render: (s) => statusBadge(s.status) },
     historyColumn,
   ];

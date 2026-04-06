@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import FormField from '@/components/ui/FormField';
 import FormLayout from '@/components/ui/FormLayout';
-import { Input, PhoneInput, Select, Textarea } from '@/components/ui/FormInput';
+import { Input, PhoneInput, Select, Textarea, CurrencyInput } from '@/components/ui/FormInput';
 import { membershipApi, type Membership } from '@/lib/api';
 import { useClassSlots } from '../hooks/useClassSlots';
 
@@ -240,8 +240,8 @@ export default function MemberForm({
               style={{ backgroundColor: '#f8f9fa', cursor: 'not-allowed' }} />
           </FormField>
           <FormField label="금액">
-            <Input placeholder="예: 450,000" value={membershipForm.price}
-              onChange={(e) => onMembershipChange({ ...membershipForm, price: e.target.value })} />
+            <CurrencyInput placeholder="예: 450,000" value={membershipForm.price}
+              onValueChange={(v) => onMembershipChange({ ...membershipForm, price: v })} />
           </FormField>
           <FormField label="납부일">
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -269,8 +269,8 @@ export default function MemberForm({
           </FormField>
           {membershipForm.status === '디파짓' && (
             <FormField label="디파짓 납부금액">
-              <Input placeholder="예: 100,000" value={membershipForm.depositAmount}
-                onChange={(e) => onMembershipChange({ ...membershipForm, depositAmount: e.target.value })} />
+              <CurrencyInput placeholder="예: 100,000" value={membershipForm.depositAmount}
+                onValueChange={(v) => onMembershipChange({ ...membershipForm, depositAmount: v })} />
             </FormField>
           )}
           <FormField label="결제방법">

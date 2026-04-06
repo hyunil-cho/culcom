@@ -110,6 +110,7 @@ public class IntegrationService {
                 .serviceId(smsMapping.getThirdPartyService().getSeq())
                 .serviceName(smsMapping.getThirdPartyService().getName())
                 .accountId(config.getMymunjaId())
+                .password(config.getMymunjaPassword())
                 .senderPhones(phones)
                 .active(Boolean.TRUE.equals(smsMapping.getIsActive()))
                 .updatedAt(smsMapping.getLastUpdateDate() != null

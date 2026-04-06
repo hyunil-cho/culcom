@@ -13,7 +13,7 @@ export default function MemberEditPage() {
   const seq = Number(params.seq);
   const [form, setForm] = useState<MemberFormData>(emptyMemberForm);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_MEMBERS });
-  const [deleting, setDeleting] = useState(false);
+
 
   useEffect(() => {
     memberApi.get(seq).then(res => {
@@ -52,6 +52,7 @@ export default function MemberEditPage() {
     <>
       <MemberForm form={form} onChange={setForm} onSubmit={handleSubmit}
         isEdit backHref={ROUTES.COMPLEX_MEMBERS} submitLabel="수정" />
+      {/* 삭제 기능 비활성화
       {deleting && (
         <ConfirmModal title="삭제 확인" onCancel={() => setDeleting(false)}
           onConfirm={async () => {
@@ -61,6 +62,7 @@ export default function MemberEditPage() {
           이 회원을 삭제하시겠습니까?<br />이 작업은 되돌릴 수 없습니다.
         </ConfirmModal>
       )}
+      */}
       {modal}
     </>
   );

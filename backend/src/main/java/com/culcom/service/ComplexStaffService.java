@@ -4,12 +4,16 @@ import com.culcom.dto.complex.member.ComplexStaffRefundInfoRequest;
 import com.culcom.dto.complex.member.ComplexStaffRefundInfoResponse;
 import com.culcom.dto.complex.member.ComplexStaffRequest;
 import com.culcom.dto.complex.member.ComplexStaffResponse;
+import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.staff.ComplexStaff;
+import com.culcom.entity.complex.staff.ComplexStaffClassLog;
 import com.culcom.entity.complex.staff.ComplexStaffRefundInfo;
 import com.culcom.entity.complex.staff.ComplexStaffStatusLog;
 import com.culcom.entity.enums.StaffStatus;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
+import com.culcom.repository.ComplexClassRepository;
+import com.culcom.repository.ComplexStaffClassLogRepository;
 import com.culcom.repository.ComplexStaffRefundInfoRepository;
 import com.culcom.repository.ComplexStaffRepository;
 import com.culcom.repository.ComplexStaffStatusLogRepository;
@@ -27,6 +31,8 @@ public class ComplexStaffService {
     private final ComplexStaffRepository staffRepository;
     private final ComplexStaffRefundInfoRepository refundInfoRepository;
     private final ComplexStaffStatusLogRepository statusLogRepository;
+    private final ComplexStaffClassLogRepository staffClassLogRepository;
+    private final ComplexClassRepository classRepository;
     private final BranchRepository branchRepository;
 
     public List<ComplexStaffResponse> list(Long branchSeq) {
@@ -80,6 +86,18 @@ public class ComplexStaffService {
         staff.setComment(req.getComment());
         staff.setInterviewer(req.getInterviewer());
         staff.setPaymentMethod(req.getPaymentMethod());
+
+        // 휴직/퇴직 시 배정된 수업에서 제외
+        if (oldStatus == StaffStatus.재직 && newStatus != StaffStatus.재직) {
+            List<ComplexClass> assignedClasses = classRepository.findByStaffSeq(seq);
+            for (ComplexClass cls : assignedClasses) {
+                cls.setStaff(null);
+                classRepository.save(cls);
+                staffClassLogRepository.save(ComplexStaffClassLog.builder()
+                        .staff(staff).complexClass(cls).action("UNASSIGN").build());
+            }
+        }
+
         return ComplexStaffResponse.from(staffRepository.save(staff));
     }
 

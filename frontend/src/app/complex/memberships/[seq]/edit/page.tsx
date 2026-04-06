@@ -20,7 +20,7 @@ export default function MembershipEditPage() {
   const seq = Number(params.seq);
   const [form, setForm] = useState<MembershipFormData>(emptyMembershipForm);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_MEMBERSHIPS });
-  const [deleting, setDeleting] = useState(false);
+
 
   useEffect(() => {
     membershipApi.get(seq).then(res => {
@@ -57,6 +57,7 @@ export default function MembershipEditPage() {
         backHref={ROUTES.COMPLEX_MEMBERSHIPS}
         submitLabel="수정"
       />
+      {/* 삭제 기능 비활성화
       {deleting && (
         <ConfirmModal
           title="삭제 확인"
@@ -71,6 +72,7 @@ export default function MembershipEditPage() {
           이 멤버십을 삭제하시겠습니까?<br />이 작업은 되돌릴 수 없습니다.
         </ConfirmModal>
       )}
+      */}
       {modal}
     </>
   );

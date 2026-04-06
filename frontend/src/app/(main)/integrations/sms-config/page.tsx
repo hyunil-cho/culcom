@@ -30,10 +30,11 @@ export default function SmsConfigPage() {
       if (res.success && res.data) {
         setConfig(res.data);
         setAccountId(res.data.accountId ?? '');
+        setPassword(res.data.password ?? '');
         setSenderPhone(res.data.senderPhones?.[0] ?? '');
         setActive(res.data.active);
       } else {
-        setConfig({ serviceId: Number(serviceId), serviceName: 'SMS 서비스', accountId: null, senderPhones: [], active: true, updatedAt: null });
+        setConfig({ serviceId: Number(serviceId), serviceName: 'SMS 서비스', accountId: null, password: null, senderPhones: [], active: true, updatedAt: null });
       }
       setLoading(false);
     });

@@ -17,7 +17,7 @@ export default function ClassEditPage() {
   const { timeSlots } = useClassSlots();
   const [staffs, setStaffs] = useState<ComplexStaff[]>([]);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_CLASSES });
-  const [deleting, setDeleting] = useState(false);
+
 
   useEffect(() => {
     Promise.all([
@@ -62,6 +62,7 @@ export default function ClassEditPage() {
         timeSlots={timeSlots}
         staffs={staffs}
       />
+      {/* 삭제 기능 비활성화
       {deleting && (
         <ConfirmModal
           title="삭제 확인"
@@ -76,6 +77,7 @@ export default function ClassEditPage() {
           이 수업을 삭제하시겠습니까?<br />이 작업은 되돌릴 수 없습니다.
         </ConfirmModal>
       )}
+      */}
       {modal}
     </>
   );
