@@ -16,16 +16,12 @@ public class UserInfo extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seq;
 
+    @Column(name = "user_id", nullable = false, unique = true, length = 100)
+    private String userId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private UserRole role;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by")
-    private UserInfo createdBy;
-
-    @Column(name = "user_id", nullable = false, unique = true, length = 100)
-    private String userId;
 
     @Column(name = "user_password", nullable = false, length = 200)
     private String userPassword;
@@ -35,6 +31,11 @@ public class UserInfo extends BaseTimeEntity {
 
     @Column(name = "phone", length = 20)
     private String phone;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private UserInfo createdBy;
+
 
     public boolean isManager() {
         return this.role.equals(UserRole.BRANCH_MANAGER);
