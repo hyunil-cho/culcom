@@ -2,6 +2,8 @@ package com.culcom.controller.complex.refund;
 
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.complex.refund.RefundCreateRequest;
+import com.culcom.dto.complex.refund.RefundReasonRequest;
+import com.culcom.dto.complex.refund.RefundReasonResponse;
 import com.culcom.dto.complex.refund.RefundResponse;
 import com.culcom.entity.enums.RequestStatus;
 import com.culcom.config.security.CustomUserPrincipal;
@@ -11,6 +13,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/complex/refunds")
@@ -33,5 +37,23 @@ public class RefundController {
             @RequestParam(required = false) String rejectReason) {
         RefundResponse result = refundService.updateStatus(seq, status, rejectReason);
         return ResponseEntity.ok(ApiResponse.ok("상태 변경 완료", result));
+    }
+
+    @GetMapping("/reasons")
+    public ResponseEntity<ApiResponse<List<RefundReasonResponse>>> reasons(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.ok(refundService.reasons(principal.getSelectedBranchSeq())));
+    }
+
+    @PostMapping("/reasons")
+    public ResponseEntity<ApiResponse<RefundReasonResponse>> addReason(
+            @RequestBody RefundReasonRequest req, @AuthenticationPrincipal CustomUserPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.ok(refundService.addReason(req, principal.getSelectedBranchSeq())));
+    }
+
+    @DeleteMapping("/reasons/{seq}")
+    public ResponseEntity<ApiResponse<Void>> deleteReason(@PathVariable Long seq) {
+        refundService.deleteReason(seq);
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }

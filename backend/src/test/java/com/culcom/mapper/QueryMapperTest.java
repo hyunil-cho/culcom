@@ -8,7 +8,7 @@ import com.culcom.dto.complex.postponement.PostponementResponse;
 import com.culcom.dto.complex.refund.RefundResponse;
 import com.culcom.dto.customer.CustomerResponse;
 import com.culcom.dto.notice.NoticeListResponse;
-import com.culcom.dto.webhook.WebhookLogResponse;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,7 +34,6 @@ class QueryMapperTest {
     @Autowired RefundQueryMapper refundQueryMapper;
     @Autowired ComplexMemberQueryMapper complexMemberQueryMapper;
     @Autowired ComplexClassQueryMapper complexClassQueryMapper;
-    @Autowired WebhookLogQueryMapper webhookLogQueryMapper;
     @Autowired AttendanceViewQueryMapper attendanceViewQueryMapper;
 
     // ── Customer ──
@@ -186,32 +185,6 @@ class QueryMapperTest {
     @Test
     void complexClassCount() {
         int count = complexClassQueryMapper.count(1L, null);
-        assertThat(count).isGreaterThanOrEqualTo(0);
-    }
-
-    // ── WebhookLog ──
-
-    @Test
-    void webhookLogSearch_noFilter() {
-        List<WebhookLogResponse> result = webhookLogQueryMapper.search(1L, null, null, 0, 20);
-        assertThat(result).isNotNull();
-    }
-
-    @Test
-    void webhookLogSearch_byWebhookSeq() {
-        List<WebhookLogResponse> result = webhookLogQueryMapper.search(1L, 1L, null, 0, 20);
-        assertThat(result).isNotNull();
-    }
-
-    @Test
-    void webhookLogSearch_byStatus() {
-        List<WebhookLogResponse> result = webhookLogQueryMapper.search(1L, null, "SUCCESS", 0, 20);
-        assertThat(result).isNotNull();
-    }
-
-    @Test
-    void webhookLogCount() {
-        int count = webhookLogQueryMapper.count(1L, null, null);
         assertThat(count).isGreaterThanOrEqualTo(0);
     }
 

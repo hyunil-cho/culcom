@@ -1,0 +1,83 @@
+.content { width: 90%; max-width: 680px; height: 80vh; display: flex; flex-direction: column; }
+
+.header {
+  padding: 1rem 1.5rem; background: var(--accent); color: #fff;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.title { margin: 0; font-size: 1rem; }
+.closeBtn { background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer; }
+
+.filterRow {
+  display: flex; gap: 6px; padding: 0.75rem 1.5rem; border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.filterBtn {
+  padding: 4px 12px; border: 1.5px solid var(--border-input); border-radius: 20px;
+  background: white; color: var(--text-secondary); font-size: 0.78rem; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+}
+.filterBtnActive {
+  composes: filterBtn;
+  border-color: var(--accent); background: var(--accent); color: white;
+}
+
+.body { flex: 1; overflow-y: auto; padding: 0; min-height: 0; }
+
+.empty { text-align: center; padding: 2rem; color: var(--text-muted); }
+
+/* 타임라인 */
+.timeline { padding: 0.5rem 0; }
+
+.timelineItem {
+  display: flex; gap: 12px; padding: 0 1.5rem; position: relative;
+}
+.timelineItem::before {
+  content: ''; position: absolute; left: calc(1.5rem + 5px); top: 16px; bottom: -8px;
+  width: 2px; background: #e5e7eb;
+}
+.timelineItem:last-child::before { display: none; }
+
+.timelineDot {
+  width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+  margin-top: 6px; z-index: 1; border: 2px solid white; box-shadow: 0 0 0 2px #e5e7eb;
+}
+
+.timelineCard {
+  flex: 1; padding: 8px 12px; margin-bottom: 8px;
+  border: 1px solid #f0f0f0; border-radius: var(--radius); background: #fafafa;
+}
+
+.timelineTop {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;
+}
+
+.typeBadge {
+  display: inline-block; padding: 1px 8px; border-radius: 10px;
+  font-size: 0.7rem; font-weight: 700;
+}
+
+.timelineDate { font-size: 0.75rem; color: var(--text-muted); }
+.timelineTitle { font-size: 0.88rem; font-weight: 600; color: var(--text-body); }
+.timelineDetail { font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
+
+.statusBadge {
+  display: inline-block; padding: 1px 8px; border-radius: 10px;
+  font-size: 0.7rem; font-weight: 700; margin-top: 4px;
+}
+
+/* Footer */
+.footer {
+  padding: 0.75rem 1.5rem; border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.paging { display: flex; gap: 4px; align-items: center; }
+.pageInfo { font-size: var(--font-sm); color: var(--text-secondary); margin: 0 8px; }
+.pageBtn {
+  padding: 6px 14px; border: 1px solid #ccc; border-radius: var(--radius);
+  background: #fff; color: var(--text-body); cursor: pointer; font-size: 0.82rem;
+}
+.pageBtn:disabled { background: #f5f5f5; color: #bbb; cursor: default; }
+.closeFooterBtn {
+  padding: 8px 20px; border: 1px solid #ccc; border-radius: var(--radius);
+  background: #fff; cursor: pointer;
+}

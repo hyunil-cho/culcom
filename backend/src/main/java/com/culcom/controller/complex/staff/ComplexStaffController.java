@@ -5,8 +5,13 @@ import com.culcom.dto.complex.member.ComplexStaffRefundInfoRequest;
 import com.culcom.dto.complex.member.ComplexStaffRefundInfoResponse;
 import com.culcom.dto.complex.member.ComplexStaffRequest;
 import com.culcom.dto.complex.member.ComplexStaffResponse;
+import com.culcom.dto.complex.member.MemberActivityTimelineItem;
 import com.culcom.config.security.CustomUserPrincipal;
+import com.culcom.mapper.MemberActivityMapper;
 import com.culcom.service.ComplexStaffService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +26,7 @@ import java.util.List;
 public class ComplexStaffController {
 
     private final ComplexStaffService complexStaffService;
+    private final MemberActivityMapper memberActivityMapper;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<ComplexStaffResponse>>> list(@AuthenticationPrincipal CustomUserPrincipal principal) {
@@ -73,5 +79,19 @@ public class ComplexStaffController {
     public ResponseEntity<ApiResponse<Void>> deleteRefundInfo(@PathVariable Long staffSeq) {
         complexStaffService.deleteRefundInfo(staffSeq);
         return ResponseEntity.ok(ApiResponse.ok("환급 정보 삭제 완료", null));
+    }
+
+    @GetMapping("/{staffSeq}/timeline")
+    public ResponseEntity<ApiResponse<Page<MemberActivityTimelineItem>>> timeline(
+            @PathVariable Long staffSeq,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        int offset = page * size;
+        List<MemberActivityTimelineItem> items = memberActivityMapper.selectStaffTimeline(staffSeq, offset, size);
+        int total = memberActivityMapper.countStaffTimeline(staffSeq);
+
+        Page<MemberActivityTimelineItem> result = new PageImpl<>(items, PageRequest.of(page, size), total);
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 }

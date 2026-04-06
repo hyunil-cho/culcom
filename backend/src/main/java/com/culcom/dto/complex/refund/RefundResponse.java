@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -26,6 +27,13 @@ public class RefundResponse {
     private RequestStatus status;
     private String rejectReason;
     private LocalDateTime createdDate;
+
+    // 멤버십 사용 내역
+    private LocalDate startDate;
+    private LocalDate expiryDate;
+    private Integer totalCount;
+    private Integer usedCount;
+    private Integer postponeUsed;
 
     public static RefundResponse from(ComplexRefundRequest entity) {
         return RefundResponse.builder()

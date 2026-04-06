@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { refundApi, type RefundRequest } from '@/lib/api';
+import { ROUTES } from '@/lib/routes';
+import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import SearchBar from '@/components/ui/SearchBar';
 import ModalOverlay from '@/components/ui/ModalOverlay';
@@ -13,6 +16,7 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 export default function RefundsPage() {
+  const router = useRouter();
   const [requests, setRequests] = useState<RefundRequest[]>([]);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -54,6 +58,24 @@ export default function RefundsPage() {
     { header: '요청회원', render: (r) => <strong>{r.memberName}</strong> },
     { header: '연락처', render: (r) => r.phoneNumber },
     { header: '멤버십', render: (r) => r.membershipName },
+    { header: '기간', render: (r) => r.startDate && r.expiryDate
+      ? <span className={s.periodText}>{r.startDate} ~ {r.expiryDate}</span>
+      : <span className={s.emptyText}>-</span>,
+    },
+    { header: '수업 횟수', render: (r) => {
+      if (r.totalCount == null || r.usedCount == null) return <span className={s.emptyText}>-</span>;
+      const pct = r.totalCount > 0 ? Math.round(r.usedCount / r.totalCount * 100) : 0;
+      return (
+        <div>
+          <div className={s.usageText}>{r.usedCount} / {r.totalCount}회 ({pct}%)</div>
+          <div className={s.usageBar}><div className={s.usageFill} style={{ width: `${pct}%` }} /></div>
+        </div>
+      );
+    }},
+    { header: '연기', render: (r) => r.postponeUsed != null
+      ? <span>{r.postponeUsed}회</span>
+      : <span className={s.emptyText}>-</span>,
+    },
     { header: '결제/환불 금액', render: (r) => (
       <div>{r.price && <div className={s.priceText}>결제: {Number(r.price).toLocaleString()}원</div>}</div>
     )},
@@ -79,6 +101,9 @@ export default function RefundsPage() {
     <>
       <div className="page-toolbar">
         <h2 className="page-title" style={{ marginBottom: 0 }}>환불 요청 관리</h2>
+        <Button variant="secondary" onClick={() => router.push(ROUTES.COMPLEX_REFUND_REASONS)}>
+          환불사유 관리
+        </Button>
       </div>
 
       <SearchBar keyword={keyword} onKeywordChange={setKeyword} onSearch={handleSearch}

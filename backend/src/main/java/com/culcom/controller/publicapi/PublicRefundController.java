@@ -9,7 +9,9 @@ import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.enums.RequestStatus;
 import com.culcom.repository.ComplexMemberMembershipRepository;
 import com.culcom.repository.ComplexMemberRepository;
+import com.culcom.repository.ComplexRefundReasonRepository;
 import com.culcom.repository.ComplexRefundRequestRepository;
+import com.culcom.entity.complex.refund.ComplexRefundReason;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +27,7 @@ public class PublicRefundController {
     private final ComplexMemberRepository memberRepository;
     private final ComplexMemberMembershipRepository memberMembershipRepository;
     private final ComplexRefundRequestRepository refundRequestRepository;
+    private final ComplexRefundReasonRepository refundReasonRepository;
 
     @GetMapping("/search-member")
     public ResponseEntity<ApiResponse<MemberSearchResponse>> searchMember(
@@ -42,7 +45,7 @@ public class PublicRefundController {
         List<MemberInfo> memberInfos = members.stream().map(m -> {
             List<ComplexMemberMembership> memberships = membershipMap.getOrDefault(m.getSeq(), List.of());
             List<MembershipInfo> msInfos = memberships.stream()
-                    .filter(mm -> mm.getStatus() == MembershipStatus.활성)
+                    .filter(mm -> mm.getStatus() == MembershipStatus.활성 || mm.getStatus() == MembershipStatus.연기)
                     .map(mm -> new MembershipInfo(
                             mm.getSeq(), mm.getMembership().getName(),
                             mm.getStartDate() != null ? mm.getStartDate().toString() : "",
@@ -92,5 +95,13 @@ public class PublicRefundController {
 
         refundRequestRepository.save(refund);
         return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @GetMapping("/reasons")
+    public ResponseEntity<ApiResponse<List<String>>> reasons(@RequestParam Long branchSeq) {
+        List<String> result = refundReasonRepository.findByBranchSeq(branchSeq).stream()
+                .map(ComplexRefundReason::getReason)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 }

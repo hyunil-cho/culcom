@@ -37,7 +37,6 @@ public class PublicMembershipController {
         List<ComplexMemberMembership> memberships = memberMembershipRepository.findByMemberSeqIn(List.of(member.getSeq()));
 
         List<MembershipCheckResponse.MembershipDetail> details = memberships.stream()
-                .filter(mm -> mm.getStatus() == MembershipStatus.활성 || mm.getStatus() == MembershipStatus.연기)
                 .map(mm -> {
                     // 해당 멤버십의 출석 기록
                     List<ComplexMemberAttendance> attendances = attendanceRepository.findByMemberMembershipSeq(mm.getSeq());

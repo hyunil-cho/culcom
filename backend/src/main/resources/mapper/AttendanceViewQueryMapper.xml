@@ -13,7 +13,7 @@
         /* 수업 기본 정보 (회원/스태프 없어도 반드시 포함) */
         SELECT
             ts.seq              AS timeSlotSeq,
-            CONCAT(ts.name, ' ', ts.days_of_week, ' (', ts.start_time, ' ~ ', ts.end_time, ')') AS slotName,
+            CONCAT(ts.name, ' ', ts.days_of_week, ' (', DATE_FORMAT(ts.start_time, '%H:%i'), ' ~ ', DATE_FORMAT(ts.end_time, '%H:%i'), ')') AS slotName,
             c.seq               AS classSeq,
             c.name              AS className,
             c.capacity          AS capacity,
@@ -40,7 +40,7 @@
         /* 스태프 */
         SELECT
             ts.seq              AS timeSlotSeq,
-            CONCAT(ts.name, ' ', ts.days_of_week, ' (', ts.start_time, ' ~ ', ts.end_time, ')') AS slotName,
+            CONCAT(ts.name, ' ', ts.days_of_week, ' (', DATE_FORMAT(ts.start_time, '%H:%i'), ' ~ ', DATE_FORMAT(ts.end_time, '%H:%i'), ')') AS slotName,
             c.seq               AS classSeq,
             c.name              AS className,
             c.capacity          AS capacity,
@@ -68,7 +68,7 @@
         /* 회원 */
         SELECT
             ts.seq              AS timeSlotSeq,
-            CONCAT(ts.name, ' ', ts.days_of_week, ' (', ts.start_time, ' ~ ', ts.end_time, ')') AS slotName,
+            CONCAT(ts.name, ' ', ts.days_of_week, ' (', DATE_FORMAT(ts.start_time, '%H:%i'), ' ~ ', DATE_FORMAT(ts.end_time, '%H:%i'), ')') AS slotName,
             c.seq               AS classSeq,
             c.name              AS className,
             c.capacity          AS capacity,

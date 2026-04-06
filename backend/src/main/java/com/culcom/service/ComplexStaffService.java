@@ -6,10 +6,13 @@ import com.culcom.dto.complex.member.ComplexStaffRequest;
 import com.culcom.dto.complex.member.ComplexStaffResponse;
 import com.culcom.entity.complex.staff.ComplexStaff;
 import com.culcom.entity.complex.staff.ComplexStaffRefundInfo;
+import com.culcom.entity.complex.staff.ComplexStaffStatusLog;
+import com.culcom.entity.enums.StaffStatus;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ComplexStaffRefundInfoRepository;
 import com.culcom.repository.ComplexStaffRepository;
+import com.culcom.repository.ComplexStaffStatusLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +26,7 @@ public class ComplexStaffService {
 
     private final ComplexStaffRepository staffRepository;
     private final ComplexStaffRefundInfoRepository refundInfoRepository;
+    private final ComplexStaffStatusLogRepository statusLogRepository;
     private final BranchRepository branchRepository;
 
     public List<ComplexStaffResponse> list(Long branchSeq) {
@@ -52,14 +56,26 @@ public class ComplexStaffService {
         return ComplexStaffResponse.from(staffRepository.save(staff));
     }
 
+    @Transactional
     public ComplexStaffResponse update(Long seq, ComplexStaffRequest req) {
         ComplexStaff staff = staffRepository.findById(seq)
                 .orElseThrow(() -> new EntityNotFoundException("스태프"));
+
+        StaffStatus oldStatus = staff.getStatus();
+        StaffStatus newStatus = req.getStatus();
+        if (oldStatus != newStatus) {
+            statusLogRepository.save(ComplexStaffStatusLog.builder()
+                    .staff(staff)
+                    .fromStatus(oldStatus)
+                    .toStatus(newStatus)
+                    .build());
+        }
+
         staff.setName(req.getName());
         staff.setPhoneNumber(req.getPhoneNumber());
         staff.setEmail(req.getEmail());
         staff.setSubject(req.getSubject());
-        staff.setStatus(req.getStatus());
+        staff.setStatus(newStatus);
         staff.setJoinDate(req.getJoinDate());
         staff.setComment(req.getComment());
         staff.setInterviewer(req.getInterviewer());

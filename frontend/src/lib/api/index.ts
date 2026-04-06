@@ -12,11 +12,11 @@ export {
   classApi, memberApi, staffApi, membershipApi, timeslotApi, refundApi,
   postponementApi, publicPostponementApi,
   type ComplexClass, type ComplexClassRequest,
-  type ComplexMember, type MemberMembershipRequest, type MemberMembershipResponse,
+  type ComplexMember, type MemberMembershipRequest, type MemberMembershipResponse, type MemberActivityTimelineItem,
   type ComplexStaff, type StaffRefundInfo,
   type Membership, type MembershipRequest,
   type ClassTimeSlot, type ClassTimeSlotRequest,
-  type RefundRequest, type PostponementRequest, type PostponementReason,
+  type RefundRequest, type RefundReason, type PostponementRequest, type PostponementReason,
   type PublicMemberInfo, type PublicMembershipInfo, type PublicClassInfo,
   type PostponementSubmitRequest, type PostponementSubmitResponse,
   publicRefundApi, type RefundSubmitRequest,
@@ -49,7 +49,6 @@ export {
   type UserResponse, type UserCreateRequest,
 } from './settings';
 export { calendarApi, type CalendarReservation } from './calendar';
-export { webhookApi, type WebhookConfig, type WebhookConfigRequest, type WebhookLog } from './webhook';
 export {
   externalApi,
   type SmsSendRequest, type SmsSendResponse, type CalendarEventRequest, type CalendarEventResponse,

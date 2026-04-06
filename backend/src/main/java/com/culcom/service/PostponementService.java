@@ -4,8 +4,10 @@ import com.culcom.dto.complex.postponement.PostponementCreateRequest;
 import com.culcom.dto.complex.postponement.PostponementReasonRequest;
 import com.culcom.dto.complex.postponement.PostponementReasonResponse;
 import com.culcom.dto.complex.postponement.PostponementResponse;
+import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.postponement.ComplexPostponementReason;
 import com.culcom.entity.complex.postponement.ComplexPostponementRequest;
+import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.enums.RequestStatus;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
@@ -15,6 +17,7 @@ import com.culcom.repository.ComplexPostponementReasonRepository;
 import com.culcom.repository.ComplexPostponementRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -49,12 +52,21 @@ public class PostponementService {
         return PostponementResponse.from(postponementRepository.save(entity));
     }
 
+    @Transactional
     public PostponementResponse updateStatus(Long seq, RequestStatus status, String rejectReason) {
         ComplexPostponementRequest req = postponementRepository.findById(seq)
                 .orElseThrow(() -> new EntityNotFoundException("연기 요청"));
         req.setStatus(status);
         if (status == RequestStatus.반려) {
             req.setRejectReason(rejectReason);
+        }
+        if (status == RequestStatus.승인) {
+            ComplexMemberMembership mm = req.getMemberMembership();
+            if (mm != null) {
+                mm.setPostponeUsed(mm.getPostponeUsed() + 1);
+                mm.setStatus(MembershipStatus.연기);
+                complexMemberMembershipRepository.save(mm);
+            }
         }
         return PostponementResponse.from(postponementRepository.save(req));
     }

@@ -28,8 +28,14 @@
             r.account_holder AS accountHolder,
             r.status,
             r.reject_reason AS rejectReason,
-            r.created_date AS createdDate
+            r.created_date AS createdDate,
+            mm.start_date AS startDate,
+            mm.expiry_date AS expiryDate,
+            mm.total_count AS totalCount,
+            mm.used_count AS usedCount,
+            mm.postpone_used AS postponeUsed
         FROM complex_refund_requests r
+        LEFT JOIN complex_member_memberships mm ON mm.seq = r.member_membership_seq
         <include refid="searchCondition"/>
         ORDER BY r.created_date DESC
         LIMIT #{size} OFFSET #{offset}

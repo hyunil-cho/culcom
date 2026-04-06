@@ -81,6 +81,14 @@ export interface MemberMembershipResponse {
   createdDate: string;
 }
 
+export interface MemberActivityTimelineItem {
+  type: 'MEMBERSHIP' | 'POSTPONEMENT' | 'REFUND' | 'ATTENDANCE';
+  date: string;
+  title: string;
+  detail: string | null;
+  status: string;
+}
+
 export const memberApi = {
   list: (params?: string) => api.get<PageResponse<ComplexMember>>(`${API.COMPLEX_MEMBERS}${params ? `?${params}` : ''}`),
   get: (seq: number) => api.get<ComplexMember>(API.COMPLEX_MEMBER(seq)),
@@ -88,6 +96,8 @@ export const memberApi = {
   update: (seq: number, data: Partial<ComplexMember>) => api.put<ComplexMember>(API.COMPLEX_MEMBER(seq), data),
   delete: (seq: number) => api.delete<void>(API.COMPLEX_MEMBER(seq)),
   getMemberships: (seq: number) => api.get<MemberMembershipResponse[]>(API.COMPLEX_MEMBER_MEMBERSHIPS(seq)),
+  timeline: (seq: number, page: number, size: number) =>
+    api.get<PageResponse<MemberActivityTimelineItem>>(`${API.COMPLEX_MEMBER_TIMELINE(seq)}?page=${page}&size=${size}`),
   assignMembership: (seq: number, data: MemberMembershipRequest) =>
     api.post<MemberMembershipResponse>(API.COMPLEX_MEMBER_MEMBERSHIPS(seq), data),
   updateMembership: (seq: number, mmSeq: number, data: MemberMembershipRequest) =>
@@ -134,6 +144,8 @@ export const staffApi = {
   saveRefund: (staffSeq: number, data: Partial<StaffRefundInfo>) =>
     api.post<StaffRefundInfo>(API.COMPLEX_STAFF_REFUND(staffSeq), data),
   deleteRefund: (staffSeq: number) => api.delete<void>(API.COMPLEX_STAFF_REFUND(staffSeq)),
+  timeline: (staffSeq: number, page: number, size: number) =>
+    api.get<PageResponse<MemberActivityTimelineItem>>(`${API.COMPLEX_STAFF_TIMELINE(staffSeq)}?page=${page}&size=${size}`),
 };
 
 // ── 멤버십 ──
@@ -203,6 +215,18 @@ export interface RefundRequest {
   status: '대기' | '승인' | '반려';
   rejectReason: string | null;
   createdDate: string;
+  // 멤버십 사용 내역
+  startDate: string | null;
+  expiryDate: string | null;
+  totalCount: number | null;
+  usedCount: number | null;
+  postponeUsed: number | null;
+}
+
+export interface RefundReason {
+  seq: number;
+  reason: string;
+  createdDate: string;
 }
 
 export const refundApi = {
@@ -212,6 +236,9 @@ export const refundApi = {
     api.put<RefundRequest>(
       `${API.COMPLEX_REFUND_STATUS(seq)}?status=${encodeURIComponent(status)}${rejectReason ? `&rejectReason=${encodeURIComponent(rejectReason)}` : ''}`
     ),
+  reasons: () => api.get<RefundReason[]>(API.COMPLEX_REFUND_REASONS),
+  addReason: (reason: string) => api.post<RefundReason>(API.COMPLEX_REFUND_REASONS, { reason }),
+  deleteReason: (seq: number) => api.delete<void>(API.COMPLEX_REFUND_REASON(seq)),
 };
 
 // ── 연기 ──
@@ -246,6 +273,7 @@ export const postponementApi = {
   reasons: () => api.get<PostponementReason[]>(API.COMPLEX_POSTPONEMENT_REASONS),
   addReason: (reason: string) => api.post<PostponementReason>(API.COMPLEX_POSTPONEMENT_REASONS, { reason }),
   deleteReason: (seq: number) => api.delete<void>(API.COMPLEX_POSTPONEMENT_REASON(seq)),
+  memberHistory: (memberSeq: number) => api.get<PostponementRequest[]>(API.COMPLEX_POSTPONEMENT_MEMBER_HISTORY(memberSeq)),
 };
 
 // ── 공개 연기 요청 ──
@@ -301,6 +329,8 @@ export const publicRefundApi = {
       `${API.PUBLIC_REFUND_SEARCH}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`
     ),
   submit: (data: RefundSubmitRequest) => api.post<void>(API.PUBLIC_REFUND_SUBMIT, data),
+  reasons: (branchSeq: number) =>
+    api.get<string[]>(`${API.PUBLIC_REFUND_REASONS}?branchSeq=${branchSeq}`),
 };
 
 // ── 공개 멤버십 조회 ──

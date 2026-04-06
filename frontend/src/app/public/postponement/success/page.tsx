@@ -53,13 +53,6 @@ function SuccessContent() {
             </tr>
           </tbody>
         </table>
-
-        <a href={ROUTES.PUBLIC_POSTPONEMENT} style={{
-          display: 'inline-block', padding: '12px 30px', background: '#4a90e2', color: 'white',
-          border: 'none', borderRadius: 6, fontSize: '1rem', fontWeight: 'bold',
-          textDecoration: 'none', cursor: 'pointer',
-        }}>추가 요청하기</a>
-
         <div style={{
           background: '#f0fdf4', padding: 15, borderRadius: 6,
           borderLeft: '4px solid #10b981', marginTop: 20,

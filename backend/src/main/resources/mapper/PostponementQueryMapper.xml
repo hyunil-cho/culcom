@@ -40,4 +40,22 @@
         <include refid="searchCondition"/>
     </select>
 
+    <select id="findByMemberSeq" resultType="com.culcom.dto.complex.postponement.PostponementResponse">
+        SELECT
+            p.seq,
+            p.member_name AS memberName,
+            p.phone_number AS phoneNumber,
+            p.time_slot AS timeSlot,
+            p.current_class AS currentClass,
+            p.start_date AS startDate,
+            p.end_date AS endDate,
+            p.reason,
+            p.status,
+            p.reject_reason AS rejectReason,
+            p.created_date AS createdDate
+        FROM complex_postponement_requests p
+        WHERE p.member_seq = #{memberSeq}
+        ORDER BY p.created_date DESC
+    </select>
+
 </mapper>

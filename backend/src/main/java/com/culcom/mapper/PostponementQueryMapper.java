@@ -20,4 +20,6 @@ public interface PostponementQueryMapper {
             @Param("branchSeq") Long branchSeq,
             @Param("status") String status,
             @Param("keyword") String keyword);
+
+    List<PostponementResponse> findByMemberSeq(@Param("memberSeq") Long memberSeq);
 }

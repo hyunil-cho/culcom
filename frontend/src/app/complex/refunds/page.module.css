@@ -4,6 +4,10 @@
 .accountBank { color: var(--text-body); }
 .rejectReasonText { font-size: var(--font-sm); color: var(--red-dark); }
 .emptyText { color: #ccc; }
+.periodText { font-size: 0.78rem; color: #555; white-space: nowrap; }
+.usageText { font-size: 0.82rem; font-weight: 600; margin-bottom: 4px; white-space: nowrap; }
+.usageBar { height: 5px; background: #e9ecef; border-radius: 3px; overflow: hidden; min-width: 60px; }
+.usageFill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.3s; }
 .statusSelect { padding: 4px 8px; border-radius: 4px; font-size: var(--font-sm); border: 1px solid var(--border-input); cursor: pointer; }
 .filterSelect { padding: 6px 12px; border-radius: var(--radius); border: 1px solid var(--border-input); font-size: var(--font-sm); }
 

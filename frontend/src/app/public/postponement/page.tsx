@@ -1,22 +1,27 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   publicPostponementApi,
   type PublicMemberInfo,
   type PublicMembershipInfo,
 } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
-import { Input, PhoneInput, Select, Textarea } from '@/components/ui/FormInput';
+import { Input, Select, Textarea } from '@/components/ui/FormInput';
 import s from './page.module.css';
 
 export default function PublicPostponementPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [searchName, setSearchName] = useState('');
-  const [searchPhone, setSearchPhone] = useState('');
-  const [searchError, setSearchError] = useState('');
+  const decoded = (() => {
+    try {
+      const d = searchParams.get('d');
+      if (!d) return null;
+      return JSON.parse(decodeURIComponent(atob(d))) as { memberSeq: number; name: string; phone: string };
+    } catch { return null; }
+  })();
 
   const [member, setMember] = useState<PublicMemberInfo | null>(null);
   const [selectedMembershipSeq, setSelectedMembershipSeq] = useState<number | null>(null);
@@ -29,22 +34,29 @@ export default function PublicPostponementPage() {
   const [reasonCustom, setReasonCustom] = useState('');
   const [reasons, setReasons] = useState<string[]>([]);
 
+  const [dateError, setDateError] = useState('');
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const handleSearch = async () => {
-    setSearchError('');
-    if (!searchName.trim() || !searchPhone.trim()) { setSearchError('이름과 연락처를 모두 입력해 주세요.'); return; }
-    const res = await publicPostponementApi.searchMember(searchName.trim(), searchPhone.trim());
-    if (!res.success || !res.data.members || res.data.members.length === 0) {
-      setSearchError('일치하는 회원 정보를 찾을 수 없습니다. 이름과 연락처를 다시 확인해 주세요.'); return;
-    }
-    setMember(res.data.members[0]);
-    setSelectedMembershipSeq(null);
-    setStep(2);
-  };
+  const minStartDate = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    return d.toISOString().split('T')[0];
+  })();
 
-  const handleKeyPress = (e: React.KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); handleSearch(); } };
+  useEffect(() => {
+    if (!decoded) { setLoading(false); setError('유효하지 않은 링크입니다. 관리자에게 문의해주세요.'); return; }
+    publicPostponementApi.searchMember(decoded.name, decoded.phone).then(res => {
+      setLoading(false);
+      if (!res.success || !res.data.members || res.data.members.length === 0) {
+        setError('회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'); return;
+      }
+      setMember(res.data.members[0]);
+      setStep(2);
+    });
+  }, []);
 
   const goToStep3 = async () => {
     if (!member || !selectedMembershipSeq) return;
@@ -63,6 +75,10 @@ export default function PublicPostponementPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!member || !selectedMembershipSeq) return;
+    if (startDate < minStartDate) {
+      setDateError(`연기 시작일은 ${minStartDate} 이후여야 합니다.`);
+      return;
+    }
     const reason = reasonSelect === '기타' ? reasonCustom.trim() : reasonSelect;
     if (!reason) { alert('연기 사유를 선택해 주세요.'); return; }
     setSubmitting(true);
@@ -90,21 +106,14 @@ export default function PublicPostponementPage() {
       <div className={s.card}>
         <div className={s.header}>
           <h1 className={s.title}>수업 연기 요청</h1>
-          <p className={s.subtitle}>회원 정보를 확인한 후 연기 요청을 진행합니다.</p>
+          <p className={s.subtitle}>멤버십을 선택하고 연기 상세 정보를 입력해주세요.</p>
         </div>
 
-        {step === 1 && (
-          <div>
-            <FormGroup label="이름">
-              <Input placeholder="성함을 입력하세요" value={searchName}
-                onChange={(e) => setSearchName(e.target.value)} onKeyDown={handleKeyPress} />
-            </FormGroup>
-            <FormGroup label="연락처">
-              <PhoneInput placeholder="01000000000" value={searchPhone}
-                onChange={(e) => setSearchPhone(e.target.value)} onKeyDown={handleKeyPress} />
-            </FormGroup>
-            <button onClick={handleSearch} className={s.primaryBtn} style={{ background: '#10b981' }}>회원 검색</button>
-            {searchError && <p className={s.searchError}>{searchError}</p>}
+        {loading && <div style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>회원 정보를 확인하는 중...</div>}
+
+        {error && (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <p style={{ color: '#dc2626', fontSize: '1rem', marginBottom: 10 }}>{error}</p>
           </div>
         )}
 
@@ -124,7 +133,6 @@ export default function PublicPostponementPage() {
               className={s.primaryBtn} style={{ background: selectedMembershipSeq ? '#4a90e2' : '#ccc' }}>
               다음: 연기 상세 입력
             </button>
-            <button onClick={() => { setStep(1); setMember(null); }} className={s.secondaryBtn}>다시 검색</button>
           </div>
         )}
 
@@ -145,11 +153,15 @@ export default function PublicPostponementPage() {
                 </Select>
               </FormGroup>
               <FormGroup label="연기 요청 기간">
+                <p style={{ fontSize: '0.82rem', color: '#4a90e2', marginBottom: 8, fontWeight: 600 }}>
+                  연기 시작일은 오늘로부터 최소 2주 후부터 선택 가능합니다.
+                </p>
                 <div className={s.dateRange}>
-                  <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
+                  <Input type="date" value={startDate} min={minStartDate} onChange={(e) => { setStartDate(e.target.value); setDateError(''); }} required />
                   <span>~</span>
-                  <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} required />
+                  <Input type="date" value={endDate} min={startDate || minStartDate} onChange={(e) => { setEndDate(e.target.value); setDateError(''); }} required />
                 </div>
+                {dateError && <p style={{ color: '#dc2626', fontSize: '0.82rem', marginTop: 6, fontWeight: 600 }}>{dateError}</p>}
               </FormGroup>
               <FormGroup label="연기 사유">
                 <Select value={reasonSelect} onChange={(e) => { setReasonSelect(e.target.value); setReasonCustom(''); }} required>

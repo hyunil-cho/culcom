@@ -3,7 +3,9 @@ package com.culcom.controller.complex.member;
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.complex.member.ComplexMemberResponse;
+import com.culcom.dto.complex.member.MemberActivityTimelineItem;
 import com.culcom.mapper.ComplexMemberQueryMapper;
+import com.culcom.mapper.MemberActivityMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -20,6 +22,7 @@ import java.util.List;
 public class ComplexMemberQueryController {
 
     private final ComplexMemberQueryMapper complexMemberQueryMapper;
+    private final MemberActivityMapper memberActivityMapper;
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<ComplexMemberResponse>>> list(
@@ -35,6 +38,20 @@ public class ComplexMemberQueryController {
         int total = complexMemberQueryMapper.count(branchSeq, keyword);
 
         Page<ComplexMemberResponse> result = new PageImpl<>(list, PageRequest.of(page, size), total);
+        return ResponseEntity.ok(ApiResponse.ok(result));
+    }
+
+    @GetMapping("/{memberSeq}/timeline")
+    public ResponseEntity<ApiResponse<Page<MemberActivityTimelineItem>>> timeline(
+            @PathVariable Long memberSeq,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        int offset = page * size;
+        List<MemberActivityTimelineItem> items = memberActivityMapper.selectTimeline(memberSeq, offset, size);
+        int total = memberActivityMapper.countTimeline(memberSeq);
+
+        Page<MemberActivityTimelineItem> result = new PageImpl<>(items, PageRequest.of(page, size), total);
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 }

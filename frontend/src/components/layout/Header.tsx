@@ -21,7 +21,6 @@ const pageTitles: Record<string, string> = {
   [ROUTES.COMPLEX_REFUNDS]: '환불 요청',
   [ROUTES.SURVEY]: '설문 관리',
   [ROUTES.USERS]: '사용자 관리',
-  [ROUTES.WEBHOOKS]: '웹훅 관리',
 };
 
 function getPageTitle(pathname: string): string {

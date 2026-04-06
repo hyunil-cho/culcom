@@ -63,7 +63,14 @@
       "Bash(rm \"/c/Users/lookh/IdeaProjects/culcom/frontend/src/app/\\(main\\)/survey/[seq]/preview/page.tsx\" \"/c/Users/lookh/IdeaProjects/culcom/frontend/src/app/\\(main\\)/survey/[seq]/preview/page.module.css\")",
       "Bash(rmdir \"/c/Users/lookh/IdeaProjects/culcom/frontend/src/app/\\(main\\)/survey/[seq]/preview\")",
       "Read(//c/Users/lookh/IdeaProjects/culcom/frontend/src/app/survey/**)",
-      "Read(//c/Users/lookh/IdeaProjects/culcom/frontend/src/app/complex/**)"
+      "Read(//c/Users/lookh/IdeaProjects/culcom/frontend/src/app/complex/**)",
+      "Bash(rm -f /c/Users/lookh/IdeaProjects/culcom/backend/src/main/java/com/culcom/controller/WebhookConfigController.java)",
+      "Bash(rm -rf /c/Users/lookh/IdeaProjects/culcom/backend/src/main/java/com/culcom/controller/webhook)",
+      "Bash(rm -f /c/Users/lookh/IdeaProjects/culcom/backend/src/main/java/com/culcom/entity/webhook/WebhookConfig.java)",
+      "Bash(rm -f /c/Users/lookh/IdeaProjects/culcom/backend/src/main/java/com/culcom/entity/webhook/WebhookLog.java)",
+      "Bash(rmdir /c/Users/lookh/IdeaProjects/culcom/backend/src/main/java/com/culcom/entity/webhook)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)"
     ]
   }
 }

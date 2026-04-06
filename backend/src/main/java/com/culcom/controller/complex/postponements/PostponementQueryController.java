@@ -38,4 +38,10 @@ public class PostponementQueryController {
         Page<PostponementResponse> result = new PageImpl<>(list, PageRequest.of(page, size), total);
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
+
+    @GetMapping("/member/{memberSeq}")
+    public ResponseEntity<ApiResponse<List<PostponementResponse>>> memberHistory(
+            @PathVariable Long memberSeq) {
+        return ResponseEntity.ok(ApiResponse.ok(postponementQueryMapper.findByMemberSeq(memberSeq)));
+    }
 }

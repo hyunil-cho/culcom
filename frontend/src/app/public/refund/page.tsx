@@ -1,49 +1,57 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { publicRefundApi, type PublicMemberInfo, type PublicMembershipInfo } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { Input, PhoneInput, Select, Textarea } from '@/components/ui/FormInput';
 
 export default function PublicRefundPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [searchName, setSearchName] = useState('');
-  const [searchPhone, setSearchPhone] = useState('');
-  const [searchError, setSearchError] = useState('');
+  const decoded = (() => {
+    try {
+      const d = searchParams.get('d');
+      if (!d) return null;
+      return JSON.parse(decodeURIComponent(atob(d))) as { memberSeq: number; name: string; phone: string };
+    } catch { return null; }
+  })();
 
   const [member, setMember] = useState<PublicMemberInfo | null>(null);
   const [selectedMembershipSeq, setSelectedMembershipSeq] = useState<number | null>(null);
-
-  const [reason, setReason] = useState('');
+  const [reasons, setReasons] = useState<string[]>([]);
+  const [reasonSelect, setReasonSelect] = useState('');
+  const [reasonCustom, setReasonCustom] = useState('');
   const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [accountHolder, setAccountHolder] = useState('');
-
-  const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const handleSearch = async () => {
-    setSearchError('');
-    if (!searchName.trim() || !searchPhone.trim()) { setSearchError('이름과 연락처를 모두 입력해 주세요.'); return; }
-    const res = await publicRefundApi.searchMember(searchName.trim(), searchPhone.trim());
-    if (!res.success || !res.data.members || res.data.members.length === 0) {
-      setSearchError('일치하는 회원 정보를 찾을 수 없습니다.'); return;
-    }
-    setMember(res.data.members[0]);
-    setSelectedMembershipSeq(null);
-    setStep(2);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); handleSearch(); } };
+  useEffect(() => {
+    if (!decoded) { setLoading(false); setError('유효하지 않은 링크입니다. 관리자에게 문의해주세요.'); return; }
+    publicRefundApi.searchMember(decoded.name, decoded.phone).then(res => {
+      setLoading(false);
+      if (!res.success || !res.data.members || res.data.members.length === 0) {
+        setError('회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'); return;
+      }
+      const m = res.data.members[0];
+      setMember(m);
+      publicRefundApi.reasons(m.branchSeq).then(rRes => {
+        if (rRes.success) setReasons(rRes.data);
+      });
+    });
+  }, []);
 
   const selectedMembership = member?.memberships.find(ms => ms.seq === selectedMembershipSeq);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!member || !selectedMembershipSeq || !selectedMembership) return;
-    if (!reason.trim()) { alert('환불 사유를 입력해 주세요.'); return; }
+    const reason = reasonSelect === '기타' ? reasonCustom.trim() : reasonSelect;
+    if (!reason) { alert('환불 사유를 선택해 주세요.'); return; }
     if (!bankName.trim() || !accountNumber.trim() || !accountHolder.trim()) { alert('환불 계좌 정보를 모두 입력해 주세요.'); return; }
 
     setSubmitting(true);
@@ -66,25 +74,18 @@ export default function PublicRefundPage() {
       <div style={{ background: 'white', padding: 40, borderRadius: 12, boxShadow: '0 10px 25px rgba(0,0,0,0.1)', width: '100%', maxWidth: 520, marginTop: 30 }}>
         <div style={{ textAlign: 'center', marginBottom: 30 }}>
           <h1 style={{ color: '#e03131', fontSize: '1.8rem', marginBottom: 10 }}>환불 요청</h1>
-          <p style={{ color: '#666', fontSize: '0.95rem' }}>회원 정보를 확인한 후 환불 요청을 진행합니다.</p>
+          <p style={{ color: '#666', fontSize: '0.95rem' }}>환불 사유와 계좌 정보를 입력해주세요.</p>
         </div>
 
-        {step === 1 && (
-          <div>
-            <FormGroup label="이름">
-              <Input placeholder="성함을 입력하세요" value={searchName}
-                onChange={(e) => setSearchName(e.target.value)} onKeyDown={handleKeyPress} />
-            </FormGroup>
-            <FormGroup label="연락처">
-              <PhoneInput placeholder="01000000000" value={searchPhone}
-                onChange={(e) => setSearchPhone(e.target.value)} onKeyDown={handleKeyPress} />
-            </FormGroup>
-            <button onClick={handleSearch} style={btnStyle('#e03131')}>회원 검색</button>
-            {searchError && <p style={{ color: '#dc2626', fontSize: '0.9rem', marginTop: 8 }}>{searchError}</p>}
+        {loading && <div style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>회원 정보를 확인하는 중...</div>}
+
+        {error && (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <p style={{ color: '#dc2626', fontSize: '1rem', marginBottom: 10 }}>{error}</p>
           </div>
         )}
 
-        {step === 2 && member && (
+        {member && (
           <div>
             <div style={{ background: '#fff5f5', border: '1.5px solid #ffa8a8', borderRadius: 10, padding: 15, marginBottom: 20 }}>
               <h3 style={{ margin: '0 0 10px', color: '#c92a2a', fontSize: '1rem' }}>회원 정보 확인</h3>
@@ -116,8 +117,16 @@ export default function PublicRefundPage() {
             {selectedMembershipSeq && (
               <form onSubmit={handleSubmit}>
                 <FormGroup label="환불 사유">
-                  <Textarea value={reason} onChange={(e) => setReason(e.target.value)}
-                    placeholder="환불 사유를 입력해주세요." required style={{ minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }} />
+                  <Select value={reasonSelect} onChange={(e) => { setReasonSelect(e.target.value); setReasonCustom(''); }} required>
+                    <option value="">사유를 선택해 주세요</option>
+                    {reasons.map(r => <option key={r} value={r}>{r}</option>)}
+                    <option value="기타">기타 (직접 입력)</option>
+                  </Select>
+                  {reasonSelect === '기타' && (
+                    <Textarea placeholder="환불 사유를 직접 입력해주세요." value={reasonCustom}
+                      onChange={(e) => setReasonCustom(e.target.value)} required
+                      style={{ marginTop: 10, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }} />
+                  )}
                 </FormGroup>
                 <FormGroup label="환불 은행">
                   <Input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="예: 국민은행" required />
@@ -133,10 +142,6 @@ export default function PublicRefundPage() {
                 </button>
               </form>
             )}
-            <button onClick={() => { setStep(1); setMember(null); }}
-              style={{ width: '100%', padding: 10, background: 'none', border: '1px solid #ddd', borderRadius: 6, color: '#666', cursor: 'pointer', marginTop: 8 }}>
-              다시 검색
-            </button>
           </div>
         )}
 

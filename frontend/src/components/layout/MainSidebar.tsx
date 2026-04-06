@@ -28,7 +28,6 @@ export default function MainSidebar() {
       items: [
         { href: ROUTES.INTEGRATIONS, label: '연동 관리', icon: '🔗' },
         { href: ROUTES.KAKAO_SYNC, label: '카카오싱크', icon: '💬' },
-        { href: ROUTES.WEBHOOKS, label: '웹훅 관리', icon: '🪝' },
       ],
     },
     {

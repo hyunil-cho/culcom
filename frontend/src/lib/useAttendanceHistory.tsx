@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import AttendanceHistoryModal from '@/components/ui/AttendanceHistoryModal';
+import MemberTimelineModal from '@/app/complex/members/components/MemberTimelineModal';
 import { type Column } from '@/components/ui/DataTable';
 
 type HistoryType = 'member' | 'staff';
@@ -31,7 +31,7 @@ export function useAttendanceHistory<T extends { seq: number; name: string }>(ty
   };
 
   const modal = target ? (
-    <AttendanceHistoryModal seq={target.seq} name={target.name} type={type} onClose={close} />
+    <MemberTimelineModal memberSeq={target.seq} memberName={target.name} type={type} onClose={close} />
   ) : null;
 
   return { column, modal };

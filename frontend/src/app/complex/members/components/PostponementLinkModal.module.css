@@ -1,0 +1,128 @@
+.content { width: 90%; max-width: 600px; }
+
+.header { padding: 1.25rem 1.5rem; border-bottom: 2px solid var(--accent); }
+.title { margin: 0; font-size: var(--font-lg); color: var(--text-dark); }
+
+.body { padding: 1.25rem 1.5rem; max-height: 70vh; overflow-y: auto; }
+
+.recipientInfo {
+  background: #f0fdf4; padding: 0.75rem; border-radius: var(--radius-md);
+  margin-bottom: 1rem; border-left: 4px solid var(--accent); display: flex; gap: 2rem;
+}
+.infoLabel { font-size: var(--font-sm); color: var(--text-secondary); display: block; margin-bottom: 2px; }
+.infoValue { font-weight: 600; font-size: 1rem; }
+
+.loadingText { text-align: center; padding: 2rem; color: var(--text-muted); }
+
+/* 연기 불가 안내 */
+.unavailableBox {
+  text-align: center; padding: 1.5rem; border-radius: var(--radius-md);
+  background: #fef2f2; border: 1.5px solid #fecaca; margin-bottom: 1.25rem;
+}
+.unavailableIcon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: #fee2e2; color: #dc2626; font-size: 1.5rem; font-weight: 900;
+  margin-bottom: 0.5rem;
+}
+.unavailableTitle { font-size: 1rem; font-weight: 700; color: #991b1b; margin-bottom: 0.3rem; }
+.unavailableDesc { font-size: var(--font-sm); color: #b91c1c; }
+
+/* 섹션 라벨 */
+.sectionLabel {
+  font-size: var(--font-sm); font-weight: 700; color: var(--text-secondary);
+  margin-bottom: 0.5rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border);
+}
+
+.emptyText { text-align: center; padding: 1rem; color: var(--text-muted); font-size: var(--font-sm); }
+
+/* 멤버십 카드 */
+.msCard {
+  padding: 0.6rem 0.75rem; border: 1px solid #e5e7eb; border-radius: var(--radius);
+  margin-bottom: 0.4rem; background: #fafafa;
+}
+.msName {
+  font-size: var(--font-sm); font-weight: 700; color: var(--text-body);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.msMeta { font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
+.msRemainOk {
+  font-size: 0.75rem; font-weight: 600; padding: 1px 8px; border-radius: 10px;
+  background: #dcfce7; color: #166534;
+}
+.msRemainOut {
+  font-size: 0.75rem; font-weight: 600; padding: 1px 8px; border-radius: 10px;
+  background: #fee2e2; color: #991b1b;
+}
+
+/* 히스토리 */
+.historyList { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.5rem; }
+.historyItem {
+  padding: 0.6rem 0.75rem; border: 1px solid #e5e7eb; border-radius: var(--radius);
+  background: white;
+}
+.historyTop { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+.historyBadge {
+  display: inline-block; padding: 1px 8px; border-radius: 10px;
+  font-size: 0.72rem; font-weight: 700;
+}
+.historyDate { font-size: 0.75rem; color: var(--text-muted); }
+.historyDetail { font-size: 0.8rem; color: var(--text-body); }
+.historyReason { font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
+.historyReject { font-size: 0.78rem; color: #dc2626; margin-top: 2px; font-weight: 600; }
+
+/* URL / SMS */
+.fieldGroup { margin-bottom: 1rem; }
+.fieldLabel { display: block; margin-bottom: 6px; font-weight: 600; font-size: var(--font-sm); }
+
+.urlRow { display: flex; gap: 8px; }
+.urlInput {
+  flex: 1; padding: 0.6rem 0.75rem; border: 1.5px solid var(--border-input);
+  border-radius: var(--radius); font-size: var(--font-sm); font-family: monospace;
+  background: #f8f9fa; color: var(--text-dark); cursor: text;
+}
+.urlInput:focus { outline: none; border-color: var(--accent); }
+
+.copyBtn {
+  padding: 0.6rem 1rem; border: none; border-radius: var(--radius);
+  background: var(--accent); color: white; font-weight: 600;
+  font-size: var(--font-sm); cursor: pointer; white-space: nowrap;
+}
+
+.urlHint { font-size: 0.78rem; color: var(--text-secondary); margin-top: 6px; }
+
+.smsToggleBtn {
+  width: 100%; padding: 0.7rem; border: 1.5px dashed var(--border-input);
+  border-radius: var(--radius-md); background: white; color: var(--text-secondary);
+  font-weight: 600; font-size: var(--font-sm); cursor: pointer; transition: all 0.2s;
+}
+.smsToggleBtn:hover { border-color: var(--accent); color: var(--accent); }
+
+.smsSection { margin-top: 0.5rem; }
+.smsDivider {
+  font-size: var(--font-sm); font-weight: 700; color: var(--text-secondary);
+  margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+}
+
+.charCount { text-align: right; font-size: var(--font-sm); color: var(--text-muted); margin-top: 4px; }
+
+.sendBtn {
+  width: 100%; padding: 0.7rem; border: none; border-radius: var(--radius);
+  background: var(--success); color: white; font-weight: 600;
+  font-size: var(--font-sm); cursor: pointer;
+}
+.sendBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.resultSuccess {
+  padding: 0.6rem 0.75rem; border-radius: var(--radius); margin-bottom: 0.75rem;
+  background: #ecfdf5; color: #065f46; font-size: var(--font-sm); font-weight: 600;
+}
+.resultError {
+  padding: 0.6rem 0.75rem; border-radius: var(--radius); margin-bottom: 0.75rem;
+  background: #fef2f2; color: #991b1b; font-size: var(--font-sm); font-weight: 600;
+}
+
+.footer {
+  padding: 1rem 1.5rem; border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; gap: 8px;
+}

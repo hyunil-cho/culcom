@@ -15,7 +15,6 @@ const R = {
   KAKAO_SYNC: '/kakao-sync',
   SETTINGS: '/settings',
   COMPLEX: '/complex',
-  WEBHOOKS: '/webhooks',
   CALENDAR: '/calendar',
 } as const;
 
@@ -25,12 +24,6 @@ export const ROUTES = {
 
   // 상담 예약 캘린더
   CALENDAR: R.CALENDAR,
-
-  // 웹훅
-  WEBHOOKS: R.WEBHOOKS,
-  WEBHOOKS_ADD: `${R.WEBHOOKS}/add`,
-  WEBHOOK_EDIT: (seq: number) => `${R.WEBHOOKS}/${seq}/edit`,
-  WEBHOOK_LOGS: `${R.WEBHOOKS}/logs`,
 
   // 공개 페이지
   PUBLIC_POSTPONEMENT: '/public/postponement',
@@ -100,6 +93,7 @@ export const ROUTES = {
   COMPLEX_POSTPONEMENTS: `${R.COMPLEX}/postponements`,
   COMPLEX_POSTPONEMENT_REASONS: `${R.COMPLEX}/postponements/reasons`,
   COMPLEX_REFUNDS: `${R.COMPLEX}/refunds`,
+  COMPLEX_REFUND_REASONS: `${R.COMPLEX}/refunds/reasons`,
   SURVEY: '/survey',
   SURVEY_OPTIONS: (seq: number) => `/survey/${seq}/options`,
   SURVEY_PREVIEW: (seq: number) => `/survey/${seq}/preview`,
@@ -157,10 +151,12 @@ export const API = {
   COMPLEX_MEMBERS: A.COMPLEX_MEMBERS,
   COMPLEX_MEMBER: (seq: number) => `${A.COMPLEX_MEMBERS}/${seq}`,
   COMPLEX_MEMBER_MEMBERSHIPS: (seq: number) => `${A.COMPLEX_MEMBERS}/${seq}/memberships`,
+  COMPLEX_MEMBER_TIMELINE: (seq: number) => `${A.COMPLEX_MEMBERS}/${seq}/timeline`,
   COMPLEX_MEMBER_MEMBERSHIP: (seq: number, mmSeq: number) => `${A.COMPLEX_MEMBERS}/${seq}/memberships/${mmSeq}`,
   COMPLEX_STAFFS: A.COMPLEX_STAFFS,
   COMPLEX_STAFF: (seq: number) => `${A.COMPLEX_STAFFS}/${seq}`,
   COMPLEX_STAFF_REFUND: (staffSeq: number) => `${A.COMPLEX_STAFFS}/${staffSeq}/refund`,
+  COMPLEX_STAFF_TIMELINE: (staffSeq: number) => `${A.COMPLEX_STAFFS}/${staffSeq}/timeline`,
 
   // 출석 등록현황
   COMPLEX_ATTENDANCE_VIEW: '/complex/attendance/view',
@@ -183,12 +179,15 @@ export const API = {
   // 환불 요청
   COMPLEX_REFUNDS: '/complex/refunds',
   COMPLEX_REFUND_STATUS: (seq: number) => `/complex/refunds/${seq}/status`,
+  COMPLEX_REFUND_REASONS: '/complex/refunds/reasons',
+  COMPLEX_REFUND_REASON: (seq: number) => `/complex/refunds/reasons/${seq}`,
 
   // 연기 요청
   COMPLEX_POSTPONEMENTS: '/complex/postponements',
   COMPLEX_POSTPONEMENT_STATUS: (seq: number) => `/complex/postponements/${seq}/status`,
   COMPLEX_POSTPONEMENT_REASONS: '/complex/postponements/reasons',
   COMPLEX_POSTPONEMENT_REASON: (seq: number) => `/complex/postponements/reasons/${seq}`,
+  COMPLEX_POSTPONEMENT_MEMBER_HISTORY: (memberSeq: number) => `/complex/postponements/member/${memberSeq}`,
 
   // 공개 연기 요청
   PUBLIC_POSTPONEMENT_SEARCH: '/public/postponement/search-member',
@@ -201,6 +200,7 @@ export const API = {
   // 공개 환불 요청
   PUBLIC_REFUND_SEARCH: '/public/refund/search-member',
   PUBLIC_REFUND_SUBMIT: '/public/refund/submit',
+  PUBLIC_REFUND_REASONS: '/public/refund/reasons',
 
   // 공개 멤버십 조회
   PUBLIC_MEMBERSHIP_CHECK: '/public/membership/check',
@@ -234,11 +234,6 @@ export const API = {
   MESSAGE_TEMPLATE: (seq: number) => `${A.MESSAGE_TEMPLATES}/${seq}`,
   MESSAGE_TEMPLATE_SET_DEFAULT: (seq: number) => `${A.MESSAGE_TEMPLATES}/${seq}/set-default`,
   MESSAGE_TEMPLATE_PLACEHOLDERS: `${A.MESSAGE_TEMPLATES}/placeholders`,
-
-  // 웹훅
-  WEBHOOKS: '/webhooks',
-  WEBHOOK: (seq: number) => `/webhooks/${seq}`,
-  WEBHOOK_LOGS: '/webhooks/logs',
 
   // 설문
   SURVEY_SUBMISSIONS: '/complex/survey/submissions',
