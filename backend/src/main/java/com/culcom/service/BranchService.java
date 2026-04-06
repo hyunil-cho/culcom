@@ -25,6 +25,7 @@ public class BranchService {
         UserInfo user = userInfoRepository.findById(userSeq)
                 .orElseThrow(() -> new EntityNotFoundException("사용자"));
         List<Branch> branches = authService.getManagedBranches(user);
+
         return branches.stream().map(BranchListResponse::from).toList();
     }
 

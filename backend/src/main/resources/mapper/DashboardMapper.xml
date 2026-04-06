@@ -21,7 +21,7 @@
             COALESCE(c.cnt, 0) AS count,
             COALESCE(r.cnt, 0) AS reservationCount
         FROM (
-            SELECT DATEADD(DAY, -n, CURRENT_DATE) AS dt
+            SELECT DATE_SUB(CURRENT_DATE, INTERVAL n DAY) AS dt
             FROM (
                 SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2
                 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
@@ -32,7 +32,7 @@
         LEFT JOIN (
             SELECT CAST(created_date AS DATE) AS dt, COUNT(*) AS cnt
             FROM customers
-            WHERE created_date >= DATEADD(DAY, -(#{days} - 1), CURRENT_DATE)
+            WHERE created_date >= DATE_SUB(CURRENT_DATE, INTERVAL (#{days} - 1) DAY)
             <if test="branchSeq != null">
                 AND branch_seq = #{branchSeq}
             </if>
@@ -41,7 +41,7 @@
         LEFT JOIN (
             SELECT CAST(created_date AS DATE) AS dt, COUNT(*) AS cnt
             FROM reservation_info
-            WHERE created_date >= DATEADD(DAY, -(#{days} - 1), CURRENT_DATE)
+            WHERE created_date >= DATE_SUB(CURRENT_DATE, INTERVAL (#{days} - 1) DAY)
             <if test="branchSeq != null">
                 AND branch_seq = #{branchSeq}
             </if>
@@ -54,7 +54,7 @@
     <select id="selectSmsRemaining" resultType="int">
         SELECT COALESCE(mci.remaining_count_sms, 0)
         FROM mymunja_config_info mci
-        INNER JOIN "branch-third-party-mapping" btpm ON mci.mapping_id = btpm.mapping_seq
+        INNER JOIN `branch-third-party-mapping` btpm ON mci.mapping_id = btpm.mapping_seq
         INNER JOIN third_party_services tps ON btpm.third_party_id = tps.seq
         INNER JOIN external_service_type est ON tps.code_seq = est.seq
         WHERE btpm.branch_id = #{branchSeq}
@@ -66,7 +66,7 @@
     <select id="selectLmsRemaining" resultType="int">
         SELECT COALESCE(mci.remaining_count_lms, 0)
         FROM mymunja_config_info mci
-        INNER JOIN "branch-third-party-mapping" btpm ON mci.mapping_id = btpm.mapping_seq
+        INNER JOIN `branch-third-party-mapping` btpm ON mci.mapping_id = btpm.mapping_seq
         INNER JOIN third_party_services tps ON btpm.third_party_id = tps.seq
         INNER JOIN external_service_type est ON tps.code_seq = est.seq
         WHERE btpm.branch_id = #{branchSeq}
@@ -78,10 +78,10 @@
     <sql id="callerDateCondition">
         <choose>
             <when test="period == 'week'">
-                selected_date >= DATEADD(DAY, -7, CURRENT_DATE)
+                selected_date >= DATE_SUB(CURRENT_DATE, INTERVAL 7 DAY)
             </when>
             <when test="period == 'month'">
-                selected_date >= DATEADD(DAY, -30, CURRENT_DATE)
+                selected_date >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY)
             </when>
             <otherwise>
                 CAST(selected_date AS DATE) = CURRENT_DATE
@@ -92,10 +92,10 @@
     <sql id="reservationDateCondition">
         <choose>
             <when test="period == 'week'">
-                r.created_date >= DATEADD(DAY, -7, CURRENT_DATE)
+                r.created_date >= DATE_SUB(CURRENT_DATE, INTERVAL 7 DAY)
             </when>
             <when test="period == 'month'">
-                r.created_date >= DATEADD(DAY, -30, CURRENT_DATE)
+                r.created_date >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY)
             </when>
             <otherwise>
                 CAST(r.created_date AS DATE) = CURRENT_DATE
