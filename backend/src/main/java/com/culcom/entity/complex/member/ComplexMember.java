@@ -30,6 +30,9 @@ public class ComplexMember extends BaseTimeEntity {
     @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private ComplexMemberMetaData metaData;
 
+    @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    private ComplexStaffInfo staffInfo;
+
     @Column(length = 300)
     private String info;
 

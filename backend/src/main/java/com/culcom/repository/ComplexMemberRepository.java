@@ -16,4 +16,7 @@ public interface ComplexMemberRepository extends JpaRepository<ComplexMember, Lo
     Page<ComplexMember> searchByBranchSeq(@Param("branchSeq") Long branchSeq, @Param("keyword") String keyword, Pageable pageable);
 
     List<ComplexMember> findByNameAndPhoneNumber(String name, String phoneNumber);
+
+    @Query("SELECT m FROM ComplexMember m WHERE m.branch.seq = :branchSeq AND m.staffInfo IS NOT NULL")
+    List<ComplexMember> findStaffByBranchSeq(@Param("branchSeq") Long branchSeq);
 }

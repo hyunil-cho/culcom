@@ -65,4 +65,9 @@ public class ComplexMemberMembership extends BaseTimeEntity {
     @Builder.Default
     private MembershipStatus status = MembershipStatus.활성;
 
+    /** 시스템 내부용 멤버십 (스태프 자동 부여 등) — UI에 노출하지 않음 */
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean internal = false;
+
 }

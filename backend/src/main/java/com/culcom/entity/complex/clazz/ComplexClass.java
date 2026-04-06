@@ -2,7 +2,7 @@ package com.culcom.entity.complex.clazz;
 
 import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.branch.Branch;
-import com.culcom.entity.complex.staff.ComplexStaff;
+import com.culcom.entity.complex.member.ComplexMember;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,7 +27,7 @@ public class ComplexClass extends BaseTimeEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "staff_seq")
-    private ComplexStaff staff;
+    private ComplexMember staff;
 
     @Column(nullable = false, length = 100)
     private String name;

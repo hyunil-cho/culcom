@@ -6,8 +6,6 @@ import com.culcom.entity.complex.clazz.ClassTimeSlot;
 import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.member.*;
 import com.culcom.entity.product.Membership;
-import com.culcom.entity.complex.staff.ComplexStaff;
-import com.culcom.entity.complex.staff.ComplexStaffAttendance;
 import com.culcom.entity.customer.Customer;
 import com.culcom.entity.enums.*;
 import com.culcom.entity.message.MessageTemplate;
@@ -40,12 +38,10 @@ public class LocalDataInitializer implements ApplicationRunner {
     private final ClassTimeSlotRepository classTimeSlotRepository;
     private final ComplexClassRepository complexClassRepository;
     private final ComplexMemberRepository complexMemberRepository;
-    private final ComplexStaffRepository complexStaffRepository;
     private final MembershipRepository membershipRepository;
     private final ComplexMemberMembershipRepository complexMemberMembershipRepository;
     private final ComplexMemberClassMappingRepository complexMemberClassMappingRepository;
     private final ComplexMemberAttendanceRepository complexMemberAttendanceRepository;
-    private final ComplexStaffAttendanceRepository complexStaffAttendanceRepository;
     private final MembershipActivityLogRepository membershipActivityLogRepository;
     private final NoticeRepository noticeRepository;
     private final PasswordEncoder passwordEncoder;
@@ -163,19 +159,13 @@ public class LocalDataInitializer implements ApplicationRunner {
                 .startTime(LocalTime.of(13, 0)).endTime(LocalTime.of(14, 30)).build());
         log.info("시간대 6개 생성");
 
-        // ── 스태프 ──
-        ComplexStaff staff1 = complexStaffRepository.save(ComplexStaff.builder()
-                .branch(gangnam).name("이민호").phoneNumber("01077778888").build());
-        ComplexStaff staff2 = complexStaffRepository.save(ComplexStaff.builder()
-                .branch(gangnam).name("김수진").phoneNumber("01066669999").build());
-        ComplexStaff staff3 = complexStaffRepository.save(ComplexStaff.builder()
-                .branch(gangnam).name("마이클 존슨").phoneNumber("01055550000").build());
-        ComplexStaff staff4 = complexStaffRepository.save(ComplexStaff.builder()
-                .branch(gangnam).name("박하나").phoneNumber("01044441111").build());
-        ComplexStaff staff5 = complexStaffRepository.save(ComplexStaff.builder()
-                .branch(seocho).name("정예린").phoneNumber("01033332222").build());
-        ComplexStaff staff6 = complexStaffRepository.save(ComplexStaff.builder()
-                .branch(seocho).name("제임스 리").phoneNumber("01022223333").build());
+        // ── 스태프 (ComplexMember + ComplexStaffInfo) ──
+        ComplexMember staff1 = createStaff(gangnam, "이민호", "01077778888");
+        ComplexMember staff2 = createStaff(gangnam, "김수진", "01066669999");
+        ComplexMember staff3 = createStaff(gangnam, "마이클 존슨", "01055550000");
+        ComplexMember staff4 = createStaff(gangnam, "박하나", "01044441111");
+        ComplexMember staff5 = createStaff(seocho, "정예린", "01033332222");
+        ComplexMember staff6 = createStaff(seocho, "제임스 리", "01022223333");
         log.info("스태프 6명 생성");
 
         // ── 수업 (팀) ──
@@ -211,12 +201,26 @@ public class LocalDataInitializer implements ApplicationRunner {
                 .name("생활 영어").description("일상에서 쓰는 영어 표현").capacity(12).sortOrder(3).build());
         log.info("수업(팀) 10개 생성");
 
+        LocalDate today = LocalDate.now();
+
         // ── 멤버십 상품 ──
         Membership mship1m = membershipRepository.save(Membership.builder().name("1개월 체험반").duration(30).count(12).price(120000).build());
         Membership mship3m = membershipRepository.save(Membership.builder().name("3개월 정규반").duration(90).count(36).price(300000).build());
         Membership mship6m = membershipRepository.save(Membership.builder().name("6개월 정규반").duration(180).count(72).price(540000).build());
         membershipRepository.save(Membership.builder().name("무제한 프리패스").duration(30).count(999).price(200000).build());
-        log.info("멤버십 상품 4개 생성");
+        Membership mshipStaff = membershipRepository.save(Membership.builder().name("스태프 무제한").duration(36500).count(999999).price(0).build());
+        log.info("멤버십 상품 5개 생성");
+
+        // ── 스태프 무제한 멤버십 부여 ──
+        ComplexMember[] allStaffs = {staff1, staff2, staff3, staff4, staff5, staff6};
+        Map<Long, ComplexMemberMembership> staffMembershipMap = new HashMap<>();
+        for (ComplexMember staff : allStaffs) {
+            ComplexMemberMembership mm = complexMemberMembershipRepository.save(ComplexMemberMembership.builder()
+                    .member(staff).membership(mshipStaff)
+                    .startDate(today.minusDays(365)).expiryDate(LocalDate.of(2099, 12, 31))
+                    .totalCount(999999).internal(true).build());
+            staffMembershipMap.put(staff.getSeq(), mm);
+        }
 
         // ── 회원 (강남점) ──
         Object[][] gangnamMembers = {
@@ -276,7 +280,6 @@ public class LocalDataInitializer implements ApplicationRunner {
         log.info("회원 {}명 생성 (강남 {}, 서초 {})", gMembers.size() + sMembers.size(), gMembers.size(), sMembers.size());
 
         // ── 멤버십 등록 & 수업 배정 ──
-        LocalDate today = LocalDate.now();
         Membership[] mships = {mship3m, mship3m, mship6m, mship3m, mship1m, mship3m, mship1m, mship6m, mship3m, mship3m,
                 mship3m, mship6m, mship1m, mship3m, mship3m, mship1m, mship3m, mship6m};
         // 강남점 수업 배정: 회원별로 다른 수업
@@ -373,8 +376,8 @@ public class LocalDataInitializer implements ApplicationRunner {
         }
         log.info("회원 출석 기록 생성 완료 (최대 60일치)");
 
-        // ── 스태프 출석 기록 ──
-        ComplexStaff[] gangnamStaffs = {staff1, staff2, staff3, staff4};
+        // ── 스태프 출석 기록 (ComplexMemberAttendance 통합) ──
+        ComplexMember[] gangnamStaffs = {staff1, staff2, staff3, staff4};
         ComplexClass[][] staffClasses = {{c1, c5}, {c2, c3}, {c4, c7}, {c6}};
         for (int s = 0; s < gangnamStaffs.length; s++) {
             for (ComplexClass cls : staffClasses[s]) {
@@ -382,22 +385,21 @@ public class LocalDataInitializer implements ApplicationRunner {
                 for (int d = 1; d <= 60; d++) {
                     LocalDate date = today.minusDays(d);
                     if (!classDays.contains(date.getDayOfWeek().getValue())) continue;
-                    StaffAttendanceStatus status = rand.nextDouble() < 0.92
-                            ? StaffAttendanceStatus.출석 : StaffAttendanceStatus.결석;
-                    complexStaffAttendanceRepository.save(ComplexStaffAttendance.builder()
-                            .staff(gangnamStaffs[s]).complexClass(cls)
-                            .attendanceDate(date).status(status).build());
+                    AttendanceStatus status = rand.nextDouble() < 0.92
+                            ? AttendanceStatus.출석 : AttendanceStatus.결석;
+                    complexMemberAttendanceRepository.save(ComplexMemberAttendance.builder()
+                            .member(gangnamStaffs[s]).memberMembership(staffMembershipMap.get(gangnamStaffs[s].getSeq()))
+                            .complexClass(cls).attendanceDate(date).status(status).build());
 
                     membershipActivityLogRepository.save(MembershipActivityLog.builder()
-                            .staff(gangnamStaffs[s]).complexClass(cls)
-                            .activityDate(date)
-                            .status(status == StaffAttendanceStatus.출석 ? AttendanceStatus.출석 : AttendanceStatus.결석)
+                            .member(gangnamStaffs[s]).complexClass(cls)
+                            .activityDate(date).status(status)
                             .usedCountDelta(0).build());
                 }
             }
         }
 
-        ComplexStaff[] seochoStaffs = {staff5, staff6};
+        ComplexMember[] seochoStaffs = {staff5, staff6};
         ComplexClass[][] sStaffClasses = {{c8, c10}, {c9}};
         for (int s = 0; s < seochoStaffs.length; s++) {
             for (ComplexClass cls : sStaffClasses[s]) {
@@ -405,21 +407,27 @@ public class LocalDataInitializer implements ApplicationRunner {
                 for (int d = 1; d <= 60; d++) {
                     LocalDate date = today.minusDays(d);
                     if (!classDays.contains(date.getDayOfWeek().getValue())) continue;
-                    StaffAttendanceStatus status = rand.nextDouble() < 0.90
-                            ? StaffAttendanceStatus.출석 : StaffAttendanceStatus.결석;
-                    complexStaffAttendanceRepository.save(ComplexStaffAttendance.builder()
-                            .staff(seochoStaffs[s]).complexClass(cls)
-                            .attendanceDate(date).status(status).build());
+                    AttendanceStatus status = rand.nextDouble() < 0.90
+                            ? AttendanceStatus.출석 : AttendanceStatus.결석;
+                    complexMemberAttendanceRepository.save(ComplexMemberAttendance.builder()
+                            .member(seochoStaffs[s]).memberMembership(staffMembershipMap.get(seochoStaffs[s].getSeq()))
+                            .complexClass(cls).attendanceDate(date).status(status).build());
 
                     membershipActivityLogRepository.save(MembershipActivityLog.builder()
-                            .staff(seochoStaffs[s]).complexClass(cls)
-                            .activityDate(date)
-                            .status(status == StaffAttendanceStatus.출석 ? AttendanceStatus.출석 : AttendanceStatus.결석)
+                            .member(seochoStaffs[s]).complexClass(cls)
+                            .activityDate(date).status(status)
                             .usedCountDelta(0).build());
                 }
             }
         }
         log.info("스태프 출석 기록 생성 완료 (6명, 60일치)");
+    }
+
+    private ComplexMember createStaff(Branch branch, String name, String phone) {
+        ComplexMember m = complexMemberRepository.save(ComplexMember.builder()
+                .branch(branch).name(name).phoneNumber(phone).build());
+        m.setStaffInfo(ComplexStaffInfo.builder().member(m).build());
+        return complexMemberRepository.save(m);
     }
 
     private Set<Integer> parseClassDays(String daysOfWeek) {

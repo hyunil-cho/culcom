@@ -7,11 +7,8 @@ import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberAttendance;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.member.MembershipActivityLog;
-import com.culcom.entity.complex.staff.ComplexStaff;
-import com.culcom.entity.complex.staff.ComplexStaffAttendance;
 import com.culcom.entity.enums.AttendanceStatus;
 import com.culcom.entity.enums.MembershipStatus;
-import com.culcom.entity.enums.StaffAttendanceStatus;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +26,6 @@ public class AttendanceService {
     private final ComplexMemberAttendanceRepository attendanceRepository;
     private final ComplexMemberMembershipRepository memberMembershipRepository;
     private final ComplexClassRepository classRepository;
-    private final ComplexStaffAttendanceRepository staffAttendanceRepository;
     private final MembershipActivityLogRepository activityLogRepository;
 
     public List<AttendanceResponse> listByClassAndDate(Long classSeq, LocalDate date) {
@@ -96,15 +92,10 @@ public class AttendanceService {
         attendanceRepository.findByClassSeqsAndDate(List.of(classSeq), today)
                 .forEach(a -> existingAttendanceMap.put(a.getMember().getSeq(), a));
 
-        // 스태프 기존 출석 프리로드
-        Map<Long, ComplexStaffAttendance> existingStaffAttendanceMap = new HashMap<>();
-        staffAttendanceRepository.findByClassSeqsAndDate(List.of(classSeq), today)
-                .forEach(a -> existingStaffAttendanceMap.put(a.getStaff().getSeq(), a));
-
         List<BulkAttendanceResultResponse> results = new ArrayList<>();
         for (BulkAttendanceRequest.BulkMember bm : req.getMembers()) {
             if (bm.isStaff()) {
-                results.add(processStaffAttendance(bm, classSeq, today, existingStaffAttendanceMap));
+                results.add(processStaffAttendance(bm, classSeq, today, existingAttendanceMap));
             } else {
                 results.add(processMemberAttendance(bm, classSeq, today, postponedMap, activeMap, existingAttendanceMap));
             }
@@ -114,10 +105,10 @@ public class AttendanceService {
 
     private BulkAttendanceResultResponse processStaffAttendance(
             BulkAttendanceRequest.BulkMember bm, Long classSeq, LocalDate today,
-            Map<Long, ComplexStaffAttendance> existingStaffAttendanceMap) {
+            Map<Long, ComplexMemberAttendance> existingAttendanceMap) {
 
-        StaffAttendanceStatus newStatus = bm.isAttended() ? StaffAttendanceStatus.출석 : StaffAttendanceStatus.결석;
-        ComplexStaffAttendance existing = existingStaffAttendanceMap.get(bm.getMemberSeq());
+        AttendanceStatus newStatus = bm.isAttended() ? AttendanceStatus.출석 : AttendanceStatus.결석;
+        ComplexMemberAttendance existing = existingAttendanceMap.get(bm.getMemberSeq());
 
         if (existing != null) {
             if (existing.getStatus() == newStatus) {
@@ -125,19 +116,19 @@ public class AttendanceService {
                         .memberSeq(bm.getMemberSeq()).name("").status("skip_already").build();
             }
             existing.setStatus(newStatus);
-            staffAttendanceRepository.save(existing);
+            attendanceRepository.save(existing);
         } else {
-            staffAttendanceRepository.save(ComplexStaffAttendance.builder()
-                    .staff(ComplexStaff.builder().seq(bm.getMemberSeq()).build())
+            attendanceRepository.save(ComplexMemberAttendance.builder()
+                    .member(ComplexMember.builder().seq(bm.getMemberSeq()).build())
                     .complexClass(ComplexClass.builder().seq(classSeq).build())
                     .attendanceDate(today).status(newStatus).build());
         }
 
         activityLogRepository.save(MembershipActivityLog.builder()
-                .staff(ComplexStaff.builder().seq(bm.getMemberSeq()).build())
+                .member(ComplexMember.builder().seq(bm.getMemberSeq()).build())
                 .complexClass(ComplexClass.builder().seq(classSeq).build())
                 .activityDate(today)
-                .status(bm.isAttended() ? AttendanceStatus.출석 : AttendanceStatus.결석)
+                .status(newStatus)
                 .usedCountDelta(0).build());
 
         String resultStatus = (existing != null ? "변경: " : "") + (bm.isAttended() ? "출석" : "결석");

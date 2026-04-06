@@ -1,6 +1,7 @@
 package com.culcom.entity.complex.staff;
 
 import com.culcom.entity.BaseTimeEntity;
+import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.enums.StaffStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -17,8 +18,8 @@ public class ComplexStaffStatusLog extends BaseTimeEntity {
     private Long seq;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "staff_seq", nullable = false)
-    private ComplexStaff staff;
+    @JoinColumn(name = "member_seq", nullable = false)
+    private ComplexMember member;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "from_status", nullable = false)

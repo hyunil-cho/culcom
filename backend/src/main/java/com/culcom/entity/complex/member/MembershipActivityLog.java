@@ -2,7 +2,6 @@ package com.culcom.entity.complex.member;
 
 import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.complex.clazz.ComplexClass;
-import com.culcom.entity.complex.staff.ComplexStaff;
 import com.culcom.entity.enums.AttendanceStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -27,10 +26,6 @@ public class MembershipActivityLog extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_seq")
     private ComplexMember member;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "staff_seq")
-    private ComplexStaff staff;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "membership_seq")

@@ -1,6 +1,6 @@
 package com.culcom.dto.complex.member;
 
-import com.culcom.entity.complex.staff.ComplexStaffRefundInfo;
+import com.culcom.entity.complex.member.ComplexStaffInfo;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -8,7 +8,7 @@ import lombok.Getter;
 @Builder
 public class ComplexStaffRefundInfoResponse {
     private Long seq;
-    private Long staffSeq;
+    private Long memberSeq;
     private String depositAmount;
     private String refundableDeposit;
     private String nonRefundableDeposit;
@@ -17,10 +17,10 @@ public class ComplexStaffRefundInfoResponse {
     private String refundAmount;
     private String paymentMethod;
 
-    public static ComplexStaffRefundInfoResponse from(ComplexStaffRefundInfo entity) {
+    public static ComplexStaffRefundInfoResponse from(ComplexStaffInfo entity) {
         return ComplexStaffRefundInfoResponse.builder()
                 .seq(entity.getSeq())
-                .staffSeq(entity.getStaff().getSeq())
+                .memberSeq(entity.getMember().getSeq())
                 .depositAmount(entity.getDepositAmount())
                 .refundableDeposit(entity.getRefundableDeposit())
                 .nonRefundableDeposit(entity.getNonRefundableDeposit())

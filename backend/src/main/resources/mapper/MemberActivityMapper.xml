@@ -109,8 +109,9 @@
             COALESCE(s.join_date, DATE_FORMAT(s.created_date, '%Y-%m-%d')) AS date,
             CONCAT(s.name, ' 스태프 등록') AS title,
             NULL AS detail,
-            s.status AS status
-        FROM complex_staffs s
+            si.status AS status
+        FROM complex_members s
+        JOIN complex_staff_info si ON si.member_seq = s.seq
         WHERE s.seq = #{staffSeq}
 
         UNION ALL
@@ -123,7 +124,7 @@
             NULL AS detail,
             sl.to_status AS status
         FROM complex_staff_status_logs sl
-        WHERE sl.staff_seq = #{staffSeq}
+        WHERE sl.member_seq = #{staffSeq}
 
         UNION ALL
 
@@ -134,9 +135,9 @@
             CONCAT(c.name, ' 수업') AS title,
             NULL AS detail,
             a.status AS status
-        FROM complex_staff_attendance a
+        FROM complex_member_attendance a
         JOIN complex_classes c ON c.seq = a.class_seq
-        WHERE a.staff_seq = #{staffSeq}
+        WHERE a.member_seq = #{staffSeq}
 
         UNION ALL
 
@@ -149,8 +150,8 @@
             cl.action AS status
         FROM complex_staff_class_logs cl
         JOIN complex_classes c ON c.seq = cl.class_seq
-        LEFT JOIN complex_class_time_slots t ON t.seq = c.time_slot_seq
-        WHERE cl.staff_seq = #{staffSeq}
+        LEFT JOIN class_time_slots t ON t.seq = c.time_slot_seq
+        WHERE cl.member_seq = #{staffSeq}
 
         UNION ALL
 
@@ -162,7 +163,7 @@
             CONCAT(COALESCE(lg.old_value, '(없음)'), ' → ', COALESCE(lg.new_value, '(없음)')) AS detail,
             '변경' AS status
         FROM complex_staff_change_logs lg
-        WHERE lg.staff_seq = #{staffSeq}
+        WHERE lg.member_seq = #{staffSeq}
           AND lg.change_type = 'INFO_CHANGE'
 
         UNION ALL
@@ -175,7 +176,7 @@
             CONCAT(COALESCE(lg.old_value, '(없음)'), ' → ', COALESCE(lg.new_value, '(없음)')) AS detail,
             '변경' AS status
         FROM complex_staff_change_logs lg
-        WHERE lg.staff_seq = #{staffSeq}
+        WHERE lg.member_seq = #{staffSeq}
           AND lg.change_type = 'REFUND_CHANGE'
     </sql>
 

@@ -25,7 +25,7 @@
             c.created_date AS createdDate
         FROM complex_classes c
         LEFT JOIN class_time_slots ts ON c.time_slot_seq = ts.seq
-        LEFT JOIN complex_staffs s ON c.staff_seq = s.seq
+        LEFT JOIN complex_members s ON c.staff_seq = s.seq
         <include refid="searchCondition"/>
         ORDER BY c.sort_order ASC
         LIMIT #{size} OFFSET #{offset}

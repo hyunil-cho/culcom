@@ -1,6 +1,7 @@
 package com.culcom.entity.complex.staff;
 
 import com.culcom.entity.BaseTimeEntity;
+import com.culcom.entity.complex.member.ComplexMember;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,8 +17,8 @@ public class ComplexStaffChangeLog extends BaseTimeEntity {
     private Long seq;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "staff_seq", nullable = false)
-    private ComplexStaff staff;
+    @JoinColumn(name = "member_seq", nullable = false)
+    private ComplexMember member;
 
     /** 변경 유형: INFO_CHANGE, REFUND_CHANGE */
     @Column(name = "change_type", nullable = false, length = 30)

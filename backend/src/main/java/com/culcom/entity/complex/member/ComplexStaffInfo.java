@@ -1,23 +1,31 @@
-package com.culcom.entity.complex.staff;
+package com.culcom.entity.complex.member;
 
 import com.culcom.entity.BaseTimeEntity;
+import com.culcom.entity.enums.StaffStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "complex_staff_refund_info")
+@Table(name = "complex_staff_info")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class ComplexStaffRefundInfo extends BaseTimeEntity {
+public class ComplexStaffInfo extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seq;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "staff_seq", nullable = false, unique = true)
-    private ComplexStaff staff;
+    @JoinColumn(name = "member_seq", nullable = false, unique = true)
+    private ComplexMember member;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private StaffStatus status = StaffStatus.재직;
+
+    // ── 환급 정보 (기존 ComplexStaffRefundInfo 흡수) ──
 
     @Column(name = "deposit_amount", length = 50)
     private String depositAmount;
@@ -39,5 +47,4 @@ public class ComplexStaffRefundInfo extends BaseTimeEntity {
 
     @Column(name = "payment_method", length = 50)
     private String paymentMethod;
-
 }

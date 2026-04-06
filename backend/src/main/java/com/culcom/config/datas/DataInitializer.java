@@ -2,14 +2,6 @@ package com.culcom.config.datas;
 
 import com.culcom.entity.auth.UserInfo;
 import com.culcom.entity.branch.Branch;
-import com.culcom.entity.complex.clazz.ClassTimeSlot;
-import com.culcom.entity.complex.clazz.ComplexClass;
-import com.culcom.entity.complex.member.*;
-import com.culcom.entity.complex.staff.ComplexStaff;
-import com.culcom.entity.complex.staff.ComplexStaffAttendance;
-import com.culcom.entity.customer.Customer;
-import com.culcom.entity.enums.AttendanceStatus;
-import com.culcom.entity.enums.StaffAttendanceStatus;
 import com.culcom.entity.enums.UserRole;
 import com.culcom.entity.integration.ExternalServiceType;
 import com.culcom.entity.integration.ThirdPartyService;
