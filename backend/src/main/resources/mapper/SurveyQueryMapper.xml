@@ -17,4 +17,5 @@
         ORDER BY ss.created_date DESC
     </select>
 
+
 </mapper>

@@ -27,8 +27,17 @@ export interface SurveySubmissionItem {
   seq: number; name: string; phoneNumber: string; templateName: string; createdDate: string;
 }
 
+export interface SurveySubmissionDetail {
+  seq: number; templateSeq: number; templateName: string;
+  name: string; phoneNumber: string; gender: string | null;
+  location: string | null; ageGroup: string | null;
+  occupation: string | null; adSource: string | null;
+  answers: string | null; createdDate: string;
+}
+
 export const surveyApi = {
   listSubmissions: () => api.get<SurveySubmissionItem[]>(API.SURVEY_SUBMISSIONS),
+  getSubmission: (seq: number) => api.get<SurveySubmissionDetail>(API.SURVEY_SUBMISSION(seq)),
   listTemplates: () => api.get<SurveyTemplate[]>(API.SURVEY_TEMPLATES),
   getTemplate: (seq: number) => api.get<SurveyTemplate>(API.SURVEY_TEMPLATE(seq)),
   createTemplate: (data: { name: string; description?: string }) =>
