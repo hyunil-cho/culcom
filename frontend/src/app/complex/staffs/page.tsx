@@ -115,14 +115,14 @@ export default function StaffsPage() {
     <>
       <div className="page-toolbar">
         <h2 className="page-title" style={{ marginBottom: 0 }}>스태프 관리</h2>
-        <Button onClick={() => router.push(ROUTES.COMPLEX_STAFFS_ADD)}>+ 스태프 추가</Button>
+        <Button onClick={() => router.push(`${ROUTES.COMPLEX_MEMBERS_ADD}?staff=true`)}>+ 스태프 추가</Button>
       </div>
 
       <DataTable
         columns={columns}
         data={staffs}
         rowKey={(s) => s.seq}
-        onRowClick={(s) => router.push(ROUTES.COMPLEX_STAFF_EDIT(s.seq))}
+        onRowClick={(s) => router.push(`${ROUTES.COMPLEX_MEMBER_EDIT(s.seq)}?staff=true`)}
         rowStyle={(s) => {
           const rate = rateMap1m[s.seq];
           if (rate && rate.totalCount > 0 && (rate.presentCount / rate.totalCount) < 0.5) {

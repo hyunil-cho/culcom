@@ -8,7 +8,11 @@ import { useMemberForm } from '../useMemberForm';
 import { Button } from '@/components/ui/Button';
 
 export default function MemberAddPage() {
-  const { form, setForm, msForm, setMsForm, classAssign, setClassAssign, handleSubmit, modal } = useMemberForm();
+  const {
+    form, setForm, msForm, setMsForm, classAssign, setClassAssign,
+    staffForm, setStaffForm, staffClassAssign, setStaffClassAssign,
+    handleSubmit, modal,
+  } = useMemberForm();
 
   const [showImport, setShowImport] = useState(false);
   const [submissions, setSubmissions] = useState<SurveySubmissionItem[]>([]);
@@ -33,6 +37,8 @@ export default function MemberAddPage() {
         backHref={ROUTES.COMPLEX_MEMBERS} submitLabel="등록"
         membershipForm={msForm} onMembershipChange={setMsForm}
         classAssign={classAssign} onClassAssignChange={setClassAssign}
+        staffForm={staffForm} onStaffChange={setStaffForm}
+        staffClassAssign={staffClassAssign} onStaffClassAssignChange={setStaffClassAssign}
         headerExtra={
           <Button variant="secondary" onClick={openImport}>불러오기</Button>
         }
