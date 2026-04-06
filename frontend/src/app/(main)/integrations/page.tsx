@@ -75,7 +75,7 @@ export default function IntegrationsPage() {
                 <p className={st.svcDesc}>{svc.description}</p>
                 {svc.category === 'SMS' && (
                   <div className={st.svcAction}>
-                    <button onClick={() => router.push(ROUTES.INTEGRATIONS_SMS_CONFIG)} className={st.configBtn}>
+                    <button onClick={() => router.push(`${ROUTES.INTEGRATIONS_SMS_CONFIG}?serviceId=${svc.id}`)} className={st.configBtn}>
                       {svc.status === 'active' ? '관리' : '설정'}
                     </button>
                   </div>

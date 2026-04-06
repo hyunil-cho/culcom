@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { integrationApi, SmsConfig } from '@/lib/api';
 import { Checkbox } from '@/components/ui/FormInput';
 import { ROUTES } from '@/lib/routes';
@@ -10,6 +10,8 @@ import s from './page.module.css';
 
 export default function SmsConfigPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const serviceId = searchParams.get('serviceId');
   const [config, setConfig] = useState<SmsConfig | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,16 +25,19 @@ export default function SmsConfigPage() {
   const { run, showError, modal } = useResultModal({ redirectPath: ROUTES.INTEGRATIONS });
 
   useEffect(() => {
+    if (!serviceId) { router.replace(ROUTES.INTEGRATIONS); return; }
     integrationApi.getSmsConfig().then((res) => {
       if (res.success && res.data) {
         setConfig(res.data);
         setAccountId(res.data.accountId ?? '');
         setSenderPhone(res.data.senderPhones?.[0] ?? '');
         setActive(res.data.active);
+      } else {
+        setConfig({ serviceId: Number(serviceId), serviceName: 'SMS 서비스', accountId: null, senderPhones: [], active: true, updatedAt: null });
       }
       setLoading(false);
     });
-  }, []);
+  }, [serviceId]);
 
   const handleSave = async () => {
     if (!accountId.trim() || !password.trim() || !senderPhone.trim()) { showError('모든 필수 항목을 입력해주세요.'); return; }

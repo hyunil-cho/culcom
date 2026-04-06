@@ -43,7 +43,8 @@ public class SecurityConfig {
                     "/v3/api-docs/**",
                     "/error"
                 ).permitAll()
-                .requestMatchers("/api/**").authenticated()
+                .requestMatchers("/api/auth/**", "/api/users/**").authenticated()
+                .requestMatchers("/api/**").hasAnyRole("BRANCH_MANAGER", "STAFF")
             )
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
