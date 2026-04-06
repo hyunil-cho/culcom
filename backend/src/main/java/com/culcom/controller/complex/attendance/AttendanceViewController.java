@@ -48,15 +48,17 @@ public class AttendanceViewController {
                             .slotName(row.getSlotName()));
 
             classInfoMap.putIfAbsent(slotClassKey, row);
-            classMembersMap.computeIfAbsent(slotClassKey, k -> new ArrayList<>())
-                    .add(AttendanceViewMemberResponse.builder()
-                            .memberSeq(row.getMemberSeq())
-                            .name(row.getName())
-                            .phoneNumber(row.getPhoneNumber())
-                            .staff(row.isStaff())
-                            .postponed(row.isPostponed())
-                            .status(row.getStatus())
-                            .build());
+            if (row.getMemberSeq() != null) {
+                classMembersMap.computeIfAbsent(slotClassKey, k -> new ArrayList<>())
+                        .add(AttendanceViewMemberResponse.builder()
+                                .memberSeq(row.getMemberSeq())
+                                .name(row.getName())
+                                .phoneNumber(row.getPhoneNumber())
+                                .staff(row.isStaff())
+                                .postponed(row.isPostponed())
+                                .status(row.getStatus())
+                                .build());
+            }
         }
 
         List<AttendanceViewSlotResponse> result = new ArrayList<>();
@@ -103,26 +105,28 @@ public class AttendanceViewController {
         for (AttendanceViewRow row : rows) {
             classInfoMap.putIfAbsent(row.getClassSeq(), row);
 
-            String histKey = row.getClassSeq() + "-" + row.getMemberSeq();
-            List<String> history = row.isStaff() ? List.of() : historyMap.getOrDefault(histKey, List.of());
+            if (row.getMemberSeq() != null) {
+                String histKey = row.getClassSeq() + "-" + row.getMemberSeq();
+                List<String> history = row.isStaff() ? List.of() : historyMap.getOrDefault(histKey, List.of());
 
-            classMembersMap.computeIfAbsent(row.getClassSeq(), k -> new ArrayList<>())
-                    .add(AttendanceViewMemberResponse.builder()
-                            .memberSeq(row.getMemberSeq())
-                            .name(row.getName())
-                            .phoneNumber(row.getPhoneNumber())
-                            .level(row.getLevel())
-                            .info(row.getInfo())
-                            .joinDate(row.getJoinDate())
-                            .expiryDate(row.getExpiryDate())
-                            .totalCount(row.getTotalCount())
-                            .usedCount(row.getUsedCount())
-                            .grade(row.getGrade())
-                            .staff(row.isStaff())
-                            .postponed(row.isPostponed())
-                            .status(row.getStatus())
-                            .attendanceHistory(history)
-                            .build());
+                classMembersMap.computeIfAbsent(row.getClassSeq(), k -> new ArrayList<>())
+                        .add(AttendanceViewMemberResponse.builder()
+                                .memberSeq(row.getMemberSeq())
+                                .name(row.getName())
+                                .phoneNumber(row.getPhoneNumber())
+                                .level(row.getLevel())
+                                .info(row.getInfo())
+                                .joinDate(row.getJoinDate())
+                                .expiryDate(row.getExpiryDate())
+                                .totalCount(row.getTotalCount())
+                                .usedCount(row.getUsedCount())
+                                .membershipName(row.getMembershipName())
+                                .staff(row.isStaff())
+                                .postponed(row.isPostponed())
+                                .status(row.getStatus())
+                                .attendanceHistory(history)
+                                .build());
+            }
         }
 
         List<AttendanceViewClassResponse> result = new ArrayList<>();
@@ -167,5 +171,27 @@ public class AttendanceViewController {
         List<AttendanceHistoryDetailRow> rows = attendanceViewQueryMapper.selectStaffAttendanceHistory(
                 branchSeq, staffSeq, page * size, size);
         return ResponseEntity.ok(ApiResponse.ok(new PageImpl<>(rows, PageRequest.of(page, size), total)));
+    }
+
+    // ── 회원 출석 히스토리 요약 ──
+
+    @GetMapping("/history/member/{memberSeq}/summary")
+    public ResponseEntity<ApiResponse<AttendanceHistorySummary>> memberHistorySummary(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @PathVariable Long memberSeq) {
+        Long branchSeq = principal.getSelectedBranchSeq();
+        AttendanceHistorySummary summary = attendanceViewQueryMapper.selectMemberAttendanceSummary(branchSeq, memberSeq);
+        return ResponseEntity.ok(ApiResponse.ok(summary));
+    }
+
+    // ── 스태프 출석 히스토리 요약 ──
+
+    @GetMapping("/history/staff/{staffSeq}/summary")
+    public ResponseEntity<ApiResponse<AttendanceHistorySummary>> staffHistorySummary(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @PathVariable Long staffSeq) {
+        Long branchSeq = principal.getSelectedBranchSeq();
+        AttendanceHistorySummary summary = attendanceViewQueryMapper.selectStaffAttendanceSummary(branchSeq, staffSeq);
+        return ResponseEntity.ok(ApiResponse.ok(summary));
     }
 }

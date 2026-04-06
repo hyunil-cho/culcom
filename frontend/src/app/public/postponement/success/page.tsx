@@ -18,7 +18,7 @@ function SuccessContent() {
   return (
     <div style={{
       backgroundColor: '#f4f7f6', display: 'flex', justifyContent: 'center',
-      alignItems: 'center', minHeight: '100vh', padding: 20,
+      alignItems: 'center', minHeight: '100dvh', padding: 20,
     }}>
       <div style={{
         background: 'white', padding: 40, borderRadius: 12,

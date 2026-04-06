@@ -238,7 +238,7 @@ export default function SurveyEditorPage() {
     if (q.inputType === 'text') {
       return <div className={s.textHint}>주관식 -- 사용자가 직접 입력합니다.</div>;
     }
-    const groups = q.isGrouped && q.groups ? q.groups.split(',').map(g => g.trim()).filter(Boolean) : [];
+    const groups = q.isGrouped && q.groupLabel ? q.groupLabel.split(',').map(g => g.trim()).filter(Boolean) : [];
     if (groups.length > 0) {
       return groups.map((group, gi) => {
         const groupOpts = opts.filter(o => o.groupName === group);

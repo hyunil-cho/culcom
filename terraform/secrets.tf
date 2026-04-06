@@ -16,29 +16,18 @@ resource "aws_ssm_parameter" "db_password" {
   tags = { Name = "${var.project_name}-db-password" }
 }
 
-resource "aws_ssm_parameter" "kakao_api_key" {
-  name  = "/${var.project_name}/${var.environment}/kakao/api-key"
+resource "aws_ssm_parameter" "kakao_client_id" {
+  name  = "/${var.project_name}/${var.environment}/kakao/client-id"
   type  = "SecureString"
-  value = var.kakao_api_key
+  value = var.kakao_client_id
 
-  tags = { Name = "${var.project_name}-kakao-api-key" }
+  tags = { Name = "${var.project_name}-kakao-client-id" }
 }
 
-# ─── ECS Execution Role에 SSM 읽기 권한 부여 ───
+resource "aws_ssm_parameter" "kakao_admin_key" {
+  name  = "/${var.project_name}/${var.environment}/kakao/admin-key"
+  type  = "SecureString"
+  value = var.kakao_admin_key
 
-resource "aws_iam_role_policy" "ecs_execution_ssm" {
-  name = "${var.project_name}-ecs-execution-ssm"
-  role = aws_iam_role.ecs_execution.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "ssm:GetParameters",
-        "ssm:GetParameter",
-      ]
-      Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/${var.project_name}/${var.environment}/*"
-    }]
-  })
+  tags = { Name = "${var.project_name}-kakao-admin-key" }
 }

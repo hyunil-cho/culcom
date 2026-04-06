@@ -19,6 +19,42 @@
   color: #fff;
   font-size: 1.2rem;
   cursor: pointer;
+  align-self: flex-start;
+}
+
+.periodBar {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.summaryBar {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.summaryPresent {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 10px;
+  border-radius: 10px;
+  color: #d4edda;
+}
+
+.summaryAbsent {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 10px;
+  border-radius: 10px;
+  color: #f8d7da;
+}
+
+.summaryPostpone {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 10px;
+  border-radius: 10px;
+  color: #fff3cd;
 }
 
 .empty {

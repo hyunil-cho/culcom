@@ -18,7 +18,7 @@ public class SurveyQuestionRequest {
     private String description;
     private InputType inputType;
     private Boolean isGrouped;
-    private String groups;
+    private String groupLabel;
     private Integer sortOrder;
     private Boolean required;
 }

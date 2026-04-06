@@ -3,6 +3,7 @@
 import FormField from '@/components/ui/FormField';
 import FormLayout from '@/components/ui/FormLayout';
 import { Input, PhoneInput, EmailInput, Select, Textarea } from '@/components/ui/FormInput';
+import { useClassSlots } from '../hooks/useClassSlots';
 
 const STATUS_OPTIONS = ['재직', '휴직', '퇴직'] as const;
 
@@ -25,13 +26,17 @@ export interface RefundFormData {
   refundAmount: string;
 }
 
+export interface ClassAssignData {
+  timeSlotSeq: string;
+  classSeq: string;
+}
+
 export interface StaffFormData {
   name: string;
   phoneNumber: string;
   email: string;
   subject: string;
   status: string;
-  joinDate: string;
   interviewer: string;
   paymentMethod: string;
   comment: string;
@@ -47,13 +52,17 @@ export const emptyRefundForm: RefundFormData = {
   refundAmount: '',
 };
 
+export const emptyClassAssign: ClassAssignData = {
+  timeSlotSeq: '',
+  classSeq: '',
+};
+
 export const emptyStaffForm: StaffFormData = {
   name: '',
   phoneNumber: '',
   email: '',
   subject: '',
   status: '재직',
-  joinDate: '',
   interviewer: '',
   paymentMethod: '',
   comment: '',
@@ -67,6 +76,7 @@ export function validateStaffForm(form: StaffFormData): string | null {
 
 export default function StaffForm({
   form, onChange, onSubmit, isEdit, backHref, submitLabel,
+  classAssign, onClassAssignChange,
 }: {
   form: StaffFormData;
   onChange: (form: StaffFormData) => void;
@@ -74,7 +84,12 @@ export default function StaffForm({
   isEdit?: boolean;
   backHref: string;
   submitLabel: string;
+  classAssign?: ClassAssignData;
+  onClassAssignChange?: (data: ClassAssignData) => void;
 }) {
+  const { timeSlots, getClassesBySlot } = useClassSlots();
+  const filteredClasses = classAssign ? getClassesBySlot(classAssign.timeSlotSeq) : [];
+
   return (
     <FormLayout
       title={submitLabel === '등록' ? '스태프 등록' : '스태프 정보 수정'}
@@ -103,10 +118,6 @@ export default function StaffForm({
           {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
         </Select>
       </FormField>
-      <FormField label="등록일">
-        <Input type="date" value={form.joinDate}
-          onChange={(e) => onChange({ ...form, joinDate: e.target.value })} />
-      </FormField>
       <FormField label="인터뷰어">
         <Input placeholder="인터뷰어 이름을 입력하세요" value={form.interviewer}
           onChange={(e) => onChange({ ...form, interviewer: e.target.value })} />
@@ -124,45 +135,68 @@ export default function StaffForm({
           style={{ height: 80, resize: 'vertical' }} />
       </FormField>
 
-      {/* 환급 정보 섹션 */}
-      <div style={{
-        margin: '2rem 0 0', padding: '1.5rem',
-        background: '#fef9f0', border: '1.5px solid #f0dcc0', borderRadius: 10,
-      }}>
-        <div style={{
-          fontSize: '1rem', fontWeight: 700, color: '#b8860b',
-          marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: 8,
-        }}>
-          환급 정보
-        </div>
-        <FormField label="디파짓 금액">
-          <Input placeholder="예: 500,000" value={form.refund.depositAmount}
-            onChange={(e) => onChange({ ...form, refund: { ...form.refund, depositAmount: e.target.value } })} />
-        </FormField>
-        <FormField label="환급 예정 디파짓" hint="환급이 가능한 디파짓 금액을 입력하세요.">
-          <Input placeholder="예: 300,000" value={form.refund.refundableDeposit}
-            onChange={(e) => onChange({ ...form, refund: { ...form.refund, refundableDeposit: e.target.value } })} />
-        </FormField>
-        <FormField label="환급불가 디파짓" hint="환급이 불가능한 디파짓 금액을 입력하세요.">
-          <Input placeholder="예: 200,000" value={form.refund.nonRefundableDeposit}
-            onChange={(e) => onChange({ ...form, refund: { ...form.refund, nonRefundableDeposit: e.target.value } })} />
-        </FormField>
-        <FormField label="환급 은행">
-          <Select value={form.refund.refundBank}
-            onChange={(e) => onChange({ ...form, refund: { ...form.refund, refundBank: e.target.value } })}>
-            <option value="">-- 은행 선택 --</option>
-            {BANK_OPTIONS.filter(Boolean).map(b => <option key={b} value={b}>{b}</option>)}
-          </Select>
-        </FormField>
-        <FormField label="환급 계좌번호">
-          <Input placeholder="예: 110-123-456789" value={form.refund.refundAccount}
-            onChange={(e) => onChange({ ...form, refund: { ...form.refund, refundAccount: e.target.value } })} />
-        </FormField>
-        <FormField label="환급 금액">
-          <Input placeholder="예: 200,000" value={form.refund.refundAmount}
-            onChange={(e) => onChange({ ...form, refund: { ...form.refund, refundAmount: e.target.value } })} />
-        </FormField>
+      {/* ── 수업 배정 (선택사항) ── */}
+      {classAssign && onClassAssignChange && (
+        <>
+          <div style={{ borderTop: '2px solid #e9ecef', margin: '1.5rem 0 1rem', paddingTop: '1rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1rem', color: '#495057' }}>수업 배정 (선택사항)</h3>
+          </div>
+          <FormField label="수업 시간대">
+            <Select value={classAssign.timeSlotSeq}
+              onChange={(e) => onClassAssignChange({ timeSlotSeq: e.target.value, classSeq: '' })}>
+              <option value="">-- 시간대 선택 --</option>
+              {timeSlots.map(ts => (
+                <option key={ts.seq} value={ts.seq}>
+                  {ts.name} ({ts.daysOfWeek} {ts.startTime} ~ {ts.endTime})
+                </option>
+              ))}
+            </Select>
+          </FormField>
+          <FormField label="배정 수업">
+            <Select value={classAssign.classSeq} disabled={!classAssign.timeSlotSeq}
+              onChange={(e) => onClassAssignChange({ ...classAssign, classSeq: e.target.value })}>
+              <option value="">{classAssign.timeSlotSeq ? '-- 수업 선택 --' : '-- 시간대를 먼저 선택하세요 --'}</option>
+              {filteredClasses.map(c => (
+                <option key={c.seq} value={c.seq}>
+                  {c.name}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+        </>
+      )}
+
+      {/* ── 환급 정보 ── */}
+      <div style={{ borderTop: '2px solid #e9ecef', margin: '1.5rem 0 1rem', paddingTop: '1rem' }}>
+        <h3 style={{ margin: 0, fontSize: '1rem', color: '#495057' }}>환급 정보</h3>
       </div>
+      <FormField label="디파짓 금액">
+        <Input placeholder="예: 500,000" value={form.refund.depositAmount}
+          onChange={(e) => onChange({ ...form, refund: { ...form.refund, depositAmount: e.target.value } })} />
+      </FormField>
+      <FormField label="환급 예정 디파짓" hint="환급이 가능한 디파짓 금액을 입력하세요.">
+        <Input placeholder="예: 300,000" value={form.refund.refundableDeposit}
+          onChange={(e) => onChange({ ...form, refund: { ...form.refund, refundableDeposit: e.target.value } })} />
+      </FormField>
+      <FormField label="환급불가 디파짓" hint="환급이 불가능한 디파짓 금액을 입력하세요.">
+        <Input placeholder="예: 200,000" value={form.refund.nonRefundableDeposit}
+          onChange={(e) => onChange({ ...form, refund: { ...form.refund, nonRefundableDeposit: e.target.value } })} />
+      </FormField>
+      <FormField label="환급 은행">
+        <Select value={form.refund.refundBank}
+          onChange={(e) => onChange({ ...form, refund: { ...form.refund, refundBank: e.target.value } })}>
+          <option value="">-- 은행 선택 --</option>
+          {BANK_OPTIONS.filter(Boolean).map(b => <option key={b} value={b}>{b}</option>)}
+        </Select>
+      </FormField>
+      <FormField label="환급 계좌번호">
+        <Input placeholder="예: 110-123-456789" value={form.refund.refundAccount}
+          onChange={(e) => onChange({ ...form, refund: { ...form.refund, refundAccount: e.target.value } })} />
+      </FormField>
+      <FormField label="환급 금액">
+        <Input placeholder="예: 200,000" value={form.refund.refundAmount}
+          onChange={(e) => onChange({ ...form, refund: { ...form.refund, refundAmount: e.target.value } })} />
+      </FormField>
     </FormLayout>
   );
 }

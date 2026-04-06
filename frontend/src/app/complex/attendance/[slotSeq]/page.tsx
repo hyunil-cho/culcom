@@ -89,8 +89,8 @@ export default function AttendanceDetailPage() {
                       <th>시작일</th>
                       <th>종료일</th>
                       <th>잔여횟수</th>
-                      <th>멤버쉽등급</th>
-                      <th colSpan={10}>최근 출석기록</th>
+                      <th>멤버십</th>
+                      <th colSpan={14}>최근 출석기록</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -111,17 +111,13 @@ export default function AttendanceDetailPage() {
                           <td className="col-date">{m.joinDate || ''}</td>
                           <td className="col-date">{m.expiryDate || ''}</td>
                           <td className="col-stats">{stats}</td>
-                          <td>
-                            <span className={`grade-badge ${m.grade === 'VVIP+' || m.grade === 'VVIP' ? 'grade-vvip' : m.grade === 'A+' ? 'grade-a' : ''}`}>
-                              {m.grade || '-'}
-                            </span>
-                          </td>
+                          <td>{m.membershipName || '-'}</td>
                           <td>
                             <div className="history-grid">
                               {history.map((h, hi) => (
-                                <div key={hi} className={`history-cell ${h === 'O' ? 'present' : ''}`}>{h}</div>
+                                <div key={hi} className={`history-cell ${h === 'O' ? 'present' : h === '△' ? 'postponed' : ''}`}>{h}</div>
                               ))}
-                              {Array.from({ length: Math.max(0, 10 - history.length) }).map((_, fi) => (
+                              {Array.from({ length: Math.max(0, 14 - history.length) }).map((_, fi) => (
                                 <div key={`empty-${fi}`} className="history-cell"></div>
                               ))}
                             </div>

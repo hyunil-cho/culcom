@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { attendanceViewApi, type AttendanceHistoryDetail, type PageResponse } from '@/lib/api';
+import { attendanceViewApi, type AttendanceHistoryDetail, type AttendanceHistorySummary, type PageResponse } from '@/lib/api';
 import styles from './AttendanceHistoryModal.module.css';
 
 interface AttendanceHistoryModalProps {
@@ -18,7 +18,13 @@ export default function AttendanceHistoryModal({ seq, name, type, onClose }: Att
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [summary, setSummary] = useState<AttendanceHistorySummary | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetcher = type === 'staff' ? attendanceViewApi.staffHistorySummary : attendanceViewApi.memberHistorySummary;
+    fetcher(seq).then(res => { if (res.success) setSummary(res.data as AttendanceHistorySummary); });
+  }, [seq, type]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -45,7 +51,21 @@ export default function AttendanceHistoryModal({ seq, name, type, onClose }: Att
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className={`modal-content ${styles.content}`}>
         <div className={styles.header}>
-          <h3>{name} - 수업 참여 기록 ({totalElements}건)</h3>
+          <div>
+            <h3>{name} - 수업 참여 기록 ({totalElements}건)</h3>
+            {summary && (
+              <>
+                {summary.startDate && summary.endDate && (
+                  <div className={styles.periodBar}>{summary.startDate} ~ {summary.endDate}</div>
+                )}
+                <div className={styles.summaryBar}>
+                  <span className={styles.summaryPresent}>출석 {summary.presentCount}</span>
+                  <span className={styles.summaryAbsent}>결석 {summary.absentCount}</span>
+                  <span className={styles.summaryPostpone}>연기 {summary.postponeCount}</span>
+                </div>
+              </>
+            )}
+          </div>
           <button onClick={onClose} className={styles.closeBtn}>&times;</button>
         </div>
 
@@ -61,7 +81,6 @@ export default function AttendanceHistoryModal({ seq, name, type, onClose }: Att
                   <th>날짜</th>
                   <th>수업</th>
                   <th>상태</th>
-                  {type === 'member' && <th>비고</th>}
                 </tr>
               </thead>
               <tbody>
@@ -72,7 +91,6 @@ export default function AttendanceHistoryModal({ seq, name, type, onClose }: Att
                     <td className={styles.tdCenter}>
                       <span className={statusClass(row.status)}>{row.status}</span>
                     </td>
-                    {type === 'member' && <td className={styles.tdNote}>{row.note || '-'}</td>}
                   </tr>
                 ))}
               </tbody>

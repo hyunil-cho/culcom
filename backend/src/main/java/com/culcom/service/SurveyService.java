@@ -130,7 +130,7 @@ public class SurveyService {
                 .title(req.getTitle()).description(req.getDescription())
                 .inputType(req.getInputType() != null ? req.getInputType() : InputType.radio)
                 .isGrouped(req.getIsGrouped() != null && req.getIsGrouped())
-                .groups(req.getGroups())
+                .groupLabel(req.getGroupLabel())
                 .sortOrder(maxOrder + 1)
                 .required(req.getRequired() != null && req.getRequired())
                 .build();
@@ -147,7 +147,7 @@ public class SurveyService {
         if (req.getTitle() != null) q.setTitle(req.getTitle());
         if (req.getInputType() != null) q.setInputType(req.getInputType());
         if (req.getIsGrouped() != null) q.setIsGrouped(req.getIsGrouped());
-        if (req.getGroups() != null) q.setGroups(req.getGroups());
+        if (req.getGroupLabel() != null) q.setGroupLabel(req.getGroupLabel());
         if (req.getRequired() != null) q.setRequired(req.getRequired());
         if (req.getSectionSeq() != null) sectionRepository.findById(req.getSectionSeq()).ifPresent(q::setSection);
         return SurveyQuestionResponse.from(questionRepository.save(q));
@@ -246,7 +246,7 @@ public class SurveyService {
         for (SurveyTemplateQuestion q : sourceQuestions) {
             SurveyTemplateQuestion qCopy = SurveyTemplateQuestion.builder()
                     .questionKey(q.getQuestionKey()).title(q.getTitle()).description(q.getDescription())
-                    .inputType(q.getInputType()).isGrouped(q.getIsGrouped()).groups(q.getGroups())
+                    .inputType(q.getInputType()).isGrouped(q.getIsGrouped()).groupLabel(q.getGroupLabel())
                     .sortOrder(q.getSortOrder()).required(q.getRequired()).build();
             qCopy.setTemplate(savedTemplate);
             if (q.getSection() != null) {

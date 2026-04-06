@@ -63,67 +63,43 @@ variable "db_password" {
 variable "db_instance_class" {
   description = "RDS 인스턴스 클래스"
   type        = string
-  default     = "db.t3.medium"
+  default     = "db.t3.micro"
 }
 
-# ─── ECS ───
-variable "backend_image" {
-  description = "Spring Boot 컨테이너 이미지 URI"
+# ─── EC2 ───
+variable "app_image" {
+  description = "앱 컨테이너 이미지 URI (Next.js + Spring Boot)"
   type        = string
 }
 
-variable "frontend_image" {
-  description = "Next.js 컨테이너 이미지 URI"
+variable "ec2_instance_type" {
+  description = "EC2 인스턴스 타입"
   type        = string
-}
-
-variable "backend_cpu" {
-  type    = number
-  default = 512
-}
-
-variable "backend_memory" {
-  type    = number
-  default = 1024
-}
-
-variable "frontend_cpu" {
-  type    = number
-  default = 256
-}
-
-variable "frontend_memory" {
-  type    = number
-  default = 512
-}
-
-variable "backend_desired_count" {
-  type    = number
-  default = 2
-}
-
-variable "frontend_desired_count" {
-  type    = number
-  default = 2
+  default     = "t3.small"
 }
 
 # ─── Secrets ───
-variable "kakao_api_key" {
-  description = "카카오 API 키"
+variable "kakao_client_id" {
+  description = "카카오 OAuth Client ID"
   type        = string
   sensitive   = true
 }
 
-# ─── Lambda ───
-variable "lambda_s3_bucket" {
-  description = "Lambda 배포 패키지가 저장된 S3 버킷"
+variable "kakao_admin_key" {
+  description = "카카오 Admin Key"
+  type        = string
+  sensitive   = true
+}
+
+variable "kakao_redirect_uri" {
+  description = "카카오 OAuth Redirect URI"
   type        = string
 }
 
-variable "lambda_s3_key" {
-  description = "Lambda 배포 패키지 S3 키"
+variable "kakao_sync_base_url" {
+  description = "카카오 싱크 Base URL"
   type        = string
-  default     = "culcom/webhook-handler.zip"
+  default     = "https://pf-link.kakao.com/qr/_qFHUn/pages/_MM"
 }
 
 # ─── Domain ───

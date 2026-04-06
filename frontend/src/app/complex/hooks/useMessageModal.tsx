@@ -30,6 +30,7 @@ export function useMessageModal() {
   const [selectedSender, setSelectedSender] = useState('');
   const [sending, setSending] = useState(false);
   const [sendResults, setSendResults] = useState<SendResult[] | null>(null);
+  const [validationError, setValidationError] = useState('');
 
   const open = async (title: string, members: AttendanceViewMember[]) => {
     setModal({ title, members });
@@ -37,6 +38,7 @@ export function useMessageModal() {
     setContent('');
     setChecked({});
     setSendResults(null);
+    setValidationError('');
     try {
       const res = await settingsApi.getSenderNumbers();
       if (res.success && res.data.length > 0) {
@@ -71,10 +73,11 @@ export function useMessageModal() {
   const checkedCount = Object.values(checked).filter(Boolean).length;
 
   const send = async () => {
-    if (!modal || !content.trim()) { alert('메시지 내용을 입력해주세요.'); return; }
+    setValidationError('');
+    if (!modal || !content.trim()) { setValidationError('메시지 내용을 입력해주세요.'); return; }
     const recipients = visibleMembers.filter(m => checked[memberKey(m)]);
-    if (recipients.length === 0) { alert('수신자를 최소 한 명 이상 선택해주세요.'); return; }
-    if (!selectedSender) { alert('발신번호가 설정되지 않았습니다.'); return; }
+    if (recipients.length === 0) { setValidationError('수신자를 최소 한 명 이상 선택해주세요.'); return; }
+    if (!selectedSender) { setValidationError('발신번호가 설정되지 않았습니다.'); return; }
 
     setSending(true);
     const results: SendResult[] = [];
@@ -253,6 +256,9 @@ export function useMessageModal() {
             </div>
           )}
         </div>
+        {validationError && (
+          <div className={styles.validationError}>{validationError}</div>
+        )}
         <div className="modal-footer">
           {step === 2 && (
             <button onClick={send} disabled={sending} className={styles.sendBtn}>

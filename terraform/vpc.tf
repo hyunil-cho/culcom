@@ -24,7 +24,7 @@ resource "aws_subnet" "public" {
   tags = { Name = "${var.project_name}-public-${var.azs[count.index]}" }
 }
 
-# ─── 프라이빗 서브넷 ───
+# ─── 프라이빗 서브넷 (RDS용) ───
 resource "aws_subnet" "private" {
   count             = length(var.azs)
   vpc_id            = aws_vpc.main.id
@@ -34,22 +34,7 @@ resource "aws_subnet" "private" {
   tags = { Name = "${var.project_name}-private-${var.azs[count.index]}" }
 }
 
-# ─── NAT Gateway (EIP + NAT) ───
-resource "aws_eip" "nat" {
-  domain = "vpc"
-  tags   = { Name = "${var.project_name}-nat-eip" }
-}
-
-resource "aws_nat_gateway" "main" {
-  allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.public[0].id
-
-  tags = { Name = "${var.project_name}-nat" }
-
-  depends_on = [aws_internet_gateway.main]
-}
-
-# ─── 라우트 테이블 ───
+# ─── 라우트 테이블 (퍼블릭) ───
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
   tags   = { Name = "${var.project_name}-public-rt" }
@@ -67,15 +52,10 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
+# ─── 라우트 테이블 (프라이빗 — 인터넷 아웃바운드 없음) ───
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
   tags   = { Name = "${var.project_name}-private-rt" }
-}
-
-resource "aws_route" "private_nat" {
-  route_table_id         = aws_route_table.private.id
-  destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.main.id
 }
 
 resource "aws_route_table_association" "private" {

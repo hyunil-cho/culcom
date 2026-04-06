@@ -1,6 +1,6 @@
-# ─── ALB 보안그룹 ───
-resource "aws_security_group" "alb" {
-  name_prefix = "${var.project_name}-alb-"
+# ─── EC2 보안그룹 ───
+resource "aws_security_group" "ec2" {
+  name_prefix = "${var.project_name}-ec2-"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -12,9 +12,9 @@ resource "aws_security_group" "alb" {
   }
 
   ingress {
-    description = "HTTPS"
-    from_port   = 443
-    to_port     = 443
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -26,32 +26,7 @@ resource "aws_security_group" "alb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = { Name = "${var.project_name}-alb-sg" }
-
-  lifecycle { create_before_destroy = true }
-}
-
-# ─── ECS 태스크 보안그룹 ───
-resource "aws_security_group" "ecs" {
-  name_prefix = "${var.project_name}-ecs-"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    description     = "From ALB"
-    from_port       = 0
-    to_port         = 65535
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = { Name = "${var.project_name}-ecs-sg" }
+  tags = { Name = "${var.project_name}-ec2-sg" }
 
   lifecycle { create_before_destroy = true }
 }
@@ -62,19 +37,11 @@ resource "aws_security_group" "rds" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description     = "MySQL from ECS"
+    description     = "MySQL from EC2"
     from_port       = 3306
     to_port         = 3306
     protocol        = "tcp"
-    security_groups = [aws_security_group.ecs.id]
-  }
-
-  ingress {
-    description     = "MySQL from Lambda"
-    from_port       = 3306
-    to_port         = 3306
-    protocol        = "tcp"
-    security_groups = [aws_security_group.lambda.id]
+    security_groups = [aws_security_group.ec2.id]
   }
 
   egress {
@@ -85,23 +52,6 @@ resource "aws_security_group" "rds" {
   }
 
   tags = { Name = "${var.project_name}-rds-sg" }
-
-  lifecycle { create_before_destroy = true }
-}
-
-# ─── Lambda 보안그룹 ───
-resource "aws_security_group" "lambda" {
-  name_prefix = "${var.project_name}-lambda-"
-  vpc_id      = aws_vpc.main.id
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = { Name = "${var.project_name}-lambda-sg" }
 
   lifecycle { create_before_destroy = true }
 }

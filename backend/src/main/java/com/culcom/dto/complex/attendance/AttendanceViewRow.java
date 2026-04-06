@@ -38,5 +38,5 @@ public class AttendanceViewRow {
     private LocalDate expiryDate;
     private Integer totalCount;
     private Integer usedCount;
-    private String grade;
+    private String membershipName;
 }

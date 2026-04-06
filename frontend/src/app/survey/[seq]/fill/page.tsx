@@ -149,7 +149,7 @@ export default function SurveyFillPage() {
 
   const renderInput = (q: SurveyQuestion) => {
     const opts = optionsByQ[q.seq] || [];
-    const groups = q.isGrouped && q.groups ? q.groups.split(',').map(g => g.trim()).filter(Boolean) : [];
+    const groups = q.isGrouped && q.groupLabel ? q.groupLabel.split(',').map(g => g.trim()).filter(Boolean) : [];
 
     if (q.inputType === 'text') {
       return <textarea value={(answers[q.questionKey] as string) || ''} onChange={e => setAnswer(q.questionKey, e.target.value)}
@@ -283,8 +283,10 @@ export default function SurveyFillPage() {
               ))}
             </div>
             <div className={s.formNav}>
-              {totalPages > 1 && (
+              {totalPages > 1 ? (
                 <button type="button" className={s.btnNext} onClick={() => goToPage(1)}>다음 단계 &rarr;</button>
+              ) : (
+                <button type="button" className={s.btnNext} onClick={() => { if (validateBasicInfo()) handleSubmit(); }}>설문 제출하기</button>
               )}
             </div>
           </div>

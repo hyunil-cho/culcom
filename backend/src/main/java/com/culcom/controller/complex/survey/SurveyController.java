@@ -2,6 +2,7 @@ package com.culcom.controller.complex.survey;
 
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.complex.survey.*;
+import com.culcom.mapper.SurveyQueryMapper;
 import com.culcom.service.SurveyService;
 import com.culcom.config.security.CustomUserPrincipal;
 import jakarta.validation.Valid;
@@ -18,6 +19,15 @@ import java.util.*;
 public class SurveyController {
 
     private final SurveyService surveyService;
+    private final SurveyQueryMapper surveyQueryMapper;
+
+    // ── 설문 제출 조회 ──
+
+    @GetMapping("/submissions")
+    public ResponseEntity<ApiResponse<List<SurveySubmissionRow>>> listSubmissions(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.ok(surveyQueryMapper.selectSubmissions(principal.getSelectedBranchSeq())));
+    }
 
     // ── 설문 템플릿 CRUD ──
 

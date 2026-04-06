@@ -61,7 +61,7 @@ export default function SurveyPreviewPage() {
   const renderInput = (q: SurveyQuestion) => {
     const opts = optionsByQ[q.seq] || [];
     const inputName = q.questionKey + (q.inputType === 'checkbox' ? '[]' : '');
-    const groups = q.isGrouped && q.groups ? q.groups.split(',').map(g => g.trim()).filter(Boolean) : [];
+    const groups = q.isGrouped && q.groupLabel ? q.groupLabel.split(',').map(g => g.trim()).filter(Boolean) : [];
 
     if (q.inputType === 'text') {
       return <textarea name={q.questionKey} className={fillStyles.textInput} placeholder="직접 입력해주세요." readOnly />;
@@ -167,8 +167,10 @@ export default function SurveyPreviewPage() {
               ))}
             </div>
             <div className={fillStyles.formNav}>
-              {totalPages > 1 && (
+              {totalPages > 1 ? (
                 <button type="button" className={fillStyles.btnNext} onClick={() => goToPage(1)}>다음 단계 &rarr;</button>
+              ) : (
+                <button type="button" className={s.btnSubmit} disabled>설문 제출하기 (미리보기)</button>
               )}
             </div>
           </div>

@@ -16,7 +16,7 @@ public class SurveyQuestionResponse {
     private String description;
     private InputType inputType;
     private Boolean isGrouped;
-    private String groups;
+    private String groupLabel;
     private Integer sortOrder;
     private Boolean required;
 
@@ -30,7 +30,7 @@ public class SurveyQuestionResponse {
                 .description(entity.getDescription())
                 .inputType(entity.getInputType())
                 .isGrouped(entity.getIsGrouped())
-                .groups(entity.getGroups())
+                .groupLabel(entity.getGroupLabel())
                 .sortOrder(entity.getSortOrder())
                 .required(entity.getRequired())
                 .build();

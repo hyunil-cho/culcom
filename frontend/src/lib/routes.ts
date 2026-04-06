@@ -169,6 +169,8 @@ export const API = {
   COMPLEX_ATTENDANCE_REORDER: '/complex/attendance/reorder',
   COMPLEX_ATTENDANCE_MEMBER_HISTORY: (memberSeq: number) => `/complex/attendance/history/member/${memberSeq}`,
   COMPLEX_ATTENDANCE_STAFF_HISTORY: (staffSeq: number) => `/complex/attendance/history/staff/${staffSeq}`,
+  COMPLEX_ATTENDANCE_MEMBER_HISTORY_SUMMARY: (memberSeq: number) => `/complex/attendance/history/member/${memberSeq}/summary`,
+  COMPLEX_ATTENDANCE_STAFF_HISTORY_SUMMARY: (staffSeq: number) => `/complex/attendance/history/staff/${staffSeq}/summary`,
 
   // 멤버십
   MEMBERSHIPS: '/memberships',
@@ -239,6 +241,7 @@ export const API = {
   WEBHOOK_LOGS: '/webhooks/logs',
 
   // 설문
+  SURVEY_SUBMISSIONS: '/complex/survey/submissions',
   SURVEY_TEMPLATES: '/complex/survey/templates',
   SURVEY_TEMPLATE: (seq: number) => `/complex/survey/templates/${seq}`,
   SURVEY_TEMPLATE_STATUS: (seq: number) => `/complex/survey/templates/${seq}/status`,

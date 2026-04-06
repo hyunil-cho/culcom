@@ -2,6 +2,7 @@ package com.culcom.mapper;
 
 import com.culcom.dto.complex.attendance.AttendanceHistoryDetailRow;
 import com.culcom.dto.complex.attendance.AttendanceHistoryRow;
+import com.culcom.dto.complex.attendance.AttendanceHistorySummary;
 import com.culcom.dto.complex.attendance.AttendanceViewRow;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -48,6 +49,16 @@ public interface AttendanceViewQueryMapper {
 
     /** 스태프 개인별 출석 히스토리 총 건수 */
     int countStaffAttendanceHistory(
+            @Param("branchSeq") Long branchSeq,
+            @Param("staffSeq") Long staffSeq);
+
+    /** 회원 출석 히스토리 요약 (출석/결석/지각 건수) */
+    AttendanceHistorySummary selectMemberAttendanceSummary(
+            @Param("branchSeq") Long branchSeq,
+            @Param("memberSeq") Long memberSeq);
+
+    /** 스태프 출석 히스토리 요약 (출석/결석/지각 건수) */
+    AttendanceHistorySummary selectStaffAttendanceSummary(
             @Param("branchSeq") Long branchSeq,
             @Param("staffSeq") Long staffSeq);
 }

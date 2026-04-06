@@ -14,6 +14,7 @@ export default function CustomerAddPage() {
     name: '',
     phoneNumber: '',
     comment: '',
+    adSource: '워크인'
   });
   const { run, modal } = useResultModal({ redirectPath: ROUTES.CUSTOMERS });
 

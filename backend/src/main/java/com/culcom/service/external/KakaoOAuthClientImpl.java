@@ -41,6 +41,8 @@ public class KakaoOAuthClientImpl implements KakaoOAuthClient {
                 "https://kauth.kakao.com/oauth/token",
                 new HttpEntity<>(params, headers), String.class);
 
+        log.info("response from KAKAO is : {} with header {}", response.getBody(), response.getStatusCode());
+
         return objectMapper.readTree(response.getBody()).path("access_token").asText();
     }
 

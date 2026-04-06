@@ -17,8 +17,11 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const loginResult = await authApi.login(userId, password);
-      console.log(`login result ${loginResult} `)
+      const result = await authApi.login(userId, password);
+      if (!result.success) {
+        setError(result.message || '로그인에 실패했습니다.');
+        return;
+      }
       router.push(ROUTES.DASHBOARD);
     } catch {
       setError('아이디 또는 비밀번호가 올바르지 않습니다.');

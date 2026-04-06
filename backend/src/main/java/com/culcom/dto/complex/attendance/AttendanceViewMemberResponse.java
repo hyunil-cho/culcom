@@ -18,7 +18,7 @@ public class AttendanceViewMemberResponse {
     private LocalDate expiryDate;
     private Integer totalCount;
     private Integer usedCount;
-    private String grade;
+    private String membershipName;
     private boolean staff;
     private boolean postponed;
     private String status;

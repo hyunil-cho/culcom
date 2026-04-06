@@ -41,8 +41,8 @@ public class SurveyTemplateQuestion {
     @Builder.Default
     private Boolean isGrouped = false;
 
-    @Column(length = 500)
-    private String groups;
+    @Column(name = "group_label", length = 500)
+    private String groupLabel;
 
     @Column(name = "sort_order", nullable = false)
     @Builder.Default

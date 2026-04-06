@@ -126,6 +126,8 @@ function BulkResultSummary({ results }: { results: BulkAttendanceResult[] }) {
   const groups = [
     { filter: '출석', label: '출석', color: '#2e7d32' },
     { filter: '결석', label: '결석', color: '#888' },
+    { filter: '변경: 출석', label: '결석→출석 변경', color: '#1565c0' },
+    { filter: '변경: 결석', label: '출석→결석 변경', color: '#e65100' },
     { filter: '연기', label: '연기', color: '#e67700' },
     { filter: 'skip_already', label: '이미 처리됨', color: '#999' },
     { filter: 'skip_no_membership', label: '멤버십 없음', color: '#c92a2a' },

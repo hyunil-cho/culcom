@@ -40,9 +40,15 @@ export const emptyMemberForm: MemberFormData = {
   chartNumber: '', signupChannel: '', interviewer: '', comment: '',
 };
 
+function nowDateTimeLocal(): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+
 export const emptyMembershipForm: MembershipFormData = {
   membershipSeq: '', startDate: '', expiryDate: '', price: '',
-  paymentDate: '', status: '', depositAmount: '', paymentMethod: '',
+  paymentDate: nowDateTimeLocal(), status: '', depositAmount: '', paymentMethod: '',
 };
 
 export const emptyClassAssign: ClassAssignData = { timeSlotSeq: '', classSeq: '' };
@@ -55,12 +61,19 @@ export function validateMemberForm(form: MemberFormData): string | null {
 
 const SIGNUP_CHANNELS = ['인스타그램', '네이버 검색', '지인 소개', '전단지', '홈페이지'];
 const PAYMENT_METHODS = ['카드', '온라인구독', '온라인신용', '토스링크', '이체(개인통장)', '이체(법인통장)', '현금'];
-const STATUSES = ['미가입/예정', '디파짓', '양도/6개월미만', '가입(완불)'];
+const STATUSES: { value: string; label: string }[] = [
+  { value: '활성', label: '활성' },
+  { value: '미가입예정', label: '미가입/예정' },
+  { value: '디파짓', label: '디파짓' },
+  { value: '양도', label: '양도' },
+  { value: '가입완불', label: '가입(완불)' },
+];
 
 export default function MemberForm({
   form, onChange, onSubmit, isEdit, backHref, submitLabel,
   membershipForm, onMembershipChange,
   classAssign, onClassAssignChange,
+  headerExtra,
 }: {
   form: MemberFormData;
   onChange: (form: MemberFormData) => void;
@@ -72,6 +85,7 @@ export default function MemberForm({
   onMembershipChange?: (f: MembershipFormData) => void;
   classAssign?: ClassAssignData;
   onClassAssignChange?: (f: ClassAssignData) => void;
+  headerExtra?: React.ReactNode;
 }) {
   const { timeSlots, getClassesBySlot } = useClassSlots();
   const [memberships, setMemberships] = useState<Membership[]>([]);
@@ -81,45 +95,29 @@ export default function MemberForm({
     membershipApi.list().then(res => { if (res.success) setMemberships(res.data); });
   }, []);
 
-  // 멤버십 선택 시 만료일 자동 계산
+  // 멤버십 선택 시 만료일 자동 계산 (현재 브라우저 시간 기준)
   const handleMembershipSelect = (membershipSeq: string) => {
     if (!onMembershipChange || !membershipForm) return;
     const updated = { ...membershipForm, membershipSeq };
     if (membershipSeq) {
       const ms = memberships.find(m => m.seq === Number(membershipSeq));
-      if (ms && membershipForm.startDate) {
-        const start = new Date(membershipForm.startDate);
+      if (ms) {
+        const start = new Date();
         start.setDate(start.getDate() + ms.duration);
         updated.expiryDate = start.toISOString().split('T')[0];
       }
+    } else {
+      updated.expiryDate = '';
     }
     onMembershipChange(updated);
   };
 
-  const handleStartDateChange = (startDate: string) => {
-    if (!onMembershipChange || !membershipForm) return;
-    const updated = { ...membershipForm, startDate };
-    if (membershipForm.membershipSeq) {
-      const ms = memberships.find(m => m.seq === Number(membershipForm.membershipSeq));
-      if (ms && startDate) {
-        const start = new Date(startDate);
-        start.setDate(start.getDate() + ms.duration);
-        updated.expiryDate = start.toISOString().split('T')[0];
-      }
-    }
-    onMembershipChange(updated);
-  };
-
-  const setNow = (field: 'startDate' | 'paymentDate') => {
+  const setNow = (field: 'paymentDate') => {
     if (!onMembershipChange || !membershipForm) return;
     const now = new Date();
-    if (field === 'startDate') {
-      handleStartDateChange(now.toISOString().split('T')[0]);
-    } else {
-      const pad = (n: number) => String(n).padStart(2, '0');
-      const val = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-      onMembershipChange({ ...membershipForm, paymentDate: val });
-    }
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const val = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    onMembershipChange({ ...membershipForm, paymentDate: val });
   };
 
   const signupSelectValue = SIGNUP_CHANNELS.includes(form.signupChannel) ? form.signupChannel : (form.signupChannel ? '기타' : '');
@@ -132,6 +130,7 @@ export default function MemberForm({
       title={submitLabel === '등록' ? '새 회원 등록' : '회원 정보 수정'}
       backHref={backHref} submitLabel={submitLabel}
       onSubmit={onSubmit} isEdit={isEdit}
+      headerExtra={headerExtra}
     >
       {/* ── 기본 정보 ── */}
       <FormField label="이름" required>
@@ -227,15 +226,6 @@ export default function MemberForm({
           <div style={{ borderTop: '2px solid #e9ecef', margin: '1.5rem 0 1rem', paddingTop: '1rem' }}>
             <h3 style={{ margin: 0, fontSize: '1rem', color: '#495057' }}>멤버십 할당 (선택사항)</h3>
           </div>
-          <FormField label="가입일">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Input type="date" style={{ flex: 1 }} value={membershipForm.startDate}
-                onChange={(e) => handleStartDateChange(e.target.value)} />
-              <label style={{ display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap', fontSize: '0.85rem', color: '#555', cursor: 'pointer' }}>
-                <input type="checkbox" onChange={(e) => { if (e.target.checked) setNow('startDate'); }} /> 오늘 날짜
-              </label>
-            </div>
-          </FormField>
           <FormField label="등급 (멤버십)">
             <Select value={membershipForm.membershipSeq}
               onChange={(e) => handleMembershipSelect(e.target.value)}>
@@ -258,7 +248,11 @@ export default function MemberForm({
               <Input type="datetime-local" style={{ flex: 1 }} value={membershipForm.paymentDate}
                 onChange={(e) => onMembershipChange({ ...membershipForm, paymentDate: e.target.value })} />
               <label style={{ display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap', fontSize: '0.85rem', color: '#555', cursor: 'pointer' }}>
-                <input type="checkbox" onChange={(e) => { if (e.target.checked) setNow('paymentDate'); }} /> 현재시간
+                <input type="checkbox" checked={!!membershipForm.paymentDate}
+                  onChange={(e) => {
+                    if (e.target.checked) setNow('paymentDate');
+                    else onMembershipChange({ ...membershipForm, paymentDate: '' });
+                  }} /> 현재시간
               </label>
             </div>
           </FormField>
@@ -270,7 +264,7 @@ export default function MemberForm({
                 onMembershipChange(updated);
               }}>
               <option value="">-- 선택 --</option>
-              {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+              {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
             </Select>
           </FormField>
           {membershipForm.status === '디파짓' && (

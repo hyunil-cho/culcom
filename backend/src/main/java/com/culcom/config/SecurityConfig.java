@@ -72,7 +72,12 @@ public class SecurityConfig {
     public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
         var config = new org.springframework.web.cors.CorsConfiguration();
         for (String origin : allowedOrigins.split(",")) {
-            config.addAllowedOrigin(origin.trim());
+            String trimmed = origin.trim();
+            if ("*".equals(trimmed)) {
+                config.addAllowedOriginPattern("*");
+            } else {
+                config.addAllowedOrigin(trimmed);
+            }
         }
         config.addAllowedMethod("*");
         config.addAllowedHeader("*");

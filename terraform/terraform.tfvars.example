@@ -1,16 +1,13 @@
 # ─── 필수 변수 ───
-db_password      = "CHANGE_ME_strong_password_here"
-kakao_api_key    = "CHANGE_ME_kakao_api_key"
-backend_image    = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/culcom-backend:latest"
-frontend_image   = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/culcom-frontend:latest"
-lambda_s3_bucket = "culcom-deploy-bucket"
+db_password         = "CHANGE_ME_strong_password_here"
+kakao_client_id     = "CHANGE_ME"
+kakao_admin_key     = "CHANGE_ME"
+kakao_redirect_uri  = "http://ELASTIC_IP/api/public/board/kakao/callback"
+app_image           = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/culcom-app:latest"
 
 # ─── 선택 변수 (기본값 존재) ───
-# aws_region          = "ap-northeast-2"
-# environment         = "stg"
-# db_instance_class   = "db.t3.medium"
-# backend_cpu         = 512
-# backend_memory      = 1024
-# frontend_cpu        = 256
-# frontend_memory     = 512
-# domain_name         = "culcom.example.com"
+# aws_region        = "ap-northeast-2"
+# environment       = "stg"
+# db_instance_class = "db.t3.micro"
+# ec2_instance_type = "t3.small"
+# domain_name       = "culcom.example.com"

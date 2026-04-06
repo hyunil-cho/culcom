@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.culcom.mapper.SurveyQueryMapper">
+
+    <select id="selectSubmissions" resultType="com.culcom.dto.complex.survey.SurveySubmissionRow">
+        SELECT
+            ss.seq          AS seq,
+            ss.name         AS name,
+            ss.phone_number AS phoneNumber,
+            st.name         AS templateName,
+            ss.created_date AS createdDate
+        FROM survey_submissions ss
+        JOIN survey_templates st ON st.seq = ss.template_seq
+        WHERE ss.branch_seq = #{branchSeq}
+        ORDER BY ss.created_date DESC
+    </select>
+
+</mapper>

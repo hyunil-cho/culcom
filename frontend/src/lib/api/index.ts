@@ -25,12 +25,12 @@ export {
 export {
   attendanceViewApi,
   type AttendanceViewMember, type AttendanceViewClass, type AttendanceViewSlot,
-  type BulkAttendanceResult, type AttendanceHistoryDetail,
+  type BulkAttendanceResult, type AttendanceHistoryDetail, type AttendanceHistorySummary,
 } from './attendance';
 export {
   surveyApi, publicSurveyApi,
   type SurveyTemplate, type SurveySection, type SurveyQuestion, type SurveyOption,
-  type SurveySubmitData,
+  type SurveySubmitData, type SurveySubmissionItem,
 } from './survey';
 export {
   noticeApi,

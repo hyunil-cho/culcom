@@ -15,7 +15,7 @@ export interface SurveyQuestion {
   seq: number; templateSeq: number; sectionSeq: number | null;
   questionKey: string; title: string; description: string | null;
   inputType: 'radio' | 'checkbox' | 'text';
-  isGrouped: boolean; groups: string | null; sortOrder: number; required: boolean;
+  isGrouped: boolean; groupLabel: string | null; sortOrder: number; required: boolean;
 }
 
 export interface SurveyOption {
@@ -23,7 +23,12 @@ export interface SurveyOption {
   groupName: string; label: string; sortOrder: number; createdDate: string;
 }
 
+export interface SurveySubmissionItem {
+  seq: number; name: string; phoneNumber: string; templateName: string; createdDate: string;
+}
+
 export const surveyApi = {
+  listSubmissions: () => api.get<SurveySubmissionItem[]>(API.SURVEY_SUBMISSIONS),
   listTemplates: () => api.get<SurveyTemplate[]>(API.SURVEY_TEMPLATES),
   getTemplate: (seq: number) => api.get<SurveyTemplate>(API.SURVEY_TEMPLATE(seq)),
   createTemplate: (data: { name: string; description?: string }) =>

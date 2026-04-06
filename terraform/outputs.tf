@@ -3,9 +3,9 @@ output "vpc_id" {
   value       = aws_vpc.main.id
 }
 
-output "alb_dns_name" {
-  description = "ALB DNS (프론트엔드/백엔드 접근용)"
-  value       = aws_lb.main.dns_name
+output "app_public_ip" {
+  description = "앱 서버 Elastic IP (접속용)"
+  value       = aws_eip.app.public_ip
 }
 
 output "rds_endpoint" {
@@ -18,22 +18,7 @@ output "rds_address" {
   value       = aws_db_instance.main.address
 }
 
-output "ecs_cluster_name" {
-  description = "ECS 클러스터 이름"
-  value       = aws_ecs_cluster.main.name
-}
-
-output "api_gateway_url" {
-  description = "API Gateway URL (/external/{lambdaSeq} 엔드포인트)"
-  value       = aws_apigatewayv2_api.lambda.api_endpoint
-}
-
-output "lambda_function_name" {
-  description = "Webhook Handler Lambda 함수 이름"
-  value       = aws_lambda_function.webhook_handler.function_name
-}
-
-output "lambda_function_arn" {
-  description = "Webhook Handler Lambda ARN"
-  value       = aws_lambda_function.webhook_handler.arn
+output "ecr_repository_url" {
+  description = "ECR 리포지토리 URL"
+  value       = aws_ecr_repository.app.repository_url
 }
