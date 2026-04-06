@@ -21,4 +21,5 @@ public class ComplexStaffRequest {
     private String comment;
     private String interviewer;
     private String paymentMethod;
+    private String bio;
 }

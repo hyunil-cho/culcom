@@ -24,6 +24,7 @@ export interface RefundFormData {
   refundBank: string;
   refundAccount: string;
   refundAmount: string;
+  paymentMethod: string;
 }
 
 export interface ClassAssignData {
@@ -38,6 +39,7 @@ export interface StaffFormData {
   interviewer: string;
   paymentMethod: string;
   comment: string;
+  bio: string;
   refund: RefundFormData;
 }
 
@@ -48,6 +50,7 @@ export const emptyRefundForm: RefundFormData = {
   refundBank: '',
   refundAccount: '',
   refundAmount: '',
+  paymentMethod: '',
 };
 
 export const emptyClassAssign: ClassAssignData = {
@@ -62,6 +65,7 @@ export const emptyStaffForm: StaffFormData = {
   interviewer: '',
   paymentMethod: '',
   comment: '',
+  bio: '',
   refund: emptyRefundForm,
 };
 
@@ -121,6 +125,11 @@ export default function StaffForm({
           {PAYMENT_OPTIONS.filter(Boolean).map(p => <option key={p} value={p}>{p}</option>)}
         </Select>
       </FormField>
+      <FormField label="인적사항">
+        <Textarea placeholder="인적사항을 입력하세요" value={form.bio}
+          onChange={(e) => onChange({ ...form, bio: e.target.value })}
+          style={{ height: 80, resize: 'vertical' }} />
+      </FormField>
       <FormField label="비고">
         <Textarea placeholder="스태프 특이사항 입력" value={form.comment}
           onChange={(e) => onChange({ ...form, comment: e.target.value })}
@@ -162,6 +171,13 @@ export default function StaffForm({
       <div style={{ borderTop: '2px solid #e9ecef', margin: '1.5rem 0 1rem', paddingTop: '1rem' }}>
         <h3 style={{ margin: 0, fontSize: '1rem', color: '#495057' }}>환급 정보</h3>
       </div>
+      <FormField label="결제방식">
+        <Select value={form.refund.paymentMethod}
+          onChange={(e) => onChange({ ...form, refund: { ...form.refund, paymentMethod: e.target.value } })}>
+          <option value="">-- 선택 --</option>
+          {PAYMENT_OPTIONS.filter(Boolean).map(p => <option key={p} value={p}>{p}</option>)}
+        </Select>
+      </FormField>
       <FormField label="디파짓 금액">
         <CurrencyInput placeholder="예: 500,000" value={form.refund.depositAmount}
           onValueChange={(v) => onChange({ ...form, refund: { ...form.refund, depositAmount: v } })} />

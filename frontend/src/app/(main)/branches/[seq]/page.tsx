@@ -18,7 +18,7 @@ export default function BranchDetailPage() {
   const session = useSessionStore((s) => s.session);
   const refreshBranches = useSessionStore((s) => s.refreshBranches);
   const [branch, setBranch] = useState<Branch | null>(null);
-  const [deleting, setDeleting] = useState(false);
+
   const { run, modal } = useResultModal({ onConfirm: async () => { await refreshBranches(); router.push(ROUTES.BRANCHES); } });
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export default function BranchDetailPage() {
         {SessionRole.isManager(session) && (
           <div className="action-group" style={{ display: 'flex', gap: 8 }}>
             <LinkButton href={ROUTES.BRANCH_EDIT(seq)}>수정</LinkButton>
-            <Button variant="danger" onClick={() => setDeleting(true)}>삭제</Button>
+            {/* <Button variant="danger" onClick={() => setDeleting(true)}>삭제</Button> */}
           </div>
         )}
       </div>
@@ -50,6 +50,7 @@ export default function BranchDetailPage() {
         ]}
       />
 
+      {/* 삭제 기능 비활성화
       {deleting && (
         <ConfirmModal
           title="삭제 확인"
@@ -64,6 +65,7 @@ export default function BranchDetailPage() {
           <strong>{branch.branchName}</strong> 지점을 삭제하시겠습니까?<br />이 작업은 되돌릴 수 없습니다.
         </ConfirmModal>
       )}
+      */}
 
       {modal}
     </>

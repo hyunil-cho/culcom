@@ -26,6 +26,7 @@ export {
   attendanceViewApi,
   type AttendanceViewMember, type AttendanceViewClass, type AttendanceViewSlot,
   type BulkAttendanceResult, type AttendanceHistoryDetail, type AttendanceHistorySummary,
+  type StaffAttendanceRateSummary,
 } from './attendance';
 export {
   surveyApi, publicSurveyApi,

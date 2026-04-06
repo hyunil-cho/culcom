@@ -38,6 +38,7 @@ public class CustomerService {
                 .comment(request.getComment())
                 .commercialName(request.getCommercialName())
                 .adSource(request.getAdSource())
+                .interviewer(request.getInterviewer())
                 .build();
         branchRepository.findById(branchSeq).ifPresent(customer::setBranch);
         return CustomerResponse.from(customerRepository.save(customer));
@@ -52,6 +53,7 @@ public class CustomerService {
         customer.setComment(request.getComment());
         customer.setCommercialName(request.getCommercialName());
         customer.setAdSource(request.getAdSource());
+        customer.setInterviewer(request.getInterviewer());
         if (request.getStatus() != null) {
             customer.setStatus(CustomerStatus.valueOf(request.getStatus()));
         }

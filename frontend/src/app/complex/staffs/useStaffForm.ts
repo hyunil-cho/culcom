@@ -31,6 +31,7 @@ export function useStaffForm(seq?: number) {
         interviewer: s.interviewer ?? '',
         paymentMethod: s.paymentMethod ?? '',
         comment: s.comment ?? '',
+        bio: s.bio ?? '',
         refund: r ? {
           depositAmount: r.depositAmount ?? '',
           refundableDeposit: r.refundableDeposit ?? '',
@@ -38,6 +39,7 @@ export function useStaffForm(seq?: number) {
           refundBank: r.refundBank ?? '',
           refundAccount: r.refundAccount ?? '',
           refundAmount: r.refundAmount ?? '',
+          paymentMethod: r.paymentMethod ?? '',
         } : emptyRefundForm,
       });
     });
@@ -58,7 +60,7 @@ export function useStaffForm(seq?: number) {
   const saveRefund = async (staffSeq: number) => {
     const r = form.refund;
     const hasRefund = r.depositAmount || r.refundableDeposit || r.nonRefundableDeposit
-      || r.refundBank || r.refundAccount || r.refundAmount;
+      || r.refundBank || r.refundAccount || r.refundAmount || r.paymentMethod;
     if (hasRefund) {
       await staffApi.saveRefund(staffSeq, {
         depositAmount: r.depositAmount || undefined,
@@ -67,6 +69,7 @@ export function useStaffForm(seq?: number) {
         refundBank: r.refundBank || undefined,
         refundAccount: r.refundAccount || undefined,
         refundAmount: r.refundAmount || undefined,
+        paymentMethod: r.paymentMethod || undefined,
       });
     }
   };
@@ -99,6 +102,7 @@ export function useStaffForm(seq?: number) {
       interviewer: form.interviewer || undefined,
       paymentMethod: form.paymentMethod || undefined,
       comment: form.comment || undefined,
+      bio: form.bio || undefined,
     };
 
     if (isEdit) {

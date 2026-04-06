@@ -20,6 +20,8 @@ const TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> 
   ATTENDANCE:          { label: '출석',     color: '#065f46', bg: '#ecfdf5' },
   STAFF_REGISTER:      { label: '등록',     color: '#1e40af', bg: '#dbeafe' },
   STATUS_CHANGE:       { label: '상태변경', color: '#7c3aed', bg: '#ede9fe' },
+  INFO_CHANGE:         { label: '정보변경', color: '#0369a1', bg: '#e0f2fe' },
+  REFUND_CHANGE:       { label: '환불정보', color: '#b45309', bg: '#fef3c7' },
 };
 
 const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
@@ -32,6 +34,7 @@ const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
   '대기': { color: '#4f46e5', bg: '#eef2ff' },
   '승인': { color: '#065f46', bg: '#ecfdf5' },
   '반려': { color: '#991b1b', bg: '#fef2f2' },
+  '변경': { color: '#0369a1', bg: '#e0f2fe' },
 };
 
 const PAGE_SIZE = 20;
@@ -67,6 +70,8 @@ export default function MemberTimelineModal({ memberSeq, memberName, type = 'mem
     ...(type === 'staff' ? [
       { key: 'STAFF_REGISTER', label: '등록', types: ['STAFF_REGISTER'], color: '#1e40af', bg: '#dbeafe' },
       { key: 'STATUS_CHANGE', label: '상태변경', types: ['STATUS_CHANGE'], color: '#7c3aed', bg: '#ede9fe' },
+      { key: 'INFO_CHANGE', label: '정보변경', types: ['INFO_CHANGE'], color: '#0369a1', bg: '#e0f2fe' },
+      { key: 'REFUND_CHANGE', label: '환불정보', types: ['REFUND_CHANGE'], color: '#b45309', bg: '#fef3c7' },
     ] : []),
   ];
 

@@ -14,5 +14,6 @@ public class CustomerCreateRequest {
     private String comment;
     private String commercialName;
     private String adSource;
+    private String interviewer;
     private String status;
 }

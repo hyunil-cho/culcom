@@ -6,6 +6,7 @@ import com.culcom.dto.complex.member.ComplexStaffRequest;
 import com.culcom.dto.complex.member.ComplexStaffResponse;
 import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.staff.ComplexStaff;
+import com.culcom.entity.complex.staff.ComplexStaffChangeLog;
 import com.culcom.entity.complex.staff.ComplexStaffClassLog;
 import com.culcom.entity.complex.staff.ComplexStaffRefundInfo;
 import com.culcom.entity.complex.staff.ComplexStaffStatusLog;
@@ -13,6 +14,7 @@ import com.culcom.entity.enums.StaffStatus;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ComplexClassRepository;
+import com.culcom.repository.ComplexStaffChangeLogRepository;
 import com.culcom.repository.ComplexStaffClassLogRepository;
 import com.culcom.repository.ComplexStaffRefundInfoRepository;
 import com.culcom.repository.ComplexStaffRepository;
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +35,7 @@ public class ComplexStaffService {
     private final ComplexStaffRefundInfoRepository refundInfoRepository;
     private final ComplexStaffStatusLogRepository statusLogRepository;
     private final ComplexStaffClassLogRepository staffClassLogRepository;
+    private final ComplexStaffChangeLogRepository changeLogRepository;
     private final ComplexClassRepository classRepository;
     private final BranchRepository branchRepository;
 
@@ -57,6 +61,7 @@ public class ComplexStaffService {
                 .comment(req.getComment())
                 .interviewer(req.getInterviewer())
                 .paymentMethod(req.getPaymentMethod())
+                .bio(req.getBio())
                 .branch(branchRepository.getReferenceById(branchSeq))
                 .build();
         return ComplexStaffResponse.from(staffRepository.save(staff));
@@ -77,6 +82,19 @@ public class ComplexStaffService {
                     .build());
         }
 
+        // 필드 변경 감지 및 로그 기록
+        logIfChanged(staff, "이름", staff.getName(), req.getName());
+        logIfChanged(staff, "전화번호", staff.getPhoneNumber(), req.getPhoneNumber());
+        logIfChanged(staff, "이메일", staff.getEmail(), req.getEmail());
+        logIfChanged(staff, "담당과목", staff.getSubject(), req.getSubject());
+        logIfChanged(staff, "면접관", staff.getInterviewer(), req.getInterviewer());
+        logIfChanged(staff, "결제방식", staff.getPaymentMethod(), req.getPaymentMethod());
+        logIfChanged(staff, "비고", staff.getComment(), req.getComment());
+        logIfChanged(staff, "인적사항", staff.getBio(), req.getBio());
+        logIfChanged(staff, "입사일",
+                staff.getJoinDate() != null ? staff.getJoinDate().toString() : null,
+                req.getJoinDate() != null ? req.getJoinDate().toString() : null);
+
         staff.setName(req.getName());
         staff.setPhoneNumber(req.getPhoneNumber());
         staff.setEmail(req.getEmail());
@@ -86,6 +104,7 @@ public class ComplexStaffService {
         staff.setComment(req.getComment());
         staff.setInterviewer(req.getInterviewer());
         staff.setPaymentMethod(req.getPaymentMethod());
+        staff.setBio(req.getBio());
 
         // 휴직/퇴직 시 배정된 수업에서 제외
         if (oldStatus == StaffStatus.재직 && newStatus != StaffStatus.재직) {
@@ -101,6 +120,18 @@ public class ComplexStaffService {
         return ComplexStaffResponse.from(staffRepository.save(staff));
     }
 
+    private void logIfChanged(ComplexStaff staff, String fieldName, String oldVal, String newVal) {
+        if (!Objects.equals(oldVal, newVal)) {
+            changeLogRepository.save(ComplexStaffChangeLog.builder()
+                    .staff(staff)
+                    .changeType("INFO_CHANGE")
+                    .fieldName(fieldName)
+                    .oldValue(oldVal)
+                    .newValue(newVal)
+                    .build());
+        }
+    }
+
     @Transactional
     public void delete(Long seq) {
         refundInfoRepository.deleteByStaffSeq(seq);
@@ -113,12 +144,32 @@ public class ComplexStaffService {
                 .orElse(null);
     }
 
+    @Transactional
     public ComplexStaffRefundInfoResponse saveRefundInfo(Long staffSeq, ComplexStaffRefundInfoRequest req) {
         ComplexStaff staff = staffRepository.findById(staffSeq)
                 .orElseThrow(() -> new EntityNotFoundException("스태프"));
 
         ComplexStaffRefundInfo refund = refundInfoRepository.findByStaffSeq(staffSeq)
-                .orElse(ComplexStaffRefundInfo.builder().staff(staff).build());
+                .orElse(null);
+
+        boolean isNew = (refund == null);
+        if (isNew) {
+            refund = ComplexStaffRefundInfo.builder().staff(staff).build();
+        }
+
+        if (isNew) {
+            changeLogRepository.save(ComplexStaffChangeLog.builder()
+                    .staff(staff).changeType("REFUND_CHANGE").fieldName("환불정보")
+                    .oldValue(null).newValue("등록").build());
+        } else {
+            logRefundIfChanged(staff, "입금액", refund.getDepositAmount(), req.getDepositAmount());
+            logRefundIfChanged(staff, "환불가능금액", refund.getRefundableDeposit(), req.getRefundableDeposit());
+            logRefundIfChanged(staff, "환불불가금액", refund.getNonRefundableDeposit(), req.getNonRefundableDeposit());
+            logRefundIfChanged(staff, "환불은행", refund.getRefundBank(), req.getRefundBank());
+            logRefundIfChanged(staff, "환불계좌", refund.getRefundAccount(), req.getRefundAccount());
+            logRefundIfChanged(staff, "환불금액", refund.getRefundAmount(), req.getRefundAmount());
+            logRefundIfChanged(staff, "결제방식", refund.getPaymentMethod(), req.getPaymentMethod());
+        }
 
         refund.setDepositAmount(req.getDepositAmount());
         refund.setRefundableDeposit(req.getRefundableDeposit());
@@ -126,12 +177,30 @@ public class ComplexStaffService {
         refund.setRefundBank(req.getRefundBank());
         refund.setRefundAccount(req.getRefundAccount());
         refund.setRefundAmount(req.getRefundAmount());
+        refund.setPaymentMethod(req.getPaymentMethod());
 
         return ComplexStaffRefundInfoResponse.from(refundInfoRepository.save(refund));
     }
 
     @Transactional
     public void deleteRefundInfo(Long staffSeq) {
+        ComplexStaff staff = staffRepository.findById(staffSeq)
+                .orElseThrow(() -> new EntityNotFoundException("스태프"));
+        changeLogRepository.save(ComplexStaffChangeLog.builder()
+                .staff(staff).changeType("REFUND_CHANGE").fieldName("환불정보")
+                .oldValue("삭제").newValue(null).build());
         refundInfoRepository.deleteByStaffSeq(staffSeq);
+    }
+
+    private void logRefundIfChanged(ComplexStaff staff, String fieldName, String oldVal, String newVal) {
+        if (!Objects.equals(oldVal, newVal)) {
+            changeLogRepository.save(ComplexStaffChangeLog.builder()
+                    .staff(staff)
+                    .changeType("REFUND_CHANGE")
+                    .fieldName(fieldName)
+                    .oldValue(oldVal)
+                    .newValue(newVal)
+                    .build());
+        }
     }
 }

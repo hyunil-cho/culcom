@@ -37,4 +37,7 @@ public class ComplexStaffRefundInfo extends BaseTimeEntity {
     @Column(name = "refund_amount", length = 50)
     private String refundAmount;
 
+    @Column(name = "payment_method", length = 50)
+    private String paymentMethod;
+
 }

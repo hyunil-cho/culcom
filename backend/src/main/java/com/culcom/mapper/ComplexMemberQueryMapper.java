@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface ComplexMemberQueryMapper {
@@ -18,4 +19,7 @@ public interface ComplexMemberQueryMapper {
     int count(
             @Param("branchSeq") Long branchSeq,
             @Param("keyword") String keyword);
+
+    List<Map<String, Object>> selectAttendanceHistory(
+            @Param("memberSeqs") List<Long> memberSeqs);
 }

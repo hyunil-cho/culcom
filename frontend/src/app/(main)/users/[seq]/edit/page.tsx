@@ -39,6 +39,7 @@ export default function UserEditPage() {
       <UserForm form={form} onChange={setForm} onSubmit={handleSubmit}
         isEdit
         backHref={ROUTES.USERS} submitLabel="수정" />
+      {/* 삭제 기능 비활성화
       {deleting && (
         <ConfirmModal title="삭제 확인" onCancel={() => setDeleting(false)}
           onConfirm={async () => {
@@ -48,6 +49,7 @@ export default function UserEditPage() {
           <strong>{form.userId}</strong> 계정을 삭제하시겠습니까?<br /><br />이 작업은 되돌릴 수 없습니다.
         </ConfirmModal>
       )}
+      */}
       {modal}
     </>
   );

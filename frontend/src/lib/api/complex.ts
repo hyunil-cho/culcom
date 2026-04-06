@@ -49,6 +49,7 @@ export interface ComplexMember {
   joinDate?: string;
   createdDate?: string;
   lastUpdateDate?: string;
+  attendanceHistory?: string[];
 }
 
 export interface MemberMembershipRequest {
@@ -82,7 +83,7 @@ export interface MemberMembershipResponse {
 }
 
 export interface MemberActivityTimelineItem {
-  type: 'MEMBERSHIP' | 'POSTPONEMENT' | 'REFUND' | 'ATTENDANCE';
+  type: 'MEMBERSHIP' | 'POSTPONEMENT' | 'POSTPONEMENT_RESULT' | 'REFUND' | 'REFUND_RESULT' | 'ATTENDANCE' | 'STAFF_REGISTER' | 'STATUS_CHANGE' | 'CLASS_ASSIGN' | 'INFO_CHANGE' | 'REFUND_CHANGE';
   date: string;
   title: string;
   detail: string | null;
@@ -106,6 +107,10 @@ export const memberApi = {
     api.delete<void>(API.COMPLEX_MEMBER_MEMBERSHIP(seq, mmSeq)),
   assignClass: (seq: number, classSeq: number) =>
     api.post<void>(`${API.COMPLEX_MEMBER(seq)}/class/${classSeq}`),
+  getClassMappings: (seq: number) =>
+    api.get<{ classSeq: number; timeSlotSeq: number | null }[]>(`${API.COMPLEX_MEMBER(seq)}/class`),
+  reassignClass: (seq: number, classSeq: number) =>
+    api.put<void>(`${API.COMPLEX_MEMBER(seq)}/class/${classSeq}`),
 };
 
 // ── 스태프 ──
@@ -114,6 +119,7 @@ export interface ComplexStaff {
   seq: number;
   name: string;
   phoneNumber?: string;
+  branchName?: string;
   email?: string;
   subject?: string;
   status: string;
@@ -121,6 +127,7 @@ export interface ComplexStaff {
   comment?: string;
   interviewer?: string;
   paymentMethod?: string;
+  bio?: string;
 }
 
 export interface StaffRefundInfo {
@@ -132,6 +139,7 @@ export interface StaffRefundInfo {
   refundBank?: string;
   refundAccount?: string;
   refundAmount?: string;
+  paymentMethod?: string;
 }
 
 export const staffApi = {

@@ -51,4 +51,8 @@ public class ComplexStaff extends BaseTimeEntity {
     @Column(name = "payment_method", length = 50)
     private String paymentMethod;
 
+    /** 인적사항 */
+    @Column(length = 500)
+    private String bio;
+
 }

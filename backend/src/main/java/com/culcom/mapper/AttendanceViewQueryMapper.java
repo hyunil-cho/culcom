@@ -4,6 +4,7 @@ import com.culcom.dto.complex.attendance.AttendanceHistoryDetailRow;
 import com.culcom.dto.complex.attendance.AttendanceHistoryRow;
 import com.culcom.dto.complex.attendance.AttendanceHistorySummary;
 import com.culcom.dto.complex.attendance.AttendanceViewRow;
+import com.culcom.dto.complex.attendance.StaffAttendanceRateSummary;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -61,4 +62,9 @@ public interface AttendanceViewQueryMapper {
     AttendanceHistorySummary selectStaffAttendanceSummary(
             @Param("branchSeq") Long branchSeq,
             @Param("staffSeq") Long staffSeq);
+
+    /** 전체 스태프 출석율 요약 (최근 3개월) */
+    List<StaffAttendanceRateSummary> selectAllStaffAttendanceRates(
+            @Param("branchSeq") Long branchSeq,
+            @Param("fromDate") LocalDate fromDate);
 }

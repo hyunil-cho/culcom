@@ -40,7 +40,7 @@ export default function CustomerDetailPage() {
         <Link href={ROUTES.CUSTOMERS} className="btn-back">← 목록으로</Link>
         <div className="action-group" style={{ display: 'flex', gap: 8 }}>
           <LinkButton href={ROUTES.CUSTOMER_EDIT(seq)}>수정</LinkButton>
-          <Button variant="danger" onClick={() => setDeleting(true)}>삭제</Button>
+          {/* <Button variant="danger" onClick={() => setDeleting(true)}>삭제</Button> */}
         </div>
       </div>
 
@@ -54,11 +54,13 @@ export default function CustomerDetailPage() {
           { label: '코멘트', value: customer.comment || '-' },
           { label: '광고명', value: customer.commercialName || '-' },
           { label: '지원경로', value: customer.adSource || '-' },
+          { label: '인터뷰어', value: customer.interviewer || '-' },
           { label: '등록일', value: customer.createdDate?.split('T')[0] ?? '-' },
           { label: '최종 업데이트', value: formatDateTime(customer.lastUpdateDate) || '-' },
         ]}
       />
 
+      {/* 삭제 기능 비활성화
       {deleting && (
         <ConfirmModal
           title="삭제 확인"
@@ -73,6 +75,7 @@ export default function CustomerDetailPage() {
           <strong>{customer.name}</strong> 고객을 삭제하시겠습니까?<br />이 작업은 되돌릴 수 없습니다.
         </ConfirmModal>
       )}
+      */}
 
       {modal}
     </>

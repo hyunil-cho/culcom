@@ -43,6 +43,7 @@ export default function SurveyEditorPage() {
   const [editSectionSeq, setEditSectionSeq] = useState<number | null>(null);
   const [editSectionTitle, setEditSectionTitle] = useState('');
   const [editTemplateName, setEditTemplateName] = useState<string | null>(null);
+  const [editTemplateDesc, setEditTemplateDesc] = useState<string | null>(null);
   const [questionAddForms, setQuestionAddForms] = useState<Record<number, QuestionForm>>({});
   const [questionEditForms, setQuestionEditForms] = useState<Record<number, QuestionForm>>({});
   const [optionAddForms, setOptionAddForms] = useState<Record<string, string>>({});
@@ -119,11 +120,17 @@ export default function SurveyEditorPage() {
     load();
   };
 
-  const startEditTemplateName = () => { if (template) setEditTemplateName(template.name); };
+  const startEditTemplateName = () => {
+    if (template) {
+      setEditTemplateName(template.name);
+      setEditTemplateDesc(template.description ?? '');
+    }
+  };
+  const cancelEditTemplate = () => { setEditTemplateName(null); setEditTemplateDesc(null); };
   const handleUpdateTemplateName = async () => {
     if (editTemplateName == null || !editTemplateName.trim()) { alert('설문지 이름을 입력해주세요.'); return; }
-    const res = await surveyApi.updateTemplate(templateSeq, { name: editTemplateName.trim() });
-    if (res.success) { setEditTemplateName(null); load(); }
+    const res = await surveyApi.updateTemplate(templateSeq, { name: editTemplateName.trim(), description: editTemplateDesc?.trim() || undefined });
+    if (res.success) { cancelEditTemplate(); load(); }
   };
 
   const handleAddSection = async () => {
@@ -397,13 +404,19 @@ export default function SurveyEditorPage() {
 
       <div className={s.headerRow}>
         {editTemplateName !== null ? (
-          <div className={s.editNameRow}>
-            <input type="text" value={editTemplateName} autoFocus
+          <div className={s.editNameRow} style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+            <input type="text" value={editTemplateName} autoFocus placeholder="설문지 이름"
               onChange={e => setEditTemplateName(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') handleUpdateTemplateName(); if (e.key === 'Escape') setEditTemplateName(null); }}
+              onKeyDown={e => { if (e.key === 'Escape') cancelEditTemplate(); }}
               className={s.editNameInput} />
-            <Button style={{ padding: '0.35rem 0.7rem', fontSize: '0.82rem' }} onClick={handleUpdateTemplateName}>저장</Button>
-            <Button variant="secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.82rem' }} onClick={() => setEditTemplateName(null)}>취소</Button>
+            <input type="text" value={editTemplateDesc ?? ''} placeholder="설명 (선택사항)"
+              onChange={e => setEditTemplateDesc(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Escape') cancelEditTemplate(); }}
+              className={s.editNameInput} />
+            <div style={{ display: 'flex', gap: 6 }}>
+              <Button style={{ padding: '0.35rem 0.7rem', fontSize: '0.82rem' }} onClick={handleUpdateTemplateName}>저장</Button>
+              <Button variant="secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.82rem' }} onClick={cancelEditTemplate}>취소</Button>
+            </div>
           </div>
         ) : (
           <div className={s.titleRow}>

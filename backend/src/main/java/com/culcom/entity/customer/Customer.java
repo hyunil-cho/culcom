@@ -36,6 +36,9 @@ public class Customer extends BaseTimeEntity {
     @Column(name = "ad_source", length = 100)
     private String adSource;
 
+    @Column(length = 100)
+    private String interviewer;
+
     @Column(name = "kakao_id", unique = true)
     private Long kakaoId;
 

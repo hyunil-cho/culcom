@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { attendanceViewApi, AttendanceViewSlot } from '@/lib/api';
+import { attendanceViewApi, type AttendanceViewSlot, type AttendanceViewMember } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { useHighlightSearch } from '@/lib/useHighlightSearch';
 import HighlightSearchBar from '@/components/ui/HighlightSearchBar';
@@ -10,6 +10,7 @@ import { useMessageModal } from '../hooks/useMessageModal';
 import { useBulkAttendance } from './components/BulkAttendanceModal';
 import { calcTodayRate, RateBadge } from './components/AttendanceRateBadge';
 import { MessageButton } from './components/MessageButton';
+import MemberManageModal from './components/MemberManageModal';
 import './attendance.css';
 
 export default function AttendancePage() {
@@ -34,6 +35,8 @@ export default function AttendancePage() {
   }, []);
 
   const bulkAttendance = useBulkAttendance(fetchData);
+
+  const [manageTarget, setManageTarget] = useState<{ member: AttendanceViewMember; className: string } | null>(null);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -99,7 +102,7 @@ export default function AttendancePage() {
   return (
     <>
       <div className="complex-container">
-        <h1 className="complex-title">지점 통합 등록현황</h1>
+        <h1 className="complex-title">팀 현황 관리</h1>
 
         <HighlightSearchBar
           onSearch={performSearch}
@@ -151,13 +154,19 @@ export default function AttendancePage() {
                             <span className="member-name">{m.name}</span>
                             <span className="member-phone">{m.phoneNumber}</span>
                           </div>
-                          {m.postponed ? (
-                            <div className="status-mark postponed" title="수업 연기 중">△</div>
-                          ) : (
-                            <div className={`status-mark ${m.status === 'O' ? 'active' : m.status === 'X' ? '' : 'absent'}`}>
-                              {m.status || '-'}
-                            </div>
-                          )}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <button onClick={(e) => { e.stopPropagation(); setManageTarget({ member: m, className: cls.name }); }}
+                              style={{ background: '#6366f1', color: '#fff', border: 'none', borderRadius: 3, padding: '2px 6px', fontSize: '0.7rem', cursor: 'pointer', fontWeight: 600 }}>
+                              관리
+                            </button>
+                            {m.postponed ? (
+                              <div className="status-mark postponed" title="수업 연기 중">△</div>
+                            ) : (
+                              <div className={`status-mark ${m.status === 'O' ? 'active' : m.status === 'X' ? '' : 'absent'}`}>
+                                {m.status || '-'}
+                              </div>
+                            )}
+                          </div>
                         </li>
                       ))}
                     </ul>
@@ -176,6 +185,14 @@ export default function AttendancePage() {
         )}
       </div>
 
+      {manageTarget && (
+        <MemberManageModal
+          member={manageTarget.member}
+          currentClassName={manageTarget.className}
+          onClose={() => setManageTarget(null)}
+          onMoved={() => { setManageTarget(null); fetchData(); }}
+        />
+      )}
       {bulkAttendance.rendered}
       {msgModal.rendered}
     </>

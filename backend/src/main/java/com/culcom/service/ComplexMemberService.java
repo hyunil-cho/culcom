@@ -159,4 +159,22 @@ public class ComplexMemberService {
                 .complexClass(clazz)
                 .build());
     }
+
+    @Transactional
+    public void reassignClass(Long memberSeq, Long classSeq) {
+        ComplexMember member = memberRepository.findById(memberSeq)
+                .orElseThrow(() -> new EntityNotFoundException("회원"));
+        ComplexClass clazz = classRepository.findById(classSeq)
+                .orElseThrow(() -> new EntityNotFoundException("수업"));
+
+        classMappingRepository.deleteByMemberSeq(memberSeq);
+        classMappingRepository.save(ComplexMemberClassMapping.builder()
+                .member(member)
+                .complexClass(clazz)
+                .build());
+    }
+
+    public List<ComplexMemberClassMapping> getClassMappings(Long memberSeq) {
+        return classMappingRepository.findByMemberSeq(memberSeq);
+    }
 }

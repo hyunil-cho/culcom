@@ -12,4 +12,5 @@ public class ComplexStaffRefundInfoRequest {
     private String refundBank;
     private String refundAccount;
     private String refundAmount;
+    private String paymentMethod;
 }

@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/complex/members")
@@ -63,11 +64,31 @@ public class ComplexMemberController {
         return ResponseEntity.ok(ApiResponse.ok("멤버십 삭제 완료", null));
     }
 
+    @GetMapping("/{seq}/class")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getClassMappings(@PathVariable Long seq) {
+        var mappings = complexMemberService.getClassMappings(seq);
+        var result = mappings.stream().map(m -> {
+            Map<String, Object> map = new java.util.LinkedHashMap<>();
+            map.put("classSeq", m.getComplexClass().getSeq());
+            map.put("timeSlotSeq", m.getComplexClass().getTimeSlot() != null
+                    ? m.getComplexClass().getTimeSlot().getSeq() : null);
+            return map;
+        }).toList();
+        return ResponseEntity.ok(ApiResponse.ok(result));
+    }
+
     @PostMapping("/{seq}/class/{classSeq}")
     public ResponseEntity<ApiResponse<Void>> assignClass(
             @PathVariable Long seq, @PathVariable Long classSeq) {
         complexMemberService.assignClass(seq, classSeq);
         return ResponseEntity.ok(ApiResponse.ok("수업 배정 완료", null));
+    }
+
+    @PutMapping("/{seq}/class/{classSeq}")
+    public ResponseEntity<ApiResponse<Void>> reassignClass(
+            @PathVariable Long seq, @PathVariable Long classSeq) {
+        complexMemberService.reassignClass(seq, classSeq);
+        return ResponseEntity.ok(ApiResponse.ok("수업 재배정 완료", null));
     }
 
     @DeleteMapping("/{seq}")

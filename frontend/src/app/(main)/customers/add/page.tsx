@@ -14,7 +14,8 @@ export default function CustomerAddPage() {
     name: '',
     phoneNumber: '',
     comment: '',
-    adSource: '워크인'
+    adSource: '워크인',
+    interviewer: '',
   });
   const { run, modal } = useResultModal({ redirectPath: ROUTES.CUSTOMERS });
 
@@ -54,6 +55,11 @@ export default function CustomerAddPage() {
           <FormField label="전화번호" required hint="하이픈 없이 숫자만 입력해주세요 (예: 01012345678)">
             <PhoneInput value={form.phoneNumber}
               onChange={(e) => handlePhoneChange(e.target.value)} required />
+          </FormField>
+
+          <FormField label="인터뷰어">
+            <Input placeholder="등록자 이름" value={form.interviewer}
+              onChange={(e) => setForm({ ...form, interviewer: e.target.value })} />
           </FormField>
 
           <FormField label="코멘트" hint="최대 200자까지 입력 가능합니다.">

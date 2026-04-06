@@ -29,6 +29,10 @@ export interface AttendanceHistorySummary {
   startDate: string | null; endDate: string | null;
 }
 
+export interface StaffAttendanceRateSummary {
+  staffSeq: number; totalCount: number; presentCount: number;
+}
+
 export const attendanceViewApi = {
   getView: () => api.get<AttendanceViewSlot[]>(API.COMPLEX_ATTENDANCE_VIEW),
   getDetail: (slotSeq: number) =>
@@ -45,4 +49,8 @@ export const attendanceViewApi = {
     api.get<AttendanceHistorySummary>(API.COMPLEX_ATTENDANCE_MEMBER_HISTORY_SUMMARY(memberSeq)),
   staffHistorySummary: (staffSeq: number) =>
     api.get<AttendanceHistorySummary>(API.COMPLEX_ATTENDANCE_STAFF_HISTORY_SUMMARY(staffSeq)),
+  staffAttendanceRates: (months?: number) =>
+    api.get<StaffAttendanceRateSummary[]>(
+      months ? `${API.COMPLEX_ATTENDANCE_STAFF_RATES}?months=${months}` : API.COMPLEX_ATTENDANCE_STAFF_RATES
+    ),
 };

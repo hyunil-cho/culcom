@@ -16,7 +16,7 @@ export default function CustomerEditPage() {
   const params = useParams();
   const seq = Number(params.seq);
 
-  const [form, setForm] = useState({ name: '', phoneNumber: '', comment: '', commercialName: '', adSource: '' });
+  const [form, setForm] = useState({ name: '', phoneNumber: '', comment: '', commercialName: '', adSource: '', interviewer: '' });
   const { run, modal } = useResultModal({ redirectPath: ROUTES.CUSTOMERS });
   const [deleting, setDeleting] = useState(false);
 
@@ -30,6 +30,7 @@ export default function CustomerEditPage() {
           comment: c.comment ?? '',
           commercialName: c.commercialName ?? '',
           adSource: c.adSource ?? '',
+          interviewer: c.interviewer ?? '',
         });
       }
     });
@@ -44,6 +45,7 @@ export default function CustomerEditPage() {
       comment: form.comment || undefined,
       commercialName: form.commercialName || undefined,
       adSource: form.adSource || undefined,
+      interviewer: form.interviewer || undefined,
     }), '고객 정보가 수정되었습니다.');
   };
 
@@ -80,9 +82,14 @@ export default function CustomerEditPage() {
             <Input value={form.adSource}
               onChange={(e) => setForm({ ...form, adSource: e.target.value })} />
           </FormField>
+          <FormField label="인터뷰어">
+            <Input value={form.interviewer}
+              onChange={(e) => setForm({ ...form, interviewer: e.target.value })} />
+          </FormField>
         </div>
       </div>
 
+      {/* 삭제 기능 비활성화
       {deleting && (
         <ConfirmModal title="삭제 확인" onCancel={() => setDeleting(false)}
           onConfirm={async () => {
@@ -92,6 +99,7 @@ export default function CustomerEditPage() {
           이 고객을 삭제하시겠습니까?<br />이 작업은 되돌릴 수 없습니다.
         </ConfirmModal>
       )}
+      */}
 
       {modal}
     </>

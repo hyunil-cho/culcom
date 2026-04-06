@@ -15,6 +15,7 @@ public class ComplexStaffRefundInfoResponse {
     private String refundBank;
     private String refundAccount;
     private String refundAmount;
+    private String paymentMethod;
 
     public static ComplexStaffRefundInfoResponse from(ComplexStaffRefundInfo entity) {
         return ComplexStaffRefundInfoResponse.builder()
@@ -26,6 +27,7 @@ public class ComplexStaffRefundInfoResponse {
                 .refundBank(entity.getRefundBank())
                 .refundAccount(entity.getRefundAccount())
                 .refundAmount(entity.getRefundAmount())
+                .paymentMethod(entity.getPaymentMethod())
                 .build();
     }
 }

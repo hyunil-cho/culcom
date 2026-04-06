@@ -45,7 +45,7 @@ export default function AttendanceDetailPage() {
       <div className="staff-view-container">
         <div className="back-nav">
           <button className="btn-back" onClick={() => router.push(ROUTES.COMPLEX_ATTENDANCE)}>
-            <span>⬅</span> 전체 현황 리스트로
+            <span>⬅</span> 통합팀 현황 관리로
           </button>
         </div>
 

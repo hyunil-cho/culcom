@@ -152,6 +152,32 @@
         JOIN complex_classes c ON c.seq = cl.class_seq
         LEFT JOIN complex_class_time_slots t ON t.seq = c.time_slot_seq
         WHERE cl.staff_seq = #{staffSeq}
+
+        UNION ALL
+
+        /* 정보 변경 */
+        SELECT
+            'INFO_CHANGE' AS type,
+            DATE_FORMAT(lg.created_date, '%Y-%m-%d') AS date,
+            CONCAT(lg.field_name, ' 변경') AS title,
+            CONCAT(COALESCE(lg.old_value, '(없음)'), ' → ', COALESCE(lg.new_value, '(없음)')) AS detail,
+            '변경' AS status
+        FROM complex_staff_change_logs lg
+        WHERE lg.staff_seq = #{staffSeq}
+          AND lg.change_type = 'INFO_CHANGE'
+
+        UNION ALL
+
+        /* 환불정보 변경 */
+        SELECT
+            'REFUND_CHANGE' AS type,
+            DATE_FORMAT(lg.created_date, '%Y-%m-%d') AS date,
+            CONCAT('환불정보 ', lg.field_name, ' 변경') AS title,
+            CONCAT(COALESCE(lg.old_value, '(없음)'), ' → ', COALESCE(lg.new_value, '(없음)')) AS detail,
+            '변경' AS status
+        FROM complex_staff_change_logs lg
+        WHERE lg.staff_seq = #{staffSeq}
+          AND lg.change_type = 'REFUND_CHANGE'
     </sql>
 
     <select id="selectStaffTimeline" resultType="com.culcom.dto.complex.member.MemberActivityTimelineItem">

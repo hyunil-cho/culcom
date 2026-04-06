@@ -313,4 +313,19 @@
           AND c.branch_seq = #{branchSeq}
     </select>
 
+    <!--
+      전체 스태프 출석율 요약 (fromDate 이후)
+    -->
+    <select id="selectAllStaffAttendanceRates" resultType="com.culcom.dto.complex.attendance.StaffAttendanceRateSummary">
+        SELECT
+            a.staff_seq                                          AS staffSeq,
+            COUNT(*)                                             AS totalCount,
+            SUM(CASE WHEN a.status = '출석' THEN 1 ELSE 0 END)  AS presentCount
+        FROM complex_staff_attendance a
+        JOIN complex_classes c ON c.seq = a.class_seq
+        WHERE c.branch_seq = #{branchSeq}
+          AND a.attendance_date &gt;= #{fromDate}
+        GROUP BY a.staff_seq
+    </select>
+
 </mapper>

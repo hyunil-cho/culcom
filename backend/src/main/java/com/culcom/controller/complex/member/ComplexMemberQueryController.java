@@ -14,7 +14,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/complex/members")
@@ -36,6 +39,21 @@ public class ComplexMemberQueryController {
 
         List<ComplexMemberResponse> list = complexMemberQueryMapper.search(branchSeq, keyword, offset, size);
         int total = complexMemberQueryMapper.count(branchSeq, keyword);
+
+        // 출석 기록 조회 및 매핑
+        if (!list.isEmpty()) {
+            List<Long> memberSeqs = list.stream().map(ComplexMemberResponse::getSeq).toList();
+            List<Map<String, Object>> historyRows = complexMemberQueryMapper.selectAttendanceHistory(memberSeqs);
+            Map<Long, List<String>> historyMap = new HashMap<>();
+            for (Map<String, Object> row : historyRows) {
+                Long memberSeq = ((Number) row.get("memberSeq")).longValue();
+                String status = (String) row.get("status");
+                historyMap.computeIfAbsent(memberSeq, k -> new ArrayList<>()).add(status);
+            }
+            for (ComplexMemberResponse m : list) {
+                m.setAttendanceHistory(historyMap.getOrDefault(m.getSeq(), List.of()));
+            }
+        }
 
         Page<ComplexMemberResponse> result = new PageImpl<>(list, PageRequest.of(page, size), total);
         return ResponseEntity.ok(ApiResponse.ok(result));

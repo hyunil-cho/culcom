@@ -9,6 +9,10 @@ import java.util.List;
 
 public interface ComplexMemberClassMappingRepository extends JpaRepository<ComplexMemberClassMapping, Long> {
 
+    List<ComplexMemberClassMapping> findByMemberSeq(Long memberSeq);
+
+    void deleteByMemberSeq(Long memberSeq);
+
     @Query("SELECT m FROM ComplexMemberClassMapping m " +
            "JOIN FETCH m.member " +
            "JOIN FETCH m.complexClass c " +

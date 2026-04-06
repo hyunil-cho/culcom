@@ -194,4 +194,16 @@ public class AttendanceViewController {
         AttendanceHistorySummary summary = attendanceViewQueryMapper.selectStaffAttendanceSummary(branchSeq, staffSeq);
         return ResponseEntity.ok(ApiResponse.ok(summary));
     }
+
+    // ── 전체 스태프 출석율 요약 ──
+
+    @GetMapping("/history/staff-rates")
+    public ResponseEntity<ApiResponse<List<StaffAttendanceRateSummary>>> staffAttendanceRates(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @RequestParam(defaultValue = "3") int months) {
+        Long branchSeq = principal.getSelectedBranchSeq();
+        LocalDate fromDate = LocalDate.now().minusMonths(months);
+        List<StaffAttendanceRateSummary> rates = attendanceViewQueryMapper.selectAllStaffAttendanceRates(branchSeq, fromDate);
+        return ResponseEntity.ok(ApiResponse.ok(rates));
+    }
 }
