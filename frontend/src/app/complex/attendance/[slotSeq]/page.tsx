@@ -8,6 +8,7 @@ import { useHighlightSearch } from '@/lib/useHighlightSearch';
 import HighlightSearchBar from '@/components/ui/HighlightSearchBar';
 import { useMessageModal } from '../../hooks/useMessageModal';
 import { calcHistoryRate, RateBadge } from '../components/AttendanceRateBadge';
+import { AttendanceHistoryCells } from '@/hooks/useAttendanceHistoryColumn';
 import { MessageButton } from '../components/MessageButton';
 import '../attendance.css';
 
@@ -97,7 +98,6 @@ export default function AttendanceDetailPage() {
                     {cls.members.map((m, i) => {
                       const remaining = (m.totalCount ?? 0) - (m.usedCount ?? 0);
                       const stats = m.totalCount != null ? `${m.usedCount ?? 0}회 사용 / ${Math.max(0, remaining)}회 남음` : '';
-                      const history = m.attendanceHistory || [];
 
                       return (
                         <tr key={`${m.memberSeq}-${i}`} style={m.staff ? { background: '#fff8f0' } : {}}>
@@ -113,14 +113,7 @@ export default function AttendanceDetailPage() {
                           <td className="col-stats">{stats}</td>
                           <td>{m.membershipName || '-'}</td>
                           <td>
-                            <div className="history-grid">
-                              {history.map((h, hi) => (
-                                <div key={hi} className={`history-cell ${h === 'O' ? 'present' : h === '△' ? 'postponed' : ''}`}>{h}</div>
-                              ))}
-                              {Array.from({ length: Math.max(0, 14 - history.length) }).map((_, fi) => (
-                                <div key={`empty-${fi}`} className="history-cell"></div>
-                              ))}
-                            </div>
+                            <AttendanceHistoryCells history={m.attendanceHistory} size={14} />
                           </td>
                         </tr>
                       );

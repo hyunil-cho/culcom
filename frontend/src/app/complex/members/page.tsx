@@ -13,6 +13,7 @@ import RefundLinkModal from './components/RefundLinkModal';
 import PostponementLinkModal from './components/PostponementLinkModal';
 import MembershipLinkModal from './components/MembershipLinkModal';
 import { useAttendanceHistory } from '@/lib/useAttendanceHistory';
+import { useAttendanceHistoryColumn } from '@/hooks/useAttendanceHistoryColumn';
 
 const DEFAULTS = { page: '0', keyword: '' };
 
@@ -34,6 +35,7 @@ function MembersContent() {
   const [refundModal, setRefundModal] = useState<{ seq: number; name: string; phone: string } | null>(null);
   const [postponeModal, setPostponeModal] = useState<{ seq: number; name: string; phone: string } | null>(null);
   const { column: historyColumn, modal: historyModal } = useAttendanceHistory<ComplexMember>('member');
+  const recentHistoryColumn = useAttendanceHistoryColumn<ComplexMember>();
 
   const load = useCallback(async () => {
     const apiParams = new URLSearchParams({ page: String(page), size: '20' });
@@ -89,30 +91,7 @@ function MembersContent() {
     { header: '인터뷰어', render: (m) => <span style={{ color: '#333', fontWeight: 600 }}>{m.interviewer || ''}</span> },
     { header: '등록일자', render: (m) => <span style={{ fontSize: '0.75rem', color: '#666' }}>{m.createdDate?.split('T')[0] ?? ''}</span> },
     { header: '수정일자', render: (m) => <span style={{ fontSize: '0.75rem', color: '#666' }}>{m.lastUpdateDate?.split('T')[0] ?? ''}</span> },
-    {
-      header: '최근 출석기록', render: (m) => {
-        const history = m.attendanceHistory || [];
-        return (
-          <div style={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-            {history.map((h, i) => (
-              <div key={i} style={{
-                width: 20, height: 20, border: '1px solid #dee2e6', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', fontSize: '0.65rem', fontWeight: 'bold',
-                background: h === 'O' ? '#2ecc71' : h === '△' ? '#fff3cd' : '#fff',
-                color: h === 'O' ? '#fff' : h === '△' ? '#856404' : '#adb5bd',
-                borderColor: h === 'O' ? '#27ae60' : h === '△' ? '#ffeeba' : '#dee2e6',
-              }}>{h}</div>
-            ))}
-            {Array.from({ length: Math.max(0, 14 - history.length) }).map((_, i) => (
-              <div key={`e${i}`} style={{
-                width: 20, height: 20, border: '1px solid #dee2e6', background: '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }} />
-            ))}
-          </div>
-        );
-      },
-    },
+    recentHistoryColumn,
   ];
 
   return (
