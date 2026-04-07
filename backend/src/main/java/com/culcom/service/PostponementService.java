@@ -8,7 +8,6 @@ import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.postponement.ComplexPostponementReason;
 import com.culcom.entity.complex.postponement.ComplexPostponementRequest;
 import com.culcom.entity.enums.ActivityEventType;
-import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.enums.RequestStatus;
 import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
@@ -77,7 +76,7 @@ public class PostponementService {
             ComplexMemberMembership mm = req.getMemberMembership();
             if (mm != null) {
                 mm.setPostponeUsed(mm.getPostponeUsed() + 1);
-                mm.setStatus(MembershipStatus.연기);
+                mm.setIsActive(false);
                 complexMemberMembershipRepository.save(mm);
             }
         }
@@ -90,7 +89,8 @@ public class PostponementService {
             if (status == RequestStatus.반려 && rejectReason != null) {
                 note += " (사유: " + rejectReason + ")";
             }
-            eventPublisher.publishEvent(ActivityEvent.of(req.getMember(), eventType, note));
+            Long mmSeq = req.getMemberMembership() != null ? req.getMemberMembership().getSeq() : null;
+            eventPublisher.publishEvent(ActivityEvent.ofMembership(req.getMember(), eventType, mmSeq, note));
         }
 
         return PostponementResponse.from(req);

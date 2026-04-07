@@ -7,7 +7,6 @@ import com.culcom.entity.complex.member.*;
 import com.culcom.entity.product.Membership;
 import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.ActivityFieldType;
-import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.*;
@@ -116,18 +115,19 @@ public class ComplexMemberService {
         if (req.getPaymentMethod() != null) mm.setPaymentMethod(req.getPaymentMethod());
         if (req.getPaymentDate() != null && !req.getPaymentDate().isEmpty())
             mm.setPaymentDate(LocalDateTime.parse(req.getPaymentDate()));
-        String oldStatus = mm.getStatus() != null ? mm.getStatus().name() : null;
-        if (req.getStatus() != null && !req.getStatus().isEmpty()) {
-            mm.setStatus(MembershipStatus.valueOf(req.getStatus()));
+        Boolean oldActive = mm.getIsActive();
+        if (req.getIsActive() != null) {
+            mm.setIsActive(req.getIsActive());
         }
 
         memberMembershipRepository.save(mm);
 
-        String newStatus = mm.getStatus() != null ? mm.getStatus().name() : null;
-        if (!Objects.equals(oldStatus, newStatus)) {
-            eventPublisher.publishEvent(ActivityEvent.withChange(
-                    mm.getMember(), ActivityEventType.MEMBERSHIP_UPDATE,
-                    ActivityFieldType.STATUS, oldStatus, newStatus));
+        if (!Objects.equals(oldActive, mm.getIsActive())) {
+            eventPublisher.publishEvent(ActivityEvent.withMembershipChange(
+                    mm.getMember(), ActivityEventType.MEMBERSHIP_UPDATE, mm.getSeq(),
+                    ActivityFieldType.STATUS,
+                    Boolean.TRUE.equals(oldActive) ? "사용가능" : "사용불가",
+                    Boolean.TRUE.equals(mm.getIsActive()) ? "사용가능" : "사용불가"));
         }
 
         return ComplexMemberMembershipResponse.from(mm);
@@ -140,8 +140,9 @@ public class ComplexMemberService {
         if (mm.getMember() == null || !mm.getMember().getSeq().equals(memberSeq)) {
             throw new EntityNotFoundException("멤버십");
         }
-        eventPublisher.publishEvent(ActivityEvent.of(
-                mm.getMember(), ActivityEventType.MEMBERSHIP_DELETE, mm.getMembership().getName() + " 멤버십 삭제"));
+        eventPublisher.publishEvent(ActivityEvent.ofMembership(
+                mm.getMember(), ActivityEventType.MEMBERSHIP_DELETE, mm.getSeq(),
+                mm.getMembership().getName() + " 멤버십 삭제"));
 
         memberMembershipRepository.delete(mm);
     }
@@ -159,10 +160,6 @@ public class ComplexMemberService {
                 ? LocalDate.parse(req.getExpiryDate()) : startDate.plusDays(membership.getDuration());
         LocalDateTime paymentDate = req.getPaymentDate() != null && !req.getPaymentDate().isEmpty()
                 ? LocalDateTime.parse(req.getPaymentDate()) : null;
-        MembershipStatus status = MembershipStatus.활성;
-        if (req.getStatus() != null && !req.getStatus().isEmpty()) {
-            status = MembershipStatus.valueOf(req.getStatus());
-        }
 
         ComplexMemberMembership mm = ComplexMemberMembership.builder()
                 .member(member)
@@ -174,7 +171,7 @@ public class ComplexMemberService {
                 .depositAmount(req.getDepositAmount())
                 .paymentMethod(req.getPaymentMethod())
                 .paymentDate(paymentDate)
-                .status(status)
+                .isActive(req.getIsActive() != null ? req.getIsActive() : true)
                 .build();
 
         if (member.getJoinDate() == null) {
@@ -184,8 +181,9 @@ public class ComplexMemberService {
 
         memberMembershipRepository.save(mm);
 
-        eventPublisher.publishEvent(ActivityEvent.of(
-                member, ActivityEventType.MEMBERSHIP_ASSIGN, membership.getName() + " 멤버십 등록"));
+        eventPublisher.publishEvent(ActivityEvent.ofMembership(
+                member, ActivityEventType.MEMBERSHIP_ASSIGN, mm.getSeq(),
+                membership.getName() + " 멤버십 등록"));
 
         return ComplexMemberMembershipResponse.from(mm);
     }

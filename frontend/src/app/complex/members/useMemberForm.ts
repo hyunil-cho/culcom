@@ -58,9 +58,9 @@ export function useMemberForm(seq?: number) {
           expiryDate: ms.expiryDate ?? '',
           price: ms.price ?? '',
           paymentDate: ms.paymentDate ?? '',
-          status: ms.status ?? '',
           depositAmount: ms.depositAmount ?? '',
           paymentMethod: ms.paymentMethod ?? '',
+          isActive: ms.isActive ?? true,
         });
         setMemberMembershipSeq(ms.seq);
       }
@@ -132,9 +132,9 @@ export function useMemberForm(seq?: number) {
       expiryDate: msForm.expiryDate || undefined,
       price: msForm.price || undefined,
       paymentDate: msForm.paymentDate || undefined,
-      status: msForm.status || undefined,
       depositAmount: msForm.depositAmount || undefined,
       paymentMethod: (msForm.paymentMethod && msForm.paymentMethod !== '기타') ? msForm.paymentMethod : undefined,
+      isActive: msForm.isActive,
     };
     if (memberMembershipSeq) {
       await memberApi.updateMembership(memberSeq, memberMembershipSeq, msData);

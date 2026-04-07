@@ -8,7 +8,6 @@ import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.postponement.ComplexPostponementReason;
 import com.culcom.entity.complex.postponement.ComplexPostponementRequest;
 import com.culcom.entity.enums.ActivityEventType;
-import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.enums.RequestStatus;
 import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
@@ -54,7 +53,7 @@ public class PublicPostponementService {
         List<MemberInfo> memberInfos = members.stream().map(m -> {
             // 멤버십: 맵에서 조회 (추가 쿼리 없음)
             List<MembershipInfo> msInfos = membershipMap.getOrDefault(m.getSeq(), List.of()).stream()
-                    .filter(ms -> ms.getStatus() == MembershipStatus.활성)
+                    .filter(ComplexMemberMembership::isUsable)
                     .map(ms -> new MembershipInfo(
                             ms.getSeq(),
                             ms.getMembership().getName(),

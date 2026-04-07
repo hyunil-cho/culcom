@@ -67,7 +67,7 @@ export interface MemberMembershipRequest {
   depositAmount?: string;
   paymentMethod?: string;
   paymentDate?: string;
-  status?: string;
+  isActive?: boolean;
 }
 
 export interface MemberMembershipResponse {
@@ -85,7 +85,7 @@ export interface MemberMembershipResponse {
   depositAmount: string | null;
   paymentMethod: string | null;
   paymentDate: string | null;
-  status: string;
+  isActive: boolean;
   createdDate: string;
 }
 

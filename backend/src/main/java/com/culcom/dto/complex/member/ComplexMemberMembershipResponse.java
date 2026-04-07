@@ -1,7 +1,6 @@
 package com.culcom.dto.complex.member;
 
 import com.culcom.entity.complex.member.ComplexMemberMembership;
-import com.culcom.entity.enums.MembershipStatus;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -25,7 +24,7 @@ public class ComplexMemberMembershipResponse {
     private String depositAmount;
     private String paymentMethod;
     private LocalDateTime paymentDate;
-    private MembershipStatus status;
+    private Boolean isActive;
     private LocalDateTime createdDate;
 
     public static ComplexMemberMembershipResponse from(ComplexMemberMembership entity) {
@@ -44,7 +43,7 @@ public class ComplexMemberMembershipResponse {
                 .depositAmount(entity.getDepositAmount())
                 .paymentMethod(entity.getPaymentMethod())
                 .paymentDate(entity.getPaymentDate())
-                .status(entity.getStatus())
+                .isActive(entity.getIsActive())
                 .createdDate(entity.getCreatedDate())
                 .build();
     }

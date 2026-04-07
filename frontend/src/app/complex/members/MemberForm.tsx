@@ -41,9 +41,9 @@ export interface MembershipFormData {
   expiryDate: string;
   price: string;
   paymentDate: string;
-  status: string;
   depositAmount: string;
   paymentMethod: string;
+  isActive: boolean;
 }
 
 export interface ClassAssignData {
@@ -64,7 +64,8 @@ function nowDateTimeLocal(): string {
 
 export const emptyMembershipForm: MembershipFormData = {
   membershipSeq: '', startDate: '', expiryDate: '', price: '',
-  paymentDate: nowDateTimeLocal(), status: '', depositAmount: '', paymentMethod: '',
+  paymentDate: nowDateTimeLocal(), depositAmount: '', paymentMethod: '',
+  isActive: true,
 };
 
 export const emptyClassAssign: ClassAssignData = { timeSlotSeq: '', classSeq: '' };
@@ -88,14 +89,6 @@ const SIGNUP_CHANNELS = ['인스타그램', '네이버 검색', '지인 소개',
 const PAYMENT_METHODS = ['카드', '온라인구독', '온라인신용', '토스링크', '이체(개인통장)', '이체(법인통장)', '현금'];
 const STAFF_STATUS_OPTIONS = ['재직', '휴직', '퇴직'] as const;
 const BANK_OPTIONS = ['국민은행', '신한은행', '우리은행', '하나은행', '농협은행', '기업은행', '카카오뱅크', '토스뱅크', '케이뱅크'] as const;
-const STATUSES: { value: string; label: string }[] = [
-  { value: '활성', label: '활성' },
-  { value: '미가입예정', label: '미가입/예정' },
-  { value: '디파짓', label: '디파짓' },
-  { value: '양도', label: '양도' },
-  { value: '가입완불', label: '가입(완불)' },
-];
-
 type TabId = 'basic' | 'class';
 
 const TAB_STYLE = {
@@ -332,6 +325,15 @@ export default function MemberForm({
                   ))}
                 </Select>
               </FormField>
+              <FormField label="사용 개시" hint="* 끄면 출석/연기/환불에서 사용할 수 없게 됩니다.">
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={membershipForm.isActive}
+                    onChange={(e) => onMembershipChange({ ...membershipForm, isActive: e.target.checked })} />
+                  <span style={{ fontSize: '0.9rem', color: membershipForm.isActive ? '#2e7d32' : '#999', fontWeight: 600 }}>
+                    {membershipForm.isActive ? '사용 가능' : '사용 불가'}
+                  </span>
+                </label>
+              </FormField>
               {/* 멤버십 요약 (선택 시 표시) */}
               {membershipForm?.membershipSeq && (() => {
                 const ms = memberships.find(m => m.seq === Number(membershipForm.membershipSeq));
@@ -345,6 +347,7 @@ export default function MemberForm({
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px', fontSize: '0.85rem', color: '#495057' }}>
                         <div><strong>등급:</strong> {ms ? ms.name : '-'}</div>
+                        <div><strong>사용 가능:</strong> {membershipForm.isActive ? '예' : '아니오'}</div>
                         <div><strong>기간:</strong> {ms ? `${ms.duration}일` : '-'}</div>
                         <div><strong>횟수:</strong> {ms ? `${ms.count}회` : '-'}</div>
                         <div><strong>기준 금액:</strong> {ms ? `${ms.price.toLocaleString()}원` : '-'}</div>
@@ -373,23 +376,10 @@ export default function MemberForm({
                   </label>
                 </div>
               </FormField>
-              <FormField label="상태">
-                <Select value={membershipForm.status}
-                  onChange={(e) => {
-                    const updated = { ...membershipForm, status: e.target.value };
-                    if (e.target.value !== '디파짓') updated.depositAmount = '';
-                    onMembershipChange(updated);
-                  }}>
-                  <option value="">-- 선택 --</option>
-                  {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                </Select>
+              <FormField label="디파짓 납부금액">
+                <CurrencyInput placeholder="예: 100,000" value={membershipForm.depositAmount}
+                  onValueChange={(v) => onMembershipChange({ ...membershipForm, depositAmount: v })} />
               </FormField>
-              {membershipForm.status === '디파짓' && (
-                <FormField label="디파짓 납부금액">
-                  <CurrencyInput placeholder="예: 100,000" value={membershipForm.depositAmount}
-                    onValueChange={(v) => onMembershipChange({ ...membershipForm, depositAmount: v })} />
-                </FormField>
-              )}
               <FormField label="결제방법">
                 <div>
                   <Select value={paymentSelectValue}

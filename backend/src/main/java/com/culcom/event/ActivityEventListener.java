@@ -22,6 +22,7 @@ public class ActivityEventListener {
                 .note(event.getNote())
                 .changeDetail(event.getChangeDetail())
                 .attendanceDetail(event.getAttendanceDetail())
+                .memberMembershipSeq(event.getMemberMembershipSeq())
                 .build());
     }
 }

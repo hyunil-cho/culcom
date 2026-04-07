@@ -4,7 +4,6 @@ import com.culcom.dto.ApiResponse;
 import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberAttendance;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
-import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.repository.ComplexMemberAttendanceRepository;
 import com.culcom.repository.ComplexMemberMembershipRepository;
 import com.culcom.repository.ComplexMemberRepository;
@@ -47,7 +46,7 @@ public class PublicMembershipController {
 
                     return new MembershipCheckResponse.MembershipDetail(
                             mm.getMembership().getName(),
-                            mm.getStatus().name(),
+                            Boolean.TRUE.equals(mm.getIsActive()) ? "사용가능" : "사용불가",
                             mm.getStartDate() != null ? mm.getStartDate().toString() : "",
                             mm.getExpiryDate() != null ? mm.getExpiryDate().toString() : "",
                             mm.getTotalCount(), mm.getUsedCount(),

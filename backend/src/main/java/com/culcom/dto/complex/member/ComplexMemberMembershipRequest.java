@@ -15,5 +15,5 @@ public class ComplexMemberMembershipRequest {
     private String depositAmount;
     private String paymentMethod;
     private String paymentDate;
-    private String status;
+    private Boolean isActive;
 }

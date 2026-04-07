@@ -10,7 +10,6 @@ import com.culcom.entity.complex.member.ComplexMemberClassMapping;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.member.logs.AttendanceDetail;
 import com.culcom.entity.enums.AttendanceStatus;
-import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.*;
@@ -101,14 +100,11 @@ public class AttendanceService {
         List<Long> memberSeqs = req.getMembers().stream()
                 .map(BulkAttendanceRequest.BulkMember::getMemberSeq).toList();
 
-        // 배치 프리로드: 멤버십(연기+활성) + 오늘 출석 기록
-        Map<Long, ComplexMemberMembership> postponedMap = new HashMap<>();
-        Map<Long, ComplexMemberMembership> activeMap = new HashMap<>();
+        // 배치 프리로드: 사용 가능 멤버십 + 오늘 출석 기록 (회원-멤버십은 1:1)
+        Map<Long, ComplexMemberMembership> usableMap = new HashMap<>();
         if (!memberSeqs.isEmpty()) {
-            memberMembershipRepository.findByMemberSeqsAndStatus(memberSeqs, MembershipStatus.연기)
-                    .forEach(mm -> postponedMap.putIfAbsent(mm.getMember().getSeq(), mm));
-            memberMembershipRepository.findByMemberSeqsAndStatus(memberSeqs, MembershipStatus.활성)
-                    .forEach(mm -> activeMap.putIfAbsent(mm.getMember().getSeq(), mm));
+            memberMembershipRepository.findActiveByMemberSeqs(memberSeqs)
+                    .forEach(mm -> usableMap.putIfAbsent(mm.getMember().getSeq(), mm));
         }
         Map<Long, ComplexMemberAttendance> existingAttendanceMap = new HashMap<>();
         attendanceRepository.findByClassSeqsAndDate(List.of(classSeq), today)
@@ -122,33 +118,21 @@ public class AttendanceService {
 
         List<BulkAttendanceResultResponse> results = new ArrayList<>();
         for (BulkAttendanceRequest.BulkMember bm : req.getMembers()) {
-            results.add(processMemberAttendance(bm, classSeq, today, postponedMap, activeMap, existingAttendanceMap, nameMap));
+            results.add(processMemberAttendance(bm, classSeq, today, usableMap, existingAttendanceMap, nameMap));
         }
         return results;
     }
 
     private BulkAttendanceResultResponse processMemberAttendance(
             BulkAttendanceRequest.BulkMember bm, Long classSeq, LocalDate today,
-            Map<Long, ComplexMemberMembership> postponedMap,
-            Map<Long, ComplexMemberMembership> activeMap,
+            Map<Long, ComplexMemberMembership> usableMap,
             Map<Long, ComplexMemberAttendance> existingAttendanceMap,
             Map<Long, String> nameMap) {
 
         String name = nameMap.getOrDefault(bm.getMemberSeq(), "");
 
-        // 연기 확인 (프리로드 맵)
-        ComplexMemberMembership pmm = postponedMap.get(bm.getMemberSeq());
-        if (pmm != null) {
-            publishAttendance(bm.getMemberSeq(), classSeq, AttendanceStatus.연기, pmm, 0, "멤버십 연기 중 — 출석 불가");
-            return BulkAttendanceResultResponse.builder()
-                    .memberSeq(bm.getMemberSeq())
-                    .name(name)
-                    .status("연기")
-                    .build();
-        }
-
-        // 활성 멤버십 확인 (프리로드 맵)
-        ComplexMemberMembership mm = activeMap.get(bm.getMemberSeq());
+        // 사용 가능 멤버십 확인
+        ComplexMemberMembership mm = usableMap.get(bm.getMemberSeq());
         if (mm == null) {
             return BulkAttendanceResultResponse.builder()
                     .memberSeq(bm.getMemberSeq())

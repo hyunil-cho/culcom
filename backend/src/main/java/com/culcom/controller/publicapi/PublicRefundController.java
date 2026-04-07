@@ -6,7 +6,6 @@ import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.refund.ComplexRefundRequest;
 import com.culcom.entity.enums.ActivityEventType;
-import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.enums.RequestStatus;
 import com.culcom.event.ActivityEvent;
 import com.culcom.repository.ComplexMemberMembershipRepository;
@@ -49,7 +48,7 @@ public class PublicRefundController {
         List<MemberInfo> memberInfos = members.stream().map(m -> {
             List<ComplexMemberMembership> memberships = membershipMap.getOrDefault(m.getSeq(), List.of());
             List<MembershipInfo> msInfos = memberships.stream()
-                    .filter(mm -> mm.getStatus() == MembershipStatus.활성 || mm.getStatus() == MembershipStatus.연기)
+                    .filter(mm -> Boolean.TRUE.equals(mm.getIsActive()))
                     .map(mm -> new MembershipInfo(
                             mm.getSeq(), mm.getMembership().getName(),
                             mm.getStartDate() != null ? mm.getStartDate().toString() : "",

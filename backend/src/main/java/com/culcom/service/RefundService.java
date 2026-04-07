@@ -8,7 +8,6 @@ import com.culcom.entity.complex.refund.ComplexRefundReason;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.refund.ComplexRefundRequest;
 import com.culcom.entity.enums.ActivityEventType;
-import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.enums.RequestStatus;
 import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
@@ -77,7 +76,7 @@ public class RefundService {
         if (status == RequestStatus.승인) {
             ComplexMemberMembership mm = req.getMemberMembership();
             if (mm != null) {
-                mm.setStatus(MembershipStatus.환불);
+                mm.setIsActive(false);
                 complexMemberMembershipRepository.save(mm);
             }
         }
@@ -90,7 +89,8 @@ public class RefundService {
             if (status == RequestStatus.반려 && rejectReason != null) {
                 note += " (사유: " + rejectReason + ")";
             }
-            eventPublisher.publishEvent(ActivityEvent.of(req.getMember(), eventType, note));
+            Long mmSeq = req.getMemberMembership() != null ? req.getMemberMembership().getSeq() : null;
+            eventPublisher.publishEvent(ActivityEvent.ofMembership(req.getMember(), eventType, mmSeq, note));
         }
 
         return RefundResponse.from(req);
