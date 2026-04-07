@@ -13,6 +13,14 @@ import java.time.LocalDateTime;
 @Builder
 public class ComplexMember extends BaseTimeEntity {
 
+    /** 스태프→일반회원 전환 차단: 이미 staffInfo가 있는 회원의 staffInfo를 null로 설정할 수 없음. */
+    public void setStaffInfo(ComplexStaffInfo staffInfo) {
+        if (this.staffInfo != null && staffInfo == null) {
+            throw new IllegalStateException("스태프를 일반 회원으로 전환할 수 없습니다.");
+        }
+        this.staffInfo = staffInfo;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seq;

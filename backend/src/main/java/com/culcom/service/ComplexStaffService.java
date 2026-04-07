@@ -6,12 +6,10 @@ import com.culcom.dto.complex.member.ComplexStaffRequest;
 import com.culcom.dto.complex.member.ComplexStaffResponse;
 import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.member.ComplexMember;
-import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.member.ComplexStaffInfo;
 import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.ActivityFieldType;
 import com.culcom.entity.enums.StaffStatus;
-import com.culcom.entity.product.Membership;
 import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.*;
@@ -20,7 +18,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
@@ -30,8 +27,6 @@ public class ComplexStaffService {
 
     private final ComplexMemberRepository memberRepository;
     private final ComplexStaffInfoRepository staffInfoRepository;
-    private final ComplexMemberMembershipRepository memberMembershipRepository;
-    private final MembershipRepository membershipRepository;
     private final ComplexClassRepository classRepository;
     private final BranchRepository branchRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -72,12 +67,7 @@ public class ComplexStaffService {
                 .orElseThrow(() -> new EntityNotFoundException("스태프"));
         ComplexStaffInfo staffInfo = member.getStaffInfo();
         if (staffInfo == null) {
-            staffInfo = ComplexStaffInfo.builder()
-                    .member(member)
-                    .status(req.getStatus() != null ? req.getStatus() : StaffStatus.재직)
-                    .build();
-            member.setStaffInfo(staffInfo);
-            assignInternalMembership(member);
+            throw new IllegalStateException("일반 회원을 스태프로 전환할 수 없습니다.");
         }
 
         StaffStatus oldStatus = staffInfo.getStatus();
@@ -179,22 +169,4 @@ public class ComplexStaffService {
         }
     }
 
-    private void assignInternalMembership(ComplexMember member) {
-        // 이미 internal 멤버십이 있으면 스킵
-        boolean hasInternal = memberMembershipRepository.findByMemberSeq(member.getSeq())
-                .stream().anyMatch(ComplexMemberMembership::getInternal);
-        if (hasInternal) return;
-
-        Membership staffMembership = membershipRepository.findByName("스태프 무제한")
-                .orElseThrow(() -> new EntityNotFoundException("스태프 무제한 멤버십"));
-
-        memberMembershipRepository.save(ComplexMemberMembership.builder()
-                .member(member)
-                .membership(staffMembership)
-                .startDate(LocalDate.now())
-                .expiryDate(LocalDate.of(2099, 12, 31))
-                .totalCount(999999)
-                .internal(true)
-                .build());
-    }
 }
