@@ -63,8 +63,6 @@ export default function PostponementsPage() {
     { header: '요청일', render: (r) => r.createdDate?.split('T')[0] ?? '-' },
     { header: '요청회원', render: (r) => <strong>{r.memberName}</strong> },
     { header: '연락처', render: (r) => r.phoneNumber },
-    { header: '시간대', render: (r) => <span className="badge badge-success" style={{ fontSize: '0.8rem' }}>{r.timeSlot}</span> },
-    { header: '현재수업', render: (r) => r.currentClass },
     { header: '연기기간', render: (r) => <span className={s.dateRange}>{r.startDate} ~ {r.endDate}</span> },
     { header: '사유', render: (r) => <span className={s.reasonText}>{r.reason}</span> },
     { header: '상태', render: (r) => <span className={`badge ${STATUS_BADGE[r.status] ?? ''}`}>{r.status}</span> },

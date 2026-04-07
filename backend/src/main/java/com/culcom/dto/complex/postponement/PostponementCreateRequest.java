@@ -15,8 +15,6 @@ public class PostponementCreateRequest {
     private Long memberMembershipSeq;
     private String memberName;
     private String phoneNumber;
-    private String timeSlot;
-    private String currentClass;
     private LocalDate startDate;
     private LocalDate endDate;
     private String reason;

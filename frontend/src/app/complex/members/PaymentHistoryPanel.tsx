@@ -5,28 +5,9 @@ import {
   memberApi,
   type MemberMembershipResponse,
   type MembershipPaymentResponse,
-  type PaymentKind,
-  type PaymentMethod,
 } from '@/lib/api';
+import { usePaymentOptions } from '@/lib/usePaymentOptions';
 import PaymentAddModal from './outstanding/PaymentAddModal';
-
-const KIND_LABEL: Record<PaymentKind, string> = {
-  DEPOSIT: '디포짓',
-  BALANCE: '잔금',
-  ADDITIONAL: '추가납부',
-  REFUND: '환불정정',
-};
-
-const METHOD_LABEL: Record<PaymentMethod, string> = {
-  CARD: '카드',
-  ONLINE_SUBSCRIPTION: '온라인구독',
-  ONLINE_CREDIT: '온라인신용',
-  TOSS_LINK: '토스링크',
-  BANK_TRANSFER_PERSONAL: '이체(개인통장)',
-  BANK_TRANSFER_CORPORATE: '이체(법인통장)',
-  CASH: '현금',
-  OTHER: '기타',
-};
 
 const STATUS_COLOR: Record<string, { bg: string; fg: string; border: string }> = {
   '미정': { bg: '#f1f3f5', fg: '#666', border: '#dee2e6' },
@@ -42,6 +23,10 @@ interface Props {
 }
 
 export default function PaymentHistoryPanel({ memberSeq, memberName }: Props) {
+  const { methods, kinds } = usePaymentOptions();
+  const methodLabel = (v: string | null) => methods.find(m => m.value === v)?.label ?? v ?? '-';
+  const kindLabel = (v: string) => kinds.find(k => k.value === v)?.label ?? v;
+
   const [memberships, setMemberships] = useState<MemberMembershipResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [paymentModal, setPaymentModal] = useState<MemberMembershipResponse | null>(null);
@@ -152,7 +137,8 @@ export default function PaymentHistoryPanel({ memberSeq, memberName }: Props) {
                   </thead>
                   <tbody>
                     {sortedPayments.map(p => (
-                      <PaymentRow key={p.seq} payment={p} />
+                      <PaymentRow key={p.seq} payment={p}
+                        kindLabel={kindLabel(p.kind)} methodLabel={methodLabel(p.method)} />
                     ))}
                   </tbody>
                 </table>
@@ -186,7 +172,11 @@ function Stat({ label, value, color }: { label: string; value: string; color?: s
   );
 }
 
-function PaymentRow({ payment }: { payment: MembershipPaymentResponse }) {
+function PaymentRow({ payment, kindLabel, methodLabel }: {
+  payment: MembershipPaymentResponse;
+  kindLabel: string;
+  methodLabel: string;
+}) {
   const isRefund = payment.kind === 'REFUND' || payment.amount < 0;
   return (
     <tr style={{ borderTop: '1px solid #f1f3f5' }}>
@@ -201,13 +191,13 @@ function PaymentRow({ payment }: { payment: MembershipPaymentResponse }) {
           background: isRefund ? '#fff5f5' : '#eff6ff',
           color: isRefund ? '#e03131' : '#2563eb',
         }}>
-          {KIND_LABEL[payment.kind]}
+          {kindLabel}
         </span>
       </td>
       <td style={{ ...td, textAlign: 'right', fontWeight: 700, color: isRefund ? '#e03131' : '#2e7d32' }}>
         {payment.amount.toLocaleString()}원
       </td>
-      <td style={td}>{payment.method ? METHOD_LABEL[payment.method] : '-'}</td>
+      <td style={td}>{methodLabel}</td>
       <td style={{ ...td, color: '#666' }}>{payment.note || '-'}</td>
     </tr>
   );

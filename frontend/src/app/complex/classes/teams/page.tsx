@@ -9,7 +9,7 @@ import {
   type ComplexMember,
   type ComplexStaff,
 } from '@/lib/api';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ROUTES } from '@/lib/routes';
 import ResultModal from '@/components/ui/ResultModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
@@ -52,6 +52,8 @@ export default function ClassTeamsPage() {
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
   const [pending, setPending] = useState<PendingAction | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialClassSeq = searchParams.get('classSeq');
 
   const openDetail = (memberSeq: number) => {
     router.push(ROUTES.COMPLEX_MEMBER_EDIT(memberSeq));
@@ -59,7 +61,13 @@ export default function ClassTeamsPage() {
 
   // 초기 로드: 수업/스태프/회원
   useEffect(() => {
-    classApi.list('page=0&size=200').then((res) => setClasses(res.data.content));
+    classApi.list('page=0&size=200').then((res) => {
+      setClasses(res.data.content);
+      if (initialClassSeq) {
+        const target = res.data.content.find((c) => c.seq === Number(initialClassSeq));
+        if (target) setSelectedClass(target);
+      }
+    });
     staffApi.list().then((res) => setStaffs(res.data));
     memberApi.list('page=0&size=500').then((res) => setAllMembers(res.data.content));
   }, []);

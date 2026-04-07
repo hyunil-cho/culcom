@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface MembershipRepository extends JpaRepository<Membership, Long> {
     Optional<Membership> findByName(String name);
     List<Membership> findByIsInternalFalse();
+    Optional<Membership> findFirstByIsInternalTrue();
 }

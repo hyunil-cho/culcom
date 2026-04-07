@@ -38,12 +38,6 @@ public class ComplexPostponementRequest extends BaseTimeEntity {
     @Column(name = "phone_number", nullable = false, length = 20)
     private String phoneNumber;
 
-    @Column(name = "time_slot", nullable = false, length = 200)
-    private String timeSlot;
-
-    @Column(name = "current_class", nullable = false, length = 200)
-    private String currentClass;
-
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 

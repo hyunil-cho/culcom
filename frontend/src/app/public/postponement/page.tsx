@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   publicPostponementApi,
@@ -12,6 +12,10 @@ import { Input, Select, Textarea } from '@/components/ui/FormInput';
 import s from './page.module.css';
 
 export default function PublicPostponementPage() {
+  return <Suspense fallback={null}><PublicPostponementPageInner /></Suspense>;
+}
+
+function PublicPostponementPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -26,8 +30,6 @@ export default function PublicPostponementPage() {
   const [member, setMember] = useState<PublicMemberInfo | null>(null);
   const [selectedMembershipSeq, setSelectedMembershipSeq] = useState<number | null>(null);
 
-  const [currentClass, setCurrentClass] = useState('');
-  const [timeSlot, setTimeSlot] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [reasonSelect, setReasonSelect] = useState('');
@@ -40,10 +42,17 @@ export default function PublicPostponementPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const toDateStr = (d: Date) => d.toISOString().split('T')[0];
   const minStartDate = (() => {
     const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return toDateStr(d);
+  })();
+  const minEndDate = (() => {
+    if (!startDate) return '';
+    const d = new Date(startDate);
     d.setDate(d.getDate() + 14);
-    return d.toISOString().split('T')[0];
+    return toDateStr(d);
   })();
 
   useEffect(() => {
@@ -62,21 +71,19 @@ export default function PublicPostponementPage() {
     if (!member || !selectedMembershipSeq) return;
     const res = await publicPostponementApi.reasons(member.branchSeq);
     if (res.success) setReasons(res.data);
-    setCurrentClass(''); setTimeSlot(''); setStartDate(''); setEndDate(''); setReasonSelect(''); setReasonCustom('');
+    setStartDate(''); setEndDate(''); setReasonSelect(''); setReasonCustom('');
     setStep(3);
   };
 
-  const handleClassChange = (className: string) => {
-    setCurrentClass(className);
-    const cls = member?.classes.find(c => c.name === className);
-    if (cls) setTimeSlot(`${cls.timeSlotName} (${cls.startTime} ~ ${cls.endTime})`);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!member || !selectedMembershipSeq) return;
     if (startDate < minStartDate) {
       setDateError(`연기 시작일은 ${minStartDate} 이후여야 합니다.`);
+      return;
+    }
+    if (endDate < minEndDate) {
+      setDateError(`복귀일은 시작일로부터 최소 2주 후(${minEndDate}) 이후여야 합니다.`);
       return;
     }
     const reason = reasonSelect === '기타' ? reasonCustom.trim() : reasonSelect;
@@ -85,14 +92,13 @@ export default function PublicPostponementPage() {
     const res = await publicPostponementApi.submit({
       name: member.name, phone: member.phoneNumber, branchSeq: member.branchSeq,
       memberSeq: member.seq, memberMembershipSeq: selectedMembershipSeq,
-      timeSlot, currentClass, startDate, endDate, reason,
+      startDate, endDate, reason,
     });
     setSubmitting(false);
     if (res.success) {
       const d = res.data;
       const params = new URLSearchParams({
         name: d.name, phone: d.phone, branchName: d.branchName,
-        timeSlot: d.timeSlot, currentClass: d.currentClass,
         startDate: d.startDate, endDate: d.endDate, reason: d.reason,
       });
       router.push(`${ROUTES.PUBLIC_POSTPONEMENT_SUCCESS}?${params.toString()}`);
@@ -146,20 +152,14 @@ export default function PublicPostponementPage() {
             </div>
 
             <form onSubmit={handleSubmit}>
-              <FormGroup label="수강 중인 수업">
-                <Select value={currentClass} onChange={(e) => handleClassChange(e.target.value)} required>
-                  <option value="">수업을 선택해 주세요</option>
-                  {member.classes.map(c => <option key={c.name} value={c.name}>{c.name} [{c.timeSlotName}]</option>)}
-                </Select>
-              </FormGroup>
-              <FormGroup label="연기 요청 기간">
+<FormGroup label="연기 요청 기간">
                 <p style={{ fontSize: '0.82rem', color: '#4a90e2', marginBottom: 8, fontWeight: 600 }}>
-                  연기 시작일은 오늘로부터 최소 2주 후부터 선택 가능합니다.
+                  시작일은 내일부터, 복귀일은 시작일로부터 최소 2주 후부터 선택 가능합니다.
                 </p>
                 <div className={s.dateRange}>
-                  <Input type="date" value={startDate} min={minStartDate} onChange={(e) => { setStartDate(e.target.value); setDateError(''); }} required />
+                  <Input type="date" value={startDate} min={minStartDate} onChange={(e) => { setStartDate(e.target.value); setEndDate(''); setDateError(''); }} required />
                   <span>~</span>
-                  <Input type="date" value={endDate} min={startDate || minStartDate} onChange={(e) => { setEndDate(e.target.value); setDateError(''); }} required />
+                  <Input type="date" value={endDate} min={minEndDate || minStartDate} disabled={!startDate} onChange={(e) => { setEndDate(e.target.value); setDateError(''); }} required />
                 </div>
                 {dateError && <p style={{ color: '#dc2626', fontSize: '0.82rem', marginTop: 6, fontWeight: 600 }}>{dateError}</p>}
               </FormGroup>

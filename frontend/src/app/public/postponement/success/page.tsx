@@ -9,8 +9,6 @@ function SuccessContent() {
   const name = params.get('name') ?? '';
   const phone = params.get('phone') ?? '';
   const branchName = params.get('branchName') ?? '';
-  const timeSlot = params.get('timeSlot') ?? '';
-  const currentClass = params.get('currentClass') ?? '';
   const startDate = params.get('startDate') ?? '';
   const endDate = params.get('endDate') ?? '';
   const reason = params.get('reason') ?? '';
@@ -37,8 +35,6 @@ function SuccessContent() {
             <InfoRow label="이름" value={name} />
             <InfoRow label="연락처" value={phone} />
             <InfoRow label="참여 지점" value={branchName} />
-            <InfoRow label="수업 시간대" value={timeSlot} />
-            <InfoRow label="수강 수업" value={currentClass} />
             <InfoRow label="연기 기간" value={`${startDate} ~ ${endDate}`} />
             <InfoRow label="연기 사유" value={reason} />
             <tr>

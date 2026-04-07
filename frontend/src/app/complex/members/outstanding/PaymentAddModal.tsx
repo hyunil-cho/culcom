@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { memberApi, type PaymentKind, type PaymentMethod } from '@/lib/api';
+import { usePaymentOptions } from '@/lib/usePaymentOptions';
 import ModalOverlay from '@/components/ui/ModalOverlay';
 
 interface Props {
@@ -14,24 +15,6 @@ interface Props {
   onSaved: () => void;
 }
 
-const KIND_OPTIONS: { value: PaymentKind; label: string }[] = [
-  { value: 'BALANCE', label: '잔금' },
-  { value: 'ADDITIONAL', label: '추가납부' },
-  { value: 'DEPOSIT', label: '디포짓' },
-  { value: 'REFUND', label: '환불정정 (음수)' },
-];
-
-const METHOD_OPTIONS: { value: PaymentMethod; label: string }[] = [
-  { value: 'CARD', label: '카드' },
-  { value: 'ONLINE_SUBSCRIPTION', label: '온라인구독' },
-  { value: 'ONLINE_CREDIT', label: '온라인신용' },
-  { value: 'TOSS_LINK', label: '토스링크' },
-  { value: 'BANK_TRANSFER_PERSONAL', label: '이체(개인통장)' },
-  { value: 'BANK_TRANSFER_CORPORATE', label: '이체(법인통장)' },
-  { value: 'CASH', label: '현금' },
-  { value: 'OTHER', label: '기타' },
-];
-
 function nowLocal(): string {
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -41,6 +24,7 @@ function nowLocal(): string {
 export default function PaymentAddModal({
   memberSeq, memberName, mmSeq, membershipName, outstanding, onClose, onSaved,
 }: Props) {
+  const { methods, kinds } = usePaymentOptions();
   const [kind, setKind] = useState<PaymentKind>('BALANCE');
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState<PaymentMethod | ''>('');
@@ -103,7 +87,11 @@ export default function PaymentAddModal({
         <Row label="구분">
           <select value={kind} onChange={(e) => setKind(e.target.value as PaymentKind)}
             style={inputStyle}>
-            {KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            {kinds.map(o => (
+              <option key={o.value} value={o.value}>
+                {o.value === 'REFUND' ? `${o.label} (음수)` : o.label}
+              </option>
+            ))}
           </select>
         </Row>
 
@@ -129,7 +117,7 @@ export default function PaymentAddModal({
           <select value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod | '')}
             style={inputStyle}>
             <option value="">-- 선택 --</option>
-            {METHOD_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            {methods.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </Row>
 

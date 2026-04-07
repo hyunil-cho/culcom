@@ -2,7 +2,6 @@ package com.culcom.dto.complex.member;
 
 import com.culcom.entity.complex.member.MembershipPayment;
 import com.culcom.entity.enums.PaymentKind;
-import com.culcom.entity.enums.PaymentMethod;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -15,7 +14,7 @@ public class MembershipPaymentResponse {
     private Long memberMembershipSeq;
     private Long amount;
     private LocalDateTime paidDate;
-    private PaymentMethod method;
+    private String method;
     private PaymentKind kind;
     private String note;
     private LocalDateTime createdDate;

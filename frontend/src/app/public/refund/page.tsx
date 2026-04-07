@@ -1,12 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { publicRefundApi, type PublicMemberInfo, type PublicMembershipInfo } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { Input, PhoneInput, Select, Textarea } from '@/components/ui/FormInput';
 
 export default function PublicRefundPage() {
+  return <Suspense fallback={null}><PublicRefundPageInner /></Suspense>;
+}
+
+function PublicRefundPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 

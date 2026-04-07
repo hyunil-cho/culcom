@@ -1,10 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { publicMembershipApi, type MembershipCheckMember } from '@/lib/api';
 
 export default function PublicMembershipPage() {
+  return <Suspense fallback={null}><PublicMembershipPageInner /></Suspense>;
+}
+
+function PublicMembershipPageInner() {
   const searchParams = useSearchParams();
 
   const decoded = (() => {

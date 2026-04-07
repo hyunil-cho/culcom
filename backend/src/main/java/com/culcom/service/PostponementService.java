@@ -40,8 +40,6 @@ public class PostponementService {
         ComplexPostponementRequest entity = ComplexPostponementRequest.builder()
                 .memberName(req.getMemberName())
                 .phoneNumber(req.getPhoneNumber())
-                .timeSlot(req.getTimeSlot())
-                .currentClass(req.getCurrentClass())
                 .startDate(req.getStartDate())
                 .endDate(req.getEndDate())
                 .reason(req.getReason())

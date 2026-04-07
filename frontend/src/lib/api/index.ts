@@ -10,11 +10,14 @@ export { branchApi, type Branch } from './branch';
 export { customerApi, type Customer } from './customer';
 export {
   classApi, memberApi, staffApi, membershipApi, timeslotApi, refundApi,
-  postponementApi, publicPostponementApi, outstandingApi,
+  postponementApi, publicPostponementApi, outstandingApi, paymentOptionsApi,
+  paymentMethodConfigApi, bankConfigApi,
   type ComplexClass, type ComplexClassRequest,
   type ComplexMember, type MemberMembershipRequest, type MemberMembershipResponse, type MemberActivityTimelineItem,
   type MembershipPaymentRequest, type MembershipPaymentResponse,
   type PaymentKind, type PaymentMethod, type OutstandingItem,
+  type EnumOption, type PaymentOptions,
+  type ConfigItem, type ConfigCreateRequest, type ConfigUpdateRequest,
   type ComplexStaff, type StaffRefundInfo,
   type Membership, type MembershipRequest,
   type ClassTimeSlot, type ClassTimeSlotRequest,

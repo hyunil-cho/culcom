@@ -8,8 +8,6 @@ public class PostponementSubmitResponse {
     private String name;
     private String phone;
     private String branchName;
-    private String timeSlot;
-    private String currentClass;
     private String startDate;
     private String endDate;
     private String reason;

@@ -2,7 +2,6 @@ package com.culcom.entity.complex.member;
 
 import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.enums.PaymentKind;
-import com.culcom.entity.enums.PaymentMethod;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -35,9 +34,8 @@ public class MembershipPayment extends BaseTimeEntity {
     @Column(name = "paid_date", nullable = false)
     private LocalDateTime paidDate;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 30)
-    private PaymentMethod method;
+    @Column(length = 50)
+    private String method;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

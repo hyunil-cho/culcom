@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { integrationApi, SmsConfig } from '@/lib/api';
 import { Checkbox } from '@/components/ui/FormInput';
@@ -9,6 +9,10 @@ import { useResultModal } from '@/hooks/useResultModal';
 import s from './page.module.css';
 
 export default function SmsConfigPage() {
+  return <Suspense fallback={null}><SmsConfigPageInner /></Suspense>;
+}
+
+function SmsConfigPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const serviceId = searchParams.get('serviceId');

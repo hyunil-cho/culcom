@@ -17,8 +17,6 @@ public class PostponementSubmitRequest {
     private Long memberSeq;
     @NotNull
     private Long memberMembershipSeq;
-    private String timeSlot;
-    private String currentClass;
     private String startDate;
     private String endDate;
     private String reason;

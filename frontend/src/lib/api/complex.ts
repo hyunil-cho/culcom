@@ -76,9 +76,8 @@ export interface MemberMembershipRequest {
 }
 
 export type PaymentKind = 'DEPOSIT' | 'BALANCE' | 'ADDITIONAL' | 'REFUND';
-export type PaymentMethod =
-  | 'CARD' | 'ONLINE_SUBSCRIPTION' | 'ONLINE_CREDIT' | 'TOSS_LINK'
-  | 'BANK_TRANSFER_PERSONAL' | 'BANK_TRANSFER_CORPORATE' | 'CASH' | 'OTHER';
+/** 결제 수단 코드. 실제 사용 가능한 값은 paymentOptionsApi.get()에서 동적으로 받는다. */
+export type PaymentMethod = string;
 
 export interface MembershipPaymentResponse {
   seq: number;
@@ -170,6 +169,58 @@ export const memberApi = {
     api.get<MembershipPaymentResponse[]>(`${API.COMPLEX_MEMBER_MEMBERSHIP(seq, mmSeq)}/payments`),
   addPayment: (seq: number, mmSeq: number, data: MembershipPaymentRequest) =>
     api.post<MembershipPaymentResponse>(`${API.COMPLEX_MEMBER_MEMBERSHIP(seq, mmSeq)}/payments`, data),
+};
+
+export interface EnumOption {
+  value: string;
+  label: string;
+}
+
+export interface PaymentOptions {
+  methods: EnumOption[];
+  banks: EnumOption[];
+  kinds: EnumOption[];
+}
+
+export const paymentOptionsApi = {
+  get: () => api.get<PaymentOptions>('/complex/payments/options'),
+};
+
+// ── 설정: 결제방법/은행 카탈로그 ──
+
+export interface ConfigItem {
+  seq: number;
+  code: string;
+  label: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface ConfigCreateRequest {
+  code: string;
+  label: string;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
+export interface ConfigUpdateRequest {
+  label?: string;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
+export const paymentMethodConfigApi = {
+  list: () => api.get<ConfigItem[]>('/complex/settings/payment-methods'),
+  create: (data: ConfigCreateRequest) => api.post<ConfigItem>('/complex/settings/payment-methods', data),
+  update: (seq: number, data: ConfigUpdateRequest) => api.put<ConfigItem>(`/complex/settings/payment-methods/${seq}`, data),
+  delete: (seq: number) => api.delete<void>(`/complex/settings/payment-methods/${seq}`),
+};
+
+export const bankConfigApi = {
+  list: () => api.get<ConfigItem[]>('/complex/settings/banks'),
+  create: (data: ConfigCreateRequest) => api.post<ConfigItem>('/complex/settings/banks', data),
+  update: (seq: number, data: ConfigUpdateRequest) => api.put<ConfigItem>(`/complex/settings/banks/${seq}`, data),
+  delete: (seq: number) => api.delete<void>(`/complex/settings/banks/${seq}`),
 };
 
 export const outstandingApi = {
@@ -320,8 +371,6 @@ export interface PostponementRequest {
   seq: number;
   memberName: string;
   phoneNumber: string;
-  timeSlot: string;
-  currentClass: string;
   startDate: string;
   endDate: string;
   reason: string;
@@ -368,13 +417,13 @@ export interface PublicClassInfo {
 
 export interface PostponementSubmitRequest {
   name: string; phone: string; branchSeq: number; memberSeq: number;
-  memberMembershipSeq: number; timeSlot: string; currentClass: string;
+  memberMembershipSeq: number;
   startDate: string; endDate: string; reason: string;
 }
 
 export interface PostponementSubmitResponse {
-  name: string; phone: string; branchName: string; timeSlot: string;
-  currentClass: string; startDate: string; endDate: string; reason: string;
+  name: string; phone: string; branchName: string;
+  startDate: string; endDate: string; reason: string;
 }
 
 export const publicPostponementApi = {

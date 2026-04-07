@@ -6,8 +6,6 @@ import { outstandingApi, type OutstandingItem, type PageResponse } from '@/lib/a
 import { ROUTES } from '@/lib/routes';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import SearchBar from '@/components/ui/SearchBar';
-import MembershipLinkModal from '../components/MembershipLinkModal';
-import RefundLinkModal from '../components/RefundLinkModal';
 import PaymentAddModal from './PaymentAddModal';
 
 type SortKey = 'OUTSTANDING_DESC' | 'DAYS_DESC' | 'NAME';
@@ -35,7 +33,6 @@ function OutstandingContent() {
   const [loading, setLoading] = useState(false);
 
   const [paymentModal, setPaymentModal] = useState<OutstandingItem | null>(null);
-  const [linkModal, setLinkModal] = useState<{ kind: 'membership' | 'refund'; item: OutstandingItem } | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -91,13 +88,8 @@ function OutstandingContent() {
     {
       header: '액션',
       render: (it) => (
-        <div style={{ display: 'flex', gap: 4 }} onClick={(e) => e.stopPropagation()}>
-          <button onClick={() => setPaymentModal(it)}
-            style={btnStyle('#4a90e2')}>+ 납부</button>
-          <button onClick={() => setLinkModal({ kind: 'membership', item: it })}
-            style={btnStyle('#8b5cf6')}>조회링크</button>
-          <button onClick={() => setLinkModal({ kind: 'refund', item: it })}
-            style={btnStyle('#e03131')}>환불링크</button>
+        <div onClick={(e) => e.stopPropagation()}>
+          <button onClick={() => setPaymentModal(it)} style={btnStyle('#4a90e2')}>+ 납부</button>
         </div>
       ),
     },
@@ -115,19 +107,18 @@ function OutstandingContent() {
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 8 }}>
-        <div style={{ flex: 1, minWidth: 280 }}>
-          <SearchBar
-            keyword={keyword}
-            onKeywordChange={setKeyword}
-            onSearch={handleSearch}
-            onReset={searched ? handleReset : undefined}
-            placeholder="회원명/연락처 검색"
-          />
-        </div>
+      <SearchBar
+        keyword={keyword}
+        onKeywordChange={setKeyword}
+        onSearch={handleSearch}
+        onReset={searched ? handleReset : undefined}
+        placeholder="회원명/연락처 검색"
+      />
 
-        {/* 정렬 토글 */}
-        <div style={{ display: 'flex', gap: 4, padding: 4, background: '#f1f3f5', borderRadius: 8 }}>
+      {/* 테이블 상단 우측 정렬 토글 */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+        <div style={{ display: 'flex', gap: 4, padding: 4, background: '#f1f3f5', borderRadius: 8, alignItems: 'center' }}>
+          <span style={{ padding: '0 8px 0 12px', fontSize: 12, color: '#888' }}>정렬</span>
           {SORT_OPTIONS.map(opt => {
             const active = sort === opt.value;
             return (
@@ -156,7 +147,7 @@ function OutstandingContent() {
         rowKey={(it) => it.memberMembershipSeq}
         emptyMessage={loading ? '불러오는 중…' : '미수금이 있는 회원이 없습니다.'}
         pagination={{ page, totalPages: data?.totalPages ?? 0, onPageChange: setPage }}
-        onRowClick={(it) => router.push(ROUTES.COMPLEX_MEMBER_EDIT(it.memberSeq))}
+        onRowClick={(it) => router.push(`${ROUTES.COMPLEX_MEMBER_EDIT(it.memberSeq)}?tab=payment`)}
       />
 
       {paymentModal && (
@@ -171,22 +162,6 @@ function OutstandingContent() {
         />
       )}
 
-      {linkModal?.kind === 'membership' && (
-        <MembershipLinkModal
-          memberSeq={linkModal.item.memberSeq}
-          memberName={linkModal.item.memberName}
-          memberPhone={linkModal.item.phoneNumber}
-          onClose={() => setLinkModal(null)}
-        />
-      )}
-      {linkModal?.kind === 'refund' && (
-        <RefundLinkModal
-          memberSeq={linkModal.item.memberSeq}
-          memberName={linkModal.item.memberName}
-          memberPhone={linkModal.item.phoneNumber}
-          onClose={() => setLinkModal(null)}
-        />
-      )}
     </>
   );
 }

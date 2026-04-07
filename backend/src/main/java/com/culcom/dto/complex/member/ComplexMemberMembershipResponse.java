@@ -2,7 +2,6 @@ package com.culcom.dto.complex.member;
 
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.member.MembershipPayment;
-import com.culcom.entity.enums.PaymentMethod;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -25,7 +24,7 @@ public class ComplexMemberMembershipResponse {
     private Integer postponeTotal;
     private Integer postponeUsed;
     private String price;
-    private PaymentMethod paymentMethod;
+    private String paymentMethod;
     private LocalDateTime paymentDate;
     private Boolean isActive;
     private LocalDateTime createdDate;

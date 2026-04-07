@@ -1,7 +1,6 @@
 package com.culcom.dto.complex.member;
 
 import com.culcom.entity.enums.PaymentKind;
-import com.culcom.entity.enums.PaymentMethod;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,7 +17,7 @@ public class MembershipPaymentRequest {
     @NotNull
     private PaymentKind kind;
 
-    private PaymentMethod method;
+    private String method;
 
     private LocalDateTime paidDate;
 

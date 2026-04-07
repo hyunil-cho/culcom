@@ -39,7 +39,25 @@ export default function ClassesPage() {
       header: '담당 리더',
       render: (c) => c.staffName
         ? <span style={{ color: '#555', fontWeight: 600 }}>{c.staffName}</span>
-        : <small style={{ color: '#ccc' }}>(미배정)</small>,
+        : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(`${ROUTES.COMPLEX_CLASS_TEAMS}?classSeq=${c.seq}`);
+            }}
+            style={{
+              background: 'transparent',
+              border: '1px solid #4a90e2',
+              color: '#4a90e2',
+              borderRadius: 4,
+              padding: '4px 10px',
+              cursor: 'pointer',
+              fontSize: 12,
+            }}
+          >
+            등록하기
+          </button>
+        ),
     },
     {
       header: '시간대',

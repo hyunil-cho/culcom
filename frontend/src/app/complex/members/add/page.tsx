@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { surveyApi, type SurveySubmissionItem } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import MemberForm from '../MemberForm';
@@ -8,6 +8,10 @@ import { useMemberForm } from '../useMemberForm';
 import { Button } from '@/components/ui/Button';
 
 export default function MemberAddPage() {
+  return <Suspense fallback={null}><MemberAddPageInner /></Suspense>;
+}
+
+function MemberAddPageInner() {
   const {
     form, setForm, msForm, setMsForm, classAssign, setClassAssign,
     staffForm, setStaffForm, staffClassAssign, setStaffClassAssign,

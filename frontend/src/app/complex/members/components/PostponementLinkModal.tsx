@@ -162,8 +162,7 @@ export default function PostponementLinkModal({ memberSeq, memberName, memberPho
                             <span className={s.historyDate}>{h.createdDate?.split('T')[0]}</span>
                           </div>
                           <div className={s.historyDetail}>
-                            {h.currentClass && <span>{h.currentClass}</span>}
-                            {h.startDate && h.endDate && <span> · {h.startDate} ~ {h.endDate}</span>}
+                            {h.startDate && h.endDate && <span>{h.startDate} ~ {h.endDate}</span>}
                           </div>
                           <div className={s.historyReason}>{h.reason}</div>
                           {h.status === '반려' && h.rejectReason && (
@@ -261,8 +260,7 @@ export default function PostponementLinkModal({ memberSeq, memberName, memberPho
                             <span className={s.historyDate}>{h.createdDate?.split('T')[0]}</span>
                           </div>
                           <div className={s.historyDetail}>
-                            {h.currentClass && <span>{h.currentClass}</span>}
-                            {h.startDate && h.endDate && <span> · {h.startDate} ~ {h.endDate}</span>}
+                            {h.startDate && h.endDate && <span>{h.startDate} ~ {h.endDate}</span>}
                           </div>
                           <div className={s.historyReason}>{h.reason}</div>
                           {h.status === '반려' && h.rejectReason && (

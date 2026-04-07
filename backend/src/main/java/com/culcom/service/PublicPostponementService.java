@@ -105,8 +105,6 @@ public class PublicPostponementService {
                 .memberMembership(membership)
                 .memberName(req.getName())
                 .phoneNumber(req.getPhone())
-                .timeSlot(req.getTimeSlot())
-                .currentClass(req.getCurrentClass())
                 .startDate(DateTimeUtils.parseDate(req.getStartDate()))
                 .endDate(DateTimeUtils.parseDate(req.getEndDate()))
                 .reason(req.getReason())
@@ -123,7 +121,6 @@ public class PublicPostponementService {
 
         return new PostponementSubmitResponse(
                 req.getName(), req.getPhone(), branch.getBranchName(),
-                req.getTimeSlot(), req.getCurrentClass(),
                 req.getStartDate(), req.getEndDate(), req.getReason()
         );
     }

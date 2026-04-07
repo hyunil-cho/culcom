@@ -6,10 +6,14 @@ import com.culcom.dto.complex.member.ComplexStaffRequest;
 import com.culcom.dto.complex.member.ComplexStaffResponse;
 import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.member.ComplexMember;
+import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.member.ComplexStaffInfo;
 import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.ActivityFieldType;
 import com.culcom.entity.enums.StaffStatus;
+import com.culcom.entity.product.Membership;
+
+import java.time.LocalDate;
 import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.*;
@@ -29,7 +33,11 @@ public class ComplexStaffService {
     private final ComplexStaffInfoRepository staffInfoRepository;
     private final ComplexClassRepository classRepository;
     private final BranchRepository branchRepository;
+    private final MembershipRepository membershipRepository;
+    private final ComplexMemberMembershipRepository memberMembershipRepository;
     private final ApplicationEventPublisher eventPublisher;
+
+
 
     public List<ComplexStaffResponse> list(Long branchSeq) {
         return memberRepository.findStaffByBranchSeq(branchSeq)
@@ -58,6 +66,20 @@ public class ComplexStaffService {
                 .build();
         member.setStaffInfo(staffInfo);
 
+        // 스태프에게 내부용 멤버십 자동 부여 (출석 등 사용처에서 사용 가능하도록)
+        Membership internalMembership = membershipRepository.findFirstByIsInternalTrue()
+                .orElseThrow(() -> new EntityNotFoundException("스태프 전용 내부 멤버십"));
+        LocalDate today = LocalDate.now();
+        ComplexMemberMembership staffMembership = ComplexMemberMembership.builder()
+                .member(member)
+                .membership(internalMembership)
+                .startDate(today)
+                .expiryDate(today.plusDays(internalMembership.getDuration()))
+                .totalCount(internalMembership.getCount())
+                .internal(true)
+                .build();
+        memberMembershipRepository.save(staffMembership);
+
         return ComplexStaffResponse.from(memberRepository.save(member));
     }
 
@@ -85,6 +107,15 @@ public class ComplexStaffService {
         member.setPhoneNumber(req.getPhoneNumber());
         member.setInterviewer(req.getInterviewer());
         staffInfo.setStatus(newStatus);
+
+        // 재직 상태 변경에 따른 내부 멤버십 활성화/비활성화
+        if (oldStatus != newStatus) {
+            boolean active = (newStatus == StaffStatus.재직);
+            memberMembershipRepository.findByMemberSeqAndInternalTrue(seq).forEach(mm -> {
+                mm.setIsActive(active);
+                memberMembershipRepository.save(mm);
+            });
+        }
 
         // 휴직/퇴직 시 배정된 수업에서 제외
         if (oldStatus == StaffStatus.재직 && newStatus != StaffStatus.재직) {

@@ -18,8 +18,6 @@ public class PostponementResponse {
     private Long seq;
     private String memberName;
     private String phoneNumber;
-    private String timeSlot;
-    private String currentClass;
     private LocalDate startDate;
     private LocalDate endDate;
     private String reason;
@@ -32,8 +30,6 @@ public class PostponementResponse {
                 .seq(entity.getSeq())
                 .memberName(entity.getMemberName())
                 .phoneNumber(entity.getPhoneNumber())
-                .timeSlot(entity.getTimeSlot())
-                .currentClass(entity.getCurrentClass())
                 .startDate(entity.getStartDate())
                 .endDate(entity.getEndDate())
                 .reason(entity.getReason())

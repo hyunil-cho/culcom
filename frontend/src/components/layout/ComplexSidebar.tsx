@@ -25,6 +25,13 @@ const groups = [
       { href: ROUTES.ROOT, label: '메인으로', icon: '✅' },
     ],
   },
+  {
+    title: '설정',
+    items: [
+      { href: ROUTES.COMPLEX_SETTINGS_PAYMENT_METHODS, label: '결제 방법', icon: '💳' },
+      { href: ROUTES.COMPLEX_SETTINGS_BANKS, label: '환급 은행', icon: '🏦' },
+    ],
+  },
 ];
 
 export default function ComplexSidebar() {

@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import FormField from '@/components/ui/FormField';
 import FormLayout from '@/components/ui/FormLayout';
 import { Input, PhoneInput, Select, Textarea, CurrencyInput, Checkbox } from '@/components/ui/FormInput';
 import { membershipApi, type Membership } from '@/lib/api';
 import { useClassSlots } from '../hooks/useClassSlots';
+import { usePaymentOptions } from '@/lib/usePaymentOptions';
 import PaymentHistoryPanel from './PaymentHistoryPanel';
 
 export interface MemberFormData {
@@ -87,9 +89,7 @@ export function validateMemberForm(form: MemberFormData): string | null {
 }
 
 const SIGNUP_CHANNELS = ['인스타그램', '네이버 검색', '지인 소개', '전단지', '홈페이지'];
-const PAYMENT_METHODS = ['카드', '온라인구독', '온라인신용', '토스링크', '이체(개인통장)', '이체(법인통장)', '현금'];
 const STAFF_STATUS_OPTIONS = ['재직', '휴직', '퇴직'] as const;
-const BANK_OPTIONS = ['국민은행', '신한은행', '우리은행', '하나은행', '농협은행', '기업은행', '카카오뱅크', '토스뱅크', '케이뱅크'] as const;
 type TabId = 'basic' | 'class' | 'payment';
 
 const TAB_STYLE = {
@@ -129,8 +129,11 @@ export default function MemberForm({
   headerExtra?: React.ReactNode;
 }) {
   const { timeSlots, getClassesBySlot } = useClassSlots();
+  const { methods: paymentMethods, banks: bankOptions } = usePaymentOptions();
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams.get('tab') as TabId | null) ?? 'basic';
   const [memberships, setMemberships] = useState<Membership[]>([]);
-  const [activeTab, setActiveTab] = useState<TabId>('basic');
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const filteredClasses = getClassesBySlot(classAssign?.timeSlotSeq);
 
   useEffect(() => {
@@ -161,9 +164,7 @@ export default function MemberForm({
   };
 
   const signupSelectValue = SIGNUP_CHANNELS.includes(form.signupChannel) ? form.signupChannel : (form.signupChannel ? '기타' : '');
-  const paymentSelectValue = membershipForm
-    ? (PAYMENT_METHODS.includes(membershipForm.paymentMethod) ? membershipForm.paymentMethod : (membershipForm.paymentMethod ? '기타' : ''))
-    : '';
+  const paymentSelectValue = membershipForm?.paymentMethod ?? '';
 
   const tabs: { id: TabId; label: string }[] = [
     { id: 'basic', label: '기본정보' },
@@ -385,22 +386,11 @@ export default function MemberForm({
                 </FormField>
               )}
               <FormField label="결제방법">
-                <div>
-                  <Select value={paymentSelectValue}
-                    onChange={(e) => {
-                      if (e.target.value === '기타') onMembershipChange({ ...membershipForm, paymentMethod: '기타' });
-                      else onMembershipChange({ ...membershipForm, paymentMethod: e.target.value });
-                    }}>
-                    <option value="">-- 선택 --</option>
-                    {PAYMENT_METHODS.map(pm => <option key={pm} value={pm}>{pm}</option>)}
-                    <option value="기타">기타 (직접입력)</option>
-                  </Select>
-                  {membershipForm.paymentMethod && !PAYMENT_METHODS.includes(membershipForm.paymentMethod) && membershipForm.paymentMethod !== '' && (
-                    <Input style={{ marginTop: 8 }} placeholder="결제방법을 직접 입력하세요"
-                      value={membershipForm.paymentMethod === '기타' ? '' : membershipForm.paymentMethod}
-                      onChange={(e) => onMembershipChange({ ...membershipForm, paymentMethod: e.target.value || '기타' })} />
-                  )}
-                </div>
+                <Select value={paymentSelectValue}
+                  onChange={(e) => onMembershipChange({ ...membershipForm, paymentMethod: e.target.value })}>
+                  <option value="">-- 선택 --</option>
+                  {paymentMethods.map(pm => <option key={pm.value} value={pm.value}>{pm.label}</option>)}
+                </Select>
               </FormField>
             </>
           )}
@@ -455,7 +445,7 @@ export default function MemberForm({
             <Select value={staffForm.refund.paymentMethod}
               onChange={(e) => onStaffChange({ ...staffForm, refund: { ...staffForm.refund, paymentMethod: e.target.value } })}>
               <option value="">-- 선택 --</option>
-              {PAYMENT_METHODS.map(p => <option key={p} value={p}>{p}</option>)}
+              {paymentMethods.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
             </Select>
           </FormField>
           <FormField label="디파짓 금액">
@@ -474,7 +464,7 @@ export default function MemberForm({
             <Select value={staffForm.refund.refundBank}
               onChange={(e) => onStaffChange({ ...staffForm, refund: { ...staffForm.refund, refundBank: e.target.value } })}>
               <option value="">-- 은행 선택 --</option>
-              {BANK_OPTIONS.map(b => <option key={b} value={b}>{b}</option>)}
+              {bankOptions.map(b => <option key={b.value} value={b.value}>{b.label}</option>)}
             </Select>
           </FormField>
           <FormField label="환급 계좌번호">

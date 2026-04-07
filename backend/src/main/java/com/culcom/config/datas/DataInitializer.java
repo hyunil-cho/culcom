@@ -2,6 +2,8 @@ package com.culcom.config.datas;
 
 import com.culcom.entity.auth.UserInfo;
 import com.culcom.entity.branch.Branch;
+import com.culcom.entity.complex.settings.BankConfig;
+import com.culcom.entity.complex.settings.PaymentMethodConfig;
 import com.culcom.entity.enums.UserRole;
 import com.culcom.entity.product.Membership;
 import com.culcom.entity.integration.ExternalServiceType;
@@ -29,6 +31,8 @@ public class DataInitializer implements ApplicationRunner {
     private final PlaceholderRepository placeholderRepository;
     private final PasswordEncoder passwordEncoder;
     private final MembershipRepository membershipRepository;
+    private final PaymentMethodConfigRepository paymentMethodConfigRepository;
+    private final BankConfigRepository bankConfigRepository;
 
     @Override
     public void run(ApplicationArguments args) {
@@ -45,6 +49,49 @@ public class DataInitializer implements ApplicationRunner {
         initThirdPartyServices();
         initPlaceholders();
         initStaffMembership();
+        initPaymentMethods();
+        initBanks();
+    }
+
+    private void initBanks() {
+        if (bankConfigRepository.count() > 0) return;
+        String[][] seeds = {
+                {"KB", "국민은행"},
+                {"SHINHAN", "신한은행"},
+                {"WOORI", "우리은행"},
+                {"HANA", "하나은행"},
+                {"NH", "농협은행"},
+                {"IBK", "기업은행"},
+                {"KAKAO", "카카오뱅크"},
+                {"TOSS", "토스뱅크"},
+                {"K", "케이뱅크"},
+        };
+        int order = 0;
+        for (String[] s : seeds) {
+            bankConfigRepository.save(BankConfig.builder()
+                    .code(s[0]).label(s[1]).sortOrder(order++).isActive(true).build());
+        }
+        log.info("초기 은행 시드 {}건 생성", seeds.length);
+    }
+
+    private void initPaymentMethods() {
+        if (paymentMethodConfigRepository.count() > 0) return;
+        String[][] seeds = {
+                {"CARD", "카드"},
+                {"ONLINE_SUBSCRIPTION", "온라인구독"},
+                {"ONLINE_CREDIT", "온라인신용"},
+                {"TOSS_LINK", "토스링크"},
+                {"BANK_TRANSFER_PERSONAL", "이체(개인통장)"},
+                {"BANK_TRANSFER_CORPORATE", "이체(법인통장)"},
+                {"CASH", "현금"},
+                {"OTHER", "기타"},
+        };
+        int order = 0;
+        for (String[] s : seeds) {
+            paymentMethodConfigRepository.save(PaymentMethodConfig.builder()
+                    .code(s[0]).label(s[1]).sortOrder(order++).isActive(true).build());
+        }
+        log.info("초기 결제 수단 시드 {}건 생성", seeds.length);
     }
 
     private void initThirdPartyServices() {

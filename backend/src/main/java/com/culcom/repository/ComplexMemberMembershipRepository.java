@@ -10,6 +10,8 @@ import java.util.List;
 public interface ComplexMemberMembershipRepository extends JpaRepository<ComplexMemberMembership, Long> {
     List<ComplexMemberMembership> findByMemberSeqAndInternalFalse(Long memberSeq);
 
+    List<ComplexMemberMembership> findByMemberSeqAndInternalTrue(Long memberSeq);
+
     @Query("SELECT mm FROM ComplexMemberMembership mm " +
            "WHERE mm.member.seq IN :memberSeqs AND mm.isActive = true")
     List<ComplexMemberMembership> findActiveByMemberSeqIn(@Param("memberSeqs") List<Long> memberSeqs);
