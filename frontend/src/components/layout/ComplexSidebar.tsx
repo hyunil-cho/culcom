@@ -18,6 +18,7 @@ const groups = [
       { href: ROUTES.COMPLEX_MEMBERS, label: '회원 관리', icon: '🧑‍🎓', children: [
         { href: ROUTES.COMPLEX_MEMBERS, label: '멤버 리스트' },
         { href: ROUTES.COMPLEX_MEMBER_LINKS, label: '링크 관리' },
+        { href: ROUTES.COMPLEX_OUTSTANDING, label: '미수금 관리' },
       ]},
       { href: ROUTES.COMPLEX_POSTPONEMENTS, label: '연기 요청', icon: '⏸️' },
       { href: ROUTES.COMPLEX_REFUNDS, label: '환불 요청', icon: '💰' },

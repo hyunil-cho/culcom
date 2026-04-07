@@ -1,5 +1,6 @@
 package com.culcom.entity.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -13,4 +14,13 @@ public enum PaymentKind {
     REFUND("환불정정");
 
     private final String label;
+
+    @JsonCreator
+    public static PaymentKind fromValue(String s) {
+        if (s == null || s.isBlank()) return null;
+        for (PaymentKind k : values()) {
+            if (k.name().equalsIgnoreCase(s) || k.label.equals(s)) return k;
+        }
+        return null;
+    }
 }

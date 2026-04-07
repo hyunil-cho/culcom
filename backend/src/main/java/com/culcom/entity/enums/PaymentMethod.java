@@ -1,5 +1,6 @@
 package com.culcom.entity.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -17,4 +18,14 @@ public enum PaymentMethod {
     OTHER("기타");
 
     private final String label;
+
+    /** enum NAME(예: "CARD") 또는 한글 label(예: "카드") 양쪽 모두 수용. */
+    @JsonCreator
+    public static PaymentMethod fromValue(String s) {
+        if (s == null || s.isBlank()) return null;
+        for (PaymentMethod m : values()) {
+            if (m.name().equalsIgnoreCase(s) || m.label.equals(s)) return m;
+        }
+        return null;
+    }
 }

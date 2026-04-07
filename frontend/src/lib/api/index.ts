@@ -10,9 +10,11 @@ export { branchApi, type Branch } from './branch';
 export { customerApi, type Customer } from './customer';
 export {
   classApi, memberApi, staffApi, membershipApi, timeslotApi, refundApi,
-  postponementApi, publicPostponementApi,
+  postponementApi, publicPostponementApi, outstandingApi,
   type ComplexClass, type ComplexClassRequest,
   type ComplexMember, type MemberMembershipRequest, type MemberMembershipResponse, type MemberActivityTimelineItem,
+  type MembershipPaymentRequest, type MembershipPaymentResponse,
+  type PaymentKind, type PaymentMethod, type OutstandingItem,
   type ComplexStaff, type StaffRefundInfo,
   type Membership, type MembershipRequest,
   type ClassTimeSlot, type ClassTimeSlotRequest,

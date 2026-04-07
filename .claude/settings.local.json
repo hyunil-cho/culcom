@@ -73,7 +73,8 @@
       "Bash(git diff:*)",
       "Bash(curl:*)",
       "Bash(sed:*)",
-      "Bash(./gradlew compileJava -q)"
+      "Bash(./gradlew compileJava -q)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

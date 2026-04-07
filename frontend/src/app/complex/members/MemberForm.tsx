@@ -6,6 +6,7 @@ import FormLayout from '@/components/ui/FormLayout';
 import { Input, PhoneInput, Select, Textarea, CurrencyInput, Checkbox } from '@/components/ui/FormInput';
 import { membershipApi, type Membership } from '@/lib/api';
 import { useClassSlots } from '../hooks/useClassSlots';
+import PaymentHistoryPanel from './PaymentHistoryPanel';
 
 export interface MemberFormData {
   name: string;
@@ -89,7 +90,7 @@ const SIGNUP_CHANNELS = ['인스타그램', '네이버 검색', '지인 소개',
 const PAYMENT_METHODS = ['카드', '온라인구독', '온라인신용', '토스링크', '이체(개인통장)', '이체(법인통장)', '현금'];
 const STAFF_STATUS_OPTIONS = ['재직', '휴직', '퇴직'] as const;
 const BANK_OPTIONS = ['국민은행', '신한은행', '우리은행', '하나은행', '농협은행', '기업은행', '카카오뱅크', '토스뱅크', '케이뱅크'] as const;
-type TabId = 'basic' | 'class';
+type TabId = 'basic' | 'class' | 'payment';
 
 const TAB_STYLE = {
   base: {
@@ -167,6 +168,9 @@ export default function MemberForm({
   const tabs: { id: TabId; label: string }[] = [
     { id: 'basic', label: '기본정보' },
     { id: 'class', label: isStaff ? '담당수업 / 환급' : '수업 / 멤버십' },
+    ...(isEdit && !isStaff && currentMemberSeq
+      ? [{ id: 'payment' as TabId, label: '결제 / 미수금' }]
+      : []),
   ];
 
   return (
@@ -374,10 +378,12 @@ export default function MemberForm({
                   </label>
                 </div>
               </FormField>
-              <FormField label="디파짓 납부금액">
-                <CurrencyInput placeholder="예: 100,000" value={membershipForm.depositAmount}
-                  onValueChange={(v) => onMembershipChange({ ...membershipForm, depositAmount: v })} />
-              </FormField>
+              {!isEdit && (
+                <FormField label="첫 납부 금액" hint="* 등록 시 입력한 금액이 첫 납부 기록으로 자동 추가됩니다. 추가 납부는 미수금 관리에서 할 수 있습니다.">
+                  <CurrencyInput placeholder="예: 100,000" value={membershipForm.depositAmount}
+                    onValueChange={(v) => onMembershipChange({ ...membershipForm, depositAmount: v })} />
+                </FormField>
+              )}
               <FormField label="결제방법">
                 <div>
                   <Select value={paymentSelectValue}
@@ -480,6 +486,11 @@ export default function MemberForm({
               onValueChange={(v) => onStaffChange({ ...staffForm, refund: { ...staffForm.refund, refundAmount: v } })} />
           </FormField>
         </>
+      )}
+
+      {/* ── 결제 / 미수금 탭 ── */}
+      {activeTab === 'payment' && currentMemberSeq && (
+        <PaymentHistoryPanel memberSeq={currentMemberSeq} memberName={form.name} />
       )}
     </FormLayout>
   );

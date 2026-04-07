@@ -58,7 +58,7 @@ export function useMemberForm(seq?: number) {
           expiryDate: ms.expiryDate ?? '',
           price: ms.price ?? '',
           paymentDate: ms.paymentDate ?? '',
-          depositAmount: ms.depositAmount ?? '',
+          depositAmount: '', // 수정 시에는 새 납부로 추가되지 않도록 비움
           paymentMethod: ms.paymentMethod ?? '',
           isActive: ms.isActive ?? true,
         });

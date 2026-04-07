@@ -75,6 +75,30 @@ export interface MemberMembershipRequest {
   isActive?: boolean;
 }
 
+export type PaymentKind = 'DEPOSIT' | 'BALANCE' | 'ADDITIONAL' | 'REFUND';
+export type PaymentMethod =
+  | 'CARD' | 'ONLINE_SUBSCRIPTION' | 'ONLINE_CREDIT' | 'TOSS_LINK'
+  | 'BANK_TRANSFER_PERSONAL' | 'BANK_TRANSFER_CORPORATE' | 'CASH' | 'OTHER';
+
+export interface MembershipPaymentResponse {
+  seq: number;
+  memberMembershipSeq: number;
+  amount: number;
+  paidDate: string;
+  method: PaymentMethod | null;
+  kind: PaymentKind;
+  note: string | null;
+  createdDate: string;
+}
+
+export interface MembershipPaymentRequest {
+  amount: number;
+  kind: PaymentKind;
+  method?: PaymentMethod;
+  paidDate?: string;
+  note?: string;
+}
+
 export interface MemberMembershipResponse {
   seq: number;
   memberSeq: number;
@@ -87,11 +111,28 @@ export interface MemberMembershipResponse {
   postponeTotal: number;
   postponeUsed: number;
   price: string | null;
-  depositAmount: string | null;
-  paymentMethod: string | null;
+  paymentMethod: PaymentMethod | null;
   paymentDate: string | null;
   isActive: boolean;
   createdDate: string;
+  paidAmount: number;
+  outstanding: number | null;
+  paymentStatus: '미정' | '미납' | '부분납부' | '완납' | '초과';
+  payments?: MembershipPaymentResponse[] | null;
+}
+
+export interface OutstandingItem {
+  memberSeq: number;
+  memberName: string;
+  phoneNumber: string;
+  memberMembershipSeq: number;
+  membershipName: string;
+  price: number | null;
+  paidAmount: number;
+  outstanding: number;
+  lastPaidDate: string | null;
+  daysSinceLastPaid: number | null;
+  paymentStatus: string;
 }
 
 export interface MemberActivityTimelineItem {
@@ -125,6 +166,21 @@ export const memberApi = {
     api.get<{ classSeq: number; timeSlotSeq: number | null }[]>(`${API.COMPLEX_MEMBER(seq)}/class`),
   reassignClass: (seq: number, classSeq: number) =>
     api.put<void>(`${API.COMPLEX_MEMBER(seq)}/class/${classSeq}`),
+  listPayments: (seq: number, mmSeq: number) =>
+    api.get<MembershipPaymentResponse[]>(`${API.COMPLEX_MEMBER_MEMBERSHIP(seq, mmSeq)}/payments`),
+  addPayment: (seq: number, mmSeq: number, data: MembershipPaymentRequest) =>
+    api.post<MembershipPaymentResponse>(`${API.COMPLEX_MEMBER_MEMBERSHIP(seq, mmSeq)}/payments`, data),
+};
+
+export const outstandingApi = {
+  list: (params?: { keyword?: string; sort?: string; page?: number; size?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.keyword) sp.set('keyword', params.keyword);
+    if (params?.sort) sp.set('sort', params.sort);
+    sp.set('page', String(params?.page ?? 0));
+    sp.set('size', String(params?.size ?? 20));
+    return api.get<PageResponse<OutstandingItem>>(`/complex/outstanding?${sp.toString()}`);
+  },
 };
 
 // ── 스태프 ──

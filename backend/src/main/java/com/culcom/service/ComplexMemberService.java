@@ -40,9 +40,10 @@ public class ComplexMemberService {
         return ComplexMemberResponse.from(member);
     }
 
+    @Transactional(readOnly = true)
     public List<ComplexMemberMembershipResponse> getMemberships(Long memberSeq) {
         return memberMembershipRepository.findByMemberSeqAndInternalFalse(memberSeq)
-                .stream().map(ComplexMemberMembershipResponse::from).toList();
+                .stream().map(mm -> ComplexMemberMembershipResponse.from(mm, true)).toList();
     }
 
     @Transactional

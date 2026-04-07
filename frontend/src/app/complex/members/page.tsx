@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { memberApi, type ComplexMember, type PageResponse } from '@/lib/api';
+import { memberApi, outstandingApi, type ComplexMember, type PageResponse } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { useQueryParams } from '@/lib/useQueryParams';
 import { Button } from '@/components/ui/Button';
@@ -28,6 +28,7 @@ function MembersContent() {
   const [totalPages, setTotalPages] = useState(0);
   const [keyword, setKeyword] = useState(searchedKeyword);
   const [membershipModal, setMembershipModal] = useState<{ seq: number; name: string } | null>(null);
+  const [outstandingMap, setOutstandingMap] = useState<Map<number, number>>(new Map());
   const { column: historyColumn, modal: historyModal } = useAttendanceHistory<ComplexMember>('member');
   const recentHistoryColumn = useAttendanceHistoryColumn<ComplexMember>();
 
@@ -43,6 +44,17 @@ function MembersContent() {
   useEffect(() => { load(); }, [load]);
   useEffect(() => { setKeyword(searchedKeyword); }, [searchedKeyword]);
 
+  // 미수금 합계 매핑 로드 (전체 한 번에 가져와서 회원별 합산)
+  useEffect(() => {
+    outstandingApi.list({ size: 1000 }).then(res => {
+      const map = new Map<number, number>();
+      for (const item of res.data.content) {
+        map.set(item.memberSeq, (map.get(item.memberSeq) ?? 0) + item.outstanding);
+      }
+      setOutstandingMap(map);
+    });
+  }, []);
+
   const columns: Column<ComplexMember>[] = [
     { header: '번호', render: (_, i) => page * 20 + (i ?? 0) + 1, style: { width: 50, color: '#adb5bd', textAlign: 'center' } },
     { header: '이름', render: (m) => <span style={{ fontWeight: 'bold', color: '#4a90e2' }}>{m.name}</span> },
@@ -57,6 +69,24 @@ function MembersContent() {
           정보
         </button>
       ),
+    },
+    {
+      header: '미수금', render: (m) => {
+        const out = outstandingMap.get(m.seq);
+        if (!out || out <= 0) return <span style={{ color: '#ccc', fontSize: '0.78rem' }}>—</span>;
+        return (
+          <button
+            onClick={(e) => { e.stopPropagation(); router.push(`${ROUTES.COMPLEX_OUTSTANDING}?keyword=${encodeURIComponent(m.name)}`); }}
+            title="미수금 관리로 이동"
+            style={{
+              background: '#fff5f5', color: '#e03131', border: '1px solid #ffc9c9',
+              borderRadius: 3, padding: '4px 8px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 700,
+            }}
+          >
+            {out.toLocaleString()}원
+          </button>
+        );
+      },
     },
     historyColumn,
     { header: '가입경로', render: (m) => <span style={{ color: '#555' }}>{m.signupChannel || ''}</span> },
