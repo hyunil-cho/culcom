@@ -25,4 +25,8 @@ public class ComplexMemberClassMapping extends BaseTimeEntity {
     @JoinColumn(name = "class_seq", nullable = false)
     private ComplexClass complexClass;
 
+    @Column(name = "sort_order", nullable = false)
+    @Builder.Default
+    private Integer sortOrder = 0;
+
 }

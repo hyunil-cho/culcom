@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { useDragReorder } from '@/hooks/useDragReorder';
 import { useRouter } from 'next/navigation';
 import { attendanceViewApi, type AttendanceViewSlot, type AttendanceViewMember } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
@@ -40,62 +41,31 @@ export default function AttendancePage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // 카드 드래그
-  const dragRef = useRef<{
-    el: HTMLElement; grid: HTMLElement; clone: HTMLElement;
-    offsetX: number; offsetY: number;
-  } | null>(null);
+  const { start: startCardDrag } = useDragReorder({
+    itemSelector: '.class-card',
+    getItemId: (el) => {
+      const id = parseInt(el.dataset.classId || '0');
+      return id || null;
+    },
+    onReorder: (ids) => {
+      const classOrders = ids.map((id, idx) => ({ id: Number(id), sortOrder: idx }));
+      attendanceViewApi.reorderClasses(classOrders);
+    },
+  });
 
-  const handleCardPointerDown = (e: React.PointerEvent, card: HTMLElement, grid: HTMLElement) => {
-    if ((e.target as HTMLElement).closest('button, a, input')) return;
-    e.preventDefault();
-    const rect = card.getBoundingClientRect();
-    const clone = card.cloneNode(true) as HTMLElement;
-    clone.style.cssText = `position:fixed;pointer-events:none;z-index:10000;opacity:0.9;box-shadow:0 12px 32px rgba(74,144,226,0.3);border-radius:8px;transform:rotate(2deg);width:${rect.width}px;height:${rect.height}px;left:${rect.left}px;top:${rect.top}px;overflow:hidden;`;
-    document.body.appendChild(clone);
-    card.style.opacity = '0.3';
-    card.style.border = '2px dashed #4a90e2';
-    dragRef.current = { el: card, grid, clone, offsetX: e.clientX - rect.left, offsetY: e.clientY - rect.top };
-    document.body.style.cursor = 'grabbing';
-  };
-
-  useEffect(() => {
-    const handleMove = (e: PointerEvent) => {
-      if (!dragRef.current) return;
-      e.preventDefault();
-      const { clone, offsetX, offsetY, grid, el } = dragRef.current;
-      clone.style.left = (e.clientX - offsetX) + 'px';
-      clone.style.top = (e.clientY - offsetY) + 'px';
-      const siblings = Array.from(grid.querySelectorAll('.class-card')) as HTMLElement[];
-      for (const sib of siblings) {
-        if (sib === el) continue;
-        const r = sib.getBoundingClientRect();
-        if (e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom) {
-          if (e.clientX < r.left + r.width / 2) grid.insertBefore(el, sib);
-          else grid.insertBefore(el, sib.nextSibling);
-          break;
-        }
-      }
-    };
-    const handleUp = () => {
-      if (!dragRef.current) return;
-      const { el, clone, grid } = dragRef.current;
-      clone.remove();
-      el.style.opacity = '';
-      el.style.border = '';
-      document.body.style.cursor = '';
-      const classOrders: { id: number; sortOrder: number }[] = [];
-      grid.querySelectorAll('.class-card').forEach((card, idx) => {
-        const id = parseInt((card as HTMLElement).dataset.classId || '0');
-        if (id) classOrders.push({ id, sortOrder: idx });
-      });
-      if (classOrders.length > 0) attendanceViewApi.reorderClasses(classOrders);
-      dragRef.current = null;
-    };
-    document.addEventListener('pointermove', handleMove);
-    document.addEventListener('pointerup', handleUp);
-    return () => { document.removeEventListener('pointermove', handleMove); document.removeEventListener('pointerup', handleUp); };
-  }, []);
+  const { start: startMemberDrag } = useDragReorder({
+    itemSelector: '.member-item',
+    getItemId: (el) => {
+      const id = parseInt(el.dataset.memberSeq || '0');
+      return id || null;
+    },
+    onReorder: (ids, container) => {
+      const classSeq = parseInt(container.dataset.classSeq || '0');
+      if (!classSeq) return;
+      const memberOrders = ids.map((id, idx) => ({ memberSeq: Number(id), sortOrder: idx }));
+      attendanceViewApi.reorderMembers(classSeq, memberOrders);
+    },
+  });
 
   if (loading) return <div style={{ padding: 20 }}>로딩 중...</div>;
 
@@ -136,16 +106,22 @@ export default function AttendancePage() {
                     onPointerDown={e => {
                       const card = e.currentTarget as HTMLElement;
                       if ((e.target as HTMLElement).closest('.class-card-header') && !(e.target as HTMLElement).closest('button, a'))
-                        handleCardPointerDown(e, card, card.parentElement!);
+                        startCardDrag(e, card, card.parentElement!);
                     }}>
                     <div className="class-card-header">
                       <h3>{cls.name}</h3>
                       <RateBadge rate={rate} />
                       <button type="button" className="btn-bulk-attend" onClick={() => bulkAttendance.open(cls)}>일괄 출석</button>
                     </div>
-                    <ul className="member-list">
+                    <ul className="member-list" data-class-seq={cls.classSeq}>
                       {cls.members.map((m, i) => (
                         <li key={`${m.memberSeq}-${i}`}
+                          data-member-seq={m.memberSeq}
+                          onPointerDown={e => {
+                            if (m.staff) return;
+                            const li = e.currentTarget as HTMLElement;
+                            startMemberDrag(e, li, li.parentElement!);
+                          }}
                           className={`member-item ${m.postponed ? 'is-postponed' : ''} ${m.staff ? 'is-staff' : ''}`}>
                           <div className="member-info">
                             <span className="member-index" style={m.staff ? { fontWeight: 800, color: '#e67e22', fontSize: '0.7rem' } : {}}>

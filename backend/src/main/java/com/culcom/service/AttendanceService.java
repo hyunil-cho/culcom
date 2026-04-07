@@ -2,9 +2,11 @@ package com.culcom.service;
 
 import com.culcom.dto.complex.attendance.*;
 import com.culcom.dto.complex.classes.ClassReorderRequest;
+import com.culcom.dto.complex.classes.MemberReorderRequest;
 import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberAttendance;
+import com.culcom.entity.complex.member.ComplexMemberClassMapping;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.member.logs.AttendanceDetail;
 import com.culcom.entity.enums.AttendanceStatus;
@@ -27,6 +29,7 @@ public class AttendanceService {
     private final ComplexMemberAttendanceRepository attendanceRepository;
     private final ComplexMemberMembershipRepository memberMembershipRepository;
     private final ComplexClassRepository classRepository;
+    private final ComplexMemberClassMappingRepository memberClassMappingRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public List<AttendanceResponse> listByClassAndDate(Long classSeq, LocalDate date) {
@@ -68,6 +71,24 @@ public class AttendanceService {
             if (c != null) c.setSortOrder(order.getSortOrder());
         }
         classRepository.saveAll(classMap.values());
+    }
+
+    @Transactional
+    public void reorderMembers(MemberReorderRequest req) {
+        Long classSeq = req.getClassSeq();
+        List<Long> memberSeqs = req.getMemberOrders().stream()
+                .map(MemberReorderRequest.MemberOrder::getMemberSeq).toList();
+        if (memberSeqs.isEmpty()) return;
+
+        Map<Long, ComplexMemberClassMapping> mappingMap = new HashMap<>();
+        memberClassMappingRepository.findByComplexClassSeqAndMemberSeqIn(classSeq, memberSeqs)
+                .forEach(m -> mappingMap.put(m.getMember().getSeq(), m));
+
+        for (MemberReorderRequest.MemberOrder order : req.getMemberOrders()) {
+            ComplexMemberClassMapping m = mappingMap.get(order.getMemberSeq());
+            if (m != null) m.setSortOrder(order.getSortOrder());
+        }
+        memberClassMappingRepository.saveAll(mappingMap.values());
     }
 
     @Transactional

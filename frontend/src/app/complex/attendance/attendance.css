@@ -19,7 +19,9 @@
 .class-card-header { background: #f8f9fa; padding: 12px 15px; border-bottom: 1px solid #dee2e6; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center; cursor: grab; }
 .class-card-header h3 { margin: 0; font-size: 1.1rem; color: #4a90e2; font-weight: 700; }
 .member-list { list-style: none; padding: 0; margin: 0; }
-.member-item { padding: 10px 15px; border-bottom: 1px solid #f1f3f5; display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; }
+.member-item { padding: 10px 15px; border-bottom: 1px solid #f1f3f5; display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; cursor: grab; }
+.member-item:active { cursor: grabbing; }
+.member-item.is-staff { cursor: default; }
 .member-info { display: flex; gap: 10px; align-items: center; flex: 1; }
 .member-index { color: #adb5bd; font-size: 0.8rem; width: 38px; }
 .member-name { font-weight: 600; color: #495057; }

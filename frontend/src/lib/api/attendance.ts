@@ -41,6 +41,8 @@ export const attendanceViewApi = {
     api.post<BulkAttendanceResult[]>(API.COMPLEX_ATTENDANCE_BULK, { classSeq, members }),
   reorderClasses: (classOrders: { id: number; sortOrder: number }[]) =>
     api.post<void>(API.COMPLEX_ATTENDANCE_REORDER, { classOrders }),
+  reorderMembers: (classSeq: number, memberOrders: { memberSeq: number; sortOrder: number }[]) =>
+    api.post<void>(`${API.COMPLEX_ATTENDANCE_REORDER}/members`, { classSeq, memberOrders }),
   memberHistory: (memberSeq: number, page: number = 0, size: number = 20) =>
     api.get<PageResponse<AttendanceHistoryDetail>>(`${API.COMPLEX_ATTENDANCE_MEMBER_HISTORY(memberSeq)}?page=${page}&size=${size}`),
   staffHistory: (staffSeq: number, page: number = 0, size: number = 20) =>

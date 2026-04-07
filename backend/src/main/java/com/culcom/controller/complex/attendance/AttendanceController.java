@@ -3,6 +3,7 @@ package com.culcom.controller.complex.attendance;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.complex.attendance.*;
 import com.culcom.dto.complex.classes.ClassReorderRequest;
+import com.culcom.dto.complex.classes.MemberReorderRequest;
 import com.culcom.service.AttendanceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +51,12 @@ public class AttendanceController {
     @PostMapping("/reorder")
     public ResponseEntity<ApiResponse<Void>> reorderClasses(@RequestBody ClassReorderRequest req) {
         attendanceService.reorderClasses(req);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @PostMapping("/reorder/members")
+    public ResponseEntity<ApiResponse<Void>> reorderMembers(@RequestBody MemberReorderRequest req) {
+        attendanceService.reorderMembers(req);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }

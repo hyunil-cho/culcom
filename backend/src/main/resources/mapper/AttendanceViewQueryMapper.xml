@@ -33,9 +33,9 @@
         FROM complex_classes c
         JOIN class_time_slots ts ON ts.seq = c.time_slot_seq
         LEFT JOIN (
-            SELECT c2.seq AS class_seq, c2.staff_seq AS member_seq FROM complex_classes c2 WHERE c2.staff_seq IS NOT NULL
+            SELECT c2.seq AS class_seq, c2.staff_seq AS member_seq, -1 AS sort_order FROM complex_classes c2 WHERE c2.staff_seq IS NOT NULL
             UNION ALL
-            SELECT mcm.class_seq, mcm.member_seq FROM complex_member_class_mapping mcm
+            SELECT mcm.class_seq, mcm.member_seq, mcm.sort_order FROM complex_member_class_mapping mcm
         ) cm ON cm.class_seq = c.seq
         LEFT JOIN complex_members m ON m.seq = cm.member_seq
         LEFT JOIN complex_staff_info si ON si.member_seq = m.seq
@@ -48,7 +48,7 @@
               AND a.class_seq = c.seq
               AND a.attendance_date = #{today}
         WHERE c.branch_seq = #{branchSeq}
-        ORDER BY ts.seq, c.sort_order, staff DESC, m.name
+        ORDER BY ts.seq, c.sort_order, staff DESC, cm.sort_order, m.name
     </select>
 
     <!--
@@ -78,9 +78,9 @@
             ms.name             AS membershipName
         FROM complex_classes c
         LEFT JOIN (
-            SELECT c2.seq AS class_seq, c2.staff_seq AS member_seq FROM complex_classes c2 WHERE c2.staff_seq IS NOT NULL
+            SELECT c2.seq AS class_seq, c2.staff_seq AS member_seq, -1 AS sort_order FROM complex_classes c2 WHERE c2.staff_seq IS NOT NULL
             UNION ALL
-            SELECT mcm.class_seq, mcm.member_seq FROM complex_member_class_mapping mcm
+            SELECT mcm.class_seq, mcm.member_seq, mcm.sort_order FROM complex_member_class_mapping mcm
         ) cm ON cm.class_seq = c.seq
         LEFT JOIN complex_members m ON m.seq = cm.member_seq
         LEFT JOIN complex_staff_info si ON si.member_seq = m.seq
@@ -92,7 +92,7 @@
         LEFT JOIN memberships ms ON ms.seq = mm.membership_seq
         WHERE c.branch_seq = #{branchSeq}
           AND c.time_slot_seq = #{slotSeq}
-        ORDER BY c.sort_order, staff DESC, m.name
+        ORDER BY c.sort_order, staff DESC, cm.sort_order, m.name
     </select>
 
     <!--
