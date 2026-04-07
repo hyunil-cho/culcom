@@ -33,6 +33,7 @@ public class RefundService {
     private final BranchRepository branchRepository;
     private final ComplexMemberRepository complexMemberRepository;
     private final ComplexMemberMembershipRepository complexMemberMembershipRepository;
+    private final ComplexMemberService complexMemberService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -76,8 +77,12 @@ public class RefundService {
         if (status == RequestStatus.승인) {
             ComplexMemberMembership mm = req.getMemberMembership();
             if (mm != null) {
+                boolean wasActive = mm.isActive();
                 mm.setStatus(com.culcom.entity.enums.MembershipStatus.환불);
                 complexMemberMembershipRepository.save(mm);
+                if (wasActive && mm.getMember() != null) {
+                    complexMemberService.detachMemberFromAllClasses(mm.getMember(), "환불");
+                }
             }
         }
         refundRepository.save(req);

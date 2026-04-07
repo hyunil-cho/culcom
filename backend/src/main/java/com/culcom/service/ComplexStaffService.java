@@ -36,6 +36,7 @@ public class ComplexStaffService {
     private final BranchRepository branchRepository;
     private final MembershipRepository membershipRepository;
     private final ComplexMemberMembershipRepository memberMembershipRepository;
+    private final ComplexMemberService complexMemberService;
     private final ApplicationEventPublisher eventPublisher;
 
 
@@ -109,19 +110,28 @@ public class ComplexStaffService {
         member.setInterviewer(req.getInterviewer());
         staffInfo.setStatus(newStatus);
 
-        // 재직 상태 변경에 따른 내부 멤버십 활성/정지 토글.
+        // 재직 상태 변경에 따른 internal(스태프 복지) 멤버십 활성/정지 토글.
         // 환불된 멤버십은 비가역이므로 건드리지 않는다.
+        //
+        // invariant: 스태프는 외부 멤버십을 별도로 등록하지 않는다 (강사 자격으로만 수강).
+        // 따라서 휴직/퇴직 시 기존 수업 매핑은 모두 자격을 잃었다고 보고 일괄 제거한다.
+        // 복직 후에는 새 멤버십을 구매하고 팀에 다시 등록해야 한다.
         if (oldStatus != newStatus) {
             MembershipStatus newMmStatus =
                     (newStatus == StaffStatus.재직)
                             ? MembershipStatus.활성
                             : MembershipStatus.정지;
-            memberMembershipRepository.findByMemberSeqAndInternalTrue(seq).forEach(mm -> {
-                if (!mm.isRefunded()) {
-                    mm.setStatus(newMmStatus);
-                    memberMembershipRepository.save(mm);
+            boolean detached = false;
+            for (ComplexMemberMembership mm : memberMembershipRepository.findByMemberSeqAndInternalTrue(seq)) {
+                if (mm.isRefunded()) continue;
+                boolean wasActive = mm.isActive();
+                mm.setStatus(newMmStatus);
+                memberMembershipRepository.save(mm);
+                if (wasActive && !mm.isActive() && !detached) {
+                    complexMemberService.detachMemberFromAllClasses(member, newMmStatus.name());
+                    detached = true;
                 }
-            });
+            }
         }
 
         // 휴직/퇴직 시 배정된 수업에서 제외

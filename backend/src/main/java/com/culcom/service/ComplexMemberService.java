@@ -131,7 +131,28 @@ public class ComplexMemberService {
                     mm.getStatus() != null ? mm.getStatus().name() : null));
         }
 
+        // 활성 → 정지/환불로 전이된 경우 소속 팀/수업에서 자동 제외
+        if (wasActive && !mm.isActive()) {
+            detachMemberFromAllClasses(mm.getMember(), mm.getStatus().name());
+        }
+
         return ComplexMemberMembershipResponse.from(mm);
+    }
+
+    /**
+     * 회원의 모든 수업 매핑(complex_member_class_mapping)을 일괄 삭제한다.
+     * 멤버십이 정지/환불되어 더 이상 수업을 들을 자격이 없을 때 호출한다.
+     * 정지가 풀려도 자동 복구는 하지 않으며, 사용자가 수동으로 재배정해야 한다.
+     */
+    @Transactional
+    public void detachMemberFromAllClasses(ComplexMember member, String reasonLabel) {
+        List<ComplexMemberClassMapping> mappings = classMappingRepository.findByMemberSeq(member.getSeq());
+        if (mappings.isEmpty()) return;
+        int count = mappings.size();
+        classMappingRepository.deleteByMemberSeq(member.getSeq());
+        eventPublisher.publishEvent(ActivityEvent.of(
+                member, ActivityEventType.CLASS_ASSIGN,
+                "멤버십 " + reasonLabel + "(으)로 인한 수업/팀 자동 제외 (" + count + "건)"));
     }
 
     @Transactional
