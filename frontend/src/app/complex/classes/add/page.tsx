@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { classApi, staffApi, type ComplexStaff } from '@/lib/api';
+import { useState } from 'react';
+import { classApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import ClassForm, { emptyClassForm, validateClassForm, type ClassFormData } from '../ClassForm';
 import { useResultModal } from '@/hooks/useResultModal';
@@ -10,12 +10,7 @@ import { useClassSlots } from '../../hooks/useClassSlots';
 export default function ClassAddPage() {
   const [form, setForm] = useState<ClassFormData>(emptyClassForm);
   const { timeSlots } = useClassSlots();
-  const [staffs, setStaffs] = useState<ComplexStaff[]>([]);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_CLASSES });
-
-  useEffect(() => {
-    staffApi.list().then(res => setStaffs(res.data));
-  }, []);
 
   const handleSubmit = async () => {
     const error = validateClassForm(form);
@@ -25,7 +20,6 @@ export default function ClassAddPage() {
       description: form.description || undefined,
       capacity: form.capacity,
       timeSlotSeq: form.timeSlotSeq as number,
-      staffSeq: form.staffSeq ? (form.staffSeq as number) : undefined,
     }), '수업이 등록되었습니다.');
   };
 
@@ -38,7 +32,6 @@ export default function ClassAddPage() {
         backHref={ROUTES.COMPLEX_CLASSES}
         submitLabel="등록"
         timeSlots={timeSlots}
-        staffs={staffs}
       />
       {modal}
     </>

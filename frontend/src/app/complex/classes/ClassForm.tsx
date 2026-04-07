@@ -3,24 +3,20 @@
 import FormField from '@/components/ui/FormField';
 import FormLayout from '@/components/ui/FormLayout';
 import { Input, NumberInput, Select, Textarea } from '@/components/ui/FormInput';
-import { type ClassTimeSlot, type ComplexStaff } from '@/lib/api';
+import { type ClassTimeSlot } from '@/lib/api';
 
 export interface ClassFormData {
   name: string;
   timeSlotSeq: number | '';
-  staffSeq: number | '';
   capacity: number;
   description: string;
-  sortOrder: number;
 }
 
 export const emptyClassForm: ClassFormData = {
   name: '',
   timeSlotSeq: '',
-  staffSeq: '',
   capacity: 10,
   description: '',
-  sortOrder: 0,
 };
 
 export function validateClassForm(form: ClassFormData): string | null {
@@ -31,7 +27,7 @@ export function validateClassForm(form: ClassFormData): string | null {
 }
 
 export default function ClassForm({
-  form, onChange, onSubmit, isEdit, backHref, submitLabel, timeSlots, staffs,
+  form, onChange, onSubmit, isEdit, backHref, submitLabel, timeSlots,
 }: {
   form: ClassFormData;
   onChange: (form: ClassFormData) => void;
@@ -40,7 +36,6 @@ export default function ClassForm({
   backHref: string;
   submitLabel: string;
   timeSlots: ClassTimeSlot[];
-  staffs: ComplexStaff[];
 }) {
   return (
     <FormLayout
@@ -65,14 +60,6 @@ export default function ClassForm({
         </Select>
       </FormField>
 
-      <FormField label="담당 강사">
-        <Select value={form.staffSeq}
-          onChange={(e) => onChange({ ...form, staffSeq: e.target.value ? Number(e.target.value) : '' })}>
-          <option value="">-- 강사 선택 (선택 사항) --</option>
-          {staffs.map(s => <option key={s.seq} value={s.seq}>{s.name}</option>)}
-        </Select>
-      </FormField>
-
       <FormField label="수업 정원 (인원 수)" required hint="해당 수업에 동시에 참여 가능한 최대 인원 수를 입력하세요.">
         <NumberInput placeholder="예: 10" value={form.capacity}
           onChange={(e) => onChange({ ...form, capacity: Number(e.target.value) })} min={1} required />
@@ -83,12 +70,6 @@ export default function ClassForm({
           value={form.description} onChange={(e) => onChange({ ...form, description: e.target.value })} />
       </FormField>
 
-      {isEdit && (
-        <FormField label="정렬 순서">
-          <NumberInput value={form.sortOrder}
-            onChange={(e) => onChange({ ...form, sortOrder: Number(e.target.value) })} />
-        </FormField>
-      )}
     </FormLayout>
   );
 }
