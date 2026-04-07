@@ -69,5 +69,47 @@
 
 /* 결과 */
 .resultBody { padding: 10px; }
-.resultInner { padding: 10px; font-size: var(--font-sm); line-height: 1.8; }
-.resultGroup { margin-bottom: 10px; }
+.resultInner { padding: 4px 2px; font-size: var(--font-sm); }
+
+.resultStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.resultStatCard {
+  padding: 12px 8px; border-radius: 8px; text-align: center;
+  background: #f8f9fa; border: 1px solid #e9ecef;
+}
+.resultStatCard.success { background: #e8f5e9; border-color: #c8e6c9; }
+.resultStatCard.warn    { background: #fff8e1; border-color: #ffe0a3; }
+.resultStatCard.muted   { background: #f1f3f5; border-color: #dee2e6; }
+.resultStatNumber { font-size: 1.5rem; font-weight: 800; line-height: 1.1; }
+.resultStatLabel  { font-size: 0.78rem; color: #555; margin-top: 4px; }
+.resultStatCard.success .resultStatNumber { color: #2e7d32; }
+.resultStatCard.warn    .resultStatNumber { color: #e67700; }
+.resultStatCard.muted   .resultStatNumber { color: #6c757d; }
+
+.resultSection {
+  margin-bottom: 12px; border: 1px solid #e9ecef; border-radius: 8px; overflow: hidden;
+}
+.resultSectionHeader {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; background: #f8f9fa; border-bottom: 1px solid #e9ecef;
+}
+.resultDot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.resultSectionTitle { font-weight: 700; font-size: 0.85rem; color: #333; }
+.resultSectionCount {
+  margin-left: auto; font-size: 0.75rem; font-weight: 700;
+  background: #fff; border: 1px solid #dee2e6; border-radius: 999px; padding: 1px 8px; color: #555;
+}
+.resultChips {
+  display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px; background: #fff;
+}
+.resultChip {
+  font-size: 0.78rem; padding: 3px 9px; border-radius: 999px;
+  background: #f1f3f5; color: #495057; border: 1px solid #e9ecef;
+}
+.resultEmpty {
+  padding: 24px; text-align: center; color: #888; font-size: 0.85rem;
+}

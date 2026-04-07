@@ -30,6 +30,7 @@ public class AttendanceService {
     private final ComplexMemberMembershipRepository memberMembershipRepository;
     private final ComplexClassRepository classRepository;
     private final ComplexMemberClassMappingRepository memberClassMappingRepository;
+    private final ComplexMemberRepository memberRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public List<AttendanceResponse> listByClassAndDate(Long classSeq, LocalDate date) {
@@ -113,9 +114,15 @@ public class AttendanceService {
         attendanceRepository.findByClassSeqsAndDate(List.of(classSeq), today)
                 .forEach(a -> existingAttendanceMap.put(a.getMember().getSeq(), a));
 
+        Map<Long, String> nameMap = new HashMap<>();
+        if (!memberSeqs.isEmpty()) {
+            memberRepository.findAllById(memberSeqs)
+                    .forEach(m -> nameMap.put(m.getSeq(), m.getName()));
+        }
+
         List<BulkAttendanceResultResponse> results = new ArrayList<>();
         for (BulkAttendanceRequest.BulkMember bm : req.getMembers()) {
-            results.add(processMemberAttendance(bm, classSeq, today, postponedMap, activeMap, existingAttendanceMap));
+            results.add(processMemberAttendance(bm, classSeq, today, postponedMap, activeMap, existingAttendanceMap, nameMap));
         }
         return results;
     }
@@ -124,21 +131,30 @@ public class AttendanceService {
             BulkAttendanceRequest.BulkMember bm, Long classSeq, LocalDate today,
             Map<Long, ComplexMemberMembership> postponedMap,
             Map<Long, ComplexMemberMembership> activeMap,
-            Map<Long, ComplexMemberAttendance> existingAttendanceMap) {
+            Map<Long, ComplexMemberAttendance> existingAttendanceMap,
+            Map<Long, String> nameMap) {
+
+        String name = nameMap.getOrDefault(bm.getMemberSeq(), "");
 
         // 연기 확인 (프리로드 맵)
         ComplexMemberMembership pmm = postponedMap.get(bm.getMemberSeq());
         if (pmm != null) {
             publishAttendance(bm.getMemberSeq(), classSeq, AttendanceStatus.연기, pmm, 0, "멤버십 연기 중 — 출석 불가");
             return BulkAttendanceResultResponse.builder()
-                    .memberSeq(bm.getMemberSeq()).name("").status("연기").build();
+                    .memberSeq(bm.getMemberSeq())
+                    .name(name)
+                    .status("연기")
+                    .build();
         }
 
         // 활성 멤버십 확인 (프리로드 맵)
         ComplexMemberMembership mm = activeMap.get(bm.getMemberSeq());
         if (mm == null) {
             return BulkAttendanceResultResponse.builder()
-                    .memberSeq(bm.getMemberSeq()).name("").status("skip_no_membership").build();
+                    .memberSeq(bm.getMemberSeq())
+                    .name(name)
+                    .status("skip_no_membership")
+                    .build();
         }
 
         AttendanceStatus newStatus = bm.isAttended() ? AttendanceStatus.출석 : AttendanceStatus.결석;
@@ -149,7 +165,7 @@ public class AttendanceService {
             AttendanceStatus oldStatus = existing.getStatus();
             if (oldStatus == newStatus) {
                 return BulkAttendanceResultResponse.builder()
-                        .memberSeq(bm.getMemberSeq()).name("").status("skip_already").build();
+                        .memberSeq(bm.getMemberSeq()).name(name).status("skip_already").build();
             }
 
             existing.setStatus(newStatus);
@@ -170,7 +186,7 @@ public class AttendanceService {
             publishAttendance(bm.getMemberSeq(), classSeq, newStatus, mm, delta, null);
 
             return BulkAttendanceResultResponse.builder()
-                    .memberSeq(bm.getMemberSeq()).name("")
+                    .memberSeq(bm.getMemberSeq()).name(name)
                     .status("변경: " + (newStatus == AttendanceStatus.출석 ? "출석" : "결석")).build();
         }
 
@@ -191,7 +207,7 @@ public class AttendanceService {
         publishAttendance(bm.getMemberSeq(), classSeq, newStatus, mm, delta, null);
 
         return BulkAttendanceResultResponse.builder()
-                .memberSeq(bm.getMemberSeq()).name("")
+                .memberSeq(bm.getMemberSeq()).name(name)
                 .status(newStatus == AttendanceStatus.출석 ? "출석" : "결석").build();
     }
 

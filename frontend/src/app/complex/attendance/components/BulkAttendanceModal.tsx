@@ -99,7 +99,7 @@ export function useBulkAttendance(onComplete: () => void) {
       )}
 
       {resultModal && (
-        <ModalOverlay size="sm" onClose={() => setResultModal(null)}>
+        <ModalOverlay size="md" onClose={() => setResultModal(null)}>
             <div className={`modal-header ${s.headerGreen}`}>
               <h3>{resultModal.className} — 출석 처리 결과</h3>
             </div>
@@ -120,24 +120,55 @@ export function useBulkAttendance(onComplete: () => void) {
 }
 
 function BulkResultSummary({ results }: { results: BulkAttendanceResult[] }) {
-  const groups = [
-    { filter: '출석', label: '출석', color: '#2e7d32' },
-    { filter: '결석', label: '결석', color: '#888' },
-    { filter: '변경: 출석', label: '결석→출석 변경', color: '#1565c0' },
-    { filter: '변경: 결석', label: '출석→결석 변경', color: '#e65100' },
-    { filter: '연기', label: '연기', color: '#e67700' },
-    { filter: 'skip_already', label: '이미 처리됨', color: '#999' },
-    { filter: 'skip_no_membership', label: '멤버십 없음', color: '#c92a2a' },
+  const groups: { filter: string; label: string; icon: string; dot: string }[] = [
+    { filter: '출석',               label: '출석',           icon: '✅', dot: '#2e7d32' },
+    { filter: '변경: 출석',          label: '결석→출석 변경', icon: '🔄', dot: '#1565c0' },
+    { filter: '결석',               label: '결석',           icon: '⬜', dot: '#868e96' },
+    { filter: '변경: 결석',          label: '출석→결석 변경', icon: '🔄', dot: '#e65100' },
+    { filter: '연기',               label: '연기',           icon: '⏸️', dot: '#e67700' },
+    { filter: 'skip_already',       label: '이미 처리됨',     icon: '⏭️', dot: '#adb5bd' },
+    { filter: 'skip_no_membership', label: '멤버십 없음',     icon: '⚠️', dot: '#c92a2a' },
   ];
+
+  const successCount = results.filter(r => r.status === '출석' || r.status === '변경: 출석').length;
+  const changeCount  = results.filter(r => r.status === '변경: 출석' || r.status === '변경: 결석').length;
+  const skipCount    = results.filter(r => r.status === 'skip_already' || r.status === 'skip_no_membership').length;
+
   return (
     <>
+      <div className={s.resultStats}>
+        <div className={`${s.resultStatCard} ${s.success}`}>
+          <div className={s.resultStatNumber}>{successCount}</div>
+          <div className={s.resultStatLabel}>출석 처리</div>
+        </div>
+        <div className={`${s.resultStatCard} ${s.warn}`}>
+          <div className={s.resultStatNumber}>{changeCount}</div>
+          <div className={s.resultStatLabel}>상태 변경</div>
+        </div>
+        <div className={`${s.resultStatCard} ${s.muted}`}>
+          <div className={s.resultStatNumber}>{skipCount}</div>
+          <div className={s.resultStatLabel}>스킵</div>
+        </div>
+      </div>
+
+      {results.length === 0 && <div className={s.resultEmpty}>처리된 항목이 없습니다.</div>}
+
       {groups.map(g => {
         const items = results.filter(x => x.status === g.filter);
         if (items.length === 0) return null;
         return (
-          <div key={g.filter} className="resultGroup" style={{ marginBottom: 10, color: g.color }}>
-            <strong>{g.label} ({items.length}명)</strong><br />
-            {items.map(x => x.name).join(', ')}
+          <div key={g.filter} className={s.resultSection}>
+            <div className={s.resultSectionHeader}>
+              <span className={s.resultDot} style={{ background: g.dot }} />
+              <span>{g.icon}</span>
+              <span className={s.resultSectionTitle}>{g.label}</span>
+              <span className={s.resultSectionCount}>{items.length}명</span>
+            </div>
+            <div className={s.resultChips}>
+              {items.map((x, i) => (
+                <span key={i} className={s.resultChip}>{x.name}</span>
+              ))}
+            </div>
           </div>
         );
       })}
