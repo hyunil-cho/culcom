@@ -1,11 +1,14 @@
 package com.culcom.entity.complex.member;
 
 import com.culcom.entity.BaseTimeEntity;
+import com.culcom.entity.enums.PaymentMethod;
 import com.culcom.entity.product.Membership;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "complex_member_memberships")
@@ -50,11 +53,9 @@ public class ComplexMemberMembership extends BaseTimeEntity {
     @Column(length = 50)
     private String price;
 
-    @Column(name = "deposit_amount", length = 50)
-    private String depositAmount;
-
-    @Column(name = "payment_method", length = 50)
-    private String paymentMethod;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", length = 30)
+    private PaymentMethod paymentMethod;
 
     @Column(name = "payment_date")
     private LocalDateTime paymentDate;
@@ -69,6 +70,10 @@ public class ComplexMemberMembership extends BaseTimeEntity {
     @Column(nullable = false)
     @Builder.Default
     private Boolean internal = false;
+
+    @OneToMany(mappedBy = "memberMembership", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<MembershipPayment> payments = new ArrayList<>();
 
     /** 출석/연기/환불 등에서 실제로 쓸 수 있는 상태인지 단일 진입점. */
     public boolean isUsable() {

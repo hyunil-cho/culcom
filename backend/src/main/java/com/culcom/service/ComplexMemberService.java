@@ -7,6 +7,7 @@ import com.culcom.entity.complex.member.*;
 import com.culcom.entity.product.Membership;
 import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.ActivityFieldType;
+import com.culcom.entity.enums.PaymentKind;
 import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.*;
@@ -105,7 +106,6 @@ public class ComplexMemberService {
         if (req.getStartDate() != null) mm.setStartDate(req.getStartDate());
         if (req.getExpiryDate() != null) mm.setExpiryDate(req.getExpiryDate());
         if (req.getPrice() != null) mm.setPrice(req.getPrice());
-        if (req.getDepositAmount() != null) mm.setDepositAmount(req.getDepositAmount());
         if (req.getPaymentMethod() != null) mm.setPaymentMethod(req.getPaymentMethod());
         if (req.getPaymentDate() != null) mm.setPaymentDate(req.getPaymentDate());
         Boolean oldActive = mm.getIsActive();
@@ -164,7 +164,6 @@ public class ComplexMemberService {
                 .expiryDate(expiryDate)
                 .totalCount(membership.getCount())
                 .price(req.getPrice())
-                .depositAmount(req.getDepositAmount())
                 .paymentMethod(req.getPaymentMethod())
                 .paymentDate(paymentDate)
                 .isActive(isActive)
@@ -177,12 +176,35 @@ public class ComplexMemberService {
 
         memberMembershipRepository.save(mm);
 
+        // 첫 납부(디포짓) 자동 생성
+        Long initialAmount = parseAmount(req.getDepositAmount());
+        if (initialAmount != null && initialAmount > 0) {
+            MembershipPayment first = MembershipPayment.builder()
+                    .memberMembership(mm)
+                    .amount(initialAmount)
+                    .paidDate(paymentDate != null ? paymentDate : LocalDateTime.now())
+                    .method(req.getPaymentMethod())
+                    .kind(PaymentKind.DEPOSIT)
+                    .note("멤버십 등록 시 첫 납부")
+                    .build();
+            mm.getPayments().add(first);
+            memberMembershipRepository.save(mm);
+        }
+
         eventPublisher.publishEvent(ActivityEvent.ofMembership(
                 member, ActivityEventType.MEMBERSHIP_ASSIGN, mm.getSeq(),
                 membership.getName() + " 멤버십 등록"));
 
         return ComplexMemberMembershipResponse.from(mm);
     }
+
+    private static Long parseAmount(String s) {
+        if (s == null) return null;
+        String digits = s.replaceAll("[^0-9-]", "");
+        if (digits.isEmpty() || "-".equals(digits)) return null;
+        try { return Long.parseLong(digits); } catch (NumberFormatException e) { return null; }
+    }
+
 
     @Transactional
     public void assignClass(Long memberSeq, Long classSeq) {
