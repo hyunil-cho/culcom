@@ -76,7 +76,7 @@ public class RefundService {
         if (status == RequestStatus.승인) {
             ComplexMemberMembership mm = req.getMemberMembership();
             if (mm != null) {
-                mm.setIsActive(false);
+                mm.setStatus(com.culcom.entity.enums.MembershipStatus.환불);
                 complexMemberMembershipRepository.save(mm);
             }
         }

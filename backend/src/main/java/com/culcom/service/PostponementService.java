@@ -74,7 +74,8 @@ public class PostponementService {
             ComplexMemberMembership mm = req.getMemberMembership();
             if (mm != null) {
                 mm.setPostponeUsed(mm.getPostponeUsed() + 1);
-                mm.setIsActive(false);
+                // 연기는 멤버십 status를 변경하지 않는다.
+                // "오늘 연기 중인지"는 complex_postponement_requests에서 기간으로 판정한다.
                 complexMemberMembershipRepository.save(mm);
             }
         }

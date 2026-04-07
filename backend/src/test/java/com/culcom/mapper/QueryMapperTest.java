@@ -198,7 +198,7 @@ class QueryMapperTest {
 
     @Test
     void attendanceView_selectAttendanceDetail() {
-        List<AttendanceViewRow> result = attendanceViewQueryMapper.selectAttendanceDetail(1L, 1L);
+        List<AttendanceViewRow> result = attendanceViewQueryMapper.selectAttendanceDetail(1L, 1L, LocalDate.now());
         assertThat(result).isNotNull();
     }
 

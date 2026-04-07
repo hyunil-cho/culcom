@@ -57,7 +57,7 @@ public class PublicMembershipService {
 
         return new MembershipDetail(
                 mm.getMembership().getName(),
-                Boolean.TRUE.equals(mm.getIsActive()) ? "사용가능" : "사용불가",
+                mm.getStatus() != null ? mm.getStatus().name() : "",
                 mm.getStartDate() != null ? mm.getStartDate().toString() : "",
                 mm.getExpiryDate() != null ? mm.getExpiryDate().toString() : "",
                 mm.getTotalCount(), mm.getUsedCount(),

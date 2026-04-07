@@ -49,7 +49,7 @@ public class PublicRefundService {
         List<MemberInfo> memberInfos = members.stream().map(m -> {
             List<ComplexMemberMembership> memberships = membershipMap.getOrDefault(m.getSeq(), List.of());
             List<MembershipInfo> msInfos = memberships.stream()
-                    .filter(mm -> Boolean.TRUE.equals(mm.getIsActive()))
+                    .filter(ComplexMemberMembership::isActive)
                     .map(mm -> new MembershipInfo(
                             mm.getSeq(), mm.getMembership().getName(),
                             mm.getStartDate() != null ? mm.getStartDate().toString() : "",

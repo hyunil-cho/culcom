@@ -90,7 +90,7 @@ public class AttendanceViewController {
             @RequestParam Long slotSeq) {
         Long branchSeq = principal.getSelectedBranchSeq();
 
-        List<AttendanceViewRow> rows = attendanceViewQueryMapper.selectAttendanceDetail(branchSeq, slotSeq);
+        List<AttendanceViewRow> rows = attendanceViewQueryMapper.selectAttendanceDetail(branchSeq, slotSeq, LocalDate.now());
         List<AttendanceHistoryRow> historyRows = attendanceViewQueryMapper.selectRecentHistory(branchSeq, slotSeq);
 
         Map<String, List<String>> historyMap = new LinkedHashMap<>();

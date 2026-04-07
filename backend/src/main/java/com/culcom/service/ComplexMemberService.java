@@ -6,6 +6,7 @@ import com.culcom.dto.complex.member.ComplexMemberMetaDataRequest;
 import com.culcom.entity.complex.member.*;
 import com.culcom.entity.product.Membership;
 import com.culcom.entity.enums.ActivityEventType;
+import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.enums.ActivityFieldType;
 import com.culcom.entity.enums.PaymentKind;
 import com.culcom.event.ActivityEvent;
@@ -110,23 +111,24 @@ public class ComplexMemberService {
         if (req.getPrice() != null) mm.setPrice(req.getPrice());
         if (req.getPaymentMethod() != null) mm.setPaymentMethod(req.getPaymentMethod());
         if (req.getPaymentDate() != null) mm.setPaymentDate(req.getPaymentDate());
-        Boolean oldActive = mm.getIsActive();
-        if (req.getIsActive() != null) {
-            if (Boolean.TRUE.equals(req.getIsActive()) && !Boolean.TRUE.equals(oldActive)
+        MembershipStatus oldStatus = mm.getStatus();
+        boolean wasActive = mm.isActive();
+        if (req.getStatus() != null) {
+            if (req.getStatus() == MembershipStatus.활성 && !wasActive
                     && memberMembershipRepository.existsActiveByMemberSeqExcluding(memberSeq, mmSeq)) {
                 throw new IllegalStateException("이미 활성화된 멤버십이 존재합니다");
             }
-            mm.setIsActive(req.getIsActive());
+            mm.setStatus(req.getStatus());
         }
 
         memberMembershipRepository.save(mm);
 
-        if (!Objects.equals(oldActive, mm.getIsActive())) {
+        if (!Objects.equals(oldStatus, mm.getStatus())) {
             eventPublisher.publishEvent(ActivityEvent.withMembershipChange(
                     mm.getMember(), ActivityEventType.MEMBERSHIP_UPDATE, mm.getSeq(),
                     ActivityFieldType.STATUS,
-                    Boolean.TRUE.equals(oldActive) ? "사용가능" : "사용불가",
-                    Boolean.TRUE.equals(mm.getIsActive()) ? "사용가능" : "사용불가"));
+                    oldStatus != null ? oldStatus.name() : null,
+                    mm.getStatus() != null ? mm.getStatus().name() : null));
         }
 
         return ComplexMemberMembershipResponse.from(mm);
@@ -154,8 +156,9 @@ public class ComplexMemberService {
                 ? req.getExpiryDate() : startDate.plusDays(membership.getDuration());
         LocalDateTime paymentDate = req.getPaymentDate();
 
-        boolean isActive = req.getIsActive() != null ? req.getIsActive() : true;
-        if (isActive && memberMembershipRepository.existsActiveByMemberSeq(memberSeq)) {
+        MembershipStatus status = req.getStatus() != null ? req.getStatus() : MembershipStatus.활성;
+        boolean willBeActive = status == MembershipStatus.활성;
+        if (willBeActive && memberMembershipRepository.existsActiveByMemberSeq(memberSeq)) {
             throw new IllegalStateException("이미 활성화된 멤버십이 존재합니다");
         }
 
@@ -168,7 +171,7 @@ public class ComplexMemberService {
                 .price(req.getPrice())
                 .paymentMethod(req.getPaymentMethod())
                 .paymentDate(paymentDate)
-                .isActive(isActive)
+                .status(status)
                 .build();
 
         if (member.getJoinDate() == null) {

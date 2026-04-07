@@ -22,7 +22,8 @@ public interface AttendanceViewQueryMapper {
     /** 등록현황 상세 뷰 (특정 시간대) */
     List<AttendanceViewRow> selectAttendanceDetail(
             @Param("branchSeq") Long branchSeq,
-            @Param("slotSeq") Long slotSeq);
+            @Param("slotSeq") Long slotSeq,
+            @Param("today") LocalDate today);
 
     /** 상세 뷰의 최근 출석기록 (최대 10건씩) */
     List<AttendanceHistoryRow> selectRecentHistory(

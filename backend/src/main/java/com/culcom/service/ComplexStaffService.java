@@ -10,6 +10,7 @@ import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.member.ComplexStaffInfo;
 import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.ActivityFieldType;
+import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.enums.StaffStatus;
 import com.culcom.entity.product.Membership;
 
@@ -108,12 +109,18 @@ public class ComplexStaffService {
         member.setInterviewer(req.getInterviewer());
         staffInfo.setStatus(newStatus);
 
-        // 재직 상태 변경에 따른 내부 멤버십 활성화/비활성화
+        // 재직 상태 변경에 따른 내부 멤버십 활성/정지 토글.
+        // 환불된 멤버십은 비가역이므로 건드리지 않는다.
         if (oldStatus != newStatus) {
-            boolean active = (newStatus == StaffStatus.재직);
+            MembershipStatus newMmStatus =
+                    (newStatus == StaffStatus.재직)
+                            ? MembershipStatus.활성
+                            : MembershipStatus.정지;
             memberMembershipRepository.findByMemberSeqAndInternalTrue(seq).forEach(mm -> {
-                mm.setIsActive(active);
-                memberMembershipRepository.save(mm);
+                if (!mm.isRefunded()) {
+                    mm.setStatus(newMmStatus);
+                    memberMembershipRepository.save(mm);
+                }
             });
         }
 

@@ -2,6 +2,7 @@ package com.culcom.dto.complex.member;
 
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.member.MembershipPayment;
+import com.culcom.entity.enums.MembershipStatus;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -26,7 +27,7 @@ public class ComplexMemberMembershipResponse {
     private String price;
     private String paymentMethod;
     private LocalDateTime paymentDate;
-    private Boolean isActive;
+    private MembershipStatus status;
     private LocalDateTime createdDate;
 
     /** 누적 납부 금액 (sum of payments.amount; 음수 환불정정 포함) */
@@ -68,7 +69,7 @@ public class ComplexMemberMembershipResponse {
                 .price(entity.getPrice())
                 .paymentMethod(entity.getPaymentMethod())
                 .paymentDate(entity.getPaymentDate())
-                .isActive(entity.getIsActive())
+                .status(entity.getStatus())
                 .createdDate(entity.getCreatedDate())
                 .paidAmount(paid)
                 .outstanding(out)

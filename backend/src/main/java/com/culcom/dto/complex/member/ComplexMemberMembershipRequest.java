@@ -1,5 +1,6 @@
 package com.culcom.dto.complex.member;
 
+import com.culcom.entity.enums.MembershipStatus;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,5 +19,5 @@ public class ComplexMemberMembershipRequest {
     private String depositAmount;
     private String paymentMethod;
     private LocalDateTime paymentDate;
-    private Boolean isActive;
+    private MembershipStatus status;
 }

@@ -13,7 +13,7 @@ public interface ComplexMemberMembershipRepository extends JpaRepository<Complex
     List<ComplexMemberMembership> findByMemberSeqAndInternalTrue(Long memberSeq);
 
     @Query("SELECT mm FROM ComplexMemberMembership mm " +
-           "WHERE mm.member.seq IN :memberSeqs AND mm.isActive = true")
+           "WHERE mm.member.seq IN :memberSeqs AND mm.status = com.culcom.entity.enums.MembershipStatus.활성")
     List<ComplexMemberMembership> findActiveByMemberSeqIn(@Param("memberSeqs") List<Long> memberSeqs);
 
     @Query("SELECT mm FROM ComplexMemberMembership mm " +
@@ -22,11 +22,11 @@ public interface ComplexMemberMembershipRepository extends JpaRepository<Complex
     List<ComplexMemberMembership> findWithMembershipByMemberSeqIn(@Param("memberSeqs") List<Long> memberSeqs);
 
     @Query("SELECT COUNT(mm) > 0 FROM ComplexMemberMembership mm " +
-           "WHERE mm.member.seq = :memberSeq AND mm.isActive = true")
+           "WHERE mm.member.seq = :memberSeq AND mm.status = com.culcom.entity.enums.MembershipStatus.활성")
     boolean existsActiveByMemberSeq(@Param("memberSeq") Long memberSeq);
 
     @Query("SELECT COUNT(mm) > 0 FROM ComplexMemberMembership mm " +
-           "WHERE mm.member.seq = :memberSeq AND mm.isActive = true AND mm.seq <> :excludeMmSeq")
+           "WHERE mm.member.seq = :memberSeq AND mm.status = com.culcom.entity.enums.MembershipStatus.활성 AND mm.seq <> :excludeMmSeq")
     boolean existsActiveByMemberSeqExcluding(@Param("memberSeq") Long memberSeq,
                                              @Param("excludeMmSeq") Long excludeMmSeq);
 

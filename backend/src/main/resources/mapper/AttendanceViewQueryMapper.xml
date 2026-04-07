@@ -23,9 +23,9 @@
             m.name              AS name,
             m.phone_number      AS phoneNumber,
             CASE WHEN si.seq IS NOT NULL THEN TRUE ELSE FALSE END AS staff,
-            CASE WHEN mm.status = '연기' AND si.seq IS NULL THEN TRUE ELSE FALSE END AS postponed,
+            CASE WHEN pr.seq IS NOT NULL AND si.seq IS NULL THEN TRUE ELSE FALSE END AS postponed,
             CASE
-                WHEN mm.status = '연기' AND si.seq IS NULL THEN '△'
+                WHEN pr.seq IS NOT NULL AND si.seq IS NULL THEN '△'
                 WHEN a.status = '출석' THEN 'O'
                 WHEN a.status = '결석' THEN 'X'
                 ELSE ''
@@ -41,8 +41,12 @@
         LEFT JOIN complex_staff_info si ON si.member_seq = m.seq
         LEFT JOIN complex_member_memberships mm
                ON mm.member_seq = m.seq
-              AND mm.status IN ('활성', '연기')
+              AND mm.status = '활성'
               AND mm.internal = FALSE
+        LEFT JOIN complex_postponement_requests pr
+               ON pr.member_membership_seq = mm.seq
+              AND pr.status = '승인'
+              AND #{today} BETWEEN pr.start_date AND pr.end_date
         LEFT JOIN complex_member_attendance a
                ON a.member_seq = m.seq
               AND a.class_seq = c.seq
@@ -64,9 +68,9 @@
             m.name              AS name,
             m.phone_number      AS phoneNumber,
             CASE WHEN si.seq IS NOT NULL THEN TRUE ELSE FALSE END AS staff,
-            CASE WHEN mm.status = '연기' AND si.seq IS NULL THEN TRUE ELSE FALSE END AS postponed,
+            CASE WHEN pr.seq IS NOT NULL AND si.seq IS NULL THEN TRUE ELSE FALSE END AS postponed,
             CASE
-                WHEN mm.status = '연기' AND si.seq IS NULL THEN '△'
+                WHEN pr.seq IS NOT NULL AND si.seq IS NULL THEN '△'
                 ELSE ''
             END AS status,
             md.level            AS level,
@@ -87,8 +91,12 @@
         LEFT JOIN complex_member_metadata md ON md.member_seq = m.seq
         LEFT JOIN complex_member_memberships mm
                ON mm.member_seq = m.seq
-              AND mm.status IN ('활성', '연기')
+              AND mm.status = '활성'
               AND mm.internal = FALSE
+        LEFT JOIN complex_postponement_requests pr
+               ON pr.member_membership_seq = mm.seq
+              AND pr.status = '승인'
+              AND #{today} BETWEEN pr.start_date AND pr.end_date
         LEFT JOIN memberships ms ON ms.seq = mm.membership_seq
         WHERE c.branch_seq = #{branchSeq}
           AND c.time_slot_seq = #{slotSeq}
