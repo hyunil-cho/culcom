@@ -57,7 +57,19 @@ function MembersContent() {
 
   const columns: Column<ComplexMember>[] = [
     { header: '번호', render: (_, i) => page * 20 + (i ?? 0) + 1, style: { width: 50, color: '#adb5bd', textAlign: 'center' } },
-    { header: '이름', render: (m) => <span style={{ fontWeight: 'bold', color: '#4a90e2' }}>{m.name}</span> },
+    {
+      header: '이름', render: (m) => (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontWeight: 'bold', color: '#4a90e2' }}>{m.name}</span>
+          {m.staffStatus && (
+            <span style={{
+              fontSize: '0.65rem', fontWeight: 700, color: '#fff',
+              background: '#6366f1', borderRadius: 3, padding: '1px 6px',
+            }}>STAFF</span>
+          )}
+        </span>
+      ),
+    },
     { header: '전화번호', render: (m) => <span style={{ fontFamily: 'monospace' }}>{m.phoneNumber}</span> },
     { header: '레벨', render: (m) => m.level || '' },
     { header: '언어', render: (m) => m.language || '' },

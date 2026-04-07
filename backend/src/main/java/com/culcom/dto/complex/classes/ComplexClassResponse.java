@@ -22,6 +22,7 @@ public class ComplexClassResponse {
     private String timeSlotName;
     private Long staffSeq;
     private String staffName;
+    private Integer memberCount;
     private LocalDateTime createdDate;
 
     public static ComplexClassResponse from(ComplexClass entity) {

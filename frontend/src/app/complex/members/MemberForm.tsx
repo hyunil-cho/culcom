@@ -89,6 +89,22 @@ export function validateMemberForm(form: MemberFormData): string | null {
   return null;
 }
 
+/**
+ * 멤버십 할당 토글이 켜졌을 때(=membershipSeq가 비어있지 않을 때) 호출.
+ * 멤버십 섹션의 모든 입력 필드를 필수로 검증한다.
+ * 토글이 꺼졌으면 useMemberForm.saveMembership에서 조기 return 되므로
+ * 이 함수를 호출하지 않는다.
+ */
+export function validateMembershipForm(ms: MembershipFormData, isEdit: boolean): string | null {
+  if (!ms.membershipSeq) return '멤버십 등급을 선택하세요.';
+  if (!ms.status) return '멤버십 상태를 선택하세요.';
+  if (!ms.price?.trim()) return '멤버십 금액을 입력하세요.';
+  if (!ms.paymentDate) return '납부일을 입력하세요.';
+  if (!ms.paymentMethod) return '결제방법을 선택하세요.';
+  if (!isEdit && !ms.depositAmount?.trim()) return '첫 납부 금액을 입력하세요.';
+  return null;
+}
+
 const SIGNUP_CHANNELS = ['인스타그램', '네이버 검색', '지인 소개', '전단지', '홈페이지'];
 const STAFF_STATUS_OPTIONS = ['재직', '휴직', '퇴직'] as const;
 type TabId = 'basic' | 'class' | 'payment';
@@ -135,13 +151,28 @@ export default function MemberForm({
   const initialTab = (searchParams.get('tab') as TabId | null) ?? 'basic';
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
+  const [membershipEnabled, setMembershipEnabled] = useState(false);
   const filteredClasses = getClassesBySlot(classAssign?.timeSlotSeq);
 
   useEffect(() => {
     membershipApi.list().then(res => { if (res.success) setMemberships(res.data); });
   }, []);
 
+  // 기존 멤버십이 로드되면 토글을 자동으로 켠다 (수정 모드 진입 시)
+  useEffect(() => {
+    if (membershipForm?.membershipSeq) setMembershipEnabled(true);
+  }, [membershipForm?.membershipSeq]);
+
   const isStaff = staffForm?.isStaff ?? false;
+
+  const toggleMembership = (on: boolean) => {
+    setMembershipEnabled(on);
+    // 토글 OFF 시 폼의 membershipSeq를 비워 저장 시 멤버십 할당이 일어나지 않게 한다.
+    // 수정 모드라면 saveMembership이 조기 return하므로 기존 DB 멤버십은 그대로 유지된다.
+    if (!on && onMembershipChange && membershipForm) {
+      onMembershipChange({ ...membershipForm, membershipSeq: '' });
+    }
+  };
 
   const handleMembershipSelect = (membershipSeq: string) => {
     if (!onMembershipChange || !membershipForm) return;
@@ -170,10 +201,17 @@ export default function MemberForm({
   const tabs: { id: TabId; label: string }[] = [
     { id: 'basic', label: '기본정보' },
     { id: 'class', label: isStaff ? '담당수업 / 환급' : '수업 / 멤버십' },
-    ...(isEdit && !isStaff && currentMemberSeq
+    ...(isEdit && !isStaff && currentMemberSeq && membershipEnabled
       ? [{ id: 'payment' as TabId, label: '결제 / 미수금' }]
       : []),
   ];
+
+  // 결제 탭이 사라졌는데 활성 탭이 그곳이면 기본 탭으로 돌린다
+  useEffect(() => {
+    if (activeTab === 'payment' && !(isEdit && !isStaff && currentMemberSeq && membershipEnabled)) {
+      setActiveTab('basic');
+    }
+  }, [activeTab, isEdit, isStaff, currentMemberSeq, membershipEnabled]);
 
   return (
     <FormLayout
@@ -289,41 +327,44 @@ export default function MemberForm({
       {/* ── 두 번째 탭: 일반 회원 → 수업/멤버십, 스태프 → 담당수업/환급 ── */}
       {activeTab === 'class' && !isStaff && (
         <>
-          {/* 수업 배정 */}
-          {classAssign && onClassAssignChange && (
-            <>
-              <h3 style={{ margin: '0 0 1rem', fontSize: '1rem', color: '#495057' }}>수업 배정</h3>
-              <FormField label="수업 시간대">
-                <Select value={classAssign.timeSlotSeq}
-                  onChange={(e) => onClassAssignChange({ timeSlotSeq: e.target.value, classSeq: '' })}>
-                  <option value="">-- 시간대 선택 --</option>
-                  {timeSlots.map(ts => (
-                    <option key={ts.seq} value={ts.seq}>
-                      {ts.name} ({ts.daysOfWeek} {ts.startTime} ~ {ts.endTime})
-                    </option>
-                  ))}
-                </Select>
-              </FormField>
-              <FormField label="배정 수업">
-                <Select value={classAssign.classSeq} disabled={!classAssign.timeSlotSeq}
-                  onChange={(e) => onClassAssignChange({ ...classAssign, classSeq: e.target.value })}>
-                  <option value="">{classAssign.timeSlotSeq ? '-- 수업 선택 --' : '-- 시간대를 먼저 선택하세요 --'}</option>
-                  {filteredClasses.map(c => (
-                    <option key={c.seq} value={c.seq}>{c.name}</option>
-                  ))}
-                </Select>
-              </FormField>
-            </>
-          )}
-
-          {/* 멤버십 할당 */}
+          {/* 멤버십 할당 (먼저) */}
           {membershipForm && onMembershipChange && (
             <>
-              <div style={{ borderTop: '2px solid #e9ecef', margin: '1.5rem 0 1rem', paddingTop: '1rem' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                margin: '0 0 1rem', paddingBottom: '0.5rem',
+              }}>
                 <h3 style={{ margin: 0, fontSize: '1rem', color: '#495057' }}>멤버십 할당</h3>
+                <div
+                  onClick={() => toggleMembership(!membershipEnabled)}
+                  title={membershipEnabled ? '멤버십 할당을 끄면 입력한 내용이 무시됩니다.' : '클릭하여 멤버십을 할당합니다.'}
+                  style={{
+                    width: 44, height: 24, borderRadius: 12, position: 'relative',
+                    background: membershipEnabled ? '#4a90e2' : '#dee2e6',
+                    transition: 'background 0.2s', cursor: 'pointer',
+                  }}
+                >
+                  <div style={{
+                    width: 20, height: 20, borderRadius: '50%', background: '#fff',
+                    position: 'absolute', top: 2,
+                    left: membershipEnabled ? 22 : 2,
+                    transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  }} />
+                </div>
               </div>
-              <FormField label="등급 (멤버십)">
-                <Select value={membershipForm.membershipSeq}
+              {!membershipEnabled && (
+                <div style={{
+                  padding: '1rem', marginBottom: '1rem',
+                  background: '#f8f9fa', border: '1px dashed #dee2e6', borderRadius: 8,
+                  fontSize: '0.85rem', color: '#888', textAlign: 'center',
+                }}>
+                  멤버십을 지금 할당하지 않습니다. 우측 토글을 켜서 할당할 수 있습니다.
+                </div>
+              )}
+              {membershipEnabled && (
+              <>
+              <FormField label="등급 (멤버십)" required>
+                <Select value={membershipForm.membershipSeq} required
                   onChange={(e) => handleMembershipSelect(e.target.value)}>
                   <option value="">-- 멤버십 선택 --</option>
                   {memberships.map(ms => (
@@ -331,9 +372,9 @@ export default function MemberForm({
                   ))}
                 </Select>
               </FormField>
-              <FormField label="멤버십 상태" hint="* 환불은 환불 메뉴에서 처리해야 합니다 (여기서 직접 변경하지 않음).">
+              <FormField label="멤버십 상태" required hint="* 환불은 환불 메뉴에서 처리해야 합니다 (여기서 직접 변경하지 않음).">
                 <Select
-                  value={membershipForm.status}
+                  value={membershipForm.status} required
                   onChange={(e) => onMembershipChange({ ...membershipForm, status: e.target.value as MembershipStatus })}
                 >
                   <option value="활성">활성</option>
@@ -365,13 +406,13 @@ export default function MemberForm({
                 <Input type="date" value={membershipForm.expiryDate} readOnly
                   style={{ backgroundColor: '#f8f9fa', cursor: 'not-allowed' }} />
               </FormField>
-              <FormField label="금액">
-                <CurrencyInput placeholder="예: 450,000" value={membershipForm.price}
+              <FormField label="금액" required>
+                <CurrencyInput placeholder="예: 450,000" value={membershipForm.price} required
                   onValueChange={(v) => onMembershipChange({ ...membershipForm, price: v })} />
               </FormField>
-              <FormField label="납부일">
+              <FormField label="납부일" required>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Input type="datetime-local" style={{ flex: 1 }} value={membershipForm.paymentDate}
+                  <Input type="datetime-local" style={{ flex: 1 }} value={membershipForm.paymentDate} required
                     onChange={(e) => onMembershipChange({ ...membershipForm, paymentDate: e.target.value })} />
                   <label style={{ display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap', fontSize: '0.85rem', color: '#555', cursor: 'pointer' }}>
                     <input type="checkbox" checked={!!membershipForm.paymentDate}
@@ -383,16 +424,47 @@ export default function MemberForm({
                 </div>
               </FormField>
               {!isEdit && (
-                <FormField label="첫 납부 금액" hint="* 등록 시 입력한 금액이 첫 납부 기록으로 자동 추가됩니다. 추가 납부는 미수금 관리에서 할 수 있습니다.">
-                  <CurrencyInput placeholder="예: 100,000" value={membershipForm.depositAmount}
+                <FormField label="첫 납부 금액" required hint="* 등록 시 입력한 금액이 첫 납부 기록으로 자동 추가됩니다. 추가 납부는 미수금 관리에서 할 수 있습니다.">
+                  <CurrencyInput placeholder="예: 100,000" value={membershipForm.depositAmount} required
                     onValueChange={(v) => onMembershipChange({ ...membershipForm, depositAmount: v })} />
                 </FormField>
               )}
-              <FormField label="결제방법">
-                <Select value={paymentSelectValue}
+              <FormField label="결제방법" required>
+                <Select value={paymentSelectValue} required
                   onChange={(e) => onMembershipChange({ ...membershipForm, paymentMethod: e.target.value })}>
                   <option value="">-- 선택 --</option>
                   {paymentMethods.map(pm => <option key={pm.value} value={pm.value}>{pm.label}</option>)}
+                </Select>
+              </FormField>
+              </>
+              )}
+            </>
+          )}
+
+          {/* 수업 배정 (멤버십이 할당된 경우에만 노출) */}
+          {membershipEnabled && classAssign && onClassAssignChange && (
+            <>
+              <div style={{ borderTop: '2px solid #e9ecef', margin: '1.5rem 0 1rem', paddingTop: '1rem' }}>
+                <h3 style={{ margin: 0, fontSize: '1rem', color: '#495057' }}>수업 배정</h3>
+              </div>
+              <FormField label="수업 시간대">
+                <Select value={classAssign.timeSlotSeq}
+                  onChange={(e) => onClassAssignChange({ timeSlotSeq: e.target.value, classSeq: '' })}>
+                  <option value="">-- 시간대 선택 --</option>
+                  {timeSlots.map(ts => (
+                    <option key={ts.seq} value={ts.seq}>
+                      {ts.name} ({ts.daysOfWeek} {ts.startTime} ~ {ts.endTime})
+                    </option>
+                  ))}
+                </Select>
+              </FormField>
+              <FormField label="배정 수업">
+                <Select value={classAssign.classSeq} disabled={!classAssign.timeSlotSeq}
+                  onChange={(e) => onClassAssignChange({ ...classAssign, classSeq: e.target.value })}>
+                  <option value="">{classAssign.timeSlotSeq ? '-- 수업 선택 --' : '-- 시간대를 먼저 선택하세요 --'}</option>
+                  {filteredClasses.map(c => (
+                    <option key={c.seq} value={c.seq}>{c.name}</option>
+                  ))}
                 </Select>
               </FormField>
             </>

@@ -6,7 +6,6 @@
 
     <sql id="searchCondition">
         WHERE m.branch_seq = #{branchSeq}
-          AND NOT EXISTS (SELECT 1 FROM complex_staff_info si WHERE si.member_seq = m.seq)
         <if test="keyword != null and keyword != ''">
             AND (m.name LIKE CONCAT('%', #{keyword}, '%')
               OR m.phone_number LIKE CONCAT('%', #{keyword}, '%'))
@@ -26,10 +25,12 @@
             m.join_date AS joinDate,
             md.signup_channel AS signupChannel,
             m.interviewer,
+            si.status AS staffStatus,
             m.created_date AS createdDate,
             m.last_update_date AS lastUpdateDate
         FROM complex_members m
         LEFT JOIN complex_member_metadata md ON md.member_seq = m.seq
+        LEFT JOIN complex_staff_info si ON si.member_seq = m.seq
         <include refid="searchCondition"/>
         ORDER BY m.created_date DESC
         LIMIT #{size} OFFSET #{offset}

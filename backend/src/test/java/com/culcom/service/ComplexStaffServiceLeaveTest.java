@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *  - 스태프의 internal 멤버십은 '정지' 상태가 되어야 한다.
  */
 @SpringBootTest
-@ActiveProfiles("local")
+@ActiveProfiles("test")
 @Transactional
 class ComplexStaffServiceLeaveTest {
 

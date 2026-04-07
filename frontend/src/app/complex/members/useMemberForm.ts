@@ -8,6 +8,7 @@ import { useResultModal } from '@/hooks/useResultModal';
 import {
   emptyMemberForm, emptyMembershipForm, emptyClassAssign, emptyStaffForm, emptyRefundForm,
   validateMemberForm,
+  validateMembershipForm,
   type MemberFormData, type MembershipFormData, type ClassAssignData, type StaffFormData,
 } from './MemberForm';
 import { useClassSlots } from '../hooks/useClassSlots';
@@ -188,6 +189,11 @@ export function useMemberForm(seq?: number) {
   const handleSubmit = async () => {
     const error = validateMemberForm(form);
     if (error) { alert(error); return; }
+    // 멤버십 할당이 켜진 경우(=membershipSeq가 비어있지 않음)에만 검증
+    if (msForm.membershipSeq) {
+      const msError = validateMembershipForm(msForm, isEdit);
+      if (msError) { alert(msError); return; }
+    }
 
     if (isEdit) {
       await saveMembership(seq);

@@ -263,7 +263,12 @@ export default function ClassTeamsPage() {
                     cursor: 'pointer',
                   }}
                 >
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>{c.name}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span style={{ fontWeight: 600 }}>{c.name}</span>
+                    <span style={{ fontSize: 12, color: '#888' }}>
+                      정원 {c.capacity}명 · 현재 {c.memberCount ?? 0}명
+                    </span>
+                  </div>
                   <div style={{ fontSize: 12, color: '#666' }}>
                     {c.staffName ? `리더: ${c.staffName}` : <span style={{ color: '#bbb' }}>(리더 미배정)</span>}
                     {c.timeSlotName ? ` · ${c.timeSlotName}` : ''}

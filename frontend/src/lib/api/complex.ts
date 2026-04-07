@@ -13,6 +13,7 @@ export interface ComplexClass {
   timeSlotName?: string;
   staffSeq?: number;
   staffName?: string;
+  memberCount?: number;
   createdDate?: string;
 }
 
