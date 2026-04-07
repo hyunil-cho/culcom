@@ -75,9 +75,8 @@ public class AttendanceService {
         LocalDate today = LocalDate.now();
         Long classSeq = req.getClassSeq();
 
-        // 회원 seq 추출 (스태프 제외)
+        // 모든 멤버 seq 추출
         List<Long> memberSeqs = req.getMembers().stream()
-                .filter(bm -> !bm.isStaff())
                 .map(BulkAttendanceRequest.BulkMember::getMemberSeq).toList();
 
         // 배치 프리로드: 멤버십(연기+활성) + 오늘 출석 기록
@@ -95,41 +94,9 @@ public class AttendanceService {
 
         List<BulkAttendanceResultResponse> results = new ArrayList<>();
         for (BulkAttendanceRequest.BulkMember bm : req.getMembers()) {
-            if (bm.isStaff()) {
-                results.add(processStaffAttendance(bm, classSeq, today, existingAttendanceMap));
-            } else {
-                results.add(processMemberAttendance(bm, classSeq, today, postponedMap, activeMap, existingAttendanceMap));
-            }
+            results.add(processMemberAttendance(bm, classSeq, today, postponedMap, activeMap, existingAttendanceMap));
         }
         return results;
-    }
-
-    private BulkAttendanceResultResponse processStaffAttendance(
-            BulkAttendanceRequest.BulkMember bm, Long classSeq, LocalDate today,
-            Map<Long, ComplexMemberAttendance> existingAttendanceMap) {
-
-        AttendanceStatus newStatus = bm.isAttended() ? AttendanceStatus.출석 : AttendanceStatus.결석;
-        ComplexMemberAttendance existing = existingAttendanceMap.get(bm.getMemberSeq());
-
-        if (existing != null) {
-            if (existing.getStatus() == newStatus) {
-                return BulkAttendanceResultResponse.builder()
-                        .memberSeq(bm.getMemberSeq()).name("").status("skip_already").build();
-            }
-            existing.setStatus(newStatus);
-            attendanceRepository.save(existing);
-        } else {
-            attendanceRepository.save(ComplexMemberAttendance.builder()
-                    .member(ComplexMember.builder().seq(bm.getMemberSeq()).build())
-                    .complexClass(ComplexClass.builder().seq(classSeq).build())
-                    .attendanceDate(today).status(newStatus).build());
-        }
-
-        publishAttendance(bm.getMemberSeq(), classSeq, newStatus, null, 0, null);
-
-        String resultStatus = (existing != null ? "변경: " : "") + (bm.isAttended() ? "출석" : "결석");
-        return BulkAttendanceResultResponse.builder()
-                .memberSeq(bm.getMemberSeq()).name("").status(resultStatus).build();
     }
 
     private BulkAttendanceResultResponse processMemberAttendance(

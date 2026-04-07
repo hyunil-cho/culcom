@@ -27,4 +27,6 @@ public class Membership extends BaseTimeEntity {
     @Column(nullable = false)
     private Integer price;
 
+    private boolean isInternal = false;
+
 }

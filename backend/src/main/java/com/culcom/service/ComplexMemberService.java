@@ -40,7 +40,7 @@ public class ComplexMemberService {
     }
 
     public List<ComplexMemberMembershipResponse> getMemberships(Long memberSeq) {
-        return memberMembershipRepository.findByMemberSeq(memberSeq)
+        return memberMembershipRepository.findByMemberSeqAndInternalFalse(memberSeq)
                 .stream().map(ComplexMemberMembershipResponse::from).toList();
     }
 

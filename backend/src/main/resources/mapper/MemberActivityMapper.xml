@@ -6,16 +6,19 @@
 
     <select id="selectTimeline" resultType="com.culcom.dto.complex.member.MemberActivityTimelineItem">
         SELECT
-            al.event_type AS type,
-            DATE_FORMAT(al.created_date, '%Y-%m-%d') AS date,
-            COALESCE(al.note, al.event_type) AS title,
+            CAST(al.event_type AS VARCHAR(30)) AS type,
+            CAST(al.event_date AS VARCHAR(30)) AS date,
+            CASE CAST(al.event_type AS VARCHAR(30))
+                WHEN 'ATTENDANCE' THEN CONCAT(COALESCE(c.name, ''), ' 수업 ', COALESCE(CAST(al.status AS VARCHAR(20)), ''))
+                ELSE COALESCE(al.note, CAST(al.event_type AS VARCHAR(30)))
+            END AS title,
             CASE
                 WHEN al.old_value IS NOT NULL OR al.new_value IS NOT NULL
                     THEN CONCAT(COALESCE(al.old_value, '(없음)'), ' → ', COALESCE(al.new_value, '(없음)'))
                 ELSE NULL
             END AS detail,
-            CASE al.event_type
-                WHEN 'ATTENDANCE' THEN COALESCE(al.status, '출석')
+            CASE CAST(al.event_type AS VARCHAR(30))
+                WHEN 'ATTENDANCE' THEN COALESCE(CAST(al.status AS VARCHAR(20)), '출석')
                 WHEN 'MEMBER_CREATE' THEN '등록'
                 WHEN 'MEMBERSHIP_ASSIGN' THEN '등록'
                 WHEN 'MEMBERSHIP_UPDATE' THEN '변경'
@@ -28,11 +31,12 @@
                 WHEN 'REFUND_REQUEST' THEN '대기'
                 WHEN 'REFUND_APPROVE' THEN '승인'
                 WHEN 'REFUND_REJECT' THEN '반려'
-                ELSE al.event_type
+                ELSE '-'
             END AS status
         FROM member_activity_log al
+        LEFT JOIN complex_classes c ON c.seq = al.class_seq
         WHERE al.member_seq = #{memberSeq}
-        ORDER BY al.created_date DESC
+        ORDER BY al.event_date DESC
         LIMIT #{size} OFFSET #{offset}
     </select>
 
@@ -46,25 +50,29 @@
 
     <select id="selectStaffTimeline" resultType="com.culcom.dto.complex.member.MemberActivityTimelineItem">
         SELECT
-            al.event_type AS type,
-            DATE_FORMAT(al.created_date, '%Y-%m-%d') AS date,
-            COALESCE(al.note, al.event_type) AS title,
+            CAST(al.event_type AS VARCHAR(30)) AS type,
+            CAST(al.event_date AS VARCHAR(30)) AS date,
+            CASE CAST(al.event_type AS VARCHAR(30))
+                WHEN 'ATTENDANCE' THEN CONCAT(COALESCE(c.name, ''), ' 수업 ', COALESCE(CAST(al.status AS VARCHAR(20)), ''))
+                ELSE COALESCE(al.note, CAST(al.event_type AS VARCHAR(30)))
+            END AS title,
             CASE
                 WHEN al.old_value IS NOT NULL OR al.new_value IS NOT NULL
                     THEN CONCAT(COALESCE(al.old_value, '(없음)'), ' → ', COALESCE(al.new_value, '(없음)'))
                 ELSE NULL
             END AS detail,
-            CASE al.event_type
-                WHEN 'ATTENDANCE' THEN COALESCE(al.status, '출석')
+            CASE CAST(al.event_type AS VARCHAR(30))
+                WHEN 'ATTENDANCE' THEN COALESCE(CAST(al.status AS VARCHAR(20)), '출석')
                 WHEN 'STATUS_CHANGE' THEN '변경'
                 WHEN 'CLASS_ASSIGN' THEN '배정'
                 WHEN 'INFO_CHANGE' THEN '변경'
                 WHEN 'REFUND_CHANGE' THEN '변경'
-                ELSE al.event_type
+                ELSE '-'
             END AS status
         FROM member_activity_log al
+        LEFT JOIN complex_classes c ON c.seq = al.class_seq
         WHERE al.member_seq = #{staffSeq}
-        ORDER BY al.created_date DESC
+        ORDER BY al.event_date DESC
         LIMIT #{size} OFFSET #{offset}
     </select>
 

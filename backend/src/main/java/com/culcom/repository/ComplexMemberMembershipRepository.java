@@ -11,6 +11,7 @@ import java.util.Optional;
 
 public interface ComplexMemberMembershipRepository extends JpaRepository<ComplexMemberMembership, Long> {
     List<ComplexMemberMembership> findByMemberSeq(Long memberSeq);
+    List<ComplexMemberMembership> findByMemberSeqAndInternalFalse(Long memberSeq);
 
     @Query("SELECT mm FROM ComplexMemberMembership mm " +
            "WHERE mm.member.seq = :memberSeq AND mm.status = :status " +

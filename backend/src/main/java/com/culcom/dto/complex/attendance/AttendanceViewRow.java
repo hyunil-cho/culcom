@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 /**
  * MyBatis 쿼리 결과를 담는 플랫 DTO.
@@ -17,6 +18,9 @@ public class AttendanceViewRow {
     // 시간대
     private Long timeSlotSeq;
     private String slotName;
+    private String daysOfWeek;
+    private LocalTime startTime;
+    private LocalTime endTime;
 
     // 수업
     private Long classSeq;

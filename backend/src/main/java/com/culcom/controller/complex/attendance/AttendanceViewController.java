@@ -45,7 +45,7 @@ public class AttendanceViewController {
             slotMap.computeIfAbsent(row.getTimeSlotSeq(), k ->
                     AttendanceViewSlotResponse.builder()
                             .timeSlotSeq(row.getTimeSlotSeq())
-                            .slotName(row.getSlotName()));
+                            .slotName(formatSlotName(row)));
 
             classInfoMap.putIfAbsent(slotClassKey, row);
             if (row.getMemberSeq() != null) {
@@ -205,5 +205,11 @@ public class AttendanceViewController {
         LocalDate fromDate = LocalDate.now().minusMonths(months);
         List<StaffAttendanceRateSummary> rates = attendanceViewQueryMapper.selectAllStaffAttendanceRates(branchSeq, fromDate);
         return ResponseEntity.ok(ApiResponse.ok(rates));
+    }
+
+    private String formatSlotName(AttendanceViewRow row) {
+        String start = row.getStartTime() != null ? row.getStartTime().toString().substring(0, 5) : "";
+        String end = row.getEndTime() != null ? row.getEndTime().toString().substring(0, 5) : "";
+        return row.getSlotName() + " " + row.getDaysOfWeek() + " (" + start + " ~ " + end + ")";
     }
 }

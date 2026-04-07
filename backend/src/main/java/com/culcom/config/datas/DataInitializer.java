@@ -3,6 +3,7 @@ package com.culcom.config.datas;
 import com.culcom.entity.auth.UserInfo;
 import com.culcom.entity.branch.Branch;
 import com.culcom.entity.enums.UserRole;
+import com.culcom.entity.product.Membership;
 import com.culcom.entity.integration.ExternalServiceType;
 import com.culcom.entity.integration.ThirdPartyService;
 import com.culcom.entity.message.MessageTemplate;
@@ -27,6 +28,7 @@ public class DataInitializer implements ApplicationRunner {
     private final ThirdPartyServiceRepository thirdPartyServiceRepository;
     private final PlaceholderRepository placeholderRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MembershipRepository membershipRepository;
 
     @Override
     public void run(ApplicationArguments args) {
@@ -42,6 +44,7 @@ public class DataInitializer implements ApplicationRunner {
 
         initThirdPartyServices();
         initPlaceholders();
+        initStaffMembership();
     }
 
     private void initThirdPartyServices() {
@@ -86,5 +89,18 @@ public class DataInitializer implements ApplicationRunner {
         placeholderRepository.save(Placeholder.builder().name("{{오시는길}}").comment("지점 오시는 길 안내").examples("2호선 강남역 3번 출구 도보 5분").value("{branch.directions}").build());
 
         log.info("초기 플레이스홀더 11건 생성 완료");
+    }
+
+    private void initStaffMembership() {
+        if (membershipRepository.findByName("스태프 무제한").isPresent()) return;
+
+        membershipRepository.save(Membership.builder()
+                .name("스태프 무제한")
+                .duration(36500)
+                .count(999999)
+                .price(0)
+                .isInternal(true)
+                .build());
+        log.info("스태프 전용 내부 멤버십 생성: 스태프 무제한");
     }
 }

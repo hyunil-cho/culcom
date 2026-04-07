@@ -25,7 +25,7 @@ export function useMemberForm(seq?: number) {
     isStaff: staffMode,
   }));
   const [staffClassAssign, setStaffClassAssign] = useState<ClassAssignData>(emptyClassAssign);
-  const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_MEMBERS });
+  const { run, modal } = useResultModal({ redirectPath: staffMode ? ROUTES.COMPLEX_STAFFS : ROUTES.COMPLEX_MEMBERS });
   const { allClasses } = useClassSlots();
 
   useEffect(() => {

@@ -18,7 +18,7 @@ public class MembershipService {
     private final MembershipRepository membershipRepository;
 
     public List<MembershipResponse> list() {
-        return membershipRepository.findAll()
+        return membershipRepository.findByIsInternalFalse()
                 .stream().map(MembershipResponse::from).toList();
     }
 
