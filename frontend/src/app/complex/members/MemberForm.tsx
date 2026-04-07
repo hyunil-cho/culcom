@@ -212,11 +212,15 @@ export default function MemberForm({
                 {isStaff ? '스태프로 등록' : '일반 회원으로 등록'}
               </span>
               <div
-                onClick={() => onStaffChange({ ...staffForm, isStaff: !staffForm.isStaff })}
+                title={isEdit
+                  ? '회원/스태프 구분은 등록 후 변경할 수 없습니다.'
+                  : '회원/스태프 구분은 진입 경로에 따라 자동 설정됩니다.'}
                 style={{
                   width: 44, height: 24, borderRadius: 12, position: 'relative',
                   background: isStaff ? '#4a90e2' : '#dee2e6',
-                  transition: 'background 0.2s', cursor: 'pointer',
+                  transition: 'background 0.2s',
+                  cursor: 'not-allowed',
+                  opacity: 0.6,
                 }}
               >
                 <div style={{
@@ -245,10 +249,6 @@ export default function MemberForm({
             <Input placeholder="예: 영어, 일본어" value={form.language}
               onChange={(e) => onChange({ ...form, language: e.target.value })} />
           </FormField>
-          <FormField label="인적사항">
-            <Input placeholder="예: 대학생, 영어회화 관심" value={form.info}
-              onChange={(e) => onChange({ ...form, info: e.target.value })} />
-          </FormField>
           <FormField label="가입 경로">
             <div>
               <Select value={signupSelectValue}
@@ -274,6 +274,10 @@ export default function MemberForm({
           <FormField label="차트넘버">
             <Input placeholder="차트 번호를 입력하세요" value={form.chartNumber}
               onChange={(e) => onChange({ ...form, chartNumber: e.target.value })} />
+          </FormField>
+          <FormField label="인적사항">
+            <Input placeholder="예: 대학생, 영어회화 관심" value={form.info}
+                   onChange={(e) => onChange({ ...form, info: e.target.value })} />
           </FormField>
           <FormField label="코멘트">
             <Textarea style={{ height: 100 }} placeholder="직업, 관심사, 등록 동기 등 상세 정보를 입력하세요" value={form.comment}
@@ -328,6 +332,26 @@ export default function MemberForm({
                   ))}
                 </Select>
               </FormField>
+              {/* 멤버십 요약 (선택 시 표시) */}
+              {membershipForm?.membershipSeq && (() => {
+                const ms = memberships.find(m => m.seq === Number(membershipForm.membershipSeq));
+                return (
+                    <div style={{
+                      margin: '0 0 1rem', padding: '0.9rem 1rem',
+                      background: '#f8f9fa', border: '1px solid #e9ecef', borderRadius: 8,
+                    }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4a90e2', marginBottom: 8 }}>
+                        멤버십 정보
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px', fontSize: '0.85rem', color: '#495057' }}>
+                        <div><strong>등급:</strong> {ms ? ms.name : '-'}</div>
+                        <div><strong>기간:</strong> {ms ? `${ms.duration}일` : '-'}</div>
+                        <div><strong>횟수:</strong> {ms ? `${ms.count}회` : '-'}</div>
+                        <div><strong>기준 금액:</strong> {ms ? `${ms.price.toLocaleString()}원` : '-'}</div>
+                      </div>
+                    </div>
+                );
+              })()}
               <FormField label="만료일" hint="* 멤버십 선택 시 자동으로 기간이 산정됩니다.">
                 <Input type="date" value={membershipForm.expiryDate} readOnly
                   style={{ backgroundColor: '#f8f9fa', cursor: 'not-allowed' }} />
