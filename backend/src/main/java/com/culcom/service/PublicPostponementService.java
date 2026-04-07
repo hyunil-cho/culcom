@@ -41,7 +41,7 @@ public class PublicPostponementService {
 
         // 배치 프리로드: 회원 seq 목록으로 한 번에 조회
         List<Long> memberSeqs = members.stream().map(ComplexMember::getSeq).toList();
-        List<ComplexMemberMembership> allMemberships = memberMembershipRepository.findByMemberSeqIn(memberSeqs);
+        List<ComplexMemberMembership> allMemberships = memberMembershipRepository.findWithMembershipByMemberSeqIn(memberSeqs);
 
         // 멤버십을 memberSeq 기준으로 그룹핑
         Map<Long, List<ComplexMemberMembership>> membershipMap = allMemberships.stream()

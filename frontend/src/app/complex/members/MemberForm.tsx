@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import FormField from '@/components/ui/FormField';
 import FormLayout from '@/components/ui/FormLayout';
-import { Input, PhoneInput, Select, Textarea, CurrencyInput } from '@/components/ui/FormInput';
+import { Input, PhoneInput, Select, Textarea, CurrencyInput, Checkbox } from '@/components/ui/FormInput';
 import { membershipApi, type Membership } from '@/lib/api';
 import { useClassSlots } from '../hooks/useClassSlots';
 
@@ -326,13 +326,11 @@ export default function MemberForm({
                 </Select>
               </FormField>
               <FormField label="사용 개시" hint="* 끄면 출석/연기/환불에서 사용할 수 없게 됩니다.">
-                <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={membershipForm.isActive}
-                    onChange={(e) => onMembershipChange({ ...membershipForm, isActive: e.target.checked })} />
-                  <span style={{ fontSize: '0.9rem', color: membershipForm.isActive ? '#2e7d32' : '#999', fontWeight: 600 }}>
-                    {membershipForm.isActive ? '사용 가능' : '사용 불가'}
-                  </span>
-                </label>
+                <Checkbox
+                  label={membershipForm.isActive ? '사용 가능' : '사용 불가'}
+                  checked={membershipForm.isActive}
+                  onChange={(e) => onMembershipChange({ ...membershipForm, isActive: e.target.checked })}
+                />
               </FormField>
               {/* 멤버십 요약 (선택 시 표시) */}
               {membershipForm?.membershipSeq && (() => {

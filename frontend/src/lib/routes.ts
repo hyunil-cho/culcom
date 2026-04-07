@@ -77,6 +77,7 @@ export const ROUTES = {
   COMPLEX: R.COMPLEX,
   COMPLEX_CLASSES: `${R.COMPLEX}/classes`,
   COMPLEX_CLASSES_ADD: `${R.COMPLEX}/classes/add`,
+  COMPLEX_CLASS_TEAMS: `${R.COMPLEX}/classes/teams`,
   COMPLEX_CLASS_EDIT: (seq: number) => `${R.COMPLEX}/classes/${seq}/edit`,
   COMPLEX_MEMBERS: `${R.COMPLEX}/members`,
   COMPLEX_MEMBERS_ADD: `${R.COMPLEX}/members/add`,
@@ -152,6 +153,9 @@ export const API = {
   // 복합시설
   COMPLEX_CLASSES: A.COMPLEX_CLASSES,
   COMPLEX_CLASS: (seq: number) => `${A.COMPLEX_CLASSES}/${seq}`,
+  COMPLEX_CLASS_MEMBERS: (seq: number) => `${A.COMPLEX_CLASSES}/${seq}/members`,
+  COMPLEX_CLASS_MEMBER: (seq: number, memberSeq: number) => `${A.COMPLEX_CLASSES}/${seq}/members/${memberSeq}`,
+  COMPLEX_CLASS_LEADER: (seq: number) => `${A.COMPLEX_CLASSES}/${seq}/leader`,
   COMPLEX_MEMBERS: A.COMPLEX_MEMBERS,
   COMPLEX_MEMBER: (seq: number) => `${A.COMPLEX_MEMBERS}/${seq}`,
   COMPLEX_MEMBER_MEMBERSHIPS: (seq: number) => `${A.COMPLEX_MEMBERS}/${seq}/memberships`,

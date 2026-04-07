@@ -13,6 +13,16 @@ public interface ComplexMemberClassMappingRepository extends JpaRepository<Compl
 
     void deleteByMemberSeq(Long memberSeq);
 
+    @Query("SELECT m FROM ComplexMemberClassMapping m " +
+           "JOIN FETCH m.member " +
+           "WHERE m.complexClass.seq = :classSeq " +
+           "ORDER BY m.sortOrder, m.seq")
+    List<ComplexMemberClassMapping> findByComplexClassSeqWithMember(@Param("classSeq") Long classSeq);
+
+    boolean existsByComplexClassSeqAndMemberSeq(Long classSeq, Long memberSeq);
+
+    void deleteByComplexClassSeqAndMemberSeq(Long classSeq, Long memberSeq);
+
     List<ComplexMemberClassMapping> findByComplexClassSeqAndMemberSeqIn(Long classSeq, List<Long> memberSeqs);
 
     @Query("SELECT m FROM ComplexMemberClassMapping m " +

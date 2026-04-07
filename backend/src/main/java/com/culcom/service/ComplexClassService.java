@@ -2,8 +2,10 @@ package com.culcom.service;
 
 import com.culcom.dto.complex.classes.ComplexClassRequest;
 import com.culcom.dto.complex.classes.ComplexClassResponse;
+import com.culcom.dto.complex.member.ComplexMemberResponse;
 import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.member.ComplexMember;
+import com.culcom.entity.complex.member.ComplexMemberClassMapping;
 import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.ActivityFieldType;
 import com.culcom.event.ActivityEvent;
@@ -11,12 +13,14 @@ import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ClassTimeSlotRepository;
 import com.culcom.repository.ComplexClassRepository;
+import com.culcom.repository.ComplexMemberClassMappingRepository;
 import com.culcom.repository.ComplexMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -27,6 +31,7 @@ public class ComplexClassService {
     private final BranchRepository branchRepository;
     private final ClassTimeSlotRepository timeSlotRepository;
     private final ComplexMemberRepository memberRepository;
+    private final ComplexMemberClassMappingRepository mappingRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public ComplexClassResponse get(Long seq) {
@@ -90,5 +95,71 @@ public class ComplexClassService {
 
     public void delete(Long seq) {
         classRepository.deleteById(seq);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ComplexMemberResponse> listMembers(Long classSeq) {
+        return mappingRepository.findByComplexClassSeqWithMember(classSeq).stream()
+                .map(m -> ComplexMemberResponse.from(m.getMember()))
+                .toList();
+    }
+
+    @Transactional
+    public void addMember(Long classSeq, Long memberSeq) {
+        ComplexClass cls = classRepository.findById(classSeq)
+                .orElseThrow(() -> new EntityNotFoundException("수업"));
+        ComplexMember member = memberRepository.findById(memberSeq)
+                .orElseThrow(() -> new EntityNotFoundException("회원"));
+        if (mappingRepository.existsByComplexClassSeqAndMemberSeq(classSeq, memberSeq)) {
+            return;
+        }
+        mappingRepository.save(ComplexMemberClassMapping.builder()
+                .complexClass(cls)
+                .member(member)
+                .sortOrder(0)
+                .build());
+        eventPublisher.publishEvent(ActivityEvent.withChange(
+                member, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, null, cls.getName()));
+    }
+
+    @Transactional
+    public void removeMember(Long classSeq, Long memberSeq) {
+        ComplexClass cls = classRepository.findById(classSeq)
+                .orElseThrow(() -> new EntityNotFoundException("수업"));
+        ComplexMember member = memberRepository.findById(memberSeq)
+                .orElseThrow(() -> new EntityNotFoundException("회원"));
+        mappingRepository.deleteByComplexClassSeqAndMemberSeq(classSeq, memberSeq);
+        eventPublisher.publishEvent(ActivityEvent.withChange(
+                member, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, cls.getName(), null));
+    }
+
+    @Transactional
+    public ComplexClassResponse setLeader(Long classSeq, Long staffSeq) {
+        ComplexClass cls = classRepository.findById(classSeq)
+                .orElseThrow(() -> new EntityNotFoundException("수업"));
+        Long oldStaffSeq = cls.getStaff() != null ? cls.getStaff().getSeq() : null;
+
+        if (staffSeq != null) {
+            ComplexMember newStaff = memberRepository.findById(staffSeq)
+                    .orElseThrow(() -> new EntityNotFoundException("스태프"));
+            cls.setStaff(newStaff);
+        } else {
+            cls.setStaff(null);
+        }
+        ComplexClass saved = classRepository.save(cls);
+
+        if (!Objects.equals(oldStaffSeq, staffSeq)) {
+            if (oldStaffSeq != null) {
+                ComplexMember oldStaff = memberRepository.getReferenceById(oldStaffSeq);
+                eventPublisher.publishEvent(ActivityEvent.withChange(
+                        oldStaff, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, cls.getName(), null));
+            }
+            if (staffSeq != null) {
+                ComplexMember newStaff = memberRepository.getReferenceById(staffSeq);
+                eventPublisher.publishEvent(ActivityEvent.withChange(
+                        newStaff, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, null, cls.getName()));
+            }
+        }
+        return ComplexClassResponse.from(saved);
     }
 }

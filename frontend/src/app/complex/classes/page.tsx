@@ -36,7 +36,7 @@ export default function ClassesPage() {
   const columns: Column<ComplexClass>[] = [
     { header: '수업 이름', render: (c) => <strong>{c.name}</strong> },
     {
-      header: '담당 강사',
+      header: '담당 리더',
       render: (c) => c.staffName
         ? <span style={{ color: '#555', fontWeight: 600 }}>{c.staffName}</span>
         : <small style={{ color: '#ccc' }}>(미배정)</small>,

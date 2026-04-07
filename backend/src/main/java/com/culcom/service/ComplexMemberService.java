@@ -100,23 +100,20 @@ public class ComplexMemberService {
 
     @Transactional
     public ComplexMemberMembershipResponse updateMembership(Long memberSeq, Long mmSeq, ComplexMemberMembershipRequest req) {
-        ComplexMemberMembership mm = memberMembershipRepository.findById(mmSeq)
-                .orElseThrow(() -> new EntityNotFoundException("멤버십"));
-        if (mm.getMember() == null || !mm.getMember().getSeq().equals(memberSeq)) {
-            throw new EntityNotFoundException("멤버십");
-        }
+        ComplexMemberMembership mm = findOwnedMembership(memberSeq, mmSeq);
 
-        if (req.getStartDate() != null && !req.getStartDate().isEmpty())
-            mm.setStartDate(LocalDate.parse(req.getStartDate()));
-        if (req.getExpiryDate() != null && !req.getExpiryDate().isEmpty())
-            mm.setExpiryDate(LocalDate.parse(req.getExpiryDate()));
+        if (req.getStartDate() != null) mm.setStartDate(req.getStartDate());
+        if (req.getExpiryDate() != null) mm.setExpiryDate(req.getExpiryDate());
         if (req.getPrice() != null) mm.setPrice(req.getPrice());
         if (req.getDepositAmount() != null) mm.setDepositAmount(req.getDepositAmount());
         if (req.getPaymentMethod() != null) mm.setPaymentMethod(req.getPaymentMethod());
-        if (req.getPaymentDate() != null && !req.getPaymentDate().isEmpty())
-            mm.setPaymentDate(LocalDateTime.parse(req.getPaymentDate()));
+        if (req.getPaymentDate() != null) mm.setPaymentDate(req.getPaymentDate());
         Boolean oldActive = mm.getIsActive();
         if (req.getIsActive() != null) {
+            if (Boolean.TRUE.equals(req.getIsActive()) && !Boolean.TRUE.equals(oldActive)
+                    && memberMembershipRepository.existsActiveByMemberSeqExcluding(memberSeq, mmSeq)) {
+                throw new IllegalStateException("이미 활성화된 멤버십이 존재합니다");
+            }
             mm.setIsActive(req.getIsActive());
         }
 
@@ -135,11 +132,7 @@ public class ComplexMemberService {
 
     @Transactional
     public void deleteMembership(Long memberSeq, Long mmSeq) {
-        ComplexMemberMembership mm = memberMembershipRepository.findById(mmSeq)
-                .orElseThrow(() -> new EntityNotFoundException("멤버십"));
-        if (mm.getMember() == null || !mm.getMember().getSeq().equals(memberSeq)) {
-            throw new EntityNotFoundException("멤버십");
-        }
+        ComplexMemberMembership mm = findOwnedMembership(memberSeq, mmSeq);
         eventPublisher.publishEvent(ActivityEvent.ofMembership(
                 mm.getMember(), ActivityEventType.MEMBERSHIP_DELETE, mm.getSeq(),
                 mm.getMembership().getName() + " 멤버십 삭제"));
@@ -154,12 +147,15 @@ public class ComplexMemberService {
         Membership membership = membershipRepository.findById(req.getMembershipSeq())
                 .orElseThrow(() -> new EntityNotFoundException("멤버십"));
 
-        LocalDate startDate = req.getStartDate() != null && !req.getStartDate().isEmpty()
-                ? LocalDate.parse(req.getStartDate()) : LocalDate.now();
-        LocalDate expiryDate = req.getExpiryDate() != null && !req.getExpiryDate().isEmpty()
-                ? LocalDate.parse(req.getExpiryDate()) : startDate.plusDays(membership.getDuration());
-        LocalDateTime paymentDate = req.getPaymentDate() != null && !req.getPaymentDate().isEmpty()
-                ? LocalDateTime.parse(req.getPaymentDate()) : null;
+        LocalDate startDate = req.getStartDate() != null ? req.getStartDate() : LocalDate.now();
+        LocalDate expiryDate = req.getExpiryDate() != null
+                ? req.getExpiryDate() : startDate.plusDays(membership.getDuration());
+        LocalDateTime paymentDate = req.getPaymentDate();
+
+        boolean isActive = req.getIsActive() != null ? req.getIsActive() : true;
+        if (isActive && memberMembershipRepository.existsActiveByMemberSeq(memberSeq)) {
+            throw new IllegalStateException("이미 활성화된 멤버십이 존재합니다");
+        }
 
         ComplexMemberMembership mm = ComplexMemberMembership.builder()
                 .member(member)
@@ -171,7 +167,7 @@ public class ComplexMemberService {
                 .depositAmount(req.getDepositAmount())
                 .paymentMethod(req.getPaymentMethod())
                 .paymentDate(paymentDate)
-                .isActive(req.getIsActive() != null ? req.getIsActive() : true)
+                .isActive(isActive)
                 .build();
 
         if (member.getJoinDate() == null) {
@@ -226,6 +222,15 @@ public class ComplexMemberService {
 
     public List<ComplexMemberClassMapping> getClassMappings(Long memberSeq) {
         return classMappingRepository.findByMemberSeq(memberSeq);
+    }
+
+    private ComplexMemberMembership findOwnedMembership(Long memberSeq, Long mmSeq) {
+        ComplexMemberMembership mm = memberMembershipRepository.findById(mmSeq)
+                .orElseThrow(() -> new EntityNotFoundException("멤버십"));
+        if (mm.getMember() == null || !mm.getMember().getSeq().equals(memberSeq)) {
+            throw new EntityNotFoundException("멤버십");
+        }
+        return mm;
     }
 
     private void publishIfChanged(ComplexMember member, ActivityFieldType field, String oldVal, String newVal) {

@@ -1,67 +1,24 @@
 package com.culcom.controller.publicapi;
 
 import com.culcom.dto.ApiResponse;
-import com.culcom.entity.complex.member.ComplexMember;
-import com.culcom.entity.complex.member.ComplexMemberAttendance;
-import com.culcom.entity.complex.member.ComplexMemberMembership;
-import com.culcom.repository.ComplexMemberAttendanceRepository;
-import com.culcom.repository.ComplexMemberMembershipRepository;
-import com.culcom.repository.ComplexMemberRepository;
+import com.culcom.service.PublicMembershipService;
 import lombok.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/public/membership")
 @RequiredArgsConstructor
 public class PublicMembershipController {
 
-    private final ComplexMemberRepository memberRepository;
-    private final ComplexMemberMembershipRepository memberMembershipRepository;
-    private final ComplexMemberAttendanceRepository attendanceRepository;
+    private final PublicMembershipService publicMembershipService;
 
     @GetMapping("/check")
     public ResponseEntity<ApiResponse<MembershipCheckResponse>> check(
             @RequestParam String name, @RequestParam String phone) {
-
-        List<ComplexMember> members = memberRepository.findByNameAndPhoneNumber(name, phone);
-        if (members.isEmpty()) {
-            return ResponseEntity.ok(ApiResponse.ok(new MembershipCheckResponse(null)));
-        }
-
-        ComplexMember member = members.get(0);
-        List<ComplexMemberMembership> memberships = memberMembershipRepository.findByMemberSeqIn(List.of(member.getSeq()));
-
-        List<MembershipCheckResponse.MembershipDetail> details = memberships.stream()
-                .map(mm -> {
-                    // 해당 멤버십의 출석 기록
-                    List<ComplexMemberAttendance> attendances = attendanceRepository.findByMemberMembershipSeq(mm.getSeq());
-                    long presentCount = attendances.stream().filter(a -> a.getStatus().name().equals("출석")).count();
-                    long absentCount = attendances.stream().filter(a -> a.getStatus().name().equals("결석")).count();
-                    int totalAttendance = attendances.size();
-                    int attendanceRate = totalAttendance > 0 ? (int) Math.round((double) presentCount / totalAttendance * 100) : 0;
-
-                    return new MembershipCheckResponse.MembershipDetail(
-                            mm.getMembership().getName(),
-                            Boolean.TRUE.equals(mm.getIsActive()) ? "사용가능" : "사용불가",
-                            mm.getStartDate() != null ? mm.getStartDate().toString() : "",
-                            mm.getExpiryDate() != null ? mm.getExpiryDate().toString() : "",
-                            mm.getTotalCount(), mm.getUsedCount(),
-                            mm.getPostponeTotal(), mm.getPostponeUsed(),
-                            (int) presentCount, (int) absentCount, totalAttendance, attendanceRate
-                    );
-                })
-                .toList();
-
-        MembershipCheckResponse.MemberSummary summary = new MembershipCheckResponse.MemberSummary(
-                member.getName(), member.getPhoneNumber(),
-                member.getBranch().getBranchName(), member.getMetaData() != null ? member.getMetaData().getLevel() : null, details
-        );
-
-        return ResponseEntity.ok(ApiResponse.ok(new MembershipCheckResponse(summary)));
+        return ResponseEntity.ok(ApiResponse.ok(publicMembershipService.check(name, phone)));
     }
 
     @Getter @AllArgsConstructor

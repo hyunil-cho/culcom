@@ -103,7 +103,7 @@ public class AttendanceService {
         // 배치 프리로드: 사용 가능 멤버십 + 오늘 출석 기록 (회원-멤버십은 1:1)
         Map<Long, ComplexMemberMembership> usableMap = new HashMap<>();
         if (!memberSeqs.isEmpty()) {
-            memberMembershipRepository.findActiveByMemberSeqs(memberSeqs)
+            memberMembershipRepository.findActiveByMemberSeqIn(memberSeqs)
                     .forEach(mm -> usableMap.putIfAbsent(mm.getMember().getSeq(), mm));
         }
         Map<Long, ComplexMemberAttendance> existingAttendanceMap = new HashMap<>();
