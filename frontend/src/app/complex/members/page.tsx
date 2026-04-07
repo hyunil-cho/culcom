@@ -9,9 +9,6 @@ import { Button } from '@/components/ui/Button';
 import SearchBar from '@/components/ui/SearchBar';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import MembershipInfoModal from './components/MembershipInfoModal';
-import RefundLinkModal from './components/RefundLinkModal';
-import PostponementLinkModal from './components/PostponementLinkModal';
-import MembershipLinkModal from './components/MembershipLinkModal';
 import { useAttendanceHistory } from '@/lib/useAttendanceHistory';
 import { useAttendanceHistoryColumn } from '@/hooks/useAttendanceHistoryColumn';
 
@@ -31,9 +28,6 @@ function MembersContent() {
   const [totalPages, setTotalPages] = useState(0);
   const [keyword, setKeyword] = useState(searchedKeyword);
   const [membershipModal, setMembershipModal] = useState<{ seq: number; name: string } | null>(null);
-  const [membershipLinkModal, setMembershipLinkModal] = useState<{ seq: number; name: string; phone: string } | null>(null);
-  const [refundModal, setRefundModal] = useState<{ seq: number; name: string; phone: string } | null>(null);
-  const [postponeModal, setPostponeModal] = useState<{ seq: number; name: string; phone: string } | null>(null);
   const { column: historyColumn, modal: historyModal } = useAttendanceHistory<ComplexMember>('member');
   const recentHistoryColumn = useAttendanceHistoryColumn<ComplexMember>();
 
@@ -58,35 +52,13 @@ function MembersContent() {
     { header: '인적사항', render: (m) => <span style={{ color: '#888' }}>{m.info || ''}</span> },
     {
       header: '멤버십', render: (m) => (
-        <div style={{ display: 'flex', gap: 4 }}>
-          <button onClick={(e) => { e.stopPropagation(); setMembershipModal({ seq: m.seq, name: m.name }); }}
-            style={{ background: '#6366f1', color: '#fff', border: 'none', borderRadius: 3, padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}>
-            정보
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); setMembershipLinkModal({ seq: m.seq, name: m.name, phone: m.phoneNumber }); }}
-            style={{ background: '#8b5cf6', color: '#fff', border: 'none', borderRadius: 3, padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}>
-            조회링크
-          </button>
-        </div>
+        <button onClick={(e) => { e.stopPropagation(); setMembershipModal({ seq: m.seq, name: m.name }); }}
+          style={{ background: '#6366f1', color: '#fff', border: 'none', borderRadius: 3, padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}>
+          정보
+        </button>
       ),
     },
     historyColumn,
-    {
-      header: '연기', render: (m) => (
-        <button onClick={(e) => { e.stopPropagation(); setPostponeModal({ seq: m.seq, name: m.name, phone: m.phoneNumber }); }}
-          style={{ background: '#4a90e2', color: '#fff', border: 'none', borderRadius: 3, padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}>
-          연기 요청
-        </button>
-      ),
-    },
-    {
-      header: '환불', render: (m) => (
-        <button onClick={(e) => { e.stopPropagation(); setRefundModal({ seq: m.seq, name: m.name, phone: m.phoneNumber }); }}
-          style={{ background: '#e03131', color: '#fff', border: 'none', borderRadius: 3, padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}>
-          환불 요청
-        </button>
-      ),
-    },
     { header: '가입경로', render: (m) => <span style={{ color: '#555' }}>{m.signupChannel || ''}</span> },
     { header: '인터뷰어', render: (m) => <span style={{ color: '#333', fontWeight: 600 }}>{m.interviewer || ''}</span> },
     { header: '등록일자', render: (m) => <span style={{ fontSize: '0.75rem', color: '#666' }}>{m.createdDate?.split('T')[0] ?? ''}</span> },
@@ -121,33 +93,6 @@ function MembersContent() {
           memberSeq={membershipModal.seq}
           memberName={membershipModal.name}
           onClose={() => setMembershipModal(null)}
-        />
-      )}
-
-      {membershipLinkModal && (
-        <MembershipLinkModal
-          memberSeq={membershipLinkModal.seq}
-          memberName={membershipLinkModal.name}
-          memberPhone={membershipLinkModal.phone}
-          onClose={() => setMembershipLinkModal(null)}
-        />
-      )}
-
-      {postponeModal && (
-        <PostponementLinkModal
-          memberSeq={postponeModal.seq}
-          memberName={postponeModal.name}
-          memberPhone={postponeModal.phone}
-          onClose={() => setPostponeModal(null)}
-        />
-      )}
-
-      {refundModal && (
-        <RefundLinkModal
-          memberSeq={refundModal.seq}
-          memberName={refundModal.name}
-          memberPhone={refundModal.phone}
-          onClose={() => setRefundModal(null)}
         />
       )}
 

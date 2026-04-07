@@ -81,6 +81,7 @@ export const ROUTES = {
   COMPLEX_CLASS_EDIT: (seq: number) => `${R.COMPLEX}/classes/${seq}/edit`,
   COMPLEX_MEMBERS: `${R.COMPLEX}/members`,
   COMPLEX_MEMBERS_ADD: `${R.COMPLEX}/members/add`,
+  COMPLEX_MEMBER_LINKS: `${R.COMPLEX}/members/links`,
   COMPLEX_MEMBER_EDIT: (seq: number) => `${R.COMPLEX}/members/${seq}/edit`,
   COMPLEX_STAFFS: `${R.COMPLEX}/staffs`,
   COMPLEX_STAFFS_ADD: `${R.COMPLEX}/staffs/add`,
