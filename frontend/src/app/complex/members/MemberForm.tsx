@@ -6,6 +6,7 @@ import FormField from '@/components/ui/FormField';
 import FormLayout from '@/components/ui/FormLayout';
 import { Input, PhoneInput, Select, Textarea, CurrencyInput, Checkbox } from '@/components/ui/FormInput';
 import { membershipApi, type Membership } from '@/lib/api';
+import type { MembershipStatus } from '@/lib/api/complex';
 import { useClassSlots } from '../hooks/useClassSlots';
 import { usePaymentOptions } from '@/lib/usePaymentOptions';
 import PaymentHistoryPanel from './PaymentHistoryPanel';
@@ -46,7 +47,7 @@ export interface MembershipFormData {
   paymentDate: string;
   depositAmount: string;
   paymentMethod: string;
-  isActive: boolean;
+  status: MembershipStatus;
 }
 
 export interface ClassAssignData {
@@ -68,7 +69,7 @@ function nowDateTimeLocal(): string {
 export const emptyMembershipForm: MembershipFormData = {
   membershipSeq: '', startDate: '', expiryDate: '', price: '',
   paymentDate: nowDateTimeLocal(), depositAmount: '', paymentMethod: '',
-  isActive: true,
+  status: '활성',
 };
 
 export const emptyClassAssign: ClassAssignData = { timeSlotSeq: '', classSeq: '' };
@@ -330,12 +331,14 @@ export default function MemberForm({
                   ))}
                 </Select>
               </FormField>
-              <FormField label="사용 개시" hint="* 끄면 출석/연기/환불에서 사용할 수 없게 됩니다.">
-                <Checkbox
-                  label={membershipForm.isActive ? '사용 가능' : '사용 불가'}
-                  checked={membershipForm.isActive}
-                  onChange={(e) => onMembershipChange({ ...membershipForm, isActive: e.target.checked })}
-                />
+              <FormField label="멤버십 상태" hint="* 환불은 환불 메뉴에서 처리해야 합니다 (여기서 직접 변경하지 않음).">
+                <Select
+                  value={membershipForm.status}
+                  onChange={(e) => onMembershipChange({ ...membershipForm, status: e.target.value as MembershipStatus })}
+                >
+                  <option value="활성">활성</option>
+                  <option value="정지">정지</option>
+                </Select>
               </FormField>
               {/* 멤버십 요약 (선택 시 표시) */}
               {membershipForm?.membershipSeq && (() => {
@@ -350,7 +353,7 @@ export default function MemberForm({
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px', fontSize: '0.85rem', color: '#495057' }}>
                         <div><strong>등급:</strong> {ms ? ms.name : '-'}</div>
-                        <div><strong>사용 가능:</strong> {membershipForm.isActive ? '예' : '아니오'}</div>
+                        <div><strong>상태:</strong> {membershipForm.status}</div>
                         <div><strong>기간:</strong> {ms ? `${ms.duration}일` : '-'}</div>
                         <div><strong>횟수:</strong> {ms ? `${ms.count}회` : '-'}</div>
                         <div><strong>기준 금액:</strong> {ms ? `${ms.price.toLocaleString()}원` : '-'}</div>

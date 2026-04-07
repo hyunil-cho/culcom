@@ -60,7 +60,7 @@ export function useMemberForm(seq?: number) {
           paymentDate: ms.paymentDate ?? '',
           depositAmount: '', // 수정 시에는 새 납부로 추가되지 않도록 비움
           paymentMethod: ms.paymentMethod ?? '',
-          isActive: ms.isActive ?? true,
+          status: ms.status ?? '활성',
         });
         setMemberMembershipSeq(ms.seq);
       }
@@ -134,7 +134,7 @@ export function useMemberForm(seq?: number) {
       paymentDate: msForm.paymentDate || undefined,
       depositAmount: msForm.depositAmount || undefined,
       paymentMethod: (msForm.paymentMethod && msForm.paymentMethod !== '기타') ? msForm.paymentMethod : undefined,
-      isActive: msForm.isActive,
+      status: msForm.status,
     };
     if (memberMembershipSeq) {
       await memberApi.updateMembership(memberSeq, memberMembershipSeq, msData);

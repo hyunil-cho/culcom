@@ -138,6 +138,15 @@ public class DataInitializer implements ApplicationRunner {
         log.info("초기 플레이스홀더 11건 생성 완료");
     }
 
+    /**
+     * 스태프 전용 internal 멤버십 템플릿.
+     *
+     * invariant: 강사의 멤버십은 재직 기간 중 사실상 무한대다.
+     * - duration 36500일(≈100년): 재직 중 만료되지 않도록 충분히 큰 값으로 설정
+     * - count 999999: 횟수 제한 없음
+     * - price 0: 무료 (강사 복지)
+     * 휴직/퇴직 시에는 만료가 아니라 status(활성→정지)로 사용을 막는다.
+     */
     private void initStaffMembership() {
         if (membershipRepository.findByName("스태프 무제한").isPresent()) return;
 

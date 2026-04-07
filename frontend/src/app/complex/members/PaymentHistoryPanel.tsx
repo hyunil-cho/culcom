@@ -88,8 +88,8 @@ export default function PaymentHistoryPanel({ memberSeq, memberName }: Props) {
                   }}>
                     {mm.paymentStatus}
                   </span>
-                  {!mm.isActive && (
-                    <span style={{ fontSize: 11, color: '#999' }}>(비활성)</span>
+                  {mm.status !== '활성' && (
+                    <span style={{ fontSize: 11, color: '#999' }}>({mm.status})</span>
                   )}
                 </div>
                 <div style={{ fontSize: 12, color: '#666' }}>

@@ -64,6 +64,16 @@ export interface ComplexMemberMetaData {
   signupChannel?: string;
 }
 
+/**
+ * 멤버십 본질 상태.
+ * - 활성: 정상 사용 가능
+ * - 정지: 일시적 사용 불가 (스태프 휴직 등). 가역적
+ * - 환불: 환불 처리됨. 비가역
+ *
+ * 연기는 본 enum의 값이 아니다 (별도 연기 신청 테이블에서 기간 기반으로 관리).
+ */
+export type MembershipStatus = '활성' | '정지' | '환불';
+
 export interface MemberMembershipRequest {
   membershipSeq: number;
   startDate?: string;
@@ -72,7 +82,7 @@ export interface MemberMembershipRequest {
   depositAmount?: string;
   paymentMethod?: string;
   paymentDate?: string;
-  isActive?: boolean;
+  status?: MembershipStatus;
 }
 
 export type PaymentKind = 'DEPOSIT' | 'BALANCE' | 'ADDITIONAL' | 'REFUND';
@@ -112,7 +122,7 @@ export interface MemberMembershipResponse {
   price: string | null;
   paymentMethod: PaymentMethod | null;
   paymentDate: string | null;
-  isActive: boolean;
+  status: MembershipStatus;
   createdDate: string;
   paidAmount: number;
   outstanding: number | null;

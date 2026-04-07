@@ -49,7 +49,7 @@ export default function PostponementLinkModal({ memberSeq, memberName, memberPho
       const ms = msRes.success ? msRes.data : [];
       setMemberships(ms);
 
-      const usableMemberships = ms.filter(m => m.isActive);
+      const usableMemberships = ms.filter(m => m.status === '활성');
       if (usableMemberships.length === 0) {
         setCanPostpone(false);
         setUnavailableReason('사용 가능한 멤버십이 없습니다.');
@@ -134,9 +134,9 @@ export default function PostponementLinkModal({ memberSeq, memberName, memberPho
 
               {/* 멤버십 현황 */}
               <div className={s.sectionLabel}>멤버십 연기 현황</div>
-              {memberships.filter(m => m.isActive).length === 0 ? (
+              {memberships.filter(m => m.status === '활성').length === 0 ? (
                 <div className={s.emptyText}>활성 멤버십이 없습니다.</div>
-              ) : memberships.filter(m => m.isActive).map(ms => (
+              ) : memberships.filter(m => m.status === '활성').map(ms => (
                 <div key={ms.seq} className={s.msCard}>
                   <div className={s.msName}>{ms.membershipName}</div>
                   <div className={s.msMeta}>
@@ -180,7 +180,7 @@ export default function PostponementLinkModal({ memberSeq, memberName, memberPho
             <div>
               {/* 멤버십 요약 */}
               <div className={s.sectionLabel}>멤버십 연기 잔여</div>
-              {memberships.filter(m => m.isActive).map(ms => {
+              {memberships.filter(m => m.status === '활성').map(ms => {
                 const rem = ms.postponeTotal - ms.postponeUsed;
                 return (
                   <div key={ms.seq} className={s.msCard}>
