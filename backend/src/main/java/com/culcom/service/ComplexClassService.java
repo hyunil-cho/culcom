@@ -76,12 +76,12 @@ public class ComplexClassService {
             if (oldStaffSeq != null) {
                 ComplexMember oldStaff = memberRepository.getReferenceById(oldStaffSeq);
                 eventPublisher.publishEvent(ActivityEvent.withChange(
-                        oldStaff, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, cls.getName(), "해제"));
+                        oldStaff, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, cls.getName(), null));
             }
             if (newStaffSeq != null) {
                 ComplexMember newStaff = memberRepository.getReferenceById(newStaffSeq);
                 eventPublisher.publishEvent(ActivityEvent.withChange(
-                        newStaff, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, null, "배정"));
+                        newStaff, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, null, cls.getName()));
             }
         }
 
