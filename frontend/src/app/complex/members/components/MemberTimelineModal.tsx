@@ -126,7 +126,7 @@ export default function MemberTimelineModal({ memberSeq, memberName, type = 'mem
                     <div className={s.timelineCard}>
                       <div className={s.timelineTop}>
                         <span className={s.typeBadge} style={{ background: cfg.bg, color: cfg.color }}>{cfg.label}</span>
-                        <span className={s.timelineDate}>{item.date}</span>
+                        <span className={s.timelineDate}>{item.date?.replace(/[.:]\d+$/, '').replace(/(\d{2}:\d{2}):\d{2}/, '$1')}</span>
                       </div>
                       <div className={s.timelineTitle}>{item.title}</div>
                       {item.detail && <div className={s.timelineDetail}>{item.detail}</div>}
