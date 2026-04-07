@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { memberApi, type AttendanceViewMember } from '@/lib/api';
 import { useClassSlots } from '../../hooks/useClassSlots';
 import { ROUTES } from '@/lib/routes';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 interface Props {
   member: AttendanceViewMember;
@@ -51,12 +52,11 @@ export default function MemberManageModal({ member, currentClassName, onClose, o
   };
 
   return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal-content" style={{ maxWidth: 450 }}>
-        <div className="modal-header" style={{ background: '#4a90e2', color: '#fff' }}>
-          <h3 style={{ margin: 0 }}>회원 관리 - {member.name}</h3>
+    <ModalOverlay size="md" onClose={onClose}>
+        <div className="modal-header">
+          <h3>회원 관리 - {member.name}</h3>
         </div>
-        <div className="modal-body" style={{ padding: 20 }}>
+        <div className="modal-body">
           {confirmTarget ? (
             <div style={{ textAlign: 'center' }}>
               <p style={{ marginBottom: 15, fontSize: '0.95rem' }}>
@@ -148,7 +148,6 @@ export default function MemberManageModal({ member, currentClassName, onClose, o
             </button>
           </div>
         )}
-      </div>
-    </div>
+    </ModalOverlay>
   );
 }

@@ -1,7 +1,4 @@
-.narrow { max-width: 440px; }
-.small { max-width: 400px; }
-
-.headerGreen { background: var(--green-dark); border-color: var(--green-dark); }
+.headerGreen { background: var(--green-dark); border-color: var(--green-dark); color: #fff; }
 
 .toolbar {
   display: flex;

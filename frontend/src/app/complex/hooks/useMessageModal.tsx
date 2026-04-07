@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { AttendanceViewMember, externalApi, settingsApi } from '@/lib/api';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 import styles from './useMessageModal.module.css';
 
 type GroupType = 'all' | 'staff' | 'member' | 'direct';
@@ -120,8 +121,7 @@ export function useMessageModal() {
     const successes = sendResults.filter(r => r.success);
     const failures = sendResults.filter(r => !r.success);
     return (
-      <div className="modal-overlay" onClick={e => e.target === e.currentTarget && close()}>
-        <div className={`modal-content ${styles.modalNarrow}`}>
+      <ModalOverlay size="md" onClose={close}>
           <div className={`modal-header ${styles.headerDark}`}>
             <h3>메시지 발송 결과</h3>
           </div>
@@ -169,15 +169,13 @@ export function useMessageModal() {
           <div className="modal-footer">
             <button onClick={close} className={styles.confirmBtn}>확인</button>
           </div>
-        </div>
-      </div>
+      </ModalOverlay>
     );
   })() : null;
 
   // ── 발송 폼 모달 ──
   const formModal = modal && !sendResults ? (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && close()}>
-      <div className={`modal-content ${step === 2 ? styles.modalWide : styles.modalNarrow}`}>
+    <ModalOverlay size={step === 2 ? 'xl' : 'md'} onClose={close}>
         <div className={`modal-header ${styles.headerDark}`}>
           <h3>{step === 1 ? '메시지 발송 대상 선택' : '메시지 작성'}</h3>
         </div>
@@ -269,8 +267,7 @@ export function useMessageModal() {
             {step === 1 ? '취소' : '닫기'}
           </button>
         </div>
-      </div>
-    </div>
+    </ModalOverlay>
   ) : null;
 
   const rendered = <>{formModal}{resultModal}</>;

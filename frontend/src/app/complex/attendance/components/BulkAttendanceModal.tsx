@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { attendanceViewApi, AttendanceViewClass, AttendanceViewMember, BulkAttendanceResult } from '@/lib/api';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 import s from './BulkAttendanceModal.module.css';
 
 export function useBulkAttendance(onComplete: () => void) {
@@ -36,8 +37,7 @@ export function useBulkAttendance(onComplete: () => void) {
   const rendered = (
     <>
       {bulkModal && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setBulkModal(null)}>
-          <div className={`modal-content ${s.narrow}`}>
+        <ModalOverlay size="md" onClose={() => setBulkModal(null)}>
             <div className={`modal-header ${s.headerGreen}`}>
               <h3>{bulkModal.className} — 일괄 출석</h3>
             </div>
@@ -95,13 +95,11 @@ export function useBulkAttendance(onComplete: () => void) {
               <button onClick={() => setBulkModal(null)} className={s.cancelBtn}>취소</button>
               <button onClick={save} className={s.saveBtn}>저장</button>
             </div>
-          </div>
-        </div>
+        </ModalOverlay>
       )}
 
       {resultModal && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setResultModal(null)}>
-          <div className={`modal-content ${s.small}`}>
+        <ModalOverlay size="sm" onClose={() => setResultModal(null)}>
             <div className={`modal-header ${s.headerGreen}`}>
               <h3>{resultModal.className} — 출석 처리 결과</h3>
             </div>
@@ -113,8 +111,7 @@ export function useBulkAttendance(onComplete: () => void) {
             <div className="modal-footer">
               <button onClick={() => setResultModal(null)} className={s.saveBtn}>확인</button>
             </div>
-          </div>
-        </div>
+        </ModalOverlay>
       )}
     </>
   );

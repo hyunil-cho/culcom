@@ -594,31 +594,50 @@ th {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: #333;
+  width: 90vw;
+  max-height: 90vh;
 }
 
+/* 표준 사이즈 — 모달 너비 일관성 유지 */
+.modal-content.size-sm { max-width: 420px; }
+.modal-content.size-md { max-width: 560px; }
+.modal-content.size-lg { max-width: 760px; }
+.modal-content.size-xl { max-width: 960px; }
+.modal-content.size-full { max-width: 1200px; }
+
 .modal-header {
-  padding: 1rem 1.5rem;
+  padding: 0.9rem 1.25rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: #4a90e2;
+  color: #fff;
 }
 
 .modal-header h3 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: inherit;
 }
 
 .modal-body {
-  padding: 12px 16px;
+  padding: 1rem 1.25rem;
   overflow-y: auto;
   flex: 1;
+  font-size: 0.9rem;
 }
 
 .modal-footer {
-  padding: 0.75rem 1.5rem;
-  border-top: 1px solid #e0e0e0;
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid #e9ecef;
   display: flex;
   justify-content: flex-end;
+  gap: 0.5rem;
+  background: #fafafa;
 }
 
 /* ── 유틸리티 ── */
