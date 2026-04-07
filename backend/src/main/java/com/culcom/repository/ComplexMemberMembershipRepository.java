@@ -27,4 +27,11 @@ public interface ComplexMemberMembershipRepository extends JpaRepository<Complex
            "WHERE mm.member.seq = :memberSeq AND mm.isActive = true AND mm.seq <> :excludeMmSeq")
     boolean existsActiveByMemberSeqExcluding(@Param("memberSeq") Long memberSeq,
                                              @Param("excludeMmSeq") Long excludeMmSeq);
+
+    @Query("SELECT DISTINCT mm FROM ComplexMemberMembership mm " +
+           "JOIN FETCH mm.member m " +
+           "JOIN FETCH mm.membership " +
+           "LEFT JOIN FETCH mm.payments " +
+           "WHERE m.branch.seq = :branchSeq AND mm.internal = false")
+    List<ComplexMemberMembership> findAllForOutstanding(@Param("branchSeq") Long branchSeq);
 }

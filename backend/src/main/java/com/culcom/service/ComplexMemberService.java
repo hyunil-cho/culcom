@@ -28,6 +28,7 @@ public class ComplexMemberService {
     private final ComplexMemberRepository memberRepository;
     private final MembershipRepository membershipRepository;
     private final ComplexMemberMembershipRepository memberMembershipRepository;
+    private final MembershipPaymentRepository paymentRepository;
     private final ComplexClassRepository classRepository;
     private final ComplexMemberClassMappingRepository classMappingRepository;
     private final BranchRepository branchRepository;
@@ -198,12 +199,54 @@ public class ComplexMemberService {
         return ComplexMemberMembershipResponse.from(mm);
     }
 
+    @Transactional(readOnly = true)
+    public List<MembershipPaymentResponse> listPayments(Long memberSeq, Long mmSeq) {
+        findOwnedMembership(memberSeq, mmSeq);
+        return paymentRepository.findByMemberMembershipSeqOrderByPaidDateAscSeqAsc(mmSeq)
+                .stream().map(MembershipPaymentResponse::from).toList();
+    }
+
+    @Transactional
+    public MembershipPaymentResponse addPayment(Long memberSeq, Long mmSeq, MembershipPaymentRequest req) {
+        ComplexMemberMembership mm = findOwnedMembership(memberSeq, mmSeq);
+
+        if (req.getAmount() == null || req.getAmount() == 0L) {
+            throw new IllegalArgumentException("금액은 0이 될 수 없습니다");
+        }
+        if (req.getKind() == PaymentKind.REFUND && req.getAmount() > 0) {
+            throw new IllegalArgumentException("환불정정은 음수 금액이어야 합니다");
+        }
+        if (req.getKind() != PaymentKind.REFUND && req.getAmount() < 0) {
+            throw new IllegalArgumentException("일반 납부는 양수 금액이어야 합니다");
+        }
+
+        MembershipPayment payment = MembershipPayment.builder()
+                .memberMembership(mm)
+                .amount(req.getAmount())
+                .paidDate(req.getPaidDate() != null ? req.getPaidDate() : LocalDateTime.now())
+                .method(req.getMethod())
+                .kind(req.getKind())
+                .note(req.getNote())
+                .build();
+        paymentRepository.save(payment);
+
+        ActivityEventType eventType = req.getKind() == PaymentKind.REFUND
+                ? ActivityEventType.PAYMENT_REFUND : ActivityEventType.PAYMENT_ADD;
+        String note = String.format("%s %,d원 (%s)",
+                req.getKind().getLabel(), req.getAmount(), mm.getMembership().getName());
+        eventPublisher.publishEvent(ActivityEvent.ofMembership(
+                mm.getMember(), eventType, mm.getSeq(), note));
+
+        return MembershipPaymentResponse.from(payment);
+    }
+
     private static Long parseAmount(String s) {
         if (s == null) return null;
         String digits = s.replaceAll("[^0-9-]", "");
         if (digits.isEmpty() || "-".equals(digits)) return null;
         try { return Long.parseLong(digits); } catch (NumberFormatException e) { return null; }
     }
+
 
 
     @Transactional

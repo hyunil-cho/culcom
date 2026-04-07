@@ -3,6 +3,8 @@ package com.culcom.controller.complex.member;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.complex.member.ComplexMemberMembershipRequest;
 import com.culcom.dto.complex.member.ComplexMemberMembershipResponse;
+import com.culcom.dto.complex.member.MembershipPaymentRequest;
+import com.culcom.dto.complex.member.MembershipPaymentResponse;
 import com.culcom.dto.complex.member.ComplexMemberMetaDataRequest;
 import com.culcom.dto.complex.member.ComplexMemberRequest;
 import com.culcom.dto.complex.member.ComplexMemberResponse;
@@ -69,6 +71,20 @@ public class ComplexMemberController {
     public ResponseEntity<ApiResponse<Void>> deleteMembership(@PathVariable Long seq, @PathVariable Long mmSeq) {
         complexMemberService.deleteMembership(seq, mmSeq);
         return ResponseEntity.ok(ApiResponse.ok("멤버십 삭제 완료", null));
+    }
+
+    @GetMapping("/{seq}/memberships/{mmSeq}/payments")
+    public ResponseEntity<ApiResponse<List<MembershipPaymentResponse>>> listPayments(
+            @PathVariable Long seq, @PathVariable Long mmSeq) {
+        return ResponseEntity.ok(ApiResponse.ok(complexMemberService.listPayments(seq, mmSeq)));
+    }
+
+    @PostMapping("/{seq}/memberships/{mmSeq}/payments")
+    public ResponseEntity<ApiResponse<MembershipPaymentResponse>> addPayment(
+            @PathVariable Long seq, @PathVariable Long mmSeq,
+            @Valid @RequestBody MembershipPaymentRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("납부 기록 추가 완료",
+                complexMemberService.addPayment(seq, mmSeq, req)));
     }
 
     @GetMapping("/{seq}/class")
