@@ -19,6 +19,8 @@ const R = {
 } as const;
 
 export const ROUTES = {
+  ROOT: "/",
+
   LOGIN: '/login',
   DASHBOARD: '/dashboard',
 
