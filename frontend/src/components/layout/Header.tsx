@@ -14,9 +14,9 @@ const pageTitles: Record<string, string> = {
   [ROUTES.COMPLEX_CLASSES]: '수업 관리',
   [ROUTES.COMPLEX_MEMBERS]: '회원 관리',
   [ROUTES.COMPLEX_STAFFS]: '스태프 관리',
-  [ROUTES.COMPLEX_ATTENDANCE]: '출석 관리',
-  [ROUTES.COMPLEX_MEMBERSHIPS]: '멤버십',
-  [ROUTES.COMPLEX_TIMESLOTS]: '시간대 설정',
+  [ROUTES.COMPLEX_ATTENDANCE]: '통합 팀 관리',
+  [ROUTES.COMPLEX_MEMBERSHIPS]: '멤버십 관리',
+  [ROUTES.COMPLEX_TIMESLOTS]: '수업 시간대 정보 추가',
   [ROUTES.COMPLEX_POSTPONEMENTS]: '연기 요청',
   [ROUTES.COMPLEX_REFUNDS]: '환불 요청',
   [ROUTES.SURVEY]: '설문 관리',
@@ -25,8 +25,9 @@ const pageTitles: Record<string, string> = {
 
 function getPageTitle(pathname: string): string {
   if (pageTitles[pathname]) return pageTitles[pathname];
-  for (const [path, title] of Object.entries(pageTitles)) {
-    if (pathname.startsWith(path)) return title;
+  const sorted = Object.entries(pageTitles).sort((a, b) => b[0].length - a[0].length);
+  for (const [path, title] of sorted) {
+    if (pathname === path || pathname.startsWith(path + '/')) return title;
   }
   return '백오피스';
 }
