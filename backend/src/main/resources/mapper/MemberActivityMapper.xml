@@ -6,19 +6,19 @@
 
     <select id="selectTimeline" resultType="com.culcom.dto.complex.member.MemberActivityTimelineItem">
         SELECT
-            CAST(al.event_type AS VARCHAR(30)) AS type,
-            CAST(al.event_date AS VARCHAR(30)) AS date,
-            CASE CAST(al.event_type AS VARCHAR(30))
-                WHEN 'ATTENDANCE' THEN CONCAT(COALESCE(c.name, ''), ' 수업 ', COALESCE(CAST(al.status AS VARCHAR(20)), ''))
-                ELSE COALESCE(al.note, CAST(al.event_type AS VARCHAR(30)))
+            CAST(al.event_type AS CHAR(30)) AS type,
+            CAST(al.event_date AS CHAR(30)) AS date,
+            CASE CAST(al.event_type AS CHAR(30))
+                WHEN 'ATTENDANCE' THEN CONCAT(COALESCE(c.name, ''), ' 수업 ', COALESCE(CAST(al.status AS CHAR(20)), ''))
+                ELSE COALESCE(al.note, CAST(al.event_type AS CHAR(30)))
             END AS title,
             CASE
                 WHEN al.old_value IS NOT NULL OR al.new_value IS NOT NULL
                     THEN CONCAT(COALESCE(al.old_value, '(없음)'), ' → ', COALESCE(al.new_value, '(없음)'))
                 ELSE NULL
             END AS detail,
-            CASE CAST(al.event_type AS VARCHAR(30))
-                WHEN 'ATTENDANCE' THEN COALESCE(CAST(al.status AS VARCHAR(20)), '출석')
+            CASE CAST(al.event_type AS CHAR(30))
+                WHEN 'ATTENDANCE' THEN COALESCE(CAST(al.status AS CHAR(20)), '출석')
                 WHEN 'MEMBER_CREATE' THEN '등록'
                 WHEN 'MEMBERSHIP_ASSIGN' THEN '등록'
                 WHEN 'MEMBERSHIP_UPDATE' THEN '변경'
@@ -50,19 +50,19 @@
 
     <select id="selectStaffTimeline" resultType="com.culcom.dto.complex.member.MemberActivityTimelineItem">
         SELECT
-            CAST(al.event_type AS VARCHAR(30)) AS type,
-            CAST(al.event_date AS VARCHAR(30)) AS date,
-            CASE CAST(al.event_type AS VARCHAR(30))
-                WHEN 'ATTENDANCE' THEN CONCAT(COALESCE(c.name, ''), ' 수업 ', COALESCE(CAST(al.status AS VARCHAR(20)), ''))
-                ELSE COALESCE(al.note, CAST(al.event_type AS VARCHAR(30)))
+            CAST(al.event_type AS CHAR(30)) AS type,
+            CAST(al.event_date AS CHAR(30)) AS date,
+            CASE CAST(al.event_type AS CHAR(30))
+                WHEN 'ATTENDANCE' THEN CONCAT(COALESCE(c.name, ''), ' 수업 ', COALESCE(CAST(al.status AS CHAR(20)), ''))
+                ELSE COALESCE(al.note, CAST(al.event_type AS CHAR(30)))
             END AS title,
             CASE
                 WHEN al.old_value IS NOT NULL OR al.new_value IS NOT NULL
                     THEN CONCAT(COALESCE(al.old_value, '(없음)'), ' → ', COALESCE(al.new_value, '(없음)'))
                 ELSE NULL
             END AS detail,
-            CASE CAST(al.event_type AS VARCHAR(30))
-                WHEN 'ATTENDANCE' THEN COALESCE(CAST(al.status AS VARCHAR(20)), '출석')
+            CASE CAST(al.event_type AS CHAR(30))
+                WHEN 'ATTENDANCE' THEN COALESCE(CAST(al.status AS CHAR(20)), '출석')
                 WHEN 'STATUS_CHANGE' THEN '변경'
                 WHEN 'CLASS_ASSIGN' THEN '배정'
                 WHEN 'INFO_CHANGE' THEN '변경'
