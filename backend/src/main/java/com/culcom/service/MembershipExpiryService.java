@@ -35,8 +35,13 @@ public class MembershipExpiryService {
     private final ComplexMemberService complexMemberService;
     private final ApplicationEventPublisher eventPublisher;
 
-    /** 매일 자정 00:00:00 — Asia/Seoul */
+    /**
+     * 매일 자정 00:00:00 — Asia/Seoul.
+     * 자기 자신 호출(this.expirePastDueOn) 시 프록시를 거치지 않아 내부 @Transactional이 무력화되므로
+     * 진입 메서드에도 직접 @Transactional 을 부여한다.
+     */
     @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
+    @Transactional
     public void scheduledExpire() {
         int count = expirePastDueOn(LocalDate.now());
         if (count > 0) {

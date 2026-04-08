@@ -27,6 +27,8 @@ const TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> 
   STATUS_CHANGE:         { label: '상태변경',   color: '#7c3aed', bg: '#ede9fe' },
   INFO_CHANGE:           { label: '정보변경',   color: '#0369a1', bg: '#e0f2fe' },
   REFUND_CHANGE:         { label: '환불정보',   color: '#b45309', bg: '#fef3c7' },
+  PAYMENT_ADD:           { label: '납부',       color: '#15803d', bg: '#dcfce7' },
+  PAYMENT_REFUND:        { label: '환불정정',   color: '#b91c1c', bg: '#fee2e2' },
 };
 
 const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
@@ -75,6 +77,7 @@ export default function MemberTimelineModal({ memberSeq, memberName, type = 'mem
     { key: 'MEMBERSHIP', label: '멤버십', types: ['MEMBERSHIP_ASSIGN', 'MEMBERSHIP_UPDATE', 'MEMBERSHIP_DELETE'], color: '#4338ca', bg: '#eef2ff' },
     { key: 'POSTPONEMENT', label: '연기', types: ['POSTPONEMENT_REQUEST', 'POSTPONEMENT_APPROVE', 'POSTPONEMENT_REJECT'], color: '#92400e', bg: '#fef3c7' },
     { key: 'REFUND', label: '환불', types: ['REFUND_REQUEST', 'REFUND_APPROVE', 'REFUND_REJECT'], color: '#991b1b', bg: '#fef2f2' },
+    { key: 'PAYMENT', label: '납부', types: ['PAYMENT_ADD', 'PAYMENT_REFUND'], color: '#15803d', bg: '#dcfce7' },
     { key: 'INFO_CHANGE', label: '정보변경', types: ['INFO_CHANGE'], color: '#0369a1', bg: '#e0f2fe' },
     { key: 'CLASS_ASSIGN', label: '수업배정', types: ['CLASS_ASSIGN'], color: '#0e7490', bg: '#ecfeff' },
     ...(type === 'member' ? [

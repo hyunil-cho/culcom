@@ -17,6 +17,8 @@ public class MembershipAlertsResponse {
     private List<MembershipAlertItem> recentlyExpired;
     /** 잔여 횟수 임박 (remainingCount <= countThreshold) */
     private List<MembershipAlertItem> lowRemaining;
+    /** 오늘 자동 만료 처리된 멤버십 (스케줄러/출석 트리거 통합) */
+    private List<AutoExpiredItem> autoExpiredToday;
     /** 응답 시 사용된 파라미터 (UI 표시용) */
     private int windowDays;
     private int countThreshold;

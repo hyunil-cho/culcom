@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { complexDashboardApi, type MembershipAlertItem, type MembershipAlertsResponse } from '@/lib/api';
+import { complexDashboardApi, type AutoExpiredItem, type MembershipAlertItem, type MembershipAlertsResponse } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 
 // 고정 기준 — 추후 사용자 설정으로 빼는 것을 고려
@@ -64,8 +64,78 @@ export default function ComplexDashboardPage() {
             renderMeta={(it) => <RemainingMetric remaining={it.remainingCount} total={it.totalCount} />}
             onClickMember={goToMember}
           />
+
+          <AutoExpiredWidget items={data.autoExpiredToday ?? []} onClickMember={goToMember} />
         </div>
       )}
+    </div>
+  );
+}
+
+/** 당일 자동 만료된 멤버십 위젯 */
+function AutoExpiredWidget({
+  items, onClickMember,
+}: { items: AutoExpiredItem[]; onClickMember: (memberSeq: number) => void }) {
+  const accentColor = '#7048e8';
+  return (
+    <div style={{
+      background: '#fff', border: '1px solid #e9ecef', borderRadius: 8,
+      borderTop: `4px solid ${accentColor}`, overflow: 'hidden',
+      display: 'flex', flexDirection: 'column', maxHeight: 480,
+    }}>
+      <div style={{ padding: '14px 18px', borderBottom: '1px solid #f1f3f5' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h3 style={{ margin: 0, fontSize: '1rem', color: '#333' }}>
+            <span style={{ marginRight: 6 }}>🟣</span>오늘 자동 만료
+          </h3>
+          <span style={{
+            fontSize: '0.78rem', fontWeight: 700, color: '#fff',
+            background: accentColor, borderRadius: 12, padding: '2px 10px',
+          }}>{items.length}건</span>
+        </div>
+        <div style={{ fontSize: '0.75rem', color: '#888', marginTop: 4 }}>스케줄러/출석 트리거로 만료 처리</div>
+      </div>
+
+      <div style={{ overflowY: 'auto', flex: 1 }}>
+        {items.length === 0 ? (
+          <div style={{ padding: 30, textAlign: 'center', color: '#bbb', fontSize: '0.85rem' }}>
+            오늘 자동 만료된 멤버십이 없습니다.
+          </div>
+        ) : (
+          items.map(it => {
+            const reasonColor = it.reason === '기간만료' ? '#e03131'
+                              : it.reason === '횟수소진' ? '#e8590c' : '#7048e8';
+            const time = it.expiredAt ? it.expiredAt.split('T')[1]?.slice(0, 5) : '';
+            return (
+              <div key={`${it.memberMembershipSeq}-${it.expiredAt}`}
+                onClick={() => onClickMember(it.memberSeq)}
+                style={{
+                  padding: '12px 18px', borderBottom: '1px solid #f8f9fa',
+                  cursor: 'pointer', transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
+                onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 2 }}>
+                      <strong style={{ color: '#4a90e2', fontSize: '0.95rem' }}>{it.memberName}</strong>
+                      <span style={{ fontSize: '0.72rem', color: '#999', fontFamily: 'monospace' }}>{it.phoneNumber}</span>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#888' }}>{it.note}</div>
+                  </div>
+                  <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                    <span style={{
+                      display: 'inline-block', padding: '2px 8px', borderRadius: 10,
+                      fontSize: '0.72rem', fontWeight: 700, color: '#fff', background: reasonColor,
+                    }}>{it.reason}</span>
+                    <div style={{ fontSize: '0.7rem', color: '#999', marginTop: 4 }}>{time}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }

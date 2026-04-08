@@ -203,6 +203,44 @@ export function useMemberForm(seq?: number) {
       await memberApi.updateMetaData(seq, buildMetaData());
       await saveStaff(seq);
       await run(memberApi.update(seq, buildMemberData()), '회원 정보가 수정되었습니다.');
+    } else if (staffForm.isStaff) {
+      // 신규 스태프 등록 — staffApi.create()가 회원+staffInfo+내부멤버십을 한 번에 생성한다.
+      // (memberApi.create 후 staffApi.update를 호출하면 백엔드가 "일반 회원→스태프 전환 불가" 가드에 걸린다.)
+      const res = await staffApi.create({
+        name: form.name,
+        phoneNumber: form.phoneNumber,
+        status: staffForm.status,
+        interviewer: form.interviewer || undefined,
+      });
+      if (!res.success) { alert(res.message || '스태프 등록 실패'); return; }
+      const memberSeq = res.data.seq;
+      await memberApi.updateMetaData(memberSeq, buildMetaData());
+      // 환급 정보 + 담당 수업 배정만 후속 처리
+      const r = staffForm.refund;
+      const hasRefund = r.depositAmount || r.refundableDeposit || r.nonRefundableDeposit
+        || r.refundBank || r.refundAccount || r.refundAmount || r.paymentMethod;
+      if (hasRefund) {
+        await staffApi.saveRefund(memberSeq, {
+          depositAmount: r.depositAmount || undefined,
+          refundableDeposit: r.refundableDeposit || undefined,
+          nonRefundableDeposit: r.nonRefundableDeposit || undefined,
+          refundBank: r.refundBank || undefined,
+          refundAccount: r.refundAccount || undefined,
+          refundAmount: r.refundAmount || undefined,
+          paymentMethod: r.paymentMethod || undefined,
+        });
+      }
+      if (staffClassAssign.classSeq) {
+        const classRes = await classApi.get(Number(staffClassAssign.classSeq));
+        if (classRes.success && classRes.data) {
+          const c = classRes.data;
+          await classApi.update(c.seq, {
+            name: c.name, description: c.description, capacity: c.capacity,
+            sortOrder: c.sortOrder, timeSlotSeq: c.timeSlotSeq, staffSeq: memberSeq,
+          });
+        }
+      }
+      await run(Promise.resolve(res), '스태프가 등록되었습니다.');
     } else {
       const res = await memberApi.create(buildMemberData());
       if (!res.success) { alert(res.message || '회원 등록 실패'); return; }
@@ -210,7 +248,6 @@ export function useMemberForm(seq?: number) {
       await memberApi.updateMetaData(memberSeq, buildMetaData());
       await saveMembership(memberSeq);
       await saveClassAssign(memberSeq);
-      await saveStaff(memberSeq);
       await run(Promise.resolve(res), '회원이 등록되었습니다.');
     }
   };

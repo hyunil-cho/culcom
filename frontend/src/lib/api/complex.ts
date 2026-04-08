@@ -213,10 +213,22 @@ export interface MembershipAlertItem {
   remainingCount: number | null;
 }
 
+export interface AutoExpiredItem {
+  memberSeq: number;
+  memberName: string;
+  phoneNumber: string;
+  memberMembershipSeq: number;
+  /** "기간만료" | "횟수소진" | "자동만료" */
+  reason: string;
+  expiredAt: string;
+  note: string;
+}
+
 export interface MembershipAlertsResponse {
   expiringSoon: MembershipAlertItem[];
   recentlyExpired: MembershipAlertItem[];
   lowRemaining: MembershipAlertItem[];
+  autoExpiredToday: AutoExpiredItem[];
   windowDays: number;
   countThreshold: number;
 }

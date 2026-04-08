@@ -67,6 +67,18 @@ export default function ReservationStatusModal({ reservation, onClose, onStatusC
               {surveys.length === 0 ? (
                 <div className={s.surveyEmpty}>
                   활성화된 설문지가 없습니다.<br /><span className={s.surveyEmptySub}>설문 관리에서 설문지를 활성화해주세요.</span>
+                  <div style={{ marginTop: 16 }}>
+                    <button
+                      onClick={() => { window.open(ROUTES.SURVEY, '_blank'); onClose(); }}
+                      style={{
+                        padding: '10px 18px', background: '#4f46e5', color: '#fff',
+                        border: 'none', borderRadius: 6, fontSize: '0.9rem', fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      설문지 등록 페이지로 이동
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className={s.surveyList}>

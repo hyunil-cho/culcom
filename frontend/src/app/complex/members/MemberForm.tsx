@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import FormField from '@/components/ui/FormField';
 import FormLayout from '@/components/ui/FormLayout';
@@ -206,12 +206,22 @@ export default function MemberForm({
       : []),
   ];
 
-  // 결제 탭이 사라졌는데 활성 탭이 그곳이면 기본 탭으로 돌린다
+  const paymentTabAvailable = isEdit && !isStaff && !!currentMemberSeq && membershipEnabled;
+  const initialTabAppliedRef = useRef(initialTab !== 'payment');
+
+  // 결제 탭이 사라졌는데 활성 탭이 그곳이면 기본 탭으로 돌린다.
+  // URL 쿼리가 payment 였고 비동기 로드 때문에 첫 진입에서 사용 불가였다면,
+  // 사용 가능해지는 순간 1회만 payment 로 전환 (이후 사용자가 다른 탭으로 이동하면 더 이상 강제하지 않음).
   useEffect(() => {
-    if (activeTab === 'payment' && !(isEdit && !isStaff && currentMemberSeq && membershipEnabled)) {
+    if (!initialTabAppliedRef.current && paymentTabAvailable) {
+      setActiveTab('payment');
+      initialTabAppliedRef.current = true;
+      return;
+    }
+    if (activeTab === 'payment' && !paymentTabAvailable) {
       setActiveTab('basic');
     }
-  }, [activeTab, isEdit, isStaff, currentMemberSeq, membershipEnabled]);
+  }, [activeTab, paymentTabAvailable]);
 
   return (
     <FormLayout

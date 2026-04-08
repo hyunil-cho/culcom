@@ -2,10 +2,13 @@ package com.culcom.controller.complex.dashboard;
 
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
+import com.culcom.dto.complex.dashboard.AutoExpiredItem;
 import com.culcom.dto.complex.dashboard.MembershipAlertItem;
 import com.culcom.dto.complex.dashboard.MembershipAlertsResponse;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
+import com.culcom.entity.complex.member.logs.MemberActivityLog;
 import com.culcom.repository.ComplexMemberMembershipRepository;
+import com.culcom.repository.MemberActivityLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
@@ -25,6 +29,7 @@ import java.util.List;
 public class ComplexDashboardController {
 
     private final ComplexMemberMembershipRepository membershipRepository;
+    private final MemberActivityLogRepository memberActivityLogRepository;
 
     /**
      * 대시보드 멤버십 알림 — 3개 위젯을 한 번에 반환.
@@ -67,13 +72,39 @@ public class ComplexDashboardController {
                 .map(mm -> toItem(mm, today))
                 .toList();
 
+        // 당일 자동 만료된 멤버십 (스케줄러 / 출석 시 횟수 소진 트리거 통합)
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime startOfTomorrow = today.plusDays(1).atStartOfDay();
+        List<AutoExpiredItem> autoExpiredToday = memberActivityLogRepository
+                .findAutoExpiredBetween(branchSeq, startOfDay, startOfTomorrow)
+                .stream()
+                .map(ComplexDashboardController::toAutoExpiredItem)
+                .toList();
+
         return ResponseEntity.ok(ApiResponse.ok(MembershipAlertsResponse.builder()
                 .expiringSoon(expiringSoon)
                 .recentlyExpired(recentlyExpired)
                 .lowRemaining(lowRemaining)
+                .autoExpiredToday(autoExpiredToday)
                 .windowDays(windowDays)
                 .countThreshold(countThreshold)
                 .build()));
+    }
+
+    private static AutoExpiredItem toAutoExpiredItem(MemberActivityLog log) {
+        String note = log.getNote() != null ? log.getNote() : "";
+        String reason = note.contains("기간 만료") ? "기간만료"
+                      : note.contains("소진") ? "횟수소진"
+                      : "자동만료";
+        return AutoExpiredItem.builder()
+                .memberSeq(log.getMember().getSeq())
+                .memberName(log.getMember().getName())
+                .phoneNumber(log.getMember().getPhoneNumber())
+                .memberMembershipSeq(log.getMemberMembershipSeq())
+                .reason(reason)
+                .expiredAt(log.getEventDate())
+                .note(note)
+                .build();
     }
 
     private static int remaining(ComplexMemberMembership mm) {

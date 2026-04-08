@@ -149,4 +149,45 @@ class MembershipExpiryServiceTest {
                 .noneMatch(log -> log.getEventType() == ActivityEventType.MEMBERSHIP_UPDATE
                         && log.getNote() != null && log.getNote().contains("기간 만료"));
     }
+
+    @Test
+    void scheduledExpire_엔트리포인트가_만료_처리를_위임한다() {
+        // given — 어제 만료된 활성 멤버십 1건
+        Branch branch = branchRepository.save(Branch.builder()
+                .branchName("테스트지점")
+                .alias("test-sched-" + System.nanoTime())
+                .build());
+        Membership product = membershipRepository.save(Membership.builder()
+                .name("10회권").duration(60).count(10).price(150000).build());
+        ComplexMember member = memberRepository.save(ComplexMember.builder()
+                .name("스케줄대상").phoneNumber("01099998888").branch(branch).build());
+        ComplexMemberMembership mm = memberMembershipRepository.save(ComplexMemberMembership.builder()
+                .member(member).membership(product)
+                .startDate(LocalDate.now().minusDays(60))
+                .expiryDate(LocalDate.now().minusDays(1))
+                .totalCount(10).usedCount(3)
+                .status(MembershipStatus.활성).build());
+
+        Long mmSeq = mm.getSeq();
+        Long memberSeq = member.getSeq();
+
+        // when — @Scheduled 메서드를 직접 호출 (cron 트리거 시뮬레이션)
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        membershipExpiryService.scheduledExpire();
+
+        // then
+        TestTransaction.start();
+        TestTransaction.flagForRollback();
+
+        assertThat(memberMembershipRepository.findById(mmSeq).orElseThrow().getStatus())
+                .as("scheduledExpire() 호출 시 기간 만료 멤버십이 만료 상태로 전환")
+                .isEqualTo(MembershipStatus.만료);
+        assertThat(memberActivityLogRepository.findByMemberSeqOrderByCreatedDateDesc(memberSeq))
+                .anySatisfy(log -> {
+                    assertThat(log.getEventType()).isEqualTo(ActivityEventType.MEMBERSHIP_UPDATE);
+                    assertThat(log.getNote()).contains("기간 만료");
+                });
+    }
 }
