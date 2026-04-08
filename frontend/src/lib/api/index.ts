@@ -12,7 +12,7 @@ export {
   classApi, memberApi, staffApi, membershipApi, timeslotApi, refundApi,
   postponementApi, publicPostponementApi, outstandingApi, paymentOptionsApi,
   paymentMethodConfigApi, bankConfigApi, complexDashboardApi,
-  type MembershipAlertItem, type MembershipAlertsResponse,
+  type MembershipAlertItem, type MembershipAlertsResponse, type AutoExpiredItem,
   type ComplexClass, type ComplexClassRequest,
   type ComplexMember, type MemberMembershipRequest, type MemberMembershipResponse, type MemberActivityTimelineItem,
   type MembershipPaymentRequest, type MembershipPaymentResponse,
