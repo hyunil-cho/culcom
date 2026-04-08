@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { refundApi, type RefundRequest } from '@/lib/api';
+import { refundApi, externalApi, settingsApi, type RefundRequest } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
@@ -23,12 +23,35 @@ export default function RefundsPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [statusFilter, setStatusFilter] = useState('');
   const [keyword, setKeyword] = useState('');
-  const { run, modal } = useResultModal({ onConfirm: () => load() });
+  const { run, showError, modal } = useResultModal({ onConfirm: () => load() });
 
   const [rejectTarget, setRejectTarget] = useState<RefundRequest | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [confirmTarget, setConfirmTarget] = useState<{ req: RefundRequest; newStatus: string } | null>(null);
+  const [approveMessage, setApproveMessage] = useState('');
   const [infoModal, setInfoModal] = useState<string | null>(null);
+  const [senderPhone, setSenderPhone] = useState('');
+
+  useEffect(() => {
+    settingsApi.getSenderNumbers().then(res => {
+      if (res.success && res.data?.length) setSenderPhone(res.data[0]);
+    });
+  }, []);
+
+  const sendNotificationSms = async (receiverPhone: string, message: string, subject: string) => {
+    if (!senderPhone) {
+      showError('환불 처리는 완료되었으나 SMS 발신번호가 설정되지 않아 메시지가 발송되지 않았습니다.');
+      return;
+    }
+    try {
+      const res = await externalApi.sendSms({ senderPhone, receiverPhone, message, subject });
+      if (!res.success || !res.data?.success) {
+        showError(`환불 처리는 완료되었으나 SMS 발송에 실패했습니다: ${res.data?.message || res.message || '알 수 없는 오류'}`);
+      }
+    } catch (e: any) {
+      showError(`환불 처리는 완료되었으나 SMS 발송에 실패했습니다: ${e?.message ?? '알 수 없는 오류'}`);
+    }
+  };
 
   const load = (p = page, status = statusFilter, kw = keyword) => {
     const params = [`page=${p}`, 'size=20'];
@@ -49,22 +72,35 @@ export default function RefundsPage() {
       return;
     }
     if (newStatus === '반려') { setRejectTarget(req); setRejectReason(''); return; }
+    setApproveMessage('');
     setConfirmTarget({ req, newStatus });
   };
 
   const handleConfirmStatusChange = async () => {
     if (!confirmTarget) return;
     const { req, newStatus } = confirmTarget;
+    if (newStatus === '승인' && !approveMessage.trim()) {
+      setInfoModal('회원에게 발송할 안내 메시지를 입력해주세요.');
+      return;
+    }
     setConfirmTarget(null);
-    await run(refundApi.updateStatus(req.seq, newStatus), '상태가 변경되었습니다.');
+    const message = approveMessage;
+    const res = await run(refundApi.updateStatus(req.seq, newStatus), '상태가 변경되었습니다.');
+    if (res.success && newStatus === '승인' && req.phoneNumber) {
+      await sendNotificationSms(req.phoneNumber, message, '환불 승인 안내');
+    }
   };
 
   const handleRejectSubmit = async () => {
     if (!rejectReason.trim()) { setInfoModal('반려 사유를 입력해주세요.'); return; }
     if (!rejectTarget) return;
     const target = rejectTarget;
+    const reason = rejectReason;
     setRejectTarget(null);
-    await run(refundApi.updateStatus(target.seq, '반려', rejectReason), '반려 처리되었습니다.');
+    const res = await run(refundApi.updateStatus(target.seq, '반려', reason), '반려 처리되었습니다.');
+    if (res.success && target.phoneNumber) {
+      await sendNotificationSms(target.phoneNumber, reason, '환불 반려 안내');
+    }
   };
 
   const columns: Column<RefundRequest>[] = [
@@ -182,6 +218,24 @@ export default function RefundsPage() {
                   <li>해당 멤버십이 <strong>환불 상태</strong>로 전환됩니다.</li>
                   <li>회원의 모든 <strong>수업 배정이 해제</strong>됩니다.</li>
                 </ul>
+              </div>
+            )}
+            {confirmTarget.newStatus === '승인' && (
+              <div style={{ marginTop: 14 }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: 6 }}>
+                  회원에게 발송할 안내 메시지 <span style={{ color: '#dc2626' }}>*</span>
+                </label>
+                <textarea
+                  value={approveMessage}
+                  onChange={(e) => setApproveMessage(e.target.value)}
+                  placeholder="승인 처리 후 회원에게 자동 발송될 메시지를 입력해주세요..."
+                  rows={5}
+                  style={{
+                    width: '100%', padding: '10px 12px', border: '1px solid #d1d5db',
+                    borderRadius: 6, fontSize: '0.9rem', lineHeight: 1.5, resize: 'vertical',
+                    fontFamily: 'inherit',
+                  }}
+                />
               </div>
             )}
           </div>

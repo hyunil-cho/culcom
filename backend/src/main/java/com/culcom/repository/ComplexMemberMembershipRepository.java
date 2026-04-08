@@ -84,4 +84,15 @@ public interface ComplexMemberMembershipRepository extends JpaRepository<Complex
     List<ComplexMemberMembership> findLowRemaining(@Param("branchSeq") Long branchSeq,
                                                    @Param("today") LocalDate today,
                                                    @Param("threshold") int threshold);
+
+    /**
+     * 기간 만료 자동 전환 대상: 활성 상태이지만 expiry_date < today.
+     * 매일 자정 스케줄러가 호출 — 지점 무관 전체 시스템 대상.
+     */
+    @Query("SELECT mm FROM ComplexMemberMembership mm " +
+           "JOIN FETCH mm.member " +
+           "WHERE mm.status = com.culcom.entity.enums.MembershipStatus.활성 " +
+           "  AND mm.expiryDate IS NOT NULL " +
+           "  AND mm.expiryDate < :today")
+    List<ComplexMemberMembership> findActiveButExpired(@Param("today") LocalDate today);
 }
