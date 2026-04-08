@@ -39,7 +39,7 @@ export default function MembershipInfoModal({
               <div key={ms.seq} className={styles.card}>
                 <div className={styles.cardHeader}>
                   <span className={styles.membershipName}>{ms.membershipName}</span>
-                  <span className={styles.statusBadge}>{ms.status}</span>
+                  <span className={`${styles.statusBadge} ${styles['status_' + ms.status] ?? ''}`}>{ms.status}</span>
                 </div>
                 <div className={styles.infoGrid}>
                   <div><span className={styles.infoLabel}>기간</span><br /><strong>{ms.startDate} ~ {ms.expiryDate}</strong></div>

@@ -66,6 +66,18 @@ export default function ClassesPage() {
         : '-',
     },
     {
+      header: '현재 인원',
+      render: (c) => {
+        const count = c.memberCount ?? 0;
+        const full = c.capacity != null && count >= c.capacity;
+        return (
+            <>
+              <span style={{ color: full ? '#e03131' : '#2b8a3e', fontWeight: 'bold' }}>{count}</span>명
+            </>
+        );
+      },
+    },
+    {
       header: '정원',
       render: (c) => <><span style={{ color: '#4a90e2', fontWeight: 'bold' }}>{c.capacity}</span>명</>,
     },

@@ -24,12 +24,15 @@
             m.phone_number      AS phoneNumber,
             CASE WHEN si.seq IS NOT NULL THEN TRUE ELSE FALSE END AS staff,
             CASE WHEN pr.seq IS NOT NULL AND si.seq IS NULL THEN TRUE ELSE FALSE END AS postponed,
+            <!-- 스태프가 아니고, 활성 멤버십이 없는 회원 → 출석 불가 -->
+            CASE WHEN si.seq IS NULL AND mm.seq IS NULL THEN TRUE ELSE FALSE END AS noMembership,
             CASE
                 WHEN pr.seq IS NOT NULL AND si.seq IS NULL THEN '△'
                 WHEN a.status = '출석' THEN 'O'
                 WHEN a.status = '결석' THEN 'X'
                 ELSE ''
-            END AS status
+            END AS status,
+            a.attendance_date AS attendanceDate
         FROM complex_classes c
         JOIN class_time_slots ts ON ts.seq = c.time_slot_seq
         LEFT JOIN (
@@ -39,18 +42,36 @@
         ) cm ON cm.class_seq = c.seq
         LEFT JOIN complex_members m ON m.seq = cm.member_seq
         LEFT JOIN complex_staff_info si ON si.member_seq = m.seq
+        <!--
+          "사용 가능한" 멤버십만 join — status가 활성이라도 기간 만료 / 횟수 소진이면 제외.
+          이렇게 해야 noMembership 플래그가 진짜 출석 가능 여부와 일치한다.
+        -->
         LEFT JOIN complex_member_memberships mm
                ON mm.member_seq = m.seq
               AND mm.status = '활성'
               AND mm.internal = FALSE
+              AND (mm.expiry_date IS NULL OR mm.expiry_date &gt;= #{today})
+              AND (mm.total_count IS NULL OR mm.used_count &lt; mm.total_count)
         LEFT JOIN complex_postponement_requests pr
                ON pr.member_membership_seq = mm.seq
               AND pr.status = '승인'
               AND #{today} BETWEEN pr.start_date AND pr.end_date
+        <!--
+          출석 상태는 "오늘"이 아니라 "최근 7일 이내 가장 마지막 출석 기록"을 기준으로 한다.
+          즉 일주일 전에 출석했던 기록이 있다면 그 상태(O/X)를 그대로 보여준다.
+          7일 이내에 어떤 기록도 없으면 a는 NULL → 상태 '-'.
+        -->
         LEFT JOIN complex_member_attendance a
-               ON a.member_seq = m.seq
-              AND a.class_seq = c.seq
-              AND a.attendance_date = #{today}
+               ON a.seq = (
+                   SELECT a2.seq
+                   FROM complex_member_attendance a2
+                   WHERE a2.member_seq = m.seq
+                     AND a2.class_seq = c.seq
+                     AND a2.attendance_date &gt;= DATE_SUB(#{today}, INTERVAL 7 DAY)
+                     AND a2.attendance_date &lt;= #{today}
+                   ORDER BY a2.attendance_date DESC
+                   LIMIT 1
+               )
         WHERE c.branch_seq = #{branchSeq}
         ORDER BY ts.seq, c.sort_order, staff DESC, cm.sort_order, m.name
     </select>
@@ -69,6 +90,7 @@
             m.phone_number      AS phoneNumber,
             CASE WHEN si.seq IS NOT NULL THEN TRUE ELSE FALSE END AS staff,
             CASE WHEN pr.seq IS NOT NULL AND si.seq IS NULL THEN TRUE ELSE FALSE END AS postponed,
+            CASE WHEN si.seq IS NULL AND mm.seq IS NULL THEN TRUE ELSE FALSE END AS noMembership,
             CASE
                 WHEN pr.seq IS NOT NULL AND si.seq IS NULL THEN '△'
                 ELSE ''
@@ -89,6 +111,7 @@
         LEFT JOIN complex_members m ON m.seq = cm.member_seq
         LEFT JOIN complex_staff_info si ON si.member_seq = m.seq
         LEFT JOIN complex_member_metadata md ON md.member_seq = m.seq
+        <!-- 상세 뷰는 만료/소진 멤버십도 화면에 보여줘야 하므로 활성 조건만 유지 -->
         LEFT JOIN complex_member_memberships mm
                ON mm.member_seq = m.seq
               AND mm.status = '활성'

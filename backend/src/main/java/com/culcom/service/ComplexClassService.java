@@ -110,6 +110,10 @@ public class ComplexClassService {
                 .orElseThrow(() -> new EntityNotFoundException("수업"));
         ComplexMember member = memberRepository.findById(memberSeq)
                 .orElseThrow(() -> new EntityNotFoundException("회원"));
+        // 자기 자신이 리더인 팀에는 멤버로 들어갈 수 없다.
+        if (cls.getStaff() != null && cls.getStaff().getSeq().equals(memberSeq)) {
+            throw new IllegalStateException("자기 자신이 리더인 팀에는 멤버로 등록할 수 없습니다.");
+        }
         if (mappingRepository.existsByComplexClassSeqAndMemberSeq(classSeq, memberSeq)) {
             return;
         }

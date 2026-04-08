@@ -78,6 +78,7 @@ variable "ec2_instance_type" {
   default     = "t3.small"
 }
 
+
 # ─── Secrets ───
 variable "kakao_client_id" {
   description = "카카오 OAuth Client ID"

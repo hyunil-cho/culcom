@@ -78,11 +78,18 @@ public class ComplexMemberMembership extends BaseTimeEntity {
     private List<MembershipPayment> payments = new ArrayList<>();
 
     /**
-     * 멤버십이 본질적으로 활성 상태인지 (환불되지 않았는지) — 단일 진입점.
-     * status enum과의 직접 비교 대신 이 메서드를 사용한다.
+     * 멤버십이 사용 가능한 활성 상태인지 — 단일 진입점.
+     * 다음 조건을 모두 만족해야 활성으로 간주한다:
+     *   1) status == 활성 (환불/정지 아님)
+     *   2) 만료일이 오늘 이후 (expiryDate >= today)
+     *   3) 사용 횟수가 한도 미달 (usedCount < totalCount)
+     * 만료/소진 시 자동으로 false를 반환한다.
      */
     public boolean isActive() {
-        return status == MembershipStatus.활성;
+        if (status != MembershipStatus.활성) return false;
+        if (expiryDate != null && expiryDate.isBefore(LocalDate.now())) return false;
+        if (totalCount != null && usedCount != null && usedCount >= totalCount) return false;
+        return true;
     }
 
     /** 환불 처리되었는지. */

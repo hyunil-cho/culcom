@@ -56,7 +56,9 @@ public class AttendanceViewController {
                                 .phoneNumber(row.getPhoneNumber())
                                 .staff(row.isStaff())
                                 .postponed(row.isPostponed())
+                                .noMembership(row.isNoMembership())
                                 .status(row.getStatus())
+                                .attendanceDate(row.getAttendanceDate())
                                 .build());
             }
         }
@@ -123,6 +125,7 @@ public class AttendanceViewController {
                                 .membershipName(row.getMembershipName())
                                 .staff(row.isStaff())
                                 .postponed(row.isPostponed())
+                                .noMembership(row.isNoMembership())
                                 .status(row.getStatus())
                                 .attendanceHistory(history)
                                 .build());

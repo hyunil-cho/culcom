@@ -5,7 +5,10 @@ export interface AttendanceViewMember {
   memberSeq: number; name: string; phoneNumber: string;
   level?: string; info?: string; joinDate?: string; expiryDate?: string;
   totalCount?: number; usedCount?: number; membershipName?: string;
-  staff: boolean; postponed: boolean; status: string; attendanceHistory?: string[];
+  staff: boolean; postponed: boolean; noMembership: boolean; status: string;
+  /** status 기록의 실제 날짜(YYYY-MM-DD). 오늘이 아닐 수 있음 — UI에서 시각적으로 구분. */
+  attendanceDate?: string | null;
+  attendanceHistory?: string[];
 }
 
 export interface AttendanceViewClass {

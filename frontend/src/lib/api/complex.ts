@@ -69,11 +69,12 @@ export interface ComplexMemberMetaData {
  * 멤버십 본질 상태.
  * - 활성: 정상 사용 가능
  * - 정지: 일시적 사용 불가 (스태프 휴직 등). 가역적
+ * - 만료: 횟수 소진/기간 만료로 자동 전이됨. 새 멤버십 등록 유도
  * - 환불: 환불 처리됨. 비가역
  *
  * 연기는 본 enum의 값이 아니다 (별도 연기 신청 테이블에서 기간 기반으로 관리).
  */
-export type MembershipStatus = '활성' | '정지' | '환불';
+export type MembershipStatus = '활성' | '정지' | '만료' | '환불';
 
 export interface MemberMembershipRequest {
   membershipSeq: number;
@@ -195,6 +196,34 @@ export interface PaymentOptions {
 
 export const paymentOptionsApi = {
   get: () => api.get<PaymentOptions>('/complex/payments/options'),
+};
+
+// ── 대시보드 ──
+
+export interface MembershipAlertItem {
+  memberSeq: number;
+  memberName: string;
+  phoneNumber: string;
+  memberMembershipSeq: number;
+  membershipName: string | null;
+  expiryDate: string | null;
+  daysFromToday: number | null;
+  totalCount: number | null;
+  usedCount: number | null;
+  remainingCount: number | null;
+}
+
+export interface MembershipAlertsResponse {
+  expiringSoon: MembershipAlertItem[];
+  recentlyExpired: MembershipAlertItem[];
+  lowRemaining: MembershipAlertItem[];
+  windowDays: number;
+  countThreshold: number;
+}
+
+export const complexDashboardApi = {
+  membershipAlerts: (windowDays: number, countThreshold: number) =>
+    api.get<MembershipAlertsResponse>(`/complex/dashboard/membership-alerts?windowDays=${windowDays}&countThreshold=${countThreshold}`),
 };
 
 // ── 설정: 결제방법/은행 카탈로그 ──

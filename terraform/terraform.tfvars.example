@@ -11,3 +11,5 @@ app_image           = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/culcom-
 # db_instance_class = "db.t3.micro"
 # ec2_instance_type = "t3.small"
 # domain_name       = "culcom.example.com"
+
+# SSH 키페어는 Terraform이 자동 생성하여 terraform/.ssh/<project>-<env>-key.pem 에 저장됩니다.

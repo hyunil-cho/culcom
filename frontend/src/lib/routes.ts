@@ -75,6 +75,7 @@ export const ROUTES = {
 
   // 복합시설
   COMPLEX: R.COMPLEX,
+  COMPLEX_DASHBOARD: `${R.COMPLEX}/dashboard`,
   COMPLEX_CLASSES: `${R.COMPLEX}/classes`,
   COMPLEX_CLASSES_ADD: `${R.COMPLEX}/classes/add`,
   COMPLEX_CLASS_TEAMS: `${R.COMPLEX}/classes/teams`,

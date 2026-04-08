@@ -77,6 +77,26 @@ resource "aws_iam_instance_profile" "ec2" {
   role = aws_iam_role.ec2.name
 }
 
+# ─── SSH 키페어 (Terraform이 새로 생성) ───
+resource "tls_private_key" "app" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "aws_key_pair" "app" {
+  key_name   = "${var.project_name}-${var.environment}-key"
+  public_key = tls_private_key.app.public_key_openssh
+
+  tags = { Name = "${var.project_name}-keypair" }
+}
+
+# 생성된 개인키를 로컬 파일로 저장 (terraform 디렉터리 내 .ssh/)
+resource "local_sensitive_file" "app_private_key" {
+  content         = tls_private_key.app.private_key_pem
+  filename        = "${path.module}/.ssh/${aws_key_pair.app.key_name}.pem"
+  file_permission = "0400"
+}
+
 # ─── Elastic IP ───
 resource "aws_eip" "app" {
   instance = aws_instance.app.id
@@ -92,6 +112,7 @@ resource "aws_instance" "app" {
   subnet_id              = aws_subnet.public[0].id
   vpc_security_group_ids = [aws_security_group.ec2.id]
   iam_instance_profile   = aws_iam_instance_profile.ec2.name
+  key_name               = aws_key_pair.app.key_name
 
   root_block_device {
     volume_size = 30

@@ -28,11 +28,16 @@
 .member-phone { color: #999; font-size: 0.85rem; }
 .status-mark { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border: 1px solid #dee2e6; border-radius: 50%; font-weight: bold; font-size: 0.8rem; background: #fff; }
 .status-mark.active { background: #4a90e2; color: white; border-color: #4a90e2; }
+/* 오늘이 아닌 과거(최근 7일 이내) 출석 기록은 흐리게 + 점선 테두리로 구분 */
+.status-mark.is-stale { opacity: 0.45; border-style: dashed; }
 .status-mark.postponed { background: #fff9db; color: #e67700; border-color: #ffc078; font-size: 0.9rem; }
 .status-mark.absent { background: #fff5f5; color: #ccc; border-color: #eee; font-size: 0.75rem; }
 .member-item.is-staff { background: #fff8f0; border-bottom: 2px solid #f0c78a; }
 .member-item.is-postponed { background: #fff3cd; }
 .member-item.is-postponed .member-name { color: #b8860b; }
+.member-item.is-no-membership { background: #f8f9fa; opacity: 0.65; cursor: not-allowed; }
+.member-item.is-no-membership .member-name { color: #868e96; text-decoration: line-through; }
+.status-mark.no-membership { background: #f1f3f5; color: #c92a2a; border-color: #dee2e6; font-size: 0.85rem; font-weight: 800; }
 .card-footer { padding: 12px 15px; background: #fdfdfd; border-top: 1px solid #eee; border-radius: 0 0 8px 8px; font-size: 0.85rem; color: #666; display: flex; justify-content: space-between; align-items: center; }
 .btn-bulk-attend { background: #fff; color: #2e7d32; border: 1px solid #2e7d32; padding: 2px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
 .btn-bulk-attend:hover { background: #2e7d32; color: white; }

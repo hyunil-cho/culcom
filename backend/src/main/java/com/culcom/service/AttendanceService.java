@@ -9,7 +9,9 @@ import com.culcom.entity.complex.member.ComplexMemberAttendance;
 import com.culcom.entity.complex.member.ComplexMemberClassMapping;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.member.logs.AttendanceDetail;
+import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.AttendanceStatus;
+import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.*;
@@ -144,7 +146,18 @@ public class AttendanceService {
         AttendanceStatus newStatus = bm.isAttended() ? AttendanceStatus.출석 : AttendanceStatus.결석;
         ComplexMemberAttendance existing = existingAttendanceMap.get(bm.getMemberSeq());
 
-        // 기존 기록이 있으면 상태 변경 처리
+        // 멤버십 사용 횟수는 출석/결석 무관하게 "수업이 진행됐다는 사실 자체"로 1회 차감된다.
+        // → 신규 기록일 때만 차감 (출석↔결석 상태 변경은 추가 차감하지 않음)
+        boolean willConsume = (existing == null);
+        if (willConsume && mm.getUsedCount() >= mm.getTotalCount()) {
+            return BulkAttendanceResultResponse.builder()
+                    .memberSeq(bm.getMemberSeq())
+                    .name(name)
+                    .status("skip_quota_exceeded")
+                    .build();
+        }
+
+        // 기존 기록이 있으면 상태만 변경 — usedCount는 건드리지 않는다.
         if (existing != null) {
             AttendanceStatus oldStatus = existing.getStatus();
             if (oldStatus == newStatus) {
@@ -155,44 +168,48 @@ public class AttendanceService {
             existing.setStatus(newStatus);
             attendanceRepository.save(existing);
 
-            // usedCount 보정: 결석→출석 (+1), 출석→결석 (-1)
-            int delta = 0;
-            if (oldStatus == AttendanceStatus.결석 && newStatus == AttendanceStatus.출석) {
-                delta = 1;
-                mm.setUsedCount(mm.getUsedCount() + 1);
-                memberMembershipRepository.save(mm);
-            } else if (oldStatus == AttendanceStatus.출석 && newStatus == AttendanceStatus.결석) {
-                delta = -1;
-                mm.setUsedCount(Math.max(0, mm.getUsedCount() - 1));
-                memberMembershipRepository.save(mm);
-            }
-
-            publishAttendance(bm.getMemberSeq(), classSeq, newStatus, mm, delta, null);
+            publishAttendance(bm.getMemberSeq(), classSeq, newStatus, mm, 0, null);
 
             return BulkAttendanceResultResponse.builder()
                     .memberSeq(bm.getMemberSeq()).name(name)
                     .status("변경: " + (newStatus == AttendanceStatus.출석 ? "출석" : "결석")).build();
         }
 
-        // 신규 기록
+        // 신규 기록 — 출석/결석 모두 usedCount +1
         attendanceRepository.save(ComplexMemberAttendance.builder()
                 .member(ComplexMember.builder().seq(bm.getMemberSeq()).build())
                 .memberMembership(mm)
                 .complexClass(classRepository.getReferenceById(classSeq))
                 .attendanceDate(today).status(newStatus).build());
 
-        int delta = 0;
-        if (bm.isAttended()) {
-            delta = 1;
-            mm.setUsedCount(mm.getUsedCount() + 1);
-            memberMembershipRepository.save(mm);
-        }
+        mm.setUsedCount(mm.getUsedCount() + 1);
+        checkAndExpireIfExhausted(mm, bm.getMemberSeq());
+        memberMembershipRepository.save(mm);
 
-        publishAttendance(bm.getMemberSeq(), classSeq, newStatus, mm, delta, null);
+        publishAttendance(bm.getMemberSeq(), classSeq, newStatus, mm, 1, null);
 
         return BulkAttendanceResultResponse.builder()
                 .memberSeq(bm.getMemberSeq()).name(name)
                 .status(newStatus == AttendanceStatus.출석 ? "출석" : "결석").build();
+    }
+
+    /**
+     * 출석 처리 후 호출 — 멤버십 횟수가 모두 소진됐다면 status를 만료로 전환하고
+     * MemberActivityLog에 만료 사유를 기록한다.
+     * 이미 정지/만료/환불 상태이거나 totalCount가 null이면 아무 일도 하지 않는다.
+     * 호출부에서 mm을 별도로 save하므로 여기선 save하지 않는다.
+     */
+    private void checkAndExpireIfExhausted(ComplexMemberMembership mm, Long memberSeq) {
+        if (mm.getStatus() != MembershipStatus.활성) return;
+        if (mm.getTotalCount() == null || mm.getUsedCount() == null) return;
+        if (mm.getUsedCount() < mm.getTotalCount()) return;
+
+        mm.setStatus(MembershipStatus.만료);
+        eventPublisher.publishEvent(ActivityEvent.ofMembership(
+                ComplexMember.builder().seq(memberSeq).build(),
+                ActivityEventType.MEMBERSHIP_UPDATE,
+                mm.getSeq(),
+                "횟수 소진으로 자동 만료 (사용 " + mm.getUsedCount() + "/" + mm.getTotalCount() + ")"));
     }
 
     private void publishAttendance(Long memberSeq, Long classSeq, AttendanceStatus status,

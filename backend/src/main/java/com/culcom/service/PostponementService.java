@@ -37,6 +37,17 @@ public class PostponementService {
 
     @Transactional
     public PostponementResponse create(PostponementCreateRequest req, Long branchSeq) {
+        // 멤버십이 허용한 최대 연기 횟수(postponeTotal)를 초과하는 신청은 거부한다.
+        if (req.getMemberMembershipSeq() != null) {
+            ComplexMemberMembership mm = complexMemberMembershipRepository.findById(req.getMemberMembershipSeq())
+                    .orElseThrow(() -> new EntityNotFoundException("멤버십"));
+            int used = mm.getPostponeUsed() != null ? mm.getPostponeUsed() : 0;
+            int total = mm.getPostponeTotal() != null ? mm.getPostponeTotal() : 0;
+            if (used >= total) {
+                throw new IllegalStateException("연기 가능 횟수를 초과했습니다. (사용 " + used + "/" + total + ")");
+            }
+        }
+
         ComplexPostponementRequest entity = ComplexPostponementRequest.builder()
                 .memberName(req.getMemberName())
                 .phoneNumber(req.getPhoneNumber())

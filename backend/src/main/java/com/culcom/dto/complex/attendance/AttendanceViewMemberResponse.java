@@ -21,6 +21,9 @@ public class AttendanceViewMemberResponse {
     private String membershipName;
     private boolean staff;
     private boolean postponed;
+    private boolean noMembership;
     private String status;
+    /** status 기록의 실제 날짜 (오늘이 아닐 수 있음 — 최근 7일 이내). null이면 기록 없음. */
+    private LocalDate attendanceDate;
     private List<String> attendanceHistory;
 }

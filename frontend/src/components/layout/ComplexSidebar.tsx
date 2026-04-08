@@ -7,6 +7,7 @@ const groups = [
   {
     title: '수업 관리',
     items: [
+      { href: ROUTES.COMPLEX_DASHBOARD, label: '대시보드', icon: '📊' },
       { href: ROUTES.COMPLEX_ATTENDANCE, label: '팀 현황 관리', icon: '✅' },
       { href: ROUTES.COMPLEX_MEMBERSHIPS, label: '멤버십 관리', icon: '🎫' },
       { href: ROUTES.COMPLEX_TIMESLOTS, label: '시간대 설정', icon: '⏰' },

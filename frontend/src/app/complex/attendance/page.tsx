@@ -122,7 +122,7 @@ export default function AttendancePage() {
                             const li = e.currentTarget as HTMLElement;
                             startMemberDrag(e, li, li.parentElement!);
                           }}
-                          className={`member-item ${m.postponed ? 'is-postponed' : ''} ${m.staff ? 'is-staff' : ''}`}>
+                          className={`member-item ${m.postponed ? 'is-postponed' : ''} ${m.staff ? 'is-staff' : ''} ${m.noMembership ? 'is-no-membership' : ''}`}>
                           <div className="member-info">
                             <span className="member-index" style={m.staff ? { fontWeight: 800, color: '#e67e22', fontSize: '0.7rem' } : {}}>
                               {m.staff ? 'STAFF' : i}
@@ -137,11 +137,23 @@ export default function AttendancePage() {
                             </button>
                             {m.postponed ? (
                               <div className="status-mark postponed" title="수업 연기 중">△</div>
-                            ) : (
-                              <div className={`status-mark ${m.status === 'O' ? 'active' : m.status === 'X' ? '' : 'absent'}`}>
-                                {m.status || '-'}
-                              </div>
-                            )}
+                            ) : m.noMembership ? (
+                              <div className="status-mark no-membership" title="활성 멤버십 없음 — 출석 불가">!</div>
+                            ) : (() => {
+                              const today = new Date().toISOString().slice(0, 10);
+                              const isStale = !!m.attendanceDate && m.attendanceDate !== today;
+                              const statusClass = m.status === 'O' ? 'active' : m.status === 'X' ? '' : 'absent';
+                              return (
+                                <div
+                                  className={`status-mark ${statusClass}${isStale ? ' is-stale' : ''}`}
+                                  title={m.attendanceDate
+                                    ? (isStale ? `${m.attendanceDate} 기록 (오늘 아님)` : '오늘 기록')
+                                    : undefined}
+                                >
+                                  {m.status || '-'}
+                                </div>
+                              );
+                            })()}
                           </div>
                         </li>
                       ))}

@@ -33,7 +33,11 @@ public class AttendanceViewRow {
     private String phoneNumber;
     private boolean staff;
     private boolean postponed;
+    /** 활성 멤버십 없음 (스태프 제외). 출석 체크 불가. */
+    private boolean noMembership;
     private String status;
+    /** 위 status가 유래된 attendance 행의 날짜. 7일 이내 마지막 기록일 수 있음. 기록 없으면 null. */
+    private LocalDate attendanceDate;
 
     // 상세 뷰 전용
     private String level;

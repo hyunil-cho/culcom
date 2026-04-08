@@ -372,13 +372,17 @@ export default function MemberForm({
                   ))}
                 </Select>
               </FormField>
-              <FormField label="멤버십 상태" required hint="* 환불은 환불 메뉴에서 처리해야 합니다 (여기서 직접 변경하지 않음).">
+              <FormField label="멤버십 상태" required hint="* 환불/만료는 자동 전환됩니다 (여기서 직접 변경 불가).">
                 <Select
                   value={membershipForm.status} required
+                  // 환불/만료 상태에서는 사용자가 임의로 활성/정지로 되돌릴 수 없도록 잠근다.
+                  disabled={membershipForm.status === '환불' || membershipForm.status === '만료'}
                   onChange={(e) => onMembershipChange({ ...membershipForm, status: e.target.value as MembershipStatus })}
                 >
                   <option value="활성">활성</option>
                   <option value="정지">정지</option>
+                  <option value="만료" disabled>만료</option>
+                  <option value="환불" disabled>환불</option>
                 </Select>
               </FormField>
               {/* 멤버십 요약 (선택 시 표시) */}
@@ -394,7 +398,13 @@ export default function MemberForm({
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px', fontSize: '0.85rem', color: '#495057' }}>
                         <div><strong>등급:</strong> {ms ? ms.name : '-'}</div>
-                        <div><strong>상태:</strong> {membershipForm.status}</div>
+                        <div><strong>상태:</strong> {(() => {
+                          const color = membershipForm.status === '환불' ? '#dc2626'
+                            : membershipForm.status === '만료' ? '#dc2626'
+                            : membershipForm.status === '정지' ? '#b45309'
+                            : '#16a34a';
+                          return <span style={{ color, fontWeight: 700 }}>{membershipForm.status}</span>;
+                        })()}</div>
                         <div><strong>기간:</strong> {ms ? `${ms.duration}일` : '-'}</div>
                         <div><strong>횟수:</strong> {ms ? `${ms.count}회` : '-'}</div>
                         <div><strong>기준 금액:</strong> {ms ? `${ms.price.toLocaleString()}원` : '-'}</div>

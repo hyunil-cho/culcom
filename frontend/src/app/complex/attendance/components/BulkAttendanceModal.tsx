@@ -11,9 +11,14 @@ export function useBulkAttendance(onComplete: () => void) {
   const [resultModal, setResultModal] = useState<{ className: string; results: BulkAttendanceResult[] } | null>(null);
 
   const open = (cls: AttendanceViewClass) => {
+    // 체크박스 초기값은 "오늘자 출석" 기록만 반영한다.
+    // attendanceDate가 오늘이 아닌(=지난 7일 내 과거) 기록은 무시 — 새 출석 체크에 영향을 주면 안 됨.
+    const today = new Date().toISOString().slice(0, 10);
     const checked: Record<number, boolean> = {};
     cls.members.forEach(m => {
-      if (!m.postponed) checked[m.memberSeq] = m.status === 'O';
+      if (m.postponed || m.noMembership) return;
+      const isToday = m.attendanceDate === today;
+      checked[m.memberSeq] = isToday && m.status === 'O';
     });
     setBulkChecked(checked);
     setBulkModal({ classSeq: cls.classSeq, className: cls.name, members: cls.members });
@@ -21,11 +26,14 @@ export function useBulkAttendance(onComplete: () => void) {
 
   const save = async () => {
     if (!bulkModal) return;
-    const members = bulkModal.members.map(m => ({
-      memberSeq: m.memberSeq,
-      staff: m.staff,
-      attended: m.postponed ? false : (bulkChecked[m.memberSeq] ?? false),
-    }));
+    const members = bulkModal.members
+      // 멤버십 없음/연기 중인 회원은 일괄 출석 페이로드에서 제외 (서버 부하 절감 + 의도 명확화)
+      .filter(m => !m.noMembership)
+      .map(m => ({
+        memberSeq: m.memberSeq,
+        staff: m.staff,
+        attended: m.postponed ? false : (bulkChecked[m.memberSeq] ?? false),
+      }));
     const res = await attendanceViewApi.bulkAttendance(bulkModal.classSeq, members);
     if (res.success) {
       setResultModal({ className: bulkModal.className, results: res.data });
@@ -47,12 +55,12 @@ export function useBulkAttendance(onComplete: () => void) {
                 <div className={s.toolbarBtns}>
                   <button type="button" onClick={() => {
                     const next: Record<number, boolean> = {};
-                    bulkModal.members.forEach(m => { if (!m.postponed) next[m.memberSeq] = true; });
+                    bulkModal.members.forEach(m => { if (!m.postponed && !m.noMembership) next[m.memberSeq] = true; });
                     setBulkChecked(next);
                   }} className={s.selectAllBtn}>전체 출석</button>
                   <button type="button" onClick={() => {
                     const next: Record<number, boolean> = {};
-                    bulkModal.members.forEach(m => { if (!m.postponed) next[m.memberSeq] = false; });
+                    bulkModal.members.forEach(m => { if (!m.postponed && !m.noMembership) next[m.memberSeq] = false; });
                     setBulkChecked(next);
                   }} className={s.deselectAllBtn}>전체 해제</button>
                 </div>
@@ -72,6 +80,19 @@ export function useBulkAttendance(onComplete: () => void) {
                           <strong className={s.postponedName}>{m.name}</strong>
                           <span className={s.phone}>{m.phoneNumber}</span>
                           <span className={s.postponedBadge}>연기중</span>
+                        </div>
+                      </div>
+                    );
+                  }
+                  if (m.noMembership) {
+                    return (
+                      <div key={m.memberSeq} className={s.postponedRow}>
+                        <span className={s.postponedMark}>!</span>
+                        <div className={s.memberInfo}>
+                          {label}
+                          <strong className={s.postponedName}>{m.name}</strong>
+                          <span className={s.phone}>{m.phoneNumber}</span>
+                          <span className={s.postponedBadge}>멤버십 없음</span>
                         </div>
                       </div>
                     );

@@ -11,7 +11,8 @@ export { customerApi, type Customer } from './customer';
 export {
   classApi, memberApi, staffApi, membershipApi, timeslotApi, refundApi,
   postponementApi, publicPostponementApi, outstandingApi, paymentOptionsApi,
-  paymentMethodConfigApi, bankConfigApi,
+  paymentMethodConfigApi, bankConfigApi, complexDashboardApi,
+  type MembershipAlertItem, type MembershipAlertsResponse,
   type ComplexClass, type ComplexClassRequest,
   type ComplexMember, type MemberMembershipRequest, type MemberMembershipResponse, type MemberActivityTimelineItem,
   type MembershipPaymentRequest, type MembershipPaymentResponse,

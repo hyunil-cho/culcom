@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   classApi,
   memberApi,
@@ -40,6 +40,14 @@ function SectionHeader({ title, desc, right }: { title: string; desc?: string; r
 }
 
 export default function ClassTeamsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ClassTeamsPageInner />
+    </Suspense>
+  );
+}
+
+function ClassTeamsPageInner() {
   const [classes, setClasses] = useState<ComplexClass[]>([]);
   const [staffs, setStaffs] = useState<ComplexStaff[]>([]);
   const [allMembers, setAllMembers] = useState<ComplexMember[]>([]);
@@ -96,15 +104,18 @@ export default function ClassTeamsPage() {
 
   const candidateMembers = useMemo(() => {
     const kw = memberKeyword.trim().toLowerCase();
+    const leaderSeq = selectedClass?.staffSeq;
     return allMembers
       .filter((m) => !teamMemberSeqs.has(m.seq))
+      // 자기 자신이 리더인 팀에는 멤버로 들어갈 수 없다.
+      .filter((m) => leaderSeq == null || m.seq !== leaderSeq)
       .filter(
         (m) =>
           !kw ||
           m.name.toLowerCase().includes(kw) ||
           (m.phoneNumber ?? '').includes(kw),
       );
-  }, [allMembers, teamMemberSeqs, memberKeyword]);
+  }, [allMembers, teamMemberSeqs, memberKeyword, selectedClass?.staffSeq]);
 
   const refreshSelectedClass = (seq: number) => {
     classApi.get(seq).then((res) => {
