@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import SearchBar from '@/components/ui/SearchBar';
 import ModalOverlay from '@/components/ui/ModalOverlay';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useResultModal } from '@/hooks/useResultModal';
 import s from './page.module.css';
 
@@ -26,6 +27,8 @@ export default function RefundsPage() {
 
   const [rejectTarget, setRejectTarget] = useState<RefundRequest | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [confirmTarget, setConfirmTarget] = useState<{ req: RefundRequest; newStatus: string } | null>(null);
+  const [infoModal, setInfoModal] = useState<string | null>(null);
 
   const load = (p = page, status = statusFilter, kw = keyword) => {
     const params = [`page=${p}`, 'size=20'];
@@ -39,18 +42,29 @@ export default function RefundsPage() {
   const handleStatusFilter = (status: string) => { setStatusFilter(status); setPage(0); load(0, status); };
   const handleSearch = () => { setPage(0); load(0, statusFilter, keyword); };
 
-  const handleStatusChange = async (req: RefundRequest, newStatus: string) => {
+  const handleStatusChange = (req: RefundRequest, newStatus: string) => {
     if (newStatus === req.status) return;
+    if (req.status === '승인') {
+      setInfoModal('이미 승인된 환불 요청은 상태를 변경할 수 없습니다.');
+      return;
+    }
     if (newStatus === '반려') { setRejectTarget(req); setRejectReason(''); return; }
-    if (!confirm(`${req.memberName} 회원의 환불 요청 상태를 "${newStatus}"(으)로 변경하시겠습니까?`)) return;
+    setConfirmTarget({ req, newStatus });
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (!confirmTarget) return;
+    const { req, newStatus } = confirmTarget;
+    setConfirmTarget(null);
     await run(refundApi.updateStatus(req.seq, newStatus), '상태가 변경되었습니다.');
   };
 
   const handleRejectSubmit = async () => {
-    if (!rejectReason.trim()) { alert('반려 사유를 입력해주세요.'); return; }
+    if (!rejectReason.trim()) { setInfoModal('반려 사유를 입력해주세요.'); return; }
     if (!rejectTarget) return;
+    const target = rejectTarget;
     setRejectTarget(null);
-    await run(refundApi.updateStatus(rejectTarget.seq, '반려', rejectReason), '반려 처리되었습니다.');
+    await run(refundApi.updateStatus(target.seq, '반려', rejectReason), '반려 처리되었습니다.');
   };
 
   const columns: Column<RefundRequest>[] = [
@@ -90,7 +104,9 @@ export default function RefundsPage() {
     { header: '반려 사유', render: (r) => r.status === '반려' && r.rejectReason
       ? <span className={s.rejectReasonText}>{r.rejectReason}</span>
       : <span className={s.emptyText}>-</span> },
-    { header: '처리', render: (r) => (
+    { header: '처리', render: (r) => r.status === '승인' ? (
+      <span className={s.emptyText}>처리 완료</span>
+    ) : (
       <select value={r.status} onChange={(e) => handleStatusChange(r, e.target.value)} className={s.statusSelect}>
         <option value="대기">대기</option><option value="승인">승인</option><option value="반려">반려</option>
       </select>
@@ -137,6 +153,51 @@ export default function RefundsPage() {
             <button onClick={handleRejectSubmit} className={s.rejectSubmitBtn}>반려 처리</button>
           </div>
         </ModalOverlay>
+      )}
+
+      {confirmTarget && (
+        <ConfirmModal
+          title={confirmTarget.newStatus === '승인' ? '환불 승인' : '환불 상태 변경'}
+          confirmLabel={confirmTarget.newStatus === '승인' ? '승인 처리' : '변경'}
+          confirmColor={confirmTarget.newStatus === '승인' ? '#dc2626' : '#4a90e2'}
+          onCancel={() => setConfirmTarget(null)}
+          onConfirm={handleConfirmStatusChange}
+        >
+          <div style={{ textAlign: 'left' }}>
+            <p style={{ margin: '0 0 12px' }}>
+              <strong>{confirmTarget.req.memberName}</strong> 회원의 환불 요청을{' '}
+              <strong>{confirmTarget.newStatus}</strong> 처리하시겠습니까?
+            </p>
+            {confirmTarget.newStatus === '승인' && (
+              <div style={{
+                marginTop: 12, padding: '12px 14px',
+                background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 6,
+                color: '#991b1b', fontSize: '0.85rem', lineHeight: 1.6,
+              }}>
+                <div style={{ fontWeight: 700, color: '#dc2626', marginBottom: 6 }}>
+                  ⚠️ 되돌릴 수 없는 작업입니다
+                </div>
+                <ul style={{ margin: 0, paddingLeft: 18 }}>
+                  <li>승인 후에는 다른 상태로 <strong>변경할 수 없습니다</strong>.</li>
+                  <li>해당 멤버십이 <strong>환불 상태</strong>로 전환됩니다.</li>
+                  <li>회원의 모든 <strong>수업 배정이 해제</strong>됩니다.</li>
+                </ul>
+              </div>
+            )}
+          </div>
+        </ConfirmModal>
+      )}
+
+      {infoModal && (
+        <ConfirmModal
+          title="알림"
+          confirmLabel="확인"
+          confirmColor="#4a90e2"
+          onCancel={() => setInfoModal(null)}
+          onConfirm={() => setInfoModal(null)}
+        >
+          <p style={{ margin: 0 }}>{infoModal}</p>
+        </ConfirmModal>
       )}
 
       {modal}
