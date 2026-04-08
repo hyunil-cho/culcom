@@ -197,27 +197,6 @@ function CustomersContent() {
 
       // 예약 확정 SMS 자동 발송
       sendReservationSms(customer, normalized);
-
-      // 구글 캘린더 이벤트 생성
-      try {
-        const calRes = await externalApi.createCalendarEvent({
-          customerName: customer?.name ?? '',
-          phoneNumber: customer?.phoneNumber ?? '',
-          interviewDate: normalized,
-          comment: customer?.comment ?? undefined,
-          caller,
-          callCount: customer?.callCount ?? 0,
-          commercialName: customer?.commercialName ?? undefined,
-          adSource: customer?.adSource ?? undefined,
-        });
-        if (calRes.success && calRes.data?.link) {
-          window.open(calRes.data.link, '_blank');
-        } else {
-          setResult({ success: false, message: `예약은 완료되었으나, 캘린더 연동에 실패했습니다: ${calRes.message ?? '알 수 없는 오류'}` });
-        }
-      } catch {
-        setResult({ success: false, message: '예약은 완료되었으나, 캘린더 연동 중 오류가 발생했습니다.' });
-      }
     }
   };
 
