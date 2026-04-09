@@ -69,10 +69,7 @@ public class ComplexMemberService {
     public ComplexMemberResponse update(Long seq, ComplexMemberRequest req) {
         ComplexMember member = memberRepository.findById(seq)
                 .orElseThrow(() -> new EntityNotFoundException("회원"));
-        publishIfChanged(member, ActivityFieldType.NAME, member.getName(), req.getName());
-        publishIfChanged(member, ActivityFieldType.PHONE_NUMBER, member.getPhoneNumber(), req.getPhoneNumber());
-        publishIfChanged(member, ActivityFieldType.INTERVIEWER, member.getInterviewer(), req.getInterviewer());
-
+        // 회원 기본정보(이름/연락처/특이사항/인터뷰어 등) 변경은 활동 히스토리에 남기지 않는다.
         member.setName(req.getName());
         member.setPhoneNumber(req.getPhoneNumber());
         member.setInfo(req.getInfo());
@@ -323,9 +320,4 @@ public class ComplexMemberService {
         return mm;
     }
 
-    private void publishIfChanged(ComplexMember member, ActivityFieldType field, String oldVal, String newVal) {
-        if (!Objects.equals(oldVal, newVal)) {
-            eventPublisher.publishEvent(ActivityEvent.withChange(member, ActivityEventType.INFO_CHANGE, field, oldVal, newVal));
-        }
-    }
 }

@@ -101,10 +101,7 @@ public class ComplexStaffService {
                     member, ActivityEventType.STATUS_CHANGE, ActivityFieldType.STATUS, oldStatus.name(), newStatus.name()));
         }
 
-        publishIfChanged(member, ActivityFieldType.NAME, member.getName(), req.getName());
-        publishIfChanged(member, ActivityFieldType.PHONE_NUMBER, member.getPhoneNumber(), req.getPhoneNumber());
-        publishIfChanged(member, ActivityFieldType.INTERVIEWER, member.getInterviewer(), req.getInterviewer());
-
+        // 스태프 기본정보 변경은 활동 히스토리에 남기지 않는다.
         member.setName(req.getName());
         member.setPhoneNumber(req.getPhoneNumber());
         member.setInterviewer(req.getInterviewer());
@@ -166,14 +163,7 @@ public class ComplexStaffService {
         ComplexStaffInfo staffInfo = member.getStaffInfo();
         if (staffInfo == null) throw new EntityNotFoundException("스태프 정보");
 
-        publishRefundIfChanged(member, ActivityFieldType.DEPOSIT_AMOUNT, staffInfo.getDepositAmount(), req.getDepositAmount());
-        publishRefundIfChanged(member, ActivityFieldType.REFUNDABLE_DEPOSIT, staffInfo.getRefundableDeposit(), req.getRefundableDeposit());
-        publishRefundIfChanged(member, ActivityFieldType.NON_REFUNDABLE_DEPOSIT, staffInfo.getNonRefundableDeposit(), req.getNonRefundableDeposit());
-        publishRefundIfChanged(member, ActivityFieldType.REFUND_BANK, staffInfo.getRefundBank(), req.getRefundBank());
-        publishRefundIfChanged(member, ActivityFieldType.REFUND_ACCOUNT, staffInfo.getRefundAccount(), req.getRefundAccount());
-        publishRefundIfChanged(member, ActivityFieldType.REFUND_AMOUNT, staffInfo.getRefundAmount(), req.getRefundAmount());
-        publishRefundIfChanged(member, ActivityFieldType.PAYMENT_METHOD, staffInfo.getPaymentMethod(), req.getPaymentMethod());
-
+        // 스태프 환급 정보 변경은 활동 히스토리에 남기지 않는다.
         staffInfo.setDepositAmount(req.getDepositAmount());
         staffInfo.setRefundableDeposit(req.getRefundableDeposit());
         staffInfo.setNonRefundableDeposit(req.getNonRefundableDeposit());
@@ -189,9 +179,6 @@ public class ComplexStaffService {
     public void deleteRefundInfo(Long memberSeq) {
         ComplexMember member = memberRepository.findById(memberSeq)
                 .orElseThrow(() -> new EntityNotFoundException("스태프"));
-        eventPublisher.publishEvent(ActivityEvent.withChange(
-                member, ActivityEventType.REFUND_CHANGE, ActivityFieldType.REFUND_INFO, "삭제", null));
-
         ComplexStaffInfo staffInfo = member.getStaffInfo();
         if (staffInfo != null) {
             staffInfo.setDepositAmount(null);
@@ -202,18 +189,6 @@ public class ComplexStaffService {
             staffInfo.setRefundAmount(null);
             staffInfo.setPaymentMethod(null);
             staffInfoRepository.save(staffInfo);
-        }
-    }
-
-    private void publishIfChanged(ComplexMember member, ActivityFieldType field, String oldVal, String newVal) {
-        if (!Objects.equals(oldVal, newVal)) {
-            eventPublisher.publishEvent(ActivityEvent.withChange(member, ActivityEventType.INFO_CHANGE, field, oldVal, newVal));
-        }
-    }
-
-    private void publishRefundIfChanged(ComplexMember member, ActivityFieldType field, String oldVal, String newVal) {
-        if (!Objects.equals(oldVal, newVal)) {
-            eventPublisher.publishEvent(ActivityEvent.withChange(member, ActivityEventType.REFUND_CHANGE, field, oldVal, newVal));
         }
     }
 
