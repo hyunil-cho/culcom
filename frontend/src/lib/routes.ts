@@ -103,6 +103,11 @@ export const ROUTES = {
   COMPLEX_POSTPONEMENT_REASONS: `${R.COMPLEX}/postponements/reasons`,
   COMPLEX_REFUNDS: `${R.COMPLEX}/refunds`,
   COMPLEX_REFUND_REASONS: `${R.COMPLEX}/refunds/reasons`,
+  // 동의항목
+  CONSENT_ITEMS: '/consent-items',
+  CONSENT_ITEMS_ADD: '/consent-items/add',
+  CONSENT_ITEM_EDIT: (seq: number) => `/consent-items/${seq}/edit`,
+
   SURVEY: '/survey',
   SURVEY_SUBMISSIONS: '/survey/submissions',
   SURVEY_SUBMISSION_DETAIL: (seq: number) => `/survey/submissions/${seq}`,

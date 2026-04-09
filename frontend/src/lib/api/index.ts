@@ -56,6 +56,7 @@ export {
   type UserResponse, type UserCreateRequest,
 } from './settings';
 export { calendarApi, type CalendarReservation } from './calendar';
+export { consentItemApi, type ConsentItem, type ConsentItemRequest } from './consent';
 export {
   externalApi,
   type SmsSendRequest, type SmsSendResponse, type CalendarEventRequest, type CalendarEventResponse,

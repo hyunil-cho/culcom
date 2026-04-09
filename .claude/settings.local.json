@@ -75,7 +75,9 @@
       "Bash(sed:*)",
       "Bash(./gradlew compileJava -q)",
       "mcp__ide__getDiagnostics",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(cp -r /c/Users/lookh/IdeaProjects/culcom/frontend/src/app/consent-items /c/Users/lookh/IdeaProjects/culcom/frontend/src/app/'\\(main\\)'/consent-items)",
+      "Bash(rm -rf /c/Users/lookh/IdeaProjects/culcom/frontend/src/app/consent-items)"
     ]
   }
 }
