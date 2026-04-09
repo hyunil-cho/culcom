@@ -23,6 +23,7 @@ export default function MembershipAddPage() {
       duration: toDurationDays(form),
       count: form.count,
       price: form.price,
+      transferable: form.transferable,
     }), '멤버십이 등록되었습니다.');
   };
 

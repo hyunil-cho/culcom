@@ -74,7 +74,8 @@
       "Bash(curl:*)",
       "Bash(sed:*)",
       "Bash(./gradlew compileJava -q)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(git checkout:*)"
     ]
   }
 }

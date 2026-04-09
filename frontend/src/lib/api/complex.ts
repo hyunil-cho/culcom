@@ -332,6 +332,7 @@ export interface Membership {
   duration: number;
   count: number;
   price: number;
+  transferable: boolean;
   createdDate: string | null;
   lastUpdateDate: string | null;
 }
@@ -341,6 +342,7 @@ export interface MembershipRequest {
   duration: number;
   count: number;
   price: number;
+  transferable: boolean;
 }
 
 export const membershipApi = {

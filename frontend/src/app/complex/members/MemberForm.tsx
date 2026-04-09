@@ -418,6 +418,11 @@ export default function MemberForm({
                         <div><strong>기간:</strong> {ms ? `${ms.duration}일` : '-'}</div>
                         <div><strong>횟수:</strong> {ms ? `${ms.count}회` : '-'}</div>
                         <div><strong>기준 금액:</strong> {ms ? `${ms.price.toLocaleString()}원` : '-'}</div>
+                        <div><strong>양도:</strong> {ms ? (
+                          <span style={{ color: ms.transferable ? '#16a34a' : '#dc2626', fontWeight: 700 }}>
+                            {ms.transferable ? '가능' : '불가'}
+                          </span>
+                        ) : '-'}</div>
                       </div>
                     </div>
                 );

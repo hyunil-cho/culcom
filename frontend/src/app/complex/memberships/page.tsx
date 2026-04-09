@@ -33,6 +33,11 @@ export default function MembershipsPage() {
     { header: '유효 기간', render: (m) => formatDuration(m.duration) },
     { header: '수강 횟수', render: (m) => `${m.count}회` },
     { header: '판매 가격', render: (m) => formatPrice(m.price) },
+    { header: '양도', render: (m) => (
+      <span style={{ fontSize: '0.78rem', fontWeight: 600, color: m.transferable ? '#16a34a' : '#dc2626' }}>
+        {m.transferable ? '가능' : '불가'}
+      </span>
+    )},
     { header: '등록일', render: (m) => m.createdDate?.split('T')[0] ?? '-' },
   ];
 

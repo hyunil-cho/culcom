@@ -14,6 +14,7 @@ public class MembershipResponse {
     private Integer duration;
     private Integer count;
     private Integer price;
+    private Boolean transferable;
     private LocalDateTime createdDate;
 
     public static MembershipResponse from(Membership entity) {
@@ -23,6 +24,7 @@ public class MembershipResponse {
                 .duration(entity.getDuration())
                 .count(entity.getCount())
                 .price(entity.getPrice())
+                .transferable(entity.getTransferable())
                 .createdDate(entity.getCreatedDate())
                 .build();
     }

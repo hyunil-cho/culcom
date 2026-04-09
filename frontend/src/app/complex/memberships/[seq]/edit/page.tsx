@@ -32,6 +32,7 @@ export default function MembershipEditPage() {
         durationUnit: dur.unit,
         count: m.count,
         price: m.price,
+        transferable: m.transferable,
       });
     });
   }, [seq]);
@@ -44,6 +45,7 @@ export default function MembershipEditPage() {
       duration: toDurationDays(form),
       count: form.count,
       price: form.price,
+      transferable: form.transferable,
     }), '멤버십이 수정되었습니다.');
   };
 

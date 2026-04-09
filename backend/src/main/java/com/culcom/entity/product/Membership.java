@@ -29,4 +29,8 @@ public class Membership extends BaseTimeEntity {
 
     private boolean isInternal = false;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean transferable = true;
+
 }

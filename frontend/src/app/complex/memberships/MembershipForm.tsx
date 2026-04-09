@@ -2,7 +2,7 @@
 
 import FormField from '@/components/ui/FormField';
 import FormLayout from '@/components/ui/FormLayout';
-import { Input, NumberInput, Select, CurrencyInput } from '@/components/ui/FormInput';
+import { Input, NumberInput, Select, CurrencyInput, Checkbox } from '@/components/ui/FormInput';
 
 export interface MembershipFormData {
   name: string;
@@ -10,6 +10,7 @@ export interface MembershipFormData {
   durationUnit: 'day' | 'month' | 'year';
   count: number;
   price: number;
+  transferable: boolean;
 }
 
 export const emptyMembershipForm: MembershipFormData = {
@@ -18,6 +19,7 @@ export const emptyMembershipForm: MembershipFormData = {
   durationUnit: 'month',
   count: 1,
   price: 0,
+  transferable: true,
 };
 
 export function toDurationDays(form: MembershipFormData): number {
@@ -87,6 +89,12 @@ export default function MembershipForm({
       <FormField label="판매 가격 (원)" required hint="부가세 포함 판매가를 입력하세요.">
         <CurrencyInput placeholder="예: 450,000" value={form.price}
           onValueChange={(v) => set('price', Number(v) || 0)} required />
+      </FormField>
+
+      <FormField label="양도 설정">
+        <Checkbox label="양도 가능" hint="체크 해제 시 이 멤버십은 다른 회원에게 양도할 수 없습니다."
+          checked={form.transferable}
+          onChange={(e) => set('transferable', e.target.checked)} />
       </FormField>
     </FormLayout>
   );

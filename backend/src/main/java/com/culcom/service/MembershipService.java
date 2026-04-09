@@ -35,6 +35,7 @@ public class MembershipService {
                 .duration(req.getDuration())
                 .count(req.getCount())
                 .price(req.getPrice())
+                .transferable(req.getTransferable())
                 .build();
         return MembershipResponse.from(membershipRepository.save(membership));
     }
@@ -47,6 +48,7 @@ public class MembershipService {
         m.setDuration(req.getDuration());
         m.setCount(req.getCount());
         m.setPrice(req.getPrice());
+        m.setTransferable(req.getTransferable());
         return MembershipResponse.from(membershipRepository.save(m));
     }
 

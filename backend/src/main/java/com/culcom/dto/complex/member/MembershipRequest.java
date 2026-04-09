@@ -16,4 +16,6 @@ public class MembershipRequest {
     private Integer count;
     @NotNull
     private Integer price;
+
+    private Boolean transferable = true;
 }
