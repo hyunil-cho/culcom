@@ -28,6 +28,7 @@ public class ComplexMemberMembershipResponse {
     private String paymentMethod;
     private LocalDateTime paymentDate;
     private MembershipStatus status;
+    private Boolean transferable;
     private LocalDateTime createdDate;
 
     /** 누적 납부 금액 (sum of payments.amount; 음수 환불정정 포함) */
@@ -70,6 +71,7 @@ public class ComplexMemberMembershipResponse {
                 .paymentMethod(entity.getPaymentMethod())
                 .paymentDate(entity.getPaymentDate())
                 .status(entity.getStatus())
+                .transferable(entity.getMembership().getTransferable())
                 .createdDate(entity.getCreatedDate())
                 .paidAmount(paid)
                 .outstanding(out)

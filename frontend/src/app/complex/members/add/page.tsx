@@ -13,7 +13,7 @@ export default function MemberAddPage() {
 
 function MemberAddPageInner() {
   const {
-    form, setForm, msForm, setMsForm, classAssign, setClassAssign,
+    form, setForm, membership, classAssign, setClassAssign,
     staffForm, setStaffForm, staffClassAssign, setStaffClassAssign,
     handleSubmit, modal,
   } = useMemberForm();
@@ -39,7 +39,7 @@ function MemberAddPageInner() {
     <>
       <MemberForm form={form} onChange={setForm} onSubmit={handleSubmit}
         backHref={ROUTES.COMPLEX_MEMBERS} submitLabel="등록"
-        membershipForm={msForm} onMembershipChange={setMsForm}
+        membershipSection={membership.formSection} membershipEnabled={membership.enabled}
         classAssign={classAssign} onClassAssignChange={setClassAssign}
         staffForm={staffForm} onStaffChange={setStaffForm}
         staffClassAssign={staffClassAssign} onStaffClassAssignChange={setStaffClassAssign}

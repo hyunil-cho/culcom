@@ -6,11 +6,11 @@ import { memberApi, staffApi, classApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { useResultModal } from '@/hooks/useResultModal';
 import {
-  emptyMemberForm, emptyMembershipForm, emptyClassAssign, emptyStaffForm, emptyRefundForm,
+  emptyMemberForm, emptyClassAssign, emptyStaffForm, emptyRefundForm,
   validateMemberForm,
-  validateMembershipForm,
-  type MemberFormData, type MembershipFormData, type ClassAssignData, type StaffFormData,
+  type MemberFormData, type ClassAssignData, type StaffFormData,
 } from './MemberForm';
+import { useMembership } from './useMembership';
 import { useClassSlots } from '../hooks/useClassSlots';
 
 export function useMemberForm(seq?: number) {
@@ -19,7 +19,7 @@ export function useMemberForm(seq?: number) {
   const staffMode = searchParams.get('staff') === 'true';
 
   const [form, setForm] = useState<MemberFormData>(emptyMemberForm);
-  const [msForm, setMsForm] = useState<MembershipFormData>(emptyMembershipForm);
+  const membership = useMembership({ memberSeq: seq, isEdit });
   const [classAssign, setClassAssign] = useState<ClassAssignData>(emptyClassAssign);
   const [staffForm, setStaffForm] = useState<StaffFormData>(() => ({
     ...emptyStaffForm,
@@ -47,23 +47,6 @@ export function useMemberForm(seq?: number) {
       // staffStatus가 있으면 스태프
       if (m.staffStatus) {
         setStaffForm(prev => ({ ...prev, isStaff: true, status: m.staffStatus! }));
-      }
-    });
-    // 기존 멤버십 로드
-    memberApi.getMemberships(seq).then(res => {
-      if (res.success && res.data.length > 0) {
-        const ms = res.data[0]; // 최신 멤버십
-        setMsForm({
-          membershipSeq: String(ms.membershipSeq),
-          startDate: ms.startDate ?? '',
-          expiryDate: ms.expiryDate ?? '',
-          price: ms.price ?? '',
-          paymentDate: ms.paymentDate ?? '',
-          depositAmount: '', // 수정 시에는 새 납부로 추가되지 않도록 비움
-          paymentMethod: ms.paymentMethod ?? '',
-          status: ms.status ?? '활성',
-        });
-        setMemberMembershipSeq(ms.seq);
       }
     });
     // 환급 정보 로드
@@ -108,8 +91,6 @@ export function useMemberForm(seq?: number) {
     }
   }, [seq, isEdit, allClasses]);
 
-  const [memberMembershipSeq, setMemberMembershipSeq] = useState<number | null>(null);
-
   const buildMemberData = () => ({
     name: form.name,
     phoneNumber: form.phoneNumber,
@@ -125,25 +106,6 @@ export function useMemberForm(seq?: number) {
     signupChannel: (form.signupChannel && form.signupChannel !== '기타') ? form.signupChannel : undefined,
   });
 
-  const saveMembership = async (memberSeq: number) => {
-    if (!msForm.membershipSeq) return;
-    const msData = {
-      membershipSeq: Number(msForm.membershipSeq),
-      startDate: msForm.startDate || undefined,
-      expiryDate: msForm.expiryDate || undefined,
-      price: msForm.price || undefined,
-      paymentDate: msForm.paymentDate || undefined,
-      depositAmount: msForm.depositAmount || undefined,
-      paymentMethod: (msForm.paymentMethod && msForm.paymentMethod !== '기타') ? msForm.paymentMethod : undefined,
-      status: msForm.status,
-    };
-    if (memberMembershipSeq) {
-      await memberApi.updateMembership(memberSeq, memberMembershipSeq, msData);
-    } else {
-      await memberApi.assignMembership(memberSeq, msData);
-    }
-  };
-
   const saveClassAssign = async (memberSeq: number) => {
     if (!classAssign.classSeq) return;
     await memberApi.assignClass(memberSeq, Number(classAssign.classSeq));
@@ -151,14 +113,12 @@ export function useMemberForm(seq?: number) {
 
   const saveStaff = async (memberSeq: number) => {
     if (!staffForm.isStaff) return;
-    // 스태프 정보 저장 (create 또는 update)
     await staffApi.update(memberSeq, {
       name: form.name,
       phoneNumber: form.phoneNumber,
       status: staffForm.status,
       interviewer: form.interviewer || undefined,
     });
-    // 환급 정보 저장
     const r = staffForm.refund;
     const hasRefund = r.depositAmount || r.refundableDeposit || r.nonRefundableDeposit
       || r.refundBank || r.refundAccount || r.refundAmount || r.paymentMethod;
@@ -173,7 +133,6 @@ export function useMemberForm(seq?: number) {
         paymentMethod: r.paymentMethod || undefined,
       });
     }
-    // 스태프 수업 배정
     if (staffClassAssign.classSeq) {
       const classRes = await classApi.get(Number(staffClassAssign.classSeq));
       if (classRes.success && classRes.data) {
@@ -189,14 +148,12 @@ export function useMemberForm(seq?: number) {
   const handleSubmit = async () => {
     const error = validateMemberForm(form);
     if (error) { alert(error); return; }
-    // 멤버십 할당이 켜진 경우(=membershipSeq가 비어있지 않음)에만 검증
-    if (msForm.membershipSeq) {
-      const msError = validateMembershipForm(msForm, isEdit);
-      if (msError) { alert(msError); return; }
-    }
+    // 멤버십 검증 (useMembership 훅의 validate 사용)
+    const msError = membership.validate();
+    if (msError) { alert(msError); return; }
 
     if (isEdit) {
-      await saveMembership(seq);
+      await membership.save(seq);
       if (classAssign.classSeq) {
         await memberApi.reassignClass(seq, Number(classAssign.classSeq));
       }
@@ -204,8 +161,6 @@ export function useMemberForm(seq?: number) {
       await saveStaff(seq);
       await run(memberApi.update(seq, buildMemberData()), '회원 정보가 수정되었습니다.');
     } else if (staffForm.isStaff) {
-      // 신규 스태프 등록 — staffApi.create()가 회원+staffInfo+내부멤버십을 한 번에 생성한다.
-      // (memberApi.create 후 staffApi.update를 호출하면 백엔드가 "일반 회원→스태프 전환 불가" 가드에 걸린다.)
       const res = await staffApi.create({
         name: form.name,
         phoneNumber: form.phoneNumber,
@@ -215,7 +170,6 @@ export function useMemberForm(seq?: number) {
       if (!res.success) { alert(res.message || '스태프 등록 실패'); return; }
       const memberSeq = res.data.seq;
       await memberApi.updateMetaData(memberSeq, buildMetaData());
-      // 환급 정보 + 담당 수업 배정만 후속 처리
       const r = staffForm.refund;
       const hasRefund = r.depositAmount || r.refundableDeposit || r.nonRefundableDeposit
         || r.refundBank || r.refundAccount || r.refundAmount || r.paymentMethod;
@@ -246,14 +200,14 @@ export function useMemberForm(seq?: number) {
       if (!res.success) { alert(res.message || '회원 등록 실패'); return; }
       const memberSeq = res.data.seq;
       await memberApi.updateMetaData(memberSeq, buildMetaData());
-      await saveMembership(memberSeq);
+      await membership.save(memberSeq);
       await saveClassAssign(memberSeq);
       await run(Promise.resolve(res), '회원이 등록되었습니다.');
     }
   };
 
   return {
-    form, setForm, msForm, setMsForm, classAssign, setClassAssign,
+    form, setForm, membership, classAssign, setClassAssign,
     staffForm, setStaffForm, staffClassAssign, setStaffClassAssign,
     handleSubmit, run, modal, isEdit,
   };

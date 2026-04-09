@@ -8,7 +8,7 @@ import { useMemberForm } from '../../useMemberForm';
 export default function MemberEditPage() {
   const seq = Number(useParams().seq);
   const {
-    form, setForm, msForm, setMsForm, classAssign, setClassAssign,
+    form, setForm, membership, classAssign, setClassAssign,
     staffForm, setStaffForm, staffClassAssign, setStaffClassAssign,
     handleSubmit, modal,
   } = useMemberForm(seq);
@@ -17,7 +17,7 @@ export default function MemberEditPage() {
     <>
       <MemberForm form={form} onChange={setForm} onSubmit={handleSubmit}
         isEdit backHref={ROUTES.COMPLEX_MEMBERS} submitLabel="수정"
-        membershipForm={msForm} onMembershipChange={setMsForm}
+        membershipSection={membership.formSection} membershipEnabled={membership.enabled}
         classAssign={classAssign} onClassAssignChange={setClassAssign}
         staffForm={staffForm} onStaffChange={setStaffForm}
         staffClassAssign={staffClassAssign} onStaffClassAssignChange={setStaffClassAssign}

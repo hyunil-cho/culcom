@@ -8,7 +8,7 @@ import { useQueryParams } from '@/lib/useQueryParams';
 import { Button } from '@/components/ui/Button';
 import SearchBar from '@/components/ui/SearchBar';
 import DataTable, { type Column } from '@/components/ui/DataTable';
-import MembershipInfoModal from './components/MembershipInfoModal';
+import { useMembership } from './useMembership';
 import { useAttendanceHistory } from '@/lib/useAttendanceHistory';
 import { useAttendanceHistoryColumn } from '@/hooks/useAttendanceHistoryColumn';
 
@@ -27,7 +27,7 @@ function MembersContent() {
   const [members, setMembers] = useState<ComplexMember[]>([]);
   const [totalPages, setTotalPages] = useState(0);
   const [keyword, setKeyword] = useState(searchedKeyword);
-  const [membershipModal, setMembershipModal] = useState<{ seq: number; name: string } | null>(null);
+  const { openInfoModal, infoModal } = useMembership();
   const [outstandingMap, setOutstandingMap] = useState<Map<number, number>>(new Map());
   const { column: historyColumn, modal: historyModal } = useAttendanceHistory<ComplexMember>('member');
   const recentHistoryColumn = useAttendanceHistoryColumn<ComplexMember>();
@@ -76,7 +76,7 @@ function MembersContent() {
     { header: '인적사항', render: (m) => <span style={{ color: '#888' }}>{m.info || ''}</span> },
     {
       header: '멤버십', render: (m) => (
-        <button onClick={(e) => { e.stopPropagation(); setMembershipModal({ seq: m.seq, name: m.name }); }}
+        <button onClick={(e) => { e.stopPropagation(); openInfoModal(m.seq, m.name); }}
           style={{ background: '#6366f1', color: '#fff', border: 'none', borderRadius: 3, padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}>
           정보
         </button>
@@ -130,13 +130,7 @@ function MembersContent() {
         onRowClick={(m) => router.push(ROUTES.COMPLEX_MEMBER_EDIT(m.seq))}
       />
 
-      {membershipModal && (
-        <MembershipInfoModal
-          memberSeq={membershipModal.seq}
-          memberName={membershipModal.name}
-          onClose={() => setMembershipModal(null)}
-        />
-      )}
+      {infoModal}
 
       {historyModal}
     </>

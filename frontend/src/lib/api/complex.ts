@@ -125,6 +125,7 @@ export interface MemberMembershipResponse {
   paymentMethod: PaymentMethod | null;
   paymentDate: string | null;
   status: MembershipStatus;
+  transferable: boolean;
   createdDate: string;
   paidAmount: number;
   outstanding: number | null;
