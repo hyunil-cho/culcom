@@ -5,8 +5,9 @@ import { memberApi, type ComplexMember } from '@/lib/api';
 import MembershipLinkModal from '../components/MembershipLinkModal';
 import PostponementLinkModal from '../components/PostponementLinkModal';
 import RefundLinkModal from '../components/RefundLinkModal';
+import TransferLinkModal from '../components/TransferLinkModal';
 
-type LinkKind = 'membership' | 'postponement' | 'refund';
+type LinkKind = 'membership' | 'postponement' | 'refund' | 'transfer';
 
 const LINK_TYPES: {
   kind: LinkKind;
@@ -35,6 +36,13 @@ const LINK_TYPES: {
     desc: '회원이 직접 환불을 신청할 수 있는 링크입니다.',
     icon: '💰',
     color: '#e03131',
+  },
+  {
+    kind: 'transfer',
+    title: '멤버십 양도 링크',
+    desc: '회원의 멤버십을 다른 사람에게 양도할 수 있는 링크입니다.',
+    icon: '🔄',
+    color: '#10b981',
   },
 ];
 
@@ -250,6 +258,9 @@ export default function MemberLinksPage() {
       )}
       {linkProps && openLink === 'refund' && (
         <RefundLinkModal {...linkProps} onClose={() => setOpenLink(null)} />
+      )}
+      {linkProps && openLink === 'transfer' && (
+        <TransferLinkModal {...linkProps} onClose={() => setOpenLink(null)} />
       )}
     </>
   );

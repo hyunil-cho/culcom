@@ -23,6 +23,7 @@ const groups = [
       ]},
       { href: ROUTES.COMPLEX_POSTPONEMENTS, label: '연기 요청', icon: '⏸️' },
       { href: ROUTES.COMPLEX_REFUNDS, label: '환불 요청', icon: '💰' },
+      { href: ROUTES.COMPLEX_TRANSFER_REQUESTS, label: '양도 요청', icon: '🔄' },
       { href: ROUTES.ROOT, label: '메인으로', icon: '✅' },
     ],
   },

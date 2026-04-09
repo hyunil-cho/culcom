@@ -73,6 +73,11 @@ public class ComplexMemberMembership extends BaseTimeEntity {
     @Builder.Default
     private Boolean internal = false;
 
+    /** 양도로 받은 멤버십 여부 — true이면 재양도 불가 */
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean transferred = false;
+
     @OneToMany(mappedBy = "memberMembership", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<MembershipPayment> payments = new ArrayList<>();

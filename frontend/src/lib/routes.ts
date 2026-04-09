@@ -33,6 +33,8 @@ export const ROUTES = {
   PUBLIC_REFUND: '/public/refund',
   PUBLIC_REFUND_SUCCESS: '/public/refund/success',
   PUBLIC_MEMBERSHIP: '/public/membership',
+  PUBLIC_TRANSFER: '/public/transfer',
+  PUBLIC_TRANSFER_INVITE: '/public/transfer/invite',
 
   // 고객 관리
   CUSTOMERS: R.CUSTOMERS,
@@ -103,6 +105,7 @@ export const ROUTES = {
   COMPLEX_POSTPONEMENT_REASONS: `${R.COMPLEX}/postponements/reasons`,
   COMPLEX_REFUNDS: `${R.COMPLEX}/refunds`,
   COMPLEX_REFUND_REASONS: `${R.COMPLEX}/refunds/reasons`,
+  COMPLEX_TRANSFER_REQUESTS: `${R.COMPLEX}/transfer-requests`,
   // 동의항목
   CONSENT_ITEMS: '/consent-items',
   CONSENT_ITEMS_ADD: '/consent-items/add',

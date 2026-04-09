@@ -23,7 +23,7 @@ export default function MembershipCard({ ms }: { ms: MemberMembershipResponse })
         <div><span className={styles.infoLabel}>수업 횟수</span><br /><strong className={styles.infoValue}>{ms.usedCount}회 사용 / {ms.totalCount}회 (잔여 {rem}회)</strong></div>
         <div><span className={styles.infoLabel}>결제 금액</span><br /><strong>{ms.price || '-'}</strong></div>
         <div><span className={styles.infoLabel}>연기</span><br /><strong>{ms.postponeUsed}회 사용 / {ms.postponeTotal}회</strong></div>
-        <div><span className={styles.infoLabel}>양도</span><br /><strong style={{ color: ms.transferable ? '#16a34a' : '#dc2626' }}>{ms.transferable ? '가능' : '불가'}</strong></div>
+        <div><span className={styles.infoLabel}>양도</span><br /><strong style={{ color: ms.transferred ? '#6b7280' : ms.transferable ? '#16a34a' : '#dc2626' }}>{ms.transferred ? '재양도불가' : ms.transferable ? '가능' : '불가'}</strong></div>
       </div>
       <div className={styles.progressBar}>
         <div className={styles.progressFill} style={{ width: `${pctUsed}%` }} />

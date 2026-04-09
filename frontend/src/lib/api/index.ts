@@ -58,6 +58,11 @@ export {
 export { calendarApi, type CalendarReservation } from './calendar';
 export { consentItemApi, type ConsentItem, type ConsentItemRequest } from './consent';
 export {
+  transferApi, publicTransferApi,
+  type TransferRequestItem, type TransferStatus, type TransferPublicInfo,
+  type TransferInviteInfo, type TransferInviteSubmitData,
+} from './transfer';
+export {
   externalApi,
   type SmsSendRequest, type SmsSendResponse, type CalendarEventRequest, type CalendarEventResponse,
 } from './external';
