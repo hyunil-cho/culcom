@@ -5,6 +5,7 @@ import com.culcom.entity.transfer.TransferRequest;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -12,7 +13,9 @@ import java.time.LocalDateTime;
 public class TransferRequestResponse {
     private Long seq;
     private Long memberMembershipSeq;
+    private Long membershipSeq;
     private String membershipName;
+    private String expiryDate;
     private Long fromMemberSeq;
     private String fromMemberName;
     private String fromMemberPhone;
@@ -29,7 +32,10 @@ public class TransferRequestResponse {
         return TransferRequestResponse.builder()
                 .seq(entity.getSeq())
                 .memberMembershipSeq(entity.getMemberMembership().getSeq())
+                .membershipSeq(entity.getMemberMembership().getMembership().getSeq())
                 .membershipName(entity.getMemberMembership().getMembership().getName())
+                .expiryDate(entity.getMemberMembership().getExpiryDate() != null
+                        ? entity.getMemberMembership().getExpiryDate().toString() : null)
                 .fromMemberSeq(entity.getFromMember().getSeq())
                 .fromMemberName(entity.getFromMember().getName())
                 .fromMemberPhone(entity.getFromMember().getPhoneNumber())

@@ -2,16 +2,21 @@ package com.culcom.service;
 
 import com.culcom.dto.consent.ConsentItemResponse;
 import com.culcom.dto.transfer.*;
+import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.consent.ConsentItem;
 import com.culcom.entity.customer.Customer;
 import com.culcom.entity.customer.CustomerConsentHistory;
+import com.culcom.entity.enums.ActivityEventType;
+import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.enums.TransferStatus;
 import com.culcom.entity.transfer.TransferRequest;
+import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.*;
 import com.culcom.repository.MembershipPaymentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,10 +29,13 @@ public class TransferService {
 
     private final TransferRequestRepository transferRequestRepository;
     private final ComplexMemberMembershipRepository memberMembershipRepository;
+    private final ComplexMemberRepository complexMemberRepository;
     private final ConsentItemRepository consentItemRepository;
     private final CustomerRepository customerRepository;
     private final CustomerConsentHistoryRepository consentHistoryRepository;
     private final MembershipPaymentRepository paymentRepository;
+    private final ComplexMemberService complexMemberService;
+    private final ApplicationEventPublisher eventPublisher;
 
     // ── 양도비 계산 ──
 
@@ -90,6 +98,63 @@ public class TransferService {
         TransferRequest tr = transferRequestRepository.findById(seq)
                 .orElseThrow(() -> new EntityNotFoundException("양도 요청"));
         tr.setStatus(status);
+        return TransferRequestResponse.from(transferRequestRepository.save(tr));
+    }
+
+    // ── 관리자: 양도 완료 (멤버십 이전) ──
+
+    @Transactional
+    public TransferRequestResponse completeTransfer(Long transferSeq, Long newMemberSeq) {
+        TransferRequest tr = transferRequestRepository.findById(transferSeq)
+                .orElseThrow(() -> new EntityNotFoundException("양도 요청"));
+
+        ComplexMember newMember = complexMemberRepository.findById(newMemberSeq)
+                .orElseThrow(() -> new EntityNotFoundException("회원"));
+
+        ComplexMemberMembership original = tr.getMemberMembership();
+        ComplexMember fromMember = tr.getFromMember();
+        String membershipName = original.getMembership().getName();
+        int remaining = original.getTotalCount() - original.getUsedCount();
+
+        // 1. 양도자 멤버십 비활성화
+        original.setStatus(MembershipStatus.만료);
+        memberMembershipRepository.save(original);
+
+        // 2. 양도자 수업/팀 자동 제외
+        complexMemberService.detachMemberFromAllClasses(fromMember, "양도");
+
+        // 3. 양수자에게 동일한 멤버십 생성 (양도 불가 표시)
+        ComplexMemberMembership newMm = ComplexMemberMembership.builder()
+                .member(newMember)
+                .membership(original.getMembership())
+                .startDate(original.getStartDate())
+                .expiryDate(original.getExpiryDate())
+                .totalCount(original.getTotalCount())
+                .usedCount(original.getUsedCount())
+                .postponeTotal(original.getPostponeTotal())
+                .postponeUsed(original.getPostponeUsed())
+                .price(original.getPrice())
+                .paymentMethod(original.getPaymentMethod())
+                .paymentDate(original.getPaymentDate())
+                .status(MembershipStatus.활성)
+                .transferred(true)
+                .build();
+        memberMembershipRepository.save(newMm);
+
+        // 4. 히스토리 기록 — 양도자 (양도 발신)
+        eventPublisher.publishEvent(ActivityEvent.ofMembership(
+                fromMember, ActivityEventType.TRANSFER_OUT, original.getSeq(),
+                String.format("%s 멤버십 양도 → %s (잔여 %d회, 양수비 %,d원)",
+                        membershipName, newMember.getName(), remaining, tr.getTransferFee())));
+
+        // 5. 히스토리 기록 — 양수자 (양도 수신)
+        eventPublisher.publishEvent(ActivityEvent.ofMembership(
+                newMember, ActivityEventType.TRANSFER_IN, newMm.getSeq(),
+                String.format("%s 멤버십 양도 ← %s (잔여 %d회, 양수비 %,d원)",
+                        membershipName, fromMember.getName(), remaining, tr.getTransferFee())));
+
+        // 6. 양도 요청 상태 확인으로 변경
+        tr.setStatus(TransferStatus.확인);
         return TransferRequestResponse.from(transferRequestRepository.save(tr));
     }
 

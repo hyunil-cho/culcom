@@ -42,4 +42,10 @@ public class TransferController {
             @PathVariable Long seq, @RequestParam TransferStatus status) {
         return ResponseEntity.ok(ApiResponse.ok("양도 요청 상태가 변경되었습니다.", transferService.updateStatus(seq, status)));
     }
+
+    @PostMapping("/{seq}/complete")
+    public ResponseEntity<ApiResponse<TransferRequestResponse>> complete(
+            @PathVariable Long seq, @RequestParam Long memberSeq) {
+        return ResponseEntity.ok(ApiResponse.ok("양도가 완료되었습니다.", transferService.completeTransfer(seq, memberSeq)));
+    }
 }

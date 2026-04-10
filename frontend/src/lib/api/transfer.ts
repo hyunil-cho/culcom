@@ -8,7 +8,9 @@ export type TransferStatus = '생성' | '접수' | '확인' | '거절';
 export interface TransferRequestItem {
   seq: number;
   memberMembershipSeq: number;
+  membershipSeq: number;
   membershipName: string;
+  expiryDate: string | null;
   fromMemberSeq: number;
   fromMemberName: string;
   fromMemberPhone: string;
@@ -56,6 +58,8 @@ export const transferApi = {
     api.post<TransferRequestItem>('/transfer-requests', { memberMembershipSeq }),
   updateStatus: (seq: number, status: TransferStatus) =>
     api.put<TransferRequestItem>(`/transfer-requests/${seq}/status?status=${status}`),
+  complete: (seq: number, memberSeq: number) =>
+    api.post<TransferRequestItem>(`/transfer-requests/${seq}/complete?memberSeq=${memberSeq}`),
 };
 
 // ── 공개 API ──

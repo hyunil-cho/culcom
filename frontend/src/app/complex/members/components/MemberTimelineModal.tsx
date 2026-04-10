@@ -29,6 +29,8 @@ const TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> 
   REFUND_CHANGE:         { label: '환불정보',   color: '#b45309', bg: '#fef3c7' },
   PAYMENT_ADD:           { label: '납부',       color: '#15803d', bg: '#dcfce7' },
   PAYMENT_REFUND:        { label: '환불정정',   color: '#b91c1c', bg: '#fee2e2' },
+  TRANSFER_OUT:          { label: '양도',       color: '#b45309', bg: '#fef3c7' },
+  TRANSFER_IN:           { label: '양수',       color: '#059669', bg: '#ecfdf5' },
 };
 
 const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
@@ -45,6 +47,8 @@ const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
   '등록': { color: '#1e40af', bg: '#dbeafe' },
   '삭제': { color: '#991b1b', bg: '#fee2e2' },
   '배정': { color: '#0e7490', bg: '#ecfeff' },
+  '양도': { color: '#b45309', bg: '#fef3c7' },
+  '양수': { color: '#059669', bg: '#ecfdf5' },
 };
 
 const PAGE_SIZE = 20;
@@ -80,6 +84,7 @@ export default function MemberTimelineModal({ memberSeq, memberName, type = 'mem
     { key: 'PAYMENT', label: '납부', types: ['PAYMENT_ADD', 'PAYMENT_REFUND'], color: '#15803d', bg: '#dcfce7' },
     { key: 'INFO_CHANGE', label: '정보변경', types: ['INFO_CHANGE'], color: '#0369a1', bg: '#e0f2fe' },
     { key: 'CLASS_ASSIGN', label: '수업배정', types: ['CLASS_ASSIGN'], color: '#0e7490', bg: '#ecfeff' },
+    { key: 'TRANSFER', label: '양도', types: ['TRANSFER_OUT', 'TRANSFER_IN'], color: '#b45309', bg: '#fef3c7' },
     ...(type === 'member' ? [
       { key: 'MEMBER_CREATE', label: '등록', types: ['MEMBER_CREATE'], color: '#1e40af', bg: '#dbeafe' },
     ] : []),

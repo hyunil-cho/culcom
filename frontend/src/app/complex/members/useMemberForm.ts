@@ -19,7 +19,7 @@ export function useMemberForm(seq?: number) {
   const staffMode = searchParams.get('staff') === 'true';
 
   const [form, setForm] = useState<MemberFormData>(emptyMemberForm);
-  const membership = useMembership({ memberSeq: seq, isEdit });
+  const membership = useMembership({ memberSeq: seq, isEdit, memberName: form.name, memberPhone: form.phoneNumber });
   const [classAssign, setClassAssign] = useState<ClassAssignData>(emptyClassAssign);
   const [staffForm, setStaffForm] = useState<StaffFormData>(() => ({
     ...emptyStaffForm,
@@ -28,6 +28,9 @@ export function useMemberForm(seq?: number) {
   const [staffClassAssign, setStaffClassAssign] = useState<ClassAssignData>(emptyClassAssign);
   const { run, modal } = useResultModal({ redirectPath: staffMode ? ROUTES.COMPLEX_STAFFS : ROUTES.COMPLEX_MEMBERS });
   const { allClasses } = useClassSlots();
+
+  // 양도 불일치 모달 상태
+  const [showTransferMismatch, setShowTransferMismatch] = useState(false);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -145,13 +148,15 @@ export function useMemberForm(seq?: number) {
     }
   };
 
-  const handleSubmit = async () => {
-    const error = validateMemberForm(form);
-    if (error) { alert(error); return; }
-    // 멤버십 검증 (useMembership 훅의 validate 사용)
-    const msError = membership.validate();
-    if (msError) { alert(msError); return; }
+  /** 양도 불일치 여부 확인 */
+  const checkTransferMismatch = (): boolean => {
+    if (!membership.transferMode || !membership.selectedTransfer) return false;
+    const t = membership.selectedTransfer;
+    return form.name.trim() !== t.fromMemberName || form.phoneNumber !== t.fromMemberPhone;
+  };
 
+  /** 실제 저장 로직 */
+  const doSubmit = async () => {
     if (isEdit) {
       await membership.save(seq);
       if (classAssign.classSeq) {
@@ -206,9 +211,36 @@ export function useMemberForm(seq?: number) {
     }
   };
 
+  const handleSubmit = async () => {
+    const error = validateMemberForm(form);
+    if (error) { alert(error); return; }
+    // 멤버십 검증 (useMembership 훅의 validate 사용)
+    const msError = membership.validate();
+    if (msError) { alert(msError); return; }
+
+    // 양도 모드: 이름/전화번호 불일치 확인
+    if (checkTransferMismatch()) {
+      setShowTransferMismatch(true);
+      return;
+    }
+
+    await doSubmit();
+  };
+
+  /** 불일치 경고 후 강제 진행 */
+  const confirmMismatchAndSubmit = async () => {
+    setShowTransferMismatch(false);
+    await doSubmit();
+  };
+
+  const dismissMismatch = () => {
+    setShowTransferMismatch(false);
+  };
+
   return {
     form, setForm, membership, classAssign, setClassAssign,
     staffForm, setStaffForm, staffClassAssign, setStaffClassAssign,
     handleSubmit, run, modal, isEdit,
+    showTransferMismatch, confirmMismatchAndSubmit, dismissMismatch,
   };
 }

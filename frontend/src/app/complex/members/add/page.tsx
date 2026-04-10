@@ -6,6 +6,7 @@ import { ROUTES } from '@/lib/routes';
 import MemberForm from '../MemberForm';
 import { useMemberForm } from '../useMemberForm';
 import { Button } from '@/components/ui/Button';
+import TransferMismatchModal from '../components/TransferMismatchModal';
 
 export default function MemberAddPage() {
   return <Suspense fallback={null}><MemberAddPageInner /></Suspense>;
@@ -16,6 +17,7 @@ function MemberAddPageInner() {
     form, setForm, membership, classAssign, setClassAssign,
     staffForm, setStaffForm, staffClassAssign, setStaffClassAssign,
     handleSubmit, modal,
+    showTransferMismatch, confirmMismatchAndSubmit, dismissMismatch,
   } = useMemberForm();
 
   const [showImport, setShowImport] = useState(false);
@@ -48,6 +50,17 @@ function MemberAddPageInner() {
         }
       />
       {modal}
+
+      {/* 양도 이름/전화번호 불일치 경고 모달 */}
+      {showTransferMismatch && membership.selectedTransfer && (
+        <TransferMismatchModal
+          memberName={form.name}
+          memberPhone={form.phoneNumber}
+          transfer={membership.selectedTransfer}
+          onConfirm={confirmMismatchAndSubmit}
+          onCancel={dismissMismatch}
+        />
+      )}
 
       {showImport && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowImport(false)}>

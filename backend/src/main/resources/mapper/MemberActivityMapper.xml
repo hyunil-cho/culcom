@@ -31,6 +31,8 @@
                 WHEN 'REFUND_REQUEST' THEN '대기'
                 WHEN 'REFUND_APPROVE' THEN '승인'
                 WHEN 'REFUND_REJECT' THEN '반려'
+                WHEN 'TRANSFER_OUT' THEN '양도'
+                WHEN 'TRANSFER_IN' THEN '양수'
                 ELSE '-'
             END AS status
         FROM member_activity_log al

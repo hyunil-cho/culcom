@@ -6,6 +6,7 @@ import { usePaymentOptions } from '@/lib/usePaymentOptions';
 import MembershipInfoModal from './components/MembershipInfoModal';
 import MembershipFormSection from './components/MembershipFormSection';
 import { validateMembershipForm, type MembershipFormData } from './MemberForm';
+import { useTransfer } from './useTransfer';
 
 const EMPTY_FORM: MembershipFormData = {
   membershipSeq: '', startDate: '', expiryDate: '', price: '',
@@ -16,20 +17,15 @@ const EMPTY_FORM: MembershipFormData = {
 interface UseMembershipOptions {
   memberSeq?: number;
   isEdit?: boolean;
+  memberName?: string;
+  memberPhone?: string;
 }
 
 /**
  * 멤버십 관련 상태·UI·로직을 통합하는 훅.
- *
- * 반환값:
- * - form / setForm / enabled — 멤버십 폼 상태
- * - formSection — 회원 등록/수정 폼에 삽입할 멤버십 섹션 JSX
- * - openInfoModal / infoModal — 멤버십 정보 모달
- * - save(memberSeq) — 멤버십 저장 (생성 또는 수정)
- * - validate() — 폼 검증 (에러 메시지 또는 null)
  */
 export function useMembership(options?: UseMembershipOptions) {
-  const { memberSeq, isEdit } = options ?? {};
+  const { memberSeq, isEdit, memberName, memberPhone } = options ?? {};
   const { methods: paymentMethods } = usePaymentOptions();
 
   // ── 멤버십 상품 목록 ──
@@ -42,6 +38,14 @@ export function useMembership(options?: UseMembershipOptions) {
   const [form, setForm] = useState<MembershipFormData>(EMPTY_FORM);
   const [enabled, setEnabled] = useState(false);
   const [memberMembershipSeq, setMemberMembershipSeq] = useState<number | null>(null);
+
+  // ── 양도 (별도 훅) ──
+  const transfer = useTransfer({
+    memberships,
+    setForm,
+    setEnabled: (v: boolean) => setEnabled(v),
+    emptyForm: EMPTY_FORM,
+  });
 
   // 수정 모드: 기존 멤버십 로드
   useEffect(() => {
@@ -99,12 +103,22 @@ export function useMembership(options?: UseMembershipOptions) {
   // ── 검증 ──
   const validate = useCallback((): string | null => {
     if (!form.membershipSeq) return null;
-    return validateMembershipForm(form, !!isEdit);
-  }, [form, isEdit]);
+    const transferError = transfer.validate();
+    if (transferError) return transferError;
+    return validateMembershipForm(form, !!isEdit, transfer.mode);
+  }, [form, isEdit, transfer]);
 
   // ── 저장 ──
   const save = useCallback(async (targetMemberSeq: number) => {
     if (!form.membershipSeq) return;
+
+    // 양도 모드: 백엔드에서 멤버십 이전 처리 (양도자 비활성화 + 양수자 생성)
+    if (transfer.mode && transfer.selected) {
+      await transfer.confirmTransfer(targetMemberSeq);
+      return;
+    }
+
+    // 신규 모드: 일반 멤버십 할당
     const msData = {
       membershipSeq: Number(form.membershipSeq),
       startDate: form.startDate || undefined,
@@ -120,7 +134,7 @@ export function useMembership(options?: UseMembershipOptions) {
     } else {
       await memberApi.assignMembership(targetMemberSeq, msData);
     }
-  }, [form, memberMembershipSeq]);
+  }, [form, memberMembershipSeq, transfer]);
 
   // ── 멤버십 정보 모달 ──
   const [infoModalState, setInfoModalState] = useState<{ seq: number; name: string } | null>(null);
@@ -143,6 +157,13 @@ export function useMembership(options?: UseMembershipOptions) {
       isEdit={isEdit} isExisting={isExisting}
       memberships={memberships} paymentMethods={paymentMethods}
       onSelect={handleSelect}
+      transferMode={transfer.mode}
+      onTransferModeChange={transfer.setMode}
+      transfers={transfer.transfers}
+      selectedTransfer={transfer.selected}
+      onSelectTransfer={transfer.select}
+      memberName={memberName}
+      memberPhone={memberPhone}
     />
   );
 
@@ -151,5 +172,7 @@ export function useMembership(options?: UseMembershipOptions) {
     formSection,
     openInfoModal, infoModal,
     save, validate,
+    transferMode: transfer.mode,
+    selectedTransfer: transfer.selected,
   };
 }

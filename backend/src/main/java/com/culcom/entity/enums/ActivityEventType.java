@@ -17,5 +17,7 @@ public enum ActivityEventType {
     POSTPONEMENT_REJECT,
     REFUND_REQUEST,
     REFUND_APPROVE,
-    REFUND_REJECT
+    REFUND_REJECT,
+    TRANSFER_OUT,
+    TRANSFER_IN
 }

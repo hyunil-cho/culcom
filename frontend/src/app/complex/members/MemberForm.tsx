@@ -94,9 +94,14 @@ export function validateMemberForm(form: MemberFormData): string | null {
  * 토글이 꺼졌으면 useMemberForm.saveMembership에서 조기 return 되므로
  * 이 함수를 호출하지 않는다.
  */
-export function validateMembershipForm(ms: MembershipFormData, isEdit: boolean): string | null {
+export function validateMembershipForm(ms: MembershipFormData, isEdit: boolean, isTransfer?: boolean): string | null {
   if (!ms.membershipSeq) return '멤버십 등급을 선택하세요.';
   if (!ms.status) return '멤버십 상태를 선택하세요.';
+  if (isTransfer) {
+    if (!ms.paymentDate) return '양수금 납부일을 입력하세요.';
+    if (!ms.paymentMethod) return '양수금 결제방법을 선택하세요.';
+    return null;
+  }
   if (!ms.price?.trim()) return '멤버십 금액을 입력하세요.';
   if (!ms.paymentDate) return '납부일을 입력하세요.';
   if (!ms.paymentMethod) return '결제방법을 선택하세요.';
