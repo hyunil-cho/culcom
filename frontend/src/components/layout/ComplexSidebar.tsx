@@ -37,5 +37,5 @@ const groups = [
 ];
 
 export default function ComplexSidebar() {
-  return <SidebarShell groups={groups} />;
+  return <SidebarShell groups={groups} title="E-UT" />;
 }

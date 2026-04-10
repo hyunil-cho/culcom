@@ -37,7 +37,7 @@ export default function MainSidebar() {
     {
       title: '하위사이트',
       items: [
-        { href: ROUTES.COMPLEX, label: 'complex 관리', icon: '🏠' },
+        { href: ROUTES.COMPLEX, label: 'E-UT 관리', icon: '🏠' },
       ],
     },
     ...(SessionRole.canManageUsers(session) ? [{

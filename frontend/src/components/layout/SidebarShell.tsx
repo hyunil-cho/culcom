@@ -73,13 +73,13 @@ function SidebarItem({ item, pathname }: { item: MenuItem; pathname: string }) {
   );
 }
 
-export default function SidebarShell({ groups }: { groups: MenuGroup[] }) {
+export default function SidebarShell({ groups, title = 'culcom' }: { groups: MenuGroup[]; title?: string }) {
   const pathname = usePathname();
 
   return (
     <aside className={styles.aside}>
       <div className={styles.logo}>
-        <h1 className={styles.logoTitle}>Culcom</h1>
+        <h1 className={styles.logoTitle}>{title}</h1>
       </div>
 
       <nav className={styles.nav}>
