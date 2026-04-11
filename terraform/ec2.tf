@@ -120,14 +120,16 @@ resource "aws_instance" "app" {
   }
 
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    aws_region      = var.aws_region
-    app_image       = var.app_image
-    project_name    = var.project_name
-    environment     = var.environment
-    db_endpoint     = aws_db_instance.main.endpoint
-    db_name         = var.db_name
-    redirect_uri    = var.kakao_redirect_uri
-    sync_base_url   = var.kakao_sync_base_url
+    aws_region        = var.aws_region
+    app_image         = var.app_image
+    project_name      = var.project_name
+    environment       = var.environment
+    db_endpoint       = aws_db_instance.main.endpoint
+    db_name           = var.db_name
+    redirect_uri      = var.kakao_redirect_uri
+    sync_base_url     = var.kakao_sync_base_url
+    app_domain        = var.domain_name
+    letsencrypt_email = var.letsencrypt_email
   }))
 
   tags = { Name = "${var.project_name}-app" }

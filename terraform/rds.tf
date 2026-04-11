@@ -1,7 +1,13 @@
+locals {
+  # local 환경: RDS를 퍼블릭 서브넷에 배치하고 외부에서 직접 접근 가능하도록 한다.
+  # stg / prod 환경: 기존대로 프라이빗 서브넷, EC2 보안그룹에서만 접근 가능.
+  is_local = var.environment == "local"
+}
+
 # ─── DB 서브넷 그룹 ───
 resource "aws_db_subnet_group" "main" {
   name       = "${var.project_name}-db-subnet"
-  subnet_ids = aws_subnet.private[*].id
+  subnet_ids = local.is_local ? aws_subnet.public[*].id : aws_subnet.private[*].id
 
   tags = { Name = "${var.project_name}-db-subnet-group" }
 }
@@ -26,6 +32,7 @@ resource "aws_db_instance" "main" {
   multi_az               = false
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.rds.id]
+  publicly_accessible    = local.is_local
 
   backup_retention_period = 7
   backup_window           = "03:00-04:00"

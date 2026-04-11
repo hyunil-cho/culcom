@@ -11,9 +11,14 @@ variable "project_name" {
 }
 
 variable "environment" {
-  description = "배포 환경 (stg / prod)"
+  description = "배포 환경 (local / stg / prod). local인 경우 RDS가 퍼블릭 서브넷에 배치되고 외부 접속이 허용됨."
   type        = string
   default     = "stg"
+
+  validation {
+    condition     = contains(["local", "stg", "prod"], var.environment)
+    error_message = "environment 는 local, stg, prod 중 하나여야 합니다."
+  }
 }
 
 # ─── VPC ───
@@ -66,6 +71,12 @@ variable "db_instance_class" {
   default     = "db.t3.micro"
 }
 
+variable "db_allowed_cidrs" {
+  description = "environment = local 일 때 RDS 3306 포트에 접근을 허용할 CIDR 목록. 운영 환경에서는 무시됨."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
+
 # ─── EC2 ───
 variable "app_image" {
   description = "앱 컨테이너 이미지 URI (Next.js + Spring Boot)"
@@ -105,7 +116,11 @@ variable "kakao_sync_base_url" {
 
 # ─── Domain ───
 variable "domain_name" {
-  description = "서비스 도메인 (예: culcom.example.com). 빈 문자열이면 Route53/ACM 생성 생략"
+  description = "서비스 도메인 (예: www.eutgumi.co.kr). Route53 A 레코드는 별도로 EIP에 매핑되어 있다고 가정."
   type        = string
-  default     = ""
+}
+
+variable "letsencrypt_email" {
+  description = "Let's Encrypt 인증서 발급 및 만료 알림 수신용 이메일"
+  type        = string
 }

@@ -26,7 +26,7 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
-
+  profile = "culcom"
   default_tags {
     tags = {
       Project     = var.project_name
