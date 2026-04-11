@@ -48,9 +48,7 @@ export interface ComplexMember {
   level?: string;
   language?: string;
   info?: string;
-  chartNumber?: string;
   signupChannel?: string;
-  interviewer?: string;
   staffStatus?: string;
   comment?: string;
   joinDate?: string;
