@@ -5,8 +5,10 @@ import com.culcom.dto.ApiResponse;
 import com.culcom.dto.complex.dashboard.AutoExpiredItem;
 import com.culcom.dto.complex.dashboard.MembershipAlertItem;
 import com.culcom.dto.complex.dashboard.MembershipAlertsResponse;
+import com.culcom.dto.complex.dashboard.TrendResponse;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.member.logs.MemberActivityLog;
+import com.culcom.mapper.ComplexDashboardMapper;
 import com.culcom.repository.ComplexMemberMembershipRepository;
 import com.culcom.repository.MemberActivityLogRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,7 @@ public class ComplexDashboardController {
 
     private final ComplexMemberMembershipRepository membershipRepository;
     private final MemberActivityLogRepository memberActivityLogRepository;
+    private final ComplexDashboardMapper complexDashboardMapper;
 
     /**
      * 대시보드 멤버십 알림 — 3개 위젯을 한 번에 반환.
@@ -88,6 +91,35 @@ public class ComplexDashboardController {
                 .autoExpiredToday(autoExpiredToday)
                 .windowDays(windowDays)
                 .countThreshold(countThreshold)
+                .build()));
+    }
+
+    /**
+     * 등록/요청 추이.
+     *
+     * @param period 일(day) / 주(week) / 월(month) / 연(year) — 기본 month
+     * @param count  반환할 버킷 개수 — 기본 6
+     */
+    @GetMapping("/trends")
+    public ResponseEntity<ApiResponse<TrendResponse>> trends(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @RequestParam(defaultValue = "month") String period,
+            @RequestParam(defaultValue = "6") int count) {
+
+        Long branchSeq = principal.getSelectedBranchSeq();
+        String normalized = switch (period) {
+            case "day", "week", "month", "year" -> period;
+            default -> "month";
+        };
+
+        return ResponseEntity.ok(ApiResponse.ok(TrendResponse.builder()
+                .period(normalized)
+                .count(count)
+                .members(complexDashboardMapper.selectMembers(branchSeq, normalized, count))
+                .staffs(complexDashboardMapper.selectStaffs(branchSeq, normalized, count))
+                .postponements(complexDashboardMapper.selectPostponements(branchSeq, normalized, count))
+                .refunds(complexDashboardMapper.selectRefunds(branchSeq, normalized, count))
+                .transfers(complexDashboardMapper.selectTransfers(branchSeq, normalized, count))
                 .build()));
     }
 
