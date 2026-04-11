@@ -5,7 +5,7 @@ import { memberApi, membershipApi, type Membership } from '@/lib/api';
 import { usePaymentOptions } from '@/lib/usePaymentOptions';
 import MembershipInfoModal from './components/MembershipInfoModal';
 import MembershipFormSection from './components/MembershipFormSection';
-import { validateMembershipForm, type MembershipFormData } from './MemberForm';
+import { validateMembershipForm, nowDateTimeLocal, type MembershipFormData } from './memberFormTypes';
 import { useTransfer } from './useTransfer';
 
 const EMPTY_FORM: MembershipFormData = {
@@ -92,9 +92,14 @@ export function useMembership(options?: UseMembershipOptions) {
           const d = new Date();
           d.setDate(d.getDate() + ms.duration);
           updated.expiryDate = d.toISOString().split('T')[0];
+          updated.price = String(ms.price);
+          if (!updated.paymentDate) {
+            updated.paymentDate = nowDateTimeLocal();
+          }
         }
       } else {
         updated.expiryDate = '';
+        updated.price = '';
       }
       return updated;
     });
