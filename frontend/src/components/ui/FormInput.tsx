@@ -7,9 +7,13 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={`form-input ${props.className ?? ''}`} />;
 }
 
-/** 전화번호 입력 (type="tel", maxLength=11) */
-export function PhoneInput(props: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>) {
-  return <Input type="tel" maxLength={11} placeholder="01012345678" {...props} />;
+/** 전화번호 입력 (type="tel", maxLength=11, 숫자만 허용) */
+export function PhoneInput({ onChange, ...props }: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>) {
+  return <Input type="tel" maxLength={11} placeholder="01012345678" {...props}
+    onChange={(e) => {
+      e.target.value = e.target.value.replace(/\D/g, '');
+      onChange?.(e);
+    }} />;
 }
 
 /** 숫자 입력 (type="number") */
