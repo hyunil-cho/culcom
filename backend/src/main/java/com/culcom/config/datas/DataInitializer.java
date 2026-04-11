@@ -4,6 +4,7 @@ import com.culcom.entity.auth.UserInfo;
 import com.culcom.entity.branch.Branch;
 import com.culcom.entity.complex.settings.BankConfig;
 import com.culcom.entity.complex.settings.PaymentMethodConfig;
+import com.culcom.entity.complex.settings.SignupChannelConfig;
 import com.culcom.entity.enums.UserRole;
 import com.culcom.entity.product.Membership;
 import com.culcom.entity.integration.ExternalServiceType;
@@ -33,6 +34,7 @@ public class DataInitializer implements ApplicationRunner {
     private final MembershipRepository membershipRepository;
     private final PaymentMethodConfigRepository paymentMethodConfigRepository;
     private final BankConfigRepository bankConfigRepository;
+    private final SignupChannelConfigRepository signupChannelConfigRepository;
 
     @Override
     public void run(ApplicationArguments args) {
@@ -51,6 +53,7 @@ public class DataInitializer implements ApplicationRunner {
         initStaffMembership();
         initPaymentMethods();
         initBanks();
+        initSignupChannels();
     }
 
     private void initBanks() {
@@ -74,6 +77,23 @@ public class DataInitializer implements ApplicationRunner {
         log.info("초기 은행 시드 {}건 생성", seeds.length);
     }
 
+    private void initSignupChannels() {
+        if (signupChannelConfigRepository.count() > 0) return;
+        String[][] seeds = {
+                {"INSTAGRAM", "인스타그램"},
+                {"NAVER", "네이버 검색"},
+                {"REFERRAL", "지인 소개"},
+                {"FLYER", "전단지"},
+                {"HOMEPAGE", "홈페이지"},
+        };
+        int order = 0;
+        for (String[] s : seeds) {
+            signupChannelConfigRepository.save(SignupChannelConfig.builder()
+                    .code(s[0]).label(s[1]).sortOrder(order++).isActive(true).build());
+        }
+        log.info("초기 가입경로 시드 {}건 생성", seeds.length);
+    }
+
     private void initPaymentMethods() {
         if (paymentMethodConfigRepository.count() > 0) return;
         String[][] seeds = {
@@ -81,6 +101,7 @@ public class DataInitializer implements ApplicationRunner {
                 {"ONLINE_SUBSCRIPTION", "온라인구독"},
                 {"ONLINE_CREDIT", "온라인신용"},
                 {"TOSS_LINK", "토스링크"},
+                {"WALK_IN","워크인"},
                 {"BANK_TRANSFER_PERSONAL", "이체(개인통장)"},
                 {"BANK_TRANSFER_CORPORATE", "이체(법인통장)"},
                 {"CASH", "현금"},

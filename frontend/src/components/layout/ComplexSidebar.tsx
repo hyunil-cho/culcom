@@ -32,6 +32,7 @@ const groups = [
     items: [
       { href: ROUTES.COMPLEX_SETTINGS_PAYMENT_METHODS, label: '결제 방법', icon: '💳' },
       { href: ROUTES.COMPLEX_SETTINGS_BANKS, label: '환급 은행', icon: '🏦' },
+      { href: ROUTES.COMPLEX_SETTINGS_SIGNUP_CHANNELS, label: '가입 경로', icon: '📢' },
     ],
   },
 ];
