@@ -57,7 +57,6 @@ public class ComplexStaffService {
         ComplexMember member = ComplexMember.builder()
                 .name(req.getName())
                 .phoneNumber(req.getPhoneNumber())
-                .interviewer(req.getInterviewer())
                 .branch(branchRepository.getReferenceById(branchSeq))
                 .build();
         memberRepository.save(member);

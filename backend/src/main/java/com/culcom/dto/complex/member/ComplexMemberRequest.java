@@ -12,7 +12,5 @@ public class ComplexMemberRequest {
     @NotBlank
     private String phoneNumber;
     private String info;
-    private String chartNumber;
     private String comment;
-    private String interviewer;
 }

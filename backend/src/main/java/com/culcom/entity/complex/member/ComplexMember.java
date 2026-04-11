@@ -44,16 +44,10 @@ public class ComplexMember extends BaseTimeEntity {
     @Column(length = 300)
     private String info;
 
-    @Column(name = "chart_number", length = 50)
-    private String chartNumber;
-
     @Column(columnDefinition = "text")
     private String comment;
 
     @Column(name = "join_date")
     private LocalDateTime joinDate;
-
-    @Column(length = 100)
-    private String interviewer;
 
 }

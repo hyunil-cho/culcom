@@ -102,7 +102,6 @@ function MembersContent() {
     },
     historyColumn,
     { header: '가입경로', render: (m) => <span style={{ color: '#555' }}>{m.signupChannel || ''}</span> },
-    { header: '인터뷰어', render: (m) => <span style={{ color: '#333', fontWeight: 600 }}>{m.interviewer || ''}</span> },
     { header: '등록일자', render: (m) => <span style={{ fontSize: '0.75rem', color: '#666' }}>{m.createdDate?.split('T')[0] ?? ''}</span> },
     { header: '수정일자', render: (m) => <span style={{ fontSize: '0.75rem', color: '#666' }}>{m.lastUpdateDate?.split('T')[0] ?? ''}</span> },
     recentHistoryColumn,

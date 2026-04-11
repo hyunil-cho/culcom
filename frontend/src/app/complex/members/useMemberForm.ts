@@ -42,9 +42,7 @@ export function useMemberForm(seq?: number) {
         level: m.level ?? '',
         language: m.language ?? '',
         info: m.info ?? '',
-        chartNumber: m.chartNumber ?? '',
         signupChannel: m.signupChannel ?? '',
-        interviewer: m.interviewer ?? '',
         comment: m.comment ?? '',
       });
       // staffStatus가 있으면 스태프
@@ -98,8 +96,6 @@ export function useMemberForm(seq?: number) {
     name: form.name,
     phoneNumber: form.phoneNumber,
     info: form.info || undefined,
-    chartNumber: form.chartNumber || undefined,
-    interviewer: form.interviewer || undefined,
     comment: form.comment || undefined,
   });
 
@@ -120,7 +116,6 @@ export function useMemberForm(seq?: number) {
       name: form.name,
       phoneNumber: form.phoneNumber,
       status: staffForm.status,
-      interviewer: form.interviewer || undefined,
     });
     const r = staffForm.refund;
     const hasRefund = r.depositAmount || r.refundableDeposit || r.nonRefundableDeposit
@@ -170,7 +165,6 @@ export function useMemberForm(seq?: number) {
         name: form.name,
         phoneNumber: form.phoneNumber,
         status: staffForm.status,
-        interviewer: form.interviewer || undefined,
       });
       if (!res.success) { alert(res.message || '스태프 등록 실패'); return; }
       const memberSeq = res.data.seq;
@@ -207,7 +201,10 @@ export function useMemberForm(seq?: number) {
       await memberApi.updateMetaData(memberSeq, buildMetaData());
       await membership.save(memberSeq);
       await saveClassAssign(memberSeq);
-      await run(Promise.resolve(res), '회원이 등록되었습니다.');
+      const msg = res.data.smsWarning
+        ? `회원이 등록되었습니다.\n(${res.data.smsWarning})`
+        : '회원이 등록되었습니다.';
+      await run(Promise.resolve(res), msg);
     }
   };
 

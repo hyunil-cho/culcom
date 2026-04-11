@@ -54,7 +54,6 @@ export default function CustomerDetailPage() {
           { label: '코멘트', value: customer.comment || '-' },
           { label: '광고명', value: customer.commercialName || '-' },
           { label: '지원경로', value: customer.adSource || '-' },
-          { label: '인터뷰어', value: customer.interviewer || '-' },
           { label: '등록일', value: customer.createdDate?.split('T')[0] ?? '-' },
           { label: '최종 업데이트', value: formatDateTime(customer.lastUpdateDate) || '-' },
         ]}

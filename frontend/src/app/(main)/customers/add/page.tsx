@@ -6,18 +6,21 @@ import { customerApi } from '@/lib/api';
 import { cleanPhoneNumber, verifyPhoneNumber } from '@/lib/commonUtils';
 import { ROUTES } from '@/lib/routes';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useSignupChannels } from '@/lib/useSignupChannels';
 import FormField from '@/components/ui/FormField';
-import { Input, PhoneInput, Textarea } from '@/components/ui/FormInput';
+import { Input, PhoneInput, Select, Textarea } from '@/components/ui/FormInput';
 
 export default function CustomerAddPage() {
   const [form, setForm] = useState({
     name: '',
     phoneNumber: '',
     comment: '',
-    adSource: '워크인',
-    interviewer: '',
+    adSource: '',
   });
   const { run, modal } = useResultModal({ redirectPath: ROUTES.CUSTOMERS });
+  const { channels: signupChannelConfigs } = useSignupChannels();
+  const signupChannelLabels = signupChannelConfigs.map(c => c.label);
+  const adSourceSelectValue = signupChannelLabels.includes(form.adSource) ? form.adSource : (form.adSource ? '기타' : '');
 
   const handlePhoneChange = (value: string) => {
     const cleaned = cleanPhoneNumber(value);
@@ -33,7 +36,12 @@ export default function CustomerAddPage() {
       alert('전화번호는 010으로 시작하는 11자리 숫자여야 합니다.');
       return;
     }
-    await run(customerApi.create(form), '고객이 등록되었습니다.');
+    const res = await customerApi.create(form);
+    if (!res.success) { run(Promise.resolve(res), ''); return; }
+    const msg = res.data.smsWarning
+      ? `고객이 등록되었습니다.\n(${res.data.smsWarning})`
+      : '고객이 등록되었습니다.';
+    await run(Promise.resolve(res), msg);
   };
 
   return (
@@ -57,9 +65,23 @@ export default function CustomerAddPage() {
               onChange={(e) => handlePhoneChange(e.target.value)} required />
           </FormField>
 
-          <FormField label="인터뷰어">
-            <Input placeholder="등록자 이름" value={form.interviewer}
-              onChange={(e) => setForm({ ...form, interviewer: e.target.value })} />
+          <FormField label="가입 경로">
+            <div>
+              <Select value={adSourceSelectValue}
+                onChange={(e) => {
+                  if (e.target.value === '기타') setForm({ ...form, adSource: '기타' });
+                  else setForm({ ...form, adSource: e.target.value });
+                }}>
+                <option value="">-- 선택 --</option>
+                {signupChannelLabels.map(ch => <option key={ch} value={ch}>{ch}</option>)}
+                <option value="기타">기타 (직접입력)</option>
+              </Select>
+              {form.adSource && !signupChannelLabels.includes(form.adSource) && form.adSource !== '' && (
+                <Input style={{ marginTop: 8 }} placeholder="가입 경로를 직접 입력하세요"
+                  value={form.adSource === '기타' ? '' : form.adSource}
+                  onChange={(e) => setForm({ ...form, adSource: e.target.value || '기타' })} />
+              )}
+            </div>
           </FormField>
 
           <FormField label="코멘트" hint="최대 200자까지 입력 가능합니다.">

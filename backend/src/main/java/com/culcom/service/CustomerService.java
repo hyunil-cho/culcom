@@ -53,7 +53,6 @@ public class CustomerService {
         customer.setComment(request.getComment());
         customer.setCommercialName(request.getCommercialName());
         customer.setAdSource(request.getAdSource());
-        customer.setInterviewer(request.getInterviewer());
         if (request.getStatus() != null) {
             customer.setStatus(CustomerStatus.valueOf(request.getStatus()));
         }

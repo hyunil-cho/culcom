@@ -22,11 +22,9 @@ public class ComplexMemberResponse {
     private String level;
     private String language;
     private String info;
-    private String chartNumber;
     private String comment;
     private LocalDateTime joinDate;
     private String signupChannel;
-    private String interviewer;
     private String staffStatus;
     private LocalDateTime createdDate;
     private LocalDateTime lastUpdateDate;

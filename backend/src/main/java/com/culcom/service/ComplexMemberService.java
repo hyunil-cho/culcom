@@ -53,9 +53,7 @@ public class ComplexMemberService {
                 .name(req.getName())
                 .phoneNumber(req.getPhoneNumber())
                 .info(req.getInfo())
-                .chartNumber(req.getChartNumber())
                 .comment(req.getComment())
-                .interviewer(req.getInterviewer())
                 .branch(branchRepository.getReferenceById(branchSeq))
                 .build();
         memberRepository.save(member);
@@ -69,13 +67,11 @@ public class ComplexMemberService {
     public ComplexMemberResponse update(Long seq, ComplexMemberRequest req) {
         ComplexMember member = memberRepository.findById(seq)
                 .orElseThrow(() -> new EntityNotFoundException("회원"));
-        // 회원 기본정보(이름/연락처/특이사항/인터뷰어 등) 변경은 활동 히스토리에 남기지 않는다.
+        // 회원 기본정보(이름/연락처/특이사항 등) 변경은 활동 히스토리에 남기지 않는다.
         member.setName(req.getName());
         member.setPhoneNumber(req.getPhoneNumber());
         member.setInfo(req.getInfo());
-        member.setChartNumber(req.getChartNumber());
         member.setComment(req.getComment());
-        member.setInterviewer(req.getInterviewer());
         return ComplexMemberResponse.from(memberRepository.save(member));
     }
 

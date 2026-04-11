@@ -8,7 +8,6 @@ export interface Customer {
   comment?: string;
   commercialName?: string;
   adSource?: string;
-  interviewer?: string;
   callCount: number;
   status: string;
   createdDate: string;

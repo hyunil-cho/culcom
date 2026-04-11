@@ -19,7 +19,6 @@ public class CustomerResponse {
     private String comment;
     private String commercialName;
     private String adSource;
-    private String interviewer;
     private Integer callCount;
     private String status;
     private LocalDateTime createdDate;
@@ -33,7 +32,6 @@ public class CustomerResponse {
                 .comment(c.getComment())
                 .commercialName(c.getCommercialName())
                 .adSource(c.getAdSource())
-                .interviewer(c.getInterviewer())
                 .callCount(c.getCallCount())
                 .status(c.getStatus().name())
                 .createdDate(c.getCreatedDate())

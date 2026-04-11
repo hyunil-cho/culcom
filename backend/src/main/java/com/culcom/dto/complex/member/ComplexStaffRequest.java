@@ -16,5 +16,4 @@ public class ComplexStaffRequest {
     private String phoneNumber;
     private StaffStatus status;
     private LocalDate joinDate;
-    private String interviewer;
 }

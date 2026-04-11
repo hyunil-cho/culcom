@@ -20,11 +20,9 @@
             md.level,
             md.language,
             m.info,
-            m.chart_number AS chartNumber,
             m.comment,
             m.join_date AS joinDate,
             md.signup_channel AS signupChannel,
-            m.interviewer,
             si.status AS staffStatus,
             m.created_date AS createdDate,
             m.last_update_date AS lastUpdateDate

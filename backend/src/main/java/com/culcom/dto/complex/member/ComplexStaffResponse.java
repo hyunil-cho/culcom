@@ -16,7 +16,6 @@ public class ComplexStaffResponse {
     private String phoneNumber;
     private String branchName;
     private StaffStatus status;
-    private String interviewer;
     private LocalDateTime createdDate;
     private LocalDateTime lastUpdateDate;
 
@@ -28,7 +27,6 @@ public class ComplexStaffResponse {
                 .phoneNumber(entity.getPhoneNumber())
                 .branchName(entity.getBranch() != null ? entity.getBranch().getBranchName() : null)
                 .status(si != null ? si.getStatus() : null)
-                .interviewer(entity.getInterviewer())
                 .createdDate(entity.getCreatedDate())
                 .lastUpdateDate(entity.getLastUpdateDate())
                 .build();
