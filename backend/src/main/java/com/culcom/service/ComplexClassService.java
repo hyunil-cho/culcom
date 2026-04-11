@@ -14,6 +14,7 @@ import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ClassTimeSlotRepository;
 import com.culcom.repository.ComplexClassRepository;
 import com.culcom.repository.ComplexMemberClassMappingRepository;
+import com.culcom.repository.ComplexMemberMembershipRepository;
 import com.culcom.repository.ComplexMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -31,6 +32,7 @@ public class ComplexClassService {
     private final BranchRepository branchRepository;
     private final ClassTimeSlotRepository timeSlotRepository;
     private final ComplexMemberRepository memberRepository;
+    private final ComplexMemberMembershipRepository memberMembershipRepository;
     private final ComplexMemberClassMappingRepository mappingRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -114,6 +116,10 @@ public class ComplexClassService {
         if (cls.getStaff() != null && cls.getStaff().getSeq().equals(memberSeq)) {
             throw new IllegalStateException("자기 자신이 리더인 팀에는 멤버로 등록할 수 없습니다.");
         }
+        // 활성 멤버십이 없는 회원(환불/만료/정지/미구매)은 팀에 추가할 수 없다.
+        if (!memberMembershipRepository.existsActiveByMemberSeq(memberSeq)) {
+            throw new IllegalStateException("활성 멤버십이 없는 회원은 팀에 추가할 수 없습니다.");
+        }
         if (mappingRepository.existsByComplexClassSeqAndMemberSeq(classSeq, memberSeq)) {
             return;
         }
@@ -146,8 +152,14 @@ public class ComplexClassService {
         if (staffSeq != null) {
             ComplexMember newStaff = memberRepository.findById(staffSeq)
                     .orElseThrow(() -> new EntityNotFoundException("스태프"));
+            // 리더도 결국 회원이며, 스태프는 internal 멤버십을 통해 팀에 들어간다.
+            // 휴직/퇴직/환불/만료로 활성 멤버십이 없는 회원은 리더로 배정할 수 없다.
+            if (!memberMembershipRepository.existsActiveByMemberSeq(staffSeq)) {
+                throw new IllegalStateException("활성 멤버십이 없는 회원은 리더로 배정할 수 없습니다.");
+            }
             cls.setStaff(newStaff);
         } else {
+            // 리더 해제(null)는 언제나 허용 — 멤버십 상태와 무관한 동작이다.
             cls.setStaff(null);
         }
         ComplexClass saved = classRepository.save(cls);
