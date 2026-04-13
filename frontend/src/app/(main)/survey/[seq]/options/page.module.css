@@ -85,7 +85,8 @@
 
 /* ── 선택지 ── */
 .optionTags { display: flex; flex-wrap: wrap; gap: 0.45rem; min-height: 30px; margin-bottom: 0.5rem; }
-.optionTag { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; background: #f0f4f8; border: 1px solid #d0d8e0; border-radius: var(--radius); font-size: 0.84rem; color: var(--text-body); }
+.optionTag { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; background: #f0f4f8; border: 1px solid #d0d8e0; border-radius: var(--radius); font-size: 0.84rem; color: var(--text-body); cursor: grab; transition: border-color 0.15s; }
+.optionTag:hover { border-color: #90a8c0; }
 .optionDeleteBtn { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 0.7rem; padding: 0; }
 .optionEmpty { font-size: 0.84rem; color: #bbb; font-style: italic; }
 .optionInputRow { display: flex; gap: 6px; align-items: center; }
