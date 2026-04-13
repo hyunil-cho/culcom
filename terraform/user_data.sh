@@ -21,6 +21,7 @@ DB_USERNAME=$(aws ssm get-parameter --name "/${project_name}/${environment}/db/u
 DB_PASSWORD=$(aws ssm get-parameter --name "/${project_name}/${environment}/db/password" --with-decryption --query "Parameter.Value" --output text --region ${aws_region})
 KAKAO_CLIENT_ID=$(aws ssm get-parameter --name "/${project_name}/${environment}/kakao/client-id" --with-decryption --query "Parameter.Value" --output text --region ${aws_region})
 KAKAO_ADMIN_KEY=$(aws ssm get-parameter --name "/${project_name}/${environment}/kakao/admin-key" --with-decryption --query "Parameter.Value" --output text --region ${aws_region})
+META_VERIFY_TOKEN=$(aws ssm get-parameter --name "/${project_name}/${environment}/meta/verify-token" --with-decryption --query "Parameter.Value" --output text --region ${aws_region})
 
 # ─── CORS 허용 오리진 (HTTPS 도메인 단일) ───
 CORS_ALLOWED_ORIGINS="https://${app_domain}"
@@ -45,6 +46,7 @@ docker run -d \
   -e KAKAO_ADMIN_KEY="$KAKAO_ADMIN_KEY" \
   -e KAKAO_REDIRECT_URI="${redirect_uri}" \
   -e KAKAO_SYNC_BASE_URL="${sync_base_url}" \
+  -e META_VERIFY_TOKEN="$META_VERIFY_TOKEN" \
   -e CORS_ALLOWED_ORIGINS="$CORS_ALLOWED_ORIGINS" \
   ${app_image}
 

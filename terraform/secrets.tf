@@ -31,3 +31,11 @@ resource "aws_ssm_parameter" "kakao_admin_key" {
 
   tags = { Name = "${var.project_name}-kakao-admin-key" }
 }
+
+resource "aws_ssm_parameter" "meta_verify_token" {
+  name  = "/${var.project_name}/${var.environment}/meta/verify-token"
+  type  = "SecureString"
+  value = var.meta_verify_token
+
+  tags = { Name = "${var.project_name}-meta-verify-token" }
+}

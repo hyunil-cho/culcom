@@ -103,6 +103,12 @@ variable "kakao_admin_key" {
   sensitive   = true
 }
 
+variable "meta_verify_token" {
+  description = "Meta Webhooks 인증용 Verify Token"
+  type        = string
+  sensitive   = true
+}
+
 variable "kakao_redirect_uri" {
   description = "카카오 OAuth Redirect URI"
   type        = string
