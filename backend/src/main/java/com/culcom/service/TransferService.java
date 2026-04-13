@@ -13,6 +13,7 @@ import com.culcom.entity.enums.TransferStatus;
 import com.culcom.entity.transfer.TransferRequest;
 import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
+import com.culcom.util.PriceUtils;
 import com.culcom.repository.*;
 import com.culcom.repository.MembershipPaymentRepository;
 import lombok.RequiredArgsConstructor;
@@ -70,7 +71,7 @@ public class TransferService {
 
         // 미수금 검증 (단건 쿼리로 합계 조회, Lazy 컬렉션 접근 회피)
         long paid = paymentRepository.sumAmountByMemberMembershipSeq(mm.getSeq());
-        Long total = parsePrice(mm.getPrice());
+        Long total = PriceUtils.parse(mm.getPrice());
         if (total != null && paid < total) {
             throw new IllegalStateException("미수금이 있어 양도할 수 없습니다. 미수금을 완납 후 진행해주세요.");
         }
@@ -273,10 +274,4 @@ public class TransferService {
         transferRequestRepository.save(tr);
     }
 
-    private static Long parsePrice(String s) {
-        if (s == null) return null;
-        String digits = s.replaceAll("[^0-9-]", "");
-        if (digits.isEmpty() || "-".equals(digits)) return null;
-        try { return Long.parseLong(digits); } catch (NumberFormatException e) { return null; }
-    }
 }

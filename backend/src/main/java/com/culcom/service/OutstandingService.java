@@ -4,6 +4,7 @@ import com.culcom.dto.complex.member.OutstandingItemResponse;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.member.MembershipPayment;
 import com.culcom.repository.ComplexMemberMembershipRepository;
+import com.culcom.util.PriceUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -15,6 +16,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 미수금(outstanding) 조회 서비스.
@@ -57,7 +59,7 @@ public class OutstandingService {
     }
 
     private OutstandingItemResponse toItem(ComplexMemberMembership mm, LocalDateTime now) {
-        Long price = parseAmount(mm.getPrice());
+        Long price = PriceUtils.parse(mm.getPrice());
         long paid = mm.getPayments() == null ? 0L
                 : mm.getPayments().stream().mapToLong(p -> p.getAmount() == null ? 0L : p.getAmount()).sum();
         Long outstanding = price != null ? (price - paid) : null;
@@ -65,7 +67,7 @@ public class OutstandingService {
         LocalDateTime lastPaidDate = mm.getPayments() == null ? null
                 : mm.getPayments().stream()
                     .map(MembershipPayment::getPaidDate)
-                    .filter(d -> d != null)
+                    .filter(Objects::nonNull)
                     .max(LocalDateTime::compareTo).orElse(null);
         LocalDateTime referenceDate = lastPaidDate != null ? lastPaidDate : mm.getCreatedDate();
         Long days = referenceDate != null ? Duration.between(referenceDate, now).toDays() : null;
@@ -103,10 +105,4 @@ public class OutstandingService {
         };
     }
 
-    private static Long parseAmount(String s) {
-        if (s == null) return null;
-        String digits = s.replaceAll("[^0-9-]", "");
-        if (digits.isEmpty() || "-".equals(digits)) return null;
-        try { return Long.parseLong(digits); } catch (NumberFormatException e) { return null; }
-    }
 }

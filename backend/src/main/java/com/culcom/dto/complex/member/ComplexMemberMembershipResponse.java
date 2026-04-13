@@ -3,6 +3,7 @@ package com.culcom.dto.complex.member;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.member.MembershipPayment;
 import com.culcom.entity.enums.MembershipStatus;
+import com.culcom.util.PriceUtils;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -48,7 +49,7 @@ public class ComplexMemberMembershipResponse {
     public static ComplexMemberMembershipResponse from(ComplexMemberMembership entity, boolean includePayments) {
         List<MembershipPayment> ps = entity.getPayments() != null ? entity.getPayments() : Collections.emptyList();
         long paid = ps.stream().mapToLong(p -> p.getAmount() == null ? 0L : p.getAmount()).sum();
-        Long total = parseAmount(entity.getPrice());
+        Long total = PriceUtils.parse(entity.getPrice());
         Long out = total != null ? (total - paid) : null;
         String status;
         if (total == null) status = "미정";
@@ -84,10 +85,4 @@ public class ComplexMemberMembershipResponse {
                 .build();
     }
 
-    private static Long parseAmount(String s) {
-        if (s == null) return null;
-        String digits = s.replaceAll("[^0-9-]", "");
-        if (digits.isEmpty() || "-".equals(digits)) return null;
-        try { return Long.parseLong(digits); } catch (NumberFormatException e) { return null; }
-    }
 }

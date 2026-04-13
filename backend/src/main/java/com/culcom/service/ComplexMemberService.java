@@ -6,6 +6,7 @@ import com.culcom.dto.complex.member.ComplexMemberMetaDataRequest;
 import com.culcom.entity.complex.member.*;
 import com.culcom.entity.product.Membership;
 import com.culcom.entity.enums.ActivityEventType;
+import com.culcom.util.PriceUtils;
 import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.enums.ActivityFieldType;
 import com.culcom.entity.enums.PaymentKind;
@@ -203,7 +204,7 @@ public class ComplexMemberService {
         memberMembershipRepository.save(mm);
 
         // 첫 납부(디포짓) 자동 생성
-        Long initialAmount = parseAmount(req.getDepositAmount());
+        Long initialAmount = PriceUtils.parse(req.getDepositAmount());
         if (initialAmount != null && initialAmount > 0) {
             MembershipPayment first = MembershipPayment.builder()
                     .memberMembership(mm)
@@ -249,7 +250,7 @@ public class ComplexMemberService {
         // REFUND(음수) 정정은 합계를 줄이므로 이 검증에서 제외한다.
         // mm.price 파싱 실패(총액 불명)인 경우에는 비교할 수 없으므로 스킵.
         if (req.getKind() != PaymentKind.REFUND) {
-            Long total = parseAmount(mm.getPrice());
+            Long total = PriceUtils.parse(mm.getPrice());
             if (total != null) {
                 long alreadyPaid = paymentRepository.sumAmountByMemberMembershipSeq(mm.getSeq());
                 long remaining = Math.max(0L, total - alreadyPaid);
@@ -280,12 +281,6 @@ public class ComplexMemberService {
         return MembershipPaymentResponse.from(payment);
     }
 
-    private static Long parseAmount(String s) {
-        if (s == null) return null;
-        String digits = s.replaceAll("[^0-9-]", "");
-        if (digits.isEmpty() || "-".equals(digits)) return null;
-        try { return Long.parseLong(digits); } catch (NumberFormatException e) { return null; }
-    }
 
 
 
