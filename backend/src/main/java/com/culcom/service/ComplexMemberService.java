@@ -4,6 +4,7 @@ import com.culcom.dto.complex.member.*;
 import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.dto.complex.member.ComplexMemberMetaDataRequest;
 import com.culcom.entity.complex.member.*;
+import com.culcom.mapper.ComplexMemberQueryMapper;
 import com.culcom.entity.product.Membership;
 import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.util.PriceUtils;
@@ -21,8 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +35,7 @@ public class ComplexMemberService {
     private final ComplexClassRepository classRepository;
     private final ComplexMemberClassMappingRepository classMappingRepository;
     private final BranchRepository branchRepository;
+    private final ComplexMemberQueryMapper complexMemberQueryMapper;
     private final ApplicationEventPublisher eventPublisher;
     private final SmsService smsService;
 
@@ -322,6 +323,24 @@ public class ComplexMemberService {
 
     public List<ComplexMemberClassMapping> getClassMappings(Long memberSeq) {
         return classMappingRepository.findByMemberSeq(memberSeq);
+    }
+
+    /**
+     * 회원 목록에 최근 출석 기록을 매핑한다.
+     */
+    public void populateAttendanceHistory(List<ComplexMemberResponse> members) {
+        if (members.isEmpty()) return;
+        List<Long> memberSeqs = members.stream().map(ComplexMemberResponse::getSeq).toList();
+        List<Map<String, Object>> historyRows = complexMemberQueryMapper.selectAttendanceHistory(memberSeqs);
+        Map<Long, List<String>> historyMap = new HashMap<>();
+        for (Map<String, Object> row : historyRows) {
+            Long memberSeq = ((Number) row.get("memberSeq")).longValue();
+            String status = (String) row.get("status");
+            historyMap.computeIfAbsent(memberSeq, k -> new ArrayList<>()).add(status);
+        }
+        for (ComplexMemberResponse m : members) {
+            m.setAttendanceHistory(historyMap.getOrDefault(m.getSeq(), List.of()));
+        }
     }
 
     private ComplexMemberMembership findOwnedMembership(Long memberSeq, Long mmSeq) {

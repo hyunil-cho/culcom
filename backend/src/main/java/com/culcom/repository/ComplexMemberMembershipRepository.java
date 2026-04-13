@@ -9,7 +9,11 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface ComplexMemberMembershipRepository extends JpaRepository<ComplexMemberMembership, Long> {
-    List<ComplexMemberMembership> findByMemberSeqAndInternalFalse(Long memberSeq);
+    @Query("SELECT mm FROM ComplexMemberMembership mm " +
+           "JOIN FETCH mm.membership " +
+           "LEFT JOIN FETCH mm.payments " +
+           "WHERE mm.member.seq = :memberSeq AND mm.internal = false")
+    List<ComplexMemberMembership> findByMemberSeqAndInternalFalse(@Param("memberSeq") Long memberSeq);
 
     List<ComplexMemberMembership> findByMemberSeqAndInternalTrue(Long memberSeq);
 
