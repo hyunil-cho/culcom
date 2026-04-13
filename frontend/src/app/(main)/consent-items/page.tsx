@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import SearchBar from '@/components/ui/SearchBar';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import { CATEGORIES } from './ConsentItemForm';
+import { useModal } from '@/hooks/useModal';
 import ConsentPreviewModal from './ConsentPreviewModal';
 
 const categoryMap = Object.fromEntries(CATEGORIES.map(c => [c.value, c.label]));
@@ -25,7 +26,7 @@ function ConsentItemsContent() {
 
   const [items, setItems] = useState<ConsentItem[]>([]);
   const [keyword, setKeyword] = useState(searchedKeyword);
-  const [preview, setPreview] = useState<ConsentItem | null>(null);
+  const previewModal = useModal<ConsentItem>();
 
   const load = useCallback(async () => {
     const res = await consentItemApi.list();
@@ -60,7 +61,7 @@ function ConsentItemsContent() {
     { header: '버전', render: (item) => <span style={{ fontFamily: 'monospace', color: '#6b7280' }}>v{item.version}</span> },
     { header: '미리보기', render: (item) => (
       <button
-        onClick={(e) => { e.stopPropagation(); setPreview(item); }}
+        onClick={(e) => { e.stopPropagation(); previewModal.open(item); }}
         style={{
           background: '#6366f1', color: '#fff', border: 'none', borderRadius: 3,
           padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600,
@@ -95,12 +96,12 @@ function ConsentItemsContent() {
         onRowClick={(item) => router.push(ROUTES.CONSENT_ITEM_EDIT(item.seq))}
       />
 
-      {preview && (
+      {previewModal.isOpen && (
         <ConsentPreviewModal
-          title={preview.title}
-          content={preview.content}
-          required={preview.required}
-          onClose={() => setPreview(null)}
+          title={previewModal.data!.title}
+          content={previewModal.data!.content}
+          required={previewModal.data!.required}
+          onClose={previewModal.close}
         />
       )}
     </>

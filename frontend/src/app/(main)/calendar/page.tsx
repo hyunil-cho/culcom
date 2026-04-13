@@ -10,6 +10,7 @@ import ReservationChip from './components/ReservationChip';
 import MonthDayCell from './components/MonthDayCell';
 import DayDetailPanel from './components/DayDetailPanel';
 import ReservationStatusModal from './components/ReservationStatusModal';
+import { useModal } from '@/hooks/useModal';
 import s from './components/calendar.module.css';
 
 export default function CalendarPage() {
@@ -18,7 +19,7 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [reservationMap, setReservationMap] = useState<Record<string, Reservation[]>>({});
   const [loading, setLoading] = useState(true);
-  const [statusModalReservation, setStatusModalReservation] = useState<Reservation | null>(null);
+  const statusModal = useModal<Reservation>();
 
   const today = new Date();
 
@@ -183,14 +184,14 @@ export default function CalendarPage() {
         <>
           <div onClick={() => setSelectedDate(null)} className={s.panelOverlay} />
           <DayDetailPanel date={selectedDate} reservations={getReservations(selectedDate)}
-            onClose={() => setSelectedDate(null)} onReservationClick={(r) => setStatusModalReservation(r)} />
+            onClose={() => setSelectedDate(null)} onReservationClick={(r) => statusModal.open(r)} />
         </>
       )}
 
       {/* 예약 상태 변경 모달 */}
-      {statusModalReservation && (
-        <ReservationStatusModal reservation={statusModalReservation}
-          onClose={() => setStatusModalReservation(null)} onStatusChanged={() => loadReservations()} />
+      {statusModal.isOpen && (
+        <ReservationStatusModal reservation={statusModal.data!}
+          onClose={statusModal.close} onStatusChanged={() => loadReservations()} />
       )}
     </>
   );

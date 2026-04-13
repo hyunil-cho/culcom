@@ -5,6 +5,7 @@ import { messageTemplateApi, MessageTemplateItem } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useModal } from '@/hooks/useModal';
 import { Button, LinkButton } from '@/components/ui/Button';
 import s from './page.module.css';
 
@@ -14,8 +15,8 @@ export default function MessageTemplatesPage() {
 
 function MessageTemplatesContent() {
   const [templates, setTemplates] = useState<MessageTemplateItem[]>([]);
-  const [deleteTarget, setDeleteTarget] = useState<MessageTemplateItem | null>(null);
-  const [defaultTarget, setDefaultTarget] = useState<MessageTemplateItem | null>(null);
+  const deleteModal = useModal<MessageTemplateItem>();
+  const defaultModal = useModal<MessageTemplateItem>();
   const { run, modal } = useResultModal();
 
   const fetchTemplates = useCallback(async () => {
@@ -26,16 +27,18 @@ function MessageTemplatesContent() {
   useEffect(() => { fetchTemplates(); }, [fetchTemplates]);
 
   const handleDelete = async () => {
-    if (!deleteTarget) return;
-    const res = await run(messageTemplateApi.delete(deleteTarget.seq), '템플릿이 삭제되었습니다.');
-    setDeleteTarget(null);
+    if (!deleteModal.data) return;
+    const target = deleteModal.data;
+    deleteModal.close();
+    const res = await run(messageTemplateApi.delete(target.seq), '템플릿이 삭제되었습니다.');
     if (res.success) fetchTemplates();
   };
 
   const handleSetDefault = async () => {
-    if (!defaultTarget) return;
-    const res = await run(messageTemplateApi.setDefault(defaultTarget.seq), '기본 템플릿이 설정되었습니다.');
-    setDefaultTarget(null);
+    if (!defaultModal.data) return;
+    const target = defaultModal.data;
+    defaultModal.close();
+    const res = await run(messageTemplateApi.setDefault(target.seq), '기본 템플릿이 설정되었습니다.');
     if (res.success) fetchTemplates();
   };
 
@@ -78,31 +81,31 @@ function MessageTemplatesContent() {
                 {!t.isDefault && t.isActive && (
                   <Button variant="secondary"
                     style={{ flex: 1, padding: '8px 16px', fontSize: 13, background: '#fff8e1', borderColor: '#ffc107', color: '#333' }}
-                    onClick={() => setDefaultTarget(t)}>기본 설정</Button>
+                    onClick={() => defaultModal.open(t)}>기본 설정</Button>
                 )}
                 <LinkButton href={ROUTES.MESSAGE_TEMPLATE_EDIT(t.seq)}
                   style={{ flex: 1, padding: '8px 16px', fontSize: 13, textAlign: 'center' }}>수정</LinkButton>
                 <Button variant="secondary"
                   style={{ flex: 1, padding: '8px 16px', fontSize: 13, background: '#ffebee', borderColor: '#f44336', color: '#d32f2f' }}
-                  onClick={() => setDeleteTarget(t)}>삭제</Button>
+                  onClick={() => deleteModal.open(t)}>삭제</Button>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {deleteTarget && (
-        <ConfirmModal title="템플릿 삭제" onCancel={() => setDeleteTarget(null)} onConfirm={handleDelete}
+      {deleteModal.isOpen && (
+        <ConfirmModal title="템플릿 삭제" onCancel={deleteModal.close} onConfirm={handleDelete}
           confirmLabel="삭제" confirmColor="var(--danger)">
-          <p>&quot;{deleteTarget.templateName}&quot; 템플릿을 삭제하시겠습니까?</p>
+          <p>&quot;{deleteModal.data!.templateName}&quot; 템플릿을 삭제하시겠습니까?</p>
           <p className={s.subNote}>이 작업은 되돌릴 수 없습니다.</p>
         </ConfirmModal>
       )}
 
-      {defaultTarget && (
-        <ConfirmModal title="기본 템플릿 설정" onCancel={() => setDefaultTarget(null)} onConfirm={handleSetDefault}
+      {defaultModal.isOpen && (
+        <ConfirmModal title="기본 템플릿 설정" onCancel={defaultModal.close} onConfirm={handleSetDefault}
           confirmLabel="설정" confirmColor="var(--success, #4caf50)">
-          <p>&quot;{defaultTarget.templateName}&quot; 템플릿을 기본값으로 설정하시겠습니까?</p>
+          <p>&quot;{defaultModal.data!.templateName}&quot; 템플릿을 기본값으로 설정하시겠습니까?</p>
           <p className={s.subNoteAlt}>기존 기본값은 자동으로 해제됩니다.</p>
         </ConfirmModal>
       )}

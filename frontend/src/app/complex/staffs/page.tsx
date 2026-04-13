@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import { useAttendanceHistory } from '@/lib/useAttendanceHistory';
 import { useClassSlots } from '../hooks/useClassSlots';
+import { useModal } from '@/hooks/useModal';
 
 function StaffTeamModal({ staff, classes, onClose }: {
   staff: ComplexStaff;
@@ -56,7 +57,7 @@ export default function StaffsPage() {
   const [staffs, setStaffs] = useState<ComplexStaff[]>([]);
   const [rateMap, setRateMap] = useState<Record<number, StaffAttendanceRateSummary>>({});
   const [rateMap1m, setRateMap1m] = useState<Record<number, StaffAttendanceRateSummary>>({});
-  const [teamTarget, setTeamTarget] = useState<ComplexStaff | null>(null);
+  const teamModal = useModal<ComplexStaff>();
   const { column: historyColumn, modal: historyModal } = useAttendanceHistory<ComplexStaff>('staff');
   const { allClasses } = useClassSlots();
 
@@ -94,7 +95,7 @@ export default function StaffsPage() {
     { header: '팀현황', render: (s) => {
       const count = getClassesForStaff(s.seq).length;
       return (
-        <button onClick={(e) => { e.stopPropagation(); setTeamTarget(s); }}
+        <button onClick={(e) => { e.stopPropagation(); teamModal.open(s); }}
           style={{ background: '#4a90e2', color: '#fff', border: 'none', borderRadius: 3,
             padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}>
           {count}개 팀
@@ -133,11 +134,11 @@ export default function StaffsPage() {
       />
 
       {historyModal}
-      {teamTarget && (
+      {teamModal.isOpen && (
         <StaffTeamModal
-          staff={teamTarget}
-          classes={getClassesForStaff(teamTarget.seq)}
-          onClose={() => setTeamTarget(null)}
+          staff={teamModal.data!}
+          classes={getClassesForStaff(teamModal.data!.seq)}
+          onClose={teamModal.close}
         />
       )}
     </>

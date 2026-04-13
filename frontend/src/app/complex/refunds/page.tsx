@@ -10,6 +10,8 @@ import SearchBar from '@/components/ui/SearchBar';
 import ModalOverlay from '@/components/ui/ModalOverlay';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useModal } from '@/hooks/useModal';
+import { useListPage } from '@/hooks/useListPage';
 import s from './page.module.css';
 
 const STATUS_BADGE: Record<string, string> = {
@@ -18,18 +20,16 @@ const STATUS_BADGE: Record<string, string> = {
 
 export default function RefundsPage() {
   const router = useRouter();
-  const [requests, setRequests] = useState<RefundRequest[]>([]);
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
+  const list = useListPage<RefundRequest>((q) => refundApi.list(q));
   const [statusFilter, setStatusFilter] = useState('');
   const [keyword, setKeyword] = useState('');
-  const { run, showError, modal } = useResultModal({ onConfirm: () => load() });
+  const { run, showError, modal } = useResultModal({ onConfirm: () => list.load(list.pagination.page) });
 
-  const [rejectTarget, setRejectTarget] = useState<RefundRequest | null>(null);
+  const rejectModal = useModal<RefundRequest>();
   const [rejectReason, setRejectReason] = useState('');
-  const [confirmTarget, setConfirmTarget] = useState<{ req: RefundRequest; newStatus: string } | null>(null);
+  const confirmModal = useModal<{ req: RefundRequest; newStatus: string }>();
   const [approveMessage, setApproveMessage] = useState('');
-  const [infoModal, setInfoModal] = useState<string | null>(null);
+  const infoAlert = useModal<string>();
   const [senderPhone, setSenderPhone] = useState('');
 
   useEffect(() => {
@@ -53,37 +53,28 @@ export default function RefundsPage() {
     }
   };
 
-  const load = (p = page, status = statusFilter, kw = keyword) => {
-    const params = [`page=${p}`, 'size=20'];
-    if (status) params.push(`status=${status}`);
-    if (kw) params.push(`keyword=${encodeURIComponent(kw)}`);
-    refundApi.list(params.join('&')).then(res => { setRequests(res.data.content); setTotalPages(res.data.totalPages); });
-  };
-
-  useEffect(() => { load(); }, []);
-  const handlePageChange = (p: number) => { setPage(p); load(p); };
-  const handleStatusFilter = (status: string) => { setStatusFilter(status); setPage(0); load(0, status); };
-  const handleSearch = () => { setPage(0); load(0, statusFilter, keyword); };
+  const handleStatusFilter = (status: string) => { setStatusFilter(status); list.load(0, { status, keyword }); };
+  const handleSearch = () => { list.load(0, { status: statusFilter, keyword }); };
 
   const handleStatusChange = (req: RefundRequest, newStatus: string) => {
     if (newStatus === req.status) return;
     if (req.status === '승인') {
-      setInfoModal('이미 승인된 환불 요청은 상태를 변경할 수 없습니다.');
+      infoAlert.open('이미 승인된 환불 요청은 상태를 변경할 수 없습니다.');
       return;
     }
-    if (newStatus === '반려') { setRejectTarget(req); setRejectReason(''); return; }
+    if (newStatus === '반려') { rejectModal.open(req); setRejectReason(''); return; }
     setApproveMessage('');
-    setConfirmTarget({ req, newStatus });
+    confirmModal.open({ req, newStatus });
   };
 
   const handleConfirmStatusChange = async () => {
-    if (!confirmTarget) return;
-    const { req, newStatus } = confirmTarget;
+    if (!confirmModal.data) return;
+    const { req, newStatus } = confirmModal.data;
     if (newStatus === '승인' && !approveMessage.trim()) {
-      setInfoModal('회원에게 발송할 안내 메시지를 입력해주세요.');
+      infoAlert.open('회원에게 발송할 안내 메시지를 입력해주세요.');
       return;
     }
-    setConfirmTarget(null);
+    confirmModal.close();
     const message = approveMessage;
     const res = await run(refundApi.updateStatus(req.seq, newStatus), '상태가 변경되었습니다.');
     if (res.success && newStatus === '승인' && req.phoneNumber) {
@@ -92,11 +83,11 @@ export default function RefundsPage() {
   };
 
   const handleRejectSubmit = async () => {
-    if (!rejectReason.trim()) { setInfoModal('반려 사유를 입력해주세요.'); return; }
-    if (!rejectTarget) return;
-    const target = rejectTarget;
+    if (!rejectReason.trim()) { infoAlert.open('반려 사유를 입력해주세요.'); return; }
+    if (!rejectModal.data) return;
+    const target = rejectModal.data;
     const reason = rejectReason;
-    setRejectTarget(null);
+    rejectModal.close();
     const res = await run(refundApi.updateStatus(target.seq, '반려', reason), '반려 처리되었습니다.');
     if (res.success && target.phoneNumber) {
       await sendNotificationSms(target.phoneNumber, reason, '환불 반려 안내');
@@ -159,7 +150,7 @@ export default function RefundsPage() {
       </div>
 
       <SearchBar keyword={keyword} onKeywordChange={setKeyword} onSearch={handleSearch}
-        onReset={keyword ? () => { setKeyword(''); setPage(0); load(0, statusFilter, ''); } : undefined}
+        onReset={keyword ? () => { setKeyword(''); list.load(0, { status: statusFilter }); } : undefined}
         placeholder="회원명 또는 연락처 검색"
         actions={
           <select value={statusFilter} onChange={(e) => handleStatusFilter(e.target.value)} className={s.filterSelect}>
@@ -168,16 +159,16 @@ export default function RefundsPage() {
         }
       />
 
-      <DataTable columns={columns} data={requests} rowKey={(r) => r.seq}
+      <DataTable columns={columns} data={list.items} rowKey={(r) => r.seq}
         rowStyle={(r) => r.status === '승인' ? { backgroundColor: '#f0fdf4' } : undefined}
-        emptyMessage="환불 요청이 없습니다." pagination={{ page, totalPages, onPageChange: handlePageChange }} />
+        emptyMessage="환불 요청이 없습니다." pagination={list.pagination} />
 
-      {rejectTarget && (
-        <ModalOverlay onClose={() => setRejectTarget(null)}>
+      {rejectModal.isOpen && (
+        <ModalOverlay onClose={rejectModal.close}>
           <div className={s.rejectHeader}><h3 className={s.rejectTitle}>환불 반려 사유 입력</h3></div>
           <div className={s.rejectBody}>
             <div className={s.rejectAlert}>
-              <strong className={s.rejectAlertName}>{rejectTarget.memberName}</strong> 회원의 환불 요청을
+              <strong className={s.rejectAlertName}>{rejectModal.data!.memberName}</strong> 회원의 환불 요청을
               <span className="badge badge-danger" style={{ marginLeft: 5 }}>반려</span> 합니다.
             </div>
             <label className={s.rejectLabel}>반려 사유 <span className={s.requiredMark}>*</span></label>
@@ -185,26 +176,26 @@ export default function RefundsPage() {
               placeholder="반려 사유를 입력해주세요..." className={s.rejectTextarea} />
           </div>
           <div className={s.rejectFooter}>
-            <button onClick={() => setRejectTarget(null)} className={s.rejectCancelBtn}>취소</button>
+            <button onClick={rejectModal.close} className={s.rejectCancelBtn}>취소</button>
             <button onClick={handleRejectSubmit} className={s.rejectSubmitBtn}>반려 처리</button>
           </div>
         </ModalOverlay>
       )}
 
-      {confirmTarget && (
+      {confirmModal.isOpen && (
         <ConfirmModal
-          title={confirmTarget.newStatus === '승인' ? '환불 승인' : '환불 상태 변경'}
-          confirmLabel={confirmTarget.newStatus === '승인' ? '승인 처리' : '변경'}
-          confirmColor={confirmTarget.newStatus === '승인' ? '#dc2626' : '#4a90e2'}
-          onCancel={() => setConfirmTarget(null)}
+          title={confirmModal.data!.newStatus === '승인' ? '환불 승인' : '환불 상태 변경'}
+          confirmLabel={confirmModal.data!.newStatus === '승인' ? '승인 처리' : '변경'}
+          confirmColor={confirmModal.data!.newStatus === '승인' ? '#dc2626' : '#4a90e2'}
+          onCancel={confirmModal.close}
           onConfirm={handleConfirmStatusChange}
         >
           <div style={{ textAlign: 'left' }}>
             <p style={{ margin: '0 0 12px' }}>
-              <strong>{confirmTarget.req.memberName}</strong> 회원의 환불 요청을{' '}
-              <strong>{confirmTarget.newStatus}</strong> 처리하시겠습니까?
+              <strong>{confirmModal.data!.req.memberName}</strong> 회원의 환불 요청을{' '}
+              <strong>{confirmModal.data!.newStatus}</strong> 처리하시겠습니까?
             </p>
-            {confirmTarget.newStatus === '승인' && (
+            {confirmModal.data!.newStatus === '승인' && (
               <div style={{
                 marginTop: 12, padding: '12px 14px',
                 background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 6,
@@ -220,7 +211,7 @@ export default function RefundsPage() {
                 </ul>
               </div>
             )}
-            {confirmTarget.newStatus === '승인' && (
+            {confirmModal.data!.newStatus === '승인' && (
               <div style={{ marginTop: 14 }}>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: 6 }}>
                   회원에게 발송할 안내 메시지 <span style={{ color: '#dc2626' }}>*</span>
@@ -242,15 +233,15 @@ export default function RefundsPage() {
         </ConfirmModal>
       )}
 
-      {infoModal && (
+      {infoAlert.isOpen && (
         <ConfirmModal
           title="알림"
           confirmLabel="확인"
           confirmColor="#4a90e2"
-          onCancel={() => setInfoModal(null)}
-          onConfirm={() => setInfoModal(null)}
+          onCancel={infoAlert.close}
+          onConfirm={infoAlert.close}
         >
-          <p style={{ margin: 0 }}>{infoModal}</p>
+          <p style={{ margin: 0 }}>{infoAlert.data}</p>
         </ConfirmModal>
       )}
 

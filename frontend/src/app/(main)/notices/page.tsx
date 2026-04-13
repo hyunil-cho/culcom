@@ -9,6 +9,7 @@ import SearchBar from '@/components/ui/SearchBar';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { ROUTES } from '@/lib/routes';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useModal } from '@/hooks/useModal';
 import { Button, LinkButton } from '@/components/ui/Button';
 
 const CATEGORY_FILTERS = [
@@ -34,7 +35,7 @@ function NoticesContent() {
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [keyword, setKeyword] = useState(searchKeyword);
-  const [deleteTarget, setDeleteTarget] = useState<NoticeListItem | null>(null);
+  const deleteModal = useModal<NoticeListItem>();
   const { run, modal } = useResultModal();
 
   const fetchNotices = useCallback(async () => {
@@ -78,9 +79,10 @@ function NoticesContent() {
   };
 
   const handleDelete = async () => {
-    if (!deleteTarget) return;
-    setDeleteTarget(null);
-    const res = await run(noticeApi.delete(deleteTarget.seq), '공지사항이 삭제되었습니다.');
+    if (!deleteModal.data) return;
+    const target = deleteModal.data;
+    deleteModal.close();
+    const res = await run(noticeApi.delete(target.seq), '공지사항이 삭제되었습니다.');
     if (res.success) fetchNotices();
   };
 
@@ -165,15 +167,15 @@ function NoticesContent() {
         pagination={{ page, totalPages, onPageChange: handlePageChange }}
       />
 
-      {deleteTarget && (
+      {deleteModal.isOpen && (
         <ConfirmModal
           title="공지사항 삭제"
-          onCancel={() => setDeleteTarget(null)}
+          onCancel={deleteModal.close}
           onConfirm={handleDelete}
           confirmLabel="삭제"
           confirmColor="var(--danger)"
         >
-          <p>&quot;{deleteTarget.title}&quot;을(를) 삭제하시겠습니까?</p>
+          <p>&quot;{deleteModal.data!.title}&quot;을(를) 삭제하시겠습니까?</p>
           <p style={{ fontSize: '0.85rem', color: '#999' }}>삭제된 게시글은 복구할 수 없습니다.</p>
         </ConfirmModal>
       )}

@@ -5,25 +5,18 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { noticeApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
-import { useResultModal } from '@/hooks/useResultModal';
+import { useFormState } from '@/hooks/useFormState';
 import NoticeForm, { NoticeFormData } from '../../NoticeForm';
 
 export default function NoticeEditPage() {
   const params = useParams();
   const seq = Number(params.seq);
 
-  const [form, setForm] = useState<NoticeFormData>({
-    title: '',
-    content: '',
-    category: '공지사항',
-    isPinned: false,
-    createdBy: '',
-    eventStartDate: '',
-    eventEndDate: '',
-  });
+  const { form, setForm, handleChange, submitting, submit, showError, modal } = useFormState<NoticeFormData>(
+    { title: '', content: '', category: '공지사항', isPinned: false, createdBy: '', eventStartDate: '', eventEndDate: '' },
+    { redirectPath: ROUTES.NOTICE_DETAIL(seq) },
+  );
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const { run, showError, modal } = useResultModal({ redirectPath: ROUTES.NOTICE_DETAIL(seq) });
 
   useEffect(() => {
     noticeApi.get(seq).then((res) => {
@@ -43,23 +36,13 @@ export default function NoticeEditPage() {
     });
   }, [seq]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    if (type === 'checkbox') {
-      setForm((prev) => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
-    } else {
-      setForm((prev) => ({ ...prev, [name]: value }));
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim() || !form.content.trim()) {
       showError('제목과 내용은 필수 입력 항목입니다.');
       return;
     }
-    setSubmitting(true);
-    await run(noticeApi.update(seq, {
+    await submit(noticeApi.update(seq, {
       title: form.title,
       content: form.content,
       category: form.category,
@@ -67,7 +50,6 @@ export default function NoticeEditPage() {
       eventStartDate: form.eventStartDate || undefined,
       eventEndDate: form.eventEndDate || undefined,
     }), '공지사항이 수정되었습니다.');
-    setSubmitting(false);
   };
 
   if (loading) {

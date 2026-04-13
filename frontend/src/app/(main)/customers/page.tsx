@@ -13,6 +13,7 @@ import ResultModal from '@/components/ui/ResultModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import SearchBar from '@/components/ui/SearchBar';
 import DataTable, { type Column } from '@/components/ui/DataTable';
+import { useModal } from '@/hooks/useModal';
 import SmsModal from './SmsModal';
 
 const CALLERS = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P'];
@@ -52,15 +53,15 @@ function CustomersContent() {
   // CALLER 선택 상태
   const [selectedCallers, setSelectedCallers] = useState<Record<number, string>>({});
   const [phoneVisible, setPhoneVisible] = useState<Record<number, boolean>>({});
-  const [callerModal, setCallerModal] = useState<CallerModal | null>(null);
+  const callerConfirm = useModal<CallerModal>();
 
   // 인터뷰 확정 상태
   const [interviewInputs, setInterviewInputs] = useState<Record<number, string>>({});
-  const [interviewModal, setInterviewModal] = useState<InterviewModal | null>(null);
+  const interviewConfirmModal = useModal<InterviewModal>();
   const [result, setResult] = useState<{ success: boolean; message: string; redirectPath?: string } | null>(null);
 
   // SMS 모달
-  const [smsTarget, setSmsTarget] = useState<{ name: string; phone: string; interviewDate?: string } | null>(null);
+  const smsModal = useModal<{ name: string; phone: string; interviewDate?: string }>();
 
   const load = useCallback(async () => {
     const params = new URLSearchParams({ page: String(page), size: '20', filter });
@@ -92,12 +93,12 @@ function CustomersContent() {
   const handleCallerClick = (seq: number, caller: string) => {
     const customer = customers.find(c => c.seq === seq);
     if (!customer) return;
-    setCallerModal({ customerSeq: seq, customerName: customer.name, caller });
+    callerConfirm.open({ customerSeq: seq, customerName: customer.name, caller });
   };
 
   const confirmCaller = async () => {
-    if (!callerModal) return;
-    const { customerSeq, caller } = callerModal;
+    if (!callerConfirm.data) return;
+    const { customerSeq, caller } = callerConfirm.data;
     const res = await customerApi.processCall(customerSeq, caller);
     const data = res.data;
 
@@ -111,7 +112,7 @@ function CustomersContent() {
       else if (c.status === '신규') newStatus = '진행중';
       return { ...c, callCount: newCount, status: newStatus, lastUpdateDate: data.lastUpdateDate };
     }));
-    setCallerModal(null);
+    callerConfirm.close();
 
     if (filter === 'new' && data.callCount >= 5) {
       setCustomers(prev => prev.filter(c => c.seq !== customerSeq));
@@ -126,7 +127,7 @@ function CustomersContent() {
     const caller = selectedCallers[seq];
     if (!caller) { alert('먼저 CALLER를 선택해주세요.'); return; }
     if (!customer) return;
-    setInterviewModal({ customerSeq: seq, customerName: customer.name, caller });
+    interviewConfirmModal.open({ customerSeq: seq, customerName: customer.name, caller });
   };
 
   // 예약 확정 SMS 자동 발송
@@ -175,8 +176,8 @@ function CustomersContent() {
   };
 
   const confirmInterview = async () => {
-    if (!interviewModal) return;
-    const { customerSeq, caller } = interviewModal;
+    if (!interviewConfirmModal.data) return;
+    const { customerSeq, caller } = interviewConfirmModal.data;
     const input = interviewInputs[customerSeq]?.trim();
     if (!input) return;
 
@@ -188,7 +189,7 @@ function CustomersContent() {
         c.seq === customerSeq ? { ...c, status: '예약확정' } : c
       ));
       setInterviewInputs(prev => ({ ...prev, [customerSeq]: '' }));
-      setInterviewModal(null);
+      interviewConfirmModal.close();
 
       if (filter === 'new') {
         setCustomers(prev => prev.filter(c => c.seq !== customerSeq));
@@ -228,7 +229,7 @@ function CustomersContent() {
     )},
     { header: 'TEXT', render: (c) => (
       <button
-        onClick={(e) => { e.stopPropagation(); setSmsTarget({ name: c.name, phone: c.phoneNumber, interviewDate: interviewInputs[c.seq] || undefined }); }}
+        onClick={(e) => { e.stopPropagation(); smsModal.open({ name: c.name, phone: c.phoneNumber, interviewDate: interviewInputs[c.seq] || undefined }); }}
         style={{
           padding: '0.4rem 0.8rem', background: '#10b981', color: 'white',
           border: 'none', borderRadius: 4, cursor: 'pointer',
@@ -329,50 +330,50 @@ function CustomersContent() {
       />
 
       {/* CALLER 확인 모달 */}
-      {callerModal && (
+      {callerConfirm.isOpen && (
         <ConfirmModal
           title="CALLER 선택 확인"
-          onCancel={() => setCallerModal(null)}
+          onCancel={callerConfirm.close}
           onConfirm={confirmCaller}
           confirmColor="#667eea"
         >
           <div style={{ fontSize: '1.1rem', color: '#333', marginBottom: '1rem' }}>
-            <strong style={{ color: '#667eea', fontSize: '1.3rem' }}>{callerModal.customerName}</strong>님의
+            <strong style={{ color: '#667eea', fontSize: '1.3rem' }}>{callerConfirm.data!.customerName}</strong>님의
           </div>
           <div style={{ fontSize: '0.95rem', color: '#666', marginBottom: '0.5rem' }}>선택한 CALLER</div>
           <div style={{ background: '#f5f3ff', padding: '1.5rem', borderRadius: 8, border: '2px solid #667eea', marginTop: '1rem' }}>
-            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#667eea' }}>{callerModal.caller}</div>
+            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#667eea' }}>{callerConfirm.data!.caller}</div>
           </div>
           <div style={{ marginTop: '1rem', color: '#666', fontSize: '0.95rem' }}>이 CALLER로 선택하시겠습니까?</div>
         </ConfirmModal>
       )}
 
       {/* 인터뷰 확정 모달 */}
-      {interviewModal && (
+      {interviewConfirmModal.isOpen && (
         <ConfirmModal
           title="인터뷰 확정"
-          onCancel={() => setInterviewModal(null)}
+          onCancel={interviewConfirmModal.close}
           onConfirm={confirmInterview}
           confirmLabel="확정"
           confirmColor="#4a90e2"
         >
-          <strong>{interviewModal.customerName}</strong>님의 인터뷰를 확정하시겠습니까?
+          <strong>{interviewConfirmModal.data!.customerName}</strong>님의 인터뷰를 확정하시겠습니까?
           <br /><br />
-          CALLER: <strong style={{ color: '#667eea' }}>{interviewModal.caller}</strong>
+          CALLER: <strong style={{ color: '#667eea' }}>{interviewConfirmModal.data!.caller}</strong>
           <br />
-          일시: <strong>{interviewInputs[interviewModal.customerSeq]}</strong>
+          일시: <strong>{interviewInputs[interviewConfirmModal.data!.customerSeq]}</strong>
         </ConfirmModal>
       )}
 
       {/* SMS 전송 모달 */}
-      {smsTarget && (
+      {smsModal.isOpen && (
         <SmsModal
-          customerName={smsTarget.name}
-          customerPhone={smsTarget.phone}
-          interviewDate={smsTarget.interviewDate}
-          onClose={() => setSmsTarget(null)}
+          customerName={smsModal.data!.name}
+          customerPhone={smsModal.data!.phone}
+          interviewDate={smsModal.data!.interviewDate}
+          onClose={smsModal.close}
           onResult={(success, message) => {
-            setSmsTarget(null);
+            smsModal.close();
             setResult({ success, message });
           }}
         />

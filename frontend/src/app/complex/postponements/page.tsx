@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { postponementApi, type PostponementRequest } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
@@ -9,6 +9,8 @@ import DataTable, { type Column } from '@/components/ui/DataTable';
 import SearchBar from '@/components/ui/SearchBar';
 import ModalOverlay from '@/components/ui/ModalOverlay';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useModal } from '@/hooks/useModal';
+import { useListPage } from '@/hooks/useListPage';
 import s from './page.module.css';
 
 const STATUS_BADGE: Record<string, string> = {
@@ -19,44 +21,30 @@ const STATUS_BADGE: Record<string, string> = {
 
 export default function PostponementsPage() {
   const router = useRouter();
-  const [requests, setRequests] = useState<PostponementRequest[]>([]);
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
+  const list = useListPage<PostponementRequest>((q) => postponementApi.list(q));
   const [statusFilter, setStatusFilter] = useState('');
   const [keyword, setKeyword] = useState('');
-  const { run, modal } = useResultModal({ onConfirm: () => load() });
+  const { run, modal } = useResultModal({ onConfirm: () => list.load(list.pagination.page) });
 
-  const [rejectTarget, setRejectTarget] = useState<PostponementRequest | null>(null);
+  const rejectModal = useModal<PostponementRequest>();
   const [rejectReason, setRejectReason] = useState('');
 
-  const load = (p = page, status = statusFilter, kw = keyword) => {
-    const params = [`page=${p}`, 'size=20'];
-    if (status) params.push(`status=${status}`);
-    if (kw) params.push(`keyword=${encodeURIComponent(kw)}`);
-    postponementApi.list(params.join('&')).then(res => {
-      setRequests(res.data.content);
-      setTotalPages(res.data.totalPages);
-    });
-  };
-
-  useEffect(() => { load(); }, []);
-
-  const handlePageChange = (p: number) => { setPage(p); load(p); };
-  const handleStatusFilter = (status: string) => { setStatusFilter(status); setPage(0); load(0, status); };
-  const handleSearch = () => { setPage(0); load(0, statusFilter, keyword); };
+  const handleStatusFilter = (status: string) => { setStatusFilter(status); list.load(0, { status, keyword }); };
+  const handleSearch = () => { list.load(0, { status: statusFilter, keyword }); };
 
   const handleStatusChange = async (req: PostponementRequest, newStatus: string) => {
     if (newStatus === req.status) return;
-    if (newStatus === '반려') { setRejectTarget(req); setRejectReason(''); return; }
+    if (newStatus === '반려') { rejectModal.open(req); setRejectReason(''); return; }
     if (!confirm(`${req.memberName} 회원의 연기 요청 상태를 "${newStatus}"(으)로 변경하시겠습니까?`)) return;
     await run(postponementApi.updateStatus(req.seq, newStatus), '상태가 변경되었습니다.');
   };
 
   const handleRejectSubmit = async () => {
     if (!rejectReason.trim()) { alert('반려 사유를 입력해주세요.'); return; }
-    if (!rejectTarget) return;
-    setRejectTarget(null);
-    await run(postponementApi.updateStatus(rejectTarget.seq, '반려', rejectReason), '반려 처리되었습니다.');
+    if (!rejectModal.data) return;
+    const target = rejectModal.data;
+    rejectModal.close();
+    await run(postponementApi.updateStatus(target.seq, '반려', rejectReason), '반려 처리되었습니다.');
   };
 
   const columns: Column<PostponementRequest>[] = [
@@ -84,7 +72,7 @@ export default function PostponementsPage() {
       </div>
 
       <SearchBar keyword={keyword} onKeywordChange={setKeyword} onSearch={handleSearch}
-        onReset={keyword ? () => { setKeyword(''); setPage(0); load(0, statusFilter, ''); } : undefined}
+        onReset={keyword ? () => { setKeyword(''); list.load(0, { status: statusFilter }); } : undefined}
         placeholder="회원명 또는 연락처 검색"
         actions={
           <select value={statusFilter} onChange={(e) => handleStatusFilter(e.target.value)} className={s.filterSelect}>
@@ -93,18 +81,18 @@ export default function PostponementsPage() {
         }
       />
 
-      <DataTable columns={columns} data={requests} rowKey={(r) => r.seq}
+      <DataTable columns={columns} data={list.items} rowKey={(r) => r.seq}
         rowStyle={(r) => r.status === '승인' ? { backgroundColor: '#f0fdf4' } : undefined}
-        emptyMessage="새로운 연기 요청이 없습니다." pagination={{ page, totalPages, onPageChange: handlePageChange }} />
+        emptyMessage="새로운 연기 요청이 없습니다." pagination={list.pagination} />
 
-      {rejectTarget && (
-        <ModalOverlay onClose={() => setRejectTarget(null)}>
+      {rejectModal.isOpen && (
+        <ModalOverlay onClose={rejectModal.close}>
           <div className={s.rejectHeader}>
             <h3 className={s.rejectTitle}>반려 사유 입력</h3>
           </div>
           <div className={s.rejectBody}>
             <div className={s.rejectAlert}>
-              <strong className={s.rejectAlertName}>{rejectTarget.memberName}</strong> 회원의 연기 요청을
+              <strong className={s.rejectAlertName}>{rejectModal.data!.memberName}</strong> 회원의 연기 요청을
               <span className="badge badge-danger" style={{ marginLeft: 5 }}>반려</span> 합니다.
             </div>
             <label className={s.rejectLabel}>반려 사유 <span className={s.requiredMark}>*</span></label>
@@ -112,7 +100,7 @@ export default function PostponementsPage() {
               placeholder="반려 사유를 입력해주세요..." className={s.rejectTextarea} />
           </div>
           <div className={s.rejectFooter}>
-            <button onClick={() => setRejectTarget(null)} className={s.rejectCancelBtn}>취소</button>
+            <button onClick={rejectModal.close} className={s.rejectCancelBtn}>취소</button>
             <button onClick={handleRejectSubmit} className={s.rejectSubmitBtn}>반려 처리</button>
           </div>
         </ModalOverlay>

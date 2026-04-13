@@ -7,9 +7,13 @@ app_image           = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/culcom-
 
 # ─── 선택 변수 (기본값 존재) ───
 # aws_region        = "ap-northeast-2"
-# environment       = "stg"
+# environment       = "stg"      # local / stg / prod. local 이면 RDS 가 퍼블릭 서브넷에 배치되고 외부 접근 허용
 # db_instance_class = "db.t3.micro"
 # ec2_instance_type = "t3.small"
 # domain_name       = "culcom.example.com"
+
+# ─── local 환경에서만 사용 ───
+# environment      = "local"
+# db_allowed_cidrs = ["1.2.3.4/32"]   # 본인 IP 만 열어두는 것을 권장. 미지정 시 0.0.0.0/0 (전체 개방, 테스트용)
 
 # SSH 키페어는 Terraform이 자동 생성하여 terraform/.ssh/<project>-<env>-key.pem 에 저장됩니다.

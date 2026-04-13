@@ -12,6 +12,7 @@ import { useBulkAttendance } from './components/BulkAttendanceModal';
 import { calcTodayRate, RateBadge } from './components/AttendanceRateBadge';
 import { MessageButton } from './components/MessageButton';
 import MemberManageModal from './components/MemberManageModal';
+import { useModal } from '@/hooks/useModal';
 import './attendance.css';
 
 export default function AttendancePage() {
@@ -37,7 +38,7 @@ export default function AttendancePage() {
 
   const bulkAttendance = useBulkAttendance(fetchData);
 
-  const [manageTarget, setManageTarget] = useState<{ member: AttendanceViewMember; className: string } | null>(null);
+  const manageModal = useModal<{ member: AttendanceViewMember; className: string }>();
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -131,7 +132,7 @@ export default function AttendancePage() {
                             <span className="member-phone">{m.phoneNumber}</span>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <button onClick={(e) => { e.stopPropagation(); setManageTarget({ member: m, className: cls.name }); }}
+                            <button onClick={(e) => { e.stopPropagation(); manageModal.open({ member: m, className: cls.name }); }}
                               style={{ background: '#6366f1', color: '#fff', border: 'none', borderRadius: 3, padding: '2px 6px', fontSize: '0.7rem', cursor: 'pointer', fontWeight: 600 }}>
                               관리
                             </button>
@@ -173,12 +174,12 @@ export default function AttendancePage() {
         )}
       </div>
 
-      {manageTarget && (
+      {manageModal.isOpen && (
         <MemberManageModal
-          member={manageTarget.member}
-          currentClassName={manageTarget.className}
-          onClose={() => setManageTarget(null)}
-          onMoved={() => { setManageTarget(null); fetchData(); }}
+          member={manageModal.data!.member}
+          currentClassName={manageModal.data!.className}
+          onClose={manageModal.close}
+          onMoved={() => { manageModal.close(); fetchData(); }}
         />
       )}
       {bulkAttendance.rendered}

@@ -1,33 +1,16 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { noticeApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
-import { useResultModal } from '@/hooks/useResultModal';
+import { useFormState } from '@/hooks/useFormState';
 import NoticeForm, { NoticeFormData } from '../NoticeForm';
 
 export default function NoticeAddPage() {
-  const [form, setForm] = useState<NoticeFormData>({
-    title: '',
-    content: '',
-    category: '공지사항',
-    isPinned: false,
-    createdBy: '',
-    eventStartDate: '',
-    eventEndDate: '',
-  });
-  const [submitting, setSubmitting] = useState(false);
-  const { run, showError, modal } = useResultModal({ redirectPath: ROUTES.NOTICES });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    if (type === 'checkbox') {
-      setForm((prev) => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
-    } else {
-      setForm((prev) => ({ ...prev, [name]: value }));
-    }
-  };
+  const { form, handleChange, submitting, submit, showError, modal } = useFormState<NoticeFormData>(
+    { title: '', content: '', category: '공지사항', isPinned: false, createdBy: '', eventStartDate: '', eventEndDate: '' },
+    { redirectPath: ROUTES.NOTICES },
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,8 +18,7 @@ export default function NoticeAddPage() {
       showError('제목과 내용은 필수 입력 항목입니다.');
       return;
     }
-    setSubmitting(true);
-    await run(noticeApi.create({
+    await submit(noticeApi.create({
       title: form.title,
       content: form.content,
       category: form.category,
@@ -45,7 +27,6 @@ export default function NoticeAddPage() {
       eventStartDate: form.eventStartDate || undefined,
       eventEndDate: form.eventEndDate || undefined,
     }), '공지사항이 등록되었습니다.');
-    setSubmitting(false);
   };
 
   return (

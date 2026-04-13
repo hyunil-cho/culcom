@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { classApi, type ComplexClass } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
@@ -8,29 +8,16 @@ import { Button } from '@/components/ui/Button';
 import ResultModal from '@/components/ui/ResultModal';
 import SearchBar from '@/components/ui/SearchBar';
 import DataTable, { type Column } from '@/components/ui/DataTable';
+import { useListPage } from '@/hooks/useListPage';
+import { useModal } from '@/hooks/useModal';
 
 export default function ClassesPage() {
   const router = useRouter();
-  const [classes, setClasses] = useState<ComplexClass[]>([]);
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
+  const list = useListPage<ComplexClass>((q) => classApi.list(q));
   const [keyword, setKeyword] = useState('');
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const resultModal = useModal<{ success: boolean; message: string }>();
 
-  const load = (p = page, kw = keyword) => {
-    const params = [`page=${p}`, 'size=20'];
-    if (kw) params.push(`keyword=${encodeURIComponent(kw)}`);
-    classApi.list(params.join('&')).then(res => {
-      setClasses(res.data.content);
-      setTotalPages(res.data.totalPages);
-    });
-  };
-
-  useEffect(() => { load(); }, []);
-
-  const handleSearch = () => { setPage(0); load(0, keyword); };
-
-  const handlePageChange = (p: number) => { setPage(p); load(p); };
+  const handleSearch = () => { list.load(0, { keyword }); };
 
 
   const columns: Column<ComplexClass>[] = [
@@ -102,24 +89,24 @@ export default function ClassesPage() {
         keyword={keyword}
         onKeywordChange={setKeyword}
         onSearch={handleSearch}
-        onReset={keyword ? () => { setKeyword(''); setPage(0); load(0, ''); } : undefined}
+        onReset={keyword ? () => { setKeyword(''); list.load(0); } : undefined}
         placeholder="수업명, 강사, 시간대 검색"
       />
 
       <DataTable
         columns={columns}
-        data={classes}
+        data={list.items}
         rowKey={(c) => c.seq}
         emptyMessage="등록된 수업이 없습니다."
-        pagination={{ page, totalPages, onPageChange: handlePageChange }}
+        pagination={list.pagination}
         onRowClick={(c) => router.push(ROUTES.COMPLEX_CLASS_EDIT(c.seq))}
       />
 
-      {result && (
+      {resultModal.isOpen && (
         <ResultModal
-          success={result.success}
-          message={result.message}
-          onConfirm={() => { setResult(null); load(); }}
+          success={resultModal.data!.success}
+          message={resultModal.data!.message}
+          onConfirm={() => { resultModal.close(); list.load(list.pagination.page); }}
         />
       )}
     </>

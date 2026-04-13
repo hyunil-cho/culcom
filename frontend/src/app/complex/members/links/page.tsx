@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { memberApi, type ComplexMember } from '@/lib/api';
+import { useModal } from '@/hooks/useModal';
 import MembershipLinkModal from '../components/MembershipLinkModal';
 import PostponementLinkModal from '../components/PostponementLinkModal';
 import RefundLinkModal from '../components/RefundLinkModal';
@@ -52,7 +53,7 @@ export default function MemberLinksPage() {
   const [members, setMembers] = useState<ComplexMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<ComplexMember | null>(null);
-  const [openLink, setOpenLink] = useState<LinkKind | null>(null);
+  const linkModal = useModal<LinkKind>();
 
   // 검색
   useEffect(() => {
@@ -227,7 +228,7 @@ export default function MemberLinksPage() {
                       {lt.desc}
                     </p>
                     <button
-                      onClick={() => setOpenLink(lt.kind)}
+                      onClick={() => linkModal.open(lt.kind)}
                       style={{
                         background: lt.color,
                         color: '#fff',
@@ -250,17 +251,17 @@ export default function MemberLinksPage() {
       </div>
 
       {/* 링크 모달들 */}
-      {linkProps && openLink === 'membership' && (
-        <MembershipLinkModal {...linkProps} onClose={() => setOpenLink(null)} />
+      {linkProps && linkModal.data === 'membership' && (
+        <MembershipLinkModal {...linkProps} onClose={linkModal.close} />
       )}
-      {linkProps && openLink === 'postponement' && (
-        <PostponementLinkModal {...linkProps} onClose={() => setOpenLink(null)} />
+      {linkProps && linkModal.data === 'postponement' && (
+        <PostponementLinkModal {...linkProps} onClose={linkModal.close} />
       )}
-      {linkProps && openLink === 'refund' && (
-        <RefundLinkModal {...linkProps} onClose={() => setOpenLink(null)} />
+      {linkProps && linkModal.data === 'refund' && (
+        <RefundLinkModal {...linkProps} onClose={linkModal.close} />
       )}
-      {linkProps && openLink === 'transfer' && (
-        <TransferLinkModal {...linkProps} onClose={() => setOpenLink(null)} />
+      {linkProps && linkModal.data === 'transfer' && (
+        <TransferLinkModal {...linkProps} onClose={linkModal.close} />
       )}
     </>
   );

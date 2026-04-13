@@ -5,6 +5,7 @@ import { transferApi, type TransferRequestItem, type TransferStatus } from '@/li
 import { useQueryParams } from '@/lib/useQueryParams';
 import SearchBar from '@/components/ui/SearchBar';
 import DataTable, { type Column } from '@/components/ui/DataTable';
+import { useModal } from '@/hooks/useModal';
 import TransferDetailModal from './TransferDetailModal';
 
 const STATUS_STYLE: Record<TransferStatus, { color: string; bg: string }> = {
@@ -26,7 +27,7 @@ function TransferRequestsContent() {
 
   const [items, setItems] = useState<TransferRequestItem[]>([]);
   const [keyword, setKeyword] = useState(searchedKeyword);
-  const [detail, setDetail] = useState<TransferRequestItem | null>(null);
+  const detailModal = useModal<TransferRequestItem>();
 
   const load = useCallback(async () => {
     const res = await transferApi.list();
@@ -70,7 +71,7 @@ function TransferRequestsContent() {
     { header: '요청일', render: (item) => <span style={{ fontSize: '0.75rem', color: '#666' }}>{item.createdDate?.split('T')[0] ?? '-'}</span> },
     { header: '상세', render: (item) => (
       <button
-        onClick={(e) => { e.stopPropagation(); setDetail(item); }}
+        onClick={(e) => { e.stopPropagation(); detailModal.open(item); }}
         style={{
           background: '#6366f1', color: '#fff', border: 'none', borderRadius: 3,
           padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600,
@@ -100,13 +101,13 @@ function TransferRequestsContent() {
         data={filtered}
         rowKey={(item) => item.seq}
         emptyMessage="양도 요청이 없습니다."
-        onRowClick={(item) => setDetail(item)}
+        onRowClick={(item) => detailModal.open(item)}
       />
 
-      {detail && (
+      {detailModal.isOpen && (
         <TransferDetailModal
-          item={detail}
-          onClose={() => setDetail(null)}
+          item={detailModal.data!}
+          onClose={detailModal.close}
           onStatusChange={load}
         />
       )}

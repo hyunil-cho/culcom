@@ -6,6 +6,7 @@ import { outstandingApi, type OutstandingItem, type PageResponse } from '@/lib/a
 import { ROUTES } from '@/lib/routes';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import SearchBar from '@/components/ui/SearchBar';
+import { useModal } from '@/hooks/useModal';
 import PaymentAddModal from './PaymentAddModal';
 
 type SortKey = 'OUTSTANDING_DESC' | 'DAYS_DESC' | 'NAME';
@@ -32,7 +33,7 @@ function OutstandingContent() {
   const [data, setData] = useState<PageResponse<OutstandingItem> | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const [paymentModal, setPaymentModal] = useState<OutstandingItem | null>(null);
+  const paymentModal = useModal<OutstandingItem>();
 
   const load = useCallback(() => {
     setLoading(true);
@@ -89,7 +90,7 @@ function OutstandingContent() {
       header: '액션',
       render: (it) => (
         <div onClick={(e) => e.stopPropagation()}>
-          <button onClick={() => setPaymentModal(it)} style={btnStyle('#4a90e2')}>+ 납부</button>
+          <button onClick={() => paymentModal.open(it)} style={btnStyle('#4a90e2')}>+ 납부</button>
         </div>
       ),
     },
@@ -150,15 +151,15 @@ function OutstandingContent() {
         onRowClick={(it) => router.push(`${ROUTES.COMPLEX_MEMBER_EDIT(it.memberSeq)}?tab=payment`)}
       />
 
-      {paymentModal && (
+      {paymentModal.isOpen && (
         <PaymentAddModal
-          memberSeq={paymentModal.memberSeq}
-          memberName={paymentModal.memberName}
-          mmSeq={paymentModal.memberMembershipSeq}
-          membershipName={paymentModal.membershipName}
-          outstanding={paymentModal.outstanding}
-          onClose={() => setPaymentModal(null)}
-          onSaved={() => { setPaymentModal(null); load(); }}
+          memberSeq={paymentModal.data!.memberSeq}
+          memberName={paymentModal.data!.memberName}
+          mmSeq={paymentModal.data!.memberMembershipSeq}
+          membershipName={paymentModal.data!.membershipName}
+          outstanding={paymentModal.data!.outstanding}
+          onClose={paymentModal.close}
+          onSaved={() => { paymentModal.close(); load(); }}
         />
       )}
 
