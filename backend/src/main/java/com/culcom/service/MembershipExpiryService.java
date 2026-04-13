@@ -32,7 +32,7 @@ import java.util.List;
 public class MembershipExpiryService {
 
     private final ComplexMemberMembershipRepository memberMembershipRepository;
-    private final ComplexMemberService complexMemberService;
+    private final MemberClassService memberClassService;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
@@ -69,7 +69,7 @@ public class MembershipExpiryService {
                     "기간 만료로 자동 만료 (만료일 " + mm.getExpiryDate() + ")"));
 
             // 만료된 멤버십을 듣던 수업 배정도 자동 해제
-            complexMemberService.detachMemberFromAllClasses(mm.getMember(), "만료");
+            memberClassService.detachMemberFromAllClasses(mm.getMember(), "만료");
         }
         return expired.size();
     }

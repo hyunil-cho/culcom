@@ -36,7 +36,7 @@ public class ComplexStaffService {
     private final BranchRepository branchRepository;
     private final MembershipRepository membershipRepository;
     private final ComplexMemberMembershipRepository memberMembershipRepository;
-    private final ComplexMemberService complexMemberService;
+    private final MemberClassService memberClassService;
     private final ApplicationEventPublisher eventPublisher;
 
 
@@ -123,7 +123,7 @@ public class ComplexStaffService {
                 mm.setStatus(newMmStatus);
                 memberMembershipRepository.save(mm);
                 if (wasActive && !mm.isActive() && !detached) {
-                    complexMemberService.detachMemberFromAllClasses(member, newMmStatus.name());
+                    memberClassService.detachMemberFromAllClasses(member, newMmStatus.name());
                     detached = true;
                 }
             }

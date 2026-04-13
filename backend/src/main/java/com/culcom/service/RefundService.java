@@ -32,7 +32,7 @@ public class RefundService {
     private final BranchRepository branchRepository;
     private final ComplexMemberRepository complexMemberRepository;
     private final ComplexMemberMembershipRepository complexMemberMembershipRepository;
-    private final ComplexMemberService complexMemberService;
+    private final MemberClassService memberClassService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -58,10 +58,12 @@ public class RefundService {
                 .accountHolder(req.getAccountHolder())
                 .build();
         if (req.getMemberSeq() != null) {
-            entity.setMember(complexMemberRepository.getReferenceById(req.getMemberSeq()));
+            entity.setMember(complexMemberRepository.findById(req.getMemberSeq())
+                    .orElseThrow(() -> new EntityNotFoundException("회원")));
         }
         if (req.getMemberMembershipSeq() != null) {
-            entity.setMemberMembership(complexMemberMembershipRepository.getReferenceById(req.getMemberMembershipSeq()));
+            entity.setMemberMembership(complexMemberMembershipRepository.findById(req.getMemberMembershipSeq())
+                    .orElseThrow(() -> new EntityNotFoundException("멤버십")));
         }
         branchRepository.findById(branchSeq).ifPresent(entity::setBranch);
         refundRepository.save(entity);
@@ -95,7 +97,7 @@ public class RefundService {
                 mm.setStatus(com.culcom.entity.enums.MembershipStatus.환불);
                 complexMemberMembershipRepository.save(mm);
                 if (wasActive && mm.getMember() != null) {
-                    complexMemberService.detachMemberFromAllClasses(mm.getMember(), "환불");
+                    memberClassService.detachMemberFromAllClasses(mm.getMember(), "환불");
                 }
             }
         }

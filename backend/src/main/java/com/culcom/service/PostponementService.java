@@ -59,10 +59,12 @@ public class PostponementService {
                 .reason(req.getReason())
                 .build();
         if (req.getMemberSeq() != null) {
-            entity.setMember(complexMemberRepository.getReferenceById(req.getMemberSeq()));
+            entity.setMember(complexMemberRepository.findById(req.getMemberSeq())
+                    .orElseThrow(() -> new EntityNotFoundException("회원")));
         }
         if (req.getMemberMembershipSeq() != null) {
-            entity.setMemberMembership(complexMemberMembershipRepository.getReferenceById(req.getMemberMembershipSeq()));
+            entity.setMemberMembership(complexMemberMembershipRepository.findById(req.getMemberMembershipSeq())
+                    .orElseThrow(() -> new EntityNotFoundException("멤버십")));
         }
         branchRepository.findById(branchSeq).ifPresent(entity::setBranch);
         postponementRepository.save(entity);

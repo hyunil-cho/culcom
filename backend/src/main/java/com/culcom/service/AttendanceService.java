@@ -41,11 +41,13 @@ public class AttendanceService {
 
     @Transactional
     public AttendanceResponse record(AttendanceRequest req) {
-        ComplexMemberMembership mm = memberMembershipRepository.getReferenceById(req.getMemberMembershipSeq());
+        ComplexMemberMembership mm = memberMembershipRepository.findById(req.getMemberMembershipSeq())
+                .orElseThrow(() -> new EntityNotFoundException("멤버십"));
         ComplexMemberAttendance attendance = ComplexMemberAttendance.builder()
                 .member(mm.getMember())
                 .memberMembership(mm)
-                .complexClass(req.getClassSeq() != null ? classRepository.getReferenceById(req.getClassSeq()) : null)
+                .complexClass(req.getClassSeq() != null ? classRepository.findById(req.getClassSeq())
+                        .orElseThrow(() -> new EntityNotFoundException("수업")) : null)
                 .attendanceDate(req.getAttendanceDate())
                 .status(req.getStatus())
                 .note(req.getNote())
@@ -179,7 +181,8 @@ public class AttendanceService {
         attendanceRepository.save(ComplexMemberAttendance.builder()
                 .member(ComplexMember.builder().seq(bm.getMemberSeq()).build())
                 .memberMembership(mm)
-                .complexClass(classRepository.getReferenceById(classSeq))
+                .complexClass(classRepository.findById(classSeq)
+                        .orElseThrow(() -> new EntityNotFoundException("수업")))
                 .attendanceDate(today).status(newStatus).build());
 
         mm.setUsedCount(mm.getUsedCount() + 1);

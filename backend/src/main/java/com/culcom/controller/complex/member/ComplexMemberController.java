@@ -10,12 +10,15 @@ import com.culcom.dto.complex.member.ComplexMemberRequest;
 import com.culcom.dto.complex.member.ComplexMemberResponse;
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.service.ComplexMemberService;
+import com.culcom.service.MemberClassService;
+import com.culcom.service.MemberMembershipService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +28,8 @@ import java.util.Map;
 public class ComplexMemberController {
 
     private final ComplexMemberService complexMemberService;
+    private final MemberMembershipService memberMembershipService;
+    private final MemberClassService memberClassService;
 
     @GetMapping("/{seq}")
     public ResponseEntity<ApiResponse<ComplexMemberResponse>> get(@PathVariable Long seq) {
@@ -33,7 +38,7 @@ public class ComplexMemberController {
 
     @GetMapping("/{seq}/memberships")
     public ResponseEntity<ApiResponse<List<ComplexMemberMembershipResponse>>> getMemberships(@PathVariable Long seq) {
-        return ResponseEntity.ok(ApiResponse.ok(complexMemberService.getMemberships(seq)));
+        return ResponseEntity.ok(ApiResponse.ok(memberMembershipService.getMemberships(seq)));
     }
 
     @PostMapping
@@ -58,25 +63,25 @@ public class ComplexMemberController {
     @PostMapping("/{seq}/memberships")
     public ResponseEntity<ApiResponse<ComplexMemberMembershipResponse>> assignMembership(
             @PathVariable Long seq, @Valid @RequestBody ComplexMemberMembershipRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok("멤버십 할당 완료", complexMemberService.assignMembership(seq, req)));
+        return ResponseEntity.ok(ApiResponse.ok("멤버십 할당 완료", memberMembershipService.assignMembership(seq, req)));
     }
 
     @PutMapping("/{seq}/memberships/{mmSeq}")
     public ResponseEntity<ApiResponse<ComplexMemberMembershipResponse>> updateMembership(
             @PathVariable Long seq, @PathVariable Long mmSeq, @Valid @RequestBody ComplexMemberMembershipRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok("멤버십 수정 완료", complexMemberService.updateMembership(seq, mmSeq, req)));
+        return ResponseEntity.ok(ApiResponse.ok("멤버십 수정 완료", memberMembershipService.updateMembership(seq, mmSeq, req)));
     }
 
     @DeleteMapping("/{seq}/memberships/{mmSeq}")
     public ResponseEntity<ApiResponse<Void>> deleteMembership(@PathVariable Long seq, @PathVariable Long mmSeq) {
-        complexMemberService.deleteMembership(seq, mmSeq);
+        memberMembershipService.deleteMembership(seq, mmSeq);
         return ResponseEntity.ok(ApiResponse.ok("멤버십 삭제 완료", null));
     }
 
     @GetMapping("/{seq}/memberships/{mmSeq}/payments")
     public ResponseEntity<ApiResponse<List<MembershipPaymentResponse>>> listPayments(
             @PathVariable Long seq, @PathVariable Long mmSeq) {
-        return ResponseEntity.ok(ApiResponse.ok(complexMemberService.listPayments(seq, mmSeq)));
+        return ResponseEntity.ok(ApiResponse.ok(memberMembershipService.listPayments(seq, mmSeq)));
     }
 
     @PostMapping("/{seq}/memberships/{mmSeq}/payments")
@@ -84,14 +89,14 @@ public class ComplexMemberController {
             @PathVariable Long seq, @PathVariable Long mmSeq,
             @Valid @RequestBody MembershipPaymentRequest req) {
         return ResponseEntity.ok(ApiResponse.ok("납부 기록 추가 완료",
-                complexMemberService.addPayment(seq, mmSeq, req)));
+                memberMembershipService.addPayment(seq, mmSeq, req)));
     }
 
     @GetMapping("/{seq}/class")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getClassMappings(@PathVariable Long seq) {
-        var mappings = complexMemberService.getClassMappings(seq);
+        var mappings = memberClassService.getClassMappings(seq);
         var result = mappings.stream().map(m -> {
-            Map<String, Object> map = new java.util.LinkedHashMap<>();
+            Map<String, Object> map = new LinkedHashMap<>();
             map.put("classSeq", m.getComplexClass().getSeq());
             map.put("timeSlotSeq", m.getComplexClass().getTimeSlot() != null
                     ? m.getComplexClass().getTimeSlot().getSeq() : null);
@@ -103,14 +108,14 @@ public class ComplexMemberController {
     @PostMapping("/{seq}/class/{classSeq}")
     public ResponseEntity<ApiResponse<Void>> assignClass(
             @PathVariable Long seq, @PathVariable Long classSeq) {
-        complexMemberService.assignClass(seq, classSeq);
+        memberClassService.assignClass(seq, classSeq);
         return ResponseEntity.ok(ApiResponse.ok("수업 배정 완료", null));
     }
 
     @PutMapping("/{seq}/class/{classSeq}")
     public ResponseEntity<ApiResponse<Void>> reassignClass(
             @PathVariable Long seq, @PathVariable Long classSeq) {
-        complexMemberService.reassignClass(seq, classSeq);
+        memberClassService.reassignClass(seq, classSeq);
         return ResponseEntity.ok(ApiResponse.ok("수업 재배정 완료", null));
     }
 

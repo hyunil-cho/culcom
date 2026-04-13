@@ -41,7 +41,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Transactional
 class ComplexMemberServiceOverpaymentTest {
 
-    @Autowired ComplexMemberService complexMemberService;
+    @Autowired MemberMembershipService memberMembershipService;
     @Autowired TransferService transferService;
     @Autowired BranchRepository branchRepository;
     @Autowired MembershipRepository membershipRepository;
@@ -109,7 +109,7 @@ class ComplexMemberServiceOverpaymentTest {
         MembershipPaymentRequest req = buildReq(200_000L, PaymentKind.BALANCE);
 
         assertThatCode(() ->
-                complexMemberService.addPayment(f.member.getSeq(), f.mm.getSeq(), req))
+                memberMembershipService.addPayment(f.member.getSeq(), f.mm.getSeq(), req))
                 .doesNotThrowAnyException();
 
         assertThat(paymentRepository.sumAmountByMemberMembershipSeq(f.mm.getSeq()))
@@ -122,7 +122,7 @@ class ComplexMemberServiceOverpaymentTest {
         MembershipPaymentRequest req = buildReq(200_001L, PaymentKind.BALANCE);
 
         assertThatThrownBy(() ->
-                complexMemberService.addPayment(f.member.getSeq(), f.mm.getSeq(), req))
+                memberMembershipService.addPayment(f.member.getSeq(), f.mm.getSeq(), req))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("미수금");
 
@@ -137,7 +137,7 @@ class ComplexMemberServiceOverpaymentTest {
         MembershipPaymentRequest req = buildReq(500_000L, PaymentKind.BALANCE);
 
         assertThatThrownBy(() ->
-                complexMemberService.addPayment(f.member.getSeq(), f.mm.getSeq(), req))
+                memberMembershipService.addPayment(f.member.getSeq(), f.mm.getSeq(), req))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("미수금");
     }
@@ -148,7 +148,7 @@ class ComplexMemberServiceOverpaymentTest {
         MembershipPaymentRequest req = buildReq(1L, PaymentKind.ADDITIONAL); // 1원만 추가
 
         assertThatThrownBy(() ->
-                complexMemberService.addPayment(f.member.getSeq(), f.mm.getSeq(), req))
+                memberMembershipService.addPayment(f.member.getSeq(), f.mm.getSeq(), req))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("미수금");
     }
@@ -159,7 +159,7 @@ class ComplexMemberServiceOverpaymentTest {
         MembershipPaymentRequest req = buildReq(100_001L, PaymentKind.ADDITIONAL); // 1원 초과
 
         assertThatThrownBy(() ->
-                complexMemberService.addPayment(f.member.getSeq(), f.mm.getSeq(), req))
+                memberMembershipService.addPayment(f.member.getSeq(), f.mm.getSeq(), req))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("미수금");
     }
@@ -182,7 +182,7 @@ class ComplexMemberServiceOverpaymentTest {
         assertThat(derivedStatus(f.mm)).isEqualTo("완납");
 
         // 50,000원 환불 정정 → paid 250,000 / total 300,000
-        complexMemberService.addPayment(f.member.getSeq(), f.mm.getSeq(),
+        memberMembershipService.addPayment(f.member.getSeq(), f.mm.getSeq(),
                 buildReq(-50_000L, PaymentKind.REFUND));
 
         // (1) 파생 납부 상태가 완납 → 부분납부로 전환
@@ -195,7 +195,7 @@ class ComplexMemberServiceOverpaymentTest {
                 .isEqualTo("부분납부");
 
         // (2) 과납 가드가 '미수금 50,000' 으로 인식 → 50,000 재납부는 허용
-        assertThatCode(() -> complexMemberService.addPayment(
+        assertThatCode(() -> memberMembershipService.addPayment(
                 f.member.getSeq(), f.mm.getSeq(), buildReq(50_000L, PaymentKind.BALANCE)))
                 .as("환불분만큼의 재납부는 허용되어야 한다").doesNotThrowAnyException();
 
@@ -203,7 +203,7 @@ class ComplexMemberServiceOverpaymentTest {
                 .as("재납부 후에는 다시 완납").isEqualTo("완납");
 
         // (3) 이어서 1원이라도 추가하면 과납으로 거부되어야 한다
-        assertThatThrownBy(() -> complexMemberService.addPayment(
+        assertThatThrownBy(() -> memberMembershipService.addPayment(
                 f.member.getSeq(), f.mm.getSeq(), buildReq(1L, PaymentKind.ADDITIONAL)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("미수금");
@@ -219,7 +219,7 @@ class ComplexMemberServiceOverpaymentTest {
         assertThat(derivedStatus(f.mm)).isEqualTo("완납");
 
         // 300,000 전액 환불 정정 → paid 0
-        complexMemberService.addPayment(f.member.getSeq(), f.mm.getSeq(),
+        memberMembershipService.addPayment(f.member.getSeq(), f.mm.getSeq(),
                 buildReq(-300_000L, PaymentKind.REFUND));
 
         assertThat(paid(f.mm)).isEqualTo(0L);

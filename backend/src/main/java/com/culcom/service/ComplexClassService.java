@@ -48,9 +48,12 @@ public class ComplexClassService {
                 .description(req.getDescription())
                 .capacity(req.getCapacity())
                 .sortOrder(req.getSortOrder() != null ? req.getSortOrder() : classRepository.findMaxSortOrderByBranchSeq(branchSeq) + 1)
-                .branch(branchRepository.getReferenceById(branchSeq))
-                .timeSlot(timeSlotRepository.getReferenceById(req.getTimeSlotSeq()))
-                .staff(req.getStaffSeq() != null ? memberRepository.getReferenceById(req.getStaffSeq()) : null)
+                .branch(branchRepository.findById(branchSeq)
+                        .orElseThrow(() -> new EntityNotFoundException("지점")))
+                .timeSlot(timeSlotRepository.findById(req.getTimeSlotSeq())
+                        .orElseThrow(() -> new EntityNotFoundException("시간대")))
+                .staff(req.getStaffSeq() != null ? memberRepository.findById(req.getStaffSeq())
+                        .orElseThrow(() -> new EntityNotFoundException("스태프")) : null)
                 .build();
         ComplexClass result = classRepository.save(entity);
         return ComplexClassResponse.from(result);
@@ -81,14 +84,14 @@ public class ComplexClassService {
 
         if (!Objects.equals(oldStaffSeq, newStaffSeq)) {
             if (oldStaffSeq != null) {
-                ComplexMember oldStaff = memberRepository.getReferenceById(oldStaffSeq);
-                eventPublisher.publishEvent(ActivityEvent.withChange(
-                        oldStaff, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, cls.getName(), null));
+                memberRepository.findById(oldStaffSeq).ifPresent(oldStaff ->
+                        eventPublisher.publishEvent(ActivityEvent.withChange(
+                                oldStaff, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, cls.getName(), null)));
             }
             if (newStaffSeq != null) {
-                ComplexMember newStaff = memberRepository.getReferenceById(newStaffSeq);
-                eventPublisher.publishEvent(ActivityEvent.withChange(
-                        newStaff, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, null, cls.getName()));
+                memberRepository.findById(newStaffSeq).ifPresent(newStaff ->
+                        eventPublisher.publishEvent(ActivityEvent.withChange(
+                                newStaff, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, null, cls.getName())));
             }
         }
 
@@ -166,14 +169,14 @@ public class ComplexClassService {
 
         if (!Objects.equals(oldStaffSeq, staffSeq)) {
             if (oldStaffSeq != null) {
-                ComplexMember oldStaff = memberRepository.getReferenceById(oldStaffSeq);
-                eventPublisher.publishEvent(ActivityEvent.withChange(
-                        oldStaff, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, cls.getName(), null));
+                memberRepository.findById(oldStaffSeq).ifPresent(oldStaff ->
+                        eventPublisher.publishEvent(ActivityEvent.withChange(
+                                oldStaff, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, cls.getName(), null)));
             }
             if (staffSeq != null) {
-                ComplexMember newStaff = memberRepository.getReferenceById(staffSeq);
-                eventPublisher.publishEvent(ActivityEvent.withChange(
-                        newStaff, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, null, cls.getName()));
+                memberRepository.findById(staffSeq).ifPresent(newStaff ->
+                        eventPublisher.publishEvent(ActivityEvent.withChange(
+                                newStaff, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, null, cls.getName())));
             }
         }
         return ComplexClassResponse.from(saved);

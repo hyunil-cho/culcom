@@ -35,7 +35,7 @@ public class TransferService {
     private final CustomerRepository customerRepository;
     private final CustomerConsentHistoryRepository consentHistoryRepository;
     private final MembershipPaymentRepository paymentRepository;
-    private final ComplexMemberService complexMemberService;
+    private final MemberClassService memberClassService;
     private final ApplicationEventPublisher eventPublisher;
 
     // ── 양도비 계산 ──
@@ -128,7 +128,7 @@ public class TransferService {
         memberMembershipRepository.save(original);
 
         // 2. 양도자 수업/팀 자동 제외
-        complexMemberService.detachMemberFromAllClasses(fromMember, "양도");
+        memberClassService.detachMemberFromAllClasses(fromMember, "양도");
 
         // 3. 양수자에게 동일한 멤버십 생성 (양도 불가 표시)
         ComplexMemberMembership newMm = ComplexMemberMembership.builder()
