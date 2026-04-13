@@ -184,21 +184,6 @@ export const memberApi = {
     api.post<MembershipPaymentResponse>(`${API.COMPLEX_MEMBER_MEMBERSHIP(seq, mmSeq)}/payments`, data),
 };
 
-export interface EnumOption {
-  value: string;
-  label: string;
-}
-
-export interface PaymentOptions {
-  methods: EnumOption[];
-  banks: EnumOption[];
-  kinds: EnumOption[];
-}
-
-export const paymentOptionsApi = {
-  get: () => api.get<PaymentOptions>('/complex/payments/options'),
-};
-
 // ── 대시보드 ──
 
 export interface MembershipAlertItem {
@@ -263,21 +248,15 @@ export const complexDashboardApi = {
 export interface ConfigItem {
   seq: number;
   code: string;
-  label: string;
-  sortOrder: number;
   isActive: boolean;
 }
 
 export interface ConfigCreateRequest {
   code: string;
-  label: string;
-  sortOrder?: number;
   isActive?: boolean;
 }
 
 export interface ConfigUpdateRequest {
-  label?: string;
-  sortOrder?: number;
   isActive?: boolean;
 }
 

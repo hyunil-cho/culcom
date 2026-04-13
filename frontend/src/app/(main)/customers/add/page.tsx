@@ -19,7 +19,7 @@ export default function CustomerAddPage() {
   });
   const { run, modal } = useResultModal({ redirectPath: ROUTES.CUSTOMERS });
   const { channels: signupChannelConfigs } = useSignupChannels();
-  const signupChannelLabels = signupChannelConfigs.map(c => c.label);
+  const signupChannelLabels = signupChannelConfigs.map(c => c.code);
   const adSourceSelectValue = signupChannelLabels.includes(form.adSource) ? form.adSource : (form.adSource ? '기타' : '');
 
   const handlePhoneChange = (value: string) => {

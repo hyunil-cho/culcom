@@ -10,7 +10,7 @@ export { branchApi, type Branch } from './branch';
 export { customerApi, type Customer } from './customer';
 export {
   classApi, memberApi, staffApi, membershipApi, timeslotApi, refundApi,
-  postponementApi, publicPostponementApi, outstandingApi, paymentOptionsApi,
+  postponementApi, publicPostponementApi, outstandingApi,
   paymentMethodConfigApi, bankConfigApi, signupChannelConfigApi, complexDashboardApi,
   type MembershipAlertItem, type MembershipAlertsResponse, type AutoExpiredItem,
   type TrendResponse, type TrendItem, type TrendPeriod,
@@ -18,7 +18,6 @@ export {
   type ComplexMember, type MemberMembershipRequest, type MemberMembershipResponse, type MemberActivityTimelineItem,
   type MembershipPaymentRequest, type MembershipPaymentResponse,
   type PaymentKind, type PaymentMethod, type OutstandingItem,
-  type EnumOption, type PaymentOptions,
   type ConfigItem, type ConfigCreateRequest, type ConfigUpdateRequest,
   type ComplexStaff, type StaffRefundInfo,
   type Membership, type MembershipRequest,

@@ -11,7 +11,7 @@ import lombok.*;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class BankConfig extends BaseTimeEntity {
+public class BankConfig extends BaseTimeEntity implements Configurable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,13 +19,6 @@ public class BankConfig extends BaseTimeEntity {
 
     @Column(nullable = false, length = 50, updatable = false)
     private String code;
-
-    @Column(nullable = false, length = 100)
-    private String label;
-
-    @Column(name = "sort_order", nullable = false)
-    @Builder.Default
-    private Integer sortOrder = 0;
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default

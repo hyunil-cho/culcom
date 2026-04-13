@@ -1,8 +1,6 @@
 package com.culcom.service;
 
-import com.culcom.dto.publicapi.MemberInfo;
 import com.culcom.dto.publicapi.MemberSearchResponse;
-import com.culcom.dto.publicapi.MembershipInfo;
 import com.culcom.dto.publicapi.RefundSubmitRequest;
 import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
@@ -34,37 +32,10 @@ public class PublicRefundService {
     private final ComplexRefundRequestRepository refundRequestRepository;
     private final ComplexRefundReasonRepository refundReasonRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final PublicMemberSearchService memberSearchService;
 
     public MemberSearchResponse searchMember(String name, String phone) {
-        List<ComplexMember> members = memberRepository.findByNameAndPhoneNumber(name, phone);
-        if (members.isEmpty()) {
-            return new MemberSearchResponse(List.of());
-        }
-
-        List<Long> memberSeqs = members.stream().map(ComplexMember::getSeq).toList();
-        List<ComplexMemberMembership> allMemberships = memberMembershipRepository.findWithMembershipByMemberSeqIn(memberSeqs);
-        Map<Long, List<ComplexMemberMembership>> membershipMap = allMemberships.stream()
-                .collect(Collectors.groupingBy(mm -> mm.getMember().getSeq()));
-
-        List<MemberInfo> memberInfos = members.stream().map(m -> {
-            List<ComplexMemberMembership> memberships = membershipMap.getOrDefault(m.getSeq(), List.of());
-            List<MembershipInfo> msInfos = memberships.stream()
-                    .filter(ComplexMemberMembership::isActive)
-                    .map(mm -> new MembershipInfo(
-                            mm.getSeq(), mm.getMembership().getName(),
-                            mm.getStartDate() != null ? mm.getStartDate().toString() : "",
-                            mm.getExpiryDate() != null ? mm.getExpiryDate().toString() : "",
-                            mm.getTotalCount(), mm.getUsedCount(),
-                            mm.getPostponeTotal(), mm.getPostponeUsed()))
-                    .toList();
-
-            return new MemberInfo(
-                    m.getSeq(), m.getName(), m.getPhoneNumber(),
-                    m.getBranch().getSeq(), m.getBranch().getBranchName(),
-                    m.getMetaData() != null ? m.getMetaData().getLevel() : null, msInfos, List.of());
-        }).toList();
-
-        return new MemberSearchResponse(memberInfos);
+        return memberSearchService.search(name, phone, ComplexMemberMembership::isActive, false);
     }
 
     @Transactional

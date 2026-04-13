@@ -42,7 +42,7 @@ function MemberAddPageInner() {
       return;
     }
     const detail = detailRes.data;
-    const channelLabels = channels.map(c => c.label);
+    const channelLabels = channels.map(c => c.code);
     const signupChannel = detail.adSource && channelLabels.includes(detail.adSource)
       ? detail.adSource : (detail.adSource ?? '');
     const info = detail.customerComment ?? '';

@@ -15,7 +15,7 @@ interface Props {
 
 export default function BasicInfoTab({ form, onChange, isEdit, staffForm, onStaffChange }: Props) {
   const { channels: signupChannelConfigs } = useSignupChannels();
-  const signupChannelLabels = signupChannelConfigs.map(c => c.label);
+  const signupChannelLabels = signupChannelConfigs.map(c => c.code);
   const isStaff = staffForm?.isStaff ?? false;
   const signupSelectValue = signupChannelLabels.includes(form.signupChannel) ? form.signupChannel : (form.signupChannel ? '기타' : '');
 

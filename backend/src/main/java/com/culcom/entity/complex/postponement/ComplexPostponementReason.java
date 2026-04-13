@@ -2,6 +2,7 @@ package com.culcom.entity.complex.postponement;
 
 import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.branch.Branch;
+import com.culcom.entity.complex.BranchReason;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,7 +11,7 @@ import lombok.*;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class ComplexPostponementReason extends BaseTimeEntity {
+public class ComplexPostponementReason extends BaseTimeEntity implements BranchReason {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -23,13 +23,10 @@ export default function ConfigCatalogPage({ title, description, api }: Props) {
   const [items, setItems] = useState<ConfigItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingSeq, setEditingSeq] = useState<number | null>(null);
-  const [editLabel, setEditLabel] = useState('');
-  const [editSortOrder, setEditSortOrder] = useState(0);
   const [editIsActive, setEditIsActive] = useState(true);
 
   const [adding, setAdding] = useState(false);
   const [newCode, setNewCode] = useState('');
-  const [newLabel, setNewLabel] = useState('');
 
   const [confirmDelete, setConfirmDelete] = useState<ConfigItem | null>(null);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -43,8 +40,6 @@ export default function ConfigCatalogPage({ title, description, api }: Props) {
 
   const startEdit = (it: ConfigItem) => {
     setEditingSeq(it.seq);
-    setEditLabel(it.label);
-    setEditSortOrder(it.sortOrder);
     setEditIsActive(it.isActive);
   };
 
@@ -52,7 +47,7 @@ export default function ConfigCatalogPage({ title, description, api }: Props) {
 
   const saveEdit = async (seq: number) => {
     try {
-      await api.update(seq, { label: editLabel, sortOrder: editSortOrder, isActive: editIsActive });
+      await api.update(seq, { isActive: editIsActive });
       setEditingSeq(null);
       load();
     } catch (e: any) {
@@ -61,15 +56,14 @@ export default function ConfigCatalogPage({ title, description, api }: Props) {
   };
 
   const handleAdd = async () => {
-    if (!newCode.trim() || !newLabel.trim()) {
-      setResult({ success: false, message: '코드와 표시명 모두 입력해 주세요' });
+    if (!newCode.trim()) {
+      setResult({ success: false, message: '코드를 입력해 주세요' });
       return;
     }
     try {
-      await api.create({ code: newCode.trim(), label: newLabel.trim(), isActive: true });
+      await api.create({ code: newCode.trim(), isActive: true });
       setAdding(false);
       setNewCode('');
-      setNewLabel('');
       load();
     } catch (e: any) {
       setResult({ success: false, message: e?.message ?? '추가 실패' });
@@ -104,14 +98,8 @@ export default function ConfigCatalogPage({ title, description, api }: Props) {
               onChange={(e) => setNewCode(e.target.value.toUpperCase())}
               style={{ ...inputStyle, width: 180, fontFamily: 'monospace' }}
             />
-            <input
-              placeholder="표시명 (예: 카드)"
-              value={newLabel}
-              onChange={(e) => setNewLabel(e.target.value)}
-              style={{ ...inputStyle, flex: 1, minWidth: 200 }}
-            />
             <Button onClick={handleAdd}>저장</Button>
-            <button onClick={() => { setAdding(false); setNewCode(''); setNewLabel(''); }}
+            <button onClick={() => { setAdding(false); setNewCode(''); }}
               style={{ padding: '8px 14px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: 'pointer' }}>
               취소
             </button>
@@ -132,8 +120,6 @@ export default function ConfigCatalogPage({ title, description, api }: Props) {
             <thead>
               <tr style={{ background: '#fafbfc', color: '#888', fontSize: 12 }}>
                 <th style={th}>코드</th>
-                <th style={th}>표시명</th>
-                <th style={{ ...th, width: 100 }}>정렬</th>
                 <th style={{ ...th, width: 100 }}>활성</th>
                 <th style={{ ...th, width: 200, textAlign: 'right' }}>액션</th>
               </tr>
@@ -144,20 +130,6 @@ export default function ConfigCatalogPage({ title, description, api }: Props) {
                 return (
                   <tr key={it.seq} style={{ borderTop: '1px solid #f1f3f5' }}>
                     <td style={{ ...td, fontFamily: 'monospace', color: '#666' }}>{it.code}</td>
-                    <td style={td}>
-                      {editing ? (
-                        <input value={editLabel} onChange={(e) => setEditLabel(e.target.value)} style={inputStyle} />
-                      ) : (
-                        <strong>{it.label}</strong>
-                      )}
-                    </td>
-                    <td style={td}>
-                      {editing ? (
-                        <input type="number" value={editSortOrder}
-                          onChange={(e) => setEditSortOrder(Number(e.target.value))}
-                          style={{ ...inputStyle, width: 70 }} />
-                      ) : it.sortOrder}
-                    </td>
                     <td style={td}>
                       {editing ? (
                         <label style={{ display: 'inline-flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
@@ -207,7 +179,7 @@ export default function ConfigCatalogPage({ title, description, api }: Props) {
           onConfirm={handleDelete}
         >
           <p style={{ margin: 0 }}>
-            <strong>{confirmDelete.label}</strong> ({confirmDelete.code}) 을(를) 삭제하시겠습니까?
+            <strong>{confirmDelete.code}</strong> 을(를) 삭제하시겠습니까?
             <br />
             <small style={{ color: '#888' }}>
               * 이미 이 항목을 참조하는 결제 기록이 있다면 표시에 영향이 갈 수 있습니다.

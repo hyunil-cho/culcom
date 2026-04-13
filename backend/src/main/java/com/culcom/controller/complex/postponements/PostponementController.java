@@ -1,9 +1,8 @@
 package com.culcom.controller.complex.postponements;
 
 import com.culcom.dto.ApiResponse;
+import com.culcom.dto.complex.ReasonDto;
 import com.culcom.dto.complex.postponement.PostponementCreateRequest;
-import com.culcom.dto.complex.postponement.PostponementReasonRequest;
-import com.culcom.dto.complex.postponement.PostponementReasonResponse;
 import com.culcom.dto.complex.postponement.PostponementResponse;
 import com.culcom.entity.enums.RequestStatus;
 import com.culcom.config.security.CustomUserPrincipal;
@@ -40,15 +39,15 @@ public class PostponementController {
     }
 
     @GetMapping("/reasons")
-    public ResponseEntity<ApiResponse<List<PostponementReasonResponse>>> reasons(@AuthenticationPrincipal CustomUserPrincipal principal) {
-        List<PostponementReasonResponse> result = postponementService.reasons(principal.getSelectedBranchSeq());
+    public ResponseEntity<ApiResponse<List<ReasonDto.Response>>> reasons(@AuthenticationPrincipal CustomUserPrincipal principal) {
+        List<ReasonDto.Response> result = postponementService.reasons(principal.getSelectedBranchSeq());
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
     @PostMapping("/reasons")
-    public ResponseEntity<ApiResponse<PostponementReasonResponse>> addReason(
-            @RequestBody PostponementReasonRequest req, @AuthenticationPrincipal CustomUserPrincipal principal) {
-        PostponementReasonResponse result = postponementService.addReason(req, principal.getSelectedBranchSeq());
+    public ResponseEntity<ApiResponse<ReasonDto.Response>> addReason(
+            @RequestBody ReasonDto.Request req, @AuthenticationPrincipal CustomUserPrincipal principal) {
+        ReasonDto.Response result = postponementService.addReason(req, principal.getSelectedBranchSeq());
         return ResponseEntity.ok(ApiResponse.ok("연기사유 추가 완료", result));
     }
 

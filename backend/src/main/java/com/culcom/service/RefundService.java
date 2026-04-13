@@ -1,8 +1,7 @@
 package com.culcom.service;
 
+import com.culcom.dto.complex.ReasonDto;
 import com.culcom.dto.complex.refund.RefundCreateRequest;
-import com.culcom.dto.complex.refund.RefundReasonRequest;
-import com.culcom.dto.complex.refund.RefundReasonResponse;
 import com.culcom.dto.complex.refund.RefundResponse;
 import com.culcom.entity.complex.refund.ComplexRefundReason;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
@@ -102,32 +101,26 @@ public class RefundService {
         }
         refundRepository.save(req);
 
-        if (req.getMember() != null) {
-            ActivityEventType eventType = status == RequestStatus.승인
-                    ? ActivityEventType.REFUND_APPROVE : ActivityEventType.REFUND_REJECT;
-            String note = "환불 " + status.name() + ": " + req.getMembershipName();
-            if (status == RequestStatus.반려 && rejectReason != null) {
-                note += " (사유: " + rejectReason + ")";
-            }
-            Long mmSeq = req.getMemberMembership() != null ? req.getMemberMembership().getSeq() : null;
-            eventPublisher.publishEvent(ActivityEvent.ofMembership(req.getMember(), eventType, mmSeq, note));
-        }
+        RequestStatusEventHelper.publishStatusChangeEvent(eventPublisher,
+                req.getMember(), req.getMemberMembership(), status, rejectReason,
+                ActivityEventType.REFUND_APPROVE, ActivityEventType.REFUND_REJECT,
+                "환불 " + status.name() + ": " + req.getMembershipName());
 
         return RefundResponse.from(req);
     }
 
-    public List<RefundReasonResponse> reasons(Long branchSeq) {
+    public List<ReasonDto.Response> reasons(Long branchSeq) {
         return reasonRepository.findByBranchSeq(branchSeq).stream()
-                .map(RefundReasonResponse::from)
+                .map(ReasonDto.Response::from)
                 .collect(Collectors.toList());
     }
 
-    public RefundReasonResponse addReason(RefundReasonRequest req, Long branchSeq) {
+    public ReasonDto.Response addReason(ReasonDto.Request req, Long branchSeq) {
         ComplexRefundReason entity = ComplexRefundReason.builder()
                 .reason(req.getReason())
                 .build();
         branchRepository.findById(branchSeq).ifPresent(entity::setBranch);
-        return RefundReasonResponse.from(reasonRepository.save(entity));
+        return ReasonDto.Response.from(reasonRepository.save(entity));
     }
 
     public void deleteReason(Long seq) {

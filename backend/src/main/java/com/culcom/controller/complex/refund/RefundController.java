@@ -1,9 +1,8 @@
 package com.culcom.controller.complex.refund;
 
 import com.culcom.dto.ApiResponse;
+import com.culcom.dto.complex.ReasonDto;
 import com.culcom.dto.complex.refund.RefundCreateRequest;
-import com.culcom.dto.complex.refund.RefundReasonRequest;
-import com.culcom.dto.complex.refund.RefundReasonResponse;
 import com.culcom.dto.complex.refund.RefundResponse;
 import com.culcom.entity.enums.RequestStatus;
 import com.culcom.config.security.CustomUserPrincipal;
@@ -40,14 +39,14 @@ public class RefundController {
     }
 
     @GetMapping("/reasons")
-    public ResponseEntity<ApiResponse<List<RefundReasonResponse>>> reasons(
+    public ResponseEntity<ApiResponse<List<ReasonDto.Response>>> reasons(
             @AuthenticationPrincipal CustomUserPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.ok(refundService.reasons(principal.getSelectedBranchSeq())));
     }
 
     @PostMapping("/reasons")
-    public ResponseEntity<ApiResponse<RefundReasonResponse>> addReason(
-            @RequestBody RefundReasonRequest req, @AuthenticationPrincipal CustomUserPrincipal principal) {
+    public ResponseEntity<ApiResponse<ReasonDto.Response>> addReason(
+            @RequestBody ReasonDto.Request req, @AuthenticationPrincipal CustomUserPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.ok(refundService.addReason(req, principal.getSelectedBranchSeq())));
     }
 

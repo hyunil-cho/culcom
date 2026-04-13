@@ -58,59 +58,28 @@ public class DataInitializer implements ApplicationRunner {
 
     private void initBanks() {
         if (bankConfigRepository.count() > 0) return;
-        String[][] seeds = {
-                {"KB", "국민은행"},
-                {"SHINHAN", "신한은행"},
-                {"WOORI", "우리은행"},
-                {"HANA", "하나은행"},
-                {"NH", "농협은행"},
-                {"IBK", "기업은행"},
-                {"KAKAO", "카카오뱅크"},
-                {"TOSS", "토스뱅크"},
-                {"K", "케이뱅크"},
-        };
-        int order = 0;
-        for (String[] s : seeds) {
-            bankConfigRepository.save(BankConfig.builder()
-                    .code(s[0]).label(s[1]).sortOrder(order++).isActive(true).build());
+        String[] seeds = {"KB", "SHINHAN", "WOORI", "HANA", "NH", "IBK", "KAKAO", "TOSS", "K"};
+        for (String code : seeds) {
+            bankConfigRepository.save(BankConfig.builder().code(code).isActive(true).build());
         }
         log.info("초기 은행 시드 {}건 생성", seeds.length);
     }
 
     private void initSignupChannels() {
         if (signupChannelConfigRepository.count() > 0) return;
-        String[][] seeds = {
-                {"INSTAGRAM", "인스타그램"},
-                {"NAVER", "네이버 검색"},
-                {"REFERRAL", "지인 소개"},
-                {"FLYER", "전단지"},
-                {"HOMEPAGE", "홈페이지"},
-        };
-        int order = 0;
-        for (String[] s : seeds) {
-            signupChannelConfigRepository.save(SignupChannelConfig.builder()
-                    .code(s[0]).label(s[1]).sortOrder(order++).isActive(true).build());
+        String[] seeds = {"INSTAGRAM", "NAVER", "REFERRAL", "FLYER", "HOMEPAGE"};
+        for (String code : seeds) {
+            signupChannelConfigRepository.save(SignupChannelConfig.builder().code(code).isActive(true).build());
         }
         log.info("초기 가입경로 시드 {}건 생성", seeds.length);
     }
 
     private void initPaymentMethods() {
         if (paymentMethodConfigRepository.count() > 0) return;
-        String[][] seeds = {
-                {"CARD", "카드"},
-                {"ONLINE_SUBSCRIPTION", "온라인구독"},
-                {"ONLINE_CREDIT", "온라인신용"},
-                {"TOSS_LINK", "토스링크"},
-                {"WALK_IN","워크인"},
-                {"BANK_TRANSFER_PERSONAL", "이체(개인통장)"},
-                {"BANK_TRANSFER_CORPORATE", "이체(법인통장)"},
-                {"CASH", "현금"},
-                {"OTHER", "기타"},
-        };
-        int order = 0;
-        for (String[] s : seeds) {
-            paymentMethodConfigRepository.save(PaymentMethodConfig.builder()
-                    .code(s[0]).label(s[1]).sortOrder(order++).isActive(true).build());
+        String[] seeds = {"CARD", "ONLINE_SUBSCRIPTION", "ONLINE_CREDIT", "TOSS_LINK",
+                "WALK_IN", "BANK_TRANSFER_PERSONAL", "BANK_TRANSFER_CORPORATE", "CASH", "OTHER"};
+        for (String code : seeds) {
+            paymentMethodConfigRepository.save(PaymentMethodConfig.builder().code(code).isActive(true).build());
         }
         log.info("초기 결제 수단 시드 {}건 생성", seeds.length);
     }

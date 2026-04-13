@@ -1,8 +1,7 @@
 package com.culcom.service;
 
+import com.culcom.dto.complex.ReasonDto;
 import com.culcom.dto.complex.postponement.PostponementCreateRequest;
-import com.culcom.dto.complex.postponement.PostponementReasonRequest;
-import com.culcom.dto.complex.postponement.PostponementReasonResponse;
 import com.culcom.dto.complex.postponement.PostponementResponse;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.postponement.ComplexPostponementReason;
@@ -96,32 +95,26 @@ public class PostponementService {
         }
         postponementRepository.save(req);
 
-        if (req.getMember() != null) {
-            ActivityEventType eventType = status == RequestStatus.승인
-                    ? ActivityEventType.POSTPONEMENT_APPROVE : ActivityEventType.POSTPONEMENT_REJECT;
-            String note = "연기 " + status.name() + ": " + req.getStartDate() + " ~ " + req.getEndDate();
-            if (status == RequestStatus.반려 && rejectReason != null) {
-                note += " (사유: " + rejectReason + ")";
-            }
-            Long mmSeq = req.getMemberMembership() != null ? req.getMemberMembership().getSeq() : null;
-            eventPublisher.publishEvent(ActivityEvent.ofMembership(req.getMember(), eventType, mmSeq, note));
-        }
+        RequestStatusEventHelper.publishStatusChangeEvent(eventPublisher,
+                req.getMember(), req.getMemberMembership(), status, rejectReason,
+                ActivityEventType.POSTPONEMENT_APPROVE, ActivityEventType.POSTPONEMENT_REJECT,
+                "연기 " + status.name() + ": " + req.getStartDate() + " ~ " + req.getEndDate());
 
         return PostponementResponse.from(req);
     }
 
-    public List<PostponementReasonResponse> reasons(Long branchSeq) {
+    public List<ReasonDto.Response> reasons(Long branchSeq) {
         return reasonRepository.findByBranchSeq(branchSeq).stream()
-                .map(PostponementReasonResponse::from)
+                .map(ReasonDto.Response::from)
                 .collect(Collectors.toList());
     }
 
-    public PostponementReasonResponse addReason(PostponementReasonRequest req, Long branchSeq) {
+    public ReasonDto.Response addReason(ReasonDto.Request req, Long branchSeq) {
         ComplexPostponementReason entity = ComplexPostponementReason.builder()
                 .reason(req.getReason())
                 .build();
         branchRepository.findById(branchSeq).ifPresent(entity::setBranch);
-        return PostponementReasonResponse.from(reasonRepository.save(entity));
+        return ReasonDto.Response.from(reasonRepository.save(entity));
     }
 
     public void deleteReason(Long seq) {
