@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { memberApi, transferApi, settingsApi, externalApi, type MemberMembershipResponse, type TransferRequestItem } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { Select, Textarea } from '@/components/ui/FormInput';
 import { Button } from '@/components/ui/Button';
 import s from './MembershipLinkModal.module.css';
@@ -14,39 +15,34 @@ interface Props {
 }
 
 export default function TransferLinkModal({ memberSeq, memberName, memberPhone, onClose }: Props) {
-  const [memberships, setMemberships] = useState<MemberMembershipResponse[]>([]);
   const [selectedMmSeq, setSelectedMmSeq] = useState('');
-  const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [result, setResult] = useState<TransferRequestItem | null>(null);
 
   // SMS
   const [copied, setCopied] = useState(false);
   const [showSms, setShowSms] = useState(false);
-  const [senderNumbers, setSenderNumbers] = useState<string[]>([]);
   const [senderPhone, setSenderPhone] = useState('');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ success: boolean; text: string } | null>(null);
 
   // 멤버십 목록 로드 (활성만)
-  useEffect(() => {
-    memberApi.getMemberships(memberSeq).then(res => {
-      if (res.success) setMemberships(res.data.filter(ms => ms.status === '활성'));
-      setLoading(false);
-    });
-  }, [memberSeq]);
+  const { data: allMemberships = [], isLoading: loading } = useApiQuery<MemberMembershipResponse[]>(
+    ['transferLinkMemberships', memberSeq],
+    () => memberApi.getMemberships(memberSeq),
+  );
+  const memberships = allMemberships.filter(ms => ms.status === '활성');
 
   // SMS 발신번호 로드
+  const { data: senderNumbers = [] } = useApiQuery<string[]>(
+    ['senderNumbers'],
+    () => settingsApi.getSenderNumbers(),
+    { enabled: showSms },
+  );
   useEffect(() => {
-    if (!showSms) return;
-    settingsApi.getSenderNumbers().then(res => {
-      if (res.success && res.data?.length > 0) {
-        setSenderNumbers(res.data);
-        setSenderPhone(res.data[0]);
-      }
-    });
-  }, [showSms]);
+    if (senderNumbers.length > 0 && !senderPhone) setSenderPhone(senderNumbers[0]);
+  }, [senderNumbers, senderPhone]);
 
   const transferUrl = result
     ? `${window.location.origin}/public/transfer?token=${result.token}`

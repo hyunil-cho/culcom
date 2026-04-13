@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { memberApi, type ComplexMember } from '@/lib/api';
+import type { PageResponse } from '@/lib/api/client';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { useModal } from '@/hooks/useModal';
 import MembershipLinkModal from '../components/MembershipLinkModal';
 import PostponementLinkModal from '../components/PostponementLinkModal';
@@ -50,23 +52,16 @@ const LINK_TYPES: {
 export default function MemberLinksPage() {
   const [keyword, setKeyword] = useState('');
   const [searched, setSearched] = useState('');
-  const [members, setMembers] = useState<ComplexMember[]>([]);
-  const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<ComplexMember | null>(null);
   const linkModal = useModal<LinkKind>();
 
   // 검색
-  useEffect(() => {
-    if (!searched.trim()) {
-      setMembers([]);
-      return;
-    }
-    setLoading(true);
-    memberApi
-      .list(`page=0&size=50&keyword=${encodeURIComponent(searched)}`)
-      .then((res) => setMembers(res.data.content))
-      .finally(() => setLoading(false));
-  }, [searched]);
+  const { data: searchData, isLoading: loading } = useApiQuery<PageResponse<ComplexMember>>(
+    ['memberLinks', searched],
+    () => memberApi.list(`page=0&size=50&keyword=${encodeURIComponent(searched)}`),
+    { enabled: !!searched.trim() },
+  );
+  const members = searched.trim() ? (searchData?.content ?? []) : [];
 
   const handleSearch = () => setSearched(keyword);
   const handleReset = () => {

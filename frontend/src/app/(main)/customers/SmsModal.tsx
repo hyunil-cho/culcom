@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { messageTemplateApi, settingsApi, externalApi, MessageTemplateItem } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { usePlaceholderResolver } from '@/lib/usePlaceholderResolver';
 import { Select, Textarea } from '@/components/ui/FormInput';
 import { Button } from '@/components/ui/Button';
@@ -19,8 +20,16 @@ export default function SmsModal({ customerName, customerPhone, interviewDate, o
   const { ready, resolve } = usePlaceholderResolver();
 
   const [mode, setMode] = useState<'template' | 'direct'>('template');
-  const [templates, setTemplates] = useState<MessageTemplateItem[]>([]);
-  const [senderNumbers, setSenderNumbers] = useState<string[]>([]);
+
+  const { data: templates = [] } = useApiQuery<MessageTemplateItem[]>(
+    ['messageTemplates'],
+    () => messageTemplateApi.list(),
+  );
+
+  const { data: senderNumbers = [] } = useApiQuery<string[]>(
+    ['senderNumbers'],
+    () => settingsApi.getSenderNumbers(),
+  );
 
   const [selectedTemplateSeq, setSelectedTemplateSeq] = useState<number | ''>('');
   const [senderPhone, setSenderPhone] = useState('');
@@ -28,23 +37,19 @@ export default function SmsModal({ customerName, customerPhone, interviewDate, o
   const [sending, setSending] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Set defaults when data loads
   useEffect(() => {
-    Promise.all([
-      messageTemplateApi.list().then((res) => {
-        if (res.success) {
-          setTemplates(res.data);
-          const def = res.data.find(t => t.isDefault);
-          if (def) setSelectedTemplateSeq(def.seq);
-        }
-      }),
-      settingsApi.getSenderNumbers().then((res) => {
-        if (res.success) {
-          setSenderNumbers(res.data ?? []);
-          if (res.data?.length > 0) setSenderPhone(res.data[0]);
-        }
-      }),
-    ]);
-  }, []);
+    if (templates.length > 0 && selectedTemplateSeq === '') {
+      const def = templates.find(t => t.isDefault);
+      if (def) setSelectedTemplateSeq(def.seq);
+    }
+  }, [templates, selectedTemplateSeq]);
+
+  useEffect(() => {
+    if (senderNumbers.length > 0 && !senderPhone) {
+      setSenderPhone(senderNumbers[0]);
+    }
+  }, [senderNumbers, senderPhone]);
 
   useEffect(() => {
     if (!ready || mode !== 'template' || !selectedTemplateSeq) return;

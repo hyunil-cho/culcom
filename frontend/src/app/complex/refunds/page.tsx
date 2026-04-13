@@ -11,7 +11,7 @@ import ModalOverlay from '@/components/ui/ModalOverlay';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useResultModal } from '@/hooks/useResultModal';
 import { useModal } from '@/hooks/useModal';
-import { useListPage } from '@/hooks/useListPage';
+import { useListPageQuery } from '@/hooks/useListPageQuery';
 import s from './page.module.css';
 
 const STATUS_BADGE: Record<string, string> = {
@@ -20,7 +20,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 export default function RefundsPage() {
   const router = useRouter();
-  const list = useListPage<RefundRequest>((q) => refundApi.list(q));
+  const list = useListPageQuery<RefundRequest>('refunds', (q) => refundApi.list(q));
   const [statusFilter, setStatusFilter] = useState('');
   const [keyword, setKeyword] = useState('');
   const { run, showError, modal } = useResultModal({ onConfirm: () => list.load(list.pagination.page) });

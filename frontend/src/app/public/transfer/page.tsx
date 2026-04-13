@@ -1,8 +1,10 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { publicTransferApi, type TransferPublicInfo } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { queryClient } from '@/lib/queryClient';
 
 export default function PublicTransferPage() {
   return <Suspense fallback={null}><Inner /></Suspense>;
@@ -12,25 +14,20 @@ function Inner() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token') ?? '';
 
-  const [info, setInfo] = useState<TransferPublicInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { data: info, isLoading: loading, error: queryError } = useApiQuery<TransferPublicInfo>(
+    ['publicTransfer', token],
+    () => publicTransferApi.getByToken(token),
+    { enabled: !!token },
+  );
+
+  const error = !token ? '유효하지 않은 링크입니다.' : queryError ? '양도 요청을 찾을 수 없습니다.' : '';
   const [confirming, setConfirming] = useState(false);
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (!token) { setLoading(false); setError('유효하지 않은 링크입니다.'); return; }
-    publicTransferApi.getByToken(token).then(res => {
-      setLoading(false);
-      if (res.success) setInfo(res.data);
-      else setError('양도 요청을 찾을 수 없습니다.');
-    }).catch(() => { setLoading(false); setError('오류가 발생했습니다.'); });
-  }, [token]);
 
   const handleConfirm = async () => {
     setConfirming(true);
     const res = await publicTransferApi.confirm(token);
-    if (res.success) setInfo(res.data);
+    if (res.success) queryClient.invalidateQueries({ queryKey: ['publicTransfer', token] });
     setConfirming(false);
   };
 

@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { complexDashboardApi, type AutoExpiredItem, type MembershipAlertItem, type MembershipAlertsResponse } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import TrendCharts from './TrendCharts';
 
@@ -12,15 +12,11 @@ const COUNT_THRESHOLD = 5;
 
 export default function ComplexDashboardPage() {
   const router = useRouter();
-  const [data, setData] = useState<MembershipAlertsResponse | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    setLoading(true);
-    complexDashboardApi.membershipAlerts(WINDOW_DAYS, COUNT_THRESHOLD)
-      .then(res => { if (res.success) setData(res.data); })
-      .finally(() => setLoading(false));
-  }, []);
+  const { data = null, isLoading: loading } = useApiQuery<MembershipAlertsResponse>(
+    ['complexDashboard', 'membershipAlerts', WINDOW_DAYS, COUNT_THRESHOLD],
+    () => complexDashboardApi.membershipAlerts(WINDOW_DAYS, COUNT_THRESHOLD),
+  );
 
   const goToMember = (memberSeq: number) => {
     router.push(ROUTES.COMPLEX_MEMBER_EDIT(memberSeq));

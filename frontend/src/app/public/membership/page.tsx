@@ -1,8 +1,9 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { publicMembershipApi, type MembershipCheckMember } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 
 export default function PublicMembershipPage() {
   return <Suspense fallback={null}><PublicMembershipPageInner /></Suspense>;
@@ -19,21 +20,18 @@ function PublicMembershipPageInner() {
     } catch { return null; }
   })();
 
-  const [member, setMember] = useState<MembershipCheckMember | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { data: checkResult, isLoading: loading, error: queryError } = useApiQuery(
+    ['publicMembership', decoded?.name, decoded?.phone],
+    () => publicMembershipApi.check(decoded!.name, decoded!.phone),
+    { enabled: !!decoded },
+  );
 
-  useEffect(() => {
-    if (!decoded) { setLoading(false); setError('유효하지 않은 링크입니다. 관리자에게 문의해주세요.'); return; }
-    publicMembershipApi.check(decoded.name, decoded.phone).then(res => {
-      setLoading(false);
-      if (res.success && res.data.member) {
-        setMember(res.data.member);
-      } else {
-        setError('회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.');
-      }
-    });
-  }, []);
+  const member: MembershipCheckMember | null = checkResult?.member ?? null;
+
+  const error = !decoded ? '유효하지 않은 링크입니다. 관리자에게 문의해주세요.'
+    : queryError ? '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'
+    : (!loading && !member) ? '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'
+    : '';
 
   return (
     <div style={{ backgroundColor: '#f4f7f6', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', minHeight: '100vh', padding: 20 }}>

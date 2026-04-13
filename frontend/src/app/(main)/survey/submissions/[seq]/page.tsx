@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { surveyApi, type SurveySubmissionDetail, type SurveyQuestion } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
@@ -18,22 +18,18 @@ export default function SurveySubmissionDetailPage() {
   const router = useRouter();
   const seq = Number(params.seq);
 
-  const [detail, setDetail] = useState<SurveySubmissionDetail | null>(null);
-  const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: detail = null, isLoading: detailLoading } = useApiQuery<SurveySubmissionDetail>(
+    ['surveySubmission', seq],
+    () => surveyApi.getSubmission(seq),
+  );
 
-  useEffect(() => {
-    const load = async () => {
-      const res = await surveyApi.getSubmission(seq);
-      if (res.success && res.data) {
-        setDetail(res.data);
-        const qRes = await surveyApi.listQuestions(res.data.templateSeq);
-        if (qRes.success) setQuestions(qRes.data);
-      }
-      setLoading(false);
-    };
-    load();
-  }, [seq]);
+  const { data: questions = [], isLoading: questionsLoading } = useApiQuery<SurveyQuestion[]>(
+    ['surveyQuestions', detail?.templateSeq],
+    () => surveyApi.listQuestions(detail!.templateSeq),
+    { enabled: !!detail?.templateSeq },
+  );
+
+  const loading = detailLoading || questionsLoading;
 
   if (loading) return <div className="content-card" style={{ textAlign: 'center', padding: '2rem' }}>로딩 중...</div>;
   if (!detail) return <div className="content-card" style={{ textAlign: 'center', padding: '2rem' }}>데이터를 찾을 수 없습니다.</div>;

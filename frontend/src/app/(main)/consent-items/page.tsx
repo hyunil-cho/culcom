@@ -1,8 +1,9 @@
 'use client';
 
-import { Suspense, useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { consentItemApi, type ConsentItem } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import { useQueryParams } from '@/lib/useQueryParams';
 import { Button } from '@/components/ui/Button';
@@ -24,16 +25,10 @@ function ConsentItemsContent() {
   const { params, setParams } = useQueryParams(DEFAULTS);
   const searchedKeyword = params.keyword;
 
-  const [items, setItems] = useState<ConsentItem[]>([]);
+  const { data: items = [] } = useApiQuery<ConsentItem[]>(['consentItems'], () => consentItemApi.list());
   const [keyword, setKeyword] = useState(searchedKeyword);
   const previewModal = useModal<ConsentItem>();
 
-  const load = useCallback(async () => {
-    const res = await consentItemApi.list();
-    if (res.success) setItems(res.data);
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
   useEffect(() => { setKeyword(searchedKeyword); }, [searchedKeyword]);
 
   const filtered = searchedKeyword

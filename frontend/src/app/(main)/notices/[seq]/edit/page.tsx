@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { noticeApi } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import { useFormState } from '@/hooks/useFormState';
 import NoticeForm, { NoticeFormData } from '../../NoticeForm';
@@ -16,25 +17,25 @@ export default function NoticeEditPage() {
     { title: '', content: '', category: '공지사항', isPinned: false, createdBy: '', eventStartDate: '', eventEndDate: '' },
     { redirectPath: ROUTES.NOTICE_DETAIL(seq) },
   );
-  const [loading, setLoading] = useState(true);
+
+  const { data: noticeData, isLoading: loading } = useApiQuery(
+    ['notice', seq],
+    () => noticeApi.get(seq),
+  );
 
   useEffect(() => {
-    noticeApi.get(seq).then((res) => {
-      if (res.success) {
-        const n = res.data;
-        setForm({
-          title: n.title,
-          content: n.content,
-          category: n.category,
-          isPinned: n.isPinned,
-          createdBy: n.createdBy,
-          eventStartDate: n.eventStartDate || '',
-          eventEndDate: n.eventEndDate || '',
-        });
-      }
-      setLoading(false);
-    });
-  }, [seq]);
+    if (noticeData) {
+      setForm({
+        title: noticeData.title,
+        content: noticeData.content,
+        category: noticeData.category,
+        isPinned: noticeData.isPinned,
+        createdBy: noticeData.createdBy,
+        eventStartDate: noticeData.eventStartDate || '',
+        eventEndDate: noticeData.eventEndDate || '',
+      });
+    }
+  }, [noticeData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

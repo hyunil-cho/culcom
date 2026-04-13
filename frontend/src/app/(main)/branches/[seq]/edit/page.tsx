@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { branchApi } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { useSessionStore } from '@/lib/store';
 import { ROUTES } from '@/lib/routes';
 import BranchForm, { emptyBranchForm, validateBranchForm, type BranchFormData } from '../../BranchForm';
@@ -15,18 +16,22 @@ export default function BranchEditPage() {
   const [form, setForm] = useState<BranchFormData>(emptyBranchForm);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.BRANCH_DETAIL(seq) });
 
+  const { data: branchData } = useApiQuery(
+    ['branch', seq],
+    () => branchApi.get(seq),
+  );
+
   useEffect(() => {
-    branchApi.get(seq).then(res => {
-      const b = res.data;
+    if (branchData) {
       setForm({
-        branchName: b.branchName,
-        alias: b.alias,
-        branchManager: b.branchManager ?? '',
-        address: b.address ?? '',
-        directions: b.directions ?? '',
+        branchName: branchData.branchName,
+        alias: branchData.alias,
+        branchManager: branchData.branchManager ?? '',
+        address: branchData.address ?? '',
+        directions: branchData.directions ?? '',
       });
-    });
-  }, [seq]);
+    }
+  }, [branchData]);
 
   const handleSubmit = async () => {
     const error = validateBranchForm(form);

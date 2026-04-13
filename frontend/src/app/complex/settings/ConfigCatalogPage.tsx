@@ -1,16 +1,19 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { ConfigItem, ConfigCreateRequest, ConfigUpdateRequest } from '@/lib/api';
+import type { ApiResponse } from '@/lib/api/client';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/Button';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import ResultModal from '@/components/ui/ResultModal';
 
 interface CatalogApi {
-  list: () => Promise<{ data: ConfigItem[] }>;
-  create: (data: ConfigCreateRequest) => Promise<{ data: ConfigItem }>;
-  update: (seq: number, data: ConfigUpdateRequest) => Promise<{ data: ConfigItem }>;
-  delete: (seq: number) => Promise<{ data: void }>;
+  list: () => Promise<ApiResponse<ConfigItem[]>>;
+  create: (data: ConfigCreateRequest) => Promise<ApiResponse<ConfigItem>>;
+  update: (seq: number, data: ConfigUpdateRequest) => Promise<ApiResponse<ConfigItem>>;
+  delete: (seq: number) => Promise<ApiResponse<void>>;
 }
 
 interface Props {
@@ -20,8 +23,13 @@ interface Props {
 }
 
 export default function ConfigCatalogPage({ title, description, api }: Props) {
-  const [items, setItems] = useState<ConfigItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const configQueryKey = ['configCatalog', title];
+
+  const { data: items = [], isLoading: loading } = useApiQuery<ConfigItem[]>(
+    configQueryKey,
+    () => api.list(),
+  );
+
   const [editingSeq, setEditingSeq] = useState<number | null>(null);
   const [editIsActive, setEditIsActive] = useState(true);
 
@@ -31,12 +39,7 @@ export default function ConfigCatalogPage({ title, description, api }: Props) {
   const [confirmDelete, setConfirmDelete] = useState<ConfigItem | null>(null);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
 
-  const load = useCallback(() => {
-    setLoading(true);
-    api.list().then(res => setItems(res.data)).finally(() => setLoading(false));
-  }, [api]);
-
-  useEffect(() => { load(); }, [load]);
+  const load = () => queryClient.invalidateQueries({ queryKey: configQueryKey });
 
   const startEdit = (it: ConfigItem) => {
     setEditingSeq(it.seq);

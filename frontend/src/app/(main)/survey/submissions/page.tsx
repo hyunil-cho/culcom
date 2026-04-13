@@ -1,22 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { surveyApi, type SurveySubmissionItem } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 
 export default function SurveySubmissionsPage() {
   const router = useRouter();
-  const [submissions, setSubmissions] = useState<SurveySubmissionItem[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    surveyApi.listSubmissions().then(res => {
-      if (res.success) setSubmissions(res.data);
-      setLoading(false);
-    });
-  }, []);
+  const { data: submissions = [], isLoading: loading } = useApiQuery<SurveySubmissionItem[]>(
+    ['surveySubmissions'],
+    () => surveyApi.listSubmissions(),
+  );
 
   const formatDate = (d: string) => {
     return new Date(d).toLocaleDateString('ko-KR', {

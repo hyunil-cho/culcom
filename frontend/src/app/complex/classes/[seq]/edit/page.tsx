@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { classApi } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { useClassSlots } from '../../../hooks/useClassSlots';
 import { ROUTES } from '@/lib/routes';
 import ClassForm, { emptyClassForm, validateClassForm, type ClassFormData } from '../../ClassForm';
@@ -15,17 +16,21 @@ export default function ClassEditPage() {
   const { timeSlots } = useClassSlots();
   const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_CLASSES });
 
+  const { data: classData } = useApiQuery(
+    ['class', seq],
+    () => classApi.get(seq),
+  );
+
   useEffect(() => {
-    classApi.get(seq).then(classRes => {
-      const c = classRes.data;
+    if (classData) {
       setForm({
-        name: c.name,
-        timeSlotSeq: c.timeSlotSeq ?? '',
-        capacity: c.capacity,
-        description: c.description ?? '',
+        name: classData.name,
+        timeSlotSeq: classData.timeSlotSeq ?? '',
+        capacity: classData.capacity,
+        description: classData.description ?? '',
       });
-    });
-  }, [seq]);
+    }
+  }, [classData]);
 
   const handleSubmit = async () => {
     const error = validateClassForm(form);

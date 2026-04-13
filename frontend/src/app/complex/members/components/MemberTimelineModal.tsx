@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { memberApi, staffApi, type MemberActivityTimelineItem, type PageResponse } from '@/lib/api';
+import { useState } from 'react';
+import { memberApi, staffApi, type MemberActivityTimelineItem } from '@/lib/api';
+import type { PageResponse } from '@/lib/api/client';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import s from './MemberTimelineModal.module.css';
 
 interface Props {
@@ -54,27 +56,17 @@ const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
 const PAGE_SIZE = 20;
 
 export default function MemberTimelineModal({ memberSeq, memberName, type = 'member', onClose }: Props) {
-  const [items, setItems] = useState<MemberActivityTimelineItem[]>([]);
   const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const fetcher = type === 'staff' ? staffApi.timeline : memberApi.timeline;
-    const res = await fetcher(memberSeq, page, PAGE_SIZE);
-    if (res.success) {
-      const d = res.data as PageResponse<MemberActivityTimelineItem>;
-      setItems(d.content);
-      setTotalPages(d.totalPages);
-      setTotalElements(d.totalElements);
-    }
-    setLoading(false);
-  }, [memberSeq, type, page]);
-
-  useEffect(() => { load(); }, [load]);
+  const fetcher = type === 'staff' ? staffApi.timeline : memberApi.timeline;
+  const { data: timelineData, isLoading: loading } = useApiQuery<PageResponse<MemberActivityTimelineItem>>(
+    ['memberTimeline', type, memberSeq, page],
+    () => fetcher(memberSeq, page, PAGE_SIZE),
+  );
+  const items = timelineData?.content ?? [];
+  const totalPages = timelineData?.totalPages ?? 0;
+  const totalElements = timelineData?.totalElements ?? 0;
 
   const FILTER_GROUPS: { key: string; label: string; types: string[]; color: string; bg: string }[] = [
     { key: 'ATTENDANCE', label: '출석', types: ['ATTENDANCE'], color: '#065f46', bg: '#ecfdf5' },

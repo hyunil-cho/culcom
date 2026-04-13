@@ -1,9 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { Suspense, useEffect, useState, useCallback } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { customerApi, externalApi, settingsApi, messageTemplateApi, type Customer, type PageResponse } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { queryClient } from '@/lib/queryClient';
 import { usePlaceholderResolver } from '@/lib/usePlaceholderResolver';
 import { ROUTES } from '@/lib/routes';
 import { toServerDateTime, formatDateTime } from '@/lib/dateUtils';
@@ -45,10 +47,25 @@ function CustomersContent() {
   const searchType = qp.searchType;
   const searchedKeyword = qp.keyword;
 
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
   const [keyword, setKeyword] = useState(searchedKeyword);
+
+  const queryParams = (() => {
+    const params = new URLSearchParams({ page: String(page), size: '20', filter });
+    if (searchedKeyword) {
+      params.set('keyword', searchedKeyword);
+      params.set('searchType', searchType);
+    }
+    return params.toString();
+  })();
+
+  const { data: pageData } = useApiQuery<PageResponse<Customer>>(
+    ['customers', page, filter, searchedKeyword, searchType],
+    () => customerApi.list(queryParams),
+  );
+
+  const customers = pageData?.content ?? [];
+  const totalPages = pageData?.totalPages ?? 0;
+  const totalCount = pageData?.totalElements ?? 0;
 
   // CALLER 선택 상태
   const [selectedCallers, setSelectedCallers] = useState<Record<number, string>>({});
@@ -63,20 +80,7 @@ function CustomersContent() {
   // SMS 모달
   const smsModal = useModal<{ name: string; phone: string; interviewDate?: string }>();
 
-  const load = useCallback(async () => {
-    const params = new URLSearchParams({ page: String(page), size: '20', filter });
-    if (searchedKeyword) {
-      params.set('keyword', searchedKeyword);
-      params.set('searchType', searchType);
-    }
-    const res = await customerApi.list(params.toString());
-    const data = res.data as PageResponse<Customer>;
-    setCustomers(data.content);
-    setTotalPages(data.totalPages);
-    setTotalCount(data.totalElements);
-  }, [page, filter, searchedKeyword, searchType]);
-
-  useEffect(() => { load(); }, [load]);
+  const invalidateCustomers = () => queryClient.invalidateQueries({ queryKey: ['customers'] });
 
   useEffect(() => { setKeyword(searchedKeyword); }, [searchedKeyword]);
 
@@ -104,19 +108,8 @@ function CustomersContent() {
 
     setSelectedCallers(prev => ({ ...prev, [customerSeq]: caller }));
     setPhoneVisible(prev => ({ ...prev, [customerSeq]: true }));
-    setCustomers(prev => prev.map(c => {
-      if (c.seq !== customerSeq) return c;
-      const newCount = data.callCount;
-      let newStatus = c.status;
-      if (newCount >= 5) newStatus = '콜수초과';
-      else if (c.status === '신규') newStatus = '진행중';
-      return { ...c, callCount: newCount, status: newStatus, lastUpdateDate: data.lastUpdateDate };
-    }));
     callerConfirm.close();
-
-    if (filter === 'new' && data.callCount >= 5) {
-      setCustomers(prev => prev.filter(c => c.seq !== customerSeq));
-    }
+    invalidateCustomers();
   };
 
   // 인터뷰 확정
@@ -185,15 +178,9 @@ function CustomersContent() {
     const normalized = toServerDateTime(input);
     const res = await customerApi.createReservation(customerSeq, caller, normalized);
     if (res.success) {
-      setCustomers(prev => prev.map(c =>
-        c.seq === customerSeq ? { ...c, status: '예약확정' } : c
-      ));
       setInterviewInputs(prev => ({ ...prev, [customerSeq]: '' }));
       interviewConfirmModal.close();
-
-      if (filter === 'new') {
-        setCustomers(prev => prev.filter(c => c.seq !== customerSeq));
-      }
+      invalidateCustomers();
       setResult({ success: true, message: '예약이 생성되었습니다.' });
 
       // 예약 확정 SMS 자동 발송
@@ -207,12 +194,7 @@ function CustomersContent() {
     if (!caller) { alert('먼저 CALLER를 선택해주세요.'); return; }
     if (!confirm('전화상 안함으로 처리하시겠습니까?')) return;
     await customerApi.markNoPhoneInterview(seq);
-    setCustomers(prev => prev.map(c =>
-      c.seq === seq ? { ...c, status: '전화상거절' } : c
-    ));
-    if (filter === 'new') {
-      setCustomers(prev => prev.filter(c => c.seq !== seq));
-    }
+    invalidateCustomers();
   };
 
   const customerColumns: Column<Customer>[] = [
@@ -385,7 +367,7 @@ function CustomersContent() {
           message={result.message}
           {...(result.redirectPath
             ? { redirectPath: result.redirectPath }
-            : { onConfirm: () => { setResult(null); load(); } })}
+            : { onConfirm: () => { setResult(null); invalidateCustomers(); } })}
         />
       )}
     </>

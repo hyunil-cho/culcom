@@ -1,12 +1,13 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   publicPostponementApi,
   type PublicMemberInfo,
   type PublicMembershipInfo,
 } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import { Input, Select, Textarea } from '@/components/ui/FormInput';
 import s from './page.module.css';
@@ -27,7 +28,19 @@ function PublicPostponementPageInner() {
     } catch { return null; }
   })();
 
-  const [member, setMember] = useState<PublicMemberInfo | null>(null);
+  const { data: memberSearchResult, isLoading: loading, error: queryError } = useApiQuery(
+    ['publicPostponementMember', decoded?.name, decoded?.phone],
+    () => publicPostponementApi.searchMember(decoded!.name, decoded!.phone),
+    { enabled: !!decoded },
+  );
+
+  const member: PublicMemberInfo | null = memberSearchResult?.members?.[0] ?? null;
+
+  const error = !decoded ? '유효하지 않은 링크입니다. 관리자에게 문의해주세요.'
+    : queryError ? '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'
+    : (!loading && !member) ? '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'
+    : '';
+
   const [selectedMembershipSeq, setSelectedMembershipSeq] = useState<number | null>(null);
 
   const [startDate, setStartDate] = useState('');
@@ -38,9 +51,8 @@ function PublicPostponementPageInner() {
 
   const [dateError, setDateError] = useState('');
   const [step, setStep] = useState(1);
+  const effectiveStep = member && step === 1 ? 2 : step;
   const [submitting, setSubmitting] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   const toDateStr = (d: Date) => d.toISOString().split('T')[0];
   const minStartDate = (() => {
@@ -54,18 +66,6 @@ function PublicPostponementPageInner() {
     d.setDate(d.getDate() + 14);
     return toDateStr(d);
   })();
-
-  useEffect(() => {
-    if (!decoded) { setLoading(false); setError('유효하지 않은 링크입니다. 관리자에게 문의해주세요.'); return; }
-    publicPostponementApi.searchMember(decoded.name, decoded.phone).then(res => {
-      setLoading(false);
-      if (!res.success || !res.data.members || res.data.members.length === 0) {
-        setError('회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'); return;
-      }
-      setMember(res.data.members[0]);
-      setStep(2);
-    });
-  }, []);
 
   const goToStep3 = async () => {
     if (!member || !selectedMembershipSeq) return;
@@ -123,7 +123,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
         )}
 
-        {step === 2 && member && (
+        {effectiveStep === 2 && member && (
           <div>
             <MemberInfoCard member={member} />
             <FormGroup label="연기할 멤버십 선택">
@@ -142,7 +142,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
         )}
 
-        {step === 3 && member && (
+        {effectiveStep === 3 && member && (
           <div>
             <div className={s.summaryCard}>
               <h3 className={s.summaryTitle}>요청 요약</h3>

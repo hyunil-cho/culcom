@@ -1,10 +1,12 @@
 'use client';
 
-import { Suspense, useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { memberApi, outstandingApi, type ComplexMember, type PageResponse } from '@/lib/api';
+import { memberApi, outstandingApi, type ComplexMember } from '@/lib/api';
+import type { PageResponse } from '@/lib/api/client';
 import { ROUTES } from '@/lib/routes';
 import { useQueryParams } from '@/lib/useQueryParams';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { Button } from '@/components/ui/Button';
 import SearchBar from '@/components/ui/SearchBar';
 import DataTable, { type Column } from '@/components/ui/DataTable';
@@ -24,36 +26,36 @@ function MembersContent() {
   const page = Number(params.page);
   const searchedKeyword = params.keyword;
 
-  const [members, setMembers] = useState<ComplexMember[]>([]);
-  const [totalPages, setTotalPages] = useState(0);
   const [keyword, setKeyword] = useState(searchedKeyword);
   const { openInfoModal, infoModal } = useMembership();
-  const [outstandingMap, setOutstandingMap] = useState<Map<number, number>>(new Map());
   const { column: historyColumn, modal: historyModal } = useAttendanceHistory<ComplexMember>('member');
   const recentHistoryColumn = useAttendanceHistoryColumn<ComplexMember>();
 
-  const load = useCallback(async () => {
-    const apiParams = new URLSearchParams({ page: String(page), size: '20' });
-    if (searchedKeyword) apiParams.set('keyword', searchedKeyword);
-    const res = await memberApi.list(apiParams.toString());
-    const data = res.data as PageResponse<ComplexMember>;
-    setMembers(data.content);
-    setTotalPages(data.totalPages);
-  }, [page, searchedKeyword]);
-
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => { setKeyword(searchedKeyword); }, [searchedKeyword]);
+  const memberParams = new URLSearchParams({ page: String(page), size: '20' });
+  if (searchedKeyword) memberParams.set('keyword', searchedKeyword);
+  const { data: pageData } = useApiQuery<PageResponse<ComplexMember>>(
+    ['members', page, searchedKeyword],
+    () => memberApi.list(memberParams.toString()),
+  );
+  const members = pageData?.content ?? [];
+  const totalPages = pageData?.totalPages ?? 0;
 
   // 미수금 합계 매핑 로드 (전체 한 번에 가져와서 회원별 합산)
-  useEffect(() => {
-    outstandingApi.list({ size: 1000 }).then(res => {
-      const map = new Map<number, number>();
-      for (const item of res.data.content) {
+  const { data: outstandingData } = useApiQuery<PageResponse<{ memberSeq: number; outstanding: number }>>(
+    ['outstandingMap'],
+    () => outstandingApi.list({ size: 1000 }),
+  );
+  const outstandingMap = (() => {
+    const map = new Map<number, number>();
+    if (outstandingData) {
+      for (const item of outstandingData.content) {
         map.set(item.memberSeq, (map.get(item.memberSeq) ?? 0) + item.outstanding);
       }
-      setOutstandingMap(map);
-    });
-  }, []);
+    }
+    return map;
+  })();
+
+  useEffect(() => { setKeyword(searchedKeyword); }, [searchedKeyword]);
 
   const columns: Column<ComplexMember>[] = [
     { header: '번호', render: (_, i) => page * 20 + (i ?? 0) + 1, style: { width: 50, color: '#adb5bd', textAlign: 'center' } },

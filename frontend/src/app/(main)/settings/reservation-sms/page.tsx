@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import Link from 'next/link';
 import { settingsApi, type MessageTemplateSimple, type ReservationSmsConfig } from '@/lib/api';
 import { Checkbox } from '@/components/ui/FormInput';
@@ -10,32 +11,36 @@ import { Button, LinkButton } from '@/components/ui/Button';
 import s from './page.module.css';
 
 export default function ReservationSmsConfigPage() {
-  const [templates, setTemplates] = useState<MessageTemplateSimple[]>([]);
-  const [senderNumbers, setSenderNumbers] = useState<string[]>([]);
-  const [config, setConfig] = useState<ReservationSmsConfig | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: templates = [] } = useApiQuery<MessageTemplateSimple[]>(
+    ['reservationSms', 'templates'],
+    () => settingsApi.getTemplates(),
+  );
+
+  const { data: senderNumbers = [] } = useApiQuery<string[]>(
+    ['reservationSms', 'senderNumbers'],
+    () => settingsApi.getSenderNumbers(),
+  );
+
+  const { data: config = null, isLoading: loading } = useApiQuery<ReservationSmsConfig | null>(
+    ['reservationSms', 'config'],
+    () => settingsApi.getReservationSmsConfig(),
+  );
+
   const [saving, setSaving] = useState(false);
   const { run, showError, modal } = useResultModal({ redirectPath: ROUTES.SETTINGS });
 
   const [templateSeq, setTemplateSeq] = useState<number | ''>('');
   const [senderNumber, setSenderNumber] = useState('');
   const [autoSend, setAutoSend] = useState(false);
+  const [formInitialized, setFormInitialized] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      settingsApi.getTemplates(), settingsApi.getSenderNumbers(), settingsApi.getReservationSmsConfig(),
-    ]).then(([templatesRes, numbersRes, configRes]) => {
-      setTemplates(templatesRes.data ?? []);
-      setSenderNumbers(numbersRes.data ?? []);
-      if (configRes.data) {
-        setConfig(configRes.data);
-        setTemplateSeq(configRes.data.templateSeq);
-        setSenderNumber(configRes.data.senderNumber);
-        setAutoSend(configRes.data.autoSend);
-      }
-      setLoading(false);
-    });
-  }, []);
+    if (formInitialized || loading || !config) return;
+    setTemplateSeq(config.templateSeq);
+    setSenderNumber(config.senderNumber);
+    setAutoSend(config.autoSend);
+    setFormInitialized(true);
+  }, [config, loading, formInitialized]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
 import { branchApi, messageTemplateApi, Branch, PlaceholderItem } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
 import { resolvePlaceholders, buildPlaceholderValues, PlaceholderContext } from '@/lib/commonUtils';
+import { useApiQuery } from '@/hooks/useApiQuery';
 
 /**
  * 플레이스홀더 + 지점 정보를 로드하고, 템플릿 치환 기능을 제공하는 hook.
@@ -9,27 +9,20 @@ import { resolvePlaceholders, buildPlaceholderValues, PlaceholderContext } from 
  */
 export function usePlaceholderResolver() {
   const session = useSessionStore((s) => s.session);
-  const [branch, setBranch] = useState<Branch | null>(null);
-  const [placeholders, setPlaceholders] = useState<PlaceholderItem[]>([]);
-  const [ready, setReady] = useState(false);
+  const branchSeq = session?.selectedBranchSeq;
 
-  useEffect(() => {
-    const promises: Promise<void>[] = [
-      messageTemplateApi.placeholders().then((res) => {
-        if (res.success) setPlaceholders(res.data);
-      }),
-    ];
+  const { data: placeholders = [] } = useApiQuery<PlaceholderItem[]>(
+    ['placeholders'],
+    () => messageTemplateApi.placeholders(),
+  );
 
-    if (session?.selectedBranchSeq) {
-      promises.push(
-        branchApi.get(session.selectedBranchSeq).then((res) => {
-          if (res.success) setBranch(res.data);
-        })
-      );
-    }
+  const { data: branch = null, isFetched: branchFetched } = useApiQuery<Branch>(
+    ['branch', branchSeq],
+    () => branchApi.get(branchSeq!),
+    { enabled: !!branchSeq },
+  );
 
-    Promise.all(promises).then(() => setReady(true));
-  }, [session?.selectedBranchSeq]);
+  const ready = placeholders.length > 0 && (!branchSeq || branchFetched);
 
   /** 템플릿 내용을 컨텍스트 기반으로 치환한다. */
   const resolve = (content: string, ctx: PlaceholderContext) => {

@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { publicTransferApi, type TransferInviteInfo } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { useConsent } from '@/hooks/useConsent';
 import ConsentStep from '@/components/ui/ConsentStep';
 
@@ -16,9 +17,20 @@ function Inner() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token') ?? '';
 
-  const [step, setStep] = useState<Step>('loading');
-  const [info, setInfo] = useState<TransferInviteInfo | null>(null);
-  const [error, setError] = useState('');
+  const [userStep, setUserStep] = useState<'consent' | 'form' | 'done'>('consent');
+
+  const { data: info, isLoading, error: queryError } = useApiQuery<TransferInviteInfo>(
+    ['publicTransferInvite', token],
+    () => publicTransferApi.getInviteInfo(token),
+    { enabled: !!token },
+  );
+
+  const step: Step = !token ? 'error'
+    : isLoading ? 'loading'
+    : queryError ? 'error'
+    : userStep;
+
+  const error = !token ? '유효하지 않은 링크입니다.' : queryError ? '양도 초대를 찾을 수 없습니다.' : '';
 
   const consent = useConsent({
     category: 'TRANSFER',
@@ -31,19 +43,6 @@ function Inner() {
   const [availableTime, setAvailableTime] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!token) { setStep('error'); setError('유효하지 않은 링크입니다.'); return; }
-    publicTransferApi.getInviteInfo(token).then(res => {
-      if (res.success) {
-        setInfo(res.data);
-        setStep('consent');
-      } else {
-        setStep('error');
-        setError('양도 초대를 찾을 수 없습니다.');
-      }
-    }).catch(() => { setStep('error'); setError('오류가 발생했습니다.'); });
-  }, [token]);
-
   const handleSubmit = async () => {
     if (!name.trim()) { alert('이름을 입력해주세요.'); return; }
     if (!phone.trim()) { alert('전화번호를 입력해주세요.'); return; }
@@ -54,7 +53,7 @@ function Inner() {
       consents: consent.toSubmitData(),
     });
     setSubmitting(false);
-    if (res.success) setStep('done');
+    if (res.success) setUserStep('done');
     else alert(res.message || '오류가 발생했습니다.');
   };
 
@@ -92,7 +91,7 @@ function Inner() {
             <ConsentStep
               consent={consent}
               buttonText="다음"
-              onNext={() => setStep('form')}
+              onNext={() => setUserStep('form')}
             />
           </>
         )}
@@ -124,7 +123,7 @@ function Inner() {
             </div>
 
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setStep('consent')}
+              <button onClick={() => setUserStep('consent')}
                 style={{ flex: 1, padding: '12px 0', background: '#fff', color: '#374151', border: '1.5px solid #d1d5db', borderRadius: 8, fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer' }}>
                 이전
               </button>

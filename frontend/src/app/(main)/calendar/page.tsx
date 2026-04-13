@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
-import { calendarApi } from '@/lib/api';
+import { useState, useMemo } from 'react';
+import { calendarApi, type CalendarReservation } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { queryClient } from '@/lib/queryClient';
 import {
   type Reservation, type ViewMode, DAY_LABELS,
   formatDateKey, getWeekDates, getMonthDates, isSameDay, toReservationMap, getStatusStyle,
@@ -17,8 +19,6 @@ export default function CalendarPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [reservationMap, setReservationMap] = useState<Record<string, Reservation[]>>({});
-  const [loading, setLoading] = useState(true);
   const statusModal = useModal<Reservation>();
 
   const today = new Date();
@@ -33,14 +33,14 @@ export default function CalendarPage() {
     return { start: formatDateKey(allDates[0]), end: formatDateKey(allDates[allDates.length - 1]) };
   }, [viewMode, currentDate]);
 
-  const loadReservations = useCallback(async () => {
-    setLoading(true);
-    const res = await calendarApi.getReservations(dateRange.start, dateRange.end);
-    if (res.success) setReservationMap(toReservationMap(res.data));
-    setLoading(false);
-  }, [dateRange]);
+  const { data: rawReservations, isLoading: loading } = useApiQuery<CalendarReservation[]>(
+    ['reservations', dateRange.start, dateRange.end],
+    () => calendarApi.getReservations(dateRange.start, dateRange.end),
+  );
 
-  useEffect(() => { loadReservations(); }, [loadReservations]);
+  const reservationMap = useMemo(() => toReservationMap(rawReservations ?? []), [rawReservations]);
+
+  const invalidateReservations = () => queryClient.invalidateQueries({ queryKey: ['reservations'] });
 
   const getReservations = (date: Date): Reservation[] => reservationMap[formatDateKey(date)] || [];
 
@@ -191,7 +191,7 @@ export default function CalendarPage() {
       {/* 예약 상태 변경 모달 */}
       {statusModal.isOpen && (
         <ReservationStatusModal reservation={statusModal.data!}
-          onClose={statusModal.close} onStatusChanged={() => loadReservations()} />
+          onClose={statusModal.close} onStatusChanged={invalidateReservations} />
       )}
     </>
   );

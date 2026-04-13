@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { integrationApi, IntegrationService } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/routes';
 import st from './page.module.css';
@@ -16,14 +17,8 @@ const categories = [
 
 export default function IntegrationsPage() {
   const router = useRouter();
-  const [services, setServices] = useState<IntegrationService[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: services = [], isLoading: loading } = useApiQuery<IntegrationService[]>(['integrations'], () => integrationApi.list());
   const [filter, setFilter] = useState('all');
-
-  useEffect(() => {
-    setLoading(true);
-    integrationApi.list().then((res) => { if (res.success) setServices(res.data ?? []); setLoading(false); });
-  }, []);
 
   const filtered = filter === 'all' ? services : services.filter((s) => s.category === filter);
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { membershipApi } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { ROUTES } from '@/lib/routes';
 import MembershipForm, {
@@ -21,21 +22,24 @@ export default function MembershipEditPage() {
   const [form, setForm] = useState<MembershipFormData>(emptyMembershipForm);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_MEMBERSHIPS });
 
+  const { data: membershipData } = useApiQuery(
+    ['membership', seq],
+    () => membershipApi.get(seq),
+  );
 
   useEffect(() => {
-    membershipApi.get(seq).then(res => {
-      const m = res.data;
-      const dur = fromDurationDays(m.duration);
+    if (membershipData) {
+      const dur = fromDurationDays(membershipData.duration);
       setForm({
-        name: m.name,
+        name: membershipData.name,
         durationValue: dur.value,
         durationUnit: dur.unit,
-        count: m.count,
-        price: m.price,
-        transferable: m.transferable,
+        count: membershipData.count,
+        price: membershipData.price,
+        transferable: membershipData.transferable,
       });
-    });
-  }, [seq]);
+    }
+  }, [membershipData]);
 
   const handleSubmit = async () => {
     const error = validateMembershipForm(form);

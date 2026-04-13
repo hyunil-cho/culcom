@@ -1,7 +1,9 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { transferApi, type TransferRequestItem, type TransferStatus } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { queryClient } from '@/lib/queryClient';
 import { useQueryParams } from '@/lib/useQueryParams';
 import SearchBar from '@/components/ui/SearchBar';
 import DataTable, { type Column } from '@/components/ui/DataTable';
@@ -25,16 +27,10 @@ function TransferRequestsContent() {
   const { params, setParams } = useQueryParams(DEFAULTS);
   const searchedKeyword = params.keyword;
 
-  const [items, setItems] = useState<TransferRequestItem[]>([]);
+  const { data: items = [] } = useApiQuery<TransferRequestItem[]>(['transferRequests'], () => transferApi.list());
   const [keyword, setKeyword] = useState(searchedKeyword);
   const detailModal = useModal<TransferRequestItem>();
 
-  const load = useCallback(async () => {
-    const res = await transferApi.list();
-    if (res.success) setItems(res.data);
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
   useEffect(() => { setKeyword(searchedKeyword); }, [searchedKeyword]);
 
   const filtered = searchedKeyword
@@ -108,7 +104,7 @@ function TransferRequestsContent() {
         <TransferDetailModal
           item={detailModal.data!}
           onClose={detailModal.close}
-          onStatusChange={load}
+          onStatusChange={() => queryClient.invalidateQueries({ queryKey: ['transferRequests'] })}
         />
       )}
     </>

@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button, LinkButton } from '@/components/ui/Button';
-import { customerApi } from '@/lib/api';
+import { customerApi, type Customer } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { cleanPhoneNumber, verifyPhoneNumber } from '@/lib/commonUtils';
 import { ROUTES } from '@/lib/routes';
 import FormField from '@/components/ui/FormField';
@@ -20,20 +21,22 @@ export default function CustomerEditPage() {
   const { run, modal } = useResultModal({ redirectPath: ROUTES.CUSTOMERS });
   const [deleting, setDeleting] = useState(false);
 
+  const { data: customerData } = useApiQuery<Customer>(
+    ['customer', seq],
+    () => customerApi.get(seq),
+  );
+
   useEffect(() => {
-    customerApi.get(seq).then(res => {
-      if (res.success) {
-        const c = res.data;
-        setForm({
-          name: c.name,
-          phoneNumber: c.phoneNumber,
-          comment: c.comment ?? '',
-          commercialName: c.commercialName ?? '',
-          adSource: c.adSource ?? '',
-        });
-      }
-    });
-  }, [seq]);
+    if (customerData) {
+      setForm({
+        name: customerData.name,
+        phoneNumber: customerData.phoneNumber,
+        comment: customerData.comment ?? '',
+        commercialName: customerData.commercialName ?? '',
+        adSource: customerData.adSource ?? '',
+      });
+    }
+  }, [customerData]);
 
   const handleSubmit = async () => {
     if (!form.name.trim()) { alert('이름을 입력해주세요.'); return; }

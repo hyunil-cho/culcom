@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { settingsApi, externalApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { Select, Textarea } from '@/components/ui/FormInput';
 import { Button } from '@/components/ui/Button';
 import s from './RefundLinkModal.module.css';
@@ -17,7 +18,6 @@ interface Props {
 export default function RefundLinkModal({ memberSeq, memberName, memberPhone, onClose }: Props) {
   const [copied, setCopied] = useState(false);
   const [showSms, setShowSms] = useState(false);
-  const [senderNumbers, setSenderNumbers] = useState<string[]>([]);
   const [senderPhone, setSenderPhone] = useState('');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -26,15 +26,14 @@ export default function RefundLinkModal({ memberSeq, memberName, memberPhone, on
   const payload = btoa(encodeURIComponent(JSON.stringify({ memberSeq, name: memberName, phone: memberPhone })));
   const refundUrl = `${window.location.origin}${ROUTES.PUBLIC_REFUND}?d=${payload}`;
 
+  const { data: senderNumbers = [] } = useApiQuery<string[]>(
+    ['senderNumbers'],
+    () => settingsApi.getSenderNumbers(),
+    { enabled: showSms },
+  );
   useEffect(() => {
-    if (!showSms) return;
-    settingsApi.getSenderNumbers().then(res => {
-      if (res.success && res.data?.length > 0) {
-        setSenderNumbers(res.data);
-        setSenderPhone(res.data[0]);
-      }
-    });
-  }, [showSms]);
+    if (senderNumbers.length > 0 && !senderPhone) setSenderPhone(senderNumbers[0]);
+  }, [senderNumbers, senderPhone]);
 
   useEffect(() => {
     if (showSms) {

@@ -1,7 +1,9 @@
 'use client';
 
-import { Suspense, useEffect, useState, useCallback } from 'react';
+import { Suspense } from 'react';
 import { messageTemplateApi, MessageTemplateItem } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { queryClient } from '@/lib/queryClient';
 import { ROUTES } from '@/lib/routes';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useResultModal } from '@/hooks/useResultModal';
@@ -14,24 +16,22 @@ export default function MessageTemplatesPage() {
 }
 
 function MessageTemplatesContent() {
-  const [templates, setTemplates] = useState<MessageTemplateItem[]>([]);
+  const { data: templates = [] } = useApiQuery<MessageTemplateItem[]>(
+    ['messageTemplates'],
+    () => messageTemplateApi.list(),
+  );
   const deleteModal = useModal<MessageTemplateItem>();
   const defaultModal = useModal<MessageTemplateItem>();
   const { run, modal } = useResultModal();
 
-  const fetchTemplates = useCallback(async () => {
-    const res = await messageTemplateApi.list();
-    if (res.success) setTemplates(res.data);
-  }, []);
-
-  useEffect(() => { fetchTemplates(); }, [fetchTemplates]);
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['messageTemplates'] });
 
   const handleDelete = async () => {
     if (!deleteModal.data) return;
     const target = deleteModal.data;
     deleteModal.close();
     const res = await run(messageTemplateApi.delete(target.seq), '템플릿이 삭제되었습니다.');
-    if (res.success) fetchTemplates();
+    if (res.success) invalidate();
   };
 
   const handleSetDefault = async () => {
@@ -39,7 +39,7 @@ function MessageTemplatesContent() {
     const target = defaultModal.data;
     defaultModal.close();
     const res = await run(messageTemplateApi.setDefault(target.seq), '기본 템플릿이 설정되었습니다.');
-    if (res.success) fetchTemplates();
+    if (res.success) invalidate();
   };
 
   return (

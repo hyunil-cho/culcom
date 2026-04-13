@@ -10,7 +10,7 @@ import SearchBar from '@/components/ui/SearchBar';
 import ModalOverlay from '@/components/ui/ModalOverlay';
 import { useResultModal } from '@/hooks/useResultModal';
 import { useModal } from '@/hooks/useModal';
-import { useListPage } from '@/hooks/useListPage';
+import { useListPageQuery } from '@/hooks/useListPageQuery';
 import s from './page.module.css';
 
 const STATUS_BADGE: Record<string, string> = {
@@ -21,7 +21,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 export default function PostponementsPage() {
   const router = useRouter();
-  const list = useListPage<PostponementRequest>((q) => postponementApi.list(q));
+  const list = useListPageQuery<PostponementRequest>('postponements', (q) => postponementApi.list(q));
   const [statusFilter, setStatusFilter] = useState('');
   const [keyword, setKeyword] = useState('');
   const { run, modal } = useResultModal({ onConfirm: () => list.load(list.pagination.page) });

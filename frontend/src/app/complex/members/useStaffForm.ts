@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { staffApi, classApi, memberApi, type ComplexClass } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import {
   emptyStaffForm, emptyClassAssign,
   type StaffFormData, type ClassAssignData,
@@ -25,26 +26,29 @@ export function useStaffForm({ seq, isEdit, allClasses }: UseStaffFormOptions) {
   const [staffClassAssign, setStaffClassAssign] = useState<ClassAssignData>(emptyClassAssign);
 
   // 수정 모드: 환급 정보 로드
+  const { data: refundData } = useApiQuery(
+    ['staffRefund', seq],
+    () => staffApi.getRefund(seq!),
+    { enabled: isEdit && seq != null },
+  );
+  const refundLoaded = useRef(false);
   useEffect(() => {
-    if (!isEdit || seq == null) return;
-    staffApi.getRefund(seq).then(refRes => {
-      if (refRes.success && refRes.data) {
-        const r = refRes.data;
-        setStaffForm(prev => ({
-          ...prev,
-          refund: {
-            depositAmount: r.depositAmount ?? '',
-            refundableDeposit: r.refundableDeposit ?? '',
-            nonRefundableDeposit: r.nonRefundableDeposit ?? '',
-            refundBank: r.refundBank ?? '',
-            refundAccount: r.refundAccount ?? '',
-            refundAmount: r.refundAmount ?? '',
-            paymentMethod: r.paymentMethod ?? '',
-          },
-        }));
-      }
-    }).catch(() => {});
-  }, [seq, isEdit]);
+    if (!refundData || refundLoaded.current) return;
+    refundLoaded.current = true;
+    const r = refundData;
+    setStaffForm(prev => ({
+      ...prev,
+      refund: {
+        depositAmount: r.depositAmount ?? '',
+        refundableDeposit: r.refundableDeposit ?? '',
+        nonRefundableDeposit: r.nonRefundableDeposit ?? '',
+        refundBank: r.refundBank ?? '',
+        refundAccount: r.refundAccount ?? '',
+        refundAmount: r.refundAmount ?? '',
+        paymentMethod: r.paymentMethod ?? '',
+      },
+    }));
+  }, [refundData]);
 
   // 수정 모드: 스태프 수업 배정 로드
   useEffect(() => {

@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { timeslotApi, classApi, type ClassTimeSlot, type ComplexClass, type PageResponse } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 
 /**
  * 시간대 목록 + 수업 목록을 로드하고,
@@ -12,15 +13,17 @@ import { timeslotApi, classApi, type ClassTimeSlot, type ComplexClass, type Page
  * - getClassesBySlot(slotSeq): 특정 시간대의 수업 목록
  */
 export function useClassSlots() {
-  const [timeSlots, setTimeSlots] = useState<ClassTimeSlot[]>([]);
-  const [allClasses, setAllClasses] = useState<ComplexClass[]>([]);
+  const { data: timeSlots = [] } = useApiQuery<ClassTimeSlot[]>(
+    ['timeslots'],
+    () => timeslotApi.list(),
+  );
 
-  useEffect(() => {
-    timeslotApi.list().then(res => { if (res.success) setTimeSlots(res.data); });
-    classApi.list('size=200').then(res => {
-      if (res.success) setAllClasses((res.data as PageResponse<ComplexClass>).content);
-    });
-  }, []);
+  const { data: classPageData } = useApiQuery<PageResponse<ComplexClass>>(
+    ['classes', 'all'],
+    () => classApi.list('size=200'),
+  );
+
+  const allClasses = classPageData?.content ?? [];
 
   const classesBySlot = useMemo(() => {
     const map = new Map<number, ComplexClass[]>();

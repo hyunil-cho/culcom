@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { surveyApi, SurveyTemplate, SurveySection, SurveyQuestion, SurveyOption } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { queryClient } from '@/lib/queryClient';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/FormInput';
@@ -32,12 +34,8 @@ export default function SurveyEditorPage() {
   const router = useRouter();
   const templateSeq = Number(params.seq);
 
-  const [template, setTemplate] = useState<SurveyTemplate | null>(null);
-  const [sections, setSections] = useState<SurveySection[]>([]);
-  const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
-  const [optionsByQ, setOptionsByQ] = useState<Record<number, SurveyOption[]>>({});
   const [openCards, setOpenCards] = useState<Set<number>>(new Set());
-  const [loading, setLoading] = useState(true);
+  const openCardsInitialized = useRef(false);
 
   const [addSectionForm, setAddSectionForm] = useState<{ title: string } | null>(null);
   const [editSectionSeq, setEditSectionSeq] = useState<number | null>(null);
@@ -53,33 +51,44 @@ export default function SurveyEditorPage() {
   const dragOption = useRef<{ seq: number; questionSeq: number } | null>(null);
   const dragOverOption = useRef<{ seq: number; questionSeq: number } | null>(null);
 
-  const load = useCallback(async () => {
-    const [tplRes, secRes, qRes, oRes] = await Promise.all([
-      surveyApi.getTemplate(templateSeq),
-      surveyApi.listSections(templateSeq),
-      surveyApi.listQuestions(templateSeq),
-      surveyApi.listOptions(templateSeq),
-    ]);
-    if (tplRes.success) setTemplate(tplRes.data);
-    if (secRes.success) setSections(secRes.data);
-    if (qRes.success) {
-      setQuestions(qRes.data);
-      if (qRes.data.length > 0 && openCards.size === 0) {
-        setOpenCards(new Set([qRes.data[0].seq]));
-      }
-    }
-    if (oRes.success) {
-      const grouped: Record<number, SurveyOption[]> = {};
-      for (const o of oRes.data) {
-        if (!grouped[o.questionSeq]) grouped[o.questionSeq] = [];
-        grouped[o.questionSeq].push(o);
-      }
-      setOptionsByQ(grouped);
-    }
-    setLoading(false);
-  }, [templateSeq]);
+  const surveyKey = ['surveyEditor', templateSeq];
 
-  useEffect(() => { load(); }, [load]);
+  const { data: template = null, isLoading: tplLoading } = useApiQuery<SurveyTemplate>(
+    [...surveyKey, 'template'],
+    () => surveyApi.getTemplate(templateSeq),
+  );
+
+  const { data: sections = [], isLoading: secLoading } = useApiQuery<SurveySection[]>(
+    [...surveyKey, 'sections'],
+    () => surveyApi.listSections(templateSeq),
+  );
+
+  const { data: questions = [], isLoading: qLoading } = useApiQuery<SurveyQuestion[]>(
+    [...surveyKey, 'questions'],
+    () => surveyApi.listQuestions(templateSeq),
+  );
+
+  const { data: allOptions = [], isLoading: oLoading } = useApiQuery<SurveyOption[]>(
+    [...surveyKey, 'options'],
+    () => surveyApi.listOptions(templateSeq),
+  );
+
+  const loading = tplLoading || secLoading || qLoading || oLoading;
+
+  const optionsByQ: Record<number, SurveyOption[]> = {};
+  for (const o of allOptions) {
+    if (!optionsByQ[o.questionSeq]) optionsByQ[o.questionSeq] = [];
+    optionsByQ[o.questionSeq].push(o);
+  }
+
+  useEffect(() => {
+    if (!openCardsInitialized.current && questions.length > 0 && openCards.size === 0) {
+      openCardsInitialized.current = true;
+      setOpenCards(new Set([questions[0].seq]));
+    }
+  }, [questions]);
+
+  const load = () => queryClient.invalidateQueries({ queryKey: surveyKey });
 
   const questionsForSection = (sectionSeq: number) =>
     questions.filter(q => q.sectionSeq === sectionSeq);
@@ -111,11 +120,6 @@ export default function SurveyEditorPage() {
     const [moved] = secQuestions.splice(fromIdx, 1);
     secQuestions.splice(toIdx, 0, moved);
     const items = secQuestions.map((q, i) => ({ seq: q.seq, sortOrder: i + 1, newQuestionKey: `q${i + 1}` }));
-    setQuestions(prev => {
-      const otherQuestions = prev.filter(q => q.sectionSeq !== sectionSeq);
-      const reordered = secQuestions.map((q, i) => ({ ...q, sortOrder: i + 1, questionKey: `q${i + 1}` }));
-      return [...otherQuestions, ...reordered].sort((a, b) => a.sortOrder - b.sortOrder);
-    });
     dragItem.current = null;
     dragOverItem.current = null;
     await surveyApi.reorderQuestions(templateSeq, items);
@@ -207,7 +211,6 @@ export default function SurveyEditorPage() {
     if (fromIdx === -1 || toIdx === -1) return;
     const [moved] = opts.splice(fromIdx, 1);
     opts.splice(toIdx, 0, moved);
-    setOptionsByQ(prev => ({ ...prev, [questionSeq]: opts }));
     const items = opts.map((o, i) => ({ seq: o.seq, sortOrder: i + 1 }));
     dragOption.current = null;
     dragOverOption.current = null;

@@ -1,9 +1,12 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { outstandingApi, type OutstandingItem, type PageResponse } from '@/lib/api';
+import { outstandingApi, type OutstandingItem } from '@/lib/api';
+import type { PageResponse } from '@/lib/api/client';
 import { ROUTES } from '@/lib/routes';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { queryClient } from '@/lib/queryClient';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import SearchBar from '@/components/ui/SearchBar';
 import { useModal } from '@/hooks/useModal';
@@ -30,19 +33,13 @@ function OutstandingContent() {
   const [searched, setSearched] = useState(initialKeyword);
   const [sort, setSort] = useState<SortKey>('OUTSTANDING_DESC');
   const [page, setPage] = useState(0);
-  const [data, setData] = useState<PageResponse<OutstandingItem> | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const paymentModal = useModal<OutstandingItem>();
 
-  const load = useCallback(() => {
-    setLoading(true);
-    outstandingApi.list({ keyword: searched, sort, page, size: 20 })
-      .then(res => setData(res.data))
-      .finally(() => setLoading(false));
-  }, [searched, sort, page]);
-
-  useEffect(() => { load(); }, [load]);
+  const { data, isLoading: loading } = useApiQuery<PageResponse<OutstandingItem>>(
+    ['outstanding', searched, sort, page],
+    () => outstandingApi.list({ keyword: searched, sort, page, size: 20 }),
+  );
 
   const handleSearch = () => { setPage(0); setSearched(keyword); };
   const handleReset = () => { setKeyword(''); setSearched(''); setPage(0); };
@@ -159,7 +156,7 @@ function OutstandingContent() {
           membershipName={paymentModal.data!.membershipName}
           outstanding={paymentModal.data!.outstanding}
           onClose={paymentModal.close}
-          onSaved={() => { paymentModal.close(); load(); }}
+          onSaved={() => { paymentModal.close(); queryClient.invalidateQueries({ queryKey: ['outstanding'] }); }}
         />
       )}
 

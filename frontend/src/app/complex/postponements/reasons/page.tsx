@@ -1,20 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { postponementApi, type PostponementReason } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { queryClient } from '@/lib/queryClient';
 import s from './page.module.css';
 
 export default function PostponementReasonsPage() {
-  const [reasons, setReasons] = useState<PostponementReason[]>([]);
+  const { data: reasons = [] } = useApiQuery<PostponementReason[]>(
+    ['postponementReasons'],
+    () => postponementApi.reasons(),
+  );
   const [showForm, setShowForm] = useState(false);
   const [reasonText, setReasonText] = useState('');
-  const { run, modal } = useResultModal({ onConfirm: () => load() });
-
-  const load = () => { postponementApi.reasons().then(res => setReasons(res.data)); };
-  useEffect(() => { load(); }, []);
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['postponementReasons'] });
+  const { run, modal } = useResultModal({ onConfirm: invalidate });
 
   const handleAdd = async () => {
     if (!reasonText.trim()) { alert('사유 텍스트를 입력하세요.'); return; }

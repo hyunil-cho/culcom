@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { memberApi, type MemberMembershipResponse } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import MembershipCard from './MembershipCard';
 import styles from './MembershipInfoModal.module.css';
 
@@ -12,15 +12,10 @@ export default function MembershipInfoModal({
   memberName: string;
   onClose: () => void;
 }) {
-  const [memberships, setMemberships] = useState<MemberMembershipResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    memberApi.getMemberships(memberSeq).then(res => {
-      if (res.success) setMemberships(res.data);
-      setLoading(false);
-    });
-  }, [memberSeq]);
+  const { data: memberships = [], isLoading: loading } = useApiQuery<MemberMembershipResponse[]>(
+    ['memberMemberships', memberSeq],
+    () => memberApi.getMemberships(memberSeq),
+  );
 
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>

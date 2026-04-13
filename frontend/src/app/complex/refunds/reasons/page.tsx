@@ -1,20 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { refundApi, type RefundReason } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { queryClient } from '@/lib/queryClient';
 import s from './page.module.css';
 
 export default function RefundReasonsPage() {
-  const [reasons, setReasons] = useState<RefundReason[]>([]);
+  const { data: reasons = [] } = useApiQuery<RefundReason[]>(
+    ['refundReasons'],
+    () => refundApi.reasons(),
+  );
   const [showForm, setShowForm] = useState(false);
   const [reasonText, setReasonText] = useState('');
-  const { run, modal } = useResultModal({ onConfirm: () => load() });
-
-  const load = () => { refundApi.reasons().then(res => setReasons(res.data)); };
-  useEffect(() => { load(); }, []);
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['refundReasons'] });
+  const { run, modal } = useResultModal({ onConfirm: invalidate });
 
   const handleAdd = async () => {
     if (!reasonText.trim()) { alert('사유 텍스트를 입력하세요.'); return; }

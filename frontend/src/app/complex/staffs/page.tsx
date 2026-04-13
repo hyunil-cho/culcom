@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { staffApi, type ComplexStaff, type ComplexClass, attendanceViewApi, type StaffAttendanceRateSummary } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import { useAttendanceHistory } from '@/lib/useAttendanceHistory';
@@ -54,30 +55,32 @@ function StaffTeamModal({ staff, classes, onClose }: {
 
 export default function StaffsPage() {
   const router = useRouter();
-  const [staffs, setStaffs] = useState<ComplexStaff[]>([]);
-  const [rateMap, setRateMap] = useState<Record<number, StaffAttendanceRateSummary>>({});
-  const [rateMap1m, setRateMap1m] = useState<Record<number, StaffAttendanceRateSummary>>({});
   const teamModal = useModal<ComplexStaff>();
   const { column: historyColumn, modal: historyModal } = useAttendanceHistory<ComplexStaff>('staff');
   const { allClasses } = useClassSlots();
 
-  useEffect(() => {
-    staffApi.list().then(res => setStaffs(res.data));
-    attendanceViewApi.staffAttendanceRates().then(res => {
-      if (res.success) {
-        const map: Record<number, StaffAttendanceRateSummary> = {};
-        for (const r of res.data) map[r.staffSeq] = r;
-        setRateMap(map);
-      }
-    });
-    attendanceViewApi.staffAttendanceRates(1).then(res => {
-      if (res.success) {
-        const map: Record<number, StaffAttendanceRateSummary> = {};
-        for (const r of res.data) map[r.staffSeq] = r;
-        setRateMap1m(map);
-      }
-    });
-  }, []);
+  const { data: staffs = [] } = useApiQuery<ComplexStaff[]>(
+    ['staffs'],
+    () => staffApi.list(),
+  );
+  const { data: rateData = [] } = useApiQuery<StaffAttendanceRateSummary[]>(
+    ['staffAttendanceRates'],
+    () => attendanceViewApi.staffAttendanceRates(),
+  );
+  const rateMap = useMemo(() => {
+    const map: Record<number, StaffAttendanceRateSummary> = {};
+    for (const r of rateData) map[r.staffSeq] = r;
+    return map;
+  }, [rateData]);
+  const { data: rateData1m = [] } = useApiQuery<StaffAttendanceRateSummary[]>(
+    ['staffAttendanceRates1m'],
+    () => attendanceViewApi.staffAttendanceRates(1),
+  );
+  const rateMap1m = useMemo(() => {
+    const map: Record<number, StaffAttendanceRateSummary> = {};
+    for (const r of rateData1m) map[r.staffSeq] = r;
+    return map;
+  }, [rateData1m]);
 
   const getClassesForStaff = (staffSeq: number) =>
     allClasses.filter(c => c.staffSeq === staffSeq);

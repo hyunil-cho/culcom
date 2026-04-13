@@ -1,8 +1,10 @@
 'use client';
 
-import { Suspense, useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { noticeApi, NoticeListItem } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { queryClient } from '@/lib/queryClient';
 import { useQueryParams } from '@/lib/useQueryParams';
 import DataTable from '@/components/ui/DataTable';
 import SearchBar from '@/components/ui/SearchBar';
@@ -31,30 +33,25 @@ function NoticesContent() {
   const filter = params.filter;
   const searchKeyword = params.searchKeyword;
 
-  const [notices, setNotices] = useState<NoticeListItem[]>([]);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
   const [keyword, setKeyword] = useState(searchKeyword);
   const deleteModal = useModal<NoticeListItem>();
   const { run, modal } = useResultModal();
 
-  const fetchNotices = useCallback(async () => {
-    const apiParams = new URLSearchParams();
-    apiParams.set('page', String(page));
-    apiParams.set('size', '10');
-    apiParams.set('filter', filter);
-    if (searchKeyword) apiParams.set('searchKeyword', searchKeyword);
-    const res = await noticeApi.list(apiParams.toString());
-    if (res.success) {
-      setNotices(res.data.content);
-      setTotalPages(res.data.totalPages);
-      setTotalElements(res.data.totalElements);
-    }
-  }, [page, filter, searchKeyword]);
-
-  useEffect(() => {
-    fetchNotices();
-  }, [fetchNotices]);
+  const noticeQueryKey = ['notices', { page, filter, searchKeyword }];
+  const { data: noticeData } = useApiQuery<{ content: NoticeListItem[]; totalPages: number; totalElements: number }>(
+    noticeQueryKey,
+    () => {
+      const apiParams = new URLSearchParams();
+      apiParams.set('page', String(page));
+      apiParams.set('size', '10');
+      apiParams.set('filter', filter);
+      if (searchKeyword) apiParams.set('searchKeyword', searchKeyword);
+      return noticeApi.list(apiParams.toString());
+    },
+  );
+  const notices = noticeData?.content ?? [];
+  const totalPages = noticeData?.totalPages ?? 0;
+  const totalElements = noticeData?.totalElements ?? 0;
 
   // searchKeyword가 URL에서 복원될 때 입력창도 동기화
   useEffect(() => {
@@ -83,7 +80,7 @@ function NoticesContent() {
     const target = deleteModal.data;
     deleteModal.close();
     const res = await run(noticeApi.delete(target.seq), '공지사항이 삭제되었습니다.');
-    if (res.success) fetchNotices();
+    if (res.success) queryClient.invalidateQueries({ queryKey: ['notices'] });
   };
 
   const columns = [

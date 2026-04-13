@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   settingsApi, externalApi, memberApi, postponementApi,
   type MemberMembershipResponse, type PostponementRequest,
 } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { Select, Textarea } from '@/components/ui/FormInput';
 import { Button } from '@/components/ui/Button';
 import s from './PostponementLinkModal.module.css';
@@ -24,15 +25,8 @@ const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
 };
 
 export default function PostponementLinkModal({ memberSeq, memberName, memberPhone, onClose }: Props) {
-  const [loading, setLoading] = useState(true);
-  const [memberships, setMemberships] = useState<MemberMembershipResponse[]>([]);
-  const [history, setHistory] = useState<PostponementRequest[]>([]);
-  const [canPostpone, setCanPostpone] = useState(false);
-  const [unavailableReason, setUnavailableReason] = useState('');
-
   const [copied, setCopied] = useState(false);
   const [showSms, setShowSms] = useState(false);
-  const [senderNumbers, setSenderNumbers] = useState<string[]>([]);
   const [senderPhone, setSenderPhone] = useState('');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -41,42 +35,36 @@ export default function PostponementLinkModal({ memberSeq, memberName, memberPho
   const payload = btoa(encodeURIComponent(JSON.stringify({ memberSeq, name: memberName, phone: memberPhone })));
   const postponementUrl = `${window.location.origin}${ROUTES.PUBLIC_POSTPONEMENT}?d=${payload}`;
 
+  const { data: memberships = [], isLoading: msLoading } = useApiQuery<MemberMembershipResponse[]>(
+    ['postponementLinkMemberships', memberSeq],
+    () => memberApi.getMemberships(memberSeq),
+  );
+  const { data: history = [], isLoading: histLoading } = useApiQuery<PostponementRequest[]>(
+    ['postponementHistory', memberSeq],
+    () => postponementApi.memberHistory(memberSeq),
+  );
+  const loading = msLoading || histLoading;
+
+  const { canPostpone, unavailableReason } = useMemo(() => {
+    const usableMemberships = memberships.filter(m => m.status === '활성');
+    if (usableMemberships.length === 0) {
+      return { canPostpone: false, unavailableReason: '사용 가능한 멤버십이 없습니다.' };
+    }
+    const hasRemaining = usableMemberships.some(m => m.postponeTotal - m.postponeUsed > 0);
+    if (!hasRemaining) {
+      return { canPostpone: false, unavailableReason: '연기 가능 횟수가 소진되었습니다.' };
+    }
+    return { canPostpone: true, unavailableReason: '' };
+  }, [memberships]);
+
+  const { data: senderNumbers = [] } = useApiQuery<string[]>(
+    ['senderNumbers'],
+    () => settingsApi.getSenderNumbers(),
+    { enabled: showSms },
+  );
   useEffect(() => {
-    Promise.all([
-      memberApi.getMemberships(memberSeq),
-      postponementApi.memberHistory(memberSeq),
-    ]).then(([msRes, histRes]) => {
-      const ms = msRes.success ? msRes.data : [];
-      setMemberships(ms);
-
-      const usableMemberships = ms.filter(m => m.status === '활성');
-      if (usableMemberships.length === 0) {
-        setCanPostpone(false);
-        setUnavailableReason('사용 가능한 멤버십이 없습니다.');
-      } else {
-        const hasRemaining = usableMemberships.some(m => m.postponeTotal - m.postponeUsed > 0);
-        if (!hasRemaining) {
-          setCanPostpone(false);
-          setUnavailableReason('연기 가능 횟수가 소진되었습니다.');
-        } else {
-          setCanPostpone(true);
-        }
-      }
-
-      if (histRes.success) setHistory(histRes.data);
-      setLoading(false);
-    });
-  }, [memberSeq]);
-
-  useEffect(() => {
-    if (!showSms) return;
-    settingsApi.getSenderNumbers().then(res => {
-      if (res.success && res.data?.length > 0) {
-        setSenderNumbers(res.data);
-        setSenderPhone(res.data[0]);
-      }
-    });
-  }, [showSms]);
+    if (senderNumbers.length > 0 && !senderPhone) setSenderPhone(senderNumbers[0]);
+  }, [senderNumbers, senderPhone]);
 
   useEffect(() => {
     if (showSms) {

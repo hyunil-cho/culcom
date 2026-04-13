@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
@@ -99,15 +100,12 @@ function tabStyle(active: boolean): React.CSSProperties {
 }
 
 export default function TrendCharts() {
-  const [data, setData] = useState<TrendResponse | null>(null);
   const [period, setPeriod] = useState<TrendPeriod>('month');
 
-  useEffect(() => {
-    const count = DEFAULT_COUNT[period];
-    complexDashboardApi.trends(period, count).then(res => {
-      if (res.success) setData(res.data);
-    });
-  }, [period]);
+  const { data = null } = useApiQuery<TrendResponse>(
+    ['complexDashboard', 'trends', period],
+    () => complexDashboardApi.trends(period, DEFAULT_COUNT[period]),
+  );
 
   if (!data) return null;
 

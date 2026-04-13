@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { publicRefundApi, type PublicMemberInfo, type PublicMembershipInfo } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import { Input, PhoneInput, Select, Textarea } from '@/components/ui/FormInput';
 
@@ -22,32 +23,32 @@ function PublicRefundPageInner() {
     } catch { return null; }
   })();
 
-  const [member, setMember] = useState<PublicMemberInfo | null>(null);
+  const { data: memberSearchResult, isLoading: loading, error: queryError } = useApiQuery(
+    ['publicRefundMember', decoded?.name, decoded?.phone],
+    () => publicRefundApi.searchMember(decoded!.name, decoded!.phone),
+    { enabled: !!decoded },
+  );
+
+  const member: PublicMemberInfo | null = memberSearchResult?.members?.[0] ?? null;
+
+  const { data: reasons = [] } = useApiQuery<string[]>(
+    ['publicRefundReasons', member?.branchSeq],
+    () => publicRefundApi.reasons(member!.branchSeq),
+    { enabled: !!member?.branchSeq },
+  );
+
+  const error = !decoded ? '유효하지 않은 링크입니다. 관리자에게 문의해주세요.'
+    : queryError ? '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'
+    : (!loading && !member) ? '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'
+    : '';
+
   const [selectedMembershipSeq, setSelectedMembershipSeq] = useState<number | null>(null);
-  const [reasons, setReasons] = useState<string[]>([]);
   const [reasonSelect, setReasonSelect] = useState('');
   const [reasonCustom, setReasonCustom] = useState('');
   const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [accountHolder, setAccountHolder] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!decoded) { setLoading(false); setError('유효하지 않은 링크입니다. 관리자에게 문의해주세요.'); return; }
-    publicRefundApi.searchMember(decoded.name, decoded.phone).then(res => {
-      setLoading(false);
-      if (!res.success || !res.data.members || res.data.members.length === 0) {
-        setError('회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'); return;
-      }
-      const m = res.data.members[0];
-      setMember(m);
-      publicRefundApi.reasons(m.branchSeq).then(rRes => {
-        if (rRes.success) setReasons(rRes.data);
-      });
-    });
-  }, []);
 
   const selectedMembership = member?.memberships.find(ms => ms.seq === selectedMembershipSeq);
 

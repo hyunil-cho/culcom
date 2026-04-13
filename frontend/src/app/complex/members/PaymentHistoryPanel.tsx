@@ -1,12 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   memberApi,
   type MemberMembershipResponse,
   type MembershipPaymentResponse,
 } from '@/lib/api';
 import { usePaymentOptions } from '@/lib/usePaymentOptions';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { queryClient } from '@/lib/queryClient';
 import PaymentAddModal from './outstanding/PaymentAddModal';
 
 const STATUS_COLOR: Record<string, { bg: string; fg: string; border: string }> = {
@@ -27,20 +29,13 @@ export default function PaymentHistoryPanel({ memberSeq, memberName }: Props) {
   const methodLabel = (v: string | null) => methods.find(m => m.value === v)?.label ?? v ?? '-';
   const kindLabel = (v: string) => kinds.find(k => k.value === v)?.label ?? v;
 
-  const [memberships, setMemberships] = useState<MemberMembershipResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: memberships = [], isLoading } = useApiQuery<MemberMembershipResponse[]>(
+    ['memberMemberships', memberSeq],
+    () => memberApi.getMemberships(memberSeq),
+  );
   const [paymentModal, setPaymentModal] = useState<MemberMembershipResponse | null>(null);
 
-  const load = useCallback(() => {
-    setLoading(true);
-    memberApi.getMemberships(memberSeq)
-      .then(res => setMemberships(res.data))
-      .finally(() => setLoading(false));
-  }, [memberSeq]);
-
-  useEffect(() => { load(); }, [load]);
-
-  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#999' }}>불러오는 중…</div>;
+  if (isLoading) return <div style={{ padding: 40, textAlign: 'center', color: '#999' }}>불러오는 중…</div>;
   if (memberships.length === 0) {
     return <div style={{ padding: 40, textAlign: 'center', color: '#999' }}>등록된 멤버십이 없습니다.</div>;
   }
@@ -156,7 +151,7 @@ export default function PaymentHistoryPanel({ memberSeq, memberName }: Props) {
           membershipName={paymentModal.membershipName}
           outstanding={paymentModal.outstanding ?? 0}
           onClose={() => setPaymentModal(null)}
-          onSaved={() => { setPaymentModal(null); load(); }}
+          onSaved={() => { setPaymentModal(null); queryClient.invalidateQueries({ queryKey: ['memberMemberships', memberSeq] }); }}
         />
       )}
     </>

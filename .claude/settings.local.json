@@ -83,7 +83,10 @@
       "Bash(awk '{sum+=$1} END {print \"Total service lines: \" sum}')",
       "Bash(README\")",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(./gradlew cleanTest test --tests \"com.culcom.service.PostponementServiceOverlapTest\")",
+      "Bash(echo \"EXIT_CODE=$?\")",
+      "Bash(npm run:*)"
     ]
   }
 }

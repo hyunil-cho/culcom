@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { consentItemApi } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import { useResultModal } from '@/hooks/useResultModal';
 import ConsentItemForm, { emptyForm, validateForm, type ConsentItemFormData } from '../../ConsentItemForm';
@@ -12,12 +13,16 @@ export default function ConsentItemEditPage() {
   const [form, setForm] = useState<ConsentItemFormData>(emptyForm);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.CONSENT_ITEMS });
 
+  const { data: consentData } = useApiQuery(
+    ['consentItem', seq],
+    () => consentItemApi.get(seq),
+  );
+
   useEffect(() => {
-    consentItemApi.get(seq).then(res => {
-      const d = res.data;
-      setForm({ title: d.title, content: d.content, required: d.required, category: d.category });
-    });
-  }, [seq]);
+    if (consentData) {
+      setForm({ title: consentData.title, content: consentData.content, required: consentData.required, category: consentData.category });
+    }
+  }, [consentData]);
 
   const handleSubmit = async () => {
     const error = validateForm(form);

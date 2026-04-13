@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { memberApi, membershipApi, type Membership } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { usePaymentOptions } from '@/lib/usePaymentOptions';
 import MembershipInfoModal from './components/MembershipInfoModal';
 import MembershipFormSection from './components/MembershipFormSection';
@@ -29,10 +30,10 @@ export function useMembership(options?: UseMembershipOptions) {
   const { methods: paymentMethods } = usePaymentOptions();
 
   // ── 멤버십 상품 목록 ──
-  const [memberships, setMemberships] = useState<Membership[]>([]);
-  useEffect(() => {
-    membershipApi.list().then(res => { if (res.success) setMemberships(res.data); });
-  }, []);
+  const { data: memberships = [] } = useApiQuery<Membership[]>(
+    ['memberships'],
+    () => membershipApi.list(),
+  );
 
   // ── 폼 상태 ──
   const [form, setForm] = useState<MembershipFormData>(EMPTY_FORM);
@@ -48,25 +49,30 @@ export function useMembership(options?: UseMembershipOptions) {
   });
 
   // 수정 모드: 기존 멤버십 로드
+  const { data: existingMemberships } = useApiQuery(
+    ['memberMemberships', memberSeq],
+    () => memberApi.getMemberships(memberSeq!),
+    { enabled: !!memberSeq },
+  );
+  const existingMsLoaded = useRef(false);
   useEffect(() => {
-    if (!memberSeq) return;
-    memberApi.getMemberships(memberSeq).then(res => {
-      if (res.success && res.data.length > 0) {
-        const ms = res.data[0];
-        setForm({
-          membershipSeq: String(ms.membershipSeq),
-          startDate: ms.startDate ?? '',
-          expiryDate: ms.expiryDate ?? '',
-          price: ms.price ?? '',
-          paymentDate: ms.paymentDate ?? '',
-          depositAmount: '',
-          paymentMethod: ms.paymentMethod ?? '',
-          status: ms.status ?? '활성',
-        });
-        setMemberMembershipSeq(ms.seq);
-      }
-    });
-  }, [memberSeq]);
+    if (!existingMemberships || existingMsLoaded.current) return;
+    existingMsLoaded.current = true;
+    if (existingMemberships.length > 0) {
+      const ms = existingMemberships[0];
+      setForm({
+        membershipSeq: String(ms.membershipSeq),
+        startDate: ms.startDate ?? '',
+        expiryDate: ms.expiryDate ?? '',
+        price: ms.price ?? '',
+        paymentDate: ms.paymentDate ?? '',
+        depositAmount: '',
+        paymentMethod: ms.paymentMethod ?? '',
+        status: ms.status ?? '활성',
+      });
+      setMemberMembershipSeq(ms.seq);
+    }
+  }, [existingMemberships]);
 
   // membershipSeq가 채워지면 토글 자동 ON
   useEffect(() => {

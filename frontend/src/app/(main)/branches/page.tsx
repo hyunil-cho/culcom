@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { branchApi, SessionRole, type Branch } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import ResultModal from '@/components/ui/ResultModal';
 import { ROUTES } from '@/lib/routes';
 import DataTable, { type Column } from '@/components/ui/DataTable';
@@ -12,13 +12,10 @@ import DataTable, { type Column } from '@/components/ui/DataTable';
 export default function BranchesPage() {
   const session = useSessionStore((s) => s.session);
   const refreshBranches = useSessionStore((s) => s.refreshBranches);
-  const [branches, setBranches] = useState<Branch[]>([]);
   const router = useRouter();
   const canEdit = SessionRole.isManager(session);
 
-  const load = () => { branchApi.list().then(res => setBranches(res.data)); };
-
-  useEffect(() => { load(); }, []);
+  const { data: branches = [] } = useApiQuery<Branch[]>(['branches'], () => branchApi.list());
 
   const branchColumns: Column<Branch>[] = [
     { header: '지점명', render: (b) => <strong>{b.branchName}</strong> },

@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { attendanceViewApi, type AttendanceHistoryDetail, type AttendanceHistorySummary, type PageResponse } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import styles from './AttendanceHistoryModal.module.css';
 
 interface AttendanceHistoryModalProps {
@@ -14,32 +15,27 @@ interface AttendanceHistoryModalProps {
 const PAGE_SIZE = 20;
 
 export default function AttendanceHistoryModal({ seq, name, type, onClose }: AttendanceHistoryModalProps) {
-  const [data, setData] = useState<AttendanceHistoryDetail[]>([]);
   const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
-  const [summary, setSummary] = useState<AttendanceHistorySummary | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetcher = type === 'staff' ? attendanceViewApi.staffHistorySummary : attendanceViewApi.memberHistorySummary;
-    fetcher(seq).then(res => { if (res.success) setSummary(res.data as AttendanceHistorySummary); });
-  }, [seq, type]);
+  const { data: summary = null } = useApiQuery<AttendanceHistorySummary>(
+    ['attendanceHistorySummary', type, seq],
+    () => {
+      const fetcher = type === 'staff' ? attendanceViewApi.staffHistorySummary : attendanceViewApi.memberHistorySummary;
+      return fetcher(seq) as Promise<import('@/lib/api/client').ApiResponse<AttendanceHistorySummary>>;
+    },
+  );
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const fetcher = type === 'staff' ? attendanceViewApi.staffHistory : attendanceViewApi.memberHistory;
-    const res = await fetcher(seq, page, PAGE_SIZE);
-    if (res.success) {
-      const d = res.data as PageResponse<AttendanceHistoryDetail>;
-      setData(d.content);
-      setTotalPages(d.totalPages);
-      setTotalElements(d.totalElements);
-    }
-    setLoading(false);
-  }, [seq, type, page]);
+  const { data: pageData, isLoading: loading } = useApiQuery<PageResponse<AttendanceHistoryDetail>>(
+    ['attendanceHistory', type, seq, page],
+    () => {
+      const fetcher = type === 'staff' ? attendanceViewApi.staffHistory : attendanceViewApi.memberHistory;
+      return fetcher(seq, page, PAGE_SIZE) as Promise<import('@/lib/api/client').ApiResponse<PageResponse<AttendanceHistoryDetail>>>;
+    },
+  );
 
-  useEffect(() => { load(); }, [load]);
+  const data = pageData?.content ?? [];
+  const totalPages = pageData?.totalPages ?? 0;
+  const totalElements = pageData?.totalElements ?? 0;
 
   const statusClass = (status: string) => {
     if (status === '출석') return styles.statusPresent;

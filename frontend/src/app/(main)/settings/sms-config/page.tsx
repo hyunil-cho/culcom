@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import Link from 'next/link';
 import { smsEventApi, type MessageTemplateSimple, type SmsEventConfig, type SmsEventType } from '@/lib/api';
 import { Checkbox } from '@/components/ui/FormInput';
@@ -23,15 +24,28 @@ interface EventFormState {
 const emptyForm: EventFormState = { templateSeq: '', senderNumber: '', autoSend: false };
 
 export default function SmsConfigPage() {
-  const [templates, setTemplates] = useState<MessageTemplateSimple[]>([]);
-  const [senderNumbers, setSenderNumbers] = useState<string[]>([]);
+  const { data: templates = [] } = useApiQuery<MessageTemplateSimple[]>(
+    ['smsConfig', 'templates'],
+    () => smsEventApi.getTemplates(),
+  );
+
+  const { data: senderNumbers = [] } = useApiQuery<string[]>(
+    ['smsConfig', 'senderNumbers'],
+    () => smsEventApi.getSenderNumbers(),
+  );
+
+  const { data: configsList = [], isLoading: loading } = useApiQuery<SmsEventConfig[]>(
+    ['smsConfig', 'configs'],
+    () => smsEventApi.list(),
+  );
+
   const [configs, setConfigs] = useState<Record<SmsEventType, SmsEventConfig | null>>({
     '예약확정': null, '고객등록': null, '회원등록': null,
   });
   const [forms, setForms] = useState<Record<SmsEventType, EventFormState>>({
     '예약확정': { ...emptyForm }, '고객등록': { ...emptyForm }, '회원등록': { ...emptyForm },
   });
-  const [loading, setLoading] = useState(true);
+  const [formsInitialized, setFormsInitialized] = useState(false);
   const [savingType, setSavingType] = useState<SmsEventType | null>(null);
   const [savedType, setSavedType] = useState<SmsEventType | null>(null);
   const [expanded, setExpanded] = useState<Record<SmsEventType, boolean>>({
@@ -39,31 +53,24 @@ export default function SmsConfigPage() {
   });
 
   useEffect(() => {
-    Promise.all([
-      smsEventApi.getTemplates(),
-      smsEventApi.getSenderNumbers(),
-      smsEventApi.list(),
-    ]).then(([templatesRes, numbersRes, configsRes]) => {
-      setTemplates(templatesRes.data ?? []);
-      setSenderNumbers(numbersRes.data ?? []);
-
-      const configMap: Record<string, SmsEventConfig | null> = { '예약확정': null, '고객등록': null, '회원등록': null };
-      const formMap: Record<string, EventFormState> = {
-        '예약확정': { ...emptyForm }, '고객등록': { ...emptyForm }, '회원등록': { ...emptyForm },
+    if (configsList.length === 0 && formsInitialized) return;
+    if (loading) return;
+    const configMap: Record<string, SmsEventConfig | null> = { '예약확정': null, '고객등록': null, '회원등록': null };
+    const formMap: Record<string, EventFormState> = {
+      '예약확정': { ...emptyForm }, '고객등록': { ...emptyForm }, '회원등록': { ...emptyForm },
+    };
+    for (const c of configsList) {
+      configMap[c.eventType] = c;
+      formMap[c.eventType] = {
+        templateSeq: c.templateSeq,
+        senderNumber: c.senderNumber,
+        autoSend: c.autoSend,
       };
-      for (const c of configsRes.data ?? []) {
-        configMap[c.eventType] = c;
-        formMap[c.eventType] = {
-          templateSeq: c.templateSeq,
-          senderNumber: c.senderNumber,
-          autoSend: c.autoSend,
-        };
-      }
-      setConfigs(configMap as Record<SmsEventType, SmsEventConfig | null>);
-      setForms(formMap as Record<SmsEventType, EventFormState>);
-      setLoading(false);
-    });
-  }, []);
+    }
+    setConfigs(configMap as Record<SmsEventType, SmsEventConfig | null>);
+    setForms(formMap as Record<SmsEventType, EventFormState>);
+    setFormsInitialized(true);
+  }, [configsList, loading]);
 
   const updateForm = (type: SmsEventType, patch: Partial<EventFormState>) => {
     setForms(prev => ({ ...prev, [type]: { ...prev[type], ...patch } }));

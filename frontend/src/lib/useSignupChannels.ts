@@ -1,34 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { signupChannelConfigApi, type ConfigItem } from '@/lib/api';
-
-let cache: ConfigItem[] | null = null;
-let inflight: Promise<ConfigItem[]> | null = null;
+import { queryClient } from '@/lib/queryClient';
 
 export function useSignupChannels(): { channels: ConfigItem[]; loading: boolean } {
-  const [channels, setChannels] = useState<ConfigItem[]>(cache ?? []);
-  const [loading, setLoading] = useState(!cache);
-
-  useEffect(() => {
-    if (cache) return;
-    if (!inflight) {
-      inflight = signupChannelConfigApi.list().then(res => {
-        cache = res.data;
-        return res.data;
-      });
-    }
-    inflight.then(data => {
-      setChannels(data);
-      setLoading(false);
-    });
-  }, []);
-
-  return { channels, loading };
+  const { data, isLoading } = useApiQuery<ConfigItem[]>(
+    ['config', 'signupChannels'],
+    () => signupChannelConfigApi.list(),
+  );
+  return { channels: data ?? [], loading: isLoading };
 }
 
 /** 캐시를 무효화한다. 설정 변경 후 호출. */
 export function invalidateSignupChannelCache() {
-  cache = null;
-  inflight = null;
+  queryClient.invalidateQueries({ queryKey: ['config', 'signupChannels'] });
 }

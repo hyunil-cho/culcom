@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useDragReorder } from '@/hooks/useDragReorder';
 import { useRouter } from 'next/navigation';
 import { attendanceViewApi, type AttendanceViewSlot, type AttendanceViewMember } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { queryClient } from '@/lib/queryClient';
 import { ROUTES } from '@/lib/routes';
 import { useHighlightSearch } from '@/lib/useHighlightSearch';
 import HighlightSearchBar from '@/components/ui/HighlightSearchBar';
@@ -17,8 +19,13 @@ import './attendance.css';
 
 export default function AttendancePage() {
   const router = useRouter();
-  const [slots, setSlots] = useState<AttendanceViewSlot[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  const { data: slots = [], isLoading: loading } = useApiQuery<AttendanceViewSlot[]>(
+    ['attendanceView'],
+    () => attendanceViewApi.getView(),
+  );
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['attendanceView'] });
 
   const { matchedItems, currentMatchIndex, performSearch, navigateMatch } = useHighlightSearch({
     rowSelector: '.member-item',
@@ -30,17 +37,9 @@ export default function AttendancePage() {
 
   const msgModal = useMessageModal();
 
-  const fetchData = useCallback(async () => {
-    const res = await attendanceViewApi.getView();
-    if (res.success) setSlots(res.data);
-    setLoading(false);
-  }, []);
-
-  const bulkAttendance = useBulkAttendance(fetchData);
+  const bulkAttendance = useBulkAttendance(invalidate);
 
   const manageModal = useModal<{ member: AttendanceViewMember; className: string }>();
-
-  useEffect(() => { fetchData(); }, [fetchData]);
 
   const { start: startCardDrag } = useDragReorder({
     itemSelector: '.class-card',
@@ -179,7 +178,7 @@ export default function AttendancePage() {
           member={manageModal.data!.member}
           currentClassName={manageModal.data!.className}
           onClose={manageModal.close}
-          onMoved={() => { manageModal.close(); fetchData(); }}
+          onMoved={() => { manageModal.close(); invalidate(); }}
         />
       )}
       {bulkAttendance.rendered}

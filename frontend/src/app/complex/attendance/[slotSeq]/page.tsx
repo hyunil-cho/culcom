@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback, type CSSProperties } from 'react';
+import { type CSSProperties } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { attendanceViewApi, AttendanceViewClass } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import { useHighlightSearch } from '@/lib/useHighlightSearch';
 import HighlightSearchBar from '@/components/ui/HighlightSearchBar';
@@ -17,8 +18,11 @@ export default function AttendanceDetailPage() {
   const router = useRouter();
   const slotSeq = Number(params.slotSeq);
 
-  const [classes, setClasses] = useState<AttendanceViewClass[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: classes = [], isLoading: loading } = useApiQuery<AttendanceViewClass[]>(
+    ['attendanceViewDetail', slotSeq],
+    () => attendanceViewApi.getDetail(slotSeq),
+  );
+
   const today = new Date().toISOString().split('T')[0];
 
   const { matchedItems, currentMatchIndex, performSearch, navigateMatch } = useHighlightSearch({
@@ -30,14 +34,6 @@ export default function AttendanceDetailPage() {
   });
 
   const msgModal = useMessageModal();
-
-  const fetchData = useCallback(async () => {
-    const res = await attendanceViewApi.getDetail(slotSeq);
-    if (res.success) setClasses(res.data);
-    setLoading(false);
-  }, [slotSeq]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
 
   if (loading) return <div style={{ padding: 20 }}>로딩 중...</div>;
 

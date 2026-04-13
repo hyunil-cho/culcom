@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { timeslotApi, type ClassTimeSlot } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { queryClient } from '@/lib/queryClient';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
@@ -10,12 +11,8 @@ import { useResultModal } from '@/hooks/useResultModal';
 
 export default function TimeslotsPage() {
   const router = useRouter();
-  const [slots, setSlots] = useState<ClassTimeSlot[]>([]);
-  const { modal } = useResultModal({ onConfirm: () => load() });
-
-  useEffect(() => { load(); }, []);
-
-  const load = () => { timeslotApi.list().then(res => setSlots(res.data)); };
+  const { data: slots = [] } = useApiQuery<ClassTimeSlot[]>(['timeslots'], () => timeslotApi.list());
+  const { modal } = useResultModal({ onConfirm: () => queryClient.invalidateQueries({ queryKey: ['timeslots'] }) });
 
 
   const columns: Column<ClassTimeSlot>[] = [

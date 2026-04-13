@@ -8,12 +8,12 @@ import { Button } from '@/components/ui/Button';
 import ResultModal from '@/components/ui/ResultModal';
 import SearchBar from '@/components/ui/SearchBar';
 import DataTable, { type Column } from '@/components/ui/DataTable';
-import { useListPage } from '@/hooks/useListPage';
+import { useListPageQuery } from '@/hooks/useListPageQuery';
 import { useModal } from '@/hooks/useModal';
 
 export default function ClassesPage() {
   const router = useRouter();
-  const list = useListPage<ComplexClass>((q) => classApi.list(q));
+  const list = useListPageQuery<ComplexClass>('classes', (q) => classApi.list(q));
   const [keyword, setKeyword] = useState('');
   const resultModal = useModal<{ success: boolean; message: string }>();
 

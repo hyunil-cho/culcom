@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { transferApi, type TransferRequestItem } from '@/lib/api/transfer';
 import type { Membership } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import type { MembershipFormData } from './MemberForm';
 
 interface UseTransferOptions {
@@ -25,24 +26,23 @@ interface UseTransferOptions {
  */
 export function useTransfer({ memberships, setForm, setEnabled, emptyForm }: UseTransferOptions) {
   const [mode, setModeState] = useState(false);
-  const [transfers, setTransfers] = useState<TransferRequestItem[]>([]);
+  const [manualTransfers, setManualTransfers] = useState<TransferRequestItem[] | null>(null);
   const [selected, setSelected] = useState<TransferRequestItem | null>(null);
   const autoDetectedRef = useRef(false);
 
-  // 양도 모드 ON → 목록 조회, OFF → 초기화
-  useEffect(() => {
-    if (mode) {
-      transferApi.list().then(res => setTransfers(res.data ?? []));
-    } else {
-      setTransfers([]);
-      setSelected(null);
-    }
-  }, [mode]);
+  // 양도 모드 ON → 목록 조회
+  const { data: queryTransfers = [] } = useApiQuery<TransferRequestItem[]>(
+    ['transfers'],
+    () => transferApi.list(),
+    { enabled: mode },
+  );
+  const transfers = manualTransfers ?? queryTransfers;
 
   const setMode = useCallback((on: boolean) => {
     setModeState(on);
     if (!on) {
       setSelected(null);
+      setManualTransfers(null);
       setForm(emptyForm);
       autoDetectedRef.current = false;
     }
@@ -82,7 +82,7 @@ export function useTransfer({ memberships, setForm, setEnabled, emptyForm }: Use
         setModeState(true);
         // 목록도 로드
         const listRes = await transferApi.list();
-        setTransfers(listRes.data ?? []);
+        setManualTransfers(listRes.data ?? []);
         applyTransfer(res.data);
         autoDetectedRef.current = true;
       }

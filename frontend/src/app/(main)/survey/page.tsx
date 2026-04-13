@@ -1,27 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { surveyApi, SurveyTemplate } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { queryClient } from '@/lib/queryClient';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
 import styles from './page.module.css';
 
 export default function SurveyPage() {
   const router = useRouter();
-  const [templates, setTemplates] = useState<SurveyTemplate[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [createName, setCreateName] = useState('');
   const [createDesc, setCreateDesc] = useState('');
-  const [loading, setLoading] = useState(true);
 
-  const load = async () => {
-    const res = await surveyApi.listTemplates();
-    if (res.success) setTemplates(res.data);
-    setLoading(false);
-  };
+  const { data: templates = [], isLoading: loading } = useApiQuery<SurveyTemplate[]>(
+    ['surveyTemplates'],
+    () => surveyApi.listTemplates(),
+  );
 
-  useEffect(() => { load(); }, []);
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['surveyTemplates'] });
 
   const handleCreate = async () => {
     if (!createName.trim()) return;
@@ -30,24 +29,24 @@ export default function SurveyPage() {
       setCreateName('');
       setCreateDesc('');
       setShowCreate(false);
-      load();
+      invalidate();
     }
   };
 
   const handleStatusChange = async (seq: number, status: string) => {
     const res = await surveyApi.updateStatus(seq, status);
-    if (res.success) load();
+    if (res.success) invalidate();
   };
 
   const handleCopy = async (seq: number) => {
     const res = await surveyApi.copyTemplate(seq);
-    if (res.success) load();
+    if (res.success) invalidate();
   };
 
   const handleDelete = async (seq: number, name: string) => {
     if (!confirm(`"${name}" 설문지를 삭제하시겠습니까?\n포함된 모든 선택지와 설정이 함께 삭제됩니다.`)) return;
     const res = await surveyApi.deleteTemplate(seq);
-    if (res.success) load();
+    if (res.success) invalidate();
   };
 
   const statusBadgeClass = (status: string) => {

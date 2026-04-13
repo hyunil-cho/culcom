@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { timeslotApi } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { ROUTES } from '@/lib/routes';
 import TimeslotForm, {
@@ -21,10 +22,14 @@ export default function TimeslotEditPage() {
   const [form, setForm] = useState<TimeslotFormData>(emptyTimeslotForm);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_TIMESLOTS });
 
+  const { data: timeslots } = useApiQuery(
+    ['timeslots'],
+    () => timeslotApi.list(),
+  );
 
   useEffect(() => {
-    timeslotApi.list().then(res => {
-      const slot = res.data.find(s => s.seq === seq);
+    if (timeslots) {
+      const slot = timeslots.find(s => s.seq === seq);
       if (slot) {
         setForm({
           name: slot.name,
@@ -33,8 +38,8 @@ export default function TimeslotEditPage() {
           endTime: slot.endTime,
         });
       }
-    });
-  }, [seq]);
+    }
+  }, [timeslots, seq]);
 
   const handleSubmit = async () => {
     const error = validateTimeslotForm(form);

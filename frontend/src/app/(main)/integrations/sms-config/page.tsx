@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { integrationApi, SmsConfig } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { Checkbox } from '@/components/ui/FormInput';
 import { ROUTES } from '@/lib/routes';
 import { useResultModal } from '@/hooks/useResultModal';
@@ -16,33 +17,37 @@ function SmsConfigPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const serviceId = searchParams.get('serviceId');
-  const [config, setConfig] = useState<SmsConfig | null>(null);
-  const [loading, setLoading] = useState(true);
-
   const [accountId, setAccountId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [senderPhone, setSenderPhone] = useState('');
   const [active, setActive] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [formInitialized, setFormInitialized] = useState(false);
 
   const { run, showError, modal } = useResultModal({ redirectPath: ROUTES.INTEGRATIONS });
 
+  const { data: fetchedConfig, isLoading: loading } = useApiQuery<SmsConfig | null>(
+    ['smsConfig'],
+    () => integrationApi.getSmsConfig() as Promise<import('@/lib/api/client').ApiResponse<SmsConfig | null>>,
+    { enabled: !!serviceId },
+  );
+
+  const config = fetchedConfig ?? (serviceId ? { serviceId: Number(serviceId), serviceName: 'SMS 서비스', accountId: null, password: null, senderPhones: [], active: true, updatedAt: null } as SmsConfig : null);
+
   useEffect(() => {
     if (!serviceId) { router.replace(ROUTES.INTEGRATIONS); return; }
-    integrationApi.getSmsConfig().then((res) => {
-      if (res.success && res.data) {
-        setConfig(res.data);
-        setAccountId(res.data.accountId ?? '');
-        setPassword(res.data.password ?? '');
-        setSenderPhone(res.data.senderPhones?.[0] ?? '');
-        setActive(res.data.active);
-      } else {
-        setConfig({ serviceId: Number(serviceId), serviceName: 'SMS 서비스', accountId: null, password: null, senderPhones: [], active: true, updatedAt: null });
-      }
-      setLoading(false);
-    });
-  }, [serviceId]);
+  }, [serviceId, router]);
+
+  useEffect(() => {
+    if (fetchedConfig && !formInitialized) {
+      setAccountId(fetchedConfig.accountId ?? '');
+      setPassword(fetchedConfig.password ?? '');
+      setSenderPhone(fetchedConfig.senderPhones?.[0] ?? '');
+      setActive(fetchedConfig.active);
+      setFormInitialized(true);
+    }
+  }, [fetchedConfig, formInitialized]);
 
   const handleSave = async () => {
     if (!accountId.trim() || !password.trim() || !senderPhone.trim()) { showError('모든 필수 항목을 입력해주세요.'); return; }

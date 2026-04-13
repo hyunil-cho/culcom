@@ -1,27 +1,23 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { kakaoSyncApi } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { Button } from '@/components/ui/Button';
 import styles from './page.module.css';
 
 export default function KakaoSyncPage() {
-  const [kakaoSyncUrl, setKakaoSyncUrl] = useState('');
-  const [branchName, setBranchName] = useState('');
+  const { data: kakaoSyncData } = useApiQuery<{ kakaoSyncUrl: string; branchName: string }>(
+    ['kakaoSync'],
+    () => kakaoSyncApi.getUrl(),
+  );
+  const kakaoSyncUrl = kakaoSyncData?.kakaoSyncUrl ?? '';
+  const branchName = kakaoSyncData?.branchName ?? '';
   const [qrSize, setQrSize] = useState(300);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const downloadRef = useRef<HTMLCanvasElement | null>(null);
-
-  useEffect(() => {
-    kakaoSyncApi.getUrl().then((res) => {
-      if (res.success) {
-        setKakaoSyncUrl(res.data.kakaoSyncUrl);
-        setBranchName(res.data.branchName);
-      }
-    });
-  }, []);
 
   const copyUrl = useCallback(async () => {
     try {

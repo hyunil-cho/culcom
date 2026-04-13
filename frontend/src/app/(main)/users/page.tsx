@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { userApi, SessionRole, type UserResponse } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { useSessionStore } from '@/lib/store';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import { ROUTES } from '@/lib/routes';
@@ -17,11 +17,7 @@ const ROLE_LABELS: Record<string, string> = {
 export default function UsersPage() {
   const router = useRouter();
   const session = useSessionStore((s) => s.session);
-  const [users, setUsers] = useState<UserResponse[]>([]);
-
-  const load = () => { userApi.list().then(res => setUsers(res.data)); };
-
-  useEffect(() => { load(); }, []);
+  const { data: users = [] } = useApiQuery<UserResponse[]>(['users'], () => userApi.list());
 
   const creatingRole = SessionRole.isRoot(session) ? '지점장' : '직원';
 

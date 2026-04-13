@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useMemo } from 'react';
 import { surveyApi, SurveyTemplate, SurveySection, SurveyQuestion, SurveyOption } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 
 export interface SurveyData {
   template: SurveyTemplate | null;
@@ -12,29 +13,36 @@ export interface SurveyData {
 }
 
 export function useSurveyData(templateSeq: number): SurveyData {
-  const [template, setTemplate] = useState<SurveyTemplate | null>(null);
-  const [sections, setSections] = useState<SurveySection[]>([]);
-  const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
-  const [optionsByQ, setOptionsByQ] = useState<Record<number, SurveyOption[]>>({});
-  const [loading, setLoading] = useState(true);
+  const { data: template = null, isLoading: tplLoading } = useApiQuery<SurveyTemplate>(
+    ['surveyTemplate', templateSeq],
+    () => surveyApi.getTemplate(templateSeq),
+  );
 
-  const load = useCallback(async () => {
-    const [tplRes, secRes, qRes, oRes] = await Promise.all([
-      surveyApi.getTemplate(templateSeq), surveyApi.listSections(templateSeq),
-      surveyApi.listQuestions(templateSeq), surveyApi.listOptions(templateSeq),
-    ]);
-    if (tplRes.success) setTemplate(tplRes.data);
-    if (secRes.success) setSections(secRes.data);
-    if (qRes.success) setQuestions(qRes.data);
-    if (oRes.success) {
-      const grouped: Record<number, SurveyOption[]> = {};
-      for (const o of oRes.data) { if (!grouped[o.questionSeq]) grouped[o.questionSeq] = []; grouped[o.questionSeq].push(o); }
-      setOptionsByQ(grouped);
+  const { data: sections = [], isLoading: secLoading } = useApiQuery<SurveySection[]>(
+    ['surveySections', templateSeq],
+    () => surveyApi.listSections(templateSeq),
+  );
+
+  const { data: questions = [], isLoading: qLoading } = useApiQuery<SurveyQuestion[]>(
+    ['surveyQuestions', templateSeq],
+    () => surveyApi.listQuestions(templateSeq),
+  );
+
+  const { data: rawOptions = [], isLoading: oLoading } = useApiQuery<SurveyOption[]>(
+    ['surveyOptions', templateSeq],
+    () => surveyApi.listOptions(templateSeq),
+  );
+
+  const optionsByQ = useMemo(() => {
+    const grouped: Record<number, SurveyOption[]> = {};
+    for (const o of rawOptions) {
+      if (!grouped[o.questionSeq]) grouped[o.questionSeq] = [];
+      grouped[o.questionSeq].push(o);
     }
-    setLoading(false);
-  }, [templateSeq]);
+    return grouped;
+  }, [rawOptions]);
 
-  useEffect(() => { load(); }, [load]);
+  const loading = tplLoading || secLoading || qLoading || oLoading;
 
   return { template, sections, questions, optionsByQ, loading };
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useSessionStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
 import {
@@ -8,6 +8,7 @@ import {
   DashboardData,
   CallerStats,
 } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
 import {
@@ -22,26 +23,17 @@ export default function DashboardPage() {
   const router = useRouter();
   const noBranch = session && !session.selectedBranchSeq;
 
-  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
-  const [callerStats, setCallerStats] = useState<CallerStats[]>([]);
   const [period, setPeriod] = useState<Period>('day');
-  const [loading, setLoading] = useState(true);
-  const [callerLoading, setCallerLoading] = useState(true);
 
-  useEffect(() => {
-    dashboardApi.get().then((res) => {
-      if (res.success) setDashboard(res.data);
-      setLoading(false);
-    });
-  }, []);
+  const { data: dashboard = null, isLoading: loading } = useApiQuery<DashboardData>(
+    ['dashboard'],
+    () => dashboardApi.get(),
+  );
 
-  useEffect(() => {
-    setCallerLoading(true);
-    dashboardApi.callerStats(period).then((res) => {
-      if (res.success) setCallerStats(res.data);
-      setCallerLoading(false);
-    });
-  }, [period]);
+  const { data: callerStats = [], isLoading: callerLoading } = useApiQuery<CallerStats[]>(
+    ['dashboard', 'callerStats', period],
+    () => dashboardApi.callerStats(period),
+  );
 
   const chartData = (dashboard?.dailyStats ?? []).map((d) => {
     const date = new Date(d.date);

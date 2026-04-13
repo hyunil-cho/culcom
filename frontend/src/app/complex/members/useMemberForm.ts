@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { memberApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { useResultModal } from '@/hooks/useResultModal';
 import {
   emptyMemberForm, emptyClassAssign,
@@ -38,34 +39,49 @@ export function useMemberForm(seq?: number) {
     return () => clearTimeout(pendingCheckTimer.current);
   }, [form.name, form.phoneNumber, isEdit]);
 
-  // 수정 모드: 회원 기본 정보 + 수업 배정 로드
+  // 수정 모드: 회원 기본 정보 로드
+  const { data: memberData } = useApiQuery(
+    ['member', seq],
+    () => memberApi.get(seq!),
+    { enabled: isEdit && seq != null },
+  );
+  const memberDataLoaded = useRef(false);
   useEffect(() => {
-    if (!isEdit || seq == null) return;
-    memberApi.get(seq).then(res => {
-      const m = res.data;
-      setForm({
-        name: m.name,
-        phoneNumber: m.phoneNumber,
-        level: m.level ?? '',
-        language: m.language ?? '',
-        info: m.info ?? '',
-        signupChannel: m.signupChannel ?? '',
-        comment: m.comment ?? '',
+    if (!memberData || memberDataLoaded.current) return;
+    memberDataLoaded.current = true;
+    const m = memberData;
+    setForm({
+      name: m.name,
+      phoneNumber: m.phoneNumber,
+      level: m.level ?? '',
+      language: m.language ?? '',
+      info: m.info ?? '',
+      signupChannel: m.signupChannel ?? '',
+      comment: m.comment ?? '',
+    });
+    if (m.staffStatus) {
+      staff.setStaffForm(prev => ({ ...prev, isStaff: true, status: m.staffStatus! }));
+    }
+  }, [memberData]);
+
+  // 수정 모드: 수업 배정 로드
+  const { data: classMappings } = useApiQuery(
+    ['memberClassMappings', seq],
+    () => memberApi.getClassMappings(seq!),
+    { enabled: isEdit && seq != null },
+  );
+  const classMappingsLoaded = useRef(false);
+  useEffect(() => {
+    if (!classMappings || classMappingsLoaded.current) return;
+    classMappingsLoaded.current = true;
+    if (classMappings.length > 0) {
+      const cm = classMappings[0];
+      setClassAssign({
+        timeSlotSeq: cm.timeSlotSeq != null ? String(cm.timeSlotSeq) : '',
+        classSeq: String(cm.classSeq),
       });
-      if (m.staffStatus) {
-        staff.setStaffForm(prev => ({ ...prev, isStaff: true, status: m.staffStatus! }));
-      }
-    });
-    memberApi.getClassMappings(seq).then(res => {
-      if (res.success && res.data.length > 0) {
-        const cm = res.data[0];
-        setClassAssign({
-          timeSlotSeq: cm.timeSlotSeq != null ? String(cm.timeSlotSeq) : '',
-          classSeq: String(cm.classSeq),
-        });
-      }
-    });
-  }, [seq, isEdit]);
+    }
+  }, [classMappings]);
 
   const buildMemberData = () => ({
     name: form.name,

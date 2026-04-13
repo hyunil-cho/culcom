@@ -3,8 +3,10 @@
 import { Suspense, useEffect, useState } from 'react';
 import {
   classApi, memberApi, staffApi,
-  type ComplexClass, type ComplexMember, type ComplexStaff,
+  type ComplexClass, type ComplexMember, type ComplexStaff, type PageResponse,
 } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { queryClient } from '@/lib/queryClient';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ROUTES } from '@/lib/routes';
 import ResultModal from '@/components/ui/ResultModal';
@@ -29,41 +31,50 @@ export default function ClassTeamsPage() {
 }
 
 function ClassTeamsPageInner() {
-  const [classes, setClasses] = useState<ComplexClass[]>([]);
-  const [staffs, setStaffs] = useState<ComplexStaff[]>([]);
-  const [allMembers, setAllMembers] = useState<ComplexMember[]>([]);
-
-  const [selectedClass, setSelectedClass] = useState<ComplexClass | null>(null);
-  const [teamMembers, setTeamMembers] = useState<ComplexMember[]>([]);
-  const resultModal = useModal<{ success: boolean; message: string }>();
-  const pendingModal = useModal<PendingAction>();
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialClassSeq = searchParams.get('classSeq');
 
-  // 초기 로드
-  useEffect(() => {
-    classApi.list('page=0&size=200').then((res) => {
-      setClasses(res.data.content);
-      if (initialClassSeq) {
-        const target = res.data.content.find((c) => c.seq === Number(initialClassSeq));
-        if (target) setSelectedClass(target);
-      }
-    });
-    staffApi.list().then((res) => setStaffs(res.data));
-    memberApi.list('page=0&size=500').then((res) => setAllMembers(res.data.content));
-  }, []);
+  const { data: classPageData } = useApiQuery<PageResponse<ComplexClass>>(
+    ['classes', 'teams'],
+    () => classApi.list('page=0&size=200'),
+  );
+  const classes = classPageData?.content ?? [];
 
-  // 수업 선택 시 팀 멤버 로드
+  const { data: staffs = [] } = useApiQuery<ComplexStaff[]>(
+    ['staffs'],
+    () => staffApi.list(),
+  );
+
+  const { data: memberPageData } = useApiQuery<PageResponse<ComplexMember>>(
+    ['members', 'all'],
+    () => memberApi.list('page=0&size=500'),
+  );
+  const allMembers = memberPageData?.content ?? [];
+
+  const [selectedClass, setSelectedClass] = useState<ComplexClass | null>(null);
+
+  // 초기 수업 선택
   useEffect(() => {
-    if (!selectedClass) { setTeamMembers([]); return; }
-    classApi.listMembers(selectedClass.seq).then((res) => setTeamMembers(res.data));
-  }, [selectedClass?.seq]);
+    if (initialClassSeq && classes.length > 0 && !selectedClass) {
+      const target = classes.find((c) => c.seq === Number(initialClassSeq));
+      if (target) setSelectedClass(target);
+    }
+  }, [classes, initialClassSeq, selectedClass]);
+
+  const { data: teamMembers = [] } = useApiQuery<ComplexMember[]>(
+    ['classMembers', selectedClass?.seq],
+    () => classApi.listMembers(selectedClass!.seq),
+    { enabled: !!selectedClass },
+  );
+
+  const resultModal = useModal<{ success: boolean; message: string }>();
+  const pendingModal = useModal<PendingAction>();
 
   const refreshSelectedClass = (seq: number) => {
     classApi.get(seq).then((res) => {
       setSelectedClass(res.data);
-      setClasses((prev) => prev.map((c) => (c.seq === seq ? res.data : c)));
+      queryClient.invalidateQueries({ queryKey: ['classes', 'teams'] });
     });
   };
 
@@ -84,11 +95,10 @@ function ClassTeamsPageInner() {
     try {
       if (pending.kind === 'member-add') {
         await classApi.addMember(selectedClass.seq, pending.member.seq);
-        const res = await classApi.listMembers(selectedClass.seq);
-        setTeamMembers(res.data);
+        queryClient.invalidateQueries({ queryKey: ['classMembers', selectedClass.seq] });
       } else if (pending.kind === 'member-remove') {
         await classApi.removeMember(selectedClass.seq, pending.member.seq);
-        setTeamMembers((prev) => prev.filter((m) => m.seq !== pending.member.seq));
+        queryClient.invalidateQueries({ queryKey: ['classMembers', selectedClass.seq] });
       } else if (pending.kind === 'leader-set') {
         await classApi.setLeader(selectedClass.seq, pending.staff.seq);
         refreshSelectedClass(selectedClass.seq);

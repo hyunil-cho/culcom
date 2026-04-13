@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { consentItemApi, type ConsentItem } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 
 interface UseConsentOptions {
   /** consent item category (예: SIGNUP, TRANSFER, SURVEY 등) */
@@ -31,12 +32,19 @@ interface UseConsentReturn {
 
 export function useConsent({ category, items: externalItems }: UseConsentOptions): UseConsentReturn {
   const [items, setItems] = useState<ConsentItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [agreements, setAgreements] = useState<Map<number, boolean>>(new Map());
 
   // externalItems 참조 안정화: seq 목록 기준으로 실제 변경 여부 판단
   const prevExternalSeqsRef = useRef<string>('');
+
+  const { data: fetchedItems, isLoading: queryLoading, error: queryError } = useApiQuery<ConsentItem[]>(
+    ['consentItems', category],
+    () => consentItemApi.list(category),
+    { enabled: !externalItems },
+  );
+
+  const loading = externalItems ? false : queryLoading;
 
   useEffect(() => {
     if (externalItems) {
@@ -46,29 +54,18 @@ export function useConsent({ category, items: externalItems }: UseConsentOptions
 
       setItems(externalItems);
       setAgreements(new Map(externalItems.map(c => [c.seq, false])));
-      setLoading(false);
       setError(null);
       return;
     }
 
-    // category 변경 시 이전 상태 즉시 초기화
-    setItems([]);
-    setAgreements(new Map());
-    setLoading(true);
-    setError(null);
-
-    consentItemApi.list(category).then(res => {
-      if (res.success) {
-        const list = res.data;
-        setItems(list);
-        setAgreements(new Map(list.map(c => [c.seq, false])));
-      } else {
-        setError(res.message || '동의항목을 불러오지 못했습니다.');
-      }
-    }).catch(() => {
-      setError('동의항목을 불러오는 중 오류가 발생했습니다.');
-    }).finally(() => setLoading(false));
-  }, [category, externalItems]);
+    if (fetchedItems) {
+      setItems(fetchedItems);
+      setAgreements(new Map(fetchedItems.map(c => [c.seq, false])));
+      setError(null);
+    } else if (queryError) {
+      setError(queryError.message || '동의항목을 불러오지 못했습니다.');
+    }
+  }, [category, externalItems, fetchedItems, queryError]);
 
   const toggle = useCallback((seq: number, value: boolean) => {
     setAgreements(prev => new Map(prev).set(seq, value));

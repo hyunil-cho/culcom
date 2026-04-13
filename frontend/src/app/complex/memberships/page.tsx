@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { membershipApi, type Membership } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { queryClient } from '@/lib/queryClient';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
@@ -20,12 +21,8 @@ function formatPrice(price: number): string {
 
 export default function MembershipsPage() {
   const router = useRouter();
-  const [memberships, setMemberships] = useState<Membership[]>([]);
-  const { modal } = useResultModal({ onConfirm: () => load() });
-
-  useEffect(() => { load(); }, []);
-
-  const load = () => { membershipApi.list().then(res => setMemberships(res.data)); };
+  const { data: memberships = [] } = useApiQuery<Membership[]>(['memberships'], () => membershipApi.list());
+  const { modal } = useResultModal({ onConfirm: () => queryClient.invalidateQueries({ queryKey: ['memberships'] }) });
 
 
   const columns: Column<Membership>[] = [

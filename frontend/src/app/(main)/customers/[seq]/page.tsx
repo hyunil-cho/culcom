@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button, LinkButton } from '@/components/ui/Button';
 import { customerApi, type Customer } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import { formatDateTime } from '@/lib/dateUtils';
 import DetailCard from '@/components/ui/DetailCard';
@@ -22,15 +23,12 @@ const STATUS_BADGE: Record<string, string> = {
 export default function CustomerDetailPage() {
   const params = useParams();
   const seq = Number(params.seq);
-  const [customer, setCustomer] = useState<Customer | null>(null);
+  const { data: customer } = useApiQuery<Customer>(
+    ['customer', seq],
+    () => customerApi.get(seq),
+  );
   const [deleting, setDeleting] = useState(false);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.CUSTOMERS });
-
-  useEffect(() => {
-    customerApi.get(seq).then(res => {
-      if (res.success) setCustomer(res.data);
-    });
-  }, [seq]);
 
   if (!customer) return null;
 

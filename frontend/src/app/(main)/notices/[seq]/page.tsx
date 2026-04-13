@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { noticeApi, NoticeDetail } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useResultModal } from '@/hooks/useResultModal';
@@ -15,11 +16,9 @@ export default function NoticeDetailPage() {
   const router = useRouter();
   const seq = Number(params.seq);
 
-  const [notice, setNotice] = useState<NoticeDetail | null>(null);
+  const { data: notice } = useApiQuery<NoticeDetail>(['notices', seq], () => noticeApi.get(seq));
   const [deleting, setDeleting] = useState(false);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.NOTICES });
-
-  useEffect(() => { noticeApi.get(seq).then((res) => { if (res.success) setNotice(res.data); }); }, [seq]);
 
   const handleDelete = async () => { setDeleting(false); await run(noticeApi.delete(seq), '공지사항이 삭제되었습니다.'); };
 

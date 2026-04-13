@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button, LinkButton } from '@/components/ui/Button';
 import { branchApi, SessionRole, type Branch } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { useSessionStore } from '@/lib/store';
 import { ROUTES } from '@/lib/routes';
 import DetailCard from '@/components/ui/DetailCard';
@@ -17,13 +17,9 @@ export default function BranchDetailPage() {
   const seq = Number(params.seq);
   const session = useSessionStore((s) => s.session);
   const refreshBranches = useSessionStore((s) => s.refreshBranches);
-  const [branch, setBranch] = useState<Branch | null>(null);
+  const { data: branch } = useApiQuery<Branch>(['branches', seq], () => branchApi.get(seq));
 
   const { run, modal } = useResultModal({ onConfirm: async () => { await refreshBranches(); router.push(ROUTES.BRANCHES); } });
-
-  useEffect(() => {
-    branchApi.get(seq).then(res => setBranch(res.data));
-  }, [seq]);
 
   if (!branch) return null;
 

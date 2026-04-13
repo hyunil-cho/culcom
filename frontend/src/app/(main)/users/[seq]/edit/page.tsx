@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { userApi } from '@/lib/api';
+import { userApi, type UserResponse } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import UserForm, { emptyUserForm, validateUserForm, type UserFormData } from '../../UserForm';
 import { useResultModal } from '@/hooks/useResultModal';
@@ -16,15 +17,20 @@ export default function UserEditPage() {
   const { run, modal } = useResultModal({ redirectPath: ROUTES.USERS });
   const [deleting, setDeleting] = useState(false);
 
+  const { data: users } = useApiQuery<UserResponse[]>(
+    ['users'],
+    () => userApi.list(),
+  );
+
   useEffect(() => {
-    userApi.list().then(res => {
-      const u = res.data.find(u => u.seq === seq);
+    if (users) {
+      const u = users.find(u => u.seq === seq);
       if (u) {
         setForm({ userId: u.userId, password: '', name: u.name ?? '', phone: '' });
         setRole(u.role);
       }
-    });
-  }, [seq]);
+    }
+  }, [users, seq]);
 
   const handleSubmit = async () => {
     const error = validateUserForm(form, true);

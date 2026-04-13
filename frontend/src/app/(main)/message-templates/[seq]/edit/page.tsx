@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { messageTemplateApi } from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import { useFormState } from '@/hooks/useFormState';
 import MessageTemplateForm, { MessageTemplateFormData } from '../../MessageTemplateForm';
@@ -16,22 +17,22 @@ export default function MessageTemplateEditPage() {
     { templateName: '', description: '', messageContext: '', isActive: true },
     { redirectPath: ROUTES.MESSAGE_TEMPLATES },
   );
-  const [loading, setLoading] = useState(true);
+
+  const { data: templateData, isLoading: loading } = useApiQuery(
+    ['messageTemplate', seq],
+    () => messageTemplateApi.get(seq),
+  );
 
   useEffect(() => {
-    messageTemplateApi.get(seq).then((res) => {
-      if (res.success) {
-        const t = res.data;
-        setForm({
-          templateName: t.templateName,
-          description: t.description || '',
-          messageContext: t.messageContext || '',
-          isActive: t.isActive,
-        });
-      }
-      setLoading(false);
-    });
-  }, [seq]);
+    if (templateData) {
+      setForm({
+        templateName: templateData.templateName,
+        description: templateData.description || '',
+        messageContext: templateData.messageContext || '',
+        isActive: templateData.isActive,
+      });
+    }
+  }, [templateData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
