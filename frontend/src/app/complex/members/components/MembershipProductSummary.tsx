@@ -1,7 +1,7 @@
 'use client';
 
 import type { Membership } from '@/lib/api';
-import type { MembershipStatus } from '@/lib/api/complex';
+import type { MembershipStatus } from '@/lib/api/members';
 
 const STATUS_COLORS: Record<string, string> = {
   '환불': '#dc2626', '만료': '#dc2626', '정지': '#b45309',

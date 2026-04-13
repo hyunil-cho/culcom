@@ -2,7 +2,7 @@
 
 import type { Dispatch, SetStateAction } from 'react';
 import type { Membership } from '@/lib/api';
-import type { MembershipStatus } from '@/lib/api/complex';
+import type { MembershipStatus } from '@/lib/api/members';
 import type { TransferRequestItem } from '@/lib/api/transfer';
 import type { MembershipFormData } from '../memberFormTypes';
 import FormField from '@/components/ui/FormField';

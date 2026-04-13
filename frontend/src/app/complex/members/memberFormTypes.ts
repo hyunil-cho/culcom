@@ -1,4 +1,4 @@
-import type { MembershipStatus } from '@/lib/api/complex';
+import type { MembershipStatus } from '@/lib/api/members';
 
 export interface MemberFormData {
   name: string;
