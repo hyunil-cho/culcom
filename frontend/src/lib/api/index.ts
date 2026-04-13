@@ -11,8 +11,9 @@ export { customerApi, type Customer } from './customer';
 export {
   classApi, memberApi, staffApi, membershipApi, timeslotApi, refundApi,
   postponementApi, publicPostponementApi, outstandingApi, paymentOptionsApi,
-  paymentMethodConfigApi, bankConfigApi, complexDashboardApi,
+  paymentMethodConfigApi, bankConfigApi, signupChannelConfigApi, complexDashboardApi,
   type MembershipAlertItem, type MembershipAlertsResponse, type AutoExpiredItem,
+  type TrendResponse, type TrendItem, type TrendPeriod,
   type ComplexClass, type ComplexClassRequest,
   type ComplexMember, type MemberMembershipRequest, type MemberMembershipResponse, type MemberActivityTimelineItem,
   type MembershipPaymentRequest, type MembershipPaymentResponse,
@@ -49,8 +50,9 @@ export {
   type MessageTemplateUpdateRequest, type PlaceholderItem,
 } from './message';
 export {
-  settingsApi, integrationApi, kakaoSyncApi, dashboardApi, userApi,
+  settingsApi, integrationApi, kakaoSyncApi, dashboardApi, userApi, smsEventApi,
   type MessageTemplateSimple, type ReservationSmsConfig, type ReservationSmsConfigRequest,
+  type SmsEventType, type SmsEventConfig, type SmsEventConfigRequest,
   type IntegrationService, type SmsConfig, type SmsConfigSaveRequest,
   type KakaoSyncUrlResponse, type DailyStats, type CallerStats, type DashboardData,
   type UserResponse, type UserCreateRequest,

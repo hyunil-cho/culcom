@@ -33,6 +33,7 @@ export interface SurveySubmissionDetail {
   location: string | null; ageGroup: string | null;
   occupation: string | null; adSource: string | null;
   answers: string | null; createdDate: string;
+  customerComment: string | null;
 }
 
 export const surveyApi = {
@@ -73,6 +74,8 @@ export const surveyApi = {
     api.post<SurveyOption>(API.SURVEY_OPTIONS(templateSeq), data),
   deleteOption: (templateSeq: number, optionSeq: number) =>
     api.delete<void>(API.SURVEY_OPTION(templateSeq, optionSeq)),
+  reorderOptions: (templateSeq: number, items: { seq: number; sortOrder: number }[]) =>
+    api.put<SurveyOption[]>(`${API.SURVEY_OPTIONS(templateSeq)}/reorder`, { items }),
 };
 
 export interface SurveySubmitData {
@@ -86,6 +89,7 @@ export interface SurveySubmitData {
   occupation: string;
   adSource: string;
   answers: Record<string, string | string[]>;
+  consents?: { consentItemSeq: number; agreed: boolean }[];
 }
 
 export const publicSurveyApi = {

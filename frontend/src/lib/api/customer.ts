@@ -12,6 +12,7 @@ export interface Customer {
   status: string;
   createdDate: string;
   lastUpdateDate?: string;
+  smsWarning?: string;
 }
 
 export const customerApi = {

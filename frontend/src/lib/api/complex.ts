@@ -55,6 +55,7 @@ export interface ComplexMember {
   createdDate?: string;
   lastUpdateDate?: string;
   attendanceHistory?: string[];
+  smsWarning?: string;
 }
 
 export interface ComplexMemberMetaData {
@@ -233,9 +234,28 @@ export interface MembershipAlertsResponse {
   countThreshold: number;
 }
 
+export type TrendPeriod = 'day' | 'week' | 'month' | 'year';
+
+export interface TrendItem {
+  bucket: string;  // 일: yyyy-MM-dd, 주: yyyy-WW (ISO), 월: yyyy-MM, 연: yyyy
+  count: number;
+}
+
+export interface TrendResponse {
+  period: TrendPeriod;
+  count: number;
+  members: TrendItem[];
+  staffs: TrendItem[];
+  postponements: TrendItem[];
+  refunds: TrendItem[];
+  transfers: TrendItem[];
+}
+
 export const complexDashboardApi = {
   membershipAlerts: (windowDays: number, countThreshold: number) =>
     api.get<MembershipAlertsResponse>(`/complex/dashboard/membership-alerts?windowDays=${windowDays}&countThreshold=${countThreshold}`),
+  trends: (period: TrendPeriod = 'month', count = 6) =>
+    api.get<TrendResponse>(`/complex/dashboard/trends?period=${period}&count=${count}`),
 };
 
 // ── 설정: 결제방법/은행 카탈로그 ──
@@ -275,6 +295,13 @@ export const bankConfigApi = {
   delete: (seq: number) => api.delete<void>(`/complex/settings/banks/${seq}`),
 };
 
+export const signupChannelConfigApi = {
+  list: () => api.get<ConfigItem[]>('/complex/settings/signup-channels'),
+  create: (data: ConfigCreateRequest) => api.post<ConfigItem>('/complex/settings/signup-channels', data),
+  update: (seq: number, data: ConfigUpdateRequest) => api.put<ConfigItem>(`/complex/settings/signup-channels/${seq}`, data),
+  delete: (seq: number) => api.delete<void>(`/complex/settings/signup-channels/${seq}`),
+};
+
 export const outstandingApi = {
   list: (params?: { keyword?: string; sort?: string; page?: number; size?: number }) => {
     const sp = new URLSearchParams();
@@ -295,7 +322,6 @@ export interface ComplexStaff {
   branchName?: string;
   status: string;
   joinDate?: string;
-  interviewer?: string;
 }
 
 export interface StaffRefundInfo {

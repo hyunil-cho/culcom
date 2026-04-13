@@ -74,6 +74,7 @@ export const ROUTES = {
   // 설정
   SETTINGS: R.SETTINGS,
   SETTINGS_RESERVATION_SMS: `${R.SETTINGS}/reservation-sms`,
+  SETTINGS_SMS_CONFIG: `${R.SETTINGS}/sms-config`,
 
   // 복합시설
   COMPLEX: R.COMPLEX,
@@ -89,6 +90,7 @@ export const ROUTES = {
   COMPLEX_SETTINGS: `${R.COMPLEX}/settings`,
   COMPLEX_SETTINGS_PAYMENT_METHODS: `${R.COMPLEX}/settings/payment-methods`,
   COMPLEX_SETTINGS_BANKS: `${R.COMPLEX}/settings/banks`,
+  COMPLEX_SETTINGS_SIGNUP_CHANNELS: `${R.COMPLEX}/settings/signup-channels`,
   COMPLEX_MEMBER_EDIT: (seq: number) => `${R.COMPLEX}/members/${seq}/edit`,
   COMPLEX_STAFFS: `${R.COMPLEX}/staffs`,
   COMPLEX_STAFFS_ADD: `${R.COMPLEX}/staffs/add`,
@@ -135,6 +137,7 @@ const A = {
   COMPLEX_STAFFS: '/complex/staffs',
   USERS: '/users',
   SETTINGS_RESERVATION_SMS: '/settings/reservation-sms',
+  SETTINGS_SMS_EVENTS: '/settings/sms-events',
   INTEGRATIONS: '/integrations',
   KAKAO_SYNC: '/kakao-sync',
   NOTICES: '/notices',
@@ -236,6 +239,9 @@ export const API = {
   SETTINGS_RESERVATION_SMS: A.SETTINGS_RESERVATION_SMS,
   SETTINGS_RESERVATION_SMS_TEMPLATES: `${A.SETTINGS_RESERVATION_SMS}/templates`,
   SETTINGS_RESERVATION_SMS_SENDERS: `${A.SETTINGS_RESERVATION_SMS}/sender-numbers`,
+  SETTINGS_SMS_EVENTS: A.SETTINGS_SMS_EVENTS,
+  SETTINGS_SMS_EVENTS_TEMPLATES: `${A.SETTINGS_SMS_EVENTS}/templates`,
+  SETTINGS_SMS_EVENTS_SENDERS: `${A.SETTINGS_SMS_EVENTS}/sender-numbers`,
 
   // 연동
   INTEGRATIONS: A.INTEGRATIONS,
