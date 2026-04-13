@@ -71,5 +71,5 @@ export {
 } from './transfer';
 export {
   externalApi,
-  type SmsSendRequest, type SmsSendResponse, type CalendarEventRequest, type CalendarEventResponse,
+  type SmsSendRequest, type SmsSendResponse,
 } from './external';
