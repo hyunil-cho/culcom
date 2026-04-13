@@ -284,5 +284,4 @@ export const API = {
 
   // 외부 서비스
   EXTERNAL_SMS_SEND: `${A.EXTERNAL}/sms/send`,
-  EXTERNAL_CALENDAR_CREATE: `${A.EXTERNAL}/calendar/create-event`,
 } as const;
