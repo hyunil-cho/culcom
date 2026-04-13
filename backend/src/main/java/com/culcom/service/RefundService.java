@@ -8,6 +8,7 @@ import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.refund.ComplexRefundRequest;
 import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.RequestStatus;
+import com.culcom.entity.enums.SmsEventType;
 import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
@@ -34,6 +35,7 @@ public class RefundService {
     private final ComplexMemberMembershipRepository complexMemberMembershipRepository;
     private final MemberClassService memberClassService;
     private final ApplicationEventPublisher eventPublisher;
+    private final SmsService smsService;
 
     @Transactional
     public RefundResponse create(RefundCreateRequest req, Long branchSeq) {
@@ -107,6 +109,12 @@ public class RefundService {
                 req.getMember(), req.getMemberMembership(), status, rejectReason,
                 ActivityEventType.REFUND_APPROVE, ActivityEventType.REFUND_REJECT,
                 "환불 " + status.name() + ": " + req.getMembershipName());
+
+        if (req.getMember() != null && req.getBranch() != null) {
+            SmsEventType smsType = status == RequestStatus.승인 ? SmsEventType.환불승인 : SmsEventType.환불반려;
+            smsService.sendEventSmsIfConfigured(req.getBranch().getSeq(), smsType,
+                    req.getMemberName(), req.getPhoneNumber());
+        }
 
         return RefundResponse.from(req);
     }

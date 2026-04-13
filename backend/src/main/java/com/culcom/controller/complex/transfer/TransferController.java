@@ -29,6 +29,14 @@ public class TransferController {
         return ResponseEntity.ok(ApiResponse.ok(transferService.list()));
     }
 
+    /** 이름+전화번호로 접수 상태의 양도 요청 조회 (회원등록 시 자동 감지용) */
+    @GetMapping("/pending")
+    public ResponseEntity<ApiResponse<TransferRequestResponse>> findPending(
+            @RequestParam String name, @RequestParam String phone) {
+        TransferRequestResponse result = transferService.findPendingByRecipient(name, phone);
+        return ResponseEntity.ok(ApiResponse.ok(result));
+    }
+
     @PostMapping
     public ResponseEntity<ApiResponse<TransferRequestResponse>> create(
             @Valid @RequestBody TransferCreateRequest req,

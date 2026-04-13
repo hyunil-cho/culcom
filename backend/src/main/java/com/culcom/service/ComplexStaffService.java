@@ -81,6 +81,8 @@ public class ComplexStaffService {
                 .build();
         memberMembershipRepository.save(staffMembership);
 
+        eventPublisher.publishEvent(ActivityEvent.of(member, ActivityEventType.MEMBER_CREATE, "스태프 등록: " + member.getName()));
+
         return ComplexStaffResponse.from(memberRepository.save(member));
     }
 

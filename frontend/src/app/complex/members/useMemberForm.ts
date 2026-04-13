@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { memberApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { useResultModal } from '@/hooks/useResultModal';
@@ -25,6 +25,18 @@ export function useMemberForm(seq?: number) {
 
   // 양도 불일치 모달 상태
   const [showTransferMismatch, setShowTransferMismatch] = useState(false);
+
+  // 신규 등록 시 이름+전화번호로 대기 양도 자동 감지 (디바운스 500ms)
+  const pendingCheckTimer = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => {
+    if (isEdit) return;
+    if (!form.name.trim() || !form.phoneNumber.trim()) return;
+    clearTimeout(pendingCheckTimer.current);
+    pendingCheckTimer.current = setTimeout(() => {
+      membership.checkPendingTransfer(form.name, form.phoneNumber);
+    }, 500);
+    return () => clearTimeout(pendingCheckTimer.current);
+  }, [form.name, form.phoneNumber, isEdit]);
 
   // 수정 모드: 회원 기본 정보 + 수업 배정 로드
   useEffect(() => {

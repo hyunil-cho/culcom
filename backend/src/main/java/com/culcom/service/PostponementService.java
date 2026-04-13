@@ -8,6 +8,7 @@ import com.culcom.entity.complex.postponement.ComplexPostponementReason;
 import com.culcom.entity.complex.postponement.ComplexPostponementRequest;
 import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.RequestStatus;
+import com.culcom.entity.enums.SmsEventType;
 import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
@@ -33,6 +34,7 @@ public class PostponementService {
     private final ComplexMemberRepository complexMemberRepository;
     private final ComplexMemberMembershipRepository complexMemberMembershipRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final SmsService smsService;
 
     @Transactional
     public PostponementResponse create(PostponementCreateRequest req, Long branchSeq) {
@@ -48,6 +50,11 @@ public class PostponementService {
             int total = mm.getPostponeTotal() != null ? mm.getPostponeTotal() : 0;
             if (used >= total) {
                 throw new IllegalStateException("연기 가능 횟수를 초과했습니다. (사용 " + used + "/" + total + ")");
+            }
+            // 이미 승인된 연기 기간과 겹치는 신청은 거부한다.
+            if (req.getStartDate() != null && req.getEndDate() != null
+                    && postponementRepository.existsApprovedOverlap(mm.getSeq(), req.getStartDate(), req.getEndDate())) {
+                throw new IllegalStateException("이미 승인된 연기 기간과 겹칩니다.");
             }
         }
 
@@ -101,6 +108,12 @@ public class PostponementService {
                 req.getMember(), req.getMemberMembership(), status, rejectReason,
                 ActivityEventType.POSTPONEMENT_APPROVE, ActivityEventType.POSTPONEMENT_REJECT,
                 "연기 " + status.name() + ": " + req.getStartDate() + " ~ " + req.getEndDate());
+
+        if (req.getMember() != null && req.getBranch() != null) {
+            SmsEventType smsType = status == RequestStatus.승인 ? SmsEventType.연기승인 : SmsEventType.연기반려;
+            smsService.sendEventSmsIfConfigured(req.getBranch().getSeq(), smsType,
+                    req.getMemberName(), req.getPhoneNumber());
+        }
 
         return PostponementResponse.from(req);
     }

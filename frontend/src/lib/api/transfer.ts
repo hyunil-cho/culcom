@@ -54,6 +54,9 @@ export interface TransferInviteSubmitData {
 
 export const transferApi = {
   list: () => api.get<TransferRequestItem[]>('/transfer-requests'),
+  /** 이름+전화번호로 접수 대기 양도 요청 조회 */
+  findPending: (name: string, phone: string) =>
+    api.get<TransferRequestItem | null>(`/transfer-requests/pending?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`),
   create: (memberMembershipSeq: number) =>
     api.post<TransferRequestItem>('/transfer-requests', { memberMembershipSeq }),
   updateStatus: (seq: number, status: TransferStatus) =>

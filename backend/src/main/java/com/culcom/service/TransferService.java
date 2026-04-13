@@ -9,6 +9,7 @@ import com.culcom.entity.customer.Customer;
 import com.culcom.entity.customer.CustomerConsentHistory;
 import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.MembershipStatus;
+import com.culcom.entity.enums.SmsEventType;
 import com.culcom.entity.enums.TransferStatus;
 import com.culcom.entity.transfer.TransferRequest;
 import com.culcom.event.ActivityEvent;
@@ -36,6 +37,7 @@ public class TransferService {
     private final CustomerConsentHistoryRepository consentHistoryRepository;
     private final MembershipPaymentRepository paymentRepository;
     private final MemberClassService memberClassService;
+    private final SmsService smsService;
     private final ApplicationEventPublisher eventPublisher;
 
     // ── 양도비 계산 ──
@@ -98,6 +100,16 @@ public class TransferService {
                 .stream().map(TransferRequestResponse::from).toList();
     }
 
+    /**
+     * 이름+전화번호로 접수 상태의 양도 요청을 조회.
+     * 회원등록 시 양도 대기 건을 자동 감지하기 위해 사용.
+     */
+    public TransferRequestResponse findPendingByRecipient(String name, String phone) {
+        return transferRequestRepository.findPendingByToCustomerNameAndPhone(name, phone)
+                .map(TransferRequestResponse::from)
+                .orElse(null);
+    }
+
     // ── 관리자: 상태 변경 (확인/거절) ──
 
     @Transactional
@@ -105,7 +117,14 @@ public class TransferService {
         TransferRequest tr = transferRequestRepository.findById(seq)
                 .orElseThrow(() -> new EntityNotFoundException("양도 요청"));
         tr.setStatus(status);
-        return TransferRequestResponse.from(transferRequestRepository.save(tr));
+        TransferRequestResponse response = TransferRequestResponse.from(transferRequestRepository.save(tr));
+
+        if (status == TransferStatus.거절 && tr.getFromMember() != null && tr.getBranch() != null) {
+            smsService.sendEventSmsIfConfigured(tr.getBranch().getSeq(), SmsEventType.양도거절,
+                    tr.getFromMember().getName(), tr.getFromMember().getPhoneNumber());
+        }
+
+        return response;
     }
 
     // ── 관리자: 양도 완료 (멤버십 이전) ──
@@ -120,6 +139,16 @@ public class TransferService {
 
         ComplexMemberMembership original = tr.getMemberMembership();
         ComplexMember fromMember = tr.getFromMember();
+
+        // 자기 자신에게 양도 차단
+        if (fromMember.getSeq().equals(newMemberSeq)) {
+            throw new IllegalStateException("자기 자신에게 양도할 수 없습니다.");
+        }
+        // 원본 멤버십이 더 이상 활성이 아니면 양도 완료 차단
+        if (!original.isActive()) {
+            throw new IllegalStateException("사용할 수 없는 멤버십은 양도를 완료할 수 없습니다.");
+        }
+
         String membershipName = original.getMembership().getName();
         int remaining = original.getTotalCount() - original.getUsedCount();
 
@@ -162,6 +191,15 @@ public class TransferService {
 
         // 6. 양도 요청 상태 확인으로 변경
         tr.setStatus(TransferStatus.확인);
+
+        // 7. SMS 알림
+        if (tr.getBranch() != null) {
+            smsService.sendEventSmsIfConfigured(tr.getBranch().getSeq(), SmsEventType.양도완료,
+                    fromMember.getName(), fromMember.getPhoneNumber());
+            smsService.sendEventSmsIfConfigured(tr.getBranch().getSeq(), SmsEventType.양도완료,
+                    newMember.getName(), newMember.getPhoneNumber());
+        }
+
         return TransferRequestResponse.from(transferRequestRepository.save(tr));
     }
 

@@ -179,5 +179,6 @@ export function useMembership(options?: UseMembershipOptions) {
     save, validate,
     transferMode: transfer.mode,
     selectedTransfer: transfer.selected,
+    checkPendingTransfer: transfer.checkPending,
   };
 }

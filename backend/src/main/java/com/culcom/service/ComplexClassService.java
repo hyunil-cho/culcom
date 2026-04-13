@@ -115,6 +115,17 @@ public class ComplexClassService {
                 .orElseThrow(() -> new EntityNotFoundException("수업"));
         ComplexMember member = memberRepository.findById(memberSeq)
                 .orElseThrow(() -> new EntityNotFoundException("회원"));
+        // 정원 초과 검증
+        if (cls.getCapacity() != null && cls.getCapacity() > 0) {
+            long currentCount = mappingRepository.findByComplexClassSeqWithMember(classSeq).size();
+            if (currentCount >= cls.getCapacity()) {
+                throw new IllegalStateException("정원이 초과되었습니다. (현재 " + currentCount + "/" + cls.getCapacity() + ")");
+            }
+        }
+        // 지점 불일치 검증
+        if (!cls.getBranch().getSeq().equals(member.getBranch().getSeq())) {
+            throw new IllegalStateException("다른 지점의 회원은 이 수업에 추가할 수 없습니다.");
+        }
         // 자기 자신이 리더인 팀에는 멤버로 들어갈 수 없다.
         if (cls.getStaff() != null && cls.getStaff().getSeq().equals(memberSeq)) {
             throw new IllegalStateException("자기 자신이 리더인 팀에는 멤버로 등록할 수 없습니다.");
@@ -155,6 +166,10 @@ public class ComplexClassService {
         if (staffSeq != null) {
             ComplexMember newStaff = memberRepository.findById(staffSeq)
                     .orElseThrow(() -> new EntityNotFoundException("스태프"));
+            // 지점 불일치 검증
+            if (!cls.getBranch().getSeq().equals(newStaff.getBranch().getSeq())) {
+                throw new IllegalStateException("다른 지점의 회원은 리더로 배정할 수 없습니다.");
+            }
             // 리더도 결국 회원이며, 스태프는 internal 멤버십을 통해 팀에 들어간다.
             // 휴직/퇴직/환불/만료로 활성 멤버십이 없는 회원은 리더로 배정할 수 없다.
             if (!memberMembershipRepository.existsActiveByMemberSeq(staffSeq)) {

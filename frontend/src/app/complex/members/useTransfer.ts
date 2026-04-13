@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { transferApi, type TransferRequestItem } from '@/lib/api/transfer';
 import type { Membership } from '@/lib/api';
 import type { MembershipFormData } from './MemberForm';
@@ -21,11 +21,13 @@ interface UseTransferOptions {
  * - select(transfer) — 양도 요청 선택 → 멤버십 폼 자동 반영
  * - confirmTransfer(seq) — 양도 확정 API 호출
  * - validate() — 양도 모드일 때 추가 검증
+ * - checkPending(name, phone) — 이름+전화번호로 대기 양도 자동 감지
  */
 export function useTransfer({ memberships, setForm, setEnabled, emptyForm }: UseTransferOptions) {
   const [mode, setModeState] = useState(false);
   const [transfers, setTransfers] = useState<TransferRequestItem[]>([]);
   const [selected, setSelected] = useState<TransferRequestItem | null>(null);
+  const autoDetectedRef = useRef(false);
 
   // 양도 모드 ON → 목록 조회, OFF → 초기화
   useEffect(() => {
@@ -42,16 +44,11 @@ export function useTransfer({ memberships, setForm, setEnabled, emptyForm }: Use
     if (!on) {
       setSelected(null);
       setForm(emptyForm);
+      autoDetectedRef.current = false;
     }
   }, [setForm, emptyForm]);
 
-  const select = useCallback((transfer: TransferRequestItem) => {
-    // 이미 선택된 항목을 다시 클릭하면 선택 해제
-    if (selected?.seq === transfer.seq) {
-      setSelected(null);
-      setForm(emptyForm);
-      return;
-    }
+  const applyTransfer = useCallback((transfer: TransferRequestItem) => {
     setSelected(transfer);
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, '0');
@@ -64,7 +61,35 @@ export function useTransfer({ memberships, setForm, setEnabled, emptyForm }: Use
       paymentDate: nowStr,
     }));
     setEnabled(true);
-  }, [selected, setForm, setEnabled, emptyForm]);
+  }, [setForm, setEnabled]);
+
+  const select = useCallback((transfer: TransferRequestItem) => {
+    // 이미 선택된 항목을 다시 클릭하면 선택 해제
+    if (selected?.seq === transfer.seq) {
+      setSelected(null);
+      setForm(emptyForm);
+      return;
+    }
+    applyTransfer(transfer);
+  }, [selected, setForm, emptyForm, applyTransfer]);
+
+  /** 이름+전화번호로 접수 대기 양도 요청을 자동 감지 */
+  const checkPending = useCallback(async (name: string, phone: string) => {
+    if (!name.trim() || !phone.trim()) return;
+    try {
+      const res = await transferApi.findPending(name.trim(), phone.trim());
+      if (res.data) {
+        setModeState(true);
+        // 목록도 로드
+        const listRes = await transferApi.list();
+        setTransfers(listRes.data ?? []);
+        applyTransfer(res.data);
+        autoDetectedRef.current = true;
+      }
+    } catch {
+      // 조회 실패 시 무시 (양도 없는 일반 회원)
+    }
+  }, [applyTransfer]);
 
   /** 양도 완료: 양도자 멤버십 비활성화 + 양수자에게 멤버십 이전 */
   const confirmTransfer = useCallback(async (memberSeq: number) => {
@@ -79,5 +104,9 @@ export function useTransfer({ memberships, setForm, setEnabled, emptyForm }: Use
     return null;
   }, [mode, selected]);
 
-  return { mode, setMode, transfers, selected, select, confirmTransfer, validate };
+  return {
+    mode, setMode, transfers, selected, select,
+    confirmTransfer, validate, checkPending,
+    autoDetected: autoDetectedRef.current,
+  };
 }

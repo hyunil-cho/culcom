@@ -48,5 +48,5 @@ export default function MainSidebar() {
     }] : []),
   ];
 
-  return <SidebarShell groups={groups} />;
+  return <SidebarShell groups={groups} title="E-UT"/>;
 }
