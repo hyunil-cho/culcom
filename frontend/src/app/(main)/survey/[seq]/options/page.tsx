@@ -50,6 +50,8 @@ export default function SurveyEditorPage() {
 
   const dragItem = useRef<{ seq: number; sectionSeq: number } | null>(null);
   const dragOverItem = useRef<{ seq: number; sectionSeq: number } | null>(null);
+  const dragOption = useRef<{ seq: number; questionSeq: number } | null>(null);
+  const dragOverOption = useRef<{ seq: number; questionSeq: number } | null>(null);
 
   const load = useCallback(async () => {
     const [tplRes, secRes, qRes, oRes] = await Promise.all([
@@ -187,6 +189,32 @@ export default function SurveyEditorPage() {
   const handleToggleRequired = async (q: SurveyQuestion) => { await surveyApi.updateQuestion(templateSeq, q.seq, { required: !q.required }); load(); };
   const handleTypeChange = async (q: SurveyQuestion, inputType: InputType) => { await surveyApi.updateQuestion(templateSeq, q.seq, { inputType }); load(); };
 
+  const handleOptionDragStart = (o: SurveyOption) => {
+    dragOption.current = { seq: o.seq, questionSeq: o.questionSeq };
+  };
+  const handleOptionDragOver = (e: React.DragEvent, o: SurveyOption) => {
+    e.preventDefault();
+    dragOverOption.current = { seq: o.seq, questionSeq: o.questionSeq };
+  };
+  const handleOptionDrop = async (e: React.DragEvent, questionSeq: number) => {
+    e.preventDefault();
+    if (!dragOption.current || !dragOverOption.current) return;
+    if (dragOption.current.questionSeq !== questionSeq || dragOverOption.current.questionSeq !== questionSeq) return;
+    if (dragOption.current.seq === dragOverOption.current.seq) return;
+    const opts = [...(optionsByQ[questionSeq] || [])];
+    const fromIdx = opts.findIndex(o => o.seq === dragOption.current!.seq);
+    const toIdx = opts.findIndex(o => o.seq === dragOverOption.current!.seq);
+    if (fromIdx === -1 || toIdx === -1) return;
+    const [moved] = opts.splice(fromIdx, 1);
+    opts.splice(toIdx, 0, moved);
+    setOptionsByQ(prev => ({ ...prev, [questionSeq]: opts }));
+    const items = opts.map((o, i) => ({ seq: o.seq, sortOrder: i + 1 }));
+    dragOption.current = null;
+    dragOverOption.current = null;
+    await surveyApi.reorderOptions(templateSeq, items);
+    load();
+  };
+
   const handleAddOption = async (questionSeq: number, groupName: string, formId: string) => {
     const label = optionAddForms[formId];
     if (!label?.trim()) return;
@@ -209,10 +237,12 @@ export default function SurveyEditorPage() {
     text: { bg: '#fff3e0', fg: '#e67300' },
   };
 
-  const renderOptionTags = (opts: SurveyOption[]) => (
-    <div className={s.optionTags}>
+  const renderOptionTags = (opts: SurveyOption[], questionSeq: number) => (
+    <div className={s.optionTags} onDrop={e => handleOptionDrop(e, questionSeq)} onDragOver={e => e.preventDefault()}>
       {opts.length > 0 ? opts.map(o => (
-        <span key={o.seq} className={s.optionTag}>
+        <span key={o.seq} className={s.optionTag} draggable
+          onDragStart={() => handleOptionDragStart(o)}
+          onDragOver={e => handleOptionDragOver(e, o)}>
           {o.label}
           <button onClick={() => handleDeleteOption(o.seq, o.label)} title="삭제" className={s.optionDeleteBtn}>x</button>
         </span>
@@ -253,13 +283,13 @@ export default function SurveyEditorPage() {
         return (
           <div key={group} className={gi < groups.length - 1 ? s.groupWrap : undefined}>
             <div className={s.groupTitle}>{group}</div>
-            {renderOptionTags(groupOpts)}
+            {renderOptionTags(groupOpts, q.seq)}
             {renderOptionAddInput(formId, q.seq, group)}
           </div>
         );
       });
     }
-    return <>{renderOptionTags(opts)}{renderOptionAddInput(`q${q.seq}`, q.seq, '')}</>;
+    return <>{renderOptionTags(opts, q.seq)}{renderOptionAddInput(`q${q.seq}`, q.seq, '')}</>;
   };
 
   const renderQuestionCard = (q: SurveyQuestion, sectionSeq: number) => {

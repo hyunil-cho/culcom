@@ -2,7 +2,9 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { publicTransferApi, type TransferInviteInfo, type ConsentItem } from '@/lib/api';
+import { publicTransferApi, type TransferInviteInfo } from '@/lib/api';
+import { useConsent } from '@/hooks/useConsent';
+import ConsentStep from '@/components/ui/ConsentStep';
 
 export default function PublicTransferInvitePage() {
   return <Suspense fallback={null}><Inner /></Suspense>;
@@ -18,8 +20,10 @@ function Inner() {
   const [info, setInfo] = useState<TransferInviteInfo | null>(null);
   const [error, setError] = useState('');
 
-  // 동의 상태
-  const [agreements, setAgreements] = useState<Map<number, boolean>>(new Map());
+  const consent = useConsent({
+    category: 'TRANSFER',
+    items: info?.consentItems,
+  });
 
   // 폼 상태
   const [name, setName] = useState('');
@@ -32,9 +36,6 @@ function Inner() {
     publicTransferApi.getInviteInfo(token).then(res => {
       if (res.success) {
         setInfo(res.data);
-        const map = new Map<number, boolean>();
-        res.data.consentItems.forEach(c => map.set(c.seq, false));
-        setAgreements(map);
         setStep('consent');
       } else {
         setStep('error');
@@ -43,25 +44,14 @@ function Inner() {
     }).catch(() => { setStep('error'); setError('오류가 발생했습니다.'); });
   }, [token]);
 
-  const requiredItems = info?.consentItems.filter(c => c.required) ?? [];
-  const allRequiredAgreed = requiredItems.every(c => agreements.get(c.seq));
-
-  const handleConsentNext = () => {
-    if (!allRequiredAgreed) { alert('필수 동의항목에 모두 동의해주세요.'); return; }
-    setStep('form');
-  };
-
   const handleSubmit = async () => {
     if (!name.trim()) { alert('이름을 입력해주세요.'); return; }
     if (!phone.trim()) { alert('전화번호를 입력해주세요.'); return; }
     setSubmitting(true);
-    const consents = Array.from(agreements.entries()).map(([seq, agreed]) => ({
-      consentItemSeq: seq, agreed,
-    }));
     const res = await publicTransferApi.submitInvite(token, {
       name: name.trim(), phoneNumber: phone.trim(),
       availableTime: availableTime.trim() || undefined,
-      consents,
+      consents: consent.toSubmitData(),
     });
     setSubmitting(false);
     if (res.success) setStep('done');
@@ -99,29 +89,11 @@ function Inner() {
               </div>
             </div>
 
-            {/* 동의항목 */}
-            <div style={{ marginBottom: 16 }}>
-              <h3 style={{ fontSize: '0.95rem', color: '#374151', margin: '0 0 10px' }}>동의항목</h3>
-              {info.consentItems.map(item => (
-                <ConsentItemBlock
-                  key={item.seq}
-                  item={item}
-                  agreed={agreements.get(item.seq) ?? false}
-                  onToggle={(v) => setAgreements(prev => new Map(prev).set(item.seq, v))}
-                />
-              ))}
-            </div>
-
-            <button onClick={handleConsentNext} disabled={!allRequiredAgreed}
-              style={{
-                width: '100%', padding: '14px 0', border: 'none', borderRadius: 8,
-                fontSize: '1rem', fontWeight: 700, cursor: allRequiredAgreed ? 'pointer' : 'not-allowed',
-                background: allRequiredAgreed ? '#10b981' : '#d1d5db',
-                color: allRequiredAgreed ? '#fff' : '#9ca3af',
-                transition: 'all 0.2s',
-              }}>
-              다음
-            </button>
+            <ConsentStep
+              consent={consent}
+              buttonText="다음"
+              onNext={() => setStep('form')}
+            />
           </>
         )}
 
@@ -176,46 +148,6 @@ function Inner() {
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function ConsentItemBlock({
-  item, agreed, onToggle,
-}: {
-  item: ConsentItem;
-  agreed: boolean;
-  onToggle: (v: boolean) => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-
-  return (
-    <div style={{ marginBottom: 10, border: `1.5px solid ${agreed ? '#bbf7d0' : '#e5e7eb'}`, borderRadius: 8, overflow: 'hidden', transition: 'border-color 0.2s' }}>
-      {/* 약관 본문 (접기/펼치기) */}
-      <button onClick={() => setExpanded(!expanded)}
-        style={{ width: '100%', padding: '8px 12px', background: '#f9fafb', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '0.82rem', color: '#374151' }}>
-          {item.title}
-          {item.required && <span style={{ color: '#dc2626', fontSize: '0.7rem', marginLeft: 4 }}>(필수)</span>}
-        </span>
-        <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{expanded ? '접기' : '펼치기'}</span>
-      </button>
-      {expanded && (
-        <div style={{ padding: '10px 12px', background: '#fff', maxHeight: 200, overflowY: 'auto', fontSize: '0.8rem', color: '#4b5563', lineHeight: 1.6, whiteSpace: 'pre-wrap', borderTop: '1px solid #e5e7eb' }}>
-          {item.content}
-        </div>
-      )}
-      {/* 동의 체크 */}
-      <label style={{
-        display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px',
-        background: agreed ? '#f0fdf4' : '#fff', cursor: 'pointer', borderTop: '1px solid #f3f4f6',
-      }}>
-        <input type="checkbox" checked={agreed} onChange={e => onToggle(e.target.checked)}
-          style={{ width: 16, height: 16, accentColor: '#10b981' }} />
-        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: agreed ? '#15803d' : '#6b7280' }}>
-          동의합니다
-        </span>
-      </label>
     </div>
   );
 }

@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew compileJava -q)",
+      "Read(//c/Users/lookh/IdeaProjects/culcom/frontend/**)",
+      "Bash(npx tsc:*)",
+      "Bash(xargs grep:*)",
+      "Bash(npm ls:*)",
+      "Bash(mkdir -p \"C:/Users/lookh/IdeaProjects/culcom/frontend/public/images/r\")",
+      "Bash(mv \"C:/Users/lookh/IdeaProjects/culcom/frontend/src/app/public/r/assets/images/\"*.png \"C:/Users/lookh/IdeaProjects/culcom/frontend/public/images/r/\")",
+      "Bash(node transform-css.mjs)",
+      "Bash(rm -f index.html script.js style.css transform-css.mjs)",
+      "Bash(rm -rf assets)",
+      "Bash(npm run:*)",
+      "Bash(awk '{print $5, $NF}')",
+      "Bash(npm install:*)",
+      "WebFetch(domain:developers.facebook.com)",
+      "Bash(./gradlew compileJava)"
+    ]
+  }
+}

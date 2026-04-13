@@ -7,6 +7,7 @@ import { useSurveyData } from '../_shared/useSurveyData';
 import { BASIC_INFO_FIELDS, hintText, questionsForSection } from '../_shared/surveyConstants';
 import SurveyShell from '../_shared/SurveyShell';
 import SurveyComplete from './SurveyComplete';
+import SurveyConsentStep from './SurveyConsentStep';
 import s from './page.module.css';
 
 export default function SurveyFillPage() {
@@ -26,6 +27,7 @@ export default function SurveyFillPage() {
   const customerPhone = decoded.phone || '';
   const reservationSeq = String(decoded.reservationSeq || '');
 
+  const [consentData, setConsentData] = useState<{ consentItemSeq: number; agreed: boolean }[] | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
@@ -39,6 +41,10 @@ export default function SurveyFillPage() {
   if (loading) return <div className={s.loading}>로딩 중...</div>;
   if (!template) return <div className={s.loading}>설문지를 찾을 수 없습니다.</div>;
   if (submitted) return <SurveyComplete name={basicInfo.name || customerName} />;
+
+  if (!consentData) {
+    return <SurveyConsentStep templateName={template.name} onConsented={(data) => setConsentData(data)} />;
+  }
 
   const totalPages = sections.length + 1;
 
@@ -107,6 +113,7 @@ export default function SurveyFillPage() {
       occupation: basicInfo.occupation,
       adSource: basicInfo.ad_source,
       answers,
+      consents: consentData,
     });
     setSubmitted(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });

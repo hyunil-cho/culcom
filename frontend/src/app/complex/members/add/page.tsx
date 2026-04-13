@@ -7,6 +7,7 @@ import MemberForm from '../MemberForm';
 import { useMemberForm } from '../useMemberForm';
 import { Button } from '@/components/ui/Button';
 import TransferMismatchModal from '../components/TransferMismatchModal';
+import { useSignupChannels } from '@/lib/useSignupChannels';
 
 export default function MemberAddPage() {
   return <Suspense fallback={null}><MemberAddPageInner /></Suspense>;
@@ -20,6 +21,7 @@ function MemberAddPageInner() {
     showTransferMismatch, confirmMismatchAndSubmit, dismissMismatch,
   } = useMemberForm();
 
+  const { channels } = useSignupChannels();
   const [showImport, setShowImport] = useState(false);
   const [submissions, setSubmissions] = useState<SurveySubmissionItem[]>([]);
   const [importLoading, setImportLoading] = useState(false);
@@ -32,9 +34,19 @@ function MemberAddPageInner() {
     setImportLoading(false);
   };
 
-  const selectSubmission = (item: SurveySubmissionItem) => {
-    setForm(prev => ({ ...prev, name: item.name, phoneNumber: item.phoneNumber }));
+  const selectSubmission = async (item: SurveySubmissionItem) => {
     setShowImport(false);
+    const detailRes = await surveyApi.getSubmission(item.seq);
+    if (!detailRes.success) {
+      setForm(prev => ({ ...prev, name: item.name, phoneNumber: item.phoneNumber }));
+      return;
+    }
+    const detail = detailRes.data;
+    const channelLabels = channels.map(c => c.label);
+    const signupChannel = detail.adSource && channelLabels.includes(detail.adSource)
+      ? detail.adSource : (detail.adSource ?? '');
+    const info = detail.customerComment ?? '';
+    setForm(prev => ({ ...prev, name: detail.name, phoneNumber: detail.phoneNumber, signupChannel, info }));
   };
 
   return (

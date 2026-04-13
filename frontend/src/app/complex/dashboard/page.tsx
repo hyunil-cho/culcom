@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { complexDashboardApi, type AutoExpiredItem, type MembershipAlertItem, type MembershipAlertsResponse } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import TrendCharts from './TrendCharts';
 
 // 고정 기준 — 추후 사용자 설정으로 빼는 것을 고려
 const WINDOW_DAYS = 30;
@@ -30,6 +31,8 @@ export default function ComplexDashboardPage() {
       <div className="page-toolbar">
         <h2 className="page-title" style={{ marginBottom: 0 }}>대시보드</h2>
       </div>
+
+      <TrendCharts />
 
       {loading && <div style={{ color: '#888', padding: 20 }}>불러오는 중...</div>}
 
