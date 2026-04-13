@@ -45,6 +45,10 @@ logging:
   level:
     org.hibernate.SQL: debug
     org.hibernate.type.descriptor.sql.BasicBinder: trace
+meta:
+  webhook:
+    verify-token: ${META_VERIFY_TOKEN:}
+
 kakao:
   oauth:
     client-id: ${KAKAO_CLIENT_ID:}
