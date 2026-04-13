@@ -35,6 +35,7 @@ COPY --from=backend-build /build/build/libs/*.jar app.jar
 
 # Frontend
 COPY --from=frontend-build /build/.next .next/
+COPY --from=frontend-build /build/public public/
 COPY --from=frontend-build /build/node_modules node_modules/
 COPY --from=frontend-build /build/package.json .
 COPY --from=frontend-build /build/next.config.js .
