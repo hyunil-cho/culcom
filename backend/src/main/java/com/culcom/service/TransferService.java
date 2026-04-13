@@ -52,6 +52,12 @@ public class TransferService {
         ComplexMemberMembership mm = memberMembershipRepository.findById(req.getMemberMembershipSeq())
                 .orElseThrow(() -> new EntityNotFoundException("멤버십"));
 
+        // 사용할 수 없는 멤버십(환불/만료/정지/기간소진/횟수소진)은 양도할 수 없다.
+        // isActive()가 네 가지 비활성 케이스를 단일 진입점으로 판정한다.
+        if (!mm.isActive()) {
+            throw new IllegalStateException("사용할 수 없는 멤버십은 양도할 수 없습니다.");
+        }
+
         // 양도 가능 여부 검증
         if (!Boolean.TRUE.equals(mm.getMembership().getTransferable())) {
             throw new IllegalStateException("양도 불가 멤버십입니다.");

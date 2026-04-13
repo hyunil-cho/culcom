@@ -38,6 +38,16 @@ public class RefundService {
 
     @Transactional
     public RefundResponse create(RefundCreateRequest req, Long branchSeq) {
+        // 이미 환불/만료/정지된 멤버십(또는 기간/횟수 소진)에는 환불 신청을 받지 않는다.
+        // isActive()가 네 가지 사용 불가 케이스를 단일 진입점으로 판정한다.
+        if (req.getMemberMembershipSeq() != null) {
+            ComplexMemberMembership target = complexMemberMembershipRepository.findById(req.getMemberMembershipSeq())
+                    .orElseThrow(() -> new EntityNotFoundException("멤버십"));
+            if (!target.isActive()) {
+                throw new IllegalStateException("사용할 수 없는 멤버십에는 환불 신청을 할 수 없습니다.");
+            }
+        }
+
         ComplexRefundRequest entity = ComplexRefundRequest.builder()
                 .memberName(req.getMemberName())
                 .phoneNumber(req.getPhoneNumber())

@@ -3,6 +3,7 @@ package com.culcom.service;
 import com.culcom.dto.complex.survey.*;
 import com.culcom.entity.enums.InputType;
 import com.culcom.entity.enums.SurveyStatus;
+import com.culcom.entity.reservation.ReservationInfo;
 import com.culcom.entity.survey.*;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.*;
@@ -21,7 +22,40 @@ public class SurveyService {
     private final SurveyTemplateSectionRepository sectionRepository;
     private final SurveyTemplateQuestionRepository questionRepository;
     private final SurveyTemplateOptionRepository optionRepository;
+    private final SurveySubmissionRepository submissionRepository;
+    private final ReservationInfoRepository reservationInfoRepository;
     private final BranchRepository branchRepository;
+
+    // ── 설문 제출 상세 조회 ──
+
+    public SurveySubmissionDetailRow getSubmissionDetail(Long seq) {
+        SurveySubmission s = submissionRepository.findById(seq)
+                .orElseThrow(() -> new EntityNotFoundException("설문 제출 데이터"));
+
+        SurveySubmissionDetailRow detail = new SurveySubmissionDetailRow();
+        detail.setSeq(s.getSeq());
+        detail.setTemplateSeq(s.getTemplateSeq());
+        detail.setName(s.getName());
+        detail.setPhoneNumber(s.getPhoneNumber());
+        detail.setGender(s.getGender());
+        detail.setLocation(s.getLocation());
+        detail.setAgeGroup(s.getAgeGroup());
+        detail.setOccupation(s.getOccupation());
+        detail.setAdSource(s.getAdSource());
+        detail.setAnswers(s.getAnswers());
+        detail.setCreatedDate(s.getCreatedDate() != null ? s.getCreatedDate().toString() : null);
+
+        templateRepository.findById(s.getTemplateSeq())
+                .ifPresent(t -> detail.setTemplateName(t.getName()));
+
+        if (s.getReservationSeq() != null) {
+            reservationInfoRepository.findById(s.getReservationSeq())
+                    .map(ReservationInfo::getCustomer)
+                    .ifPresent(customer -> detail.setCustomerComment(customer.getComment()));
+        }
+
+        return detail;
+    }
 
     // ── 설문 템플릿 CRUD ──
 
@@ -176,6 +210,22 @@ public class SurveyService {
         }
         List<SurveyTemplateQuestion> saved = questionRepository.saveAll(questionMap.values());
         return saved.stream().map(SurveyQuestionResponse::from).toList();
+    }
+
+    @Transactional
+    public List<SurveyOptionResponse> reorderOptions(OptionReorderRequest req) {
+        List<Long> seqs = req.getItems().stream().map(OptionReorderRequest.OptionReorderItem::getSeq).toList();
+        Map<Long, SurveyTemplateOption> optionMap = new HashMap<>();
+        optionRepository.findAllById(seqs).forEach(o -> optionMap.put(o.getSeq(), o));
+
+        for (OptionReorderRequest.OptionReorderItem item : req.getItems()) {
+            SurveyTemplateOption o = optionMap.get(item.getSeq());
+            if (o != null) {
+                o.setSortOrder(item.getSortOrder());
+            }
+        }
+        List<SurveyTemplateOption> saved = optionRepository.saveAll(optionMap.values());
+        return saved.stream().map(SurveyOptionResponse::from).toList();
     }
 
     // ── 선택지 CRUD ──

@@ -32,6 +32,9 @@ public class ComplexMemberResponse {
     @Setter
     private List<String> attendanceHistory;
 
+    @Setter
+    private String smsWarning;
+
     public static ComplexMemberResponse from(ComplexMember entity) {
         return ComplexMemberResponse.builder()
                 .seq(entity.getSeq())
@@ -40,11 +43,9 @@ public class ComplexMemberResponse {
                 .level(entity.getMetaData() != null ? entity.getMetaData().getLevel() : null)
                 .language(entity.getMetaData() != null ? entity.getMetaData().getLanguage() : null)
                 .info(entity.getInfo())
-                .chartNumber(entity.getChartNumber())
                 .comment(entity.getComment())
                 .joinDate(entity.getJoinDate())
                 .signupChannel(entity.getMetaData() != null ? entity.getMetaData().getSignupChannel() : null)
-                .interviewer(entity.getInterviewer())
                 .staffStatus(entity.getStaffInfo() != null ? entity.getStaffInfo().getStatus().name() : null)
                 .createdDate(entity.getCreatedDate())
                 .lastUpdateDate(entity.getLastUpdateDate())

@@ -3,6 +3,7 @@ package com.culcom.dto.publicapi;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -22,4 +23,14 @@ public class SurveySubmitRequest {
 
     // 설문 응답 (questionKey → 답변)
     private Map<String, Object> answers;
+
+    // 약관 동의 내역
+    private List<ConsentAgreement> consents;
+
+    @Getter
+    @Setter
+    public static class ConsentAgreement {
+        private Long consentItemSeq;
+        private Boolean agreed;
+    }
 }

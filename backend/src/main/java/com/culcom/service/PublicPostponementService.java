@@ -99,6 +99,11 @@ public class PublicPostponementService {
                 ? memberMembershipRepository.findById(req.getMemberMembershipSeq()).orElse(null)
                 : null;
 
+        // 사용할 수 없는 멤버십(환불/만료/정지/기간소진/횟수소진)에는 연기 신청을 받지 않는다.
+        if (membership != null && !membership.isActive()) {
+            throw new IllegalStateException("사용할 수 없는 멤버십에는 연기 신청을 할 수 없습니다.");
+        }
+
         ComplexPostponementRequest postponement = ComplexPostponementRequest.builder()
                 .branch(branch)
                 .member(member)

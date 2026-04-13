@@ -103,7 +103,6 @@ public class ComplexStaffService {
         // 스태프 기본정보 변경은 활동 히스토리에 남기지 않는다.
         member.setName(req.getName());
         member.setPhoneNumber(req.getPhoneNumber());
-        member.setInterviewer(req.getInterviewer());
         staffInfo.setStatus(newStatus);
 
         // 재직 상태 변경에 따른 internal(스태프 복지) 멤버십 활성/정지 토글.

@@ -9,6 +9,7 @@ import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.enums.ActivityFieldType;
 import com.culcom.entity.enums.PaymentKind;
+import com.culcom.entity.enums.SmsEventType;
 import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.*;
@@ -34,6 +35,7 @@ public class ComplexMemberService {
     private final ComplexMemberClassMappingRepository classMappingRepository;
     private final BranchRepository branchRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final SmsService smsService;
 
     public ComplexMemberResponse get(Long seq) {
         ComplexMember member = memberRepository.findById(seq)
@@ -60,7 +62,12 @@ public class ComplexMemberService {
 
         eventPublisher.publishEvent(ActivityEvent.of(member, ActivityEventType.MEMBER_CREATE, "회원 등록: " + member.getName()));
 
-        return ComplexMemberResponse.from(member);
+        String smsWarning = smsService.sendEventSmsIfConfigured(branchSeq, SmsEventType.회원등록,
+                member.getName(), member.getPhoneNumber());
+
+        ComplexMemberResponse response = ComplexMemberResponse.from(member);
+        response.setSmsWarning(smsWarning);
+        return response;
     }
 
     @Transactional
@@ -236,6 +243,21 @@ public class ComplexMemberService {
         }
         if (req.getKind() != PaymentKind.REFUND && req.getAmount() < 0) {
             throw new IllegalArgumentException("일반 납부는 양수 금액이어야 합니다");
+        }
+
+        // 과납 방어: 남은 미수금을 1원이라도 초과하면 거부한다.
+        // REFUND(음수) 정정은 합계를 줄이므로 이 검증에서 제외한다.
+        // mm.price 파싱 실패(총액 불명)인 경우에는 비교할 수 없으므로 스킵.
+        if (req.getKind() != PaymentKind.REFUND) {
+            Long total = parseAmount(mm.getPrice());
+            if (total != null) {
+                long alreadyPaid = paymentRepository.sumAmountByMemberMembershipSeq(mm.getSeq());
+                long remaining = Math.max(0L, total - alreadyPaid);
+                if (alreadyPaid + req.getAmount() > total) {
+                    throw new IllegalArgumentException(
+                            String.format("남은 미수금(%,d원)보다 큰 금액은 납부할 수 없습니다.", remaining));
+                }
+            }
         }
 
         MembershipPayment payment = MembershipPayment.builder()

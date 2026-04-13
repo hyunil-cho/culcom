@@ -3,6 +3,7 @@ package com.culcom.service;
 import com.culcom.dto.customer.*;
 import com.culcom.entity.customer.Customer;
 import com.culcom.entity.enums.CustomerStatus;
+import com.culcom.entity.enums.SmsEventType;
 import com.culcom.entity.reservation.CallerSelectionHistory;
 import com.culcom.entity.reservation.ReservationInfo;
 import com.culcom.exception.EntityNotFoundException;
@@ -23,6 +24,7 @@ public class CustomerService {
     private final CallerSelectionHistoryRepository callerSelectionHistoryRepository;
     private final ReservationInfoRepository reservationInfoRepository;
     private final UserInfoRepository userInfoRepository;
+    private final SmsService smsService;
 
     public CustomerResponse get(Long seq) {
         Customer customer = customerRepository.findById(seq)
@@ -38,10 +40,16 @@ public class CustomerService {
                 .comment(request.getComment())
                 .commercialName(request.getCommercialName())
                 .adSource(request.getAdSource())
-                .interviewer(request.getInterviewer())
                 .build();
         branchRepository.findById(branchSeq).ifPresent(customer::setBranch);
-        return CustomerResponse.from(customerRepository.save(customer));
+        Customer saved = customerRepository.save(customer);
+
+        String smsWarning = smsService.sendEventSmsIfConfigured(branchSeq, SmsEventType.고객등록,
+                saved.getName(), saved.getPhoneNumber());
+
+        CustomerResponse response = CustomerResponse.from(saved);
+        response.setSmsWarning(smsWarning);
+        return response;
     }
 
     @Transactional

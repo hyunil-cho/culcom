@@ -80,10 +80,18 @@ public class PublicRefundService {
         ComplexMember member = memberRepository.findById(req.getMemberSeq())
                 .orElseThrow(() -> new EntityNotFoundException("회원"));
 
+        // 사용할 수 없는 멤버십(환불/만료/정지/기간소진/횟수소진)에는 환불 신청을 받지 않는다.
+        ComplexMemberMembership targetMembership = req.getMemberMembershipSeq() != null
+                ? memberMembershipRepository.findById(req.getMemberMembershipSeq()).orElse(null)
+                : null;
+        if (targetMembership != null && !targetMembership.isActive()) {
+            throw new IllegalStateException("사용할 수 없는 멤버십에는 환불 신청을 할 수 없습니다.");
+        }
+
         ComplexRefundRequest refund = ComplexRefundRequest.builder()
                 .branch(member.getBranch())
                 .member(member)
-                .memberMembership(memberMembershipRepository.findById(req.getMemberMembershipSeq()).orElse(null))
+                .memberMembership(targetMembership)
                 .memberName(req.getMemberName())
                 .phoneNumber(req.getPhoneNumber())
                 .membershipName(req.getMembershipName())

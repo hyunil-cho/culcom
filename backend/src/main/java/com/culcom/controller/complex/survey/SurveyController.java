@@ -2,11 +2,7 @@ package com.culcom.controller.complex.survey;
 
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.complex.survey.*;
-import com.culcom.entity.survey.SurveySubmission;
-import com.culcom.entity.survey.SurveyTemplate;
 import com.culcom.mapper.SurveyQueryMapper;
-import com.culcom.repository.SurveySubmissionRepository;
-import com.culcom.repository.SurveyTemplateRepository;
 import com.culcom.service.SurveyService;
 import com.culcom.config.security.CustomUserPrincipal;
 import jakarta.validation.Valid;
@@ -24,8 +20,6 @@ public class SurveyController {
 
     private final SurveyService surveyService;
     private final SurveyQueryMapper surveyQueryMapper;
-    private final SurveySubmissionRepository surveySubmissionRepository;
-    private final SurveyTemplateRepository surveyTemplateRepository;
 
     // ── 설문 제출 조회 ──
 
@@ -37,28 +31,7 @@ public class SurveyController {
 
     @GetMapping("/submissions/{seq}")
     public ResponseEntity<ApiResponse<SurveySubmissionDetailRow>> getSubmission(@PathVariable Long seq) {
-        Optional<SurveySubmission> optSubmission = surveySubmissionRepository.findById(seq);
-        if (optSubmission.isEmpty()) {
-            return ResponseEntity.ok(ApiResponse.error("설문 제출 데이터를 찾을 수 없습니다."));
-        }
-        SurveySubmission s = optSubmission.get();
-        SurveySubmissionDetailRow detail = new SurveySubmissionDetailRow();
-        detail.setSeq(s.getSeq());
-        detail.setTemplateSeq(s.getTemplateSeq());
-        detail.setName(s.getName());
-        detail.setPhoneNumber(s.getPhoneNumber());
-        detail.setGender(s.getGender());
-        detail.setLocation(s.getLocation());
-        detail.setAgeGroup(s.getAgeGroup());
-        detail.setOccupation(s.getOccupation());
-        detail.setAdSource(s.getAdSource());
-        detail.setAnswers(s.getAnswers());
-        detail.setCreatedDate(s.getCreatedDate() != null ? s.getCreatedDate().toString() : null);
-
-        surveyTemplateRepository.findById(s.getTemplateSeq())
-                .ifPresent(t -> detail.setTemplateName(t.getName()));
-
-        return ResponseEntity.ok(ApiResponse.ok(detail));
+        return ResponseEntity.ok(ApiResponse.ok(surveyService.getSubmissionDetail(seq)));
     }
 
     // ── 설문 템플릿 CRUD ──
@@ -186,6 +159,13 @@ public class SurveyController {
             @PathVariable Long templateSeq, @Valid @RequestBody SurveyOptionRequest req) {
         return ResponseEntity.ok(ApiResponse.ok("선택지 추가 완료",
                 surveyService.createOption(templateSeq, req)));
+    }
+
+    @PutMapping("/templates/{templateSeq}/options/reorder")
+    public ResponseEntity<ApiResponse<List<SurveyOptionResponse>>> reorderOptions(
+            @PathVariable Long templateSeq, @RequestBody OptionReorderRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("선택지 순서가 변경되었습니다.",
+                surveyService.reorderOptions(req)));
     }
 
     @DeleteMapping("/templates/{templateSeq}/options/{optionSeq}")

@@ -1,10 +1,7 @@
 package com.culcom.dto.customer;
 
 import com.culcom.entity.customer.Customer;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -23,6 +20,9 @@ public class CustomerResponse {
     private String status;
     private LocalDateTime createdDate;
     private LocalDateTime lastUpdateDate;
+
+    @Setter
+    private String smsWarning;
 
     public static CustomerResponse from(Customer c) {
         return CustomerResponse.builder()
