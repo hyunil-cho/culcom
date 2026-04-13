@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.culcom.mapper.ComplexDashboardMapper">
+
+    <!-- 기간 단위(period)에 따른 GROUP BY / 시작일 계산 SQL 조각 -->
+    <sql id="bucketExpr">
+        <choose>
+            <when test="period == 'day'">DATE_FORMAT(${col}, '%Y-%m-%d')</when>
+            <when test="period == 'week'">DATE_FORMAT(${col}, '%x-%v')</when>
+            <when test="period == 'year'">DATE_FORMAT(${col}, '%Y')</when>
+            <otherwise>DATE_FORMAT(${col}, '%Y-%m')</otherwise>
+        </choose>
+    </sql>
+
+    <sql id="sinceExpr">
+        <choose>
+            <when test="period == 'day'">DATE_SUB(CURRENT_DATE, INTERVAL #{count} DAY)</when>
+            <when test="period == 'week'">DATE_SUB(CURRENT_DATE, INTERVAL #{count} WEEK)</when>
+            <when test="period == 'year'">DATE_SUB(CURRENT_DATE, INTERVAL #{count} YEAR)</when>
+            <otherwise>DATE_SUB(CURRENT_DATE, INTERVAL #{count} MONTH)</otherwise>
+        </choose>
+    </sql>
+
+    <!-- 회원(일반) 등록 추이 -->
+    <select id="selectMembers" resultType="com.culcom.dto.complex.dashboard.TrendItem">
+        SELECT <include refid="bucketExpr"><property name="col" value="m.created_date"/></include> AS bucket,
+               COUNT(*) AS count
+        FROM complex_members m
+        LEFT JOIN complex_staff_info si ON si.member_seq = m.seq
+        WHERE m.branch_seq = #{branchSeq}
+          AND si.seq IS NULL
+          AND m.created_date >= <include refid="sinceExpr"/>
+        GROUP BY bucket
+        ORDER BY bucket
+    </select>
+
+    <!-- 스태프 등록 추이 -->
+    <select id="selectStaffs" resultType="com.culcom.dto.complex.dashboard.TrendItem">
+        SELECT <include refid="bucketExpr"><property name="col" value="m.created_date"/></include> AS bucket,
+               COUNT(*) AS count
+        FROM complex_members m
+        JOIN complex_staff_info si ON si.member_seq = m.seq
+        WHERE m.branch_seq = #{branchSeq}
+          AND m.created_date >= <include refid="sinceExpr"/>
+        GROUP BY bucket
+        ORDER BY bucket
+    </select>
+
+    <!-- 연기 요청 추이 -->
+    <select id="selectPostponements" resultType="com.culcom.dto.complex.dashboard.TrendItem">
+        SELECT <include refid="bucketExpr"><property name="col" value="p.created_date"/></include> AS bucket,
+               COUNT(*) AS count
+        FROM complex_postponement_requests p
+        WHERE p.branch_seq = #{branchSeq}
+          AND p.created_date >= <include refid="sinceExpr"/>
+        GROUP BY bucket
+        ORDER BY bucket
+    </select>
+
+    <!-- 환불 요청 추이 -->
+    <select id="selectRefunds" resultType="com.culcom.dto.complex.dashboard.TrendItem">
+        SELECT <include refid="bucketExpr"><property name="col" value="r.created_date"/></include> AS bucket,
+               COUNT(*) AS count
+        FROM complex_refund_requests r
+        WHERE r.branch_seq = #{branchSeq}
+          AND r.created_date >= <include refid="sinceExpr"/>
+        GROUP BY bucket
+        ORDER BY bucket
+    </select>
+
+    <!-- 양도 요청 추이 -->
+    <select id="selectTransfers" resultType="com.culcom.dto.complex.dashboard.TrendItem">
+        SELECT <include refid="bucketExpr"><property name="col" value="t.created_date"/></include> AS bucket,
+               COUNT(*) AS count
+        FROM transfer_requests t
+        JOIN complex_member_memberships cmm ON cmm.seq = t.member_membership_seq
+        JOIN complex_members m ON m.seq = cmm.member_seq
+        WHERE m.branch_seq = #{branchSeq}
+          AND t.created_date >= <include refid="sinceExpr"/>
+        GROUP BY bucket
+        ORDER BY bucket
+    </select>
+
+</mapper>
