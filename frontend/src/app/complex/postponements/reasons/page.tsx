@@ -5,8 +5,12 @@ import Link from 'next/link';
 import { postponementApi, type PostponementReason } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useModal } from '@/hooks/useModal';
+import { useFormError } from '@/hooks/useFormError';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { queryClient } from '@/lib/queryClient';
+import FormErrorBanner from '@/components/ui/FormErrorBanner';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import s from './page.module.css';
 
 export default function PostponementReasonsPage() {
@@ -18,16 +22,24 @@ export default function PostponementReasonsPage() {
   const [reasonText, setReasonText] = useState('');
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['postponementReasons'] });
   const { run, modal } = useResultModal({ onConfirm: invalidate });
+  const { error: formError, setError, clear: clearError } = useFormError();
+  const deleteModal = useModal<number>();
 
   const handleAdd = async () => {
-    if (!reasonText.trim()) { alert('사유 텍스트를 입력하세요.'); return; }
+    if (!reasonText.trim()) { setError('사유 텍스트를 입력하세요.'); return; }
+    clearError();
     const res = await run(postponementApi.addReason(reasonText.trim()), '연기사유가 추가되었습니다.');
     if (res.success) { setReasonText(''); setShowForm(false); }
   };
 
-  const handleDelete = async (seq: number) => {
-    if (!confirm('이 사유를 삭제하시겠습니까?')) return;
-    await run(postponementApi.deleteReason(seq), '연기사유가 삭제되었습니다.');
+  const handleDelete = (seq: number) => {
+    deleteModal.open(seq);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.data) return;
+    deleteModal.close();
+    await run(postponementApi.deleteReason(deleteModal.data), '연기사유가 삭제되었습니다.');
   };
 
   return (
@@ -60,6 +72,7 @@ export default function PostponementReasonsPage() {
           </div>
         ) : (
           <div className={s.formArea}>
+            <FormErrorBanner error={formError} />
             <div className={s.formGroup}>
               <label className={s.formLabel}>사유 텍스트 <span className={s.requiredMark}>*</span></label>
               <input type="text" value={reasonText} onChange={(e) => setReasonText(e.target.value)}
@@ -77,6 +90,18 @@ export default function PostponementReasonsPage() {
         <strong>안내:</strong> 여기서 관리하는 사유 목록은 고객이 수업 연기 요청 시 선택할 수 있는 항목입니다.
         &quot;기타 (직접 입력)&quot; 옵션은 자동으로 포함됩니다.
       </div>
+
+      {deleteModal.isOpen && (
+        <ConfirmModal
+          title="삭제 확인"
+          confirmLabel="삭제"
+          confirmColor="#e03131"
+          onCancel={deleteModal.close}
+          onConfirm={confirmDelete}
+        >
+          이 사유를 삭제하시겠습니까?
+        </ConfirmModal>
+      )}
 
       {modal}
     </>

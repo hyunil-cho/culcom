@@ -11,6 +11,7 @@ import { useMessageModal } from '../../hooks/useMessageModal';
 import { calcHistoryRate, RateBadge } from '../components/AttendanceRateBadge';
 import { AttendanceHistoryCells } from '@/hooks/useAttendanceHistoryColumn';
 import { MessageButton } from '../components/MessageButton';
+import Spinner from '@/components/ui/Spinner';
 import '../attendance.css';
 
 export default function AttendanceDetailPage() {
@@ -35,7 +36,7 @@ export default function AttendanceDetailPage() {
 
   const msgModal = useMessageModal();
 
-  if (loading) return <div style={{ padding: 20 }}>로딩 중...</div>;
+  if (loading) return <Spinner />;
 
   return (
     <>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import FormField from '@/components/ui/FormField';
 import FormLayout from '@/components/ui/FormLayout';
+import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Input, Select, Textarea, Checkbox } from '@/components/ui/FormInput';
 import { ROUTES } from '@/lib/routes';
 import ConsentPreviewModal from './ConsentPreviewModal';
@@ -37,13 +38,14 @@ export function validateForm(form: ConsentItemFormData): string | null {
 }
 
 export default function ConsentItemForm({
-  form, onChange, onSubmit, isEdit, submitLabel,
+  form, onChange, onSubmit, isEdit, submitLabel, formError,
 }: {
   form: ConsentItemFormData;
   onChange: (form: ConsentItemFormData) => void;
   onSubmit: () => void;
   isEdit?: boolean;
   submitLabel: string;
+  formError?: string | null;
 }) {
   const [preview, setPreview] = useState(false);
 
@@ -69,6 +71,7 @@ export default function ConsentItemForm({
           </button>
         }
       >
+        <FormErrorBanner error={formError ?? null} />
         <FormField label="제목" required>
           <Input placeholder="예: 개인정보 수집·이용 동의" value={form.title}
             onChange={(e) => onChange({ ...form, title: e.target.value })} required />

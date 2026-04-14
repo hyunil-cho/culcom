@@ -35,6 +35,7 @@ export default function TimeslotsPage() {
         rowKey={(s) => s.seq}
         headerInfo={<span>총 <strong>{slots.length}</strong>개 시간대</span>}
         emptyMessage="등록된 수업 시간대가 없습니다."
+        emptyAction={<Button onClick={() => router.push(ROUTES.COMPLEX_TIMESLOTS_ADD)}>+ 시간대 추가</Button>}
         onRowClick={(s) => router.push(ROUTES.COMPLEX_TIMESLOT_EDIT(s.seq))}
       />
 

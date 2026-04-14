@@ -8,6 +8,7 @@ import { useSessionStore } from '@/lib/store';
 import { ROUTES } from '@/lib/routes';
 import BranchForm, { emptyBranchForm, validateBranchForm, type BranchFormData } from '../../BranchForm';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useFormError } from '@/hooks/useFormError';
 
 export default function BranchEditPage() {
   const params = useParams();
@@ -15,6 +16,7 @@ export default function BranchEditPage() {
   const refreshBranches = useSessionStore((s) => s.refreshBranches);
   const [form, setForm] = useState<BranchFormData>(emptyBranchForm);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.BRANCH_DETAIL(seq) });
+  const { error: formError, validate, clear: clearError } = useFormError();
 
   const { data: branchData } = useApiQuery(
     ['branch', seq],
@@ -34,8 +36,8 @@ export default function BranchEditPage() {
   }, [branchData]);
 
   const handleSubmit = async () => {
-    const error = validateBranchForm(form);
-    if (error) { alert(error); return; }
+    if (!validate(validateBranchForm(form))) return;
+    clearError();
     const res = await run(branchApi.update(seq, form), '지점 정보가 수정되었습니다.');
     if (res.success) await refreshBranches();
   };
@@ -49,6 +51,7 @@ export default function BranchEditPage() {
         backHref={ROUTES.BRANCH_DETAIL(seq)}
         backLabel="← 상세로"
         seq={seq}
+        formError={formError}
       />
       {modal}
     </>

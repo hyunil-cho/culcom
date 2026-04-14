@@ -55,9 +55,9 @@ export function useListPageQuery<T>(
   const totalPages = data?.totalPages ?? 0;
   const totalElements = data?.totalElements ?? 0;
 
-  const load = useCallback((targetPage?: number, newExtraParams?: Record<string, string>) => {
+  const load = useCallback((targetPage: number = 0, newExtraParams?: Record<string, string>) => {
     setItemsOverride(null);
-    if (targetPage !== undefined) setPage(targetPage);
+    setPage(targetPage);
     if (newExtraParams !== undefined) setExtraParams(newExtraParams);
   }, []);
 

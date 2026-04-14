@@ -98,6 +98,7 @@ export default function ClassesPage() {
         data={list.items}
         rowKey={(c) => c.seq}
         emptyMessage="등록된 수업이 없습니다."
+        emptyAction={<Button onClick={() => router.push(ROUTES.COMPLEX_CLASSES_ADD)}>+ 수업 추가</Button>}
         pagination={list.pagination}
         onRowClick={(c) => router.push(ROUTES.COMPLEX_CLASS_EDIT(c.seq))}
       />

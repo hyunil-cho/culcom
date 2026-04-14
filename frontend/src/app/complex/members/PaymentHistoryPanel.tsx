@@ -9,6 +9,7 @@ import {
 import { usePaymentOptions } from '@/lib/usePaymentOptions';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { queryClient } from '@/lib/queryClient';
+import Spinner from '@/components/ui/Spinner';
 import PaymentAddModal from './outstanding/PaymentAddModal';
 
 const STATUS_COLOR: Record<string, { bg: string; fg: string; border: string }> = {
@@ -35,7 +36,7 @@ export default function PaymentHistoryPanel({ memberSeq, memberName }: Props) {
   );
   const [paymentModal, setPaymentModal] = useState<MemberMembershipResponse | null>(null);
 
-  if (isLoading) return <div style={{ padding: 40, textAlign: 'center', color: '#999' }}>불러오는 중…</div>;
+  if (isLoading) return <Spinner />;
   if (memberships.length === 0) {
     return <div style={{ padding: 40, textAlign: 'center', color: '#999' }}>등록된 멤버십이 없습니다.</div>;
   }

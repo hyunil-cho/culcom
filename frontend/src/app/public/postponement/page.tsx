@@ -8,7 +8,9 @@ import {
   type PublicMembershipInfo,
 } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
+import { useFormError } from '@/hooks/useFormError';
 import { ROUTES } from '@/lib/routes';
+import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Input, Select, Textarea } from '@/components/ui/FormInput';
 import s from './page.module.css';
 
@@ -50,6 +52,7 @@ function PublicPostponementPageInner() {
   const [reasons, setReasons] = useState<string[]>([]);
 
   const [dateError, setDateError] = useState('');
+  const { error: formError, setError, clear: clearError } = useFormError();
   const [step, setStep] = useState(1);
   const effectiveStep = member && step === 1 ? 2 : step;
   const [submitting, setSubmitting] = useState(false);
@@ -87,7 +90,8 @@ const handleSubmit = async (e: React.FormEvent) => {
       return;
     }
     const reason = reasonSelect === '기타' ? reasonCustom.trim() : reasonSelect;
-    if (!reason) { alert('연기 사유를 선택해 주세요.'); return; }
+    if (!reason) { setError('연기 사유를 선택해 주세요.'); return; }
+    clearError();
     setSubmitting(true);
     const res = await publicPostponementApi.submit({
       name: member.name, phone: member.phoneNumber, branchSeq: member.branchSeq,
@@ -152,6 +156,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             </div>
 
             <form onSubmit={handleSubmit}>
+              <FormErrorBanner error={formError} />
 <FormGroup label="연기 요청 기간">
                 <p style={{ fontSize: '0.82rem', color: '#4a90e2', marginBottom: 8, fontWeight: 600 }}>
                   시작일은 내일부터, 복귀일은 시작일로부터 최소 2주 후부터 선택 가능합니다.

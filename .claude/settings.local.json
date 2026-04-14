@@ -86,7 +86,8 @@
       "Bash(git commit:*)",
       "Bash(./gradlew cleanTest test --tests \"com.culcom.service.PostponementServiceOverlapTest\")",
       "Bash(echo \"EXIT_CODE=$?\")",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(npx vitest:*)"
     ]
   }
 }

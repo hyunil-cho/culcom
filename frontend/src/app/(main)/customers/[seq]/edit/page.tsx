@@ -9,8 +9,10 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 import { cleanPhoneNumber, verifyPhoneNumber } from '@/lib/commonUtils';
 import { ROUTES } from '@/lib/routes';
 import FormField from '@/components/ui/FormField';
+import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Input, PhoneInput, Textarea } from '@/components/ui/FormInput';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useFormError } from '@/hooks/useFormError';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 
 export default function CustomerEditPage() {
@@ -19,6 +21,7 @@ export default function CustomerEditPage() {
 
   const [form, setForm] = useState({ name: '', phoneNumber: '', comment: '', commercialName: '', adSource: '' });
   const { run, modal } = useResultModal({ redirectPath: ROUTES.CUSTOMERS });
+  const { error: formError, setError, clear: clearError } = useFormError();
   const [deleting, setDeleting] = useState(false);
 
   const { data: customerData } = useApiQuery<Customer>(
@@ -39,8 +42,9 @@ export default function CustomerEditPage() {
   }, [customerData]);
 
   const handleSubmit = async () => {
-    if (!form.name.trim()) { alert('이름을 입력해주세요.'); return; }
-    if (verifyPhoneNumber(form.phoneNumber)) { alert('전화번호는 010으로 시작하는 11자리 숫자여야 합니다.'); return; }
+    if (!form.name.trim()) { setError('이름을 입력해주세요.'); return; }
+    if (verifyPhoneNumber(form.phoneNumber)) { setError('전화번호는 010으로 시작하는 11자리 숫자여야 합니다.'); return; }
+    clearError();
     await run(customerApi.update(seq, {
       name: form.name,
       phoneNumber: form.phoneNumber,
@@ -63,6 +67,7 @@ export default function CustomerEditPage() {
       <div className="content-card">
         <div className="form-header"><h2>고객 정보 수정</h2></div>
         <div className="form-body">
+          <FormErrorBanner error={formError} />
           <FormField label="이름" required>
             <Input value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })} required />

@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/FormInput';
 import { ROUTES } from '@/lib/routes';
 import { useResultModal } from '@/hooks/useResultModal';
 import { Button, LinkButton } from '@/components/ui/Button';
+import Spinner from '@/components/ui/Spinner';
 import s from './page.module.css';
 
 export default function ReservationSmsConfigPage() {
@@ -50,7 +51,7 @@ export default function ReservationSmsConfigPage() {
     setSaving(false);
   };
 
-  if (loading) return <div className={s.loading}>로딩 중...</div>;
+  if (loading) return <Spinner />;
 
   return (
     <div className={s.container}>

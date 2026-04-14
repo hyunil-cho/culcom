@@ -8,7 +8,10 @@ import { useRouter } from 'next/navigation';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import SearchBar from '@/components/ui/SearchBar';
 import ModalOverlay from '@/components/ui/ModalOverlay';
+import ConfirmModal from '@/components/ui/ConfirmModal';
+import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useFormError } from '@/hooks/useFormError';
 import { useModal } from '@/hooks/useModal';
 import { useListPageQuery } from '@/hooks/useListPageQuery';
 import s from './page.module.css';
@@ -27,20 +30,29 @@ export default function PostponementsPage() {
   const { run, modal } = useResultModal({ onConfirm: () => list.load(list.pagination.page) });
 
   const rejectModal = useModal<PostponementRequest>();
+  const statusChangeModal = useModal<{ req: PostponementRequest; newStatus: string }>();
   const [rejectReason, setRejectReason] = useState('');
+  const { error: formError, setError: setFormError, clear: clearFormError } = useFormError();
 
   const handleStatusFilter = (status: string) => { setStatusFilter(status); list.load(0, { status, keyword }); };
   const handleSearch = () => { list.load(0, { status: statusFilter, keyword }); };
 
-  const handleStatusChange = async (req: PostponementRequest, newStatus: string) => {
+  const handleStatusChange = (req: PostponementRequest, newStatus: string) => {
     if (newStatus === req.status) return;
     if (newStatus === '반려') { rejectModal.open(req); setRejectReason(''); return; }
-    if (!confirm(`${req.memberName} 회원의 연기 요청 상태를 "${newStatus}"(으)로 변경하시겠습니까?`)) return;
+    statusChangeModal.open({ req, newStatus });
+  };
+
+  const confirmStatusChange = async () => {
+    if (!statusChangeModal.data) return;
+    const { req, newStatus } = statusChangeModal.data;
+    statusChangeModal.close();
     await run(postponementApi.updateStatus(req.seq, newStatus), '상태가 변경되었습니다.');
   };
 
   const handleRejectSubmit = async () => {
-    if (!rejectReason.trim()) { alert('반려 사유를 입력해주세요.'); return; }
+    if (!rejectReason.trim()) { setFormError('반려 사유를 입력해주세요.'); return; }
+    clearFormError();
     if (!rejectModal.data) return;
     const target = rejectModal.data;
     rejectModal.close();
@@ -91,6 +103,7 @@ export default function PostponementsPage() {
             <h3 className={s.rejectTitle}>반려 사유 입력</h3>
           </div>
           <div className={s.rejectBody}>
+            <FormErrorBanner error={formError} />
             <div className={s.rejectAlert}>
               <strong className={s.rejectAlertName}>{rejectModal.data!.memberName}</strong> 회원의 연기 요청을
               <span className="badge badge-danger" style={{ marginLeft: 5 }}>반려</span> 합니다.
@@ -104,6 +117,17 @@ export default function PostponementsPage() {
             <button onClick={handleRejectSubmit} className={s.rejectSubmitBtn}>반려 처리</button>
           </div>
         </ModalOverlay>
+      )}
+
+      {statusChangeModal.isOpen && (
+        <ConfirmModal
+          title="상태 변경 확인"
+          confirmLabel="확인"
+          onCancel={statusChangeModal.close}
+          onConfirm={confirmStatusChange}
+        >
+          {statusChangeModal.data!.req.memberName} 회원의 연기 요청 상태를 &quot;{statusChangeModal.data!.newStatus}&quot;(으)로 변경하시겠습니까?
+        </ConfirmModal>
       )}
 
       {modal}

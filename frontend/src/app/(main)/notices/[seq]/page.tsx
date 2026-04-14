@@ -9,6 +9,7 @@ import { ROUTES } from '@/lib/routes';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useResultModal } from '@/hooks/useResultModal';
 import { Button, LinkButton } from '@/components/ui/Button';
+import Spinner from '@/components/ui/Spinner';
 import s from './page.module.css';
 
 export default function NoticeDetailPage() {
@@ -22,7 +23,7 @@ export default function NoticeDetailPage() {
 
   const handleDelete = async () => { setDeleting(false); await run(noticeApi.delete(seq), '공지사항이 삭제되었습니다.'); };
 
-  if (!notice) return <div className={s.loading}>로딩 중...</div>;
+  if (!notice) return <Spinner />;
 
   return (
     <>

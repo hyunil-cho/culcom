@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { publicTransferApi, type TransferInviteInfo } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useConsent } from '@/hooks/useConsent';
+import { useFormError } from '@/hooks/useFormError';
+import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import ConsentStep from '@/components/ui/ConsentStep';
 
 export default function PublicTransferInvitePage() {
@@ -42,10 +44,12 @@ function Inner() {
   const [phone, setPhone] = useState('');
   const [availableTime, setAvailableTime] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const { error: formError, setError, clear: clearError } = useFormError();
 
   const handleSubmit = async () => {
-    if (!name.trim()) { alert('이름을 입력해주세요.'); return; }
-    if (!phone.trim()) { alert('전화번호를 입력해주세요.'); return; }
+    if (!name.trim()) { setError('이름을 입력해주세요.'); return; }
+    if (!phone.trim()) { setError('전화번호를 입력해주세요.'); return; }
+    clearError();
     setSubmitting(true);
     const res = await publicTransferApi.submitInvite(token, {
       name: name.trim(), phoneNumber: phone.trim(),
@@ -103,6 +107,8 @@ function Inner() {
               <h1 style={{ color: '#10b981', fontSize: '1.5rem', margin: '0 0 8px' }}>정보 입력</h1>
               <p style={{ color: '#666', fontSize: '0.88rem', margin: 0 }}>양수자 본인의 정보를 입력해주세요.</p>
             </div>
+
+            <FormErrorBanner error={formError} />
 
             <div style={{ marginBottom: 14 }}>
               <label style={labelStyle}>이름 <span style={{ color: '#dc2626' }}>*</span></label>

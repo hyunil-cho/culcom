@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import FormLayout from '@/components/ui/FormLayout';
+import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import BasicInfoTab from './tabs/BasicInfoTab';
 import ClassTab from './tabs/ClassTab';
 import StaffTab from './tabs/StaffTab';
@@ -32,7 +33,7 @@ export default function MemberForm({
   classAssign, onClassAssignChange,
   staffForm, onStaffChange,
   staffClassAssign, onStaffClassAssignChange, currentMemberSeq,
-  headerExtra,
+  headerExtra, formError,
 }: {
   form: MemberFormData;
   onChange: (form: MemberFormData) => void;
@@ -50,6 +51,7 @@ export default function MemberForm({
   onStaffClassAssignChange?: (f: ClassAssignData) => void;
   currentMemberSeq?: number;
   headerExtra?: React.ReactNode;
+  formError?: string | null;
 }) {
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get('tab') as TabId | null) ?? 'basic';
@@ -86,6 +88,7 @@ export default function MemberForm({
       onSubmit={onSubmit} isEdit={isEdit}
       headerExtra={headerExtra}
     >
+      <FormErrorBanner error={formError ?? null} />
       {/* 탭 네비게이션 */}
       <div style={{ display: 'flex', borderBottom: '2px solid #e9ecef', marginBottom: '1.5rem' }}>
         {tabs.map(tab => (

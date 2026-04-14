@@ -8,6 +8,7 @@ import { useClassSlots } from '../../../hooks/useClassSlots';
 import { ROUTES } from '@/lib/routes';
 import ClassForm, { emptyClassForm, validateClassForm, type ClassFormData } from '../../ClassForm';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useFormError } from '@/hooks/useFormError';
 
 export default function ClassEditPage() {
   const params = useParams();
@@ -15,6 +16,7 @@ export default function ClassEditPage() {
   const [form, setForm] = useState<ClassFormData>(emptyClassForm);
   const { timeSlots } = useClassSlots();
   const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_CLASSES });
+  const { error: formError, validate, clear: clearError } = useFormError();
 
   const { data: classData } = useApiQuery(
     ['class', seq],
@@ -33,8 +35,8 @@ export default function ClassEditPage() {
   }, [classData]);
 
   const handleSubmit = async () => {
-    const error = validateClassForm(form);
-    if (error) { alert(error); return; }
+    if (!validate(validateClassForm(form))) return;
+    clearError();
     await run(classApi.update(seq, {
       name: form.name,
       description: form.description || undefined,
@@ -53,6 +55,7 @@ export default function ClassEditPage() {
         backHref={ROUTES.COMPLEX_CLASSES}
         submitLabel="수정"
         timeSlots={timeSlots}
+        formError={formError}
       />
       {modal}
     </>

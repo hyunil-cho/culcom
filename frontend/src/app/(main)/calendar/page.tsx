@@ -1,18 +1,19 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { calendarApi, type CalendarReservation } from '@/lib/api';
+import { calendarApi, type CalendarReservation, type CalendarEvent } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { queryClient } from '@/lib/queryClient';
 import {
-  type Reservation, type ViewMode, DAY_LABELS,
-  formatDateKey, getWeekDates, getMonthDates, isSameDay, toReservationMap, getStatusStyle,
+  type Reservation, type CalendarEventItem, type ViewMode, DAY_LABELS,
+  formatDateKey, getWeekDates, getMonthDates, isSameDay, toReservationMap, toEventMap, getStatusStyle,
 } from './utils';
 import ReservationChip from './components/ReservationChip';
 import MonthDayCell from './components/MonthDayCell';
 import DayDetailPanel from './components/DayDetailPanel';
 import ReservationStatusModal from './components/ReservationStatusModal';
 import { useModal } from '@/hooks/useModal';
+import Spinner from '@/components/ui/Spinner';
 import s from './components/calendar.module.css';
 
 export default function CalendarPage() {
@@ -38,11 +39,18 @@ export default function CalendarPage() {
     () => calendarApi.getReservations(dateRange.start, dateRange.end),
   );
 
+  const { data: rawEvents } = useApiQuery<CalendarEvent[]>(
+    ['calendarEvents', dateRange.start, dateRange.end],
+    () => calendarApi.getEvents(dateRange.start, dateRange.end),
+  );
+
   const reservationMap = useMemo(() => toReservationMap(rawReservations ?? []), [rawReservations]);
+  const eventMap = useMemo(() => toEventMap(rawEvents ?? []), [rawEvents]);
 
   const invalidateReservations = () => queryClient.invalidateQueries({ queryKey: ['reservations'] });
 
   const getReservations = (date: Date): Reservation[] => reservationMap[formatDateKey(date)] || [];
+  const getEvents = (date: Date): CalendarEventItem[] => eventMap[formatDateKey(date)] || [];
 
   const navigatePrev = () => {
     const d = new Date(currentDate);
@@ -85,13 +93,21 @@ export default function CalendarPage() {
         })}
         {weekDates.map((date, i) => {
           const reservations = getReservations(date);
+          const events = getEvents(date);
+          const totalCount = reservations.length + events.length;
           const isT = isSameDay(date, today);
           return (
             <div key={`body-${i}`} onClick={() => setSelectedDate(date)}
               className={isT ? s.weekBodyToday : s.weekBody}
               style={{ borderRight: i < 6 ? '1px solid var(--border)' : 'none' }}>
-              {reservations.length > 0 && <div className={s.weekCountLabel}>{reservations.length}건</div>}
+              {totalCount > 0 && <div className={s.weekCountLabel}>{totalCount}건</div>}
               <div className={s.weekChips}>
+                {events.map((ev) => (
+                  <div key={`e-${ev.seq}`} className={s.eventChip} style={{ padding: '4px 8px', fontSize: '12px' }}>
+                    <span className={s.eventChipTime} style={{ minWidth: 36 }}>{ev.startTime}</span>
+                    <span className={s.eventChipTitle}>{ev.title}</span>
+                  </div>
+                ))}
                 {reservations.map((r) => <ReservationChip key={r.seq} r={r} />)}
               </div>
             </div>
@@ -117,7 +133,7 @@ export default function CalendarPage() {
         {weeks.map((week, wi) => (
           <div key={wi} className={s.monthWeekRow}>
             {week.map((date, di) => (
-              <MonthDayCell key={di} date={date} reservations={getReservations(date)}
+              <MonthDayCell key={di} date={date} reservations={getReservations(date)} events={getEvents(date)}
                 isCurrentMonth={date.getMonth() === currentDate.getMonth()} isToday={isSameDay(date, today)}
                 onSelect={setSelectedDate} />
             ))}
@@ -164,7 +180,7 @@ export default function CalendarPage() {
           <button onClick={navigatePrev} className={s.navBtnSmall}>‹</button>
           <button onClick={navigateNext} className={s.navBtnSmall}>›</button>
           <h3 className={s.headerTitle}>{headerTitle}</h3>
-          {loading && <span className={s.loadingText}>불러오는 중...</span>}
+          {loading && <Spinner size="sm" />}
         </div>
         <div className={s.viewToggle}>
           {([['week', '주간'], ['month', '월간']] as const).map(([mode, label]) => (
@@ -184,6 +200,7 @@ export default function CalendarPage() {
         <>
           <div onClick={() => setSelectedDate(null)} className={s.panelOverlay} />
           <DayDetailPanel date={selectedDate} reservations={getReservations(selectedDate)}
+            events={getEvents(selectedDate)}
             onClose={() => setSelectedDate(null)} onReservationClick={(r) => statusModal.open(r)} />
         </>
       )}

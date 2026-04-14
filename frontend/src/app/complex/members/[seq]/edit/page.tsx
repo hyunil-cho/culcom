@@ -11,6 +11,7 @@ export default function MemberEditPage() {
     form, setForm, membership, classAssign, setClassAssign,
     staffForm, setStaffForm, staffClassAssign, setStaffClassAssign,
     handleSubmit, modal,
+    formError,
   } = useMemberForm(seq);
 
   return (
@@ -21,7 +22,7 @@ export default function MemberEditPage() {
         classAssign={classAssign} onClassAssignChange={setClassAssign}
         staffForm={staffForm} onStaffChange={setStaffForm}
         staffClassAssign={staffClassAssign} onStaffClassAssignChange={setStaffClassAssign}
-        currentMemberSeq={seq} />
+        currentMemberSeq={seq} formError={formError} />
       {modal}
     </>
   );

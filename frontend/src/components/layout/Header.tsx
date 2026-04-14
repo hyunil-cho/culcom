@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { authApi, SessionRole } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
+import { useSidebar } from './SidebarContext';
 import { ROUTES } from '@/lib/routes';
 import styles from './Header.module.css';
 
@@ -37,6 +38,7 @@ export default function Header() {
   const pathname = usePathname();
   const session = useSessionStore((s) => s.session);
   const branches = useSessionStore((s) => s.branches);
+  const { toggle: toggleSidebar } = useSidebar();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleBranchChange = async (branchSeq: number) => {
@@ -55,7 +57,8 @@ export default function Header() {
   return (
     <>
       <header className={styles.header}>
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button className={styles.menuToggle} onClick={toggleSidebar} aria-label="메뉴 열기">☰</button>
           <h1 className={styles.title}>{getPageTitle(pathname)}</h1>
         </div>
         <div className={styles.headerRight}>

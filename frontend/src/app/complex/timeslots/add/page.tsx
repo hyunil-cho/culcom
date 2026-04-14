@@ -10,14 +10,16 @@ import TimeslotForm, {
   type TimeslotFormData,
 } from '../TimeslotForm';
 import ResultModal from '@/components/ui/ResultModal';
+import { useFormError } from '@/hooks/useFormError';
 
 export default function TimeslotAddPage() {
   const [form, setForm] = useState<TimeslotFormData>(emptyTimeslotForm);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { error: formError, validate, clear: clearError } = useFormError();
 
   const handleSubmit = async () => {
-    const error = validateTimeslotForm(form);
-    if (error) { alert(error); return; }
+    if (!validate(validateTimeslotForm(form))) return;
+    clearError();
     const res = await timeslotApi.create({
       name: form.name,
       daysOfWeek: toDaysOfWeek(form.days),
@@ -37,6 +39,7 @@ export default function TimeslotAddPage() {
         onSubmit={handleSubmit}
         backHref={ROUTES.COMPLEX_TIMESLOTS}
         submitLabel="등록"
+        formError={formError}
       />
       {result && (
         <ResultModal

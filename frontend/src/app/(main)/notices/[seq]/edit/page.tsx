@@ -7,6 +7,7 @@ import { noticeApi } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import { useFormState } from '@/hooks/useFormState';
+import Spinner from '@/components/ui/Spinner';
 import NoticeForm, { NoticeFormData } from '../../NoticeForm';
 
 export default function NoticeEditPage() {
@@ -54,7 +55,7 @@ export default function NoticeEditPage() {
   };
 
   if (loading) {
-    return <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>로딩 중...</div>;
+    return <Spinner />;
   }
 
   return (

@@ -14,6 +14,7 @@ import TimeslotForm, {
   type TimeslotFormData,
 } from '../../TimeslotForm';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useFormError } from '@/hooks/useFormError';
 
 export default function TimeslotEditPage() {
   const params = useParams();
@@ -21,6 +22,7 @@ export default function TimeslotEditPage() {
   const seq = Number(params.seq);
   const [form, setForm] = useState<TimeslotFormData>(emptyTimeslotForm);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_TIMESLOTS });
+  const { error: formError, validate, clear: clearError } = useFormError();
 
   const { data: timeslots } = useApiQuery(
     ['timeslots'],
@@ -42,8 +44,8 @@ export default function TimeslotEditPage() {
   }, [timeslots, seq]);
 
   const handleSubmit = async () => {
-    const error = validateTimeslotForm(form);
-    if (error) { alert(error); return; }
+    if (!validate(validateTimeslotForm(form))) return;
+    clearError();
     await run(timeslotApi.update(seq, {
       name: form.name,
       daysOfWeek: toDaysOfWeek(form.days),
@@ -61,6 +63,7 @@ export default function TimeslotEditPage() {
         isEdit
         backHref={ROUTES.COMPLEX_TIMESLOTS}
         submitLabel="수정"
+        formError={formError}
       />
       {/* 삭제 기능 비활성화
       {deleting && (

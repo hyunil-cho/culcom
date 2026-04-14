@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSidebar } from './SidebarContext';
 import styles from './SidebarShell.module.css';
 
 export interface MenuItem {
@@ -75,23 +76,27 @@ function SidebarItem({ item, pathname }: { item: MenuItem; pathname: string }) {
 
 export default function SidebarShell({ groups, title = 'culcom' }: { groups: MenuGroup[]; title?: string }) {
   const pathname = usePathname();
+  const { open, close } = useSidebar();
 
   return (
-    <aside className={styles.aside}>
-      <div className={styles.logo}>
-        <h1 className={styles.logoTitle}>{title}</h1>
-      </div>
+    <>
+      {open && <div className={styles.overlay} onClick={close} />}
+      <aside className={`${styles.aside}${open ? ` ${styles.open}` : ''}`}>
+        <div className={styles.logo}>
+          <h1 className={styles.logoTitle}>{title}</h1>
+        </div>
 
-      <nav className={styles.nav}>
-        {groups.map((group) => (
-          <div key={group.title}>
-            <div className={styles.groupTitle}>{group.title}</div>
-            {group.items.map((item) => (
-              <SidebarItem key={item.href} item={item} pathname={pathname} />
-            ))}
-          </div>
-        ))}
-      </nav>
-    </aside>
+        <nav className={styles.nav}>
+          {groups.map((group) => (
+            <div key={group.title}>
+              <div className={styles.groupTitle}>{group.title}</div>
+              {group.items.map((item) => (
+                <SidebarItem key={item.href} item={item} pathname={pathname} />
+              ))}
+            </div>
+          ))}
+        </nav>
+      </aside>
+    </>
   );
 }

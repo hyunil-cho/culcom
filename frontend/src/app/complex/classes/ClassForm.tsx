@@ -2,6 +2,7 @@
 
 import FormField from '@/components/ui/FormField';
 import FormLayout from '@/components/ui/FormLayout';
+import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Input, NumberInput, Select, Textarea } from '@/components/ui/FormInput';
 import { type ClassTimeSlot } from '@/lib/api';
 
@@ -27,7 +28,7 @@ export function validateClassForm(form: ClassFormData): string | null {
 }
 
 export default function ClassForm({
-  form, onChange, onSubmit, isEdit, backHref, submitLabel, timeSlots,
+  form, onChange, onSubmit, isEdit, backHref, submitLabel, timeSlots, formError,
 }: {
   form: ClassFormData;
   onChange: (form: ClassFormData) => void;
@@ -36,6 +37,7 @@ export default function ClassForm({
   backHref: string;
   submitLabel: string;
   timeSlots: ClassTimeSlot[];
+  formError?: string | null;
 }) {
   return (
     <FormLayout
@@ -43,6 +45,7 @@ export default function ClassForm({
       backHref={backHref} submitLabel={submitLabel}
       onSubmit={onSubmit} isEdit={isEdit}
     >
+      <FormErrorBanner error={formError ?? null} />
       <FormField label="수업 이름" required>
         <Input placeholder="예: 월수 오전 레벨0" value={form.name}
           onChange={(e) => onChange({ ...form, name: e.target.value })} required />

@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import { memberApi, transferApi, settingsApi, externalApi, type MemberMembershipResponse, type TransferRequestItem } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
+import { useFormError } from '@/hooks/useFormError';
 import { Select, Textarea } from '@/components/ui/FormInput';
+import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Button } from '@/components/ui/Button';
 import s from './MembershipLinkModal.module.css';
 
@@ -18,6 +20,7 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
   const [selectedMmSeq, setSelectedMmSeq] = useState('');
   const [creating, setCreating] = useState(false);
   const [result, setResult] = useState<TransferRequestItem | null>(null);
+  const { error: formError, setError, clear: clearError } = useFormError();
 
   // SMS
   const [copied, setCopied] = useState(false);
@@ -56,11 +59,12 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
   }, [showSms, memberName, transferUrl]);
 
   const handleCreate = async () => {
-    if (!selectedMmSeq) { alert('양도할 멤버십을 선택하세요.'); return; }
+    if (!selectedMmSeq) { setError('양도할 멤버십을 선택하세요.'); return; }
+    clearError();
     setCreating(true);
     const res = await transferApi.create(Number(selectedMmSeq));
     if (res.success) setResult(res.data);
-    else alert(res.message || '양도 요청 생성에 실패했습니다.');
+    else setError(res.message || '양도 요청 생성에 실패했습니다.');
     setCreating(false);
   };
 
@@ -92,6 +96,7 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
         </div>
 
         <div className={s.body}>
+          <FormErrorBanner error={formError} />
           <div className={s.recipientInfo}>
             <div>
               <span className={s.infoLabel}>회원</span>

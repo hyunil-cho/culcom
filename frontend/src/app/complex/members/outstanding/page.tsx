@@ -7,6 +7,7 @@ import type { PageResponse } from '@/lib/api/client';
 import { ROUTES } from '@/lib/routes';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { queryClient } from '@/lib/queryClient';
+import Spinner from '@/components/ui/Spinner';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import SearchBar from '@/components/ui/SearchBar';
 import { useModal } from '@/hooks/useModal';
@@ -143,7 +144,8 @@ function OutstandingContent() {
         columns={columns}
         data={data?.content ?? []}
         rowKey={(it) => it.memberMembershipSeq}
-        emptyMessage={loading ? '불러오는 중…' : '미수금이 있는 회원이 없습니다.'}
+        loading={loading}
+        emptyMessage="미수금이 있는 회원이 없습니다."
         pagination={{ page, totalPages: data?.totalPages ?? 0, onPageChange: setPage }}
         onRowClick={(it) => router.push(`${ROUTES.COMPLEX_MEMBER_EDIT(it.memberSeq)}?tab=payment`)}
       />

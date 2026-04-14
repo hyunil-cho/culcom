@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { authApi, branchApi, type Branch, type SessionInfo } from '@/lib/api';
+import { queryClient } from '@/lib/queryClient';
 
 interface SessionState {
   session: SessionInfo | null;
@@ -18,8 +19,16 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     if (get().loaded) return;
     try {
       const [sessionRes, branchRes] = await Promise.all([
-        authApi.me(),
-        branchApi.list(),
+        queryClient.fetchQuery({
+          queryKey: ['session'],
+          queryFn: () => authApi.me(),
+          staleTime: Infinity,
+        }),
+        queryClient.fetchQuery({
+          queryKey: ['sessionBranches'],
+          queryFn: () => branchApi.list(),
+          staleTime: Infinity,
+        }),
       ]);
       set({ session: sessionRes.data, branches: branchRes.data, loaded: true });
     } catch {
@@ -30,6 +39,10 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   refreshBranches: async () => {
     const res = await branchApi.list();
     set({ branches: res.data });
+    queryClient.setQueryData(['sessionBranches'], res);
   },
-  reset: () => set({ session: null, branches: [], loaded: false }),
+  reset: () => {
+    set({ session: null, branches: [], loaded: false });
+    queryClient.removeQueries();
+  },
 }));

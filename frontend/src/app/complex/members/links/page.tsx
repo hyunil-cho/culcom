@@ -8,6 +8,7 @@ import { useModal } from '@/hooks/useModal';
 import MembershipLinkModal from '../components/MembershipLinkModal';
 import PostponementLinkModal from '../components/PostponementLinkModal';
 import RefundLinkModal from '../components/RefundLinkModal';
+import Spinner from '@/components/ui/Spinner';
 import TransferLinkModal from '../components/TransferLinkModal';
 
 type LinkKind = 'membership' | 'postponement' | 'refund' | 'transfer';
@@ -119,9 +120,7 @@ export default function MemberLinksPage() {
               </div>
             )}
             {searched && loading && (
-              <div style={{ padding: 28, color: '#999', textAlign: 'center', fontSize: 13 }}>
-                불러오는 중…
-              </div>
+              <Spinner />
             )}
             {searched && !loading && members.length === 0 && (
               <div style={{ padding: 28, color: '#999', textAlign: 'center', fontSize: 13 }}>

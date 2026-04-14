@@ -88,6 +88,7 @@ function ConsentItemsContent() {
         data={filtered}
         rowKey={(item) => item.seq}
         emptyMessage="등록된 동의항목이 없습니다."
+        emptyAction={<Button onClick={() => router.push(ROUTES.CONSENT_ITEMS_ADD)}>+ 새 동의항목 등록</Button>}
         onRowClick={(item) => router.push(ROUTES.CONSENT_ITEM_EDIT(item.seq))}
       />
 

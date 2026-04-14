@@ -47,3 +47,27 @@
   border-radius: var(--radius);
   cursor: pointer;
 }
+
+.menuToggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+@media (max-width: 768px) {
+  .mainArea {
+    margin-left: 0;
+  }
+
+  .content {
+    padding: 16px;
+  }
+
+  .menuToggle {
+    display: block;
+  }
+}

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { memberApi, staffApi, type MemberActivityTimelineItem } from '@/lib/api';
 import type { PageResponse } from '@/lib/api/client';
 import { useApiQuery } from '@/hooks/useApiQuery';
+import Spinner from '@/components/ui/Spinner';
 import s from './MemberTimelineModal.module.css';
 
 interface Props {
@@ -112,7 +113,7 @@ export default function MemberTimelineModal({ memberSeq, memberName, type = 'mem
 
         <div className={s.body}>
           {loading ? (
-            <div className={s.empty}>불러오는 중...</div>
+            <Spinner />
           ) : filtered.length === 0 ? (
             <div className={s.empty}>활동 기록이 없습니다.</div>
           ) : (

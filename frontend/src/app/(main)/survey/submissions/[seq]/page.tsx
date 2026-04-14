@@ -5,6 +5,7 @@ import { surveyApi, type SurveySubmissionDetail, type SurveyQuestion } from '@/l
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
+import Spinner from '@/components/ui/Spinner';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 
 interface AnswerRow {
@@ -31,7 +32,7 @@ export default function SurveySubmissionDetailPage() {
 
   const loading = detailLoading || questionsLoading;
 
-  if (loading) return <div className="content-card" style={{ textAlign: 'center', padding: '2rem' }}>로딩 중...</div>;
+  if (loading) return <Spinner />;
   if (!detail) return <div className="content-card" style={{ textAlign: 'center', padding: '2rem' }}>데이터를 찾을 수 없습니다.</div>;
 
   const formatDate = (d: string) =>

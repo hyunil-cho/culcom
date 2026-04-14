@@ -2,6 +2,7 @@
 
 import FormField from '@/components/ui/FormField';
 import FormLayout from '@/components/ui/FormLayout';
+import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Input, PhoneInput, PasswordInput } from '@/components/ui/FormInput';
 
 export interface UserFormData {
@@ -26,7 +27,7 @@ export function validateUserForm(form: UserFormData, isEdit: boolean): string | 
 }
 
 export default function UserForm({
-  form, onChange, onSubmit, isEdit, backHref, submitLabel,
+  form, onChange, onSubmit, isEdit, backHref, submitLabel, formError,
 }: {
   form: UserFormData;
   onChange: (form: UserFormData) => void;
@@ -34,6 +35,7 @@ export default function UserForm({
   isEdit?: boolean;
   backHref: string;
   submitLabel: string;
+  formError?: string | null;
 }) {
   return (
     <FormLayout
@@ -41,6 +43,7 @@ export default function UserForm({
       backHref={backHref} submitLabel={submitLabel}
       onSubmit={onSubmit} isEdit={isEdit}
     >
+      <FormErrorBanner error={formError ?? null} />
       <FormField label="아이디" required>
         <Input placeholder="아이디" value={form.userId}
           onChange={(e) => onChange({ ...form, userId: e.target.value })}

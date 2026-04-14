@@ -15,6 +15,7 @@ import { calcTodayRate, RateBadge } from './components/AttendanceRateBadge';
 import { MessageButton } from './components/MessageButton';
 import MemberManageModal from './components/MemberManageModal';
 import { useModal } from '@/hooks/useModal';
+import Spinner from '@/components/ui/Spinner';
 import './attendance.css';
 
 export default function AttendancePage() {
@@ -67,7 +68,7 @@ export default function AttendancePage() {
     },
   });
 
-  if (loading) return <div style={{ padding: 20 }}>로딩 중...</div>;
+  if (loading) return <Spinner />;
 
   return (
     <>

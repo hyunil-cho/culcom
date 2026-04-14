@@ -15,6 +15,9 @@ import ResultModal from '@/components/ui/ResultModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import SearchBar from '@/components/ui/SearchBar';
 import DataTable, { type Column } from '@/components/ui/DataTable';
+import { Button } from '@/components/ui/Button';
+import FormErrorBanner from '@/components/ui/FormErrorBanner';
+import { useFormError } from '@/hooks/useFormError';
 import { useModal } from '@/hooks/useModal';
 import SmsModal from './SmsModal';
 
@@ -76,6 +79,7 @@ function CustomersContent() {
   const [interviewInputs, setInterviewInputs] = useState<Record<number, string>>({});
   const interviewConfirmModal = useModal<InterviewModal>();
   const [result, setResult] = useState<{ success: boolean; message: string; redirectPath?: string } | null>(null);
+  const { error: formError, setError: setFormError, clear: clearFormError } = useFormError();
 
   // SMS 모달
   const smsModal = useModal<{ name: string; phone: string; interviewDate?: string }>();
@@ -115,10 +119,11 @@ function CustomersContent() {
   // 인터뷰 확정
   const handleInterviewConfirm = (seq: number) => {
     const input = interviewInputs[seq]?.trim();
-    if (!input) { alert('인터뷰 일시를 입력해주세요.'); return; }
+    if (!input) { setFormError('인터뷰 일시를 입력해주세요.'); return; }
     const customer = customers.find(c => c.seq === seq);
     const caller = selectedCallers[seq];
-    if (!caller) { alert('먼저 CALLER를 선택해주세요.'); return; }
+    if (!caller) { setFormError('먼저 CALLER를 선택해주세요.'); return; }
+    clearFormError();
     if (!customer) return;
     interviewConfirmModal.open({ customerSeq: seq, customerName: customer.name, caller });
   };
@@ -189,11 +194,19 @@ function CustomersContent() {
   };
 
   // 전화상안함
-  const handleMarkNoPhone = async (seq: number) => {
+  const noPhoneModal = useModal<number>();
+
+  const handleMarkNoPhone = (seq: number) => {
     const caller = selectedCallers[seq];
-    if (!caller) { alert('먼저 CALLER를 선택해주세요.'); return; }
-    if (!confirm('전화상 안함으로 처리하시겠습니까?')) return;
-    await customerApi.markNoPhoneInterview(seq);
+    if (!caller) { setFormError('먼저 CALLER를 선택해주세요.'); return; }
+    clearFormError();
+    noPhoneModal.open(seq);
+  };
+
+  const confirmNoPhone = async () => {
+    if (!noPhoneModal.data) return;
+    noPhoneModal.close();
+    await customerApi.markNoPhoneInterview(noPhoneModal.data);
     invalidateCustomers();
   };
 
@@ -283,6 +296,8 @@ function CustomersContent() {
         actions={<Link href={ROUTES.CUSTOMERS_ADD} className="btn-primary btn-nav">+ 워크인 추가</Link>}
       />
 
+      <FormErrorBanner error={formError} />
+
       <DataTable
         columns={customerColumns}
         data={customers}
@@ -308,6 +323,7 @@ function CustomersContent() {
         onRowClick={(c) => router.push(ROUTES.CUSTOMER_DETAIL(c.seq))}
         rowStyle={(c) => c.lastUpdateDate ? { backgroundColor: '#f3e8ff' } : undefined}
         emptyMessage="고객이 없습니다."
+        emptyAction={<Button onClick={() => router.push(ROUTES.CUSTOMERS_ADD)}>+ 워크인 추가</Button>}
         pagination={{ page, totalPages, onPageChange: (p) => setParams({ page: String(p) }) }}
       />
 
@@ -344,6 +360,18 @@ function CustomersContent() {
           CALLER: <strong style={{ color: '#667eea' }}>{interviewConfirmModal.data!.caller}</strong>
           <br />
           일시: <strong>{interviewInputs[interviewConfirmModal.data!.customerSeq]}</strong>
+        </ConfirmModal>
+      )}
+
+      {/* 전화상안함 확인 모달 */}
+      {noPhoneModal.isOpen && (
+        <ConfirmModal
+          title="전화상 안함 확인"
+          confirmLabel="확인"
+          onCancel={noPhoneModal.close}
+          onConfirm={confirmNoPhone}
+        >
+          전화상 안함으로 처리하시겠습니까?
         </ConfirmModal>
       )}
 

@@ -31,6 +31,14 @@
 .dayCount { font-size: 10px; font-weight: 600; color: #6b7280; background-color: #f3f4f6; padding: 1px 6px; border-radius: var(--radius-md); }
 .dayChips { display: flex; flex-direction: column; gap: 2px; }
 .overflowBtn { font-size: 11px; font-weight: 600; color: #4f46e5; text-align: center; padding: 2px 0; border-radius: 4px; background-color: #eef2ff; }
+.eventChip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 2px 6px; border-radius: var(--radius); background-color: #ecfdf5;
+  border-left: 3px solid #10b981; font-size: 11px; line-height: 1.4;
+  cursor: pointer; overflow: hidden;
+}
+.eventChipTime { font-weight: 600; color: #065f46; min-width: 30px; }
+.eventChipTitle { color: #111827; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ── DayDetailPanel ── */
 .panel { position: fixed; top: 0; right: 0; width: 400px; height: 100vh; background-color: #fff; box-shadow: -4px 0 20px rgba(0,0,0,0.12); z-index: 1000; display: flex; flex-direction: column; animation: slideIn 0.2s ease-out; }
@@ -119,6 +127,68 @@
 .monthDayHeaderRow { display: grid; grid-template-columns: repeat(7, 1fr); }
 .monthDayLabel { padding: 10px 0; text-align: center; font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--border); background-color: #f9fafb; }
 .monthWeekRow { display: grid; grid-template-columns: repeat(7, 1fr); }
+
+/* ── 일정 추가 버튼 / 폼 ── */
+.addEventBtn {
+  width: 100%; padding: 10px; margin-bottom: 16px;
+  border: 2px dashed #d1d5db; border-radius: var(--radius-md);
+  background: #fafafa; color: #6b7280; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+}
+.addEventBtn:hover { border-color: #10b981; color: #10b981; background: #ecfdf5; }
+
+.eventForm {
+  padding: 14px; margin-bottom: 16px;
+  border: 1px solid #d1d5db; border-radius: var(--radius-md); border-left: 4px solid #10b981;
+  background: #f9fafb; display: flex; flex-direction: column; gap: 8px;
+}
+.eventFormTitle { font-size: 13px; font-weight: 700; color: #111827; }
+.eventFormInput {
+  padding: 8px 10px; border: 1px solid #d1d5db; border-radius: var(--radius);
+  font-size: 13px; outline: none; transition: border-color 0.15s;
+}
+.eventFormInput:focus { border-color: #10b981; }
+.eventFormTextarea {
+  padding: 8px 10px; border: 1px solid #d1d5db; border-radius: var(--radius);
+  font-size: 13px; outline: none; resize: vertical; transition: border-color 0.15s;
+}
+.eventFormTextarea:focus { border-color: #10b981; }
+.eventFormTimeRow { display: flex; gap: 12px; }
+.eventFormTimeLabel { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #6b7280; font-weight: 600; flex: 1; }
+.eventFormTimeInput {
+  padding: 6px 8px; border: 1px solid #d1d5db; border-radius: var(--radius);
+  font-size: 13px; outline: none;
+}
+.eventFormTimeInput:focus { border-color: #10b981; }
+.eventFormActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.eventFormCancelBtn {
+  padding: 6px 14px; border: 1px solid #d1d5db; border-radius: var(--radius);
+  background: #fff; color: #374151; font-size: 13px; cursor: pointer;
+}
+.eventFormSaveBtn {
+  padding: 6px 14px; border: none; border-radius: var(--radius);
+  background: #10b981; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.eventFormSaveBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── 일정 목록 ── */
+.eventSection { margin-bottom: 16px; }
+.eventSectionLabel { font-size: 12px; font-weight: 700; color: #10b981; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.eventItem {
+  padding: 10px 12px; border-radius: var(--radius-md); border: 1px solid #d1fae5;
+  border-left: 4px solid #10b981; background: #fff; margin-bottom: 6px;
+}
+.eventItemHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.eventItemTime { font-size: 12px; color: #6b7280; font-weight: 600; }
+.eventDeleteBtn {
+  width: 22px; height: 22px; border: none; border-radius: 50%;
+  background: #fee2e2; color: #991b1b; font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; line-height: 1;
+}
+.eventDeleteBtn:hover { background: #fca5a5; }
+.eventItemTitle { font-size: 13px; font-weight: 600; color: #111827; }
+.eventItemContent { font-size: 12px; color: #6b7280; margin-top: 2px; }
+.eventItemAuthor { font-size: 11px; color: #9ca3af; margin-top: 4px; }
 
 /* overlay for side panel */
 .panelOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0,0,0,0.3); z-index: 999; }

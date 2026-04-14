@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { surveyApi, type SurveySubmissionItem } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
+import Spinner from '@/components/ui/Spinner';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 
 export default function SurveySubmissionsPage() {
@@ -29,7 +30,7 @@ export default function SurveySubmissionsPage() {
     { header: '제출일시', render: item => formatDate(item.createdDate) },
   ];
 
-  if (loading) return <div className="content-card" style={{ textAlign: 'center', padding: '2rem' }}>로딩 중...</div>;
+  if (loading) return <Spinner />;
 
   return (
     <>

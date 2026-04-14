@@ -8,6 +8,7 @@ import { queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/Button';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import ResultModal from '@/components/ui/ResultModal';
+import Spinner from '@/components/ui/Spinner';
 
 interface CatalogApi {
   list: () => Promise<ApiResponse<ConfigItem[]>>;
@@ -115,7 +116,7 @@ export default function ConfigCatalogPage({ title, description, api }: Props) {
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         {loading ? (
-          <div style={{ padding: 40, textAlign: 'center', color: '#999' }}>불러오는 중…</div>
+          <Spinner />
         ) : items.length === 0 ? (
           <div style={{ padding: 40, textAlign: 'center', color: '#999' }}>등록된 항목이 없습니다.</div>
         ) : (

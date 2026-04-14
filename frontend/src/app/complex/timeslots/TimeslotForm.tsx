@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import FormField from '@/components/ui/FormField';
 import FormLayout from '@/components/ui/FormLayout';
+import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Input } from '@/components/ui/FormInput';
 import TimePicker from '@/components/ui/TimePicker';
 import ModalOverlay from '@/components/ui/ModalOverlay';
@@ -40,7 +41,7 @@ export function fromDaysOfWeek(daysOfWeek: string): string[] {
 }
 
 export default function TimeslotForm({
-  form, onChange, onSubmit, isEdit, backHref, submitLabel,
+  form, onChange, onSubmit, isEdit, backHref, submitLabel, formError,
 }: {
   form: TimeslotFormData;
   onChange: (form: TimeslotFormData) => void;
@@ -48,6 +49,7 @@ export default function TimeslotForm({
   isEdit?: boolean;
   backHref: string;
   submitLabel: string;
+  formError?: string | null;
 }) {
   const [timeAlert, setTimeAlert] = useState(false);
   const [timeAlertTarget, setTimeAlertTarget] = useState<'start' | 'end'>('end');
@@ -92,6 +94,7 @@ export default function TimeslotForm({
         onSubmit={onSubmit} isEdit={isEdit}
         cardStyle={{ overflow: 'visible' }}
       >
+        <FormErrorBanner error={formError ?? null} />
         <FormField label="시간대 이름" required>
           <Input placeholder="예: 평일 오전, 주말 오후" value={form.name}
             onChange={(e) => onChange({ ...form, name: e.target.value })} required />

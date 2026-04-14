@@ -4,7 +4,9 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { publicRefundApi, type PublicMemberInfo, type PublicMembershipInfo } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
+import { useFormError } from '@/hooks/useFormError';
 import { ROUTES } from '@/lib/routes';
+import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Input, PhoneInput, Select, Textarea } from '@/components/ui/FormInput';
 
 export default function PublicRefundPage() {
@@ -49,6 +51,7 @@ function PublicRefundPageInner() {
   const [accountNumber, setAccountNumber] = useState('');
   const [accountHolder, setAccountHolder] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const { error: formError, setError, clear: clearError } = useFormError();
 
   const selectedMembership = member?.memberships.find(ms => ms.seq === selectedMembershipSeq);
 
@@ -56,8 +59,9 @@ function PublicRefundPageInner() {
     e.preventDefault();
     if (!member || !selectedMembershipSeq || !selectedMembership) return;
     const reason = reasonSelect === '기타' ? reasonCustom.trim() : reasonSelect;
-    if (!reason) { alert('환불 사유를 선택해 주세요.'); return; }
-    if (!bankName.trim() || !accountNumber.trim() || !accountHolder.trim()) { alert('환불 계좌 정보를 모두 입력해 주세요.'); return; }
+    if (!reason) { setError('환불 사유를 선택해 주세요.'); return; }
+    if (!bankName.trim() || !accountNumber.trim() || !accountHolder.trim()) { setError('환불 계좌 정보를 모두 입력해 주세요.'); return; }
+    clearError();
 
     setSubmitting(true);
     const res = await publicRefundApi.submit({
@@ -121,6 +125,7 @@ function PublicRefundPageInner() {
 
             {selectedMembershipSeq && (
               <form onSubmit={handleSubmit}>
+                <FormErrorBanner error={formError} />
                 <FormGroup label="환불 사유">
                   <Select value={reasonSelect} onChange={(e) => { setReasonSelect(e.target.value); setReasonCustom(''); }} required>
                     <option value="">사유를 선택해 주세요</option>

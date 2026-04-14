@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { complexDashboardApi, type AutoExpiredItem, type MembershipAlertItem, type MembershipAlertsResponse } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
+import Spinner from '@/components/ui/Spinner';
 import TrendCharts from './TrendCharts';
 
 // 고정 기준 — 추후 사용자 설정으로 빼는 것을 고려
@@ -30,7 +31,7 @@ export default function ComplexDashboardPage() {
 
       <TrendCharts />
 
-      {loading && <div style={{ color: '#888', padding: 20 }}>불러오는 중...</div>}
+      {loading && <Spinner />}
 
       {data && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 16 }}>

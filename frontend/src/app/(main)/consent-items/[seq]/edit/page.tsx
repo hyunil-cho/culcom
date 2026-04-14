@@ -6,12 +6,14 @@ import { consentItemApi } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useFormError } from '@/hooks/useFormError';
 import ConsentItemForm, { emptyForm, validateForm, type ConsentItemFormData } from '../../ConsentItemForm';
 
 export default function ConsentItemEditPage() {
   const seq = Number(useParams().seq);
   const [form, setForm] = useState<ConsentItemFormData>(emptyForm);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.CONSENT_ITEMS });
+  const { error: formError, validate, clear: clearError } = useFormError();
 
   const { data: consentData } = useApiQuery(
     ['consentItem', seq],
@@ -25,14 +27,14 @@ export default function ConsentItemEditPage() {
   }, [consentData]);
 
   const handleSubmit = async () => {
-    const error = validateForm(form);
-    if (error) { alert(error); return; }
+    if (!validate(validateForm(form))) return;
+    clearError();
     await run(consentItemApi.update(seq, form), '동의항목이 수정되었습니다.');
   };
 
   return (
     <>
-      <ConsentItemForm form={form} onChange={setForm} onSubmit={handleSubmit} isEdit submitLabel="수정" />
+      <ConsentItemForm form={form} onChange={setForm} onSubmit={handleSubmit} isEdit submitLabel="수정" formError={formError} />
       {modal}
     </>
   );

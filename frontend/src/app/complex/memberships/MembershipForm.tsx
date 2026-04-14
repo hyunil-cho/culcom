@@ -2,6 +2,7 @@
 
 import FormField from '@/components/ui/FormField';
 import FormLayout from '@/components/ui/FormLayout';
+import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Input, NumberInput, Select, CurrencyInput, Checkbox } from '@/components/ui/FormInput';
 
 export interface MembershipFormData {
@@ -45,7 +46,7 @@ export function validateMembershipForm(form: MembershipFormData): string | null 
 }
 
 export default function MembershipForm({
-  form, onChange, onSubmit, isEdit, backHref, submitLabel,
+  form, onChange, onSubmit, isEdit, backHref, submitLabel, formError,
 }: {
   form: MembershipFormData;
   onChange: (form: MembershipFormData) => void;
@@ -53,6 +54,7 @@ export default function MembershipForm({
   isEdit?: boolean;
   backHref: string;
   submitLabel: string;
+  formError?: string | null;
 }) {
   const set = <K extends keyof MembershipFormData>(field: K, value: MembershipFormData[K]) =>
     onChange({ ...form, [field]: value });
@@ -63,6 +65,7 @@ export default function MembershipForm({
       backHref={backHref} submitLabel={submitLabel}
       onSubmit={onSubmit} isEdit={isEdit}
     >
+      <FormErrorBanner error={formError ?? null} />
       <FormField label="멤버십 이름" required>
         <Input placeholder="예: 3개월 주2회 멤버십" value={form.name}
           onChange={(e) => set('name', e.target.value)} required />

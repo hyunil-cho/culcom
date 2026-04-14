@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { transferApi, type TransferRequestItem, type TransferStatus } from '@/lib/api';
+import { useModal } from '@/hooks/useModal';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 const STEPS: { status: TransferStatus; label: string; desc: string }[] = [
   { status: '생성', label: '요청 생성', desc: '관리자가 양도 요청을 생성하고 양도자에게 URL을 전달했습니다.' },
@@ -26,9 +28,16 @@ export default function TransferDetailModal({
   const [updating, setUpdating] = useState(false);
   const currentStep = getStepIndex(item.status);
   const isRejected = item.status === '거절';
+  const statusConfirmModal = useModal<TransferStatus>();
 
-  const handleStatus = async (status: TransferStatus) => {
-    if (!confirm(status === '거절' ? '양도 요청을 거절하시겠습니까?' : '양도를 확인하시겠습니까?')) return;
+  const handleStatus = (status: TransferStatus) => {
+    statusConfirmModal.open(status);
+  };
+
+  const confirmStatus = async () => {
+    if (!statusConfirmModal.data) return;
+    const status = statusConfirmModal.data;
+    statusConfirmModal.close();
     setUpdating(true);
     await transferApi.updateStatus(item.seq, status);
     setUpdating(false);
@@ -173,6 +182,18 @@ export default function TransferDetailModal({
             닫기
           </button>
         </div>
+
+        {statusConfirmModal.isOpen && (
+          <ConfirmModal
+            title="상태 변경 확인"
+            confirmLabel={statusConfirmModal.data === '거절' ? '거절' : '확인'}
+            confirmColor={statusConfirmModal.data === '거절' ? '#e03131' : undefined}
+            onCancel={statusConfirmModal.close}
+            onConfirm={confirmStatus}
+          >
+            {statusConfirmModal.data === '거절' ? '양도 요청을 거절하시겠습니까?' : '양도를 확인하시겠습니까?'}
+          </ConfirmModal>
+        )}
       </div>
     </div>
   );

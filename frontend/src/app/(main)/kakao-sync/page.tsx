@@ -5,6 +5,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { kakaoSyncApi } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { Button } from '@/components/ui/Button';
+import Spinner from '@/components/ui/Spinner';
 import styles from './page.module.css';
 
 export default function KakaoSyncPage() {
@@ -68,7 +69,7 @@ export default function KakaoSyncPage() {
   ];
 
   if (!kakaoSyncUrl) {
-    return <div className={styles.loading}>로딩 중...</div>;
+    return <Spinner />;
   }
 
   return (

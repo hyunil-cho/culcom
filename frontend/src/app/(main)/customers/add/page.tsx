@@ -6,8 +6,10 @@ import { customerApi } from '@/lib/api';
 import { cleanPhoneNumber, verifyPhoneNumber } from '@/lib/commonUtils';
 import { ROUTES } from '@/lib/routes';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useFormError } from '@/hooks/useFormError';
 import { useSignupChannels } from '@/lib/useSignupChannels';
 import FormField from '@/components/ui/FormField';
+import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Input, PhoneInput, Select, Textarea } from '@/components/ui/FormInput';
 
 export default function CustomerAddPage() {
@@ -18,6 +20,7 @@ export default function CustomerAddPage() {
     adSource: '',
   });
   const { run, modal } = useResultModal({ redirectPath: ROUTES.CUSTOMERS });
+  const { error: formError, setError, clear: clearError } = useFormError();
   const { channels: signupChannelConfigs } = useSignupChannels();
   const signupChannelLabels = signupChannelConfigs.map(c => c.code);
   const adSourceSelectValue = signupChannelLabels.includes(form.adSource) ? form.adSource : (form.adSource ? '기타' : '');
@@ -29,13 +32,14 @@ export default function CustomerAddPage() {
 
   const handleSubmit = async () => {
     if (!form.name.trim()) {
-      alert('이름을 입력해주세요.');
+      setError('이름을 입력해주세요.');
       return;
     }
     if (verifyPhoneNumber(form.phoneNumber)) {
-      alert('전화번호는 010으로 시작하는 11자리 숫자여야 합니다.');
+      setError('전화번호는 010으로 시작하는 11자리 숫자여야 합니다.');
       return;
     }
+    clearError();
     const res = await customerApi.create(form);
     if (!res.success) { run(Promise.resolve(res), ''); return; }
     const msg = res.data.smsWarning
@@ -55,6 +59,7 @@ export default function CustomerAddPage() {
           <h2>기본 정보</h2>
         </div>
         <div className="form-body">
+          <FormErrorBanner error={formError} />
           <FormField label="이름" required>
             <Input placeholder="이름을 입력하세요" value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })} required />

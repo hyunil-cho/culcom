@@ -281,6 +281,8 @@ export const API = {
   // 캘린더
   CALENDAR_RESERVATIONS: `${A.CALENDAR}/reservations`,
   CALENDAR_RESERVATION_STATUS: (seq: number) => `${A.CALENDAR}/reservations/${seq}/status`,
+  CALENDAR_EVENTS: `${A.CALENDAR}/events`,
+  CALENDAR_EVENT: (seq: number) => `${A.CALENDAR}/events/${seq}`,
 
   // 외부 서비스
   EXTERNAL_SMS_SEND: `${A.EXTERNAL}/sms/send`,

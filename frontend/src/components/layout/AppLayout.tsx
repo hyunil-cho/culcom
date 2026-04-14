@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Header from './Header';
+import { SidebarProvider } from './SidebarContext';
 import { useSessionStore } from '@/lib/store';
 import { SessionRole } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
@@ -39,7 +40,8 @@ export default function AppLayout({
   }, [loaded, session, branches, pathname, router]);
 
   return (
-    <div className={styles.container}>
+    <SidebarProvider>
+      <div className={styles.container}>
       {sidebar}
       <div className={styles.mainArea}>
         <Header />
@@ -72,6 +74,7 @@ export default function AppLayout({
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </SidebarProvider>
   );
 }

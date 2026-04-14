@@ -65,6 +65,77 @@
   color: var(--text-muted);
 }
 
+/* ── 오늘의 일정 ── */
+.todayHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.todayCount {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.todayList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.todayItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #4f46e5;
+  background: #fff;
+  transition: box-shadow 0.15s;
+}
+
+.todayItem:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.todayTime {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+  min-width: 44px;
+  padding-top: 1px;
+}
+
+.todayContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.todayLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.todayBadge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.todaySub {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
 .callerHeader {
   display: flex;
   justify-content: space-between;

@@ -10,14 +10,16 @@ import MembershipForm, {
   type MembershipFormData,
 } from '../MembershipForm';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useFormError } from '@/hooks/useFormError';
 
 export default function MembershipAddPage() {
   const [form, setForm] = useState<MembershipFormData>(emptyMembershipForm);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_MEMBERSHIPS });
+  const { error: formError, validate, clear: clearError } = useFormError();
 
   const handleSubmit = async () => {
-    const error = validateMembershipForm(form);
-    if (error) { alert(error); return; }
+    if (!validate(validateMembershipForm(form))) return;
+    clearError();
     await run(membershipApi.create({
       name: form.name,
       duration: toDurationDays(form),
@@ -35,6 +37,7 @@ export default function MembershipAddPage() {
         onSubmit={handleSubmit}
         backHref={ROUTES.COMPLEX_MEMBERSHIPS}
         submitLabel="등록"
+        formError={formError}
       />
       {modal}
     </>

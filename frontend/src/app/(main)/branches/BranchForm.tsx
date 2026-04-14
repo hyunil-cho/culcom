@@ -2,6 +2,7 @@
 
 import FormField from '@/components/ui/FormField';
 import FormLayout from '@/components/ui/FormLayout';
+import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Input, Textarea } from '@/components/ui/FormInput';
 
 export interface BranchFormData {
@@ -26,7 +27,7 @@ export function validateBranchForm(form: BranchFormData): string | null {
 }
 
 export default function BranchForm({
-  form, onChange, onSubmit, backHref, backLabel, seq,
+  form, onChange, onSubmit, backHref, backLabel, seq, formError,
 }: {
   form: BranchFormData;
   onChange: (form: BranchFormData) => void;
@@ -34,6 +35,7 @@ export default function BranchForm({
   backHref: string;
   backLabel: string;
   seq?: number;
+  formError?: string | null;
 }) {
   const set = (field: keyof BranchFormData, value: string) =>
     onChange({ ...form, [field]: value });
@@ -41,6 +43,7 @@ export default function BranchForm({
   return (
     <FormLayout title="기본 정보" backHref={backHref} backLabel={backLabel}
       submitLabel="저장" onSubmit={onSubmit}>
+      <FormErrorBanner error={formError ?? null} />
       {seq !== undefined && (
         <FormField label="지점코드">
           <Input value={seq} disabled />

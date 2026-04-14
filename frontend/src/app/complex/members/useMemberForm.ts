@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { memberApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { useApiQuery } from '@/hooks/useApiQuery';
@@ -18,6 +18,8 @@ export function useMemberForm(seq?: number) {
   const isEdit = seq != null;
 
   const [form, setForm] = useState<MemberFormData>(emptyMemberForm);
+  const [formError, setFormError] = useState<string | null>(null);
+  const clearFormError = useCallback(() => setFormError(null), []);
   const { allClasses } = useClassSlots();
   const staff = useStaffForm({ seq, isEdit, allClasses });
   const membership = useMembership({ memberSeq: seq, isEdit, memberName: form.name, memberPhone: form.phoneNumber });
@@ -115,11 +117,11 @@ export function useMemberForm(seq?: number) {
       await run(memberApi.update(seq, buildMemberData()), '회원 정보가 수정되었습니다.');
     } else if (staff.staffForm.isStaff) {
       const res = await staff.createStaff(form.name, form.phoneNumber, buildMetaData());
-      if (!res.success) { alert(res.message || '스태프 등록 실패'); return; }
+      if (!res.success) { setFormError(res.message || '스태프 등록 실패'); return; }
       await run(Promise.resolve(res), '스태프가 등록되었습니다.');
     } else {
       const res = await memberApi.create(buildMemberData());
-      if (!res.success) { alert(res.message || '회원 등록 실패'); return; }
+      if (!res.success) { setFormError(res.message || '회원 등록 실패'); return; }
       const memberSeq = res.data.seq;
       await memberApi.updateMetaData(memberSeq, buildMetaData());
       await membership.save(memberSeq);
@@ -135,9 +137,10 @@ export function useMemberForm(seq?: number) {
 
   const handleSubmit = async () => {
     const error = validateMemberForm(form);
-    if (error) { alert(error); return; }
+    if (error) { setFormError(error); return; }
     const msError = membership.validate();
-    if (msError) { alert(msError); return; }
+    if (msError) { setFormError(msError); return; }
+    clearFormError();
 
     if (checkTransferMismatch()) {
       setShowTransferMismatch(true);
@@ -162,5 +165,6 @@ export function useMemberForm(seq?: number) {
     staffClassAssign: staff.staffClassAssign, setStaffClassAssign: staff.setStaffClassAssign,
     handleSubmit, run, modal, isEdit,
     showTransferMismatch, confirmMismatchAndSubmit, dismissMismatch,
+    formError, clearFormError,
   };
 }

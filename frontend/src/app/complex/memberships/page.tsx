@@ -50,6 +50,7 @@ export default function MembershipsPage() {
         data={memberships}
         rowKey={(m) => m.seq}
         emptyMessage="등록된 멤버십 정보가 없습니다."
+        emptyAction={<Button onClick={() => router.push(ROUTES.COMPLEX_MEMBERSHIPS_ADD)}>+ 신규 멤버십 등록</Button>}
         onRowClick={(m) => router.push(ROUTES.COMPLEX_MEMBERSHIP_EDIT(m.seq))}
       />
 

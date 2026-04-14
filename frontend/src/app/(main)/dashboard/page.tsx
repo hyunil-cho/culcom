@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useSessionStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
 import {
   dashboardApi,
-  DashboardData,
-  CallerStats,
+  calendarApi,
+  type DashboardData,
+  type CallerStats,
+  type CalendarReservation,
+  type CalendarEvent,
 } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
@@ -14,6 +17,7 @@ import { Button } from '@/components/ui/Button';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
+import Spinner from '@/components/ui/Spinner';
 import styles from './page.module.css';
 
 type Period = 'day' | 'week' | 'month';
@@ -34,6 +38,36 @@ export default function DashboardPage() {
     ['dashboard', 'callerStats', period],
     () => dashboardApi.callerStats(period),
   );
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  const { data: todayReservations = [] } = useApiQuery<CalendarReservation[]>(
+    ['dashboard', 'todayReservations'],
+    () => calendarApi.getReservations(todayStr, todayStr),
+  );
+
+  const { data: todayEvents = [] } = useApiQuery<CalendarEvent[]>(
+    ['dashboard', 'todayEvents'],
+    () => calendarApi.getEvents(todayStr, todayStr),
+  );
+
+  const todaySchedule = useMemo(() => {
+    const items: { type: 'reservation' | 'event'; time: string; label: string; sub: string; color: string; bg: string }[] = [];
+    todayReservations.forEach((r) => {
+      const time = r.interviewDate.split(' ')[1] || '00:00';
+      const statusStyles: Record<string, { bg: string; color: string }> = {
+        '예약확정': { bg: '#dbeafe', color: '#1e40af' },
+        '방문': { bg: '#d1fae5', color: '#065f46' },
+      };
+      const st = statusStyles[r.status] ?? { bg: '#f3f4f6', color: '#6b7280' };
+      items.push({ type: 'reservation', time, label: `${r.customerName} (${r.status})`, sub: `CALLER ${r.caller}`, color: st.color, bg: st.bg });
+    });
+    todayEvents.forEach((e) => {
+      items.push({ type: 'event', time: e.startTime.substring(0, 5), label: e.title, sub: `${e.startTime.substring(0, 5)}—${e.endTime.substring(0, 5)} · ${e.author}`, color: '#065f46', bg: '#ecfdf5' });
+    });
+    items.sort((a, b) => a.time.localeCompare(b.time));
+    return items;
+  }, [todayReservations, todayEvents]);
 
   const chartData = (dashboard?.dailyStats ?? []).map((d) => {
     const date = new Date(d.date);
@@ -76,7 +110,7 @@ export default function DashboardPage() {
       )}
 
       {loading ? (
-        <div className={styles.loading}>로딩 중...</div>
+        <Spinner />
       ) : (
         <div className={styles.statsGrid}>
           {statCards.map((card) => (
@@ -90,6 +124,37 @@ export default function DashboardPage() {
           ))}
         </div>
       )}
+
+      {/* 오늘의 일정 */}
+      <div className={`card ${styles.section}`}>
+        <div className={styles.todayHeader}>
+          <h3 className={styles.sectionTitle} style={{ marginBottom: 0 }}>오늘의 일정</h3>
+          <span className={styles.todayCount}>
+            예약 {todayReservations.length}건 · 일정 {todayEvents.length}건
+          </span>
+        </div>
+        {todaySchedule.length === 0 ? (
+          <div className={styles.emptyChart}>오늘 예정된 일정이 없습니다.</div>
+        ) : (
+          <div className={styles.todayList}>
+            {todaySchedule.map((item, i) => (
+              <div key={i} className={styles.todayItem}
+                style={{ borderLeftColor: item.type === 'event' ? '#10b981' : '#4f46e5' }}>
+                <div className={styles.todayTime}>{item.time}</div>
+                <div className={styles.todayContent}>
+                  <div className={styles.todayLabel}>
+                    <span className={styles.todayBadge} style={{ backgroundColor: item.bg, color: item.color }}>
+                      {item.type === 'event' ? '일정' : '예약'}
+                    </span>
+                    {item.label}
+                  </div>
+                  <div className={styles.todaySub}>{item.sub}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className={`card ${styles.section}`}>
         <h3 className={styles.sectionTitle}>최근 7일 예약자 추이</h3>
@@ -130,7 +195,7 @@ export default function DashboardPage() {
         </div>
 
         {callerLoading ? (
-          <div className={styles.loading}>데이터를 불러오는 중...</div>
+          <Spinner />
         ) : callerStats.length === 0 ? (
           <div className={styles.loading}>해당 기간에 데이터가 없습니다.</div>
         ) : (

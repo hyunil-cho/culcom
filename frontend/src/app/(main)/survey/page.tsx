@@ -4,9 +4,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { surveyApi, SurveyTemplate } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
+import { useModal } from '@/hooks/useModal';
 import { queryClient } from '@/lib/queryClient';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
+import ConfirmModal from '@/components/ui/ConfirmModal';
+import Spinner from '@/components/ui/Spinner';
 import styles from './page.module.css';
 
 export default function SurveyPage() {
@@ -14,6 +17,7 @@ export default function SurveyPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [createName, setCreateName] = useState('');
   const [createDesc, setCreateDesc] = useState('');
+  const deleteModal = useModal<{ seq: number; name: string }>();
 
   const { data: templates = [], isLoading: loading } = useApiQuery<SurveyTemplate[]>(
     ['surveyTemplates'],
@@ -43,8 +47,14 @@ export default function SurveyPage() {
     if (res.success) invalidate();
   };
 
-  const handleDelete = async (seq: number, name: string) => {
-    if (!confirm(`"${name}" 설문지를 삭제하시겠습니까?\n포함된 모든 선택지와 설정이 함께 삭제됩니다.`)) return;
+  const handleDelete = (seq: number, name: string) => {
+    deleteModal.open({ seq, name });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.data) return;
+    const { seq } = deleteModal.data;
+    deleteModal.close();
     const res = await surveyApi.deleteTemplate(seq);
     if (res.success) invalidate();
   };
@@ -92,7 +102,7 @@ export default function SurveyPage() {
       )}
 
       {loading ? (
-        <div className={`card ${styles.loadingCard}`}>로딩 중...</div>
+        <Spinner />
       ) : templates.length === 0 ? (
         <div className={`card ${styles.emptyCard}`}>
           설문지가 없습니다. 위의 &apos;+ 새 설문지&apos; 버튼으로 생성하세요.
@@ -140,6 +150,20 @@ export default function SurveyPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {deleteModal.isOpen && (
+        <ConfirmModal
+          title="삭제 확인"
+          confirmLabel="삭제"
+          confirmColor="#e03131"
+          onCancel={deleteModal.close}
+          onConfirm={confirmDelete}
+        >
+          &quot;{deleteModal.data!.name}&quot; 설문지를 삭제하시겠습니까?
+          <br />
+          포함된 모든 선택지와 설정이 함께 삭제됩니다.
+        </ConfirmModal>
       )}
     </>
   );

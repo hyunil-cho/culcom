@@ -7,6 +7,7 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import UserForm, { emptyUserForm, validateUserForm, type UserFormData } from '../../UserForm';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useFormError } from '@/hooks/useFormError';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 
 export default function UserEditPage() {
@@ -15,6 +16,7 @@ export default function UserEditPage() {
   const [form, setForm] = useState<UserFormData>(emptyUserForm);
   const [role, setRole] = useState('');
   const { run, modal } = useResultModal({ redirectPath: ROUTES.USERS });
+  const { error: formError, validate, clear: clearError } = useFormError();
   const [deleting, setDeleting] = useState(false);
 
   const { data: users } = useApiQuery<UserResponse[]>(
@@ -33,8 +35,8 @@ export default function UserEditPage() {
   }, [users, seq]);
 
   const handleSubmit = async () => {
-    const error = validateUserForm(form, true);
-    if (error) { alert(error); return; }
+    if (!validate(validateUserForm(form, true))) return;
+    clearError();
     const data: Partial<UserFormData> = { name: form.name, phone: form.phone || undefined };
     if (form.password.trim()) data.password = form.password;
     await run(userApi.update(seq, data), '사용자 정보가 수정되었습니다.');
@@ -44,7 +46,7 @@ export default function UserEditPage() {
     <>
       <UserForm form={form} onChange={setForm} onSubmit={handleSubmit}
         isEdit
-        backHref={ROUTES.USERS} submitLabel="수정" />
+        backHref={ROUTES.USERS} submitLabel="수정" formError={formError} />
       {/* 삭제 기능 비활성화
       {deleting && (
         <ConfirmModal title="삭제 확인" onCancel={() => setDeleting(false)}

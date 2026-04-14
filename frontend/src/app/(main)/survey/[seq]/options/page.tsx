@@ -4,10 +4,15 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { surveyApi, SurveyTemplate, SurveySection, SurveyQuestion, SurveyOption } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
+import { useModal } from '@/hooks/useModal';
 import { queryClient } from '@/lib/queryClient';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import { Checkbox } from '@/components/ui/FormInput';
+import { useFormError } from '@/hooks/useFormError';
+import FormErrorBanner from '@/components/ui/FormErrorBanner';
+import Spinner from '@/components/ui/Spinner';
 import s from './page.module.css';
 
 type InputType = 'radio' | 'checkbox' | 'text';
@@ -50,6 +55,10 @@ export default function SurveyEditorPage() {
   const dragOverItem = useRef<{ seq: number; sectionSeq: number } | null>(null);
   const dragOption = useRef<{ seq: number; questionSeq: number } | null>(null);
   const dragOverOption = useRef<{ seq: number; questionSeq: number } | null>(null);
+  const { error: formError, setError, clear: clearError } = useFormError();
+  const deleteSectionModal = useModal<SurveySection>();
+  const deleteQuestionModal = useModal<SurveyQuestion>();
+  const deleteOptionModal = useModal<{ seq: number; label: string }>();
 
   const surveyKey = ['surveyEditor', templateSeq];
 
@@ -134,26 +143,33 @@ export default function SurveyEditorPage() {
   };
   const cancelEditTemplate = () => { setEditTemplateName(null); setEditTemplateDesc(null); };
   const handleUpdateTemplateName = async () => {
-    if (editTemplateName == null || !editTemplateName.trim()) { alert('설문지 이름을 입력해주세요.'); return; }
+    if (editTemplateName == null || !editTemplateName.trim()) { setError('설문지 이름을 입력해주세요.'); return; }
+    clearError();
     const res = await surveyApi.updateTemplate(templateSeq, { name: editTemplateName.trim(), description: editTemplateDesc?.trim() || undefined });
     if (res.success) { cancelEditTemplate(); load(); }
   };
 
   const handleAddSection = async () => {
-    if (!addSectionForm || !addSectionForm.title.trim()) { alert('섹션 제목을 입력해주세요.'); return; }
+    if (!addSectionForm || !addSectionForm.title.trim()) { setError('섹션 제목을 입력해주세요.'); return; }
+    clearError();
     const res = await surveyApi.createSection(templateSeq, { title: addSectionForm.title.trim() });
     if (res.success) { setAddSectionForm(null); load(); }
   };
   const startEditSection = (sec: SurveySection) => { setEditSectionSeq(sec.seq); setEditSectionTitle(sec.title); };
   const handleUpdateSection = async () => {
-    if (editSectionSeq == null || !editSectionTitle.trim()) { alert('섹션 제목을 입력해주세요.'); return; }
+    if (editSectionSeq == null || !editSectionTitle.trim()) { setError('섹션 제목을 입력해주세요.'); return; }
+    clearError();
     const res = await surveyApi.updateSection(templateSeq, editSectionSeq, { title: editSectionTitle.trim() });
     if (res.success) { setEditSectionSeq(null); load(); }
   };
-  const handleDeleteSection = async (sec: SurveySection) => {
-    const qCount = questionsForSection(sec.seq).length;
-    const msg = qCount > 0 ? `"${sec.title}" 섹션과 포함된 ${qCount}개 질문을 모두 삭제하시겠습니까?` : `"${sec.title}" 섹션을 삭제하시겠습니까?`;
-    if (!confirm(msg)) return;
+  const handleDeleteSection = (sec: SurveySection) => {
+    deleteSectionModal.open(sec);
+  };
+
+  const confirmDeleteSection = async () => {
+    if (!deleteSectionModal.data) return;
+    const sec = deleteSectionModal.data;
+    deleteSectionModal.close();
     const res = await surveyApi.deleteSection(templateSeq, sec.seq);
     if (res.success) load();
   };
@@ -167,8 +183,9 @@ export default function SurveyEditorPage() {
   const handleAddQuestion = async (sectionSeq: number) => {
     const form = questionAddForms[sectionSeq];
     if (!form) return;
-    if (!form.questionKey.trim()) { alert('질문 키를 입력해주세요.'); return; }
-    if (!form.title.trim()) { alert('질문 제목을 입력해주세요.'); return; }
+    if (!form.questionKey.trim()) { setError('질문 키를 입력해주세요.'); return; }
+    if (!form.title.trim()) { setError('질문 제목을 입력해주세요.'); return; }
+    clearError();
     const res = await surveyApi.createQuestion(templateSeq, { sectionSeq, questionKey: form.questionKey.trim(), title: form.title.trim(), inputType: form.inputType, required: form.required });
     if (res.success) { toggleQuestionAddForm(sectionSeq); load(); }
   };
@@ -181,12 +198,19 @@ export default function SurveyEditorPage() {
   const handleUpdateQuestion = async (q: SurveyQuestion) => {
     const form = questionEditForms[q.seq];
     if (!form) return;
-    if (!form.title.trim()) { alert('질문 제목을 입력해주세요.'); return; }
+    if (!form.title.trim()) { setError('질문 제목을 입력해주세요.'); return; }
+    clearError();
     const res = await surveyApi.updateQuestion(templateSeq, q.seq, { sectionSeq: q.sectionSeq!, questionKey: form.questionKey, title: form.title, inputType: form.inputType, required: form.required });
     if (res.success) { setQuestionEditForms(prev => { const next = { ...prev }; delete next[q.seq]; return next; }); load(); }
   };
-  const handleDeleteQuestion = async (q: SurveyQuestion) => {
-    if (!confirm(`"${q.title}" 질문과 모든 선택지를 삭제하시겠습니까?`)) return;
+  const handleDeleteQuestion = (q: SurveyQuestion) => {
+    deleteQuestionModal.open(q);
+  };
+
+  const confirmDeleteQuestion = async () => {
+    if (!deleteQuestionModal.data) return;
+    const q = deleteQuestionModal.data;
+    deleteQuestionModal.close();
     await surveyApi.deleteQuestion(templateSeq, q.seq);
     load();
   };
@@ -224,13 +248,19 @@ export default function SurveyEditorPage() {
     const res = await surveyApi.createOption(templateSeq, { questionSeq, groupName: groupName || undefined, label: label.trim() });
     if (res.success) { setOptionAddForms(prev => { const n = { ...prev }; delete n[formId]; return n; }); load(); }
   };
-  const handleDeleteOption = async (optionSeq: number, label: string) => {
-    if (!confirm(`"${label}" 선택지를 삭제하시겠습니까?`)) return;
-    await surveyApi.deleteOption(templateSeq, optionSeq);
+  const handleDeleteOption = (optionSeq: number, label: string) => {
+    deleteOptionModal.open({ seq: optionSeq, label });
+  };
+
+  const confirmDeleteOption = async () => {
+    if (!deleteOptionModal.data) return;
+    const { seq } = deleteOptionModal.data;
+    deleteOptionModal.close();
+    await surveyApi.deleteOption(templateSeq, seq);
     load();
   };
 
-  if (loading) return <div className={`card ${s.loadingCard}`}>로딩 중...</div>;
+  if (loading) return <Spinner />;
   if (!template) return <div className="card">설문지를 찾을 수 없습니다.</div>;
 
   const typeLabel: Record<InputType, string> = { radio: '단일선택', checkbox: '다중선택', text: '주관식' };
@@ -435,6 +465,8 @@ export default function SurveyEditorPage() {
         <a onClick={() => router.push(ROUTES.SURVEY)} className={s.backLink}>&larr; 설문지 목록</a>
       </div>
 
+      <FormErrorBanner error={formError} />
+
       <div className={s.headerRow}>
         {editTemplateName !== null ? (
           <div className={s.editNameRow} style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
@@ -544,6 +576,47 @@ export default function SurveyEditorPage() {
             <Button onClick={handleAddSection}>추가</Button>
           </div>
         </div>
+      )}
+
+      {deleteSectionModal.isOpen && (
+        <ConfirmModal
+          title="삭제 확인"
+          confirmLabel="삭제"
+          confirmColor="#e03131"
+          onCancel={deleteSectionModal.close}
+          onConfirm={confirmDeleteSection}
+        >
+          {(() => {
+            const qCount = questionsForSection(deleteSectionModal.data!.seq).length;
+            return qCount > 0
+              ? `"${deleteSectionModal.data!.title}" 섹션과 포함된 ${qCount}개 질문을 모두 삭제하시겠습니까?`
+              : `"${deleteSectionModal.data!.title}" 섹션을 삭제하시겠습니까?`;
+          })()}
+        </ConfirmModal>
+      )}
+
+      {deleteQuestionModal.isOpen && (
+        <ConfirmModal
+          title="삭제 확인"
+          confirmLabel="삭제"
+          confirmColor="#e03131"
+          onCancel={deleteQuestionModal.close}
+          onConfirm={confirmDeleteQuestion}
+        >
+          &quot;{deleteQuestionModal.data!.title}&quot; 질문과 모든 선택지를 삭제하시겠습니까?
+        </ConfirmModal>
+      )}
+
+      {deleteOptionModal.isOpen && (
+        <ConfirmModal
+          title="삭제 확인"
+          confirmLabel="삭제"
+          confirmColor="#e03131"
+          onCancel={deleteOptionModal.close}
+          onConfirm={confirmDeleteOption}
+        >
+          &quot;{deleteOptionModal.data!.label}&quot; 선택지를 삭제하시겠습니까?
+        </ConfirmModal>
       )}
     </>
   );

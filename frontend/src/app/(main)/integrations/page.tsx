@@ -5,6 +5,7 @@ import { integrationApi, IntegrationService } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/routes';
+import Spinner from '@/components/ui/Spinner';
 import st from './page.module.css';
 
 const categories = [
@@ -50,7 +51,7 @@ export default function IntegrationsPage() {
       </div>
 
       {loading ? (
-        <div className={st.loading}>로딩 중...</div>
+        <Spinner />
       ) : filtered.length === 0 ? (
         <div className={st.loading}>등록된 연동 서비스가 없습니다.</div>
       ) : (

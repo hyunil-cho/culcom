@@ -7,6 +7,7 @@ import MemberForm from '../MemberForm';
 import { useMemberForm } from '../useMemberForm';
 import { Button } from '@/components/ui/Button';
 import TransferMismatchModal from '../components/TransferMismatchModal';
+import Spinner from '@/components/ui/Spinner';
 import { useSignupChannels } from '@/lib/useSignupChannels';
 
 export default function MemberAddPage() {
@@ -19,6 +20,7 @@ function MemberAddPageInner() {
     staffForm, setStaffForm, staffClassAssign, setStaffClassAssign,
     handleSubmit, modal,
     showTransferMismatch, confirmMismatchAndSubmit, dismissMismatch,
+    formError,
   } = useMemberForm();
 
   const { channels } = useSignupChannels();
@@ -57,6 +59,7 @@ function MemberAddPageInner() {
         classAssign={classAssign} onClassAssignChange={setClassAssign}
         staffForm={staffForm} onStaffChange={setStaffForm}
         staffClassAssign={staffClassAssign} onStaffClassAssignChange={setStaffClassAssign}
+        formError={formError}
         headerExtra={
           <Button variant="secondary" onClick={openImport}>불러오기</Button>
         }
@@ -82,7 +85,7 @@ function MemberAddPageInner() {
             </div>
             <div className="modal-body" style={{ overflowY: 'auto', maxHeight: '60vh' }}>
               {importLoading ? (
-                <div style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>불러오는 중...</div>
+                <Spinner />
               ) : submissions.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>설문 제출 내역이 없습니다.</div>
               ) : (

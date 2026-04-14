@@ -7,6 +7,7 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 import { Checkbox } from '@/components/ui/FormInput';
 import { ROUTES } from '@/lib/routes';
 import { useResultModal } from '@/hooks/useResultModal';
+import Spinner from '@/components/ui/Spinner';
 import s from './page.module.css';
 
 export default function SmsConfigPage() {
@@ -61,7 +62,7 @@ function SmsConfigPageInner() {
     return (
       <>
         <h2 className="page-title">SMS 연동 설정</h2>
-        <div className={s.loading}>로딩 중...</div>
+        <Spinner />
       </>
     );
   }

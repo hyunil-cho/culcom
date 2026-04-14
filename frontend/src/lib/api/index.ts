@@ -62,7 +62,7 @@ export {
   type KakaoSyncUrlResponse, type DailyStats, type CallerStats, type DashboardData,
   type UserResponse, type UserCreateRequest,
 } from './settings';
-export { calendarApi, type CalendarReservation } from './calendar';
+export { calendarApi, type CalendarReservation, type CalendarEvent, type CalendarEventRequest } from './calendar';
 export { consentItemApi, type ConsentItem, type ConsentItemRequest } from './consent';
 export {
   transferApi, publicTransferApi,

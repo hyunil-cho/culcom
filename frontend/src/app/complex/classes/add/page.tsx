@@ -5,16 +5,18 @@ import { classApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import ClassForm, { emptyClassForm, validateClassForm, type ClassFormData } from '../ClassForm';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useFormError } from '@/hooks/useFormError';
 import { useClassSlots } from '../../hooks/useClassSlots';
 
 export default function ClassAddPage() {
   const [form, setForm] = useState<ClassFormData>(emptyClassForm);
   const { timeSlots } = useClassSlots();
   const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_CLASSES });
+  const { error: formError, validate, clear: clearError } = useFormError();
 
   const handleSubmit = async () => {
-    const error = validateClassForm(form);
-    if (error) { alert(error); return; }
+    if (!validate(validateClassForm(form))) return;
+    clearError();
     await run(classApi.create({
       name: form.name,
       description: form.description || undefined,
@@ -32,6 +34,7 @@ export default function ClassAddPage() {
         backHref={ROUTES.COMPLEX_CLASSES}
         submitLabel="등록"
         timeSlots={timeSlots}
+        formError={formError}
       />
       {modal}
     </>

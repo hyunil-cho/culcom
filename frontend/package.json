@@ -8,7 +8,9 @@
     "mock": "node mock/server.js",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.99.0",
@@ -21,12 +23,16 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
     "eslint-config-next": "14.2.21",
     "express": "^5.2.1",
-    "typescript": "^5"
+    "jsdom": "^29.0.2",
+    "typescript": "^5",
+    "vitest": "^4.1.4"
   }
 }

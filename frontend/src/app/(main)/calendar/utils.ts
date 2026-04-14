@@ -1,4 +1,13 @@
-import type { CalendarReservation } from '@/lib/api';
+import type { CalendarReservation, CalendarEvent } from '@/lib/api';
+
+export interface CalendarEventItem {
+  seq: number;
+  title: string;
+  content?: string;
+  author: string;
+  startTime: string;  // "HH:mm"
+  endTime: string;    // "HH:mm"
+}
 
 export interface Reservation {
   seq: number;
@@ -88,5 +97,24 @@ export function toReservationMap(items: CalendarReservation[]): Record<string, R
     });
   });
   Object.values(map).forEach((arr) => arr.sort((a, b) => a.time.localeCompare(b.time)));
+  return map;
+}
+
+export function toEventMap(items: CalendarEvent[]): Record<string, CalendarEventItem[]> {
+  const map: Record<string, CalendarEventItem[]> = {};
+  items.forEach((item) => {
+    const dateKey = item.eventDate;
+    if (!dateKey) return;
+    if (!map[dateKey]) map[dateKey] = [];
+    map[dateKey].push({
+      seq: item.seq,
+      title: item.title,
+      content: item.content ?? undefined,
+      author: item.author,
+      startTime: item.startTime.substring(0, 5),
+      endTime: item.endTime.substring(0, 5),
+    });
+  });
+  Object.values(map).forEach((arr) => arr.sort((a, b) => a.startTime.localeCompare(b.startTime)));
   return map;
 }

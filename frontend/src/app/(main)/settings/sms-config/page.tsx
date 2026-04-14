@@ -7,6 +7,9 @@ import { smsEventApi, type MessageTemplateSimple, type SmsEventConfig, type SmsE
 import { Checkbox } from '@/components/ui/FormInput';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
+import { useFormError } from '@/hooks/useFormError';
+import FormErrorBanner from '@/components/ui/FormErrorBanner';
+import Spinner from '@/components/ui/Spinner';
 import s from './page.module.css';
 
 const EVENT_TYPES: { type: SmsEventType; label: string; description: string }[] = [
@@ -51,6 +54,7 @@ export default function SmsConfigPage() {
   const [expanded, setExpanded] = useState<Record<SmsEventType, boolean>>({
     '예약확정': false, '고객등록': false, '회원등록': false,
   });
+  const { error: formError, setError, clear: clearError } = useFormError();
 
   useEffect(() => {
     if (configsList.length === 0 && formsInitialized) return;
@@ -79,9 +83,10 @@ export default function SmsConfigPage() {
   const handleSave = async (type: SmsEventType) => {
     const form = forms[type];
     if (form.templateSeq === '' || !form.senderNumber) {
-      alert('템플릿과 발신번호를 모두 선택해주세요.');
+      setError('템플릿과 발신번호를 모두 선택해주세요.');
       return;
     }
+    clearError();
     setSavingType(type);
     const res = await smsEventApi.save({
       eventType: type,
@@ -97,7 +102,7 @@ export default function SmsConfigPage() {
     setSavingType(null);
   };
 
-  if (loading) return <div className={s.loading}>로딩 중...</div>;
+  if (loading) return <Spinner />;
 
   return (
     <div className={s.container}>
@@ -117,6 +122,8 @@ export default function SmsConfigPage() {
           템플릿에서 {'{{이름}}'}, {'{{전화번호}}'} 플레이스홀더를 사용하면 발송 시 자동으로 치환됩니다.
         </div>
       </div>
+
+      <FormErrorBanner error={formError} />
 
       {EVENT_TYPES.map(({ type, label, description }) => {
         const form = forms[type];

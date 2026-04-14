@@ -14,6 +14,7 @@ import MembershipForm, {
   type MembershipFormData,
 } from '../../MembershipForm';
 import { useResultModal } from '@/hooks/useResultModal';
+import { useFormError } from '@/hooks/useFormError';
 
 export default function MembershipEditPage() {
   const params = useParams();
@@ -21,6 +22,7 @@ export default function MembershipEditPage() {
   const seq = Number(params.seq);
   const [form, setForm] = useState<MembershipFormData>(emptyMembershipForm);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_MEMBERSHIPS });
+  const { error: formError, validate, clear: clearError } = useFormError();
 
   const { data: membershipData } = useApiQuery(
     ['membership', seq],
@@ -42,8 +44,8 @@ export default function MembershipEditPage() {
   }, [membershipData]);
 
   const handleSubmit = async () => {
-    const error = validateMembershipForm(form);
-    if (error) { alert(error); return; }
+    if (!validate(validateMembershipForm(form))) return;
+    clearError();
     await run(membershipApi.update(seq, {
       name: form.name,
       duration: toDurationDays(form),
@@ -62,6 +64,7 @@ export default function MembershipEditPage() {
         isEdit
         backHref={ROUTES.COMPLEX_MEMBERSHIPS}
         submitLabel="수정"
+        formError={formError}
       />
       {/* 삭제 기능 비활성화
       {deleting && (

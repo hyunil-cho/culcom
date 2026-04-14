@@ -2,6 +2,7 @@
 
 import { memberApi, type MemberMembershipResponse } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
+import Spinner from '@/components/ui/Spinner';
 import MembershipCard from './MembershipCard';
 import styles from './MembershipInfoModal.module.css';
 
@@ -25,7 +26,7 @@ export default function MembershipInfoModal({
         </div>
         <div className="modal-body" style={{ maxHeight: '60vh' }}>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>불러오는 중...</div>
+            <Spinner />
           ) : memberships.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>활성 멤버십이 없습니다.</div>
           ) : memberships.map(ms => (
