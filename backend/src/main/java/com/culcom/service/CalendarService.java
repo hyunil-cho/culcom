@@ -82,6 +82,10 @@ public class CalendarService {
 
     @Transactional
     public CalendarEventResponse createEvent(Long branchSeq, CalendarEventRequest request) {
+        if (!request.getEndTime().isAfter(request.getStartTime())) {
+            throw new IllegalArgumentException("종료 시간은 시작 시간보다 이후여야 합니다.");
+        }
+
         CalendarEvent event = CalendarEvent.builder()
                 .branchSeq(branchSeq)
                 .title(request.getTitle())

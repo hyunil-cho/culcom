@@ -56,8 +56,12 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
     return Object.entries(counts);
   }, [reservations]);
 
+  const timeError = form.startTime && form.endTime && form.endTime <= form.startTime
+    ? '종료 시간은 시작 시간보다 이후여야 합니다' : '';
+
   const handleSubmit = () => {
     if (!form.title.trim() || !form.author.trim()) return;
+    if (timeError) return;
     createMutation.mutate({
       title: form.title,
       content: form.content || undefined,
@@ -126,10 +130,11 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
                   className={s.eventFormTimeInput} />
               </label>
             </div>
+            {timeError && <div style={{ color: '#e03131', fontSize: '13px' }}>{timeError}</div>}
             <div className={s.eventFormActions}>
               <button onClick={() => setShowForm(false)} className={s.eventFormCancelBtn}>취소</button>
               <button onClick={handleSubmit}
-                disabled={createMutation.isPending || !form.title.trim() || !form.author.trim()}
+                disabled={createMutation.isPending || !form.title.trim() || !form.author.trim() || !!timeError}
                 className={s.eventFormSaveBtn}>
                 {createMutation.isPending ? '저장 중...' : '저장'}
               </button>
