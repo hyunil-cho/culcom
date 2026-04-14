@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/FormInput';
 import { useFormError } from '@/hooks/useFormError';
 import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import Spinner from '@/components/ui/Spinner';
+import { BASIC_INFO_FIELDS, getFieldOptions } from '@/app/survey/[seq]/_shared/surveyConstants';
 import s from './page.module.css';
 
 type InputType = 'radio' | 'checkbox' | 'text';
@@ -25,13 +26,13 @@ interface QuestionForm {
 }
 
 const DEFAULT_CUSTOMER_FIELDS = [
-  { title: '성함', type: '텍스트' },
-  { title: '연락처', type: '텍스트' },
-  { title: '성별', type: '단일선택' },
-  { title: '사는 곳 (주소)', type: '텍스트' },
-  { title: '연령대', type: '단일선택' },
-  { title: '현재 직군', type: '단일선택' },
-  { title: 'E-UT를 어떻게 알고 오셨나요?', type: '단일선택' },
+  { key: 'name', title: '성함', type: '텍스트' },
+  { key: 'phone', title: '연락처', type: '텍스트' },
+  { key: 'gender', title: '성별', type: '단일선택' },
+  { key: 'location', title: '사는 곳 (주소)', type: '텍스트' },
+  { key: 'age_group', title: '연령대', type: '단일선택' },
+  { key: 'occupation', title: '현재 직군', type: '단일선택' },
+  { key: 'ad_source', title: 'E-UT를 어떻게 알고 오셨나요?', type: '단일선택' },
 ];
 
 export default function SurveyEditorPage() {
@@ -50,6 +51,8 @@ export default function SurveyEditorPage() {
   const [questionAddForms, setQuestionAddForms] = useState<Record<number, QuestionForm>>({});
   const [questionEditForms, setQuestionEditForms] = useState<Record<number, QuestionForm>>({});
   const [optionAddForms, setOptionAddForms] = useState<Record<string, string>>({});
+  const [expandedFixed, setExpandedFixed] = useState<Set<string>>(new Set());
+  const [fixedOptionAddForms, setFixedOptionAddForms] = useState<Record<string, string>>({});
 
   const dragItem = useRef<{ seq: number; sectionSeq: number } | null>(null);
   const dragOverItem = useRef<{ seq: number; sectionSeq: number } | null>(null);
@@ -216,6 +219,45 @@ export default function SurveyEditorPage() {
   };
   const handleToggleRequired = async (q: SurveyQuestion) => { await surveyApi.updateQuestion(templateSeq, q.seq, { required: !q.required }); load(); };
   const handleTypeChange = async (q: SurveyQuestion, inputType: InputType) => { await surveyApi.updateQuestion(templateSeq, q.seq, { inputType }); load(); };
+
+  // ── 고정 필드 선택지 관리 ──
+  const toggleFixedField = (key: string) => {
+    setExpandedFixed(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
+
+  const saveFixedOptions = async (key: string, options: string[]) => {
+    const current = template?.customerFieldOptions ?? {};
+    const updated = { ...current, [key]: options };
+    await surveyApi.updateTemplate(templateSeq, { customerFieldOptions: updated });
+    load();
+  };
+
+  const handleAddFixedOption = async (key: string) => {
+    const label = fixedOptionAddForms[key];
+    if (!label?.trim()) return;
+    const currentOptions = getFieldOptions(template, key) ?? [];
+    if (currentOptions.includes(label.trim())) { setError('이미 존재하는 선택지입니다.'); return; }
+    clearError();
+    await saveFixedOptions(key, [...currentOptions, label.trim()]);
+    setFixedOptionAddForms(prev => { const n = { ...prev }; delete n[key]; return n; });
+  };
+
+  const handleDeleteFixedOption = async (key: string, label: string) => {
+    const currentOptions = getFieldOptions(template, key) ?? [];
+    await saveFixedOptions(key, currentOptions.filter(o => o !== label));
+  };
+
+  const handleResetFixedOptions = async (key: string) => {
+    const current = template?.customerFieldOptions ?? {};
+    const updated = { ...current };
+    delete updated[key];
+    await surveyApi.updateTemplate(templateSeq, { customerFieldOptions: Object.keys(updated).length > 0 ? updated : {} });
+    load();
+  };
 
   const handleOptionDragStart = (o: SurveyOption) => {
     dragOption.current = { seq: o.seq, questionSeq: o.questionSeq };
@@ -503,18 +545,65 @@ export default function SurveyEditorPage() {
           <span className={s.sectionTitle}>고객 기본 정보</span>
           <span className={s.sectionMetaFixed}>항상 첫 페이지에 표시됩니다</span>
         </div>
-        {DEFAULT_CUSTOMER_FIELDS.map((field, i) => (
-          <div key={i} className={`card ${s.questionCard}`}>
-            <div className={s.fixedCardHeader}>
-              <div className={s.fixedCardLeft}>
-                <span className={s.fixedDot}>&#9679;</span>
-                <span className={s.questionTitle}>{field.title}</span>
-                <span className={s.requiredBadge}>필수</span>
+        {DEFAULT_CUSTOMER_FIELDS.map((field, i) => {
+          const isChoice = field.type === '단일선택';
+          const isExpanded = isChoice && expandedFixed.has(field.key);
+          const fieldOptions = isChoice ? getFieldOptions(template, field.key) ?? [] : [];
+          const hasCustom = isChoice && !!template?.customerFieldOptions?.[field.key];
+
+          return (
+            <div key={i} className={`card ${s.questionCard}`}>
+              <div className={s.fixedCardHeader}
+                onClick={isChoice ? () => toggleFixedField(field.key) : undefined}
+                style={isChoice ? { cursor: 'pointer' } : undefined}>
+                <div className={s.fixedCardLeft}>
+                  {isChoice
+                    ? <span className={isExpanded ? s.arrowOpen : s.arrowClosed}>&#9654;</span>
+                    : <span className={s.fixedDot}>&#9679;</span>}
+                  <span className={s.questionTitle}>{field.title}</span>
+                  <span className={s.requiredBadge}>필수</span>
+                </div>
+                <div className={s.questionHeaderRight} onClick={e => e.stopPropagation()}>
+                  <span className={s.fixedTypeBadge}>{field.type}</span>
+                  {isChoice && <span className={s.optionCount}>{fieldOptions.length}개</span>}
+                </div>
               </div>
-              <span className={s.fixedTypeBadge}>{field.type}</span>
+              {isExpanded && (
+                <div className={s.questionBody}>
+                  {hasCustom && (
+                    <div style={{ marginBottom: 8 }}>
+                      <button onClick={() => handleResetFixedOptions(field.key)} className={s.btnEdit} style={{ fontSize: '0.78rem' }}>기본값 복원</button>
+                    </div>
+                  )}
+                  <div className={s.optionTags}>
+                    {fieldOptions.map(opt => (
+                      <span key={opt} className={s.optionTag}>
+                        {opt}
+                        <button onClick={() => handleDeleteFixedOption(field.key, opt)} title="삭제" className={s.optionDeleteBtn}>x</button>
+                      </span>
+                    ))}
+                    {fieldOptions.length === 0 && <span className={s.optionEmpty}>선택지 없음</span>}
+                  </div>
+                  {fixedOptionAddForms[field.key] !== undefined ? (
+                    <div className={s.optionInputRow}>
+                      <input type="text" value={fixedOptionAddForms[field.key]} autoFocus placeholder="선택지 입력 후 Enter"
+                        onChange={e => setFixedOptionAddForms(prev => ({ ...prev, [field.key]: e.target.value }))}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') handleAddFixedOption(field.key);
+                          if (e.key === 'Escape') setFixedOptionAddForms(prev => { const n = { ...prev }; delete n[field.key]; return n; });
+                        }}
+                        className={s.optionInput} />
+                      <button onClick={() => handleAddFixedOption(field.key)} className={s.btnOptionSubmit}>추가</button>
+                      <button onClick={() => setFixedOptionAddForms(prev => { const n = { ...prev }; delete n[field.key]; return n; })} className={s.btnOptionCancel}>취소</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setFixedOptionAddForms(prev => ({ ...prev, [field.key]: '' }))} className={s.btnAddOption}>+ 선택지</button>
+                  )}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {sections.length === 0 && !addSectionForm ? (

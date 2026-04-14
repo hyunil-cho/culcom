@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { publicSurveyApi, SurveyQuestion } from '@/lib/api';
 import { useSurveyData } from '../_shared/useSurveyData';
-import { BASIC_INFO_FIELDS, hintText, questionsForSection } from '../_shared/surveyConstants';
+import { BASIC_INFO_FIELDS, getFieldOptions, hintText, questionsForSection } from '../_shared/surveyConstants';
 import SurveyShell from '../_shared/SurveyShell';
 import SurveyComplete from './SurveyComplete';
 import SurveyConsentStep from './SurveyConsentStep';
@@ -197,39 +197,42 @@ export default function SurveyFillPage() {
               <span className={s.sectionBadge}>Section 1</span>
               <span className={s.sectionTitle}>고객 기본 정보</span>
             </div>
-            {BASIC_INFO_FIELDS.map(field => (
-              <div key={field.key} className={s.fieldGroup}>
-                <label className={s.fieldLabel}>
-                  {field.title}
-                  <span className={s.requiredMark}>*</span>
-                  {'hint' in field && field.hint && <span className={s.hint}>{field.hint}</span>}
-                </label>
-                {field.type === 'radio' && 'options' in field && field.options ? (
-                  <div className={s.chipRow}>
-                    {field.options.map(opt => {
-                      const checked = basicInfo[field.key] === opt;
-                      return (
-                        <label key={opt} className={checked ? s.chipChecked : s.chip}
-                          onClick={() => setBasicInfo(prev => ({ ...prev, [field.key]: opt }))}>
-                          {opt}
-                        </label>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <input
-                    type={field.type === 'tel' ? 'tel' : 'text'}
-                    value={basicInfo[field.key]}
-                    placeholder={'placeholder' in field ? field.placeholder : ''}
-                    onChange={e => {
-                      const val = field.key === 'phone' ? formatPhone(e.target.value) : e.target.value;
-                      setBasicInfo(prev => ({ ...prev, [field.key]: val }));
-                    }}
-                    className={s.textInputSingle}
-                  />
-                )}
-              </div>
-            ))}
+            {BASIC_INFO_FIELDS.map(field => {
+              const options = getFieldOptions(template, field.key);
+              return (
+                <div key={field.key} className={s.fieldGroup}>
+                  <label className={s.fieldLabel}>
+                    {field.title}
+                    <span className={s.requiredMark}>*</span>
+                    {'hint' in field && field.hint && <span className={s.hint}>{field.hint}</span>}
+                  </label>
+                  {options ? (
+                    <div className={s.chipRow}>
+                      {options.map(opt => {
+                        const checked = basicInfo[field.key] === opt;
+                        return (
+                          <label key={opt} className={checked ? s.chipChecked : s.chip}
+                            onClick={() => setBasicInfo(prev => ({ ...prev, [field.key]: opt }))}>
+                            {opt}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <input
+                      type={field.type === 'tel' ? 'tel' : 'text'}
+                      value={basicInfo[field.key]}
+                      placeholder={'placeholder' in field ? field.placeholder : ''}
+                      onChange={e => {
+                        const val = field.key === 'phone' ? formatPhone(e.target.value) : e.target.value;
+                        setBasicInfo(prev => ({ ...prev, [field.key]: val }));
+                      }}
+                      className={s.textInputSingle}
+                    />
+                  )}
+                </div>
+              );
+            })}
           </div>
           <div className={s.formNav}>
             {totalPages > 1 ? (

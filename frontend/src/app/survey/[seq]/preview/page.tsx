@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { SurveyQuestion } from '@/lib/api';
 import { useSurveyData } from '../_shared/useSurveyData';
-import { BASIC_INFO_FIELDS, hintText, questionsForSection } from '../_shared/surveyConstants';
+import { BASIC_INFO_FIELDS, getFieldOptions, hintText, questionsForSection } from '../_shared/surveyConstants';
 import SurveyShell from '../_shared/SurveyShell';
 import fillStyles from '../fill/page.module.css';
 import s from './page.module.css';
@@ -83,28 +83,31 @@ export default function SurveyPreviewPage() {
               <span className={fillStyles.sectionBadge}>Section 1</span>
               <span className={fillStyles.sectionTitle}>고객 기본 정보</span>
             </div>
-            {BASIC_INFO_FIELDS.map(field => (
-              <div key={field.key} className={fillStyles.fieldGroup}>
-                <label className={fillStyles.fieldLabel}>
-                  {field.title}
-                  <span className={fillStyles.requiredMark}>*</span>
-                  {'hint' in field && field.hint && <span className={fillStyles.hint}>{field.hint}</span>}
-                </label>
-                {field.type === 'radio' && 'options' in field ? (
-                  <div className={s.chipRow}>
-                    {field.options.map(opt => (
-                      <label key={opt} className={fillStyles.chip}>
-                        <input type="radio" name={field.key} value={opt} disabled className={s.hiddenInput} />
-                        {opt}
-                      </label>
-                    ))}
-                  </div>
-                ) : (
-                  <input type={field.type === 'tel' ? 'tel' : 'text'} placeholder={'placeholder' in field ? field.placeholder : ''} disabled
-                    className={fillStyles.textInputSingle} />
-                )}
-              </div>
-            ))}
+            {BASIC_INFO_FIELDS.map(field => {
+              const options = getFieldOptions(template, field.key);
+              return (
+                <div key={field.key} className={fillStyles.fieldGroup}>
+                  <label className={fillStyles.fieldLabel}>
+                    {field.title}
+                    <span className={fillStyles.requiredMark}>*</span>
+                    {'hint' in field && field.hint && <span className={fillStyles.hint}>{field.hint}</span>}
+                  </label>
+                  {options ? (
+                    <div className={s.chipRow}>
+                      {options.map(opt => (
+                        <label key={opt} className={fillStyles.chip}>
+                          <input type="radio" name={field.key} value={opt} disabled className={s.hiddenInput} />
+                          {opt}
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <input type={field.type === 'tel' ? 'tel' : 'text'} placeholder={'placeholder' in field ? field.placeholder : ''} disabled
+                      className={fillStyles.textInputSingle} />
+                  )}
+                </div>
+              );
+            })}
           </div>
           <div className={fillStyles.formNav}>
             {totalPages > 1 ? (

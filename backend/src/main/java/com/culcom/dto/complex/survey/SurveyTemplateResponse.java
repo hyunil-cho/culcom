@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 @Getter
 @Builder
@@ -17,6 +19,7 @@ public class SurveyTemplateResponse {
     private LocalDateTime createdDate;
     private LocalDateTime lastUpdateDate;
     private int optionCount;
+    private Map<String, List<String>> customerFieldOptions;
 
     public static SurveyTemplateResponse from(SurveyTemplate entity) {
         return from(entity, 0);
@@ -31,6 +34,7 @@ public class SurveyTemplateResponse {
                 .createdDate(entity.getCreatedDate())
                 .lastUpdateDate(entity.getLastUpdateDate())
                 .optionCount(optionCount)
+                .customerFieldOptions(entity.getCustomerFieldOptions())
                 .build();
     }
 }

@@ -12,6 +12,16 @@ export const BASIC_INFO_FIELDS = [
 
 export type BasicInfoKey = typeof BASIC_INFO_FIELDS[number]['key'];
 
+export function getFieldOptions(
+  template: { customerFieldOptions?: Record<string, string[]> | null } | null,
+  key: string,
+): string[] | undefined {
+  const field = BASIC_INFO_FIELDS.find(f => f.key === key);
+  if (!field || !('options' in field)) return undefined;
+  const custom = template?.customerFieldOptions?.[key];
+  return custom && custom.length > 0 ? custom : [...field.options];
+}
+
 export function hintText(q: SurveyQuestion): string {
   if (q.inputType === 'text') return '주관식';
   if (q.inputType === 'checkbox') return '중복 선택 가능';

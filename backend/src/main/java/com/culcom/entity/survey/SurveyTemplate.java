@@ -6,6 +6,9 @@ import com.culcom.entity.enums.SurveyStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+import java.util.Map;
+
 @Entity
 @Table(name = "survey_templates")
 @Getter @Setter
@@ -31,5 +34,9 @@ public class SurveyTemplate extends BaseTimeEntity {
     @Column(nullable = false)
     @Builder.Default
     private SurveyStatus status = SurveyStatus.작성중;
+
+    @Column(name = "customer_field_options", columnDefinition = "TEXT")
+    @Convert(converter = CustomerFieldOptionsConverter.class)
+    private Map<String, List<String>> customerFieldOptions;
 
 }

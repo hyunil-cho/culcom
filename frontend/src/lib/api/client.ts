@@ -27,7 +27,7 @@ async function request<T>(url: string, options?: RequestInit): Promise<ApiRespon
   });
 
   if (res.status === 401) {
-    if (typeof window !== 'undefined' && !url.includes('/auth/')) {
+    if (typeof window !== 'undefined' && !url.includes('/auth/') && !url.startsWith('/public/')) {
       window.location.href = ROUTES.LOGIN;
     }
     throw new Error('Unauthorized');
