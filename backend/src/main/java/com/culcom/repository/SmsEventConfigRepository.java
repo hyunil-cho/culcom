@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface SmsEventConfigRepository extends JpaRepository<SmsEventConfig, Long> {
     Optional<SmsEventConfig> findByBranchSeqAndEventType(Long branchSeq, SmsEventType eventType);
     List<SmsEventConfig> findByBranchSeq(Long branchSeq);
+    void deleteByTemplateSeq(Long templateSeq);
 }

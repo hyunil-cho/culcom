@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { messageTemplateApi, settingsApi, externalApi, MessageTemplateItem } from '@/lib/api';
+import { messageTemplateApi, smsEventApi, externalApi, MessageTemplateItem } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { Select, Textarea } from '@/components/ui/FormInput';
 import { Button } from '@/components/ui/Button';
@@ -25,7 +25,7 @@ export default function SmsModal({ customerName, customerPhone, interviewDate, o
 
   const { data: senderNumbers = [] } = useApiQuery<string[]>(
     ['senderNumbers'],
-    () => settingsApi.getSenderNumbers(),
+    () => smsEventApi.getSenderNumbers(),
   );
 
   const [selectedTemplateSeq, setSelectedTemplateSeq] = useState<number | ''>('');

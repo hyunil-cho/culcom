@@ -8,11 +8,6 @@ const settingsItems = [
     title: '자동 문자 발송 설정',
     description: '고객 등록, 회원 등록, 예약 확정 시 자동으로 발송되는 문자 메시지를 설정합니다.',
   },
-  {
-    href: ROUTES.SETTINGS_RESERVATION_SMS,
-    title: '예약 확정 시 문자 발송 (기존)',
-    description: '예약 확정 시 자동으로 발송되는 문자 메시지의 템플릿과 발신번호를 설정합니다.',
-  },
 ];
 
 export default function SettingsPage() {

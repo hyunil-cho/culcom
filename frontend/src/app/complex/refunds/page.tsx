@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { refundApi, externalApi, settingsApi, type RefundRequest } from '@/lib/api';
+import { refundApi, externalApi, smsEventApi, type RefundRequest } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
@@ -33,7 +33,7 @@ export default function RefundsPage() {
   const [senderPhone, setSenderPhone] = useState('');
 
   useEffect(() => {
-    settingsApi.getSenderNumbers().then(res => {
+    smsEventApi.getSenderNumbers().then(res => {
       if (res.success && res.data?.length) setSenderPhone(res.data[0]);
     });
   }, []);

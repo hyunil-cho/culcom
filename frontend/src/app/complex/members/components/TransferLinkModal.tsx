@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { memberApi, transferApi, settingsApi, externalApi, type MemberMembershipResponse, type TransferRequestItem } from '@/lib/api';
+import { memberApi, transferApi, smsEventApi, externalApi, type MemberMembershipResponse, type TransferRequestItem } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useFormError } from '@/hooks/useFormError';
 import { Select, Textarea } from '@/components/ui/FormInput';
@@ -40,7 +40,7 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
   // SMS 발신번호 로드
   const { data: senderNumbers = [] } = useApiQuery<string[]>(
     ['senderNumbers'],
-    () => settingsApi.getSenderNumbers(),
+    () => smsEventApi.getSenderNumbers(),
     { enabled: showSms },
   );
   useEffect(() => {

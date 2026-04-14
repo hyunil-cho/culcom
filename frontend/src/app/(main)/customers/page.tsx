@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { customerApi, externalApi, settingsApi, messageTemplateApi, type Customer, type PageResponse } from '@/lib/api';
+import { customerApi, externalApi, smsEventApi, messageTemplateApi, type Customer, type PageResponse } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { queryClient } from '@/lib/queryClient';
 import { ROUTES } from '@/lib/routes';
@@ -131,19 +131,19 @@ function CustomersContent() {
   // 예약 확정 SMS 자동 발송
   const sendReservationSms = async (customer: Customer | undefined, interviewDate: string) => {
     try {
-      const configRes = await settingsApi.getReservationSmsConfig();
+      const configRes = await smsEventApi.get('예약확정');
       if (!configRes.success || !configRes.data) {
-        setResult({ success: false, message: '예약은 완료되었으나, 예약 SMS 설정이 되어 있지 않습니다. 설정 페이지에서 구성해주세요.', redirectPath: ROUTES.SETTINGS_RESERVATION_SMS });
+        setResult({ success: false, message: '예약은 완료되었으나, 예약 SMS 설정이 되어 있지 않습니다. 설정 페이지에서 구성해주세요.', redirectPath: ROUTES.SETTINGS_SMS_CONFIG });
         return;
       }
       if (!configRes.data.autoSend) {
-        setResult({ success: false, message: '예약은 완료되었으나, 예약 후 자동 문자 발송이 비활성화 상태입니다. 설정 페이지에서 활성화해주세요.', redirectPath: ROUTES.SETTINGS_RESERVATION_SMS });
+        setResult({ success: false, message: '예약은 완료되었으나, 예약 후 자동 문자 발송이 비활성화 상태입니다. 설정 페이지에서 활성화해주세요.', redirectPath: ROUTES.SETTINGS_SMS_CONFIG });
         return;
       }
 
       const { templateSeq, senderNumber } = configRes.data;
       if (!senderNumber) {
-        setResult({ success: false, message: '예약은 완료되었으나, 발신번호가 설정되지 않았습니다. 설정 페이지에서 발신번호를 지정해주세요.', redirectPath: ROUTES.SETTINGS_RESERVATION_SMS });
+        setResult({ success: false, message: '예약은 완료되었으나, 발신번호가 설정되지 않았습니다. 설정 페이지에서 발신번호를 지정해주세요.', redirectPath: ROUTES.SETTINGS_SMS_CONFIG });
         return;
       }
 

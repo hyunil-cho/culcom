@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import {
-  settingsApi, externalApi, memberApi, postponementApi,
+  smsEventApi, externalApi, memberApi, postponementApi,
   type MemberMembershipResponse, type PostponementRequest,
 } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
@@ -59,7 +59,7 @@ export default function PostponementLinkModal({ memberSeq, memberName, memberPho
 
   const { data: senderNumbers = [] } = useApiQuery<string[]>(
     ['senderNumbers'],
-    () => settingsApi.getSenderNumbers(),
+    () => smsEventApi.getSenderNumbers(),
     { enabled: showSms },
   );
   useEffect(() => {

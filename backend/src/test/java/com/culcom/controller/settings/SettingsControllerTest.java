@@ -54,50 +54,6 @@ class SettingsControllerTest {
     }
 
     @Nested
-    class ReservationSms {
-
-        @Test
-        void 예약SMS_템플릿_목록_조회() throws Exception {
-            given(settingsService.getTemplates(anyLong())).willReturn(List.of());
-
-            mockMvc.perform(get("/api/settings/reservation-sms/templates").with(auth()))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true));
-        }
-
-        @Test
-        void 예약SMS_발신번호_목록_조회() throws Exception {
-            given(settingsService.getSenderNumbers(anyLong())).willReturn(List.of("01012345678"));
-
-            mockMvc.perform(get("/api/settings/reservation-sms/sender-numbers").with(auth()))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true));
-        }
-
-        @Test
-        void 예약SMS_설정_조회() throws Exception {
-            given(settingsService.getReservationSmsConfig(anyLong())).willReturn(null);
-
-            mockMvc.perform(get("/api/settings/reservation-sms").with(auth()))
-                    .andExpect(status().isOk());
-        }
-
-        @Test
-        void 예약SMS_설정_저장() throws Exception {
-            given(settingsService.saveReservationSmsConfig(any(), anyLong())).willReturn(null);
-
-            mockMvc.perform(post("/api/settings/reservation-sms")
-                            .with(auth())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(Map.of(
-                                    "enabled", true, "templateSeq", 1,
-                                    "senderPhone", "01012345678"))))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.message").value("설정이 저장되었습니다"));
-        }
-    }
-
-    @Nested
     class SmsEvents {
 
         @Test
@@ -144,7 +100,7 @@ class SettingsControllerTest {
 
     @Test
     void 인증_없으면_401() throws Exception {
-        mockMvc.perform(get("/api/settings/reservation-sms"))
+        mockMvc.perform(get("/api/settings/sms-events"))
                 .andExpect(status().isUnauthorized());
     }
 }

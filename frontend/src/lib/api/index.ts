@@ -55,8 +55,8 @@ export {
   type MessageTemplateUpdateRequest, type MessageTemplateResolveRequest, type PlaceholderItem,
 } from './message';
 export {
-  settingsApi, integrationApi, kakaoSyncApi, dashboardApi, userApi, smsEventApi,
-  type MessageTemplateSimple, type ReservationSmsConfig, type ReservationSmsConfigRequest,
+  integrationApi, kakaoSyncApi, dashboardApi, userApi, smsEventApi,
+  type MessageTemplateSimple,
   type SmsEventType, type SmsEventConfig, type SmsEventConfigRequest,
   type IntegrationService, type SmsConfig, type SmsConfigSaveRequest,
   type KakaoSyncUrlResponse, type DailyStats, type CallerStats, type DashboardData,

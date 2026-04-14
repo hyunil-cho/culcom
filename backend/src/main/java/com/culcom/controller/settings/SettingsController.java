@@ -19,35 +19,6 @@ public class SettingsController {
 
     private final SettingsService settingsService;
 
-    @GetMapping("/reservation-sms/templates")
-    public ResponseEntity<ApiResponse<List<MessageTemplateSimpleResponse>>> getTemplates(
-            @AuthenticationPrincipal CustomUserPrincipal principal) {
-        List<MessageTemplateSimpleResponse> result = settingsService.getTemplates(principal.getSelectedBranchSeq());
-        return ResponseEntity.ok(ApiResponse.ok(result));
-    }
-
-    @GetMapping("/reservation-sms/sender-numbers")
-    public ResponseEntity<ApiResponse<List<String>>> getSenderNumbers(
-            @AuthenticationPrincipal CustomUserPrincipal principal) {
-        List<String> result = settingsService.getSenderNumbers(principal.getSelectedBranchSeq());
-        return ResponseEntity.ok(ApiResponse.ok(result));
-    }
-
-    @GetMapping("/reservation-sms")
-    public ResponseEntity<ApiResponse<ReservationSmsConfigResponse>> getReservationSmsConfig(
-            @AuthenticationPrincipal CustomUserPrincipal principal) {
-        ReservationSmsConfigResponse result = settingsService.getReservationSmsConfig(principal.getSelectedBranchSeq());
-        return ResponseEntity.ok(ApiResponse.ok(result));
-    }
-
-    @PostMapping("/reservation-sms")
-    public ResponseEntity<ApiResponse<ReservationSmsConfigResponse>> saveReservationSmsConfig(
-            @RequestBody ReservationSmsConfigRequest request,
-            @AuthenticationPrincipal CustomUserPrincipal principal) {
-        ReservationSmsConfigResponse result = settingsService.saveReservationSmsConfig(request, principal.getSelectedBranchSeq());
-        return ResponseEntity.ok(ApiResponse.ok("설정이 저장되었습니다", result));
-    }
-
     // ── SMS 이벤트 설정 ──
 
     @GetMapping("/sms-events")

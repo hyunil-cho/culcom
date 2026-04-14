@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { AttendanceViewMember, externalApi, settingsApi } from '@/lib/api';
+import { AttendanceViewMember, externalApi, smsEventApi } from '@/lib/api';
 import ModalOverlay from '@/components/ui/ModalOverlay';
 import styles from './useMessageModal.module.css';
 
@@ -41,7 +41,7 @@ export function useMessageModal() {
     setSendResults(null);
     setValidationError('');
     try {
-      const res = await settingsApi.getSenderNumbers();
+      const res = await smsEventApi.getSenderNumbers();
       if (res.success && res.data.length > 0) {
         setSenderNumbers(res.data);
         setSelectedSender(res.data[0]);

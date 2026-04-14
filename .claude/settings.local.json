@@ -94,7 +94,11 @@
       "Read(//c/Users/lookh/IdeaProjects/culcom/frontend/src/app//**)",
       "Read(//c/Users/lookh/IdeaProjects/culcom/frontend/src/**)",
       "Bash(javac --version)",
-      "Bash(./gradlew compileTestJava --tests \"com.culcom.service.CustomerCallCountExceedTest\" --no-daemon)"
+      "Bash(./gradlew compileTestJava --tests \"com.culcom.service.CustomerCallCountExceedTest\" --no-daemon)",
+      "Bash(./gradlew compileJava --no-daemon)",
+      "Bash(./gradlew --stop)",
+      "Bash(rm -rf build/test-results build/reports/tests)",
+      "Bash(./gradlew compileTestJava --no-daemon)"
     ]
   }
 }

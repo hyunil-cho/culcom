@@ -7,6 +7,7 @@ import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.MessageTemplateRepository;
 import com.culcom.repository.PlaceholderRepository;
+import com.culcom.repository.SmsEventConfigRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ public class MessageTemplateService {
     private final BranchRepository branchRepository;
     private final PlaceholderRepository placeholderRepository;
     private final SmsMessageResolver messageResolver;
+    private final SmsEventConfigRepository smsEventConfigRepository;
 
     public List<MessageTemplateResponse> list(Long branchSeq) {
         return templateRepository
@@ -63,6 +65,7 @@ public class MessageTemplateService {
 
     @Transactional
     public void delete(Long seq) {
+        smsEventConfigRepository.deleteByTemplateSeq(seq);
         templateRepository.deleteById(seq);
     }
 

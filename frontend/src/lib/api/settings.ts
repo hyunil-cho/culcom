@@ -7,22 +7,6 @@ export interface MessageTemplateSimple {
   seq: number; templateName: string;
 }
 
-export interface ReservationSmsConfig {
-  seq: number; templateSeq: number; templateName: string; senderNumber: string; autoSend: boolean;
-}
-
-export interface ReservationSmsConfigRequest {
-  templateSeq: number; senderNumber: string; autoSend: boolean;
-}
-
-export const settingsApi = {
-  getReservationSmsConfig: () => api.get<ReservationSmsConfig | null>(API.SETTINGS_RESERVATION_SMS),
-  getTemplates: () => api.get<MessageTemplateSimple[]>(API.SETTINGS_RESERVATION_SMS_TEMPLATES),
-  getSenderNumbers: () => api.get<string[]>(API.SETTINGS_RESERVATION_SMS_SENDERS),
-  saveReservationSmsConfig: (data: ReservationSmsConfigRequest) =>
-    api.post<ReservationSmsConfig>(API.SETTINGS_RESERVATION_SMS, data),
-};
-
 // ── SMS 이벤트 설정 ──
 
 export type SmsEventType = '예약확정' | '고객등록' | '회원등록';

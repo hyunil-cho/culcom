@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { settingsApi, externalApi } from '@/lib/api';
+import { smsEventApi, externalApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { Select, Textarea } from '@/components/ui/FormInput';
@@ -28,7 +28,7 @@ export default function RefundLinkModal({ memberSeq, memberName, memberPhone, on
 
   const { data: senderNumbers = [] } = useApiQuery<string[]>(
     ['senderNumbers'],
-    () => settingsApi.getSenderNumbers(),
+    () => smsEventApi.getSenderNumbers(),
     { enabled: showSms },
   );
   useEffect(() => {

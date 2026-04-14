@@ -2,7 +2,6 @@ package com.culcom.service;
 
 import com.culcom.dto.settings.*;
 import com.culcom.entity.enums.SmsEventType;
-import com.culcom.entity.reservation.ReservationSmsConfig;
 import com.culcom.entity.settings.SmsEventConfig;
 import com.culcom.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +14,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class SettingsService {
 
-    private final ReservationSmsConfigRepository reservationSmsConfigRepository;
     private final SmsEventConfigRepository smsEventConfigRepository;
     private final MessageTemplateRepository messageTemplateRepository;
     private final MymunjaConfigInfoRepository mymunjaConfigInfoRepository;
@@ -31,28 +29,6 @@ public class SettingsService {
 
     public List<String> getSenderNumbers(Long branchSeq) {
         return mymunjaConfigInfoRepository.findSenderNumbersByBranchSeq(branchSeq);
-    }
-
-    public ReservationSmsConfigResponse getReservationSmsConfig(Long branchSeq) {
-        return reservationSmsConfigRepository.findByBranchSeq(branchSeq)
-                .map(ReservationSmsConfigResponse::from)
-                .orElse(null);
-    }
-
-    public ReservationSmsConfigResponse saveReservationSmsConfig(ReservationSmsConfigRequest request, Long branchSeq) {
-        ReservationSmsConfig config = reservationSmsConfigRepository.findByBranchSeq(branchSeq)
-                .orElseGet(() -> {
-                    ReservationSmsConfig newConfig = new ReservationSmsConfig();
-                    branchRepository.findById(branchSeq).ifPresent(newConfig::setBranch);
-                    return newConfig;
-                });
-
-        messageTemplateRepository.findById(request.getTemplateSeq()).ifPresent(config::setTemplate);
-        config.setSenderNumber(request.getSenderNumber());
-        config.setAutoSend(request.getAutoSend());
-
-        ReservationSmsConfig saved = reservationSmsConfigRepository.save(config);
-        return ReservationSmsConfigResponse.from(saved);
     }
 
     // ── SMS 이벤트 설정 ──
