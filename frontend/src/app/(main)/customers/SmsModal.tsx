@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { messageTemplateApi, settingsApi, externalApi, MessageTemplateItem } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
-import { usePlaceholderResolver } from '@/lib/usePlaceholderResolver';
 import { Select, Textarea } from '@/components/ui/FormInput';
 import { Button } from '@/components/ui/Button';
 import s from './SmsModal.module.css';
@@ -17,8 +16,6 @@ interface SmsModalProps {
 }
 
 export default function SmsModal({ customerName, customerPhone, interviewDate, onClose, onResult }: SmsModalProps) {
-  const { ready, resolve } = usePlaceholderResolver();
-
   const [mode, setMode] = useState<'template' | 'direct'>('template');
 
   const { data: templates = [] } = useApiQuery<MessageTemplateItem[]>(
@@ -52,11 +49,12 @@ export default function SmsModal({ customerName, customerPhone, interviewDate, o
   }, [senderNumbers, senderPhone]);
 
   useEffect(() => {
-    if (!ready || mode !== 'template' || !selectedTemplateSeq) return;
-    const tmpl = templates.find(t => t.seq === selectedTemplateSeq);
-    if (!tmpl?.messageContext) { setMessage(''); return; }
-    setMessage(resolve(tmpl.messageContext, { customerName, customerPhone, interviewDate }));
-  }, [ready, selectedTemplateSeq, mode, templates, customerName, customerPhone, interviewDate, resolve]);
+    if (mode !== 'template' || !selectedTemplateSeq) return;
+    let cancelled = false;
+    messageTemplateApi.resolve(selectedTemplateSeq, { customerName, customerPhone, interviewDate })
+      .then(res => { if (!cancelled) setMessage(res.success && res.data ? res.data : ''); });
+    return () => { cancelled = true; };
+  }, [selectedTemplateSeq, mode, customerName, customerPhone, interviewDate]);
 
   const handleModeChange = (newMode: 'template' | 'direct') => {
     setMode(newMode);

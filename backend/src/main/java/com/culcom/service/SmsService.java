@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -93,10 +92,7 @@ public class SmsService {
             log.warn("SMS 이벤트 설정({})의 템플릿 내용이 비어있습니다.", eventType);
             return "문자 발송 실패: 메시지 템플릿 내용이 비어있습니다.";
         }
-        message = messageResolver.resolve(message, Map.of(
-                "{{이름}}", name,
-                "{{전화번호}}", phoneNumber
-        ));
+        message = messageResolver.resolveWithContext(message, config.getBranch(), name, phoneNumber, null);
 
         SmsSendResponse result = sendByBranch(branchSeq, config.getSenderNumber(), phoneNumber, message, null);
         if (result.isSuccess()) {

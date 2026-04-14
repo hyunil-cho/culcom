@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { customerApi, externalApi, settingsApi, messageTemplateApi, type Customer, type PageResponse } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { queryClient } from '@/lib/queryClient';
-import { usePlaceholderResolver } from '@/lib/usePlaceholderResolver';
 import { ROUTES } from '@/lib/routes';
 import { toServerDateTime, formatDateTime } from '@/lib/dateUtils';
 import TimePicker from '@/components/ui/TimePicker';
@@ -43,7 +42,8 @@ export default function CustomersPage() {
 
 function CustomersContent() {
   const router = useRouter();
-  const { resolve } = usePlaceholderResolver();
+
+
   const { params: qp, setParams } = useQueryParams(CUSTOMER_DEFAULTS);
   const page = Number(qp.page);
   const filter = qp.filter;
@@ -113,7 +113,7 @@ function CustomersContent() {
     setSelectedCallers(prev => ({ ...prev, [customerSeq]: caller }));
     setPhoneVisible(prev => ({ ...prev, [customerSeq]: true }));
     callerConfirm.close();
-    invalidateCustomers();
+    await invalidateCustomers();
   };
 
   // 인터뷰 확정
@@ -147,17 +147,16 @@ function CustomersContent() {
         return;
       }
 
-      const tmplRes = await messageTemplateApi.get(templateSeq);
-      if (!tmplRes.success || !tmplRes.data?.messageContext) {
-        setResult({ success: false, message: '예약은 완료되었으나, 메시지 템플릿을 불러올 수 없습니다. 설정을 확인해주세요.', redirectPath: ROUTES.MESSAGE_TEMPLATES });
-        return;
-      }
-
-      const message = resolve(tmplRes.data.messageContext, {
+      const resolveRes = await messageTemplateApi.resolve(templateSeq, {
         customerName: customer?.name,
         customerPhone: customer?.phoneNumber,
         interviewDate,
       });
+      if (!resolveRes.success || !resolveRes.data) {
+        setResult({ success: false, message: '예약은 완료되었으나, 메시지 템플릿을 불러올 수 없습니다. 설정을 확인해주세요.', redirectPath: ROUTES.MESSAGE_TEMPLATES });
+        return;
+      }
+      const message = resolveRes.data;
 
       const smsRes = await externalApi.sendSms({
         senderPhone: senderNumber,

@@ -1,6 +1,7 @@
 package com.culcom.service;
 
 import com.culcom.dto.message.*;
+import com.culcom.entity.branch.Branch;
 import com.culcom.entity.message.MessageTemplate;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
@@ -19,6 +20,7 @@ public class MessageTemplateService {
     private final MessageTemplateRepository templateRepository;
     private final BranchRepository branchRepository;
     private final PlaceholderRepository placeholderRepository;
+    private final SmsMessageResolver messageResolver;
 
     public List<MessageTemplateResponse> list(Long branchSeq) {
         return templateRepository
@@ -62,6 +64,23 @@ public class MessageTemplateService {
     @Transactional
     public void delete(Long seq) {
         templateRepository.deleteById(seq);
+    }
+
+    public String resolve(Long seq, Long branchSeq, MessageTemplateResolveRequest request) {
+        MessageTemplate template = templateRepository.findById(seq)
+                .orElseThrow(() -> new EntityNotFoundException("메시지 템플릿"));
+
+        Branch branch = branchSeq != null
+                ? branchRepository.findById(branchSeq).orElse(null)
+                : null;
+
+        return messageResolver.resolveWithContext(
+                template.getMessageContext(),
+                branch,
+                request.getCustomerName(),
+                request.getCustomerPhone(),
+                request.getInterviewDate()
+        );
     }
 
     public List<PlaceholderResponse> getPlaceholders() {

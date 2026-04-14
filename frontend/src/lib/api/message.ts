@@ -15,6 +15,12 @@ export interface MessageTemplateUpdateRequest {
   templateName: string; description?: string; messageContext: string; isActive: boolean;
 }
 
+export interface MessageTemplateResolveRequest {
+  customerName?: string;
+  customerPhone?: string;
+  interviewDate?: string;
+}
+
 export interface PlaceholderItem {
   seq: number; name: string; comment: string | null; examples: string | null; value: string | null;
 }
@@ -26,5 +32,6 @@ export const messageTemplateApi = {
   update: (seq: number, data: MessageTemplateUpdateRequest) => api.put<MessageTemplateItem>(API.MESSAGE_TEMPLATE(seq), data),
   delete: (seq: number) => api.delete<void>(API.MESSAGE_TEMPLATE(seq)),
   setDefault: (seq: number) => api.post<void>(API.MESSAGE_TEMPLATE_SET_DEFAULT(seq)),
+  resolve: (seq: number, data: MessageTemplateResolveRequest) => api.post<string>(API.MESSAGE_TEMPLATE_RESOLVE(seq), data),
   placeholders: () => api.get<PlaceholderItem[]>(API.MESSAGE_TEMPLATE_PLACEHOLDERS),
 };

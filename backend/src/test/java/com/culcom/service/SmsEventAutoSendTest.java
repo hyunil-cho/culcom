@@ -61,7 +61,7 @@ class SmsEventAutoSendTest {
     @Test
     void 자동발송_비활성화면_경고_메시지_반환() {
         Branch branch = createBranch();
-        MessageTemplate template = createTemplate(branch, "안녕하세요 {{이름}}님");
+        MessageTemplate template = createTemplate(branch, "안녕하세요 {{고객명}}님");
 
         smsEventConfigRepository.save(SmsEventConfig.builder()
                 .branch(branch)
@@ -103,7 +103,7 @@ class SmsEventAutoSendTest {
     @Test
     void SMS_연동설정_없으면_발송실패_메시지_반환() {
         Branch branch = createBranch();
-        MessageTemplate template = createTemplate(branch, "{{이름}}님 환영합니다!");
+        MessageTemplate template = createTemplate(branch, "{{고객명}}님 환영합니다!");
 
         smsEventConfigRepository.save(SmsEventConfig.builder()
                 .branch(branch)

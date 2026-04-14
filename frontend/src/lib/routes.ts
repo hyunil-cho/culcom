@@ -262,6 +262,7 @@ export const API = {
   MESSAGE_TEMPLATES: A.MESSAGE_TEMPLATES,
   MESSAGE_TEMPLATE: (seq: number) => `${A.MESSAGE_TEMPLATES}/${seq}`,
   MESSAGE_TEMPLATE_SET_DEFAULT: (seq: number) => `${A.MESSAGE_TEMPLATES}/${seq}/set-default`,
+  MESSAGE_TEMPLATE_RESOLVE: (seq: number) => `${A.MESSAGE_TEMPLATES}/${seq}/resolve`,
   MESSAGE_TEMPLATE_PLACEHOLDERS: `${A.MESSAGE_TEMPLATES}/placeholders`,
 
   // 설문

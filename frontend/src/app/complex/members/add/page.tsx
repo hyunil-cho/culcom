@@ -47,8 +47,10 @@ function MemberAddPageInner() {
     const channelLabels = channels.map(c => c.code);
     const signupChannel = detail.adSource && channelLabels.includes(detail.adSource)
       ? detail.adSource : (detail.adSource ?? '');
-    const info = detail.customerComment ?? '';
-    setForm(prev => ({ ...prev, name: detail.name, phoneNumber: detail.phoneNumber, signupChannel, info }));
+    const info = [detail.location, detail.gender, detail.ageGroup, detail.occupation, detail.adSource]
+      .filter(Boolean).join(' / ');
+    const comment = detail.customerComment ?? '';
+    setForm(prev => ({ ...prev, name: detail.name, phoneNumber: detail.phoneNumber, signupChannel, info, comment }));
   };
 
   return (

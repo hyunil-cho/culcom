@@ -87,7 +87,14 @@
       "Bash(./gradlew cleanTest test --tests \"com.culcom.service.PostponementServiceOverlapTest\")",
       "Bash(echo \"EXIT_CODE=$?\")",
       "Bash(npm run:*)",
-      "Bash(npx vitest:*)"
+      "Bash(npx vitest:*)",
+      "Bash(./gradlew compileTestJava)",
+      "Bash(npm ls:*)",
+      "Bash(awk -F'[/\\\\\\\\\\\\\\\\:]' '{print $\\(NF-1\\)}')",
+      "Read(//c/Users/lookh/IdeaProjects/culcom/frontend/src/app//**)",
+      "Read(//c/Users/lookh/IdeaProjects/culcom/frontend/src/**)",
+      "Bash(javac --version)",
+      "Bash(./gradlew compileTestJava --tests \"com.culcom.service.CustomerCallCountExceedTest\" --no-daemon)"
     ]
   }
 }

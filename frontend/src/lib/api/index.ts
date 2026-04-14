@@ -52,7 +52,7 @@ export {
 export {
   messageTemplateApi,
   type MessageTemplateItem, type MessageTemplateCreateRequest,
-  type MessageTemplateUpdateRequest, type PlaceholderItem,
+  type MessageTemplateUpdateRequest, type MessageTemplateResolveRequest, type PlaceholderItem,
 } from './message';
 export {
   settingsApi, integrationApi, kakaoSyncApi, dashboardApi, userApi, smsEventApi,

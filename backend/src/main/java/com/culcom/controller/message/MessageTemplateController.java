@@ -58,6 +58,15 @@ public class MessageTemplateController {
         return ResponseEntity.ok(ApiResponse.ok("기본 템플릿 설정 완료", null));
     }
 
+    @PostMapping("/{seq}/resolve")
+    public ResponseEntity<ApiResponse<String>> resolve(
+            @PathVariable Long seq,
+            @RequestBody MessageTemplateResolveRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        String resolved = messageTemplateService.resolve(seq, principal.getSelectedBranchSeq(), request);
+        return ResponseEntity.ok(ApiResponse.ok(resolved));
+    }
+
     @GetMapping("/placeholders")
     public ResponseEntity<ApiResponse<List<PlaceholderResponse>>> getPlaceholders() {
         return ResponseEntity.ok(ApiResponse.ok(messageTemplateService.getPlaceholders()));
