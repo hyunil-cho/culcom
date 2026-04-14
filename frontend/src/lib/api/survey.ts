@@ -5,6 +5,7 @@ export interface SurveyTemplate {
   seq: number; name: string; description: string | null;
   status: '작성중' | '활성' | '비활성'; createdDate: string;
   lastUpdateDate: string | null; optionCount: number;
+  customerFieldOptions: Record<string, string[]> | null;
 }
 
 export interface SurveySection {
@@ -32,8 +33,8 @@ export interface SurveySubmissionDetail {
   name: string; phoneNumber: string; gender: string | null;
   location: string | null; ageGroup: string | null;
   occupation: string | null; adSource: string | null;
-  answers: string | null; createdDate: string;
-  customerComment: string | null;
+  answers: string | null; questionSnapshot: string | null;
+  createdDate: string; customerComment: string | null;
 }
 
 export const surveyApi = {
@@ -43,7 +44,7 @@ export const surveyApi = {
   getTemplate: (seq: number) => api.get<SurveyTemplate>(API.SURVEY_TEMPLATE(seq)),
   createTemplate: (data: { name: string; description?: string }) =>
     api.post<SurveyTemplate>(API.SURVEY_TEMPLATES, data),
-  updateTemplate: (seq: number, data: { name?: string; description?: string }) =>
+  updateTemplate: (seq: number, data: { name?: string; description?: string; customerFieldOptions?: Record<string, string[]> }) =>
     api.put<SurveyTemplate>(API.SURVEY_TEMPLATE(seq), data),
   updateStatus: (seq: number, status: string) =>
     api.put<SurveyTemplate>(API.SURVEY_TEMPLATE_STATUS(seq), { status }),

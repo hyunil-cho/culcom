@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { surveyApi, type SurveySubmissionDetail, type SurveyQuestion } from '@/lib/api';
+import { surveyApi, type SurveySubmissionDetail } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
@@ -19,18 +19,10 @@ export default function SurveySubmissionDetailPage() {
   const router = useRouter();
   const seq = Number(params.seq);
 
-  const { data: detail = null, isLoading: detailLoading } = useApiQuery<SurveySubmissionDetail>(
+  const { data: detail = null, isLoading: loading } = useApiQuery<SurveySubmissionDetail>(
     ['surveySubmission', seq],
     () => surveyApi.getSubmission(seq),
   );
-
-  const { data: questions = [], isLoading: questionsLoading } = useApiQuery<SurveyQuestion[]>(
-    ['surveyQuestions', detail?.templateSeq],
-    () => surveyApi.listQuestions(detail!.templateSeq),
-    { enabled: !!detail?.templateSeq },
-  );
-
-  const loading = detailLoading || questionsLoading;
 
   if (loading) return <Spinner />;
   if (!detail) return <div className="content-card" style={{ textAlign: 'center', padding: '2rem' }}>데이터를 찾을 수 없습니다.</div>;
@@ -59,8 +51,14 @@ export default function SurveySubmissionDetailPage() {
     { header: '내용', render: item => item.value },
   ];
 
-  // 설문 응답 행
-  const questionMap = new Map(questions.map(q => [q.questionKey, q.title]));
+  // 설문 응답 행 (스냅샷 기반, 없으면 key 그대로 표시)
+  const questionMap = new Map<string, string>();
+  if (detail.questionSnapshot) {
+    try {
+      const snapshot: Record<string, string> = JSON.parse(detail.questionSnapshot);
+      Object.entries(snapshot).forEach(([k, v]) => questionMap.set(k, v));
+    } catch { /* ignore */ }
+  }
   let answerRows: AnswerRow[] = [];
 
   if (detail.answers) {

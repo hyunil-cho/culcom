@@ -49,4 +49,11 @@ public class SurveySubmission extends BaseTimeEntity {
     /** 설문 응답 (JSON) */
     @Column(columnDefinition = "TEXT")
     private String answers;
+
+    /** 제출 시점 스냅샷 */
+    @Column(name = "template_name", length = 200)
+    private String templateName;
+
+    @Column(name = "question_snapshot", columnDefinition = "TEXT")
+    private String questionSnapshot;
 }

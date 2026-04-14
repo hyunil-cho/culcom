@@ -7,11 +7,16 @@ import com.culcom.entity.customer.CustomerConsentHistory;
 import com.culcom.entity.reservation.ReservationInfo;
 import com.culcom.entity.survey.SurveySubmission;
 import com.culcom.entity.survey.SurveyTemplate;
+import com.culcom.entity.survey.SurveyTemplateQuestion;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +27,7 @@ public class PublicSurveyService {
 
     private final SurveySubmissionRepository submissionRepository;
     private final SurveyTemplateRepository templateRepository;
+    private final SurveyTemplateQuestionRepository questionRepository;
     private final ReservationInfoRepository reservationInfoRepository;
     private final ConsentItemRepository consentItemRepository;
     private final CustomerConsentHistoryRepository consentHistoryRepository;
@@ -46,11 +52,27 @@ public class PublicSurveyService {
                 .occupation(req.getOccupation())
                 .adSource(req.getAdSource())
                 .answers(answersJson)
+                .templateName(template.getName())
+                .questionSnapshot(buildQuestionSnapshot(template.getSeq()))
                 .build();
 
         submissionRepository.save(submission);
 
         saveConsentHistories(req);
+    }
+
+    private String buildQuestionSnapshot(Long templateSeq) {
+        try {
+            List<SurveyTemplateQuestion> questions = questionRepository.findByTemplateSeqOrderBySortOrder(templateSeq);
+            Map<String, String> snapshot = new LinkedHashMap<>();
+            for (SurveyTemplateQuestion q : questions) {
+                snapshot.put(q.getQuestionKey(), q.getTitle());
+            }
+            return objectMapper.writeValueAsString(snapshot);
+        } catch (Exception e) {
+            log.warn("질문 스냅샷 생성 실패", e);
+            return "{}";
+        }
     }
 
     private String serializeAnswers(SurveySubmitRequest req) {

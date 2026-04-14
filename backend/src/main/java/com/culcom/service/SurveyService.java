@@ -43,10 +43,16 @@ public class SurveyService {
         detail.setOccupation(s.getOccupation());
         detail.setAdSource(s.getAdSource());
         detail.setAnswers(s.getAnswers());
+        detail.setQuestionSnapshot(s.getQuestionSnapshot());
         detail.setCreatedDate(s.getCreatedDate() != null ? s.getCreatedDate().toString() : null);
 
-        templateRepository.findById(s.getTemplateSeq())
-                .ifPresent(t -> detail.setTemplateName(t.getName()));
+        // 스냅샷이 있으면 사용, 없으면 live 조회 (기존 데이터 호환)
+        if (s.getTemplateName() != null) {
+            detail.setTemplateName(s.getTemplateName());
+        } else {
+            templateRepository.findById(s.getTemplateSeq())
+                    .ifPresent(t -> detail.setTemplateName(t.getName()));
+        }
 
         if (s.getReservationSeq() != null) {
             reservationInfoRepository.findById(s.getReservationSeq())
@@ -88,6 +94,7 @@ public class SurveyService {
                 .orElseThrow(() -> new EntityNotFoundException("설문지"));
         if (req.getName() != null) t.setName(req.getName());
         if (req.getDescription() != null) t.setDescription(req.getDescription());
+        if (req.getCustomerFieldOptions() != null) t.setCustomerFieldOptions(req.getCustomerFieldOptions());
         SurveyTemplate saved = templateRepository.save(t);
         return SurveyTemplateResponse.from(saved, optionRepository.countByTemplateSeq(saved.getSeq()));
     }
@@ -270,6 +277,7 @@ public class SurveyService {
         SurveyTemplate copy = SurveyTemplate.builder()
                 .name(source.getName() + " (복사본)")
                 .description(source.getDescription())
+                .customerFieldOptions(source.getCustomerFieldOptions())
                 .build();
         branchRepository.findById(branchSeq).ifPresent(copy::setBranch);
         SurveyTemplate savedTemplate = templateRepository.save(copy);

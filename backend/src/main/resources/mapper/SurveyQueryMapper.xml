@@ -9,10 +9,10 @@
             ss.seq          AS seq,
             ss.name         AS name,
             ss.phone_number AS phoneNumber,
-            st.name         AS templateName,
+            COALESCE(ss.template_name, st.name, '(삭제된 설문지)') AS templateName,
             ss.created_date AS createdDate
         FROM survey_submissions ss
-        JOIN survey_templates st ON st.seq = ss.template_seq
+        LEFT JOIN survey_templates st ON st.seq = ss.template_seq
         WHERE ss.branch_seq = #{branchSeq}
         ORDER BY ss.created_date DESC
     </select>

@@ -19,6 +19,7 @@ public class SurveySubmissionDetailRow {
     private String occupation;
     private String adSource;
     private String answers;
+    private String questionSnapshot;
     private String createdDate;
     private String customerComment;
 }
