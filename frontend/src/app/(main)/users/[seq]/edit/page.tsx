@@ -15,7 +15,7 @@ export default function UserEditPage() {
   const seq = Number(params.seq);
   const [form, setForm] = useState<UserFormData>(emptyUserForm);
   const [role, setRole] = useState('');
-  const { run, modal } = useResultModal({ redirectPath: ROUTES.USERS });
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.USERS, invalidateKeys: ['users'] });
   const { error: formError, validate, clear: clearError } = useFormError();
   const [deleting, setDeleting] = useState(false);
 

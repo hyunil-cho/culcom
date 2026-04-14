@@ -28,7 +28,7 @@ export default function ReservationSmsConfigPage() {
   );
 
   const [saving, setSaving] = useState(false);
-  const { run, showError, modal } = useResultModal({ redirectPath: ROUTES.SETTINGS });
+  const { run, showError, modal } = useResultModal({ redirectPath: ROUTES.SETTINGS, invalidateKeys: ['reservationSms'] });
 
   const [templateSeq, setTemplateSeq] = useState<number | ''>('');
   const [senderNumber, setSenderNumber] = useState('');

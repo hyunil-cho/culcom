@@ -14,7 +14,7 @@ import { useFormError } from '@/hooks/useFormError';
 
 export default function MembershipAddPage() {
   const [form, setForm] = useState<MembershipFormData>(emptyMembershipForm);
-  const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_MEMBERSHIPS });
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_MEMBERSHIPS, invalidateKeys: ['memberships'] });
   const { error: formError, validate, clear: clearError } = useFormError();
 
   const handleSubmit = async () => {

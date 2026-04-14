@@ -14,7 +14,7 @@ export default function UserCreatePage() {
   const creatingRole = SessionRole.isRoot(session) ? '지점장' : '직원';
 
   const [form, setForm] = useState({ userId: '', password: '', name: '', phone: '' });
-  const { run, modal } = useResultModal({ redirectPath: ROUTES.USERS });
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.USERS, invalidateKeys: ['users'] });
 
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [field]: e.target.value });

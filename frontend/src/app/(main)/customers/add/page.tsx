@@ -19,7 +19,7 @@ export default function CustomerAddPage() {
     comment: '',
     adSource: '',
   });
-  const { run, modal } = useResultModal({ redirectPath: ROUTES.CUSTOMERS });
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.CUSTOMERS, invalidateKeys: ['customers'] });
   const { error: formError, setError, clear: clearError } = useFormError();
   const { channels: signupChannelConfigs } = useSignupChannels();
   const signupChannelLabels = signupChannelConfigs.map(c => c.code);

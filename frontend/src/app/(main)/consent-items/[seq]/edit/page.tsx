@@ -12,7 +12,7 @@ import ConsentItemForm, { emptyForm, validateForm, type ConsentItemFormData } fr
 export default function ConsentItemEditPage() {
   const seq = Number(useParams().seq);
   const [form, setForm] = useState<ConsentItemFormData>(emptyForm);
-  const { run, modal } = useResultModal({ redirectPath: ROUTES.CONSENT_ITEMS });
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.CONSENT_ITEMS, invalidateKeys: ['consentItems'] });
   const { error: formError, validate, clear: clearError } = useFormError();
 
   const { data: consentData } = useApiQuery(

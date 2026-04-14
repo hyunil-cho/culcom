@@ -9,7 +9,7 @@ import NoticeForm, { NoticeFormData } from '../NoticeForm';
 export default function NoticeAddPage() {
   const { form, handleChange, submitting, submit, showError, modal } = useFormState<NoticeFormData>(
     { title: '', content: '', category: '공지사항', isPinned: false, createdBy: '', eventStartDate: '', eventEndDate: '' },
-    { redirectPath: ROUTES.NOTICES },
+    { redirectPath: ROUTES.NOTICES, invalidateKeys: ['notices'] },
   );
 
   const handleSubmit = async (e: React.FormEvent) => {

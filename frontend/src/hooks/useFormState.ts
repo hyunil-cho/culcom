@@ -7,6 +7,7 @@ import type { ApiResponse } from '@/lib/api/client';
 interface UseFormStateOptions {
   redirectPath?: string;
   onConfirm?: () => void | Promise<void>;
+  invalidateKeys?: string[];
 }
 
 interface UseFormStateReturn<T> {

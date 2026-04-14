@@ -15,7 +15,7 @@ export default function BranchEditPage() {
   const seq = Number(params.seq);
   const refreshBranches = useSessionStore((s) => s.refreshBranches);
   const [form, setForm] = useState<BranchFormData>(emptyBranchForm);
-  const { run, modal } = useResultModal({ redirectPath: ROUTES.BRANCH_DETAIL(seq) });
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.BRANCH_DETAIL(seq), invalidateKeys: ['branches'] });
   const { error: formError, validate, clear: clearError } = useFormError();
 
   const { data: branchData } = useApiQuery(

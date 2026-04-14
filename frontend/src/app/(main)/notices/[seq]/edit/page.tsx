@@ -16,7 +16,7 @@ export default function NoticeEditPage() {
 
   const { form, setForm, handleChange, submitting, submit, showError, modal } = useFormState<NoticeFormData>(
     { title: '', content: '', category: '공지사항', isPinned: false, createdBy: '', eventStartDate: '', eventEndDate: '' },
-    { redirectPath: ROUTES.NOTICE_DETAIL(seq) },
+    { redirectPath: ROUTES.NOTICE_DETAIL(seq), invalidateKeys: ['notices'] },
   );
 
   const { data: noticeData, isLoading: loading } = useApiQuery(

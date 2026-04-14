@@ -9,7 +9,7 @@ import ConsentItemForm, { emptyForm, validateForm } from '../ConsentItemForm';
 
 export default function ConsentItemAddPage() {
   const [form, setForm] = useState(emptyForm);
-  const { run, modal } = useResultModal({ redirectPath: ROUTES.CONSENT_ITEMS });
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.CONSENT_ITEMS, invalidateKeys: ['consentItems'] });
   const { error: formError, validate, clear: clearError } = useFormError();
 
   const handleSubmit = async () => {

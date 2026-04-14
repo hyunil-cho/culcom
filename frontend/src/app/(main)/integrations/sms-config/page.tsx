@@ -26,7 +26,7 @@ function SmsConfigPageInner() {
   const [saving, setSaving] = useState(false);
   const [formInitialized, setFormInitialized] = useState(false);
 
-  const { run, showError, modal } = useResultModal({ redirectPath: ROUTES.INTEGRATIONS });
+  const { run, showError, modal } = useResultModal({ redirectPath: ROUTES.INTEGRATIONS, invalidateKeys: ['integrations', 'smsConfig'] });
 
   const { data: fetchedConfig, isLoading: loading } = useApiQuery<SmsConfig | null>(
     ['smsConfig'],

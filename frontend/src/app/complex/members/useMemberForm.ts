@@ -24,7 +24,7 @@ export function useMemberForm(seq?: number) {
   const staff = useStaffForm({ seq, isEdit, allClasses });
   const membership = useMembership({ memberSeq: seq, isEdit, memberName: form.name, memberPhone: form.phoneNumber });
   const [classAssign, setClassAssign] = useState<ClassAssignData>(emptyClassAssign);
-  const { run, modal } = useResultModal({ redirectPath: staff.staffMode ? ROUTES.COMPLEX_STAFFS : ROUTES.COMPLEX_MEMBERS });
+  const { run, modal } = useResultModal({ redirectPath: staff.staffMode ? ROUTES.COMPLEX_STAFFS : ROUTES.COMPLEX_MEMBERS, invalidateKeys: ['members', 'staffs'] });
 
   // 양도 불일치 모달 상태
   const [showTransferMismatch, setShowTransferMismatch] = useState(false);

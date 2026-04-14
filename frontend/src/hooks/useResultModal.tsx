@@ -3,10 +3,12 @@
 import { useState, ReactNode } from 'react';
 import ResultModal from '@/components/ui/ResultModal';
 import { ApiResponse } from '@/lib/api';
+import { queryClient } from '@/lib/queryClient';
 
 interface UseResultModalOptions {
   redirectPath?: string;
   onConfirm?: () => void | Promise<void>;
+  invalidateKeys?: string[];
 }
 
 export function useResultModal(options?: UseResultModalOptions) {
@@ -15,6 +17,13 @@ export function useResultModal(options?: UseResultModalOptions) {
   async function run<T>(apiCall: Promise<ApiResponse<T>>, successMessage: string): Promise<ApiResponse<T>> {
     const res = await apiCall;
     if (res.success) {
+      if (options?.invalidateKeys?.length) {
+        await Promise.all(
+          options.invalidateKeys.map((key) =>
+            queryClient.invalidateQueries({ queryKey: [key] }),
+          ),
+        );
+      }
       setResult({ success: true, message: successMessage });
     } else if (res.message) {
       setResult({ success: false, message: res.message });

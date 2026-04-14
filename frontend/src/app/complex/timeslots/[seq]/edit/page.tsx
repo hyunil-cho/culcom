@@ -21,7 +21,7 @@ export default function TimeslotEditPage() {
   const router = useRouter();
   const seq = Number(params.seq);
   const [form, setForm] = useState<TimeslotFormData>(emptyTimeslotForm);
-  const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_TIMESLOTS });
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_TIMESLOTS, invalidateKeys: ['timeslots'] });
   const { error: formError, validate, clear: clearError } = useFormError();
 
   const { data: timeslots } = useApiQuery(

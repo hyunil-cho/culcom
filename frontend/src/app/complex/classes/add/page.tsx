@@ -11,7 +11,7 @@ import { useClassSlots } from '../../hooks/useClassSlots';
 export default function ClassAddPage() {
   const [form, setForm] = useState<ClassFormData>(emptyClassForm);
   const { timeSlots } = useClassSlots();
-  const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_CLASSES });
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_CLASSES, invalidateKeys: ['classes'] });
   const { error: formError, validate, clear: clearError } = useFormError();
 
   const handleSubmit = async () => {

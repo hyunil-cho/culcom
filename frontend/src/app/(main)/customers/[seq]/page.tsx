@@ -28,7 +28,7 @@ export default function CustomerDetailPage() {
     () => customerApi.get(seq),
   );
   const [deleting, setDeleting] = useState(false);
-  const { run, modal } = useResultModal({ redirectPath: ROUTES.CUSTOMERS });
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.CUSTOMERS, invalidateKeys: ['customers'] });
 
   if (!customer) return null;
 

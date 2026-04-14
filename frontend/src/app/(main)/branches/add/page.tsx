@@ -11,7 +11,7 @@ import { useFormError } from '@/hooks/useFormError';
 export default function BranchAddPage() {
   const refreshBranches = useSessionStore((s) => s.refreshBranches);
   const [form, setForm] = useState<BranchFormData>(emptyBranchForm);
-  const { run, modal } = useResultModal({ redirectPath: ROUTES.BRANCHES });
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.BRANCHES, invalidateKeys: ['branches'] });
   const { error: formError, validate, clear: clearError } = useFormError();
 
   const handleSubmit = async () => {

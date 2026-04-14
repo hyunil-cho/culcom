@@ -20,7 +20,7 @@ export default function CustomerEditPage() {
   const seq = Number(params.seq);
 
   const [form, setForm] = useState({ name: '', phoneNumber: '', comment: '', commercialName: '', adSource: '' });
-  const { run, modal } = useResultModal({ redirectPath: ROUTES.CUSTOMERS });
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.CUSTOMERS, invalidateKeys: ['customers'] });
   const { error: formError, setError, clear: clearError } = useFormError();
   const [deleting, setDeleting] = useState(false);
 

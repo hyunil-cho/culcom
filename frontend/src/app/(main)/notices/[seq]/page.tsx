@@ -19,7 +19,7 @@ export default function NoticeDetailPage() {
 
   const { data: notice } = useApiQuery<NoticeDetail>(['notices', seq], () => noticeApi.get(seq));
   const [deleting, setDeleting] = useState(false);
-  const { run, modal } = useResultModal({ redirectPath: ROUTES.NOTICES });
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.NOTICES, invalidateKeys: ['notices'] });
 
   const handleDelete = async () => { setDeleting(false); await run(noticeApi.delete(seq), '공지사항이 삭제되었습니다.'); };
 

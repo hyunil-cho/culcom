@@ -21,7 +21,7 @@ export default function MembershipEditPage() {
   const router = useRouter();
   const seq = Number(params.seq);
   const [form, setForm] = useState<MembershipFormData>(emptyMembershipForm);
-  const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_MEMBERSHIPS });
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_MEMBERSHIPS, invalidateKeys: ['memberships'] });
   const { error: formError, validate, clear: clearError } = useFormError();
 
   const { data: membershipData } = useApiQuery(
