@@ -1,13 +1,14 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { publicRefundApi, type PublicMemberInfo, type PublicMembershipInfo } from '@/lib/api';
+import { publicRefundApi, type PublicMemberInfo, type RefundSubmitRequest } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
+import { useApiMutation } from '@/hooks/useApiMutation';
 import { useFormError } from '@/hooks/useFormError';
 import { ROUTES } from '@/lib/routes';
 import FormErrorBanner from '@/components/ui/FormErrorBanner';
-import { Input, PhoneInput, Select, Textarea } from '@/components/ui/FormInput';
+import { Select, Textarea } from '@/components/ui/FormInput';
 
 export default function PublicRefundPage() {
   return <Suspense fallback={null}><PublicRefundPageInner /></Suspense>;
@@ -47,35 +48,42 @@ function PublicRefundPageInner() {
   const [selectedMembershipSeq, setSelectedMembershipSeq] = useState<number | null>(null);
   const [reasonSelect, setReasonSelect] = useState('');
   const [reasonCustom, setReasonCustom] = useState('');
-  const [bankName, setBankName] = useState('');
-  const [accountNumber, setAccountNumber] = useState('');
-  const [accountHolder, setAccountHolder] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const { error: formError, setError, clear: clearError } = useFormError();
 
   const selectedMembership = member?.memberships.find(ms => ms.seq === selectedMembershipSeq);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const submitMutation = useApiMutation<number, RefundSubmitRequest>(
+    (data) => publicRefundApi.submit(data),
+    {
+      onSuccess: (refundRequestSeq) => {
+        const surveyData = btoa(encodeURIComponent(JSON.stringify({
+          branchSeq: member!.branchSeq,
+          refundRequestSeq,
+          name: member!.name,
+          phone: member!.phoneNumber,
+        })));
+        router.push(`${ROUTES.PUBLIC_REFUND_SURVEY}?d=${surveyData}&from=refund`);
+      },
+      onError: (err) => {
+        setError(err.message ?? '환불 요청에 실패했습니다. 다시 시도해 주세요.');
+      },
+    },
+  );
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!member || !selectedMembershipSeq || !selectedMembership) return;
     const reason = reasonSelect === '기타' ? reasonCustom.trim() : reasonSelect;
     if (!reason) { setError('환불 사유를 선택해 주세요.'); return; }
-    if (!bankName.trim() || !accountNumber.trim() || !accountHolder.trim()) { setError('환불 계좌 정보를 모두 입력해 주세요.'); return; }
     clearError();
 
-    setSubmitting(true);
-    const res = await publicRefundApi.submit({
+    submitMutation.mutate({
       branchSeq: member.branchSeq, memberSeq: member.seq,
       memberMembershipSeq: selectedMembershipSeq,
       memberName: member.name, phoneNumber: member.phoneNumber,
       membershipName: selectedMembership.membershipName,
       price: '', reason: reason.trim(),
-      bankName: bankName.trim(), accountNumber: accountNumber.trim(), accountHolder: accountHolder.trim(),
     });
-    setSubmitting(false);
-    if (res.success) {
-      router.push(`${ROUTES.PUBLIC_REFUND_SUCCESS}?name=${encodeURIComponent(member.name)}`);
-    }
   };
 
   return (
@@ -83,7 +91,7 @@ function PublicRefundPageInner() {
       <div style={{ background: 'white', padding: 40, borderRadius: 12, boxShadow: '0 10px 25px rgba(0,0,0,0.1)', width: '100%', maxWidth: 520, marginTop: 30 }}>
         <div style={{ textAlign: 'center', marginBottom: 30 }}>
           <h1 style={{ color: '#e03131', fontSize: '1.8rem', marginBottom: 10 }}>환불 요청</h1>
-          <p style={{ color: '#666', fontSize: '0.95rem' }}>환불 사유와 계좌 정보를 입력해주세요.</p>
+          <p style={{ color: '#666', fontSize: '0.95rem' }}>환불 사유를 선택해주세요.</p>
         </div>
 
         {loading && <div style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>회원 정보를 확인하는 중...</div>}
@@ -138,17 +146,8 @@ function PublicRefundPageInner() {
                       style={{ marginTop: 10, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }} />
                   )}
                 </FormGroup>
-                <FormGroup label="환불 은행">
-                  <Input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="예: 국민은행" required />
-                </FormGroup>
-                <FormGroup label="계좌번호">
-                  <Input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="계좌번호 입력" required />
-                </FormGroup>
-                <FormGroup label="예금주">
-                  <Input value={accountHolder} onChange={(e) => setAccountHolder(e.target.value)} placeholder="예금주명 입력" required />
-                </FormGroup>
-                <button type="submit" disabled={submitting} style={btnStyle(submitting ? '#ccc' : '#e03131')}>
-                  {submitting ? '제출 중...' : '환불 요청 제출'}
+                <button type="submit" disabled={submitMutation.isPending} style={btnStyle(submitMutation.isPending ? '#ccc' : '#e03131')}>
+                  {submitMutation.isPending ? '제출 중...' : '환불 요청 제출'}
                 </button>
               </form>
             )}

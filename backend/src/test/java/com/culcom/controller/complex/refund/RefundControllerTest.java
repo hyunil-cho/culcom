@@ -65,7 +65,6 @@ class RefundControllerTest {
                 .seq(1L).memberName("홍길동").phoneNumber("01012345678")
                 .membershipName("3개월권").price("300000")
                 .reason("개인 사정").status(RequestStatus.대기)
-                .bankName("신한은행").accountNumber("110-123-456789").accountHolder("홍길동")
                 .createdDate(LocalDateTime.now())
                 .build();
 
@@ -91,7 +90,6 @@ class RefundControllerTest {
         RefundResponse response = RefundResponse.builder()
                 .seq(1L).memberName("홍길동").status(RequestStatus.대기)
                 .membershipName("3개월권").price("300000")
-                .bankName("신한은행").accountNumber("110-123-456789").accountHolder("홍길동")
                 .build();
 
         given(refundService.create(any(), eq(1L))).willReturn(response);
@@ -104,10 +102,6 @@ class RefundControllerTest {
         body.put("membershipName", "3개월권");
         body.put("price", "300000");
         body.put("reason", "개인 사정");
-        body.put("bankName", "신한은행");
-        body.put("accountNumber", "110-123-456789");
-        body.put("accountHolder", "홍길동");
-
         mockMvc.perform(post("/api/complex/refunds")
                         .with(auth())
                         .contentType(MediaType.APPLICATION_JSON)

@@ -51,9 +51,6 @@ class RefundServiceStatusTest {
         req.setMembershipName("3개월권");
         req.setPrice("300000");
         req.setReason("단순 변심");
-        req.setBankName("국민");
-        req.setAccountNumber("123-456-7890");
-        req.setAccountHolder(member.getName());
         return req;
     }
 

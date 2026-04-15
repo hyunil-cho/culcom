@@ -24,10 +24,10 @@ public class PublicRefundController {
     }
 
     @PostMapping("/submit")
-    public ResponseEntity<ApiResponse<Void>> submit(@RequestBody RefundSubmitRequest req) {
+    public ResponseEntity<ApiResponse<Long>> submit(@RequestBody RefundSubmitRequest req) {
         try {
-            publicRefundService.submit(req);
-            return ResponseEntity.ok(ApiResponse.ok(null));
+            Long seq = publicRefundService.submit(req);
+            return ResponseEntity.ok(ApiResponse.ok(seq));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }

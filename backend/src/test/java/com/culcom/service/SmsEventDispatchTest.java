@@ -190,7 +190,6 @@ class SmsEventDispatchTest {
                 .memberName(m.getName()).phoneNumber(m.getPhoneNumber())
                 .membershipName(p.getName()).price("300000")
                 .reason("단순변심")
-                .bankName("국민").accountNumber("123").accountHolder(m.getName())
                 .build());
         clearInvocations(smsService);
 
@@ -213,7 +212,6 @@ class SmsEventDispatchTest {
                 .memberName(m.getName()).phoneNumber(m.getPhoneNumber())
                 .membershipName(p.getName()).price("300000")
                 .reason("단순변심")
-                .bankName("국민").accountNumber("123").accountHolder(m.getName())
                 .build());
         clearInvocations(smsService);
 

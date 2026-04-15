@@ -87,7 +87,7 @@ class RefundServiceDetachClassesTest {
                 .branch(branch).member(member).memberMembership(mm)
                 .memberName(member.getName()).phoneNumber(member.getPhoneNumber())
                 .membershipName(product.getName()).price("150000")
-                .reason("개인사정").bankName("국민").accountNumber("12345").accountHolder("성춘향")
+                .reason("개인사정")
                 .status(RequestStatus.대기)
                 .build());
 
@@ -129,7 +129,7 @@ class RefundServiceDetachClassesTest {
                 .branch(branch).member(member).memberMembership(mm)
                 .memberName(member.getName()).phoneNumber(member.getPhoneNumber())
                 .membershipName(product.getName()).price("150000")
-                .reason("개인사정").bankName("국민").accountNumber("12345").accountHolder("이도령")
+                .reason("개인사정")
                 .status(RequestStatus.대기).build());
 
         refundService.updateStatus(refund.getSeq(), RequestStatus.승인, null);

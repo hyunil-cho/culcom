@@ -1,0 +1,123 @@
+.backLink {
+  text-decoration: none;
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+}
+.backLink:hover {
+  color: var(--primary);
+}
+
+.truncate {
+  display: inline-block;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.starScore {
+  color: #f59e0b;
+  font-size: 1rem;
+  letter-spacing: 1px;
+}
+
+.detailBtn {
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: white;
+  color: var(--primary);
+  font-size: var(--font-sm);
+  cursor: pointer;
+}
+.detailBtn:hover {
+  background: var(--bg-secondary);
+}
+
+/* 상세 모달 */
+.detailContainer {
+  min-width: 420px;
+  max-width: 560px;
+}
+
+.detailHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.detailTitle {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.detailDate {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+}
+
+.detailInfo {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 24px;
+  background: var(--bg-secondary);
+  font-size: 0.9rem;
+}
+
+.detailPhone {
+  color: var(--text-secondary);
+}
+
+.detailBody {
+  padding: 16px 24px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.detailRow {
+  margin-bottom: 16px;
+}
+
+.detailLabel {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.detailValue {
+  font-size: 0.92rem;
+  color: var(--text-primary);
+}
+
+.detailValueLong {
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--bg-secondary);
+  padding: 8px 10px;
+  border-radius: 6px;
+  line-height: 1.5;
+}
+
+.detailFooter {
+  padding: 12px 24px 20px;
+  text-align: right;
+  border-top: 1px solid var(--border);
+}
+
+.closeBtn {
+  padding: 8px 24px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.closeBtn:hover {
+  background: var(--bg-secondary);
+}

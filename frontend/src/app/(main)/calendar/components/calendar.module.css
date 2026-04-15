@@ -180,6 +180,11 @@
 }
 .eventItemHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
 .eventItemTime { font-size: 12px; color: #6b7280; font-weight: 600; }
+.eventEditBtn {
+  border: none; border-radius: 4px; padding: 2px 8px;
+  background: #e0f2fe; color: #0369a1; font-size: 11px; font-weight: 600; cursor: pointer;
+}
+.eventEditBtn:hover { background: #bae6fd; }
 .eventDeleteBtn {
   width: 22px; height: 22px; border: none; border-radius: 50%;
   background: #fee2e2; color: #991b1b; font-size: 14px; cursor: pointer;

@@ -46,15 +46,6 @@ public class ComplexRefundRequest extends BaseTimeEntity {
     @Column(nullable = false, columnDefinition = "text")
     private String reason;
 
-    @Column(name = "bank_name", nullable = false, length = 50)
-    private String bankName;
-
-    @Column(name = "account_number", nullable = false, length = 50)
-    private String accountNumber;
-
-    @Column(name = "account_holder", nullable = false, length = 50)
-    private String accountHolder;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default

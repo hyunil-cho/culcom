@@ -9,9 +9,6 @@ export interface RefundRequest {
   membershipName: string;
   price: string | null;
   reason: string;
-  bankName: string;
-  accountNumber: string;
-  accountHolder: string;
   status: '대기' | '승인' | '반려';
   rejectReason: string | null;
   createdDate: string;
@@ -45,7 +42,7 @@ export const refundApi = {
 export interface RefundSubmitRequest {
   branchSeq: number; memberSeq: number; memberMembershipSeq: number;
   memberName: string; phoneNumber: string; membershipName: string;
-  price: string; reason: string; bankName: string; accountNumber: string; accountHolder: string;
+  price: string; reason: string;
 }
 
 export const publicRefundApi = {
@@ -53,7 +50,7 @@ export const publicRefundApi = {
     api.get<{ members: PublicMemberInfo[] }>(
       `${API.PUBLIC_REFUND_SEARCH}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`
     ),
-  submit: (data: RefundSubmitRequest) => api.post<void>(API.PUBLIC_REFUND_SUBMIT, data),
+  submit: (data: RefundSubmitRequest) => api.post<number>(API.PUBLIC_REFUND_SUBMIT, data),
   reasons: (branchSeq: number) =>
     api.get<string[]>(`${API.PUBLIC_REFUND_REASONS}?branchSeq=${branchSeq}`),
 };

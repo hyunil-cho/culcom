@@ -55,9 +55,6 @@ public class RefundService {
                 .membershipName(req.getMembershipName())
                 .price(req.getPrice())
                 .reason(req.getReason())
-                .bankName(req.getBankName())
-                .accountNumber(req.getAccountNumber())
-                .accountHolder(req.getAccountHolder())
                 .build();
         if (req.getMemberSeq() != null) {
             entity.setMember(complexMemberRepository.findById(req.getMemberSeq())

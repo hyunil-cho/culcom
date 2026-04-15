@@ -1,7 +1,5 @@
 .priceText { color: #555; font-size: var(--font-sm); }
 .reasonText { font-size: var(--font-sm); }
-.accountInfo { font-size: 0.82rem; color: #555; line-height: 1.5; }
-.accountBank { color: var(--text-body); }
 .rejectReasonText { font-size: var(--font-sm); color: var(--red-dark); }
 .emptyText { color: #ccc; }
 .periodText { font-size: 0.78rem; color: #555; white-space: nowrap; }

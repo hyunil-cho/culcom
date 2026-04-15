@@ -73,7 +73,7 @@ class PublicRefundControllerTest {
     @Test
     @DisplayName("환불요청_제출_성공")
     void 환불요청_제출_성공() throws Exception {
-        willDoNothing().given(publicRefundService).submit(any());
+        given(publicRefundService.submit(any())).willReturn(1L);
 
         Map<String, Object> body = new HashMap<>();
         body.put("branchSeq", 1);
@@ -84,9 +84,6 @@ class PublicRefundControllerTest {
         body.put("membershipName", "3개월 회원권");
         body.put("price", "300000");
         body.put("reason", "개인 사유");
-        body.put("bankName", "국민은행");
-        body.put("accountNumber", "123-456-789");
-        body.put("accountHolder", "홍길동");
 
         mockMvc.perform(post("/api/public/refund/submit")
                 .contentType(MediaType.APPLICATION_JSON)

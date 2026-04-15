@@ -121,12 +121,6 @@ export default function RefundsPage() {
       <div>{r.price && <div className={s.priceText}>결제: {Number(r.price).toLocaleString()}원</div>}</div>
     )},
     { header: '사유', render: (r) => <span className={s.reasonText}>{r.reason}</span> },
-    { header: '환불 계좌', render: (r) => (
-      <div className={s.accountInfo}>
-        <strong className={s.accountBank}>{r.bankName}</strong><br />
-        {r.accountNumber}<br />({r.accountHolder})
-      </div>
-    )},
     { header: '상태', render: (r) => <span className={`badge ${STATUS_BADGE[r.status] ?? ''}`}>{r.status}</span> },
     { header: '반려 사유', render: (r) => r.status === '반려' && r.rejectReason
       ? <span className={s.rejectReasonText}>{r.rejectReason}</span>

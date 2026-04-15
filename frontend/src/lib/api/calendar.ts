@@ -20,7 +20,6 @@ export interface CalendarEvent {
 export interface CalendarEventRequest {
   title: string;
   content?: string;
-  author: string;
   eventDate: string;
   startTime: string;
   endTime: string;
@@ -35,6 +34,8 @@ export const calendarApi = {
     api.get<CalendarEvent[]>(`${API.CALENDAR_EVENTS}?startDate=${startDate}&endDate=${endDate}`),
   createEvent: (data: CalendarEventRequest) =>
     api.post<CalendarEvent>(API.CALENDAR_EVENTS, data),
+  updateEvent: (seq: number, data: CalendarEventRequest) =>
+    api.put<CalendarEvent>(API.CALENDAR_EVENT(seq), data),
   deleteEvent: (seq: number) =>
     api.delete<void>(API.CALENDAR_EVENT(seq)),
 };

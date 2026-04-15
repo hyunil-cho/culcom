@@ -283,7 +283,6 @@ class SmsEventTemplateResolveTest {
                     .memberName(member.getName()).phoneNumber(member.getPhoneNumber())
                     .membershipName(product.getName()).price("300000")
                     .reason("단순변심")
-                    .bankName("국민").accountNumber("123").accountHolder(member.getName())
                     .build());
             clearInvocations(messageResolver);
 
@@ -317,7 +316,6 @@ class SmsEventTemplateResolveTest {
                     .memberName(member.getName()).phoneNumber(member.getPhoneNumber())
                     .membershipName(product.getName()).price("300000")
                     .reason("단순변심")
-                    .bankName("국민").accountNumber("456").accountHolder(member.getName())
                     .build());
             clearInvocations(messageResolver);
 

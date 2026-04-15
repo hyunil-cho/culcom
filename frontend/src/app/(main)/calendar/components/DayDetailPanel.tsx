@@ -9,6 +9,9 @@ import { queryClient } from '@/lib/queryClient';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import s from './calendar.module.css';
 
+type EventFormState = { title: string; content: string; startTime: string; endTime: string };
+const EMPTY_FORM: EventFormState = { title: '', content: '', startTime: '09:00', endTime: '10:00' };
+
 export default function DayDetailPanel({ date, reservations, events, onClose, onReservationClick }: {
   date: Date;
   reservations: Reservation[];
@@ -19,7 +22,8 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
   const dayLabel = `${date.getMonth() + 1}월 ${date.getDate()}일 (${DAY_LABELS[(date.getDay() + 6) % 7]})`;
 
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ title: '', content: '', author: '', startTime: '09:00', endTime: '10:00' });
+  const [editingSeq, setEditingSeq] = useState<number | null>(null);
+  const [form, setForm] = useState<EventFormState>(EMPTY_FORM);
   const deleteEventModal = useModal<number>();
 
   const invalidateEvents = () => queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
@@ -28,7 +32,20 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
     (data) => calendarApi.createEvent(data),
     {
       onSuccess: () => {
-        setForm({ title: '', content: '', author: '', startTime: '09:00', endTime: '10:00' });
+        setForm(EMPTY_FORM);
+        setShowForm(false);
+        invalidateEvents();
+      },
+      onError: (err) => alert(err.message),
+    },
+  );
+
+  const updateMutation = useApiMutation<unknown, { seq: number; data: CalendarEventRequest }>(
+    ({ seq, data }) => calendarApi.updateEvent(seq, data),
+    {
+      onSuccess: () => {
+        setForm(EMPTY_FORM);
+        setEditingSeq(null);
         setShowForm(false);
         invalidateEvents();
       },
@@ -59,17 +76,40 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
   const timeError = form.startTime && form.endTime && form.endTime <= form.startTime
     ? '종료 시간은 시작 시간보다 이후여야 합니다' : '';
 
+  const isPending = createMutation.isPending || updateMutation.isPending;
+
   const handleSubmit = () => {
-    if (!form.title.trim() || !form.author.trim()) return;
+    if (!form.title.trim()) return;
     if (timeError) return;
-    createMutation.mutate({
+    const payload: CalendarEventRequest = {
       title: form.title,
       content: form.content || undefined,
-      author: form.author,
       eventDate: formatDateKey(date),
       startTime: form.startTime,
       endTime: form.endTime,
+    };
+    if (editingSeq != null) {
+      updateMutation.mutate({ seq: editingSeq, data: payload });
+    } else {
+      createMutation.mutate(payload);
+    }
+  };
+
+  const handleEdit = (ev: CalendarEventItem) => {
+    setEditingSeq(ev.seq);
+    setForm({
+      title: ev.title,
+      content: ev.content ?? '',
+      startTime: ev.startTime,
+      endTime: ev.endTime,
     });
+    setShowForm(true);
+  };
+
+  const handleCancelForm = () => {
+    setShowForm(false);
+    setEditingSeq(null);
+    setForm(EMPTY_FORM);
   };
 
   const handleDelete = (seq: number) => {
@@ -101,21 +141,18 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
       </div>
 
       <div className={s.panelBody}>
-        {/* 일정 추가 버튼 / 폼 */}
+        {/* 일정 추가/수정 폼 */}
         {!showForm ? (
-          <button onClick={() => setShowForm(true)} className={s.addEventBtn}>+ 일정 추가</button>
+          <button onClick={() => { setEditingSeq(null); setForm(EMPTY_FORM); setShowForm(true); }} className={s.addEventBtn}>+ 일정 추가</button>
         ) : (
           <div className={s.eventForm}>
-            <div className={s.eventFormTitle}>일정 추가</div>
+            <div className={s.eventFormTitle}>{editingSeq != null ? '일정 수정' : '일정 추가'}</div>
             <input type="text" placeholder="제목 *" value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               className={s.eventFormInput} />
             <textarea placeholder="상세 내용" value={form.content} rows={2}
               onChange={(e) => setForm({ ...form, content: e.target.value })}
               className={s.eventFormTextarea} />
-            <input type="text" placeholder="작성자 *" value={form.author}
-              onChange={(e) => setForm({ ...form, author: e.target.value })}
-              className={s.eventFormInput} />
             <div className={s.eventFormTimeRow}>
               <label className={s.eventFormTimeLabel}>
                 시작
@@ -132,11 +169,11 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
             </div>
             {timeError && <div style={{ color: '#e03131', fontSize: '13px' }}>{timeError}</div>}
             <div className={s.eventFormActions}>
-              <button onClick={() => setShowForm(false)} className={s.eventFormCancelBtn}>취소</button>
+              <button onClick={handleCancelForm} className={s.eventFormCancelBtn}>취소</button>
               <button onClick={handleSubmit}
-                disabled={createMutation.isPending || !form.title.trim() || !form.author.trim() || !!timeError}
+                disabled={isPending || !form.title.trim() || !!timeError}
                 className={s.eventFormSaveBtn}>
-                {createMutation.isPending ? '저장 중...' : '저장'}
+                {isPending ? '저장 중...' : '저장'}
               </button>
             </div>
           </div>
@@ -151,7 +188,10 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
                 <div key={ev.seq} className={s.eventItem}>
                   <div className={s.eventItemHeader}>
                     <span className={s.eventItemTime}>{ev.startTime} — {ev.endTime}</span>
-                    <button onClick={() => handleDelete(ev.seq)} className={s.eventDeleteBtn}>×</button>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button onClick={() => handleEdit(ev)} className={s.eventEditBtn}>수정</button>
+                      <button onClick={() => handleDelete(ev.seq)} className={s.eventDeleteBtn}>×</button>
+                    </div>
                   </div>
                   <div className={s.eventItemTitle}>{ev.title}</div>
                   {ev.content && <div className={s.eventItemContent}>{ev.content}</div>}

@@ -98,7 +98,10 @@
       "Bash(./gradlew compileJava --no-daemon)",
       "Bash(./gradlew --stop)",
       "Bash(rm -rf build/test-results build/reports/tests)",
-      "Bash(./gradlew compileTestJava --no-daemon)"
+      "Bash(./gradlew compileTestJava --no-daemon)",
+      "Bash(git stash:*)",
+      "Bash(git restore:*)",
+      "Bash(./gradlew compileJava compileTestJava)"
     ]
   }
 }

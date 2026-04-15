@@ -39,12 +39,9 @@ public class PublicRefundService {
     }
 
     @Transactional
-    public void submit(RefundSubmitRequest req) {
+    public Long submit(RefundSubmitRequest req) {
         if (req.getMemberName() == null || req.getMemberName().isBlank() ||
-            req.getReason() == null || req.getReason().isBlank() ||
-            req.getBankName() == null || req.getBankName().isBlank() ||
-            req.getAccountNumber() == null || req.getAccountNumber().isBlank() ||
-            req.getAccountHolder() == null || req.getAccountHolder().isBlank()) {
+            req.getReason() == null || req.getReason().isBlank()) {
             throw new IllegalArgumentException("필수 항목을 모두 입력해주세요.");
         }
 
@@ -68,9 +65,6 @@ public class PublicRefundService {
                 .membershipName(req.getMembershipName())
                 .price(req.getPrice())
                 .reason(req.getReason())
-                .bankName(req.getBankName())
-                .accountNumber(req.getAccountNumber())
-                .accountHolder(req.getAccountHolder())
                 .status(RequestStatus.대기)
                 .build();
 
@@ -79,6 +73,8 @@ public class PublicRefundService {
         eventPublisher.publishEvent(ActivityEvent.of(member,
                 ActivityEventType.REFUND_REQUEST,
                 "환불 요청 (공개): " + req.getMembershipName() + " / " + req.getReason()));
+
+        return refund.getSeq();
     }
 
     public List<String> reasons(Long branchSeq) {

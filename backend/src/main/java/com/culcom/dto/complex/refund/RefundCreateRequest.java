@@ -18,7 +18,4 @@ public class RefundCreateRequest {
     private String membershipName;
     private String price;
     private String reason;
-    private String bankName;
-    private String accountNumber;
-    private String accountHolder;
 }
