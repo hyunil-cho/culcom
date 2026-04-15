@@ -2,6 +2,7 @@ package com.culcom.repository;
 
 import com.culcom.entity.transfer.TransferRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -10,6 +11,10 @@ import java.util.Optional;
 public interface TransferRequestRepository extends JpaRepository<TransferRequest, Long> {
     Optional<TransferRequest> findByToken(String token);
     Optional<TransferRequest> findByInviteToken(String inviteToken);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from TransferRequest tr where tr.toCustomer.seq = :customerSeq")
+    void deleteByToCustomerSeq(@Param("customerSeq") Long customerSeq);
 
     @Query("SELECT tr FROM TransferRequest tr " +
            "JOIN FETCH tr.memberMembership mm " +

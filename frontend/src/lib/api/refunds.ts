@@ -45,6 +45,30 @@ export interface RefundSubmitRequest {
   price: string; reason: string;
 }
 
+export interface RefundSurveyResponse {
+  seq: number;
+  refundRequestSeq: number | null;
+  memberName: string;
+  phoneNumber: string;
+  participationPeriod: string;
+  belongingScore: number;
+  teamImpact: string;
+  differenceComment: string | null;
+  improvementComment: string | null;
+  reEnrollScore: number;
+  createdDate: string;
+}
+
+export const refundSurveyApi = {
+  list: (params?: string) =>
+    api.get<PageResponse<RefundSurveyResponse>>(
+      `/complex/refund-surveys${params ? `?${params}` : ''}`,
+    ),
+  detail: (seq: number) => api.get<RefundSurveyResponse>(`/complex/refund-surveys/${seq}`),
+  byRefund: (refundRequestSeq: number) =>
+    api.get<RefundSurveyResponse | null>(`/complex/refund-surveys/by-refund/${refundRequestSeq}`),
+};
+
 export const publicRefundApi = {
   searchMember: (name: string, phone: string) =>
     api.get<{ members: PublicMemberInfo[] }>(
@@ -53,4 +77,22 @@ export const publicRefundApi = {
   submit: (data: RefundSubmitRequest) => api.post<number>(API.PUBLIC_REFUND_SUBMIT, data),
   reasons: (branchSeq: number) =>
     api.get<string[]>(`${API.PUBLIC_REFUND_REASONS}?branchSeq=${branchSeq}`),
+};
+
+export interface RefundSurveySubmitRequest {
+  branchSeq: number;
+  refundRequestSeq?: number;
+  memberName: string;
+  phoneNumber: string;
+  participationPeriod: string;
+  belongingScore: number;
+  teamImpact: string;
+  differenceComment: string;
+  improvementComment: string;
+  reEnrollScore: number;
+}
+
+export const publicRefundSurveyApi = {
+  submit: (data: RefundSurveySubmitRequest) =>
+    api.post<void>(API.PUBLIC_REFUND_SURVEY_SUBMIT, data),
 };

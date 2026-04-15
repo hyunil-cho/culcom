@@ -19,7 +19,7 @@ public class KakaoOAuthClientMock implements KakaoOAuthClient {
     @Override
     public KakaoUserInfo fetchUserInfo(String accessToken) {
         log.info("[Mock] 카카오 사용자 정보 조회 — token: {}", accessToken);
-        return new KakaoUserInfo(99999L, "테스트 사용자", "01000000000");
+        return new KakaoUserInfo(99999L, "테스트 사용자", "01000000000", "kakao-test@example.com");
     }
 
     @Override

@@ -19,7 +19,7 @@ export {
 export { staffApi, type ComplexStaff, type StaffRefundInfo } from './staffs';
 export { membershipApi, publicMembershipApi, type Membership, type MembershipRequest, type MembershipCheckMember, type MembershipCheckDetail } from './memberships';
 export { timeslotApi, type ClassTimeSlot, type ClassTimeSlotRequest } from './timeslots';
-export { refundApi, publicRefundApi, type RefundRequest, type RefundReason, type RefundSubmitRequest } from './refunds';
+export { refundApi, publicRefundApi, publicRefundSurveyApi, refundSurveyApi, type RefundRequest, type RefundReason, type RefundSubmitRequest, type RefundSurveyResponse, type RefundSurveySubmitRequest } from './refunds';
 export {
   postponementApi, publicPostponementApi,
   type PostponementRequest, type PostponementReason,

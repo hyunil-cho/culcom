@@ -26,4 +26,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     long countTodayByBranchSeq(@Param("branchSeq") Long branchSeq);
 
     java.util.Optional<Customer> findByKakaoId(Long kakaoId);
+
+    boolean existsByPhoneNumber(String phoneNumber);
 }

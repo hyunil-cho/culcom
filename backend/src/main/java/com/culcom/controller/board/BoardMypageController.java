@@ -6,7 +6,6 @@ import com.culcom.entity.customer.Customer;
 import com.culcom.service.BoardSessionService;
 import com.culcom.service.BoardSessionService.BoardSessionData;
 import com.culcom.service.CustomerService;
-import com.culcom.service.KakaoOAuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +21,6 @@ public class BoardMypageController {
 
     private final CustomerService customerService;
     private final BoardSessionService boardSessionService;
-    private final KakaoOAuthService kakaoOAuthService;
 
     @GetMapping("/mypage")
     public ResponseEntity<ApiResponse<BoardMypageResponse>> getMypage(
@@ -59,8 +57,7 @@ public class BoardMypageController {
             return ResponseEntity.ok(ApiResponse.error("회원 정보를 찾을 수 없습니다"));
         }
 
-        Long kakaoId = customerService.deleteCustomerAndGetKakaoId(session.getMemberSeq());
-        kakaoOAuthService.unlinkUser(kakaoId);
+        customerService.delete(session.getMemberSeq());
         boardSessionService.logout(response);
         return ResponseEntity.ok(ApiResponse.<Void>ok("회원탈퇴가 완료되었습니다", null));
     }

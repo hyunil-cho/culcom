@@ -34,8 +34,10 @@ public class KakaoOAuthClientImpl implements KakaoOAuthClient {
         params.add("grant_type", "authorization_code");
         params.add("client_id", properties.getClientId());
         params.add("client_secret", properties.getClientSecret());
-        params.add("redirect_uri", buildCallbackUri());
+        params.add("redirect_uri", properties.getRedirectUri());
         params.add("code", code);
+
+        log.debug("kakao properties {}", params);
 
         ResponseEntity<String> response = restTemplate.postForEntity(
                 "https://kauth.kakao.com/oauth/token",
@@ -64,8 +66,9 @@ public class KakaoOAuthClientImpl implements KakaoOAuthClient {
         if (name == null || name.isEmpty()) name = "카카오 사용자";
 
         String phone = account.path("phone_number").asText("").replaceAll("[^0-9]", "");
+        String email = account.path("email").asText(null);
 
-        return new KakaoUserInfo(root.path("id").asLong(), name, phone);
+        return new KakaoUserInfo(root.path("id").asLong(), name, phone, email);
     }
 
     @Override
@@ -86,10 +89,5 @@ public class KakaoOAuthClientImpl implements KakaoOAuthClient {
         } catch (Exception e) {
             log.error("카카오 연결 해제 실패 (kakaoId: {}): {}", kakaoId, e.getMessage());
         }
-    }
-
-    private String buildCallbackUri() {
-        URI base = URI.create(properties.getRedirectUri());
-        return base.getScheme() + "://" + base.getAuthority() + "/api/public/kakao/callback";
     }
 }

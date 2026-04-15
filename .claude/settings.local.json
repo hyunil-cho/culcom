@@ -101,7 +101,8 @@
       "Bash(./gradlew compileTestJava --no-daemon)",
       "Bash(git stash:*)",
       "Bash(git restore:*)",
-      "Bash(./gradlew compileJava compileTestJava)"
+      "Bash(./gradlew compileJava compileTestJava)",
+      "Bash(./gradlew compileJava --rerun-tasks)"
     ]
   }
 }

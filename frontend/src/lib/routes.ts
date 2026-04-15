@@ -32,6 +32,8 @@ export const ROUTES = {
   PUBLIC_POSTPONEMENT_SUCCESS: '/public/postponement/success',
   PUBLIC_REFUND: '/public/refund',
   PUBLIC_REFUND_SUCCESS: '/public/refund/success',
+  PUBLIC_REFUND_SURVEY: '/public/refund-survey',
+  PUBLIC_REFUND_SURVEY_SUCCESS: '/public/refund-survey/success',
   PUBLIC_MEMBERSHIP: '/public/membership',
   PUBLIC_TRANSFER: '/public/transfer',
   PUBLIC_TRANSFER_INVITE: '/public/transfer/invite',
@@ -225,6 +227,7 @@ export const API = {
   PUBLIC_REFUND_SEARCH: '/public/refund/search-member',
   PUBLIC_REFUND_SUBMIT: '/public/refund/submit',
   PUBLIC_REFUND_REASONS: '/public/refund/reasons',
+  PUBLIC_REFUND_SURVEY_SUBMIT: '/public/refund-survey/submit',
 
   // 공개 멤버십 조회
   PUBLIC_MEMBERSHIP_CHECK: '/public/membership/check',

@@ -49,12 +49,14 @@ export default function BoardNav({ isLoggedIn, memberName, activePage }: BoardNa
             </button>
           </div>
         ) : (
-          <a href="/api/public/kakao/login" className="nav-login-btn">
-            <svg className="kakao-icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 3C6.48 3 2 6.58 2 10.94c0 2.8 1.86 5.27 4.66 6.67l-1.19 4.39 5.09-3.36c.47.04.95.06 1.44.06 5.52 0 10-3.58 10-7.94S17.52 3 12 3z" />
-            </svg>
-            카카오 로그인
-          </a>
+          <div className="nav-right">
+            <Link href="/board/login" className="nav-mypage-btn">
+              로그인
+            </Link>
+            <Link href="/board/signup" className="nav-mypage-btn">
+              회원가입
+            </Link>
+          </div>
         )}
       </div>
     </nav>

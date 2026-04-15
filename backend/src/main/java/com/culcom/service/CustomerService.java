@@ -8,6 +8,7 @@ import com.culcom.entity.reservation.CallerSelectionHistory;
 import com.culcom.entity.reservation.ReservationInfo;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.*;
+import com.culcom.repository.board.BoardAccountRepository;
 import com.culcom.util.DateTimeUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,10 @@ public class CustomerService {
     private final CallerSelectionHistoryRepository callerSelectionHistoryRepository;
     private final ReservationInfoRepository reservationInfoRepository;
     private final UserInfoRepository userInfoRepository;
+    private final BoardAccountRepository boardAccountRepository;
+    private final CustomerConsentHistoryRepository customerConsentHistoryRepository;
+    private final TransferRequestRepository transferRequestRepository;
+    private final KakaoOAuthService kakaoOAuthService;
     private final SmsService smsService;
 
     public CustomerResponse get(Long seq) {
@@ -69,7 +74,22 @@ public class CustomerService {
 
     @Transactional
     public void delete(Long seq) {
-        customerRepository.deleteById(seq);
+        Customer customer = customerRepository.findById(seq)
+                .orElseThrow(() -> new EntityNotFoundException("고객"));
+        Long kakaoId = customer.getKakaoId();
+
+        // Customer 를 참조하는 자식 레코드들을 먼저 삭제한다
+        boardAccountRepository.deleteByCustomerSeq(seq);
+        customerConsentHistoryRepository.deleteByCustomerSeq(seq);
+        callerSelectionHistoryRepository.deleteByCustomerSeq(seq);
+        reservationInfoRepository.deleteByCustomerSeq(seq);
+        transferRequestRepository.deleteByToCustomerSeq(seq);
+
+        customerRepository.delete(customer);
+        customerRepository.flush();
+        if (kakaoId != null) {
+            kakaoOAuthService.unlinkUser(kakaoId);
+        }
     }
 
     @Transactional
@@ -156,13 +176,4 @@ public class CustomerService {
         return customerRepository.findById(seq).orElse(null);
     }
 
-    @Transactional
-    public Long deleteCustomerAndGetKakaoId(Long customerSeq) {
-        Customer customer = customerRepository.findById(customerSeq)
-                .orElseThrow(() -> new EntityNotFoundException("고객"));
-        Long kakaoId = customer.getKakaoId();
-        customerRepository.delete(customer);
-        customerRepository.flush();
-        return kakaoId;
-    }
 }
