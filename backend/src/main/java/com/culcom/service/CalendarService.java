@@ -81,7 +81,7 @@ public class CalendarService {
     }
 
     @Transactional
-    public CalendarEventResponse createEvent(Long branchSeq, CalendarEventRequest request) {
+    public CalendarEventResponse createEvent(Long branchSeq, String author, CalendarEventRequest request) {
         if (!request.getEndTime().isAfter(request.getStartTime())) {
             throw new IllegalArgumentException("종료 시간은 시작 시간보다 이후여야 합니다.");
         }
@@ -90,12 +90,34 @@ public class CalendarService {
                 .branchSeq(branchSeq)
                 .title(request.getTitle())
                 .content(request.getContent())
-                .author(request.getAuthor())
+                .author(author)
                 .eventDate(request.getEventDate())
                 .startTime(request.getStartTime())
                 .endTime(request.getEndTime())
                 .build();
         calendarEventRepository.save(event);
+        return toEventResponse(event);
+    }
+
+    @Transactional
+    public CalendarEventResponse updateEvent(Long seq, Long branchSeq, String userId, CalendarEventRequest request) {
+        CalendarEvent event = calendarEventRepository.findById(seq)
+                .orElseThrow(() -> new EntityNotFoundException("일정"));
+        if (!event.getBranchSeq().equals(branchSeq)) {
+            throw new IllegalArgumentException("해당 지점의 일정이 아닙니다.");
+        }
+        if (!event.getAuthor().equals(userId)) {
+            throw new IllegalArgumentException("본인이 작성한 일정만 수정할 수 있습니다.");
+        }
+        if (!request.getEndTime().isAfter(request.getStartTime())) {
+            throw new IllegalArgumentException("종료 시간은 시작 시간보다 이후여야 합니다.");
+        }
+
+        event.setTitle(request.getTitle());
+        event.setContent(request.getContent());
+        event.setEventDate(request.getEventDate());
+        event.setStartTime(request.getStartTime());
+        event.setEndTime(request.getEndTime());
         return toEventResponse(event);
     }
 

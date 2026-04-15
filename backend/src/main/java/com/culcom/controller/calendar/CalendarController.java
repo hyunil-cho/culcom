@@ -56,7 +56,16 @@ public class CalendarController {
             @Valid @RequestBody CalendarEventRequest request,
             @AuthenticationPrincipal CustomUserPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.ok("일정이 등록되었습니다.",
-                calendarService.createEvent(principal.getSelectedBranchSeq(), request)));
+                calendarService.createEvent(principal.getSelectedBranchSeq(), principal.getUserId(), request)));
+    }
+
+    @PutMapping("/events/{seq}")
+    public ResponseEntity<ApiResponse<CalendarEventResponse>> updateEvent(
+            @PathVariable Long seq,
+            @Valid @RequestBody CalendarEventRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.ok("일정이 수정되었습니다.",
+                calendarService.updateEvent(seq, principal.getSelectedBranchSeq(), principal.getUserId(), request)));
     }
 
     @DeleteMapping("/events/{seq}")

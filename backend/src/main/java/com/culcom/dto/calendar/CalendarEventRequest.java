@@ -19,10 +19,6 @@ public class CalendarEventRequest {
     @Size(max = 500, message = "상세 내용은 500자 이내여야 합니다.")
     private String content;
 
-    @NotBlank(message = "작성자는 필수입니다.")
-    @Size(max = 50, message = "작성자는 50자 이내여야 합니다.")
-    private String author;
-
     @NotNull(message = "일정 날짜는 필수입니다.")
     private LocalDate eventDate;
 

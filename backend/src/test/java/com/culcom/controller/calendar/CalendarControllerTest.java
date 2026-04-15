@@ -111,20 +111,21 @@ class CalendarControllerTest {
 
         @Test
         void 일정_등록_성공() throws Exception {
-            given(calendarService.createEvent(anyLong(), any()))
+            given(calendarService.createEvent(anyLong(), anyString(), any()))
                     .willReturn(CalendarEventResponse.builder()
-                            .seq(1L).title("회의").author("김작성자")
+                            .seq(1L).title("회의").author("testuser")
                             .eventDate("2026-02-01").startTime("10:00").endTime("11:00").build());
 
             mockMvc.perform(post("/api/calendar/events")
                             .with(auth())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(Map.of(
-                                    "title", "회의", "author", "김작성자",
+                                    "title", "회의",
                                     "eventDate", "2026-02-01",
                                     "startTime", "10:00", "endTime", "11:00"))))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.message").value("일정이 등록되었습니다."));
+                    .andExpect(jsonPath("$.message").value("일정이 등록되었습니다."))
+                    .andExpect(jsonPath("$.data.author").value("testuser"));
         }
 
         @Test
@@ -133,21 +134,40 @@ class CalendarControllerTest {
                             .with(auth())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(Map.of(
-                                    "title", "", "author", "작성자",
+                                    "title", "",
                                     "eventDate", "2026-02-01",
                                     "startTime", "10:00", "endTime", "11:00"))))
                     .andExpect(status().isBadRequest());
         }
 
         @Test
-        void 일정_등록시_author_빈값이면_400() throws Exception {
-            mockMvc.perform(post("/api/calendar/events")
+        void 일정_수정_성공() throws Exception {
+            given(calendarService.updateEvent(anyLong(), anyLong(), anyString(), any()))
+                    .willReturn(CalendarEventResponse.builder()
+                            .seq(1L).title("수정된 회의").author("testuser")
+                            .eventDate("2026-02-01").startTime("14:00").endTime("15:00").build());
+
+            mockMvc.perform(put("/api/calendar/events/{seq}", 1L)
                             .with(auth())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(Map.of(
-                                    "title", "회의", "author", "",
+                                    "title", "수정된 회의",
                                     "eventDate", "2026-02-01",
-                                    "startTime", "10:00", "endTime", "11:00"))))
+                                    "startTime", "14:00", "endTime", "15:00"))))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.message").value("일정이 수정되었습니다."))
+                    .andExpect(jsonPath("$.data.title").value("수정된 회의"));
+        }
+
+        @Test
+        void 일정_수정시_title_빈값이면_400() throws Exception {
+            mockMvc.perform(put("/api/calendar/events/{seq}", 1L)
+                            .with(auth())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(Map.of(
+                                    "title", "",
+                                    "eventDate", "2026-02-01",
+                                    "startTime", "14:00", "endTime", "15:00"))))
                     .andExpect(status().isBadRequest());
         }
 
