@@ -167,12 +167,13 @@ export default function BoardSignupPage() {
                       border: '1px solid var(--board-border)', borderRadius: 8,
                       padding: '10px 12px', marginBottom: 8, background: '#fafafa',
                     }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <label style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                        <label style={{ fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 8, width: 'fit-content', cursor: 'pointer' }}>
                           <input
                             type="checkbox"
                             checked={!!agreements[item.seq]}
                             onChange={(e) => toggleAgreement(item.seq, e.target.checked)}
+                            style={{ width: 16, height: 16, margin: 0, flexShrink: 0 }}
                           />
                           <span>
                             <span style={{ color: item.required ? '#b91c1c' : 'var(--board-text-sub)', marginRight: 4 }}>
@@ -187,6 +188,7 @@ export default function BoardSignupPage() {
                           style={{
                             background: 'none', border: 'none', fontSize: 12,
                             color: 'var(--board-primary)', cursor: 'pointer',
+                            flexShrink: 0, padding: 0,
                           }}>
                           {expandedSeq === item.seq ? '접기' : '보기'}
                         </button>
