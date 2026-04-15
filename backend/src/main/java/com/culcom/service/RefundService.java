@@ -80,10 +80,9 @@ public class RefundService {
     public RefundResponse updateStatus(Long seq, RequestStatus status, String rejectReason) {
         ComplexRefundRequest req = refundRepository.findById(seq)
                 .orElseThrow(() -> new EntityNotFoundException("환불 요청"));
-        // 승인 상태는 비가역 — 환불은 멤버십 상태/수업 배정에 영향을 주는 종결 처리이므로
-        // 다른 상태로 되돌릴 수 없다.
-        if (req.getStatus() == RequestStatus.승인) {
-            throw new IllegalStateException("이미 승인된 환불 요청은 상태를 변경할 수 없습니다.");
+        // 승인/반려는 종결 상태로 비가역 처리한다.
+        if (req.getStatus() == RequestStatus.승인 || req.getStatus() == RequestStatus.반려) {
+            throw new IllegalStateException("이미 처리된 환불 요청은 상태를 변경할 수 없습니다.");
         }
         req.setStatus(status);
         if (status == RequestStatus.반려) {

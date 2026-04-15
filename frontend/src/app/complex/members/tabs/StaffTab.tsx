@@ -6,7 +6,11 @@ import { useClassSlots } from '../../hooks/useClassSlots';
 import { usePaymentOptions } from '@/lib/usePaymentOptions';
 import type { StaffFormData, ClassAssignData } from '../memberFormTypes';
 
-const STAFF_STATUS_OPTIONS = ['재직', '휴직', '퇴직'] as const;
+const STAFF_STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: '활동중', label: '활동 중 (Active)' },
+  { value: '활동중단', label: '활동 중단 (Paused)' },
+  { value: '활동종료', label: '활동 종료 (Completed)' },
+];
 
 interface Props {
   staffForm: StaffFormData;
@@ -26,7 +30,7 @@ export default function StaffTab({ staffForm, onStaffChange, staffClassAssign, o
       <FormField label="상태">
         <Select value={staffForm.status}
           onChange={(e) => onStaffChange({ ...staffForm, status: e.target.value })}>
-          {STAFF_STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          {STAFF_STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
         </Select>
       </FormField>
 

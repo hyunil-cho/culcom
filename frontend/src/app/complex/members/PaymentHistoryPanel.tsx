@@ -193,7 +193,15 @@ function PaymentRow({ payment, kindLabel, methodLabel }: {
       <td style={{ ...td, textAlign: 'right', fontWeight: 700, color: isRefund ? '#e03131' : '#2e7d32' }}>
         {payment.amount.toLocaleString()}원
       </td>
-      <td style={td}>{methodLabel}</td>
+      <td style={td}>
+        {methodLabel}
+        {payment.cardDetail && (
+          <div style={{ marginTop: 4, fontSize: 11, color: '#666', lineHeight: 1.5 }}>
+            <div>{payment.cardDetail.cardCompany} · {payment.cardDetail.cardNumber}****</div>
+            <div>승인 {payment.cardDetail.cardApprovalDate} / {payment.cardDetail.cardApprovalNumber}</div>
+          </div>
+        )}
+      </td>
       <td style={{ ...td, color: '#666' }}>{payment.note || '-'}</td>
     </tr>
   );

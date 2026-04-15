@@ -43,12 +43,26 @@ public class MemberMembershipService {
                 .stream().map(mm -> ComplexMemberMembershipResponse.from(mm, true)).toList();
     }
 
+    private static final String CARD_METHOD = "카드";
+
+    private com.culcom.entity.complex.member.CardPaymentDetail resolveCardDetail(String method, CardPaymentDetailDto dto) {
+        if (!CARD_METHOD.equals(method)) return null;
+        if (dto == null) {
+            throw new IllegalArgumentException("카드 결제 시 카드 상세 정보는 필수입니다.");
+        }
+        dto.validate();
+        return dto.toEntity();
+    }
+
     @Transactional
     public ComplexMemberMembershipResponse assignMembership(Long memberSeq, ComplexMemberMembershipRequest req) {
         ComplexMember member = memberRepository.findById(memberSeq)
                 .orElseThrow(() -> new EntityNotFoundException("회원"));
         Membership membership = membershipRepository.findById(req.getMembershipSeq())
                 .orElseThrow(() -> new EntityNotFoundException("멤버십"));
+
+        com.culcom.entity.complex.member.CardPaymentDetail cardDetail =
+                resolveCardDetail(req.getPaymentMethod(), req.getCardDetail());
 
         LocalDate startDate = req.getStartDate() != null ? req.getStartDate() : LocalDate.now();
         LocalDate expiryDate = req.getExpiryDate() != null
@@ -89,6 +103,7 @@ public class MemberMembershipService {
                     .method(req.getPaymentMethod())
                     .kind(PaymentKind.DEPOSIT)
                     .note("멤버십 등록 시 첫 납부")
+                    .cardPaymentDetail(cardDetail)
                     .build();
             mm.getPayments().add(first);
             memberMembershipRepository.save(mm);
@@ -180,6 +195,9 @@ public class MemberMembershipService {
             }
         }
 
+        com.culcom.entity.complex.member.CardPaymentDetail cardDetail =
+                resolveCardDetail(req.getMethod(), req.getCardDetail());
+
         MembershipPayment payment = MembershipPayment.builder()
                 .memberMembership(mm)
                 .amount(req.getAmount())
@@ -187,6 +205,7 @@ public class MemberMembershipService {
                 .method(req.getMethod())
                 .kind(req.getKind())
                 .note(req.getNote())
+                .cardPaymentDetail(cardDetail)
                 .build();
         paymentRepository.save(payment);
 

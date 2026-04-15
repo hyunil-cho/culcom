@@ -9,4 +9,5 @@ public class ComplexMemberMetaDataRequest {
     private String level;
     private String language;
     private String signupChannel;
+    private String interviewer;
 }

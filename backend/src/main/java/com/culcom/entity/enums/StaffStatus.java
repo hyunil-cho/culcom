@@ -1,5 +1,5 @@
 package com.culcom.entity.enums;
 
 public enum StaffStatus {
-    재직, 휴직, 퇴직
+    활동중, 활동중단, 활동종료
 }

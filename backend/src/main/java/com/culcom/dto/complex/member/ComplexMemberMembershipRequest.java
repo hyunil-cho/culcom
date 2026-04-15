@@ -20,4 +20,5 @@ public class ComplexMemberMembershipRequest {
     private String paymentMethod;
     private LocalDateTime paymentDate;
     private MembershipStatus status;
+    private CardPaymentDetailDto cardDetail;
 }

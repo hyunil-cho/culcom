@@ -196,6 +196,12 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
                   <div className={s.eventItemTitle}>{ev.title}</div>
                   {ev.content && <div className={s.eventItemContent}>{ev.content}</div>}
                   <div className={s.eventItemAuthor}>{ev.author}</div>
+                  {(ev.createdDate || ev.lastUpdateDate) && (
+                    <div className={s.eventItemAuthor}>
+                      {ev.createdDate && <>생성 {ev.createdDate}</>}
+                      {ev.lastUpdateDate && ev.lastUpdateDate !== ev.createdDate && <> · 수정 {ev.lastUpdateDate}</>}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -225,6 +231,12 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
                           <span>{r.phone}</span>
                         </div>
                         {r.memo && <div className={s.panelItemMemo}>{r.memo}</div>}
+                        {(r.createdDate || r.lastUpdateDate) && (
+                          <div className={s.eventItemAuthor}>
+                            {r.createdDate && <>생성 {r.createdDate}</>}
+                            {r.lastUpdateDate && r.lastUpdateDate !== r.createdDate && <> · 수정 {r.lastUpdateDate}</>}
+                          </div>
+                        )}
                       </div>
                     );
                   })}

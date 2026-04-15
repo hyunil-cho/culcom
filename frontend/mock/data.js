@@ -39,8 +39,8 @@ const timeSlots = [
 
 // ── Staffs ──
 const staffs = [
-  { seq: 1, name: 'Alice Kim', phoneNumber: '01011112222', email: 'alice@test.com', subject: '영어', status: '재직', joinDate: '2024-01-15', comment: '', interviewer: '', paymentMethod: '', createdDate: now(), lastUpdateDate: null },
-  { seq: 2, name: 'Bob Park', phoneNumber: '01033334444', email: 'bob@test.com', subject: '일본어', status: '재직', joinDate: '2024-02-01', comment: '', interviewer: '', paymentMethod: '', createdDate: now(), lastUpdateDate: null },
+  { seq: 1, name: 'Alice Kim', phoneNumber: '01011112222', email: 'alice@test.com', subject: '영어', status: '활동중', joinDate: '2024-01-15', comment: '', interviewer: '', paymentMethod: '', createdDate: now(), lastUpdateDate: null },
+  { seq: 2, name: 'Bob Park', phoneNumber: '01033334444', email: 'bob@test.com', subject: '일본어', status: '활동중', joinDate: '2024-02-01', comment: '', interviewer: '', paymentMethod: '', createdDate: now(), lastUpdateDate: null },
 ];
 
 // ── Staff Refund Info ──

@@ -4,6 +4,7 @@ export interface ConfigItem {
   seq: number;
   code: string;
   isActive: boolean;
+  locked?: boolean;
 }
 
 export interface ConfigCreateRequest {

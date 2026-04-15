@@ -22,4 +22,6 @@ public class MembershipPaymentRequest {
     private LocalDateTime paidDate;
 
     private String note;
+
+    private CardPaymentDetailDto cardDetail;
 }

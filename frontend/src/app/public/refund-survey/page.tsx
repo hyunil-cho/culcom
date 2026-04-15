@@ -146,7 +146,9 @@ function PublicRefundSurveyInner() {
               <button key={n} type="button" onClick={() => setReEnrollScore(n)}
                 style={{
                   width: 48, height: 48, borderRadius: '50%', border: 'none', cursor: 'pointer',
-                  fontSize: '1.5rem', transition: 'all 0.2s',
+                  fontSize: '1.5rem', lineHeight: 1, padding: 0,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'all 0.2s',
                   background: reEnrollScore != null && n <= reEnrollScore ? '#facc15' : '#e5e7eb',
                   color: reEnrollScore != null && n <= reEnrollScore ? '#92400e' : '#9ca3af',
                 }}>

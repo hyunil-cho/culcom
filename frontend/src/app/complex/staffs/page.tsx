@@ -86,10 +86,13 @@ export default function StaffsPage() {
     allClasses.filter(c => c.staffSeq === staffSeq);
 
   const statusBadge = (status: string) => {
-    const map: Record<string, string> = {
-      '재직': 'badge-success', '휴직': 'badge-warning', '퇴직': 'badge-danger',
+    const map: Record<string, { cls: string; label: string }> = {
+      '활동중': { cls: 'badge-success', label: '활동 중' },
+      '활동중단': { cls: 'badge-warning', label: '활동 중단' },
+      '활동종료': { cls: 'badge-danger', label: '활동 종료' },
     };
-    return <span className={`badge ${map[status] ?? ''}`}>{status}</span>;
+    const entry = map[status];
+    return <span className={`badge ${entry?.cls ?? ''}`}>{entry?.label ?? status}</span>;
   };
 
   const columns: Column<ComplexStaff>[] = [

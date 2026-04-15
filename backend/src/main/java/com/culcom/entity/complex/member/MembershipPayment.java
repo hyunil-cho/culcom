@@ -43,4 +43,7 @@ public class MembershipPayment extends BaseTimeEntity {
 
     @Column(length = 500)
     private String note;
+
+    @Embedded
+    private CardPaymentDetail cardPaymentDetail;
 }

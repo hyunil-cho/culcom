@@ -4,6 +4,8 @@ import { API } from '@/lib/routes';
 export interface CalendarReservation {
   seq: number; customerSeq: number | null; interviewDate: string;
   customerName: string; customerPhone: string; caller: string; status: string; memo?: string;
+  createdDate?: string;
+  lastUpdateDate?: string;
 }
 
 export interface CalendarEvent {
@@ -15,6 +17,7 @@ export interface CalendarEvent {
   startTime: string;
   endTime: string;
   createdDate?: string;
+  lastUpdateDate?: string;
 }
 
 export interface CalendarEventRequest {

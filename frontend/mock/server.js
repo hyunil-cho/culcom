@@ -226,7 +226,7 @@ app.delete('/api/complex/classes/:seq', (req, res) => { const i = data.classes.f
 // ══════════════════════════════════════════
 app.get('/api/complex/staffs', (_, res) => res.json(ok(data.staffs)));
 app.get('/api/complex/staffs/:seq', (req, res) => { const item = find(data.staffs, req.params.seq); item ? res.json(ok(item)) : res.status(404).json(err('not found')); });
-app.post('/api/complex/staffs', (req, res) => { const item = { seq: data.nextSeq(), ...req.body, status: req.body.status || '재직', createdDate: data.now() }; data.staffs.push(item); res.json(ok(item)); });
+app.post('/api/complex/staffs', (req, res) => { const item = { seq: data.nextSeq(), ...req.body, status: req.body.status || '활동중', createdDate: data.now() }; data.staffs.push(item); res.json(ok(item)); });
 app.put('/api/complex/staffs/:seq', (req, res) => { const item = find(data.staffs, req.params.seq); if (!item) return res.status(404).json(err('not found')); Object.assign(item, req.body); res.json(ok(item)); });
 app.delete('/api/complex/staffs/:seq', (req, res) => { const i = data.staffs.findIndex(s => s.seq === Number(req.params.seq)); if (i >= 0) data.staffs.splice(i, 1); res.json(ok(null)); });
 app.get('/api/complex/staffs/:seq/refund', (req, res) => { const item = data.staffRefunds.find(r => r.staffSeq === Number(req.params.seq)); res.json(ok(item || null)); });

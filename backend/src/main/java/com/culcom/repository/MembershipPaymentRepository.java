@@ -21,4 +21,11 @@ public interface MembershipPaymentRepository extends JpaRepository<MembershipPay
            "WHERE mm.member.seq = :memberSeq " +
            "ORDER BY p.paidDate DESC, p.seq DESC")
     List<MembershipPayment> findByMemberSeq(@Param("memberSeq") Long memberSeq);
+
+    @Query("SELECT p FROM MembershipPayment p " +
+           "JOIN p.memberMembership mm " +
+           "WHERE mm.member.seq IN :memberSeqs " +
+           "AND p.kind = com.culcom.entity.enums.PaymentKind.DEPOSIT " +
+           "ORDER BY p.paidDate ASC, p.seq ASC")
+    List<MembershipPayment> findDepositsByMemberSeqs(@Param("memberSeqs") List<Long> memberSeqs);
 }

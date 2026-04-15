@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { memberApi, outstandingApi, type ComplexMember } from '@/lib/api';
+import { memberApi, type ComplexMember } from '@/lib/api';
 import type { PageResponse } from '@/lib/api/client';
 import { ROUTES } from '@/lib/routes';
 import { useQueryParams } from '@/lib/useQueryParams';
@@ -40,25 +40,10 @@ function MembersContent() {
   const members = pageData?.content ?? [];
   const totalPages = pageData?.totalPages ?? 0;
 
-  // 미수금 합계 매핑 로드 (전체 한 번에 가져와서 회원별 합산)
-  const { data: outstandingData } = useApiQuery<PageResponse<{ memberSeq: number; outstanding: number }>>(
-    ['outstandingMap'],
-    () => outstandingApi.list({ size: 1000 }),
-  );
-  const outstandingMap = (() => {
-    const map = new Map<number, number>();
-    if (outstandingData) {
-      for (const item of outstandingData.content) {
-        map.set(item.memberSeq, (map.get(item.memberSeq) ?? 0) + item.outstanding);
-      }
-    }
-    return map;
-  })();
-
   useEffect(() => { setKeyword(searchedKeyword); }, [searchedKeyword]);
 
   const columns: Column<ComplexMember>[] = [
-    { header: '번호', render: (_, i) => page * 20 + (i ?? 0) + 1, style: { width: 50, color: '#adb5bd', textAlign: 'center' } },
+    { header: '번호', render: (_, i) => page * 20 + (i ?? 0) + 1, style: { width: 50, color: '#adb5bd' } },
     {
       header: '이름', render: (m) => (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -72,12 +57,12 @@ function MembersContent() {
         </span>
       ),
     },
-    { header: '전화번호', render: (m) => <span style={{ fontFamily: 'monospace' }}>{m.phoneNumber}</span> },
+    { header: '연락처', render: (m) => <span style={{ fontFamily: 'monospace' }}>{m.phoneNumber}</span> },
     { header: '레벨', render: (m) => m.level || '' },
     { header: '언어', render: (m) => m.language || '' },
     { header: '인적사항', render: (m) => <span style={{ color: '#888' }}>{m.info || ''}</span> },
     {
-      header: '멤버십', render: (m) => (
+      header: '멤버쉽', render: (m) => (
         <button onClick={(e) => { e.stopPropagation(); openInfoModal(m.seq, m.name); }}
           style={{ background: '#6366f1', color: '#fff', border: 'none', borderRadius: 3, padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}>
           정보
@@ -85,27 +70,20 @@ function MembersContent() {
       ),
     },
     {
-      header: '미수금', render: (m) => {
-        const out = outstandingMap.get(m.seq);
-        if (!out || out <= 0) return <span style={{ color: '#ccc', fontSize: '0.78rem' }}>—</span>;
-        return (
-          <button
-            onClick={(e) => { e.stopPropagation(); router.push(`${ROUTES.COMPLEX_OUTSTANDING}?keyword=${encodeURIComponent(m.name)}`); }}
-            title="미수금 관리로 이동"
-            style={{
-              background: '#fff5f5', color: '#e03131', border: '1px solid #ffc9c9',
-              borderRadius: 3, padding: '4px 8px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 700,
-            }}
-          >
-            {out.toLocaleString()}원
-          </button>
-        );
-      },
+      header: '입금액', render: (m) => m.firstPaymentAmount != null
+        ? <span style={{ fontWeight: 600 }}>{m.firstPaymentAmount.toLocaleString()}원</span>
+        : <span style={{ color: '#ccc', fontSize: '0.78rem' }}>—</span>,
+    },
+    {
+      header: '입금날짜', render: (m) => <span style={{ fontSize: '0.75rem', color: '#666' }}>
+        {m.firstPaymentDate?.split('T')[0] ?? '—'}
+      </span>,
     },
     historyColumn,
     { header: '가입경로', render: (m) => <span style={{ color: '#555' }}>{m.signupChannel || ''}</span> },
+    { header: '인터뷰어', render: (m) => <span style={{ color: '#555' }}>{m.interviewer || ''}</span> },
     { header: '등록일자', render: (m) => <span style={{ fontSize: '0.75rem', color: '#666' }}>{m.createdDate?.split('T')[0] ?? ''}</span> },
-    { header: '수정일자', render: (m) => <span style={{ fontSize: '0.75rem', color: '#666' }}>{m.lastUpdateDate?.split('T')[0] ?? ''}</span> },
+    { header: '특이사항', render: (m) => <span style={{ color: '#888' }}>{m.comment || ''}</span> },
     recentHistoryColumn,
   ];
 

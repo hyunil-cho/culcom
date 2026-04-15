@@ -37,16 +37,14 @@ describe('ComplexSidebar', () => {
     expect(screen.getByText('시간대 설정')).toBeInTheDocument();
     expect(screen.getByText('스태프 관리')).toBeInTheDocument();
     expect(screen.getByText('연기 요청')).toBeInTheDocument();
-    expect(screen.getByText('환불 요청')).toBeInTheDocument();
+    expect(screen.getByText('환불 관리')).toBeInTheDocument();
     expect(screen.getByText('양도 요청')).toBeInTheDocument();
     expect(screen.getByText('메인으로')).toBeInTheDocument();
   });
 
   it('설정 그룹 항목을 표시한다', () => {
     renderSidebar();
-    expect(screen.getByText('결제 방법')).toBeInTheDocument();
-    expect(screen.getByText('환급 은행')).toBeInTheDocument();
-    expect(screen.getByText('가입 경로')).toBeInTheDocument();
+    expect(screen.getByText('옵션 카탈로그')).toBeInTheDocument();
   });
 
   it('수업 관리 그룹 타이틀 표시', () => {

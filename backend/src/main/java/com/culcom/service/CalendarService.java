@@ -42,6 +42,8 @@ public class CalendarService {
                         .caller(r.getCaller())
                         .status(r.getCustomer() != null ? r.getCustomer().getStatus().name() : "-")
                         .memo(r.getCustomer() != null ? r.getCustomer().getComment() : null)
+                        .createdDate(r.getCreatedDate() != null ? DateTimeUtils.format(r.getCreatedDate()) : null)
+                        .lastUpdateDate(r.getLastUpdateDate() != null ? DateTimeUtils.format(r.getLastUpdateDate()) : null)
                         .build())
                 .toList();
     }
@@ -67,6 +69,8 @@ public class CalendarService {
                 .caller(r.getCaller())
                 .status(r.getCustomer().getStatus().name())
                 .memo(r.getCustomer().getComment())
+                .createdDate(r.getCreatedDate() != null ? DateTimeUtils.format(r.getCreatedDate()) : null)
+                .lastUpdateDate(r.getLastUpdateDate() != null ? DateTimeUtils.format(r.getLastUpdateDate()) : null)
                 .build();
     }
 
@@ -141,6 +145,7 @@ public class CalendarService {
                 .startTime(e.getStartTime().toString())
                 .endTime(e.getEndTime().toString())
                 .createdDate(e.getCreatedDate() != null ? DateTimeUtils.format(e.getCreatedDate()) : null)
+                .lastUpdateDate(e.getLastUpdateDate() != null ? DateTimeUtils.format(e.getLastUpdateDate()) : null)
                 .build();
     }
 }

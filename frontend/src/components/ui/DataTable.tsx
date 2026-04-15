@@ -81,34 +81,41 @@ export default function DataTable<T>({
             <thead>
               <tr>
                 {columns.map((col, i) => (
-                  <th key={i} style={col.style}>{col.header}</th>
+                  <th key={i} style={{ textAlign: 'center', ...col.style }}>{col.header}</th>
                 ))}
+                {onRowClick && <th style={{ width: 100, textAlign: 'center' }}>관리</th>}
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={columns.length}>
+                  <td colSpan={columns.length + (onRowClick ? 1 : 0)}>
                     <Spinner message="데이터를 불러오는 중..." />
                   </td>
                 </tr>
               ) : data.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length} className="table-empty">
+                  <td colSpan={columns.length + (onRowClick ? 1 : 0)} className="table-empty">
                     <div>{emptyMessage}</div>
                     {emptyAction && <div style={{ marginTop: '0.75rem' }}>{emptyAction}</div>}
                   </td>
                 </tr>
               ) : (
                 data.map((item, rowIdx) => (
-                  <tr
-                    key={rowKey(item)}
-                    style={{ ...rowStyle?.(item), ...(onRowClick ? { cursor: 'pointer' } : {}) }}
-                    onClick={onRowClick ? () => onRowClick(item) : undefined}
-                  >
+                  <tr key={rowKey(item)} style={rowStyle?.(item)}>
                     {columns.map((col, i) => (
-                      <td key={i} style={col.style}>{col.render(item, rowIdx)}</td>
+                      <td key={i} style={{ textAlign: 'center', ...col.style }}>{col.render(item, rowIdx)}</td>
                     ))}
+                    {onRowClick && (
+                      <td style={{ textAlign: 'center' }}>
+                        <button
+                          className="btn-inline btn-inline-info"
+                          onClick={(e) => { e.stopPropagation(); onRowClick(item); }}
+                        >
+                          상세
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}

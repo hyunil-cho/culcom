@@ -9,9 +9,11 @@ import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.SmsEventType;
 import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
+import com.culcom.entity.complex.member.MembershipPayment;
 import com.culcom.mapper.ComplexMemberQueryMapper;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ComplexMemberRepository;
+import com.culcom.repository.MembershipPaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class ComplexMemberService {
     private final ComplexMemberQueryMapper complexMemberQueryMapper;
     private final ApplicationEventPublisher eventPublisher;
     private final SmsService smsService;
+    private final MembershipPaymentRepository membershipPaymentRepository;
 
     public ComplexMemberResponse get(Long seq) {
         ComplexMember member = memberRepository.findById(seq)
@@ -79,6 +82,7 @@ public class ComplexMemberService {
         metaData.setLevel(req.getLevel());
         metaData.setLanguage(req.getLanguage());
         metaData.setSignupChannel(req.getSignupChannel());
+        metaData.setInterviewer(req.getInterviewer());
         return ComplexMemberResponse.from(memberRepository.save(member));
     }
 
@@ -102,6 +106,27 @@ public class ComplexMemberService {
         }
         for (ComplexMemberResponse m : members) {
             m.setAttendanceHistory(historyMap.getOrDefault(m.getSeq(), List.of()));
+        }
+    }
+
+    /**
+     * 회원 목록에 첫 납부(DEPOSIT) 금액과 일자를 매핑한다.
+     */
+    public void populateFirstPayment(List<ComplexMemberResponse> members) {
+        if (members.isEmpty()) return;
+        List<Long> memberSeqs = members.stream().map(ComplexMemberResponse::getSeq).toList();
+        List<MembershipPayment> deposits = membershipPaymentRepository.findDepositsByMemberSeqs(memberSeqs);
+        Map<Long, MembershipPayment> firstByMember = new HashMap<>();
+        for (MembershipPayment p : deposits) {
+            Long memberSeq = p.getMemberMembership().getMember().getSeq();
+            firstByMember.putIfAbsent(memberSeq, p);
+        }
+        for (ComplexMemberResponse m : members) {
+            MembershipPayment p = firstByMember.get(m.getSeq());
+            if (p != null) {
+                m.setFirstPaymentAmount(p.getAmount());
+                m.setFirstPaymentDate(p.getPaidDate());
+            }
         }
     }
 }

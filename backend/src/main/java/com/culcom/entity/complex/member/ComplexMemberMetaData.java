@@ -27,4 +27,7 @@ public class ComplexMemberMetaData extends BaseTimeEntity {
 
     @Column(name = "signup_channel", length = 100)
     private String signupChannel;
+
+    @Column(length = 50)
+    private String interviewer;
 }

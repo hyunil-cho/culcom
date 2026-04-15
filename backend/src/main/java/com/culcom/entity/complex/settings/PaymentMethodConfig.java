@@ -28,4 +28,9 @@ public class PaymentMethodConfig extends BaseTimeEntity implements Configurable 
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
+
+    /** 시스템 기본 수단. true이면 사용자가 수정/삭제할 수 없다. */
+    @Column(name = "locked", nullable = false)
+    @Builder.Default
+    private Boolean locked = false;
 }

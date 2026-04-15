@@ -74,14 +74,23 @@ public class DataInitializer implements ApplicationRunner {
         log.info("초기 가입경로 시드 {}건 생성", seeds.length);
     }
 
+    private static final String[] LOCKED_PAYMENT_METHODS = {"카드", "현금", "계좌이체"};
+
     private void initPaymentMethods() {
-        if (paymentMethodConfigRepository.count() > 0) return;
-        String[] seeds = {"CARD", "ONLINE_SUBSCRIPTION", "ONLINE_CREDIT", "TOSS_LINK",
-                "WALK_IN", "BANK_TRANSFER_PERSONAL", "BANK_TRANSFER_CORPORATE", "CASH", "OTHER"};
-        for (String code : seeds) {
-            paymentMethodConfigRepository.save(PaymentMethodConfig.builder().code(code).isActive(true).build());
+        // 기본(잠금) 결제 수단은 항상 존재해야 한다 — DB가 비어있지 않더라도 누락분 보강.
+        for (String code : LOCKED_PAYMENT_METHODS) {
+            paymentMethodConfigRepository.findByCode(code).ifPresentOrElse(
+                    existing -> {
+                        if (!Boolean.TRUE.equals(existing.getLocked())) {
+                            existing.setLocked(true);
+                            paymentMethodConfigRepository.save(existing);
+                        }
+                    },
+                    () -> paymentMethodConfigRepository.save(PaymentMethodConfig.builder()
+                            .code(code).isActive(true).locked(true).build())
+            );
         }
-        log.info("초기 결제 수단 시드 {}건 생성", seeds.length);
+        log.info("기본 결제 수단 보강 완료 (잠금: {})", String.join(", ", LOCKED_PAYMENT_METHODS));
     }
 
     private void initThirdPartyServices() {

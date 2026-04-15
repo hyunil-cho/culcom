@@ -16,4 +16,6 @@ public class CalendarReservationResponse {
     private String caller;
     private String status;
     private String memo;
+    private String createdDate;
+    private String lastUpdateDate;
 }

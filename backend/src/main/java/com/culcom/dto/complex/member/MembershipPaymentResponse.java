@@ -18,6 +18,7 @@ public class MembershipPaymentResponse {
     private PaymentKind kind;
     private String note;
     private LocalDateTime createdDate;
+    private CardPaymentDetailDto cardDetail;
 
     public static MembershipPaymentResponse from(MembershipPayment entity) {
         return MembershipPaymentResponse.builder()
@@ -29,6 +30,7 @@ public class MembershipPaymentResponse {
                 .kind(entity.getKind())
                 .note(entity.getNote())
                 .createdDate(entity.getCreatedDate())
+                .cardDetail(CardPaymentDetailDto.from(entity.getCardPaymentDetail()))
                 .build();
     }
 }

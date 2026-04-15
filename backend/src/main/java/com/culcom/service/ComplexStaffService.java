@@ -63,7 +63,7 @@ public class ComplexStaffService {
 
         ComplexStaffInfo staffInfo = ComplexStaffInfo.builder()
                 .member(member)
-                .status(req.getStatus() != null ? req.getStatus() : StaffStatus.재직)
+                .status(req.getStatus() != null ? req.getStatus() : StaffStatus.활동중)
                 .build();
         member.setStaffInfo(staffInfo);
 
@@ -115,7 +115,7 @@ public class ComplexStaffService {
         // 복직 후에는 새 멤버십을 구매하고 팀에 다시 등록해야 한다.
         if (oldStatus != newStatus) {
             MembershipStatus newMmStatus =
-                    (newStatus == StaffStatus.재직)
+                    (newStatus == StaffStatus.활동중)
                             ? MembershipStatus.활성
                             : MembershipStatus.정지;
             boolean detached = false;
@@ -132,7 +132,7 @@ public class ComplexStaffService {
         }
 
         // 휴직/퇴직 시 배정된 수업에서 제외
-        if (oldStatus == StaffStatus.재직 && newStatus != StaffStatus.재직) {
+        if (oldStatus == StaffStatus.활동중 && newStatus != StaffStatus.활동중) {
             List<ComplexClass> assignedClasses = classRepository.findByStaffSeq(seq);
             for (ComplexClass cls : assignedClasses) {
                 cls.setStaff(null);

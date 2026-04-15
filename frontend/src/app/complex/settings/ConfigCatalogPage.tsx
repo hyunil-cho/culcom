@@ -21,18 +21,16 @@ interface Props {
   title: string;
   description: string;
   api: CatalogApi;
+  showHeader?: boolean;
 }
 
-export default function ConfigCatalogPage({ title, description, api }: Props) {
+export default function ConfigCatalogPage({ title, description, api, showHeader = true }: Props) {
   const configQueryKey = ['configCatalog', title];
 
   const { data: items = [], isLoading: loading } = useApiQuery<ConfigItem[]>(
     configQueryKey,
     () => api.list(),
   );
-
-  const [editingSeq, setEditingSeq] = useState<number | null>(null);
-  const [editIsActive, setEditIsActive] = useState(true);
 
   const [adding, setAdding] = useState(false);
   const [newCode, setNewCode] = useState('');
@@ -42,17 +40,9 @@ export default function ConfigCatalogPage({ title, description, api }: Props) {
 
   const load = () => queryClient.invalidateQueries({ queryKey: configQueryKey });
 
-  const startEdit = (it: ConfigItem) => {
-    setEditingSeq(it.seq);
-    setEditIsActive(it.isActive);
-  };
-
-  const cancelEdit = () => { setEditingSeq(null); };
-
-  const saveEdit = async (seq: number) => {
+  const toggleActive = async (it: ConfigItem) => {
     try {
-      await api.update(seq, { isActive: editIsActive });
-      setEditingSeq(null);
+      await api.update(it.seq, { isActive: !it.isActive });
       load();
     } catch (e: any) {
       setResult({ success: false, message: e?.message ?? '저장 실패' });
@@ -87,11 +77,16 @@ export default function ConfigCatalogPage({ title, description, api }: Props) {
 
   return (
     <>
-      <div className="page-toolbar">
-        <h2 className="page-title" style={{ marginBottom: 0 }}>{title}</h2>
-        {!adding && <Button onClick={() => setAdding(true)}>+ 추가</Button>}
+      {showHeader && (
+        <div className="page-toolbar">
+          <h2 className="page-title" style={{ marginBottom: 0 }}>{title}</h2>
+          {!adding && <Button onClick={() => setAdding(true)}>+ 추가</Button>}
+        </div>
+      )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <p style={{ color: '#888', fontSize: 13, margin: 0 }}>{description}</p>
+        {!showHeader && !adding && <Button onClick={() => setAdding(true)}>+ 추가</Button>}
       </div>
-      <p style={{ color: '#888', fontSize: 13, marginBottom: 16 }}>{description}</p>
 
       {adding && (
         <div className="card" style={{ padding: 14, marginBottom: 14, border: '1px solid #4a90e2' }}>
@@ -124,51 +119,54 @@ export default function ConfigCatalogPage({ title, description, api }: Props) {
             <thead>
               <tr style={{ background: '#fafbfc', color: '#888', fontSize: 12 }}>
                 <th style={th}>코드</th>
-                <th style={{ ...th, width: 100 }}>활성</th>
-                <th style={{ ...th, width: 200, textAlign: 'right' }}>액션</th>
+                <th style={{ ...th, width: 100 }}>상태</th>
+                <th style={{ ...th, width: 220, textAlign: 'right' }}>액션</th>
               </tr>
             </thead>
             <tbody>
-              {items.map(it => {
-                const editing = editingSeq === it.seq;
-                return (
-                  <tr key={it.seq} style={{ borderTop: '1px solid #f1f3f5' }}>
-                    <td style={{ ...td, fontFamily: 'monospace', color: '#666' }}>{it.code}</td>
-                    <td style={td}>
-                      {editing ? (
-                        <label style={{ display: 'inline-flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
-                          <input type="checkbox" checked={editIsActive}
-                            onChange={(e) => setEditIsActive(e.target.checked)} />
-                          <span style={{ fontSize: 12 }}>{editIsActive ? '활성' : '비활성'}</span>
-                        </label>
-                      ) : (
-                        <span style={{
-                          fontSize: 11, fontWeight: 600,
-                          padding: '2px 8px', borderRadius: 10,
-                          background: it.isActive ? '#f0fdf4' : '#f1f3f5',
-                          color: it.isActive ? '#2e7d32' : '#999',
-                          border: `1px solid ${it.isActive ? '#bbf7d0' : '#dee2e6'}`,
-                        }}>
-                          {it.isActive ? '활성' : '비활성'}
-                        </span>
-                      )}
-                    </td>
-                    <td style={{ ...td, textAlign: 'right' }}>
-                      {editing ? (
-                        <div style={{ display: 'inline-flex', gap: 6 }}>
-                          <button onClick={() => saveEdit(it.seq)} style={btnStyle('#4a90e2')}>저장</button>
-                          <button onClick={cancelEdit} style={btnStyle('#888')}>취소</button>
-                        </div>
-                      ) : (
-                        <div style={{ display: 'inline-flex', gap: 6 }}>
-                          <button onClick={() => startEdit(it)} style={btnStyle('#4a90e2')}>수정</button>
-                          <button onClick={() => setConfirmDelete(it)} style={btnStyle('#e03131')}>삭제</button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+              {items.map(it => (
+                <tr key={it.seq} style={{ borderTop: '1px solid #f1f3f5' }}>
+                  <td style={{ ...td, fontFamily: 'monospace', color: '#666' }}>
+                    {it.code}
+                    {it.locked && (
+                      <span style={{
+                        marginLeft: 8, fontSize: 10, fontWeight: 700,
+                        padding: '2px 6px', borderRadius: 8,
+                        background: '#eef2ff', color: '#4338ca', border: '1px solid #c7d2fe',
+                        fontFamily: 'inherit',
+                      }}>
+                        기본
+                      </span>
+                    )}
+                  </td>
+                  <td style={td}>
+                    <span style={{
+                      fontSize: 11, fontWeight: 600,
+                      padding: '2px 8px', borderRadius: 10,
+                      background: it.isActive ? '#f0fdf4' : '#f1f3f5',
+                      color: it.isActive ? '#2e7d32' : '#999',
+                      border: `1px solid ${it.isActive ? '#bbf7d0' : '#dee2e6'}`,
+                    }}>
+                      {it.isActive ? '활성' : '비활성'}
+                    </span>
+                  </td>
+                  <td style={{ ...td, textAlign: 'right' }}>
+                    {it.locked ? (
+                      <span style={{ fontSize: 12, color: '#888' }}>변경 불가</span>
+                    ) : (
+                      <div style={{ display: 'inline-flex', gap: 6 }}>
+                        <button
+                          onClick={() => toggleActive(it)}
+                          style={btnStyle(it.isActive ? '#888' : '#2e7d32')}
+                        >
+                          {it.isActive ? '비활성화' : '활성화'}
+                        </button>
+                        <button onClick={() => setConfirmDelete(it)} style={btnStyle('#e03131')}>삭제</button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}

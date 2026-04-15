@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { refundApi, externalApi, smsEventApi, type RefundRequest } from '@/lib/api';
+import { refundApi, refundSurveyApi, externalApi, smsEventApi, type RefundRequest, type RefundSurveyResponse } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
@@ -12,6 +12,7 @@ import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useResultModal } from '@/hooks/useResultModal';
 import { useModal } from '@/hooks/useModal';
 import { useListPageQuery } from '@/hooks/useListPageQuery';
+import SurveyDetailView from './SurveyDetailView';
 import s from './page.module.css';
 
 const STATUS_BADGE: Record<string, string> = {
@@ -30,6 +31,8 @@ export default function RefundsPage() {
   const confirmModal = useModal<{ req: RefundRequest; newStatus: string }>();
   const [approveMessage, setApproveMessage] = useState('');
   const infoAlert = useModal<string>();
+  const surveyModal = useModal<RefundSurveyResponse>();
+  const [surveyLoading, setSurveyLoading] = useState(false);
   const [senderPhone, setSenderPhone] = useState('');
 
   useEffect(() => {
@@ -53,13 +56,30 @@ export default function RefundsPage() {
     }
   };
 
+  const openSurvey = async (req: RefundRequest) => {
+    if (surveyLoading) return;
+    setSurveyLoading(true);
+    try {
+      const res = await refundSurveyApi.byRefund(req.seq);
+      if (!res.success || !res.data) {
+        infoAlert.open('해당 환불 요청에 연결된 설문이 없습니다.');
+        return;
+      }
+      surveyModal.open(res.data);
+    } catch (e: any) {
+      infoAlert.open(e?.message ?? '설문을 불러오지 못했습니다.');
+    } finally {
+      setSurveyLoading(false);
+    }
+  };
+
   const handleStatusFilter = (status: string) => { setStatusFilter(status); list.load(0, { status, keyword }); };
   const handleSearch = () => { list.load(0, { status: statusFilter, keyword }); };
 
   const handleStatusChange = (req: RefundRequest, newStatus: string) => {
     if (newStatus === req.status) return;
-    if (req.status === '승인') {
-      infoAlert.open('이미 승인된 환불 요청은 상태를 변경할 수 없습니다.');
+    if (req.status === '승인' || req.status === '반려') {
+      infoAlert.open('이미 처리된 환불 요청은 상태를 변경할 수 없습니다.');
       return;
     }
     if (newStatus === '반려') { rejectModal.open(req); setRejectReason(''); return; }
@@ -125,22 +145,41 @@ export default function RefundsPage() {
     { header: '반려 사유', render: (r) => r.status === '반려' && r.rejectReason
       ? <span className={s.rejectReasonText}>{r.rejectReason}</span>
       : <span className={s.emptyText}>-</span> },
-    { header: '처리', render: (r) => r.status === '승인' ? (
+    { header: '처리', render: (r) => (r.status === '승인' || r.status === '반려') ? (
       <span className={s.emptyText}>처리 완료</span>
     ) : (
       <select value={r.status} onChange={(e) => handleStatusChange(r, e.target.value)} className={s.statusSelect}>
         <option value="대기">대기</option><option value="승인">승인</option><option value="반려">반려</option>
       </select>
     )},
+    { header: '설문', render: (r) => (
+      <button
+        type="button"
+        onClick={() => openSurvey(r)}
+        disabled={surveyLoading}
+        style={{
+          padding: '4px 10px', border: '1px solid #6366f1', borderRadius: 4,
+          background: '#fff', color: '#6366f1', fontSize: '0.78rem',
+          cursor: surveyLoading ? 'default' : 'pointer', fontWeight: 600,
+        }}
+      >
+        설문 보기
+      </button>
+    )},
   ];
 
   return (
     <>
       <div className="page-toolbar">
-        <h2 className="page-title" style={{ marginBottom: 0 }}>환불 요청 관리</h2>
-        <Button variant="secondary" onClick={() => router.push(ROUTES.COMPLEX_REFUND_REASONS)}>
-          환불사유 관리
-        </Button>
+        <h2 className="page-title" style={{ marginBottom: 0 }}>환불 요청</h2>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button variant="secondary" onClick={() => router.push(ROUTES.COMPLEX_REFUND_SURVEYS)}>
+            환불 설문
+          </Button>
+          <Button variant="secondary" onClick={() => router.push(ROUTES.COMPLEX_REFUND_REASONS)}>
+            환불사유 관리
+          </Button>
+        </div>
       </div>
 
       <SearchBar keyword={keyword} onKeywordChange={setKeyword} onSearch={handleSearch}
@@ -237,6 +276,12 @@ export default function RefundsPage() {
         >
           <p style={{ margin: 0 }}>{infoAlert.data}</p>
         </ConfirmModal>
+      )}
+
+      {surveyModal.isOpen && surveyModal.data && (
+        <ModalOverlay onClose={surveyModal.close}>
+          <SurveyDetailView survey={surveyModal.data} onClose={surveyModal.close} />
+        </ModalOverlay>
       )}
 
       {modal}

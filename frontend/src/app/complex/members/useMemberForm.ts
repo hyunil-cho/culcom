@@ -57,6 +57,7 @@ export function useMemberForm(seq?: number) {
       phoneNumber: m.phoneNumber,
       level: m.level ?? '',
       language: m.language ?? '',
+      interviewer: m.interviewer ?? '',
       info: m.info ?? '',
       signupChannel: m.signupChannel ?? '',
       comment: m.comment ?? '',
@@ -95,6 +96,7 @@ export function useMemberForm(seq?: number) {
   const buildMetaData = () => ({
     level: form.level || undefined,
     language: form.language || undefined,
+    interviewer: form.interviewer || undefined,
     signupChannel: (form.signupChannel && form.signupChannel !== '기타') ? form.signupChannel : undefined,
   });
 

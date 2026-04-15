@@ -67,7 +67,7 @@ class ComplexStaffServiceLeaveTest {
         ComplexStaffRequest createReq = new ComplexStaffRequest();
         createReq.setName("김강사");
         createReq.setPhoneNumber("01012345678");
-        createReq.setStatus(StaffStatus.재직);
+        createReq.setStatus(StaffStatus.활동중);
         Long staffSeq = complexStaffService.create(createReq, branch.getSeq()).getSeq();
         ComplexMember staff = memberRepository.findById(staffSeq).orElseThrow();
 
@@ -108,7 +108,7 @@ class ComplexStaffServiceLeaveTest {
         ComplexStaffRequest leaveReq = new ComplexStaffRequest();
         leaveReq.setName(staff.getName());
         leaveReq.setPhoneNumber(staff.getPhoneNumber());
-        leaveReq.setStatus(StaffStatus.휴직);
+        leaveReq.setStatus(StaffStatus.활동중단);
         complexStaffService.update(staffSeq, leaveReq);
 
         // then — 팀 A의 리더 자리는 비워졌다

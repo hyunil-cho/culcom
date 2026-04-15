@@ -23,7 +23,7 @@ public class ComplexStaffInfo extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private StaffStatus status = StaffStatus.재직;
+    private StaffStatus status = StaffStatus.활동중;
 
     // ── 환급 정보 (기존 ComplexStaffRefundInfo 흡수) ──
 

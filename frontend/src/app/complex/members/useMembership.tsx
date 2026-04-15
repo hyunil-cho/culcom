@@ -6,6 +6,7 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 import { usePaymentOptions } from '@/lib/usePaymentOptions';
 import MembershipInfoModal from './components/MembershipInfoModal';
 import MembershipFormSection from './components/MembershipFormSection';
+import { emptyCardDetail } from './components/CardPaymentFields';
 import { validateMembershipForm, nowDateTimeLocal, type MembershipFormData } from './memberFormTypes';
 import { useTransfer } from './useTransfer';
 
@@ -13,6 +14,7 @@ const EMPTY_FORM: MembershipFormData = {
   membershipSeq: '', startDate: '', expiryDate: '', price: '',
   paymentDate: '', depositAmount: '', paymentMethod: '',
   status: '활성',
+  cardDetail: emptyCardDetail,
 };
 
 interface UseMembershipOptions {
@@ -69,6 +71,7 @@ export function useMembership(options?: UseMembershipOptions) {
         depositAmount: '',
         paymentMethod: ms.paymentMethod ?? '',
         status: ms.status ?? '활성',
+        cardDetail: emptyCardDetail,
       });
       setMemberMembershipSeq(ms.seq);
     }
@@ -139,6 +142,7 @@ export function useMembership(options?: UseMembershipOptions) {
       depositAmount: form.depositAmount || undefined,
       paymentMethod: (form.paymentMethod && form.paymentMethod !== '기타') ? form.paymentMethod : undefined,
       status: form.status,
+      cardDetail: form.paymentMethod === '카드' ? form.cardDetail : undefined,
     };
     if (memberMembershipSeq) {
       await memberApi.updateMembership(targetMemberSeq, memberMembershipSeq, msData);

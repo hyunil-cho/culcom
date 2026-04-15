@@ -40,6 +40,7 @@ public class ComplexMemberQueryController {
         int total = complexMemberQueryMapper.count(branchSeq, keyword);
 
         complexMemberService.populateAttendanceHistory(list);
+        complexMemberService.populateFirstPayment(list);
 
         Page<ComplexMemberResponse> result = new PageImpl<>(list, PageRequest.of(page, size), total);
         return ResponseEntity.ok(ApiResponse.ok(result));

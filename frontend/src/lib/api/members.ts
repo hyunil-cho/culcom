@@ -9,6 +9,7 @@ export interface ComplexMember {
   language?: string;
   info?: string;
   signupChannel?: string;
+  interviewer?: string;
   staffStatus?: string;
   comment?: string;
   joinDate?: string;
@@ -16,12 +17,15 @@ export interface ComplexMember {
   lastUpdateDate?: string;
   attendanceHistory?: string[];
   smsWarning?: string;
+  firstPaymentAmount?: number | null;
+  firstPaymentDate?: string | null;
 }
 
 export interface ComplexMemberMetaData {
   level?: string;
   language?: string;
   signupChannel?: string;
+  interviewer?: string;
 }
 
 /**
@@ -33,6 +37,13 @@ export interface ComplexMemberMetaData {
  */
 export type MembershipStatus = '활성' | '정지' | '만료' | '환불';
 
+export interface CardPaymentDetail {
+  cardCompany: string;
+  cardNumber: string;
+  cardApprovalDate: string;
+  cardApprovalNumber: string;
+}
+
 export interface MemberMembershipRequest {
   membershipSeq: number;
   startDate?: string;
@@ -42,6 +53,7 @@ export interface MemberMembershipRequest {
   paymentMethod?: string;
   paymentDate?: string;
   status?: MembershipStatus;
+  cardDetail?: CardPaymentDetail;
 }
 
 export type PaymentKind = 'DEPOSIT' | 'BALANCE' | 'ADDITIONAL' | 'REFUND';
@@ -56,6 +68,7 @@ export interface MembershipPaymentResponse {
   kind: PaymentKind;
   note: string | null;
   createdDate: string;
+  cardDetail?: CardPaymentDetail | null;
 }
 
 export interface MembershipPaymentRequest {
@@ -64,6 +77,7 @@ export interface MembershipPaymentRequest {
   method?: PaymentMethod;
   paidDate?: string;
   note?: string;
+  cardDetail?: CardPaymentDetail;
 }
 
 export interface MemberMembershipResponse {

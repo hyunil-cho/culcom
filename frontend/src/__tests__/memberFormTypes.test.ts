@@ -37,9 +37,9 @@ describe('emptyClassAssign', () => {
 });
 
 describe('emptyStaffForm', () => {
-  it('isStaff는 false, status는 "재직"', () => {
+  it('isStaff는 false, status는 "활동중"', () => {
     expect(emptyStaffForm.isStaff).toBe(false);
-    expect(emptyStaffForm.status).toBe('재직');
+    expect(emptyStaffForm.status).toBe('활동중');
   });
 });
 

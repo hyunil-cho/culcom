@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { surveyApi, type SurveySubmissionItem } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import MemberForm from '../MemberForm';
@@ -24,6 +24,22 @@ function MemberAddPageInner() {
   } = useMemberForm();
 
   const { channels } = useSignupChannels();
+  const staffRefundDefaultsApplied = useRef(false);
+  useEffect(() => {
+    if (staffRefundDefaultsApplied.current) return;
+    staffRefundDefaultsApplied.current = true;
+    setStaffForm(prev => ({
+      ...prev,
+      refund: {
+        ...prev.refund,
+        paymentMethod: '이체(개인통장)',
+        depositAmount: '100000',
+        refundableDeposit: '70000',
+        nonRefundableDeposit: '30000',
+      },
+    }));
+  }, [setStaffForm]);
+
   const [showImport, setShowImport] = useState(false);
   const [submissions, setSubmissions] = useState<SurveySubmissionItem[]>([]);
   const [importLoading, setImportLoading] = useState(false);

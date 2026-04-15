@@ -89,9 +89,7 @@ export const ROUTES = {
   COMPLEX_MEMBER_LINKS: `${R.COMPLEX}/members/links`,
   COMPLEX_OUTSTANDING: `${R.COMPLEX}/members/outstanding`,
   COMPLEX_SETTINGS: `${R.COMPLEX}/settings`,
-  COMPLEX_SETTINGS_PAYMENT_METHODS: `${R.COMPLEX}/settings/payment-methods`,
-  COMPLEX_SETTINGS_BANKS: `${R.COMPLEX}/settings/banks`,
-  COMPLEX_SETTINGS_SIGNUP_CHANNELS: `${R.COMPLEX}/settings/signup-channels`,
+  COMPLEX_SETTINGS_CATALOGS: `${R.COMPLEX}/settings/catalogs`,
   COMPLEX_MEMBER_EDIT: (seq: number) => `${R.COMPLEX}/members/${seq}/edit`,
   COMPLEX_STAFFS: `${R.COMPLEX}/staffs`,
   COMPLEX_STAFFS_ADD: `${R.COMPLEX}/staffs/add`,
@@ -108,6 +106,7 @@ export const ROUTES = {
   COMPLEX_POSTPONEMENT_REASONS: `${R.COMPLEX}/postponements/reasons`,
   COMPLEX_REFUNDS: `${R.COMPLEX}/refunds`,
   COMPLEX_REFUND_REASONS: `${R.COMPLEX}/refunds/reasons`,
+  COMPLEX_REFUND_SURVEYS: `${R.COMPLEX}/refunds/surveys`,
   COMPLEX_TRANSFER_REQUESTS: `${R.COMPLEX}/transfer-requests`,
   // 동의항목
   CONSENT_ITEMS: '/consent-items',

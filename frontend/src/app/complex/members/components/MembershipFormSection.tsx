@@ -8,6 +8,7 @@ import type { MembershipFormData } from '../memberFormTypes';
 import FormField from '@/components/ui/FormField';
 import { Select, CurrencyInput, Input } from '@/components/ui/FormInput';
 import MembershipProductSummary from './MembershipProductSummary';
+import CardPaymentFields from './CardPaymentFields';
 
 interface Props {
   form: MembershipFormData;
@@ -286,6 +287,13 @@ export default function MembershipFormSection({
                   </Select>
                 )}
               </FormField>
+
+              {!locked && form.paymentMethod === '카드' && (
+                <CardPaymentFields
+                  value={form.cardDetail}
+                  onChange={(v) => setForm(prev => ({ ...prev, cardDetail: v }))}
+                />
+              )}
             </>
           )}
 
@@ -313,6 +321,13 @@ export default function MembershipFormSection({
                   {paymentMethods.map(pm => <option key={pm.value} value={pm.value}>{pm.label}</option>)}
                 </Select>
               </FormField>
+
+              {form.paymentMethod === '카드' && (
+                <CardPaymentFields
+                  value={form.cardDetail}
+                  onChange={(v) => setForm(prev => ({ ...prev, cardDetail: v }))}
+                />
+              )}
             </>
           )}
         </>

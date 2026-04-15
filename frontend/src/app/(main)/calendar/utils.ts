@@ -7,6 +7,8 @@ export interface CalendarEventItem {
   author: string;
   startTime: string;  // "HH:mm"
   endTime: string;    // "HH:mm"
+  createdDate?: string;
+  lastUpdateDate?: string;
 }
 
 export interface Reservation {
@@ -17,6 +19,8 @@ export interface Reservation {
   caller: string;
   status: string;
   memo?: string;
+  createdDate?: string;
+  lastUpdateDate?: string;
 }
 
 export type ViewMode = 'week' | 'month';
@@ -94,6 +98,8 @@ export function toReservationMap(items: CalendarReservation[]): Record<string, R
       caller: item.caller,
       status: item.status,
       memo: item.memo ?? undefined,
+      createdDate: item.createdDate,
+      lastUpdateDate: item.lastUpdateDate,
     });
   });
   Object.values(map).forEach((arr) => arr.sort((a, b) => a.time.localeCompare(b.time)));
@@ -113,6 +119,8 @@ export function toEventMap(items: CalendarEvent[]): Record<string, CalendarEvent
       author: item.author,
       startTime: item.startTime.substring(0, 5),
       endTime: item.endTime.substring(0, 5),
+      createdDate: item.createdDate,
+      lastUpdateDate: item.lastUpdateDate,
     });
   });
   Object.values(map).forEach((arr) => arr.sort((a, b) => a.startTime.localeCompare(b.startTime)));

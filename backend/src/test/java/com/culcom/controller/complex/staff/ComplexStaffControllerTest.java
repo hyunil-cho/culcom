@@ -62,7 +62,7 @@ class ComplexStaffControllerTest {
                 .name("김강사")
                 .phoneNumber("01011112222")
                 .branchName("테스트지점")
-                .status(StaffStatus.재직)
+                .status(StaffStatus.활동중)
                 .createdDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .build();
@@ -105,7 +105,7 @@ class ComplexStaffControllerTest {
         Map<String, Object> body = Map.of(
                 "name", "김강사",
                 "phoneNumber", "01011112222",
-                "status", "재직");
+                "status", "활동중");
 
         mockMvc.perform(post("/api/complex/staffs")
                         .with(auth())
@@ -155,7 +155,7 @@ class ComplexStaffControllerTest {
     void 스태프_수정_성공() throws Exception {
         ComplexStaffResponse updated = ComplexStaffResponse.builder()
                 .seq(1L).name("수정강사").phoneNumber("01099998888")
-                .branchName("테스트지점").status(StaffStatus.재직)
+                .branchName("테스트지점").status(StaffStatus.활동중)
                 .createdDate(LocalDateTime.now()).lastUpdateDate(LocalDateTime.now())
                 .build();
         given(complexStaffService.update(eq(1L), any())).willReturn(updated);

@@ -66,8 +66,8 @@ class ComplexSettingsControllerTest {
         void 은행_목록_조회() throws Exception {
             given(bankConfigService.listAll())
                     .willReturn(List.of(
-                            new ConfigDto.Response(1L, "신한은행", true),
-                            new ConfigDto.Response(2L, "국민은행", true)));
+                            new ConfigDto.Response(1L, "신한은행", true, false),
+                            new ConfigDto.Response(2L, "국민은행", true, false)));
 
             mockMvc.perform(get("/api/complex/settings/banks").with(auth()))
                     .andExpect(status().isOk())
@@ -79,7 +79,7 @@ class ComplexSettingsControllerTest {
         @Test
         void 은행_추가() throws Exception {
             given(bankConfigService.create(any()))
-                    .willReturn(new ConfigDto.Response(3L, "우리은행", true));
+                    .willReturn(new ConfigDto.Response(3L, "우리은행", true, false));
 
             Map<String, Object> body = Map.of("code", "우리은행", "isActive", true);
 
@@ -96,7 +96,7 @@ class ComplexSettingsControllerTest {
         @Test
         void 은행_수정() throws Exception {
             given(bankConfigService.update(eq(1L), any()))
-                    .willReturn(new ConfigDto.Response(1L, "신한은행", false));
+                    .willReturn(new ConfigDto.Response(1L, "신한은행", false, false));
 
             Map<String, Object> body = Map.of("isActive", false);
 
@@ -129,8 +129,8 @@ class ComplexSettingsControllerTest {
         void 결제수단_목록_조회() throws Exception {
             given(paymentMethodConfigService.listAll())
                     .willReturn(List.of(
-                            new ConfigDto.Response(1L, "카드", true),
-                            new ConfigDto.Response(2L, "현금", true)));
+                            new ConfigDto.Response(1L, "카드", true, false),
+                            new ConfigDto.Response(2L, "현금", true, false)));
 
             mockMvc.perform(get("/api/complex/settings/payment-methods").with(auth()))
                     .andExpect(status().isOk())
@@ -142,7 +142,7 @@ class ComplexSettingsControllerTest {
         @Test
         void 결제수단_추가() throws Exception {
             given(paymentMethodConfigService.create(any()))
-                    .willReturn(new ConfigDto.Response(3L, "계좌이체", true));
+                    .willReturn(new ConfigDto.Response(3L, "계좌이체", true, false));
 
             Map<String, Object> body = Map.of("code", "계좌이체", "isActive", true);
 
@@ -158,7 +158,7 @@ class ComplexSettingsControllerTest {
         @Test
         void 결제수단_수정() throws Exception {
             given(paymentMethodConfigService.update(eq(1L), any()))
-                    .willReturn(new ConfigDto.Response(1L, "카드", false));
+                    .willReturn(new ConfigDto.Response(1L, "카드", false, false));
 
             Map<String, Object> body = Map.of("isActive", false);
 
@@ -191,8 +191,8 @@ class ComplexSettingsControllerTest {
         void 가입경로_목록_조회() throws Exception {
             given(signupChannelConfigService.listAll())
                     .willReturn(List.of(
-                            new ConfigDto.Response(1L, "인터넷 검색", true),
-                            new ConfigDto.Response(2L, "지인 소개", true)));
+                            new ConfigDto.Response(1L, "인터넷 검색", true, false),
+                            new ConfigDto.Response(2L, "지인 소개", true, false)));
 
             mockMvc.perform(get("/api/complex/settings/signup-channels").with(auth()))
                     .andExpect(status().isOk())
@@ -204,7 +204,7 @@ class ComplexSettingsControllerTest {
         @Test
         void 가입경로_추가() throws Exception {
             given(signupChannelConfigService.create(any()))
-                    .willReturn(new ConfigDto.Response(3L, "SNS 광고", true));
+                    .willReturn(new ConfigDto.Response(3L, "SNS 광고", true, false));
 
             Map<String, Object> body = Map.of("code", "SNS 광고", "isActive", true);
 
@@ -220,7 +220,7 @@ class ComplexSettingsControllerTest {
         @Test
         void 가입경로_수정() throws Exception {
             given(signupChannelConfigService.update(eq(1L), any()))
-                    .willReturn(new ConfigDto.Response(1L, "인터넷 검색", false));
+                    .willReturn(new ConfigDto.Response(1L, "인터넷 검색", false, false));
 
             Map<String, Object> body = Map.of("isActive", false);
 

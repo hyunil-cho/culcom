@@ -25,6 +25,7 @@ public class ComplexMemberResponse {
     private String comment;
     private LocalDateTime joinDate;
     private String signupChannel;
+    private String interviewer;
     private String staffStatus;
     private LocalDateTime createdDate;
     private LocalDateTime lastUpdateDate;
@@ -34,6 +35,12 @@ public class ComplexMemberResponse {
 
     @Setter
     private String smsWarning;
+
+    @Setter
+    private Long firstPaymentAmount;
+
+    @Setter
+    private LocalDateTime firstPaymentDate;
 
     public static ComplexMemberResponse from(ComplexMember entity) {
         return ComplexMemberResponse.builder()
@@ -46,6 +53,7 @@ public class ComplexMemberResponse {
                 .comment(entity.getComment())
                 .joinDate(entity.getJoinDate())
                 .signupChannel(entity.getMetaData() != null ? entity.getMetaData().getSignupChannel() : null)
+                .interviewer(entity.getMetaData() != null ? entity.getMetaData().getInterviewer() : null)
                 .staffStatus(entity.getStaffInfo() != null ? entity.getStaffInfo().getStatus().name() : null)
                 .createdDate(entity.getCreatedDate())
                 .lastUpdateDate(entity.getLastUpdateDate())

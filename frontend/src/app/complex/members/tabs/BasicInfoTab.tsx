@@ -71,6 +71,10 @@ export default function BasicInfoTab({ form, onChange, isEdit, staffForm, onStaf
         <Input placeholder="예: 영어, 일본어" value={form.language}
           onChange={(e) => onChange({ ...form, language: e.target.value })} />
       </FormField>
+      <FormField label="인터뷰어">
+        <Input placeholder="인터뷰를 진행한 직원 이름" value={form.interviewer}
+          onChange={(e) => onChange({ ...form, interviewer: e.target.value })} />
+      </FormField>
       <FormField label="가입 경로">
         <div>
           <Select value={signupSelectValue}
@@ -93,7 +97,7 @@ export default function BasicInfoTab({ form, onChange, isEdit, staffForm, onStaf
         <Input placeholder="예: 대학생, 영어회화 관심" value={form.info}
           onChange={(e) => onChange({ ...form, info: e.target.value })} />
       </FormField>
-      <FormField label="코멘트">
+      <FormField label="특이사항">
         <Textarea style={{ height: 100 }} placeholder="직업, 관심사, 등록 동기 등 상세 정보를 입력하세요" value={form.comment}
           onChange={(e) => onChange({ ...form, comment: e.target.value })} />
       </FormField>
