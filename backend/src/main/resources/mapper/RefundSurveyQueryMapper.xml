@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.culcom.mapper.RefundSurveyQueryMapper">
+
+    <sql id="searchCondition">
+        WHERE s.branch_seq = #{branchSeq}
+        <if test="keyword != null and keyword != ''">
+            AND (s.member_name LIKE CONCAT('%', #{keyword}, '%')
+              OR s.phone_number LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </sql>
+
+    <select id="search" resultType="com.culcom.dto.complex.refund.RefundSurveyResponse">
+        SELECT
+            s.seq,
+            s.refund_request_seq AS refundRequestSeq,
+            s.member_name AS memberName,
+            s.phone_number AS phoneNumber,
+            s.participation_period AS participationPeriod,
+            s.belonging_score AS belongingScore,
+            s.team_impact AS teamImpact,
+            s.difference_comment AS differenceComment,
+            s.improvement_comment AS improvementComment,
+            s.re_enroll_score AS reEnrollScore,
+            s.created_date AS createdDate
+        FROM refund_surveys s
+        <include refid="searchCondition"/>
+        ORDER BY s.created_date DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="int">
+        SELECT COUNT(*)
+        FROM refund_surveys s
+        <include refid="searchCondition"/>
+    </select>
+
+</mapper>
