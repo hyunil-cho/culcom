@@ -31,7 +31,7 @@ export {
   type TrendResponse, type TrendItem, type TrendPeriod,
 } from './complex-dashboard';
 export {
-  paymentMethodConfigApi, bankConfigApi, signupChannelConfigApi,
+  paymentMethodConfigApi, bankConfigApi, signupChannelConfigApi, cardCompanyConfigApi,
   type ConfigItem, type ConfigCreateRequest, type ConfigUpdateRequest,
 } from './complex-config';
 export {

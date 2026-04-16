@@ -3,6 +3,7 @@ package com.culcom.config.datas;
 import com.culcom.entity.auth.UserInfo;
 import com.culcom.entity.branch.Branch;
 import com.culcom.entity.complex.settings.BankConfig;
+import com.culcom.entity.complex.settings.CardCompanyConfig;
 import com.culcom.entity.complex.settings.PaymentMethodConfig;
 import com.culcom.entity.complex.settings.SignupChannelConfig;
 import com.culcom.entity.enums.UserRole;
@@ -35,6 +36,7 @@ public class DataInitializer implements ApplicationRunner {
     private final PaymentMethodConfigRepository paymentMethodConfigRepository;
     private final BankConfigRepository bankConfigRepository;
     private final SignupChannelConfigRepository signupChannelConfigRepository;
+    private final CardCompanyConfigRepository cardCompanyConfigRepository;
 
     @Override
     public void run(ApplicationArguments args) {
@@ -54,6 +56,16 @@ public class DataInitializer implements ApplicationRunner {
         initPaymentMethods();
         initBanks();
         initSignupChannels();
+        initCardCompanies();
+    }
+
+    private void initCardCompanies() {
+        if (cardCompanyConfigRepository.count() > 0) return;
+        String[] seeds = {"삼성", "현대", "KB국민", "신한", "롯데", "하나", "BC", "NH농협", "우리", "씨티"};
+        for (String code : seeds) {
+            cardCompanyConfigRepository.save(CardCompanyConfig.builder().code(code).isActive(true).build());
+        }
+        log.info("초기 카드사 시드 {}건 생성", seeds.length);
     }
 
     private void initBanks() {

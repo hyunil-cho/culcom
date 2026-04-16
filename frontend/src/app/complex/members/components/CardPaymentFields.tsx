@@ -2,6 +2,7 @@
 
 import FormField from '@/components/ui/FormField';
 import { Input } from '@/components/ui/FormInput';
+import { useCardCompanies } from '@/lib/useCardCompanies';
 
 export interface CardPaymentDetailData {
   cardCompany: string;
@@ -22,13 +23,11 @@ interface Props {
   onChange: (value: CardPaymentDetailData) => void;
 }
 
-const CARD_COMPANIES = [
-  '삼성', '현대', 'KB국민', '신한', '롯데', '하나', 'BC', 'NH농협', '우리', '씨티',
-];
-
 export default function CardPaymentFields({ value, onChange }: Props) {
+  const { cardCompanies } = useCardCompanies();
   const update = (field: keyof CardPaymentDetailData, v: string) =>
     onChange({ ...value, [field]: v });
+  const options = cardCompanies.filter(c => c.isActive || c.code === value.cardCompany);
 
   return (
     <div style={{
@@ -51,7 +50,7 @@ export default function CardPaymentFields({ value, onChange }: Props) {
           onChange={(e) => update('cardCompany', e.target.value)}
         >
           <option value="">-- 선택 --</option>
-          {CARD_COMPANIES.map(c => <option key={c} value={c}>{c}</option>)}
+          {options.map(c => <option key={c.seq} value={c.code}>{c.code}</option>)}
         </select>
       </FormField>
 

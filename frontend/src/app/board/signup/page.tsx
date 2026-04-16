@@ -6,6 +6,7 @@ import BoardNav from '../_components/BoardNav';
 import BoardFooter from '../_components/BoardFooter';
 import { useBoardSession } from '../_hooks/useBoardSession';
 import type { ConsentItem } from '@/lib/api';
+import { PhoneInput } from '@/components/ui/FormInput';
 
 interface ConsentAgreement {
   consentItemSeq: number;
@@ -141,8 +142,8 @@ export default function BoardSignupPage() {
                   required style={inputStyle} />
               </Field>
               <Field label="전화번호">
-                <input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)}
-                  required style={inputStyle} placeholder="010-0000-0000" />
+                <PhoneInput value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)}
+                  required style={inputStyle} />
               </Field>
 
               {consentItems.length > 0 && (

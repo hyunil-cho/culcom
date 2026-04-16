@@ -56,4 +56,4 @@ kakao:
     admin-key: ${KAKAO_ADMIN_KEY:}
     redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:3000/api/public/board/kakao/callback}
   sync:
-    base-url: ${KAKAO_SYNC_BASE_URL:https://pf-link.kakao.com/qr/_qFHUn/pages/_MM}
+    base-url: ${KAKAO_SYNC_BASE_URL:https://pf-link.kakao.com/qr/_kXQxlX/pages/_xlM}

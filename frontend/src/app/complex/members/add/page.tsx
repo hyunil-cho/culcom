@@ -32,7 +32,7 @@ function MemberAddPageInner() {
       ...prev,
       refund: {
         ...prev.refund,
-        paymentMethod: '이체(개인통장)',
+        paymentMethod: '계좌이체',
         depositAmount: '100000',
         refundableDeposit: '70000',
         nonRefundableDeposit: '30000',

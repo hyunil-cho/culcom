@@ -36,3 +36,10 @@ export const signupChannelConfigApi = {
   update: (seq: number, data: ConfigUpdateRequest) => api.put<ConfigItem>(`/complex/settings/signup-channels/${seq}`, data),
   delete: (seq: number) => api.delete<void>(`/complex/settings/signup-channels/${seq}`),
 };
+
+export const cardCompanyConfigApi = {
+  list: () => api.get<ConfigItem[]>('/complex/settings/card-companies'),
+  create: (data: ConfigCreateRequest) => api.post<ConfigItem>('/complex/settings/card-companies', data),
+  update: (seq: number, data: ConfigUpdateRequest) => api.put<ConfigItem>(`/complex/settings/card-companies/${seq}`, data),
+  delete: (seq: number) => api.delete<void>(`/complex/settings/card-companies/${seq}`),
+};
