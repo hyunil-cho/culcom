@@ -24,6 +24,14 @@ resource "aws_ssm_parameter" "kakao_client_id" {
   tags = { Name = "${var.project_name}-kakao-client-id" }
 }
 
+resource "aws_ssm_parameter" "kakao_client_secret" {
+  name  = "/${var.project_name}/${var.environment}/kakao/client-secret"
+  type  = "SecureString"
+  value = var.kakao_client_secret
+
+  tags = { Name = "${var.project_name}-kakao-client-secret" }
+}
+
 resource "aws_ssm_parameter" "kakao_admin_key" {
   name  = "/${var.project_name}/${var.environment}/kakao/admin-key"
   type  = "SecureString"
@@ -38,4 +46,12 @@ resource "aws_ssm_parameter" "meta_verify_token" {
   value = var.meta_verify_token
 
   tags = { Name = "${var.project_name}-meta-verify-token" }
+}
+
+resource "aws_ssm_parameter" "kakao_sync_base_url" {
+  name  = "/${var.project_name}/${var.environment}/kakao/sync-base-url"
+  type  = "String"
+  value = var.kakao_sync_base_url
+
+  tags = { Name = "${var.project_name}-kakao-sync-base-url" }
 }

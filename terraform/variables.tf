@@ -97,6 +97,12 @@ variable "kakao_client_id" {
   sensitive   = true
 }
 
+variable "kakao_client_secret" {
+  description = "카카오 OAuth Client Secret"
+  type        = string
+  sensitive   = true
+}
+
 variable "kakao_admin_key" {
   description = "카카오 Admin Key"
   type        = string
@@ -121,12 +127,23 @@ variable "kakao_sync_base_url" {
 }
 
 # ─── Domain ───
-variable "domain_name" {
-  description = "서비스 도메인 (예: www.eutgumi.co.kr). Route53 A 레코드는 별도로 EIP에 매핑되어 있다고 가정."
+variable "root_domain" {
+  description = "루트 도메인 (Route53 Hosted Zone). 예: eutgumi.co.kr"
   type        = string
 }
 
-variable "letsencrypt_email" {
-  description = "Let's Encrypt 인증서 발급 및 만료 알림 수신용 이메일"
+variable "route53_zone_id" {
+  description = "수동 생성한 Route53 Hosted Zone ID. 예: Z0123456789ABCDEF"
   type        = string
+}
+
+variable "domain_name" {
+  description = "서비스 도메인 (A 레코드로 EIP에 매핑). 예: www.eutgumi.co.kr"
+  type        = string
+}
+
+# ─── CloudWatch Alarm ───
+variable "alarm_emails" {
+  description = "CloudWatch 알람 수신 이메일 주소 목록"
+  type        = list(string)
 }

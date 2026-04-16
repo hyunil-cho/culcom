@@ -4,8 +4,18 @@ output "vpc_id" {
 }
 
 output "app_public_ip" {
-  description = "앱 서버 Elastic IP (접속용)"
+  description = "앱 서버 Elastic IP (SSH 접속용)"
   value       = aws_eip.app.public_ip
+}
+
+output "alb_dns_name" {
+  description = "ALB DNS 이름"
+  value       = aws_lb.app.dns_name
+}
+
+output "app_url" {
+  description = "서비스 접속 URL"
+  value       = "https://${var.domain_name}"
 }
 
 output "rds_endpoint" {
@@ -31,4 +41,14 @@ output "ssh_key_name" {
 output "ecr_repository_url" {
   description = "ECR 리포지토리 URL"
   value       = aws_ecr_repository.app.repository_url
+}
+
+output "route53_zone_id" {
+  description = "Route53 Hosted Zone ID"
+  value       = data.aws_route53_zone.main.zone_id
+}
+
+output "sns_alarm_topic_arn" {
+  description = "CloudWatch 알람 SNS Topic ARN"
+  value       = aws_sns_topic.alarm.arn
 }

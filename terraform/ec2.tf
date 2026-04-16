@@ -115,21 +115,19 @@ resource "aws_instance" "app" {
   key_name               = aws_key_pair.app.key_name
 
   root_block_device {
-    volume_size = 30
+    volume_size = 10
     volume_type = "gp3"
   }
 
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    aws_region        = var.aws_region
-    app_image         = var.app_image
-    project_name      = var.project_name
-    environment       = var.environment
-    db_endpoint       = aws_db_instance.main.endpoint
-    db_name           = var.db_name
-    redirect_uri      = var.kakao_redirect_uri
-    sync_base_url     = var.kakao_sync_base_url
-    app_domain        = var.domain_name
-    letsencrypt_email = var.letsencrypt_email
+    aws_region   = var.aws_region
+    app_image    = var.app_image
+    project_name = var.project_name
+    environment  = var.environment
+    db_endpoint  = aws_db_instance.main.endpoint
+    db_name      = var.db_name
+    redirect_uri = var.kakao_redirect_uri
+    app_domain   = var.domain_name
   }))
 
   tags = { Name = "${var.project_name}-app" }
