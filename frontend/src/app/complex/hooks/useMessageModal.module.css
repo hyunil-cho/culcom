@@ -1,12 +1,4 @@
 /* ── 공통 ── */
-.modalNarrow {
-  max-width: 500px;
-}
-
-.modalWide {
-  max-width: 850px;
-}
-
 .headerDark {
   background: #2c3e50;
   border-color: var(--text-dark);

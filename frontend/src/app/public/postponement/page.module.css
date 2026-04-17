@@ -33,12 +33,6 @@
   font-size: var(--font-base);
 }
 
-.searchError {
-  color: #dc2626;
-  font-size: var(--font-sm);
-  margin-top: 8px;
-}
-
 /* 폼 그룹 */
 .formGroup {
   margin-bottom: 20px;
@@ -53,21 +47,6 @@
 
 .requiredMark {
   color: #e74c3c;
-}
-
-/* 회원 정보 카드 */
-.memberCard {
-  background: #f0fdf4;
-  border: 1.5px solid #86efac;
-  border-radius: 10px;
-  padding: 15px;
-  margin-bottom: 20px;
-}
-
-.memberCardTitle {
-  margin: 0 0 10px;
-  color: #166534;
-  font-size: 1rem;
 }
 
 /* 요청 요약 */
@@ -85,68 +64,11 @@
   font-size: 1rem;
 }
 
-/* 정보 행 */
-.infoRow {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 4px;
-  font-size: var(--font-sm);
-}
-
-.infoLabel {
-  color: #555;
-  font-weight: 600;
-  min-width: 70px;
-}
-
-.infoValue {
-  color: var(--text-body);
-}
-
 /* 날짜 범위 */
 .dateRange {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-/* 멤버십 카드 */
-.membershipCard {
-  border-radius: var(--radius-md);
-  padding: 12px;
-  margin-bottom: 10px;
-  transition: all 0.2s;
-}
-
-.membershipHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.membershipName {
-  font-weight: 700;
-  color: var(--text-body);
-  font-size: var(--font-base);
-}
-
-.postponeBadge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.membershipMeta {
-  font-size: 0.82rem;
-  color: var(--text-secondary);
-  margin-top: 4px;
-}
-
-.exhaustedText {
-  color: #dc2626;
-  font-weight: 600;
 }
 
 .emptyMembership {

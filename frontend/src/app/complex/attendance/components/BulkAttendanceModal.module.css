@@ -68,7 +68,6 @@
 .saveBtn { padding: 8px 20px; border: none; border-radius: var(--radius); background: var(--green-dark); color: white; cursor: pointer; font-weight: 600; }
 
 /* 결과 */
-.resultBody { padding: 10px; }
 .resultInner { padding: 4px 2px; font-size: var(--font-sm); }
 
 .resultStats {

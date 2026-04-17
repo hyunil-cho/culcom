@@ -45,11 +45,6 @@
   justify-content: flex-end;
 }
 
-.loadingCard {
-  text-align: center;
-  color: var(--text-secondary);
-}
-
 .emptyCard {
   text-align: center;
   padding: 3rem;
