@@ -43,6 +43,9 @@ public class ComplexClassService {
     }
 
     public ComplexClassResponse create(ComplexClassRequest req, Long branchSeq) {
+        if (req.getCapacity() == null || req.getCapacity() <= 0) {
+            throw new IllegalArgumentException("정원은 1명 이상이어야 합니다.");
+        }
         ComplexClass entity = ComplexClass.builder()
                 .name(req.getName())
                 .description(req.getDescription())
@@ -67,6 +70,9 @@ public class ComplexClassService {
         Long oldStaffSeq = cls.getStaff() != null ? cls.getStaff().getSeq() : null;
         Long newStaffSeq = req.getStaffSeq();
 
+        if (req.getCapacity() == null || req.getCapacity() <= 0) {
+            throw new IllegalArgumentException("정원은 1명 이상이어야 합니다.");
+        }
         cls.setName(req.getName());
         cls.setDescription(req.getDescription());
         cls.setCapacity(req.getCapacity());
@@ -116,11 +122,9 @@ public class ComplexClassService {
         ComplexMember member = memberRepository.findById(memberSeq)
                 .orElseThrow(() -> new EntityNotFoundException("회원"));
         // 정원 초과 검증
-        if (cls.getCapacity() != null && cls.getCapacity() > 0) {
-            long currentCount = mappingRepository.findByComplexClassSeqWithMember(classSeq).size();
-            if (currentCount >= cls.getCapacity()) {
-                throw new IllegalStateException("정원이 초과되었습니다. (현재 " + currentCount + "/" + cls.getCapacity() + ")");
-            }
+        long currentCount = mappingRepository.findByComplexClassSeqWithMember(classSeq).size();
+        if (currentCount >= cls.getCapacity()) {
+            throw new IllegalStateException("정원이 초과되었습니다. (현재 " + currentCount + "/" + cls.getCapacity() + ")");
         }
         // 지점 불일치 검증
         if (!cls.getBranch().getSeq().equals(member.getBranch().getSeq())) {
@@ -135,7 +139,7 @@ public class ComplexClassService {
             throw new IllegalStateException("활성 멤버십이 없는 회원은 팀에 추가할 수 없습니다.");
         }
         if (mappingRepository.existsByComplexClassSeqAndMemberSeq(classSeq, memberSeq)) {
-            return;
+            throw new IllegalStateException("이미 팀에 포함된 회원입니다.");
         }
         mappingRepository.save(ComplexMemberClassMapping.builder()
                 .complexClass(cls)

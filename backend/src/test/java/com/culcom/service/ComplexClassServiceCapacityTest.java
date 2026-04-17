@@ -110,5 +110,70 @@ class ComplexClassServiceCapacityTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void 등록_시_capacity가_null이면_예외() {
+        Fixture f = setupWithCapacity("null", 10);
+        var req = new com.culcom.dto.complex.classes.ComplexClassRequest();
+        req.setName("널 정원 수업");
+        req.setCapacity(null);
+        req.setTimeSlotSeq(f.clazz.getTimeSlot().getSeq());
+
+        assertThatThrownBy(() -> complexClassService.create(req, f.branch.getSeq()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("정원은 1명 이상이어야 합니다");
+    }
+
+    @Test
+    void 등록_시_capacity가_0이면_예외() {
+        Fixture f = setupWithCapacity("zero", 10);
+        var req = new com.culcom.dto.complex.classes.ComplexClassRequest();
+        req.setName("0정원 수업");
+        req.setCapacity(0);
+        req.setTimeSlotSeq(f.clazz.getTimeSlot().getSeq());
+
+        assertThatThrownBy(() -> complexClassService.create(req, f.branch.getSeq()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("정원은 1명 이상이어야 합니다");
+    }
+
+    @Test
+    void 등록_시_capacity가_음수이면_예외() {
+        Fixture f = setupWithCapacity("neg", 10);
+        var req = new com.culcom.dto.complex.classes.ComplexClassRequest();
+        req.setName("음수 정원 수업");
+        req.setCapacity(-5);
+        req.setTimeSlotSeq(f.clazz.getTimeSlot().getSeq());
+
+        assertThatThrownBy(() -> complexClassService.create(req, f.branch.getSeq()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("정원은 1명 이상이어야 합니다");
+    }
+
+    @Test
+    void 수정_시_capacity가_null이면_예외() {
+        Fixture f = setupWithCapacity("upd-null", 10);
+        var req = new com.culcom.dto.complex.classes.ComplexClassRequest();
+        req.setName("수정 수업");
+        req.setCapacity(null);
+        req.setTimeSlotSeq(f.clazz.getTimeSlot().getSeq());
+
+        assertThatThrownBy(() -> complexClassService.update(f.clazz.getSeq(), req))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("정원은 1명 이상이어야 합니다");
+    }
+
+    @Test
+    void 수정_시_capacity가_0이면_예외() {
+        Fixture f = setupWithCapacity("upd-zero", 10);
+        var req = new com.culcom.dto.complex.classes.ComplexClassRequest();
+        req.setName("수정 수업");
+        req.setCapacity(0);
+        req.setTimeSlotSeq(f.clazz.getTimeSlot().getSeq());
+
+        assertThatThrownBy(() -> complexClassService.update(f.clazz.getSeq(), req))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("정원은 1명 이상이어야 합니다");
+    }
+
     private record Fixture(Branch branch, ComplexClass clazz, Membership product) {}
 }
