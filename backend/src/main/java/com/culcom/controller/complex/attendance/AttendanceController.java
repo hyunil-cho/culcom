@@ -5,13 +5,10 @@ import com.culcom.dto.complex.attendance.*;
 import com.culcom.dto.complex.classes.ClassReorderRequest;
 import com.culcom.dto.complex.classes.MemberReorderRequest;
 import com.culcom.service.AttendanceService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.*;
 
 /**
@@ -23,24 +20,6 @@ import java.util.*;
 public class AttendanceController {
 
     private final AttendanceService attendanceService;
-
-    @GetMapping
-    public ResponseEntity<ApiResponse<List<AttendanceResponse>>> listByClassAndDate(
-            @RequestParam Long classSeq,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(ApiResponse.ok(attendanceService.listByClassAndDate(classSeq, date)));
-    }
-
-    @PostMapping
-    public ResponseEntity<ApiResponse<AttendanceResponse>> record(@Valid @RequestBody AttendanceRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok("출석 기록 완료", attendanceService.record(req)));
-    }
-
-    @PutMapping("/{seq}")
-    public ResponseEntity<ApiResponse<AttendanceResponse>> update(
-            @PathVariable Long seq, @RequestBody AttendanceRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok("출석 수정 완료", attendanceService.update(seq, req)));
-    }
 
     @PostMapping("/bulk")
     public ResponseEntity<ApiResponse<List<BulkAttendanceResultResponse>>> bulkAttendance(

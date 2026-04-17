@@ -34,36 +34,6 @@ public class AttendanceService {
     private final ComplexMemberRepository memberRepository;
     private final ApplicationEventPublisher eventPublisher;
 
-    public List<AttendanceResponse> listByClassAndDate(Long classSeq, LocalDate date) {
-        return attendanceRepository.findByClassAndDate(classSeq, date)
-                .stream().map(AttendanceResponse::from).toList();
-    }
-
-    @Transactional
-    public AttendanceResponse record(AttendanceRequest req) {
-        ComplexMemberMembership mm = memberMembershipRepository.findById(req.getMemberMembershipSeq())
-                .orElseThrow(() -> new EntityNotFoundException("멤버십"));
-        ComplexMemberAttendance attendance = ComplexMemberAttendance.builder()
-                .member(mm.getMember())
-                .memberMembership(mm)
-                .complexClass(req.getClassSeq() != null ? classRepository.findById(req.getClassSeq())
-                        .orElseThrow(() -> new EntityNotFoundException("수업")) : null)
-                .attendanceDate(req.getAttendanceDate())
-                .status(req.getStatus())
-                .note(req.getNote())
-                .build();
-        return AttendanceResponse.from(attendanceRepository.save(attendance));
-    }
-
-    @Transactional
-    public AttendanceResponse update(Long seq, AttendanceRequest req) {
-        ComplexMemberAttendance att = attendanceRepository.findById(seq)
-                .orElseThrow(() -> new EntityNotFoundException("출석"));
-        att.setStatus(req.getStatus());
-        att.setNote(req.getNote());
-        return AttendanceResponse.from(attendanceRepository.save(att));
-    }
-
     @Transactional
     public void reorderClasses(ClassReorderRequest req) {
         List<Long> ids = req.getClassOrders().stream().map(ClassReorderRequest.ClassOrder::getId).toList();

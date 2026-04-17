@@ -1,9 +1,7 @@
 package com.culcom.controller.complex.attendance;
 
 import com.culcom.config.security.CustomUserPrincipal;
-import com.culcom.dto.complex.attendance.AttendanceResponse;
 import com.culcom.dto.complex.attendance.BulkAttendanceResultResponse;
-import com.culcom.entity.enums.AttendanceStatus;
 import com.culcom.entity.enums.UserRole;
 import com.culcom.service.AttendanceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,7 +18,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.*;
 import java.util.*;
 
 import static org.hamcrest.Matchers.*;
@@ -53,94 +50,6 @@ class AttendanceControllerTest {
             principal, null,
             List.of(new SimpleGrantedAuthority("ROLE_" + principal.getRole().name())));
         return authentication(token);
-    }
-
-    @Test
-    @DisplayName("출석_목록_조회")
-    void 출석_목록_조회() throws Exception {
-        AttendanceResponse resp = AttendanceResponse.builder()
-            .seq(1L)
-            .memberSeq(10L)
-            .memberMembershipSeq(100L)
-            .classSeq(1L)
-            .attendanceDate(LocalDate.of(2026, 1, 1))
-            .status(AttendanceStatus.출석)
-            .note("정상 출석")
-            .createdDate(LocalDateTime.of(2026, 1, 1, 9, 0))
-            .build();
-        given(attendanceService.listByClassAndDate(eq(1L), eq(LocalDate.of(2026, 1, 1))))
-            .willReturn(List.of(resp));
-
-        mockMvc.perform(get("/api/complex/attendance")
-                .param("classSeq", "1")
-                .param("date", "2026-01-01")
-                .with(auth()))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.data", hasSize(1)))
-            .andExpect(jsonPath("$.data[0].seq").value(1))
-            .andExpect(jsonPath("$.data[0].status").value("출석"));
-    }
-
-    @Test
-    @DisplayName("출석_기록_성공")
-    void 출석_기록_성공() throws Exception {
-        AttendanceResponse resp = AttendanceResponse.builder()
-            .seq(1L)
-            .memberSeq(10L)
-            .memberMembershipSeq(100L)
-            .classSeq(1L)
-            .attendanceDate(LocalDate.of(2026, 1, 1))
-            .status(AttendanceStatus.출석)
-            .build();
-        given(attendanceService.record(any())).willReturn(resp);
-
-        Map<String, Object> body = new HashMap<>();
-        body.put("memberMembershipSeq", 100);
-        body.put("classSeq", 1);
-        body.put("attendanceDate", "2026-01-01");
-        body.put("status", "출석");
-        body.put("note", "");
-
-        mockMvc.perform(post("/api/complex/attendance")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(body))
-                .with(auth()))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.message").value("출석 기록 완료"))
-            .andExpect(jsonPath("$.data.seq").value(1));
-    }
-
-    @Test
-    @DisplayName("출석_수정_성공")
-    void 출석_수정_성공() throws Exception {
-        AttendanceResponse resp = AttendanceResponse.builder()
-            .seq(1L)
-            .memberSeq(10L)
-            .memberMembershipSeq(100L)
-            .classSeq(1L)
-            .attendanceDate(LocalDate.of(2026, 1, 1))
-            .status(AttendanceStatus.결석)
-            .note("수정됨")
-            .build();
-        given(attendanceService.update(eq(1L), any())).willReturn(resp);
-
-        Map<String, Object> body = new HashMap<>();
-        body.put("memberMembershipSeq", 100);
-        body.put("classSeq", 1);
-        body.put("attendanceDate", "2026-01-01");
-        body.put("status", "결석");
-        body.put("note", "수정됨");
-
-        mockMvc.perform(put("/api/complex/attendance/1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(body))
-                .with(auth()))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.message").value("출석 수정 완료"))
-            .andExpect(jsonPath("$.data.status").value("결석"));
     }
 
     @Test
@@ -206,14 +115,5 @@ class AttendanceControllerTest {
                 .with(auth()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true));
-    }
-
-    @Test
-    @DisplayName("인증_없으면_401")
-    void 인증_없으면_401() throws Exception {
-        mockMvc.perform(get("/api/complex/attendance")
-                .param("classSeq", "1")
-                .param("date", "2026-01-01"))
-            .andExpect(status().isUnauthorized());
     }
 }
