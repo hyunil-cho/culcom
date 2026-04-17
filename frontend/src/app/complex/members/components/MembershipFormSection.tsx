@@ -31,6 +31,11 @@ interface Props {
   memberName?: string;
   /** 기본정보 탭에서 입력한 회원 전화번호 */
   memberPhone?: string;
+  // 갱신 관련
+  canRenew?: boolean;
+  renewalMode?: boolean;
+  onStartRenewal?: () => void;
+  onCancelRenewal?: () => void;
 }
 
 function nowDateTimeLocal(): string {
@@ -49,8 +54,10 @@ export default function MembershipFormSection({
   transferMode, onTransferModeChange,
   transfers, selectedTransfer, onSelectTransfer,
   memberName, memberPhone,
+  canRenew, renewalMode, onStartRenewal, onCancelRenewal,
 }: Props) {
-  const locked = isEdit && isExisting;
+  const effectiveIsEdit = isEdit && !renewalMode;
+  const locked = effectiveIsEdit && isExisting;
   const selectedMs = form.membershipSeq
     ? memberships.find(m => m.seq === Number(form.membershipSeq))
     : null;
@@ -107,8 +114,51 @@ export default function MembershipFormSection({
         </div>
       )}
 
+      {/* 만료/환불 → 갱신 안내 */}
+      {enabled && canRenew && !renewalMode && (
+        <div style={{
+          padding: '1.2rem', marginBottom: '1rem',
+          background: '#fff8e1', border: '1px solid #ffe082', borderRadius: 8,
+        }}>
+          <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#f57f17', marginBottom: '0.5rem' }}>
+            현재 멤버십이 {form.status === '환불' ? '환불' : '만료'}되었습니다.
+          </div>
+          <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.8rem' }}>
+            기존 멤버십: {memberships.find(m => m.seq === Number(form.membershipSeq))?.name ?? '-'}
+            {form.expiryDate && ` (만료일: ${form.expiryDate})`}
+          </div>
+          <button
+            type="button"
+            onClick={onStartRenewal}
+            style={{
+              padding: '8px 20px', border: 'none', borderRadius: 6,
+              background: '#4a90e2', color: '#fff', fontWeight: 600,
+              fontSize: '0.88rem', cursor: 'pointer',
+            }}
+          >
+            새 멤버십 등록
+          </button>
+        </div>
+      )}
+
+      {/* 갱신 모드 취소 버튼 */}
+      {renewalMode && onCancelRenewal && (
+        <div style={{ marginBottom: '1rem' }}>
+          <button
+            type="button"
+            onClick={onCancelRenewal}
+            style={{
+              padding: '6px 14px', border: '1px solid #ccc', borderRadius: 4,
+              background: '#fff', color: '#666', fontSize: '0.85rem', cursor: 'pointer',
+            }}
+          >
+            갱신 취소
+          </button>
+        </div>
+      )}
+
       {/* 폼 필드 */}
-      {enabled && (
+      {enabled && (!canRenew || renewalMode) && (
         <>
           {/* 가입 유형 (신규/양도) - 신규 등록일 때만 */}
           {!locked && onTransferModeChange && (
@@ -242,7 +292,7 @@ export default function MembershipFormSection({
                 <Input type="date" value={form.expiryDate} readOnly style={readOnlyStyle} />
               </FormField>
 
-              <FormField label="금액" required={!isEdit}>
+              <FormField label="금액" required={!effectiveIsEdit}>
                 {locked ? (
                   <Input value={form.price ? `${Number(form.price.replace(/,/g, '')).toLocaleString()}원` : '-'} readOnly style={readOnlyStyle} />
                 ) : (
@@ -251,7 +301,7 @@ export default function MembershipFormSection({
                 )}
               </FormField>
 
-              <FormField label="납부일" required={!isEdit}>
+              <FormField label="납부일" required={!effectiveIsEdit}>
                 {locked ? (
                   <Input value={form.paymentDate?.replace('T', ' ') ?? '-'} readOnly style={readOnlyStyle} />
                 ) : (
@@ -269,14 +319,14 @@ export default function MembershipFormSection({
                 )}
               </FormField>
 
-              {!isEdit && (
+              {!effectiveIsEdit && (
                 <FormField label="첫 납부 금액" required hint="* 등록 시 입력한 금액이 첫 납부 기록으로 자동 추가됩니다. 추가 납부는 미수금 관리에서 할 수 있습니다.">
                   <CurrencyInput placeholder="예: 100,000" value={form.depositAmount} required
                     onValueChange={(v) => setForm(prev => ({ ...prev, depositAmount: v }))} />
                 </FormField>
               )}
 
-              <FormField label="결제방법" required={!isEdit}>
+              <FormField label="결제방법" required={!effectiveIsEdit}>
                 {locked ? (
                   <Input value={form.paymentMethod || '-'} readOnly style={readOnlyStyle} />
                 ) : (

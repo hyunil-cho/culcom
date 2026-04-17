@@ -12,7 +12,8 @@ public interface ComplexMemberMembershipRepository extends JpaRepository<Complex
     @Query("SELECT mm FROM ComplexMemberMembership mm " +
            "JOIN FETCH mm.membership " +
            "LEFT JOIN FETCH mm.payments " +
-           "WHERE mm.member.seq = :memberSeq AND mm.internal = false")
+           "WHERE mm.member.seq = :memberSeq AND mm.internal = false " +
+           "ORDER BY mm.seq DESC")
     List<ComplexMemberMembership> findByMemberSeqAndInternalFalse(@Param("memberSeq") Long memberSeq);
 
     List<ComplexMemberMembership> findByMemberSeqAndInternalTrue(Long memberSeq);

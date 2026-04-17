@@ -139,7 +139,7 @@ export interface PublicMembershipInfo {
 }
 
 export interface PublicClassInfo {
-  name: string; timeSlotName: string; startTime: string; endTime: string;
+  seq: number; name: string; timeSlotName: string; startTime: string; endTime: string;
 }
 
 export const memberApi = {

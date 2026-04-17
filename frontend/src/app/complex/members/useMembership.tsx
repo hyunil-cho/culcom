@@ -41,6 +41,7 @@ export function useMembership(options?: UseMembershipOptions) {
   const [form, setForm] = useState<MembershipFormData>(EMPTY_FORM);
   const [enabled, setEnabled] = useState(false);
   const [memberMembershipSeq, setMemberMembershipSeq] = useState<number | null>(null);
+  const [renewalMode, setRenewalMode] = useState(false);
 
   // ── 양도 (별도 훅) ──
   const transfer = useTransfer({
@@ -61,7 +62,7 @@ export function useMembership(options?: UseMembershipOptions) {
     if (!existingMemberships || existingMsLoaded.current) return;
     existingMsLoaded.current = true;
     if (existingMemberships.length > 0) {
-      const ms = existingMemberships[0];
+      const ms = existingMemberships.find(m => m.status === '활성') ?? existingMemberships[0];
       setForm({
         membershipSeq: String(ms.membershipSeq),
         startDate: ms.startDate ?? '',
@@ -119,8 +120,9 @@ export function useMembership(options?: UseMembershipOptions) {
     if (!form.membershipSeq) return null;
     const transferError = transfer.validate();
     if (transferError) return transferError;
-    return validateMembershipForm(form, !!isEdit, transfer.mode);
-  }, [form, isEdit, transfer]);
+    const effectiveIsEdit = !!isEdit && !renewalMode;
+    return validateMembershipForm(form, effectiveIsEdit, transfer.mode);
+  }, [form, isEdit, renewalMode, transfer]);
 
   // ── 저장 ──
   const save = useCallback(async (targetMemberSeq: number) => {
@@ -162,6 +164,36 @@ export function useMembership(options?: UseMembershipOptions) {
     />
   ) : null;
 
+  // ── 갱신 모드 ──
+  const existingStatus = existingMemberships?.[0]?.status;
+  const canRenew = !!isEdit && !!memberMembershipSeq && (existingStatus === '만료' || existingStatus === '환불');
+
+  const startRenewal = useCallback(() => {
+    setRenewalMode(true);
+    setMemberMembershipSeq(null);
+    setForm({ ...EMPTY_FORM, startDate: new Date().toISOString().split('T')[0] });
+    setEnabled(true);
+  }, []);
+
+  const cancelRenewal = useCallback(() => {
+    setRenewalMode(false);
+    if (existingMemberships && existingMemberships.length > 0) {
+      const ms = existingMemberships[0];
+      setForm({
+        membershipSeq: String(ms.membershipSeq),
+        startDate: ms.startDate ?? '',
+        expiryDate: ms.expiryDate ?? '',
+        price: ms.price ?? '',
+        paymentDate: ms.paymentDate ?? '',
+        depositAmount: '',
+        paymentMethod: ms.paymentMethod ?? '',
+        status: ms.status ?? '활성',
+        cardDetail: emptyCardDetail,
+      });
+      setMemberMembershipSeq(ms.seq);
+    }
+  }, [existingMemberships]);
+
   // ── 폼 섹션 JSX ──
   const isExisting = !!memberMembershipSeq;
   const formSection = (
@@ -179,6 +211,10 @@ export function useMembership(options?: UseMembershipOptions) {
       onSelectTransfer={transfer.select}
       memberName={memberName}
       memberPhone={memberPhone}
+      canRenew={canRenew}
+      renewalMode={renewalMode}
+      onStartRenewal={startRenewal}
+      onCancelRenewal={cancelRenewal}
     />
   );
 
