@@ -12,11 +12,26 @@ import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import Spinner from '@/components/ui/Spinner';
 import s from './page.module.css';
 
-const EVENT_TYPES: { type: SmsEventType; label: string; description: string }[] = [
-  { type: '예약확정', label: '예약 확정', description: '고객의 예약이 확정될 때 자동으로 문자를 발송합니다.' },
-  { type: '고객등록', label: '고객 등록', description: '새 고객이 등록될 때 자동으로 문자를 발송합니다.' },
-  { type: '회원등록', label: '회원 등록', description: '새 회원이 등록될 때 자동으로 문자를 발송합니다.' },
+interface EventDef {
+  type: SmsEventType;
+  label: string;
+  description: string;
+  group: string;
+}
+
+const EVENT_TYPES: EventDef[] = [
+  { type: '예약확정', label: '예약 확정', description: '고객의 예약이 확정될 때 자동으로 문자를 발송합니다.', group: '예약 · 등록' },
+  { type: '고객등록', label: '고객 등록', description: '새 고객이 등록될 때 자동으로 문자를 발송합니다.', group: '예약 · 등록' },
+  { type: '회원등록', label: '회원 등록', description: '새 회원이 등록될 때 자동으로 문자를 발송합니다.', group: '예약 · 등록' },
+  { type: '연기승인', label: '연기 승인', description: '연기 요청이 승인되었을 때 요청 회원에게 발송합니다.', group: '연기' },
+  { type: '연기반려', label: '연기 반려', description: '연기 요청이 반려되었을 때 요청 회원에게 발송합니다.', group: '연기' },
+  { type: '환불승인', label: '환불 승인', description: '환불 요청이 승인되었을 때 요청 회원에게 발송합니다.', group: '환불' },
+  { type: '환불반려', label: '환불 반려', description: '환불 요청이 반려되었을 때 요청 회원에게 발송합니다.', group: '환불' },
+  { type: '양도완료', label: '양도 완료', description: '양도가 완료되었을 때 양도자·양수자 양측에 발송합니다.', group: '양도' },
+  { type: '양도거절', label: '양도 거절', description: '관리자가 양도를 거절했을 때 양도자에게 발송합니다.', group: '양도' },
 ];
+
+const GROUP_ORDER = ['예약 · 등록', '연기', '환불', '양도'];
 
 interface EventFormState {
   templateSeq: number | '';
@@ -25,6 +40,10 @@ interface EventFormState {
 }
 
 const emptyForm: EventFormState = { templateSeq: '', senderNumber: '', autoSend: false };
+
+function initialMap<V>(value: () => V): Record<SmsEventType, V> {
+  return EVENT_TYPES.reduce((acc, e) => { acc[e.type] = value(); return acc; }, {} as Record<SmsEventType, V>);
+}
 
 export default function SmsConfigPage() {
   const { data: templates = [] } = useApiQuery<MessageTemplateSimple[]>(
@@ -42,39 +61,33 @@ export default function SmsConfigPage() {
     () => smsEventApi.list(),
   );
 
-  const [configs, setConfigs] = useState<Record<SmsEventType, SmsEventConfig | null>>({
-    '예약확정': null, '고객등록': null, '회원등록': null,
-  });
-  const [forms, setForms] = useState<Record<SmsEventType, EventFormState>>({
-    '예약확정': { ...emptyForm }, '고객등록': { ...emptyForm }, '회원등록': { ...emptyForm },
-  });
+  const [configs, setConfigs] = useState<Record<SmsEventType, SmsEventConfig | null>>(() => initialMap(() => null));
+  const [forms, setForms] = useState<Record<SmsEventType, EventFormState>>(() => initialMap(() => ({ ...emptyForm })));
   const [formsInitialized, setFormsInitialized] = useState(false);
   const [savingType, setSavingType] = useState<SmsEventType | null>(null);
   const [savedType, setSavedType] = useState<SmsEventType | null>(null);
-  const [expanded, setExpanded] = useState<Record<SmsEventType, boolean>>({
-    '예약확정': false, '고객등록': false, '회원등록': false,
-  });
+  const [expanded, setExpanded] = useState<Record<SmsEventType, boolean>>(() => initialMap(() => false));
   const { error: formError, setError, clear: clearError } = useFormError();
 
   useEffect(() => {
     if (configsList.length === 0 && formsInitialized) return;
     if (loading) return;
-    const configMap: Record<string, SmsEventConfig | null> = { '예약확정': null, '고객등록': null, '회원등록': null };
-    const formMap: Record<string, EventFormState> = {
-      '예약확정': { ...emptyForm }, '고객등록': { ...emptyForm }, '회원등록': { ...emptyForm },
-    };
+    const configMap = initialMap<SmsEventConfig | null>(() => null);
+    const formMap = initialMap<EventFormState>(() => ({ ...emptyForm }));
     for (const c of configsList) {
-      configMap[c.eventType] = c;
-      formMap[c.eventType] = {
-        templateSeq: c.templateSeq,
-        senderNumber: c.senderNumber,
-        autoSend: c.autoSend,
-      };
+      if (EVENT_TYPES.some(e => e.type === c.eventType)) {
+        configMap[c.eventType] = c;
+        formMap[c.eventType] = {
+          templateSeq: c.templateSeq,
+          senderNumber: c.senderNumber,
+          autoSend: c.autoSend,
+        };
+      }
     }
-    setConfigs(configMap as Record<SmsEventType, SmsEventConfig | null>);
-    setForms(formMap as Record<SmsEventType, EventFormState>);
+    setConfigs(configMap);
+    setForms(formMap);
     setFormsInitialized(true);
-  }, [configsList, loading]);
+  }, [configsList, loading, formsInitialized]);
 
   const updateForm = (type: SmsEventType, patch: Partial<EventFormState>) => {
     setForms(prev => ({ ...prev, [type]: { ...prev[type], ...patch } }));
@@ -125,15 +138,23 @@ export default function SmsConfigPage() {
 
       <FormErrorBanner error={formError} />
 
-      {EVENT_TYPES.map(({ type, label, description }) => {
-        const form = forms[type];
-        const config = configs[type];
-        const isSaving = savingType === type;
-        const justSaved = savedType === type;
-        const isOpen = expanded[type];
-
+      {GROUP_ORDER.map(group => {
+        const events = EVENT_TYPES.filter(e => e.group === group);
+        if (events.length === 0) return null;
         return (
-          <div key={type} className={s.eventCard}>
+          <div key={group} style={{ marginBottom: 28 }}>
+            <h2 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#374151', margin: '0 0 10px', paddingBottom: 6, borderBottom: '2px solid #e5e7eb' }}>
+              {group}
+            </h2>
+            {events.map(({ type, label, description }) => {
+              const form = forms[type];
+              const config = configs[type];
+              const isSaving = savingType === type;
+              const justSaved = savedType === type;
+              const isOpen = expanded[type];
+
+              return (
+                <div key={type} className={s.eventCard}>
             <div className={s.eventCardHeader}
               onClick={() => setExpanded(prev => ({ ...prev, [type]: !prev[type] }))}
               style={{ cursor: 'pointer' }}>

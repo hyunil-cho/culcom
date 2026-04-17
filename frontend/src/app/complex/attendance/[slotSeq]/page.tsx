@@ -22,6 +22,7 @@ export default function AttendanceDetailPage() {
   const { data: classes = [], isLoading: loading } = useApiQuery<AttendanceViewClass[]>(
     ['attendanceViewDetail', slotSeq],
     () => attendanceViewApi.getDetail(slotSeq),
+    { refetchOnMount: 'always' },
   );
 
   const today = new Date().toISOString().split('T')[0];

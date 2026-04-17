@@ -9,26 +9,23 @@ import TimeslotForm, {
   toDaysOfWeek,
   type TimeslotFormData,
 } from '../TimeslotForm';
-import ResultModal from '@/components/ui/ResultModal';
+import { useResultModal } from '@/hooks/useResultModal';
 import { useFormError } from '@/hooks/useFormError';
 
 export default function TimeslotAddPage() {
   const [form, setForm] = useState<TimeslotFormData>(emptyTimeslotForm);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_TIMESLOTS, invalidateKeys: ['timeslots'] });
   const { error: formError, validate, clear: clearError } = useFormError();
 
   const handleSubmit = async () => {
     if (!validate(validateTimeslotForm(form))) return;
     clearError();
-    const res = await timeslotApi.create({
+    await run(timeslotApi.create({
       name: form.name,
       daysOfWeek: toDaysOfWeek(form.days),
       startTime: form.startTime,
       endTime: form.endTime,
-    });
-    if (res.success) {
-      setResult({ success: true, message: '시간대가 등록되었습니다.' });
-    }
+    }), '시간대가 등록되었습니다.');
   };
 
   return (
@@ -41,13 +38,7 @@ export default function TimeslotAddPage() {
         submitLabel="등록"
         formError={formError}
       />
-      {result && (
-        <ResultModal
-          success={result.success}
-          message={result.message}
-          redirectPath={ROUTES.COMPLEX_TIMESLOTS}
-        />
-      )}
+      {modal}
     </>
   );
 }

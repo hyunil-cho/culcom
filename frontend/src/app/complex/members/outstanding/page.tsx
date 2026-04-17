@@ -40,6 +40,7 @@ function OutstandingContent() {
   const { data, isLoading: loading } = useApiQuery<PageResponse<OutstandingItem>>(
     ['outstanding', searched, sort, page],
     () => outstandingApi.list({ keyword: searched, sort, page, size: 20 }),
+    { refetchOnMount: 'always' },
   );
 
   const handleSearch = () => { setPage(0); setSearched(keyword); };

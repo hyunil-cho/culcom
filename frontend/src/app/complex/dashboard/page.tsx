@@ -17,6 +17,7 @@ export default function ComplexDashboardPage() {
   const { data = null, isLoading: loading } = useApiQuery<MembershipAlertsResponse>(
     ['complexDashboard', 'membershipAlerts', WINDOW_DAYS, COUNT_THRESHOLD],
     () => complexDashboardApi.membershipAlerts(WINDOW_DAYS, COUNT_THRESHOLD),
+    { refetchOnMount: 'always' },
   );
 
   const goToMember = (memberSeq: number) => {

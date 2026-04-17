@@ -259,7 +259,7 @@ function CustomersContent() {
     )},
     { header: '광고명', render: (c) => c.commercialName ?? '-' },
     { header: '지원경로', render: (c) => c.adSource ?? '-' },
-    { header: '등록일', render: (c) => c.createdDate?.split('T')[0] },
+    { header: '등록일시', render: (c) => formatDateTime(c.createdDate) },
     { header: '회신일시', render: (c) => formatDateTime(c.lastUpdateDate) },
   ];
 

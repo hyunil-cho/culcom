@@ -38,17 +38,20 @@ function ClassTeamsPageInner() {
   const { data: classPageData } = useApiQuery<PageResponse<ComplexClass>>(
     ['classes', 'teams'],
     () => classApi.list('page=0&size=200'),
+    { refetchOnMount: 'always' },
   );
   const classes = classPageData?.content ?? [];
 
   const { data: staffs = [] } = useApiQuery<ComplexStaff[]>(
     ['staffs'],
     () => staffApi.list(),
+    { refetchOnMount: 'always' },
   );
 
   const { data: memberPageData } = useApiQuery<PageResponse<ComplexMember>>(
     ['members', 'all'],
     () => memberApi.list('page=0&size=500'),
+    { refetchOnMount: 'always' },
   );
   const allMembers = memberPageData?.content ?? [];
 

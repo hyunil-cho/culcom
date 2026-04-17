@@ -65,6 +65,12 @@ export default function PostponementsPage() {
     { header: '연락처', render: (r) => r.phoneNumber },
     { header: '연기기간', render: (r) => <span className={s.dateRange}>{r.startDate} ~ {r.endDate}</span> },
     { header: '사유', render: (r) => <span className={s.reasonText}>{r.reason}</span> },
+    { header: '희망 복귀 수업', render: (r) => r.desiredClassName
+      ? <span className={s.reasonText}>
+          <strong>{r.desiredClassName}</strong>
+          {r.desiredTimeSlotName && <><br />{r.desiredTimeSlotName} {r.desiredStartTime && r.desiredEndTime ? `(${r.desiredStartTime}~${r.desiredEndTime})` : ''}</>}
+        </span>
+      : <span className={s.emptyText}>-</span> },
     { header: '상태', render: (r) => <span className={`badge ${STATUS_BADGE[r.status] ?? ''}`}>{r.status}</span> },
     { header: '반려 사유', render: (r) => r.status === '반려' && r.rejectReason
       ? <span className={s.rejectReasonText}>{r.rejectReason}</span>

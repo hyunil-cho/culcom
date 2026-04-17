@@ -24,6 +24,7 @@ export default function AttendancePage() {
   const { data: slots = [], isLoading: loading } = useApiQuery<AttendanceViewSlot[]>(
     ['attendanceView'],
     () => attendanceViewApi.getView(),
+    { refetchOnMount: 'always' },
   );
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['attendanceView'] });

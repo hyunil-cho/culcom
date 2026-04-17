@@ -50,6 +50,7 @@ function PublicPostponementPageInner() {
   const [reasonSelect, setReasonSelect] = useState('');
   const [reasonCustom, setReasonCustom] = useState('');
   const [reasons, setReasons] = useState<string[]>([]);
+  const [desiredClassSeq, setDesiredClassSeq] = useState<number | null>(null);
 
   const [dateError, setDateError] = useState('');
   const { error: formError, setError, clear: clearError } = useFormError();
@@ -75,6 +76,7 @@ function PublicPostponementPageInner() {
     const res = await publicPostponementApi.reasons(member.branchSeq);
     if (res.success) setReasons(res.data);
     setStartDate(''); setEndDate(''); setReasonSelect(''); setReasonCustom('');
+    setDesiredClassSeq(null);
     setStep(3);
   };
 
@@ -97,6 +99,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       name: member.name, phone: member.phoneNumber, branchSeq: member.branchSeq,
       memberSeq: member.seq, memberMembershipSeq: selectedMembershipSeq,
       startDate, endDate, reason,
+      desiredClassSeq: desiredClassSeq ?? null,
     });
     setSubmitting(false);
     if (res.success) {
@@ -180,6 +183,23 @@ const handleSubmit = async (e: React.FormEvent) => {
                     style={{ marginTop: 10, minHeight: 90, resize: 'vertical', fontFamily: 'inherit' }} />
                 )}
               </FormGroup>
+              <div className="formGroup" style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>
+                  희망 복귀 시간대 및 수업 <span style={{ color: '#999', fontWeight: 400, fontSize: '0.82rem' }}>(선택)</span>
+                </label>
+                <p style={{ fontSize: '0.82rem', color: '#4a90e2', marginBottom: 8, fontWeight: 600 }}>
+                  복귀 후 참여를 희망하는 수업이 있다면 선택해주세요. 미선택 시 관리자와 협의하게 됩니다.
+                </p>
+                <Select value={desiredClassSeq ?? ''}
+                  onChange={(e) => setDesiredClassSeq(e.target.value ? Number(e.target.value) : null)}>
+                  <option value="">선택 안 함</option>
+                  {(member.classes ?? []).map(c => (
+                    <option key={c.seq} value={c.seq}>
+                      {c.name} · {c.timeSlotName} ({c.startTime}~{c.endTime})
+                    </option>
+                  ))}
+                </Select>
+              </div>
               <button type="submit" disabled={submitting} className={s.primaryBtn}
                 style={{ background: submitting ? '#ccc' : '#4a90e2' }}>
                 {submitting ? '제출 중...' : '요청 제출하기'}
