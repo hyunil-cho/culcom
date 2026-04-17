@@ -44,7 +44,7 @@
 
 .formGroup { margin-bottom: 0.9rem; }
 .formLabel { display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-body); margin-bottom: 0.4rem; }
-.requiredMark { color: #e53e3e; }
+.requiredMark { color: var(--danger); }
 .formInput {
   width: 100%; padding: 0.55rem 0.85rem;
   border: 1.5px solid var(--border-input); border-radius: 7px;

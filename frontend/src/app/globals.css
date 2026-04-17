@@ -208,17 +208,6 @@ button {
 .btn-inline-info     { background-color: #4a90e2; }
 .btn-inline-purple   { background-color: #9333ea; }
 
-/* 테이블 삭제 버튼 */
-.btn-table-delete {
-  padding: 0.4rem 0.8rem;
-  background: var(--danger);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-
 input, select, textarea {
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -293,7 +282,6 @@ th {
 .badge-success { background: #d1fae5; color: #065f46; }
 .badge-warning { background: #fef3c7; color: #92400e; }
 .badge-danger  { background: #fee2e2; color: #991b1b; }
-.badge-info    { background: #dbeafe; color: #1e40af; }
 
 /* 콘텐츠 카드 */
 .content-card {
@@ -332,11 +320,6 @@ th {
   align-items: center;
   gap: 8px;
   padding: 1rem;
-}
-
-.pagination-info {
-  padding: 8px 16px;
-  font-size: 14px;
 }
 
 .pagination-num {
@@ -390,24 +373,6 @@ th {
 
 .table-info strong {
   color: #2c3e50;
-}
-
-/* 테이블 액션 버튼 */
-.btn-table-action {
-  padding: 0.4rem 0.8rem;
-  background: #f8f9fa;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  color: #333;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-block;
-  transition: all 0.2s;
-}
-
-.btn-table-action:hover {
-  background: #e9ecef;
 }
 
 /* 검색 & 액션 섹션 */
@@ -710,22 +675,6 @@ th {
 }
 
 /* ── 유틸리티 ── */
-.flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.flex-between {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.text-center {
-  text-align: center;
-}
-
 .text-secondary {
   color: var(--text-secondary);
 }
@@ -736,14 +685,6 @@ th {
   color: var(--danger);
   margin-top: 0.25rem;
   grid-column: 2;
-}
-
-.form-input-error {
-  border-color: var(--danger) !important;
-}
-
-.form-input-error:focus {
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
 }
 
 /* ── 반응형 ── */

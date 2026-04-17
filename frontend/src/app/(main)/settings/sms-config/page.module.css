@@ -21,7 +21,7 @@
 
 .fieldGroup { margin-bottom: 20px; }
 .fieldLabel { display: block; font-weight: 500; color: var(--text-body); margin-bottom: 8px; font-size: var(--font-sm); }
-.requiredMark { color: #dc3545; margin-left: 4px; }
+.requiredMark { color: var(--danger); margin-left: 4px; }
 .selectInput { width: 100%; padding: 10px 12px; border: 1px solid var(--border-input); border-radius: var(--radius); font-size: var(--font-sm); }
 
 .cardActions { display: flex; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }

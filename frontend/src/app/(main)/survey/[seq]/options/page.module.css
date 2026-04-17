@@ -2,7 +2,7 @@
 .lbl { display: block; font-size: 0.76rem; font-weight: 700; color: #555; margin-bottom: 3px; }
 .inp { width: 100%; padding: 0.35rem 0.6rem; border: 1.5px solid var(--border-input); border-radius: 5px; font-size: 0.88rem; }
 .inpAuto { composes: inp; width: auto; }
-.requiredMark { color: #e53e3e; }
+.requiredMark { color: var(--danger); }
 .flexEnd { display: flex; gap: 6px; justify-content: flex-end; }
 .spacer { flex: 1; }
 

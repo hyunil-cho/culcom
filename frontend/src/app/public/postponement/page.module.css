@@ -46,7 +46,7 @@
 }
 
 .requiredMark {
-  color: #e74c3c;
+  color: var(--danger);
 }
 
 /* 요청 요약 */

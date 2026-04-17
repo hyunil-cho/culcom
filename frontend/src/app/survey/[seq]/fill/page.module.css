@@ -53,7 +53,7 @@
 .sectionTitle { font-size: var(--font-lg); font-weight: 700; }
 .fieldGroup { margin-bottom: 1.75rem; }
 .fieldLabel { display: block; font-size: var(--font-base); font-weight: 700; margin-bottom: 0.6rem; }
-.requiredMark { color: #e53e3e; margin-left: 3px; }
+.requiredMark { color: var(--danger); margin-left: 3px; }
 .hint { font-size: 0.8rem; color: var(--text-secondary); font-weight: 400; margin-left: 6px; }
 
 .textInput {
