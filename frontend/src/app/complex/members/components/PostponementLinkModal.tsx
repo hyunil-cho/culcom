@@ -1,14 +1,17 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
-  smsEventApi, externalApi, memberApi, postponementApi,
+  memberApi, postponementApi,
   type MemberMembershipResponse, type PostponementRequest,
 } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { useApiQuery } from '@/hooks/useApiQuery';
-import { Select, Textarea } from '@/components/ui/FormInput';
 import { Button } from '@/components/ui/Button';
+import UnavailableNotice from './UnavailableNotice';
+import CopyableUrlField from './CopyableUrlField';
+import SmsSendSection from './SmsSendSection';
+import shared from './LinkShared.module.css';
 import s from './PostponementLinkModal.module.css';
 
 interface Props {
@@ -25,15 +28,9 @@ const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
 };
 
 export default function PostponementLinkModal({ memberSeq, memberName, memberPhone, onClose }: Props) {
-  const [copied, setCopied] = useState(false);
-  const [showSms, setShowSms] = useState(false);
-  const [senderPhone, setSenderPhone] = useState('');
-  const [message, setMessage] = useState('');
-  const [sending, setSending] = useState(false);
-  const [sendResult, setSendResult] = useState<{ success: boolean; text: string } | null>(null);
-
   const payload = btoa(encodeURIComponent(JSON.stringify({ memberSeq, name: memberName, phone: memberPhone })));
   const postponementUrl = `${window.location.origin}${ROUTES.PUBLIC_POSTPONEMENT}?d=${payload}`;
+  const smsMessage = `[수업 연기 요청 안내]\n\n${memberName}님, 아래 링크에서 수업 연기 요청을 진행해주세요.\n\n${postponementUrl}`;
 
   const { data: memberships = [], isLoading: msLoading } = useApiQuery<MemberMembershipResponse[]>(
     ['postponementLinkMemberships', memberSeq],
@@ -46,52 +43,53 @@ export default function PostponementLinkModal({ memberSeq, memberName, memberPho
   const loading = msLoading || histLoading;
 
   const { canPostpone, unavailableReason } = useMemo(() => {
-    const usableMemberships = memberships.filter(m => m.status === '활성');
+    const usableMemberships = memberships.filter((m) => m.status === '활성');
     if (usableMemberships.length === 0) {
       return { canPostpone: false, unavailableReason: '사용 가능한 멤버십이 없습니다.' };
     }
-    const hasRemaining = usableMemberships.some(m => m.postponeTotal - m.postponeUsed > 0);
+    const hasOutstanding = usableMemberships.some((m) => m.outstanding != null && m.outstanding > 0);
+    if (hasOutstanding) {
+      return { canPostpone: false, unavailableReason: '미수금이 남아있어 연기 신청을 할 수 없습니다. 미수금을 완납 후 진행해주세요.' };
+    }
+    const hasRemaining = usableMemberships.some((m) => m.postponeTotal - m.postponeUsed > 0);
     if (!hasRemaining) {
       return { canPostpone: false, unavailableReason: '연기 가능 횟수가 소진되었습니다.' };
     }
     return { canPostpone: true, unavailableReason: '' };
   }, [memberships]);
 
-  const { data: senderNumbers = [] } = useApiQuery<string[]>(
-    ['senderNumbers'],
-    () => smsEventApi.getSenderNumbers(),
-    { enabled: showSms },
+  const activeMemberships = memberships.filter((m) => m.status === '활성');
+
+  const historySection = history.length > 0 && (
+    <>
+      <div className={s.sectionLabel} style={{ marginTop: '1rem' }}>연기 요청 히스토리 ({history.length}건)</div>
+      <div className={s.historyList}>
+        {history.map((h) => {
+          const badge = STATUS_BADGE[h.status] || STATUS_BADGE['대기'];
+          return (
+            <div key={h.seq} className={s.historyItem}>
+              <div className={s.historyTop}>
+                <span className={s.historyBadge} style={{ background: badge.bg, color: badge.color }}>
+                  {h.status}
+                </span>
+                <span className={s.historyDate}>{h.createdDate?.split('T')[0]}</span>
+              </div>
+              <div className={s.historyDetail}>
+                {h.startDate && h.endDate && <span>{h.startDate} ~ {h.endDate}</span>}
+              </div>
+              <div className={s.historyReason}>{h.reason}</div>
+              {h.status === '반려' && h.rejectReason && (
+                <div className={s.historyReject}>반려 사유: {h.rejectReason}</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
-  useEffect(() => {
-    if (senderNumbers.length > 0 && !senderPhone) setSenderPhone(senderNumbers[0]);
-  }, [senderNumbers, senderPhone]);
-
-  useEffect(() => {
-    if (showSms) {
-      setMessage(`[수업 연기 요청 안내]\n\n${memberName}님, 아래 링크에서 수업 연기 요청을 진행해주세요.\n\n${postponementUrl}`);
-    }
-  }, [showSms, memberName, postponementUrl]);
-
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(postponementUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleSend = async () => {
-    if (!message.trim() || !senderPhone) return;
-    setSending(true);
-    const res = await externalApi.sendSms({ senderPhone, receiverPhone: memberPhone, message });
-    setSending(false);
-    if (res.success && res.data?.success) {
-      setSendResult({ success: true, text: `전송 완료 (${res.data.msgType})` });
-    } else {
-      setSendResult({ success: false, text: res.data?.message || '전송 실패' });
-    }
-  };
 
   return (
-    <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={`modal-content ${s.content}`}>
         <div className={s.header}>
           <h3 className={s.title}>수업 연기 요청</h3>
@@ -110,21 +108,15 @@ export default function PostponementLinkModal({ memberSeq, memberName, memberPho
           </div>
 
           {loading ? (
-            <div className={s.loadingText}>멤버십 정보 확인 중...</div>
+            <div className={shared.loadingText}>멤버십 정보 확인 중...</div>
           ) : !canPostpone ? (
-            /* ── 연기 불가 ── */
             <div>
-              <div className={s.unavailableBox}>
-                <div className={s.unavailableIcon}>!</div>
-                <div className={s.unavailableTitle}>연기 요청이 불가능합니다</div>
-                <div className={s.unavailableDesc}>{unavailableReason}</div>
-              </div>
+              <UnavailableNotice title="연기 요청이 불가능합니다" description={unavailableReason} />
 
-              {/* 멤버십 현황 */}
               <div className={s.sectionLabel}>멤버십 연기 현황</div>
-              {memberships.filter(m => m.status === '활성').length === 0 ? (
+              {activeMemberships.length === 0 ? (
                 <div className={s.emptyText}>활성 멤버십이 없습니다.</div>
-              ) : memberships.filter(m => m.status === '활성').map(ms => (
+              ) : activeMemberships.map((ms) => (
                 <div key={ms.seq} className={s.msCard}>
                   <div className={s.msName}>{ms.membershipName}</div>
                   <div className={s.msMeta}>
@@ -134,41 +126,12 @@ export default function PostponementLinkModal({ memberSeq, memberName, memberPho
                 </div>
               ))}
 
-              {/* 히스토리 */}
-              {history.length > 0 && (
-                <>
-                  <div className={s.sectionLabel}>연기 요청 히스토리 ({history.length}건)</div>
-                  <div className={s.historyList}>
-                    {history.map(h => {
-                      const badge = STATUS_BADGE[h.status] || STATUS_BADGE['대기'];
-                      return (
-                        <div key={h.seq} className={s.historyItem}>
-                          <div className={s.historyTop}>
-                            <span className={s.historyBadge} style={{ background: badge.bg, color: badge.color }}>
-                              {h.status}
-                            </span>
-                            <span className={s.historyDate}>{h.createdDate?.split('T')[0]}</span>
-                          </div>
-                          <div className={s.historyDetail}>
-                            {h.startDate && h.endDate && <span>{h.startDate} ~ {h.endDate}</span>}
-                          </div>
-                          <div className={s.historyReason}>{h.reason}</div>
-                          {h.status === '반려' && h.rejectReason && (
-                            <div className={s.historyReject}>반려 사유: {h.rejectReason}</div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
+              {historySection}
             </div>
           ) : (
-            /* ── 연기 가능: 링크 생성 ── */
             <div>
-              {/* 멤버십 요약 */}
               <div className={s.sectionLabel}>멤버십 연기 잔여</div>
-              {memberships.filter(m => m.status === '활성').map(ms => {
+              {activeMemberships.map((ms) => {
                 const rem = ms.postponeTotal - ms.postponeUsed;
                 return (
                   <div key={ms.seq} className={s.msCard}>
@@ -185,81 +148,17 @@ export default function PostponementLinkModal({ memberSeq, memberName, memberPho
                 );
               })}
 
-              <div className={s.fieldGroup} style={{ marginTop: '1rem' }}>
-                <label className={s.fieldLabel}>연기 요청 URL</label>
-                <div className={s.urlRow}>
-                  <input readOnly value={postponementUrl} className={s.urlInput} onClick={e => (e.target as HTMLInputElement).select()} />
-                  <button onClick={handleCopy} className={s.copyBtn}>
-                    {copied ? '복사됨!' : '복사'}
-                  </button>
-                </div>
-                <p className={s.urlHint}>이 링크를 고객에게 전달하면, 수업 연기 요청을 직접 진행할 수 있습니다.</p>
+              <div style={{ marginTop: '1rem' }}>
+                <CopyableUrlField
+                  label="연기 요청 URL"
+                  url={postponementUrl}
+                  hint="이 링크를 고객에게 전달하면, 수업 연기 요청을 직접 진행할 수 있습니다."
+                />
               </div>
 
-              {!showSms ? (
-                <button onClick={() => setShowSms(true)} className={s.smsToggleBtn}>
-                  문자로 전송하기
-                </button>
-              ) : (
-                <div className={s.smsSection}>
-                  <div className={s.smsDivider}>문자 전송</div>
+              <SmsSendSection receiverPhone={memberPhone} initialMessage={smsMessage} />
 
-                  <div className={s.fieldGroup}>
-                    <label className={s.fieldLabel}>발신번호</label>
-                    <Select value={senderPhone} onChange={e => setSenderPhone(e.target.value)}>
-                      <option value="">발신번호를 선택하세요</option>
-                      {senderNumbers.map(p => <option key={p} value={p}>{p}</option>)}
-                    </Select>
-                  </div>
-
-                  <div className={s.fieldGroup}>
-                    <label className={s.fieldLabel}>메시지 내용</label>
-                    <Textarea value={message} onChange={e => setMessage(e.target.value)}
-                      rows={6} style={{ resize: 'vertical', lineHeight: 1.6 }} />
-                    <div className={s.charCount}>{message.length} / 2000자</div>
-                  </div>
-
-                  {sendResult && (
-                    <div className={sendResult.success ? s.resultSuccess : s.resultError}>
-                      {sendResult.text}
-                    </div>
-                  )}
-
-                  <button onClick={handleSend} disabled={sending || !senderPhone}
-                    className={s.sendBtn}>
-                    {sending ? '전송 중...' : '문자 전송'}
-                  </button>
-                </div>
-              )}
-
-              {/* 히스토리 (연기 가능할 때도 표시) */}
-              {history.length > 0 && (
-                <>
-                  <div className={s.sectionLabel} style={{ marginTop: '1rem' }}>연기 요청 히스토리 ({history.length}건)</div>
-                  <div className={s.historyList}>
-                    {history.map(h => {
-                      const badge = STATUS_BADGE[h.status] || STATUS_BADGE['대기'];
-                      return (
-                        <div key={h.seq} className={s.historyItem}>
-                          <div className={s.historyTop}>
-                            <span className={s.historyBadge} style={{ background: badge.bg, color: badge.color }}>
-                              {h.status}
-                            </span>
-                            <span className={s.historyDate}>{h.createdDate?.split('T')[0]}</span>
-                          </div>
-                          <div className={s.historyDetail}>
-                            {h.startDate && h.endDate && <span>{h.startDate} ~ {h.endDate}</span>}
-                          </div>
-                          <div className={s.historyReason}>{h.reason}</div>
-                          {h.status === '반려' && h.rejectReason && (
-                            <div className={s.historyReject}>반려 사유: {h.rejectReason}</div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
+              {historySection}
             </div>
           )}
         </div>

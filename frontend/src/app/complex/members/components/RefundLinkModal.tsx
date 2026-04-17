@@ -1,11 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { smsEventApi, externalApi } from '@/lib/api';
+import { useMemo } from 'react';
+import { memberApi, type MemberMembershipResponse } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { useApiQuery } from '@/hooks/useApiQuery';
-import { Select, Textarea } from '@/components/ui/FormInput';
 import { Button } from '@/components/ui/Button';
+import UnavailableNotice from './UnavailableNotice';
+import CopyableUrlField from './CopyableUrlField';
+import SmsSendSection from './SmsSendSection';
+import shared from './LinkShared.module.css';
 import s from './RefundLinkModal.module.css';
 
 interface Props {
@@ -16,51 +19,28 @@ interface Props {
 }
 
 export default function RefundLinkModal({ memberSeq, memberName, memberPhone, onClose }: Props) {
-  const [copied, setCopied] = useState(false);
-  const [showSms, setShowSms] = useState(false);
-  const [senderPhone, setSenderPhone] = useState('');
-  const [message, setMessage] = useState('');
-  const [sending, setSending] = useState(false);
-  const [sendResult, setSendResult] = useState<{ success: boolean; text: string } | null>(null);
+  const { data: memberships = [], isLoading: msLoading } = useApiQuery<MemberMembershipResponse[]>(
+    ['refundLinkMemberships', memberSeq],
+    () => memberApi.getMemberships(memberSeq),
+  );
+  const { canRefund, unavailableReason } = useMemo(() => {
+    const activeMemberships = memberships.filter((m) => m.status === '활성');
+    if (activeMemberships.length === 0) {
+      return { canRefund: false, unavailableReason: '활성 멤버십이 없습니다.' };
+    }
+    const hasOutstanding = activeMemberships.some((m) => m.outstanding != null && m.outstanding > 0);
+    if (hasOutstanding) {
+      return { canRefund: false, unavailableReason: '미수금이 남아있어 환불 요청 링크를 생성할 수 없습니다. 미수금을 완납 후 진행해주세요.' };
+    }
+    return { canRefund: true, unavailableReason: '' };
+  }, [memberships]);
 
   const payload = btoa(encodeURIComponent(JSON.stringify({ memberSeq, name: memberName, phone: memberPhone })));
   const refundUrl = `${window.location.origin}${ROUTES.PUBLIC_REFUND}?d=${payload}`;
-
-  const { data: senderNumbers = [] } = useApiQuery<string[]>(
-    ['senderNumbers'],
-    () => smsEventApi.getSenderNumbers(),
-    { enabled: showSms },
-  );
-  useEffect(() => {
-    if (senderNumbers.length > 0 && !senderPhone) setSenderPhone(senderNumbers[0]);
-  }, [senderNumbers, senderPhone]);
-
-  useEffect(() => {
-    if (showSms) {
-      setMessage(`[환불 요청 안내]\n\n${memberName}님, 아래 링크에서 환불 요청을 진행해주세요.\n\n${refundUrl}`);
-    }
-  }, [showSms, memberName, refundUrl]);
-
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(refundUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleSend = async () => {
-    if (!message.trim() || !senderPhone) return;
-    setSending(true);
-    const res = await externalApi.sendSms({ senderPhone, receiverPhone: memberPhone, message });
-    setSending(false);
-    if (res.success && res.data?.success) {
-      setSendResult({ success: true, text: `전송 완료 (${res.data.msgType})` });
-    } else {
-      setSendResult({ success: false, text: res.data?.message || '전송 실패' });
-    }
-  };
+  const smsMessage = `[환불 요청 안내]\n\n${memberName}님, 아래 링크에서 환불 요청을 진행해주세요.\n\n${refundUrl}`;
 
   return (
-    <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={`modal-content ${s.content}`}>
         <div className={s.header}>
           <h3 className={s.title}>환불 요청 링크</h3>
@@ -78,51 +58,19 @@ export default function RefundLinkModal({ memberSeq, memberName, memberPhone, on
             </div>
           </div>
 
-          <div className={s.fieldGroup}>
-            <label className={s.fieldLabel}>환불 요청 URL</label>
-            <div className={s.urlRow}>
-              <input readOnly value={refundUrl} className={s.urlInput} onClick={e => (e.target as HTMLInputElement).select()} />
-              <button onClick={handleCopy} className={s.copyBtn}>
-                {copied ? '복사됨!' : '복사'}
-              </button>
-            </div>
-            <p className={s.urlHint}>이 링크를 고객에게 전달하면, 환불 사유와 계좌 정보를 직접 입력할 수 있습니다.</p>
-          </div>
-
-          {!showSms ? (
-            <button onClick={() => setShowSms(true)} className={s.smsToggleBtn}>
-              문자로 전송하기
-            </button>
+          {msLoading ? (
+            <div className={shared.loadingText}>멤버십 정보 확인 중...</div>
+          ) : !canRefund ? (
+            <UnavailableNotice title="환불 요청이 불가능합니다" description={unavailableReason} />
           ) : (
-            <div className={s.smsSection}>
-              <div className={s.smsDivider}>문자 전송</div>
-
-              <div className={s.fieldGroup}>
-                <label className={s.fieldLabel}>발신번호</label>
-                <Select value={senderPhone} onChange={e => setSenderPhone(e.target.value)}>
-                  <option value="">발신번호를 선택하세요</option>
-                  {senderNumbers.map(p => <option key={p} value={p}>{p}</option>)}
-                </Select>
-              </div>
-
-              <div className={s.fieldGroup}>
-                <label className={s.fieldLabel}>메시지 내용</label>
-                <Textarea value={message} onChange={e => setMessage(e.target.value)}
-                  rows={6} style={{ resize: 'vertical', lineHeight: 1.6 }} />
-                <div className={s.charCount}>{message.length} / 2000자</div>
-              </div>
-
-              {sendResult && (
-                <div className={sendResult.success ? s.resultSuccess : s.resultError}>
-                  {sendResult.text}
-                </div>
-              )}
-
-              <button onClick={handleSend} disabled={sending || !senderPhone}
-                className={s.sendBtn}>
-                {sending ? '전송 중...' : '문자 전송'}
-              </button>
-            </div>
+            <>
+              <CopyableUrlField
+                label="환불 요청 URL"
+                url={refundUrl}
+                hint="이 링크를 고객에게 전달하면, 환불 사유와 계좌 정보를 직접 입력할 수 있습니다."
+              />
+              <SmsSendSection receiverPhone={memberPhone} initialMessage={smsMessage} />
+            </>
           )}
         </div>
 
