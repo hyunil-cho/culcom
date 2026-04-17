@@ -1,12 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { memberApi, transferApi, smsEventApi, externalApi, type MemberMembershipResponse, type TransferRequestItem } from '@/lib/api';
+import { useState } from 'react';
+import { memberApi, transferApi, type MemberMembershipResponse, type TransferRequestItem } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useFormError } from '@/hooks/useFormError';
-import { Select, Textarea } from '@/components/ui/FormInput';
+import { Select } from '@/components/ui/FormInput';
 import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Button } from '@/components/ui/Button';
+import UnavailableNotice from './UnavailableNotice';
+import CopyableUrlField from './CopyableUrlField';
+import SmsSendSection from './SmsSendSection';
+import shared from './LinkShared.module.css';
 import s from './MembershipLinkModal.module.css';
 
 interface Props {
@@ -22,41 +26,16 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
   const [result, setResult] = useState<TransferRequestItem | null>(null);
   const { error: formError, setError, clear: clearError } = useFormError();
 
-  // SMS
-  const [copied, setCopied] = useState(false);
-  const [showSms, setShowSms] = useState(false);
-  const [senderPhone, setSenderPhone] = useState('');
-  const [message, setMessage] = useState('');
-  const [sending, setSending] = useState(false);
-  const [sendResult, setSendResult] = useState<{ success: boolean; text: string } | null>(null);
-
-  // 멤버십 목록 로드 (활성만)
   const { data: allMemberships = [], isLoading: loading } = useApiQuery<MemberMembershipResponse[]>(
     ['transferLinkMemberships', memberSeq],
     () => memberApi.getMemberships(memberSeq),
   );
-  const memberships = allMemberships.filter(ms => ms.status === '활성');
-
-  // SMS 발신번호 로드
-  const { data: senderNumbers = [] } = useApiQuery<string[]>(
-    ['senderNumbers'],
-    () => smsEventApi.getSenderNumbers(),
-    { enabled: showSms },
-  );
-  useEffect(() => {
-    if (senderNumbers.length > 0 && !senderPhone) setSenderPhone(senderNumbers[0]);
-  }, [senderNumbers, senderPhone]);
+  const memberships = allMemberships.filter((ms) => ms.status === '활성');
 
   const transferUrl = result
     ? `${window.location.origin}/public/transfer?token=${result.token}`
     : '';
-
-  // SMS 메시지 초기화
-  useEffect(() => {
-    if (showSms && transferUrl) {
-      setMessage(`[멤버십 양도 안내]\n\n${memberName}님, 아래 링크에서 양도 절차를 진행하실 수 있습니다.\n\n${transferUrl}`);
-    }
-  }, [showSms, memberName, transferUrl]);
+  const smsMessage = `[멤버십 양도 안내]\n\n${memberName}님, 아래 링크에서 양도 절차를 진행하실 수 있습니다.\n\n${transferUrl}`;
 
   const handleCreate = async () => {
     if (!selectedMmSeq) { setError('양도할 멤버십을 선택하세요.'); return; }
@@ -68,28 +47,10 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
     setCreating(false);
   };
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(transferUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleSend = async () => {
-    if (!message.trim() || !senderPhone) return;
-    setSending(true);
-    const res = await externalApi.sendSms({ senderPhone, receiverPhone: memberPhone, message });
-    setSending(false);
-    if (res.success && res.data?.success) {
-      setSendResult({ success: true, text: `전송 완료 (${res.data.msgType})` });
-    } else {
-      setSendResult({ success: false, text: res.data?.message || '전송 실패' });
-    }
-  };
-
-  const selectedMs = memberships.find(ms => ms.seq === Number(selectedMmSeq));
+  const selectedMs = memberships.find((ms) => ms.seq === Number(selectedMmSeq));
 
   return (
-    <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={`modal-content ${s.content}`}>
         <div className={s.header}>
           <h3 className={s.title}>멤버십 양도 링크</h3>
@@ -108,24 +69,19 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
             </div>
           </div>
 
-          {/* 아직 양도 요청 생성 전 */}
           {!result && (
             <>
               {loading ? (
-                <div style={{ padding: 20, textAlign: 'center', color: '#999', fontSize: '0.85rem' }}>
-                  멤버십 정보 확인 중...
-                </div>
+                <div className={shared.loadingText}>멤버십 정보 확인 중...</div>
               ) : memberships.length === 0 ? (
-                <div style={{ padding: 20, textAlign: 'center', color: '#999', fontSize: '0.85rem' }}>
-                  양도 가능한 활성 멤버십이 없습니다.
-                </div>
+                <UnavailableNotice title="양도 요청이 불가능합니다" description="활성 멤버십이 없습니다." />
               ) : (
                 <>
                   <div className={s.fieldGroup}>
                     <label className={s.fieldLabel}>양도할 멤버십 선택</label>
-                    <Select value={selectedMmSeq} onChange={e => setSelectedMmSeq(e.target.value)}>
+                    <Select value={selectedMmSeq} onChange={(e) => setSelectedMmSeq(e.target.value)}>
                       <option value="">-- 멤버십 선택 --</option>
-                      {memberships.map(ms => {
+                      {memberships.map((ms) => {
                         const rem = ms.totalCount - ms.usedCount;
                         return (
                           <option key={ms.seq} value={ms.seq}>
@@ -191,7 +147,6 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
             </>
           )}
 
-          {/* 양도 요청 생성 완료 → URL 표시 */}
           {result && (
             <>
               <div style={{
@@ -201,53 +156,13 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
                 양도 요청이 생성되었습니다. (양도비: {result.transferFee.toLocaleString()}원, 잔여: {result.remainingCount}회)
               </div>
 
-              <div className={s.fieldGroup}>
-                <label className={s.fieldLabel}>양도 페이지 URL</label>
-                <div className={s.urlRow}>
-                  <input readOnly value={transferUrl} className={s.urlInput}
-                    onClick={e => (e.target as HTMLInputElement).select()} />
-                  <button onClick={handleCopy} className={s.copyBtn}>
-                    {copied ? '복사됨!' : '복사'}
-                  </button>
-                </div>
-                <p className={s.urlHint}>이 링크를 양도자에게 전달하면, 양도 절차를 진행할 수 있습니다.</p>
-              </div>
+              <CopyableUrlField
+                label="양도 페이지 URL"
+                url={transferUrl}
+                hint="이 링크를 양도자에게 전달하면, 양도 절차를 진행할 수 있습니다."
+              />
 
-              {!showSms ? (
-                <button onClick={() => setShowSms(true)} className={s.smsToggleBtn}>
-                  문자로 전송하기
-                </button>
-              ) : (
-                <div className={s.smsSection}>
-                  <div className={s.smsDivider}>문자 전송</div>
-
-                  <div className={s.fieldGroup}>
-                    <label className={s.fieldLabel}>발신번호</label>
-                    <Select value={senderPhone} onChange={e => setSenderPhone(e.target.value)}>
-                      <option value="">발신번호를 선택하세요</option>
-                      {senderNumbers.map(p => <option key={p} value={p}>{p}</option>)}
-                    </Select>
-                  </div>
-
-                  <div className={s.fieldGroup}>
-                    <label className={s.fieldLabel}>메시지 내용</label>
-                    <Textarea value={message} onChange={e => setMessage(e.target.value)}
-                      rows={6} style={{ resize: 'vertical', lineHeight: 1.6 }} />
-                    <div className={s.charCount}>{message.length} / 2000자</div>
-                  </div>
-
-                  {sendResult && (
-                    <div className={sendResult.success ? s.resultSuccess : s.resultError}>
-                      {sendResult.text}
-                    </div>
-                  )}
-
-                  <button onClick={handleSend} disabled={sending || !senderPhone}
-                    className={s.sendBtn}>
-                    {sending ? '전송 중...' : '문자 전송'}
-                  </button>
-                </div>
-              )}
+              <SmsSendSection receiverPhone={memberPhone} initialMessage={smsMessage} />
             </>
           )}
         </div>

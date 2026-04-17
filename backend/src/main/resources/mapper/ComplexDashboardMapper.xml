@@ -83,4 +83,15 @@
         ORDER BY bucket
     </select>
 
+    <!-- 연기 복귀 예정자 스캔 추이 (스케줄러가 기록한 일일 집계를 버킷 단위로 합산) -->
+    <select id="selectPostponementReturns" resultType="com.culcom.dto.complex.dashboard.TrendItem">
+        SELECT <include refid="bucketExpr"><property name="col" value="s.scan_date"/></include> AS bucket,
+               COALESCE(SUM(s.member_count), 0) AS count
+        FROM complex_postponement_return_scan_logs s
+        WHERE s.branch_seq = #{branchSeq}
+          AND s.scan_date >= <include refid="sinceExpr"/>
+        GROUP BY bucket
+        ORDER BY bucket
+    </select>
+
 </mapper>

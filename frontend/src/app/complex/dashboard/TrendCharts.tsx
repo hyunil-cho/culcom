@@ -127,6 +127,11 @@ export default function TrendCharts() {
     양도: filledTransfers[i].count,
   }));
 
+  const returnData = fillBuckets(data.postponementReturns ?? [], period, count).map(m => ({
+    bucket: m.bucket,
+    복귀예정: m.count,
+  }));
+
   const tickFormatter = formatBucket(period);
 
   return (
@@ -176,6 +181,23 @@ export default function TrendCharts() {
               <Line type="monotone" dataKey="환불" stroke="#e03131" strokeWidth={2} dot={{ r: 4 }} />
               <Line type="monotone" dataKey="양도" stroke="#2b8a3e" strokeWidth={2} dot={{ r: 4 }} />
             </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div style={CARD}>
+          <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: '#333' }}>복귀 예정자 추이</h3>
+          <p style={{ margin: '0 0 12px', fontSize: '0.75rem', color: '#888' }}>
+            매일 오전 11시 스케줄러가 다음날 복귀 회원을 집계한 결과
+          </p>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={returnData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="bucket" tickFormatter={tickFormatter} fontSize={12} />
+              <YAxis allowDecimals={false} fontSize={12} />
+              <Tooltip labelFormatter={tickFormatter} />
+              <Legend />
+              <Bar dataKey="복귀예정" fill="#0ca678" radius={[4, 4, 0, 0]} />
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>

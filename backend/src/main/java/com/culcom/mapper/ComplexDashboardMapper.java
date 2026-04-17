@@ -33,4 +33,9 @@ public interface ComplexDashboardMapper {
             @Param("branchSeq") Long branchSeq,
             @Param("period") String period,
             @Param("count") int count);
+
+    List<TrendItem> selectPostponementReturns(
+            @Param("branchSeq") Long branchSeq,
+            @Param("period") String period,
+            @Param("count") int count);
 }

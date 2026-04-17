@@ -120,6 +120,7 @@ public class ComplexDashboardController {
                 .postponements(complexDashboardMapper.selectPostponements(branchSeq, normalized, count))
                 .refunds(complexDashboardMapper.selectRefunds(branchSeq, normalized, count))
                 .transfers(complexDashboardMapper.selectTransfers(branchSeq, normalized, count))
+                .postponementReturns(complexDashboardMapper.selectPostponementReturns(branchSeq, normalized, count))
                 .build()));
     }
 
