@@ -19,6 +19,8 @@ export interface ComplexMember {
   smsWarning?: string;
   firstPaymentAmount?: number | null;
   firstPaymentDate?: string | null;
+  /** 생성 요청 전용 — 이 회원 생성이 특정 설문 제출 데이터를 활용해 이루어진 경우 해당 제출 seq */
+  surveySubmissionSeq?: number;
 }
 
 export interface ComplexMemberMetaData {
@@ -34,8 +36,9 @@ export interface ComplexMemberMetaData {
  * - 정지: 일시적 사용 불가 (스태프 휴직 등). 가역적
  * - 만료: 횟수 소진/기간 만료로 자동 전이됨. 새 멤버십 등록 유도
  * - 환불: 환불 처리됨. 비가역
+ * - 변경: 관리자가 다른 상품으로 교체해서 원본이 종결된 상태. 비가역
  */
-export type MembershipStatus = '활성' | '정지' | '만료' | '환불';
+export type MembershipStatus = '활성' | '정지' | '만료' | '환불' | '변경';
 
 export interface CardPaymentDetail {
   cardCompany: string;
@@ -80,6 +83,19 @@ export interface MembershipPaymentRequest {
   cardDetail?: CardPaymentDetail;
 }
 
+export interface MembershipChangeRequest {
+  newMembershipSeq: number;
+  startDate?: string;
+  expiryDate?: string;
+  price?: string;
+  /** 관리자 입력 추가 비용 (음수 허용). 0이면 결제 기록 남기지 않음. */
+  changeFee: number;
+  paymentMethod?: PaymentMethod;
+  paymentDate?: string;
+  cardDetail?: CardPaymentDetail;
+  changeNote?: string;
+}
+
 export interface MemberMembershipResponse {
   seq: number;
   memberSeq: number;
@@ -97,6 +113,10 @@ export interface MemberMembershipResponse {
   status: MembershipStatus;
   transferable: boolean;
   transferred: boolean;
+  /** 변경으로 생성된 멤버십인 경우 원본 seq, 아니면 null */
+  changedFromSeq: number | null;
+  /** 변경 시 관리자 입력 추가 비용 (음수 허용), 변경 이력 아니면 null */
+  changeFee: number | null;
   createdDate: string;
   paidAmount: number;
   outstanding: number | null;
@@ -159,6 +179,8 @@ export const memberApi = {
     api.put<MemberMembershipResponse>(API.COMPLEX_MEMBER_MEMBERSHIP(seq, mmSeq), data),
   deleteMembership: (seq: number, mmSeq: number) =>
     api.delete<void>(API.COMPLEX_MEMBER_MEMBERSHIP(seq, mmSeq)),
+  changeMembership: (seq: number, mmSeq: number, data: MembershipChangeRequest) =>
+    api.post<MemberMembershipResponse>(API.COMPLEX_MEMBER_MEMBERSHIP_CHANGE(seq, mmSeq), data),
   assignClass: (seq: number, classSeq: number) =>
     api.post<void>(`${API.COMPLEX_MEMBER(seq)}/class/${classSeq}`),
   getClassMappings: (seq: number) =>

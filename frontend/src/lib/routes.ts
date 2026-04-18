@@ -181,6 +181,7 @@ export const API = {
   COMPLEX_MEMBER_MEMBERSHIPS: (seq: number) => `${A.COMPLEX_MEMBERS}/${seq}/memberships`,
   COMPLEX_MEMBER_TIMELINE: (seq: number) => `${A.COMPLEX_MEMBERS}/${seq}/timeline`,
   COMPLEX_MEMBER_MEMBERSHIP: (seq: number, mmSeq: number) => `${A.COMPLEX_MEMBERS}/${seq}/memberships/${mmSeq}`,
+  COMPLEX_MEMBER_MEMBERSHIP_CHANGE: (seq: number, mmSeq: number) => `${A.COMPLEX_MEMBERS}/${seq}/memberships/${mmSeq}/change`,
   COMPLEX_STAFFS: A.COMPLEX_STAFFS,
   COMPLEX_STAFF: (seq: number) => `${A.COMPLEX_STAFFS}/${seq}`,
   COMPLEX_STAFF_REFUND: (staffSeq: number) => `${A.COMPLEX_STAFFS}/${staffSeq}/refund`,

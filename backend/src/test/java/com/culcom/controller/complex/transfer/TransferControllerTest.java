@@ -62,7 +62,13 @@ class TransferControllerTest {
                 .status(TransferStatus.생성).createdDate(LocalDateTime.now())
                 .build();
 
-        given(transferService.list()).willReturn(List.of(item));
+        given(transferService.list(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.anyBoolean(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.anyBoolean())).willReturn(List.of(item));
 
         mockMvc.perform(get("/api/transfer-requests")
                         .with(auth()))

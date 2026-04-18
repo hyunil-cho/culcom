@@ -62,15 +62,19 @@ export default function MembershipFormSection({
     ? memberships.find(m => m.seq === Number(form.membershipSeq))
     : null;
 
-  // 양도 요청 필터 (확인/거절 제외, 입력된 이름/전화번호로 자동 필터)
+  // 양도 요청 필터 (확인/거절 제외, 입력된 이름/전화번호는 양수자 정보로만 매칭).
+  // 서버가 이미 양수자(toCustomer) 기준으로 필터링하지만, 방어적 재확인을 유지한다.
   const filteredTransfers = (transfers ?? [])
     .filter(t => t.status === '생성' || t.status === '접수')
     .filter(t => {
       const name = (memberName ?? '').trim().toLowerCase();
       const phone = (memberPhone ?? '').trim();
       if (!name && !phone) return true;
-      return (name && t.fromMemberName.toLowerCase().includes(name))
-        || (phone && t.fromMemberPhone.includes(phone));
+      const toName = (t.toCustomerName ?? '').toLowerCase();
+      const toPhone = t.toCustomerPhone ?? '';
+      const nameMatch = !!name && toName.includes(name);
+      const phoneMatch = !!phone && !!toPhone && toPhone.includes(phone);
+      return nameMatch || phoneMatch;
     });
 
   return (

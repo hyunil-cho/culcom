@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { publicMembershipApi, type MembershipCheckMember } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
+import { isLinkExpired, INVALID_LINK_MESSAGE } from '@/lib/linkExpiry';
 
 export default function PublicMembershipPage() {
   return <Suspense fallback={null}><PublicMembershipPageInner /></Suspense>;
@@ -16,19 +17,22 @@ function PublicMembershipPageInner() {
     try {
       const d = searchParams.get('d');
       if (!d) return null;
-      return JSON.parse(decodeURIComponent(atob(d))) as { memberSeq: number; name: string; phone: string };
+      return JSON.parse(decodeURIComponent(atob(d))) as { memberSeq: number; name: string; phone: string; t?: number };
     } catch { return null; }
   })();
+
+  const expired = !!decoded && isLinkExpired(decoded.t);
 
   const { data: checkResult, isLoading: loading, error: queryError } = useApiQuery(
     ['publicMembership', decoded?.name, decoded?.phone],
     () => publicMembershipApi.check(decoded!.name, decoded!.phone),
-    { enabled: !!decoded },
+    { enabled: !!decoded && !expired },
   );
 
   const member: MembershipCheckMember | null = checkResult?.member ?? null;
 
-  const error = !decoded ? '유효하지 않은 링크입니다. 관리자에게 문의해주세요.'
+  const error = !decoded ? INVALID_LINK_MESSAGE
+    : expired ? INVALID_LINK_MESSAGE
     : queryError ? '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'
     : (!loading && !member) ? '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'
     : '';

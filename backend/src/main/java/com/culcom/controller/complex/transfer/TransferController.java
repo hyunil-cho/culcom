@@ -24,9 +24,22 @@ public class TransferController {
 
     private final TransferService transferService;
 
+    /**
+     * 현재 지점의 양도 요청 목록.
+     * name/phone은 양도자(fromMember) 또는 양수자(toCustomer) 어느쪽과도 부분 매칭되면 반환.
+     * status가 지정되면 그 상태만, 없으면 activeOnly로 생성/접수만 vs 전체 결정.
+     */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<TransferRequestResponse>>> list() {
-        return ResponseEntity.ok(ApiResponse.ok(transferService.list()));
+    public ResponseEntity<ApiResponse<List<TransferRequestResponse>>> list(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String phone,
+            @RequestParam(defaultValue = "false") boolean activeOnly,
+            @RequestParam(required = false) com.culcom.entity.enums.TransferStatus status,
+            @RequestParam(defaultValue = "false") boolean includeReferenced) {
+        Long branchSeq = principal.getSelectedBranchSeq();
+        return ResponseEntity.ok(ApiResponse.ok(
+                transferService.list(branchSeq, name, phone, activeOnly, status, includeReferenced)));
     }
 
     /** 이름+전화번호로 접수 상태의 양도 요청 조회 (회원등록 시 자동 감지용) */

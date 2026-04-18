@@ -9,6 +9,8 @@ export function useBulkAttendance(onComplete: () => void) {
   const [bulkModal, setBulkModal] = useState<{ classSeq: number; className: string; members: AttendanceViewMember[] } | null>(null);
   const [bulkChecked, setBulkChecked] = useState<Record<number, boolean>>({});
   const [resultModal, setResultModal] = useState<{ className: string; results: BulkAttendanceResult[] } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const open = (cls: AttendanceViewClass) => {
     // 체크박스 초기값은 "오늘자 출석" 기록만 반영한다.
@@ -21,35 +23,60 @@ export function useBulkAttendance(onComplete: () => void) {
       checked[m.memberSeq] = isToday && m.status === 'O';
     });
     setBulkChecked(checked);
+    setErrorMessage(null);
     setBulkModal({ classSeq: cls.classSeq, className: cls.name, members: cls.members });
   };
 
+  // 저장 중에는 모달 외곽 클릭으로 닫히지 않도록 한다 (요청이 진행 중인데 상태를 버리는 사고 방지).
+  const closeForm = () => {
+    if (saving) return;
+    setBulkModal(null);
+    setErrorMessage(null);
+  };
+
   const save = async () => {
-    if (!bulkModal) return;
-    const members = bulkModal.members
-      // 멤버십 없음/연기 중인 회원은 일괄 출석 페이로드에서 제외 (서버 부하 절감 + 의도 명확화)
-      .filter(m => !m.noMembership)
-      .map(m => ({
-        memberSeq: m.memberSeq,
-        staff: m.staff,
-        attended: m.postponed ? false : (bulkChecked[m.memberSeq] ?? false),
-      }));
-    const res = await attendanceViewApi.bulkAttendance(bulkModal.classSeq, members);
-    if (res.success) {
-      setResultModal({ className: bulkModal.className, results: res.data });
-      setBulkModal(null);
-      onComplete();
+    // 이중 제출 가드: 이미 저장 중이거나 모달이 없으면 무시한다.
+    if (!bulkModal || saving) return;
+    setSaving(true);
+    setErrorMessage(null);
+    try {
+      const members = bulkModal.members
+        // 멤버십 없음/연기 중인 회원은 일괄 출석 페이로드에서 제외 (서버 부하 절감 + 의도 명확화)
+        .filter(m => !m.noMembership)
+        .map(m => ({
+          memberSeq: m.memberSeq,
+          staff: m.staff,
+          attended: m.postponed ? false : (bulkChecked[m.memberSeq] ?? false),
+        }));
+      const res = await attendanceViewApi.bulkAttendance(bulkModal.classSeq, members);
+      if (res.success) {
+        setResultModal({ className: bulkModal.className, results: res.data });
+        setBulkModal(null);
+        onComplete();
+      } else {
+        setErrorMessage(res.message ?? '일괄 출석 처리에 실패했습니다.');
+      }
+    } catch (e) {
+      setErrorMessage(e instanceof Error ? e.message : '일괄 출석 처리에 실패했습니다.');
+    } finally {
+      setSaving(false);
     }
   };
 
   const rendered = (
     <>
       {bulkModal && (
-        <ModalOverlay size="md" onClose={() => setBulkModal(null)}>
+        <ModalOverlay size="md" onClose={closeForm}>
             <div className={`modal-header ${s.headerGreen}`}>
               <h3>{bulkModal.className} — 일괄 출석</h3>
             </div>
             <div className="modal-body">
+              {errorMessage && (
+                <div className={s.errorBanner} role="alert">
+                  <span>⚠️</span>
+                  <span>{errorMessage}</span>
+                </div>
+              )}
               <div className={s.toolbar}>
                 <span className={s.toolbarCount}>총 <strong>{bulkModal.members.length}</strong>명</span>
                 <div className={s.toolbarBtns}>
@@ -113,8 +140,10 @@ export function useBulkAttendance(onComplete: () => void) {
               </div>
             </div>
             <div className="modal-footer">
-              <button onClick={() => setBulkModal(null)} className={s.cancelBtn}>취소</button>
-              <button onClick={save} className={s.saveBtn}>저장</button>
+              <button onClick={closeForm} disabled={saving} className={s.cancelBtn}>취소</button>
+              <button onClick={save} disabled={saving} className={s.saveBtn}>
+                {saving ? '저장 중…' : '저장'}
+              </button>
             </div>
         </ModalOverlay>
       )}

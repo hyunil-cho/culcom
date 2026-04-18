@@ -33,6 +33,7 @@
 .status_정지 { color: #b45309; background: #fef3c7; }
 .status_만료 { color: #dc2626; background: #fee2e2; }
 .status_환불 { color: #6b7280; background: #e5e7eb; text-decoration: line-through; }
+.status_변경 { color: #6b7280; background: #f1f5f9; text-decoration: line-through; }
 
 .infoGrid {
   display: grid;

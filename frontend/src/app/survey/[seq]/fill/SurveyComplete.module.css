@@ -32,3 +32,15 @@
 .footerBold { color: #1a1a1a; }
 
 .slogan { font-size: 0.82rem; font-weight: 700; color: var(--green); letter-spacing: 0.05em; }
+
+.memberAddBtn {
+  display: inline-block;
+  margin-top: 1.5rem;
+  padding: 12px 28px;
+  background: var(--green);
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+}

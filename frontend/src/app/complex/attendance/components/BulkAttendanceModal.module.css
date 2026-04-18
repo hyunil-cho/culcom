@@ -1,5 +1,18 @@
 .headerGreen { background: var(--green-dark); border-color: var(--green-dark); color: #fff; }
 
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 14px 0;
+  padding: 10px 12px;
+  background: #fdecea;
+  border: 1px solid #f5c2c0;
+  color: #b71c1c;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
 .toolbar {
   display: flex;
   justify-content: space-between;

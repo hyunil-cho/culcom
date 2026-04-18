@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { attendanceViewApi, type AttendanceViewSlot, type AttendanceViewMember } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { queryClient } from '@/lib/queryClient';
+import { useSessionStore } from '@/lib/store';
 import { ROUTES } from '@/lib/routes';
 import { useHighlightSearch } from '@/lib/useHighlightSearch';
 import HighlightSearchBar from '@/components/ui/HighlightSearchBar';
@@ -21,13 +22,32 @@ import './attendance.css';
 export default function AttendancePage() {
   const router = useRouter();
 
+  // 지점이 바뀌면 query key가 달라져 이전 지점의 캐시가 재사용되지 않는다.
+  // (헤더에서 지점 변경 시 reload 되지만, SPA 라우팅 도중 보호 장치로 유지)
+  const branchSeq = useSessionStore((s) => s.session?.selectedBranchSeq ?? null);
+
   const { data: slots = [], isLoading: loading } = useApiQuery<AttendanceViewSlot[]>(
-    ['attendanceView'],
+    ['attendanceView', branchSeq],
     () => attendanceViewApi.getView(),
     { refetchOnMount: 'always' },
   );
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['attendanceView'] });
+  // 일괄 출석으로 상태가 바뀌면 히스토리 모달이 보여주는 데이터도 즉시 stale 해져야 한다.
+  // AttendanceHistoryModal 이 사용하는 attendanceHistory / attendanceHistorySummary 키를 함께 무효화한다.
+  // 또한 '최근 출석기록' 셀이 포함된 상세 뷰(attendanceViewDetail)와 회원 목록(members) 쿼리도 무효화한다.
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ['attendanceView'] });
+    queryClient.invalidateQueries({ queryKey: ['attendanceViewDetail'] });
+    queryClient.invalidateQueries({ queryKey: ['attendanceHistory'] });
+    queryClient.invalidateQueries({ queryKey: ['attendanceHistorySummary'] });
+    queryClient.invalidateQueries({ queryKey: ['members'] });
+  };
+
+  // 드래그 정렬 실패 시 서버 상태로 UI를 되돌리기 위한 공통 처리.
+  const handleReorderError = (kind: '분반' | '멤버', message?: string) => {
+    alert(`${kind} 순서 변경에 실패했습니다.${message ? `\n사유: ${message}` : ''}\n최신 상태로 되돌립니다.`);
+    invalidate();
+  };
 
   const { matchedItems, currentMatchIndex, performSearch, navigateMatch } = useHighlightSearch({
     rowSelector: '.member-item',
@@ -49,9 +69,14 @@ export default function AttendancePage() {
       const id = parseInt(el.dataset.classId || '0');
       return id || null;
     },
-    onReorder: (ids) => {
+    onReorder: async (ids) => {
       const classOrders = ids.map((id, idx) => ({ id: Number(id), sortOrder: idx }));
-      attendanceViewApi.reorderClasses(classOrders);
+      try {
+        const res = await attendanceViewApi.reorderClasses(classOrders);
+        if (!res.success) handleReorderError('분반', res.message);
+      } catch (e) {
+        handleReorderError('분반', e instanceof Error ? e.message : undefined);
+      }
     },
   });
 
@@ -61,11 +86,16 @@ export default function AttendancePage() {
       const id = parseInt(el.dataset.memberSeq || '0');
       return id || null;
     },
-    onReorder: (ids, container) => {
+    onReorder: async (ids, container) => {
       const classSeq = parseInt(container.dataset.classSeq || '0');
       if (!classSeq) return;
       const memberOrders = ids.map((id, idx) => ({ memberSeq: Number(id), sortOrder: idx }));
-      attendanceViewApi.reorderMembers(classSeq, memberOrders);
+      try {
+        const res = await attendanceViewApi.reorderMembers(classSeq, memberOrders);
+        if (!res.success) handleReorderError('멤버', res.message);
+      } catch (e) {
+        handleReorderError('멤버', e instanceof Error ? e.message : undefined);
+      }
     },
   });
 

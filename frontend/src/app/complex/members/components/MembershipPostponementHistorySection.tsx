@@ -19,6 +19,9 @@ export default function MembershipPostponementHistorySection({ memberSeq }: Prop
     () => postponementApi.memberHistory(memberSeq),
   );
 
+  // 연기 기록이 0건이면 섹션 자체를 숨긴다.
+  if (!isLoading && history.length === 0) return null;
+
   return (
     <div style={{
       background: '#fff',

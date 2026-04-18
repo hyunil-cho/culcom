@@ -21,8 +21,9 @@
                 WHEN 'ATTENDANCE' THEN COALESCE(CAST(al.status AS CHAR(20)), '출석')
                 WHEN 'MEMBER_CREATE' THEN '등록'
                 WHEN 'MEMBERSHIP_ASSIGN' THEN '등록'
-                WHEN 'MEMBERSHIP_UPDATE' THEN '변경'
+                WHEN 'MEMBERSHIP_UPDATE' THEN '수정'
                 WHEN 'MEMBERSHIP_DELETE' THEN '삭제'
+                WHEN 'MEMBERSHIP_CHANGE' THEN '변경'
                 WHEN 'CLASS_ASSIGN' THEN '배정'
                 WHEN 'INFO_CHANGE' THEN '변경'
                 WHEN 'POSTPONEMENT_REQUEST' THEN '대기'

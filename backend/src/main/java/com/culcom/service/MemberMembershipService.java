@@ -166,6 +166,81 @@ public class MemberMembershipService {
         return ComplexMemberMembershipResponse.from(mm);
     }
 
+    /**
+     * 회원의 활성 멤버십을 다른 상품으로 교체한다.
+     * - 원본은 {@link MembershipStatus#변경}으로 종결 (수업 배정·연기 기록은 그대로 유지)
+     * - 새 멤버십은 {@code 활성}으로 생성, {@code changedFromSeq}와 {@code changeFee}가 세팅된다
+     * - 추가 비용이 0이 아니면 {@link MembershipPayment} 기록을 남긴다 (양수→ADDITIONAL, 음수→REFUND)
+     */
+    @Transactional
+    public ComplexMemberMembershipResponse changeMembership(Long memberSeq, Long sourceMmSeq, MembershipChangeRequest req) {
+        ComplexMemberMembership source = findOwnedMembership(memberSeq, sourceMmSeq);
+        if (source.getStatus() != MembershipStatus.활성) {
+            throw new IllegalStateException("활성 상태의 멤버십만 변경할 수 있습니다.");
+        }
+
+        Membership newProduct = membershipRepository.findById(req.getNewMembershipSeq())
+                .orElseThrow(() -> new EntityNotFoundException("멤버십"));
+
+        // 원본 상태를 변경으로 전환 (수업 배정 유지를 위해 detach 로직을 호출하지 않는다)
+        source.setStatus(MembershipStatus.변경);
+        memberMembershipRepository.save(source);
+
+        LocalDate startDate = req.getStartDate() != null ? req.getStartDate() : LocalDate.now();
+        LocalDate expiryDate = req.getExpiryDate() != null
+                ? req.getExpiryDate() : startDate.plusDays(newProduct.getDuration());
+        LocalDateTime paymentDate = req.getPaymentDate() != null ? req.getPaymentDate() : LocalDateTime.now();
+
+        com.culcom.entity.complex.member.CardPaymentDetail cardDetail =
+                resolveCardDetail(req.getPaymentMethod(), req.getCardDetail());
+
+        ComplexMemberMembership target = ComplexMemberMembership.builder()
+                .member(source.getMember())
+                .membership(newProduct)
+                .startDate(startDate)
+                .expiryDate(expiryDate)
+                .totalCount(newProduct.getCount())
+                .price(req.getPrice())
+                .paymentMethod(req.getPaymentMethod())
+                .paymentDate(paymentDate)
+                .status(MembershipStatus.활성)
+                .changedFromSeq(source.getSeq())
+                .changeFee(req.getChangeFee())
+                .build();
+        memberMembershipRepository.save(target);
+
+        // 변경 추가 비용이 0이 아니면 결제 기록 생성 (정책 검증은 admin이 담당, 여기서는 직접 저장)
+        Long fee = req.getChangeFee();
+        if (fee != null && fee != 0L) {
+            PaymentKind kind = fee > 0 ? PaymentKind.ADDITIONAL : PaymentKind.REFUND;
+            String noteBase = "멤버십 변경 (" + source.getMembership().getName()
+                    + " → " + newProduct.getName() + ")";
+            MembershipPayment payment = MembershipPayment.builder()
+                    .memberMembership(target)
+                    .amount(fee)
+                    .paidDate(paymentDate)
+                    .method(req.getPaymentMethod())
+                    .kind(kind)
+                    .note(req.getChangeNote() != null && !req.getChangeNote().isBlank()
+                            ? noteBase + " - " + req.getChangeNote()
+                            : noteBase)
+                    .cardPaymentDetail(cardDetail)
+                    .build();
+            paymentRepository.save(payment);
+            target.getPayments().add(payment);
+        }
+
+        String logDetail = String.format("%s → %s (추가비용 %s원%s)",
+                source.getMembership().getName(), newProduct.getName(),
+                fee != null ? String.format("%,d", fee) : "0",
+                req.getChangeNote() != null && !req.getChangeNote().isBlank()
+                        ? ", 사유: " + req.getChangeNote() : "");
+        eventPublisher.publishEvent(ActivityEvent.ofMembership(
+                source.getMember(), ActivityEventType.MEMBERSHIP_CHANGE, target.getSeq(), logDetail));
+
+        return ComplexMemberMembershipResponse.from(target, true);
+    }
+
     @Transactional
     public void deleteMembership(Long memberSeq, Long mmSeq) {
         ComplexMemberMembership mm = findOwnedMembership(memberSeq, mmSeq);

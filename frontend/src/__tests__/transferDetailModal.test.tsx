@@ -39,7 +39,9 @@ const makeItem = (overrides: Partial<TransferRequestItem>): TransferRequestItem 
   inviteToken: null,
   toCustomerSeq: 2,
   toCustomerName: '김철수',
+  toCustomerPhone: '01098765432',
   adminMessage: null,
+  referenced: false,
   createdDate: '2026-04-18T10:00:00',
   ...overrides,
 });

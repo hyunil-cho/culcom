@@ -1,6 +1,7 @@
 'use client';
 
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { surveyApi, type SurveySubmissionItem } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import MemberForm from '../MemberForm';
@@ -20,9 +21,10 @@ function MemberAddPageInner() {
     staffForm, setStaffForm, staffClassAssign, setStaffClassAssign,
     handleSubmit, modal,
     showTransferMismatch, confirmMismatchAndSubmit, dismissMismatch,
-    formError,
+    formError, setSurveySubmissionSeq,
   } = useMemberForm();
 
+  const searchParams = useSearchParams();
   const { channels } = useSignupChannels();
   const staffRefundDefaultsApplied = useRef(false);
   useEffect(() => {
@@ -52,8 +54,9 @@ function MemberAddPageInner() {
     setImportLoading(false);
   };
 
-  const selectSubmission = async (item: SurveySubmissionItem) => {
-    setShowImport(false);
+  const applySubmissionDetail = useCallback(async (item: SurveySubmissionItem) => {
+    // 회원 생성 시 이 제출을 참조했다고 표시하기 위해 seq를 보관한다.
+    setSurveySubmissionSeq(item.seq);
     const detailRes = await surveyApi.getSubmission(item.seq);
     if (!detailRes.success) {
       setForm(prev => ({ ...prev, name: item.name, phoneNumber: item.phoneNumber }));
@@ -67,7 +70,49 @@ function MemberAddPageInner() {
       .filter(Boolean).join(' / ');
     const comment = detail.customerComment ?? '';
     setForm(prev => ({ ...prev, name: detail.name, phoneNumber: detail.phoneNumber, signupChannel, info, comment }));
+  }, [channels, setForm, setSurveySubmissionSeq]);
+
+  const selectSubmission = async (item: SurveySubmissionItem) => {
+    setShowImport(false);
+    await applySubmissionDetail(item);
   };
+
+  // 쿼리 파라미터(?name=..[&phone=..]) 자동 import — refund-survey success "회원등록" 버튼 진입 경로.
+  // 이름(가능하면 전화번호도) 으로 설문 제출 이력을 찾아 기존 import 로직을 그대로 재사용한다.
+  // 매칭이 여러 건이면 가장 최근 것을, 매칭이 없으면 최소한 name/phone 만 선채운다.
+  const autoImportApplied = useRef(false);
+  useEffect(() => {
+    if (autoImportApplied.current) return;
+    const nameParam = searchParams.get('name');
+    const phoneParam = searchParams.get('phone');
+    if (!nameParam) return;
+    autoImportApplied.current = true;
+
+    const normalize = (s: string) => s.replace(/\D/g, '');
+    const targetPhone = phoneParam ? normalize(phoneParam) : null;
+
+    (async () => {
+      const res = await surveyApi.listSubmissions();
+      let match: SurveySubmissionItem | undefined;
+      if (res.success) {
+        const candidates = res.data.filter(s =>
+          s.name === nameParam &&
+          (targetPhone == null || normalize(s.phoneNumber) === targetPhone),
+        );
+        // listSubmissions 는 최신순으로 내려오지 않을 수 있으므로 createdDate 기준 가장 최근 건을 고른다.
+        match = candidates.sort((a, b) => (b.createdDate ?? '').localeCompare(a.createdDate ?? ''))[0];
+      }
+      if (match) {
+        await applySubmissionDetail(match);
+      } else {
+        setForm(prev => ({
+          ...prev,
+          name: nameParam,
+          ...(phoneParam ? { phoneNumber: phoneParam } : {}),
+        }));
+      }
+    })();
+  }, [searchParams, applySubmissionDetail, setForm]);
 
   return (
     <>

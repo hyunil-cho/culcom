@@ -1,14 +1,25 @@
 'use client';
 
+import Link from 'next/link';
+import { ROUTES } from '@/lib/routes';
 import s from './SurveyComplete.module.css';
 import pageStyles from './page.module.css';
 
 interface SurveyCompleteProps {
   name: string;
+  phone?: string;
 }
 
-export default function SurveyComplete({ name }: SurveyCompleteProps) {
+export default function SurveyComplete({ name, phone }: SurveyCompleteProps) {
   const displayName = name || '고객';
+
+  // 설문 제출 이력에서 이름/전화번호가 일치하는 건을 찾아 자동 import 하는 관리자용 바로가기.
+  const params = new URLSearchParams();
+  if (name) params.set('name', name);
+  if (phone) params.set('phone', phone);
+  const memberAddHref = params.toString()
+    ? `${ROUTES.COMPLEX_MEMBERS_ADD}?${params.toString()}`
+    : ROUTES.COMPLEX_MEMBERS_ADD;
 
   return (
     <div className={pageStyles.body}>
@@ -47,6 +58,13 @@ export default function SurveyComplete({ name }: SurveyCompleteProps) {
             설레는 마음으로 잠시만 기다려 주세요!
           </div>
           <div className={s.slogan}>Experience, You Together</div>
+
+          <Link
+            href={memberAddHref}
+            className={s.memberAddBtn}
+          >
+            회원등록
+          </Link>
         </div>
       </div>
     </div>

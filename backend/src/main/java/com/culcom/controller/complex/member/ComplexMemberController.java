@@ -3,6 +3,7 @@ package com.culcom.controller.complex.member;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.complex.member.ComplexMemberMembershipRequest;
 import com.culcom.dto.complex.member.ComplexMemberMembershipResponse;
+import com.culcom.dto.complex.member.MembershipChangeRequest;
 import com.culcom.dto.complex.member.MembershipPaymentRequest;
 import com.culcom.dto.complex.member.MembershipPaymentResponse;
 import com.culcom.dto.complex.member.ComplexMemberMetaDataRequest;
@@ -76,6 +77,14 @@ public class ComplexMemberController {
     public ResponseEntity<ApiResponse<Void>> deleteMembership(@PathVariable Long seq, @PathVariable Long mmSeq) {
         memberMembershipService.deleteMembership(seq, mmSeq);
         return ResponseEntity.ok(ApiResponse.ok("멤버십 삭제 완료", null));
+    }
+
+    @PostMapping("/{seq}/memberships/{mmSeq}/change")
+    public ResponseEntity<ApiResponse<ComplexMemberMembershipResponse>> changeMembership(
+            @PathVariable Long seq, @PathVariable Long mmSeq,
+            @Valid @RequestBody MembershipChangeRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("멤버십 변경 완료",
+                memberMembershipService.changeMembership(seq, mmSeq, req)));
     }
 
     @GetMapping("/{seq}/memberships/{mmSeq}/payments")

@@ -36,9 +36,12 @@ function Inner() {
     : queryError ? (queryError.message || '양도 초대를 찾을 수 없습니다.')
     : '';
 
+  // items 가 info 도착 전까진 undefined 이므로 external: true 로 내부 fetch 를 완전히 차단한다.
+  // (그렇지 않으면 비로그인 상태에서 /api/consent-items 호출 → 401 → 로그인 페이지로 튕김)
   const consent = useConsent({
     category: 'TRANSFER',
     items: info?.consentItems,
+    external: true,
   });
 
   // 폼 상태

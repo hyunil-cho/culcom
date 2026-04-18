@@ -56,4 +56,12 @@ public class SurveySubmission extends BaseTimeEntity {
 
     @Column(name = "question_snapshot", columnDefinition = "TEXT")
     private String questionSnapshot;
+
+    /**
+     * 참조 완료 여부 — 이 설문 제출이 회원 등록에 활용되어
+     * 관리 리스트에서 숨겨도 되는지 여부. 기본 false.
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean referenced = false;
 }

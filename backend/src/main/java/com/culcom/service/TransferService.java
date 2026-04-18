@@ -22,12 +22,21 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class TransferService {
+
+    /** 양도 링크(토큰/초대 토큰) 유효 기간: 생성 시점으로부터 7일. */
+    private static final java.time.Duration LINK_VALID_DURATION = java.time.Duration.ofDays(7);
+
+    private static boolean isLinkExpired(TransferRequest tr) {
+        LocalDateTime created = tr.getCreatedDate();
+        return created != null && created.plus(LINK_VALID_DURATION).isBefore(LocalDateTime.now());
+    }
 
     private final TransferRequestRepository transferRequestRepository;
     private final ComplexMemberMembershipRepository memberMembershipRepository;
@@ -79,7 +88,11 @@ public class TransferService {
         }
 
         int remaining = mm.getTotalCount() - mm.getUsedCount();
-        int fee = calculateTransferFee(remaining);
+        // 관리자가 직접 지정한 양도비가 있으면 그것을, 없으면 잔여 횟수 기반 자동 계산을 사용한다.
+        int fee = req.getTransferFee() != null ? req.getTransferFee() : calculateTransferFee(remaining);
+        if (fee < 0) {
+            throw new IllegalArgumentException("양도비는 0 이상이어야 합니다.");
+        }
 
         TransferRequest transfer = TransferRequest.builder()
                 .memberMembership(mm)
@@ -102,8 +115,20 @@ public class TransferService {
 
     // ── 관리자: 목록 조회 ──
 
-    public List<TransferRequestResponse> list() {
-        return transferRequestRepository.findAll()
+    /**
+     * 지점/이름/전화/상태/활성여부 필터로 양도 요청 목록을 조회한다.
+     *
+     * @param branchSeq  세션의 선택 지점
+     * @param name       null/빈값 허용, fromMember 또는 toCustomer 이름과 부분 매칭
+     * @param phone      null/빈값 허용, fromMember 또는 toCustomer 전화와 부분 매칭
+     * @param activeOnly status가 null일 때만 적용. true면 생성/접수 상태만 반환
+     * @param status     특정 상태 필터 (null이면 활성/전체는 {@code activeOnly}로 결정)
+     */
+    public List<TransferRequestResponse> list(
+            Long branchSeq, String name, String phone,
+            boolean activeOnly, com.culcom.entity.enums.TransferStatus status,
+            boolean includeReferenced) {
+        return transferRequestRepository.findFiltered(branchSeq, name, phone, activeOnly, status, includeReferenced)
                 .stream().map(TransferRequestResponse::from).toList();
     }
 
@@ -129,6 +154,8 @@ public class TransferService {
         }
         tr.setStatus(status);
         tr.setAdminMessage(adminMessage);
+        // 참조 완료는 "실제로 양수로 활용된 경우"만. 거절은 종결이지만 참조된 것이 아니므로 플래그를 올리지 않는다.
+        // (거절 건을 리스트에서 감추려면 status=거절 필터를 사용한다.)
         TransferRequestResponse response = TransferRequestResponse.from(transferRequestRepository.save(tr));
 
         if (status == TransferStatus.거절 && tr.getFromMember() != null) {
@@ -213,8 +240,9 @@ public class TransferService {
                 String.format("%s 멤버십 양도 ← %s (잔여 %d회, 양수비 %,d원)",
                         membershipName, fromMember.getName(), remaining, tr.getTransferFee())));
 
-        // 6. 양도 요청 상태 확인으로 변경
+        // 6. 양도 요청 상태 확인으로 변경 + 참조 완료 표시
         tr.setStatus(TransferStatus.확인);
+        tr.setReferenced(true);
 
         // 7. SMS 알림
         if (tr.getBranch() != null) {
@@ -235,6 +263,9 @@ public class TransferService {
         TransferRequest tr = transferRequestRepository.findByToken(token)
                 .orElseThrow(() -> new EntityNotFoundException("양도 요청"));
 
+        if (isLinkExpired(tr)) {
+            throw new IllegalStateException("유효하지 않은 링크입니다.");
+        }
         if (tr.getStatus() != TransferStatus.생성) {
             throw new IllegalStateException("이미 만료된 링크입니다.");
         }
@@ -257,6 +288,9 @@ public class TransferService {
         TransferRequest tr = transferRequestRepository.findByToken(token)
                 .orElseThrow(() -> new EntityNotFoundException("양도 요청"));
 
+        if (isLinkExpired(tr)) {
+            throw new IllegalStateException("유효하지 않은 링크입니다.");
+        }
         if (tr.getStatus() != TransferStatus.생성) {
             throw new IllegalStateException("이미 만료된 링크입니다.");
         }
@@ -283,6 +317,9 @@ public class TransferService {
         TransferRequest tr = transferRequestRepository.findByInviteToken(inviteToken)
                 .orElseThrow(() -> new EntityNotFoundException("양도 초대"));
 
+        if (isLinkExpired(tr)) {
+            throw new IllegalStateException("유효하지 않은 링크입니다.");
+        }
         if (tr.getStatus() != TransferStatus.생성) {
             throw new IllegalStateException("이미 만료된 링크입니다.");
         }
@@ -307,6 +344,9 @@ public class TransferService {
         TransferRequest tr = transferRequestRepository.findByInviteToken(inviteToken)
                 .orElseThrow(() -> new EntityNotFoundException("양도 초대"));
 
+        if (isLinkExpired(tr)) {
+            throw new IllegalStateException("유효하지 않은 링크입니다.");
+        }
         if (tr.getStatus() != TransferStatus.생성) {
             throw new IllegalStateException("이미 만료된 링크입니다.");
         }

@@ -4,6 +4,10 @@ import { useState } from 'react';
 import { memberApi, type PaymentKind, type PaymentMethod } from '@/lib/api';
 import { usePaymentOptions } from '@/lib/usePaymentOptions';
 import ModalOverlay from '@/components/ui/ModalOverlay';
+import CardPaymentFields, {
+  createEmptyCardDetail,
+  type CardPaymentDetailData,
+} from '@/app/complex/members/components/CardPaymentFields';
 
 interface Props {
   memberSeq: number;
@@ -30,8 +34,11 @@ export default function PaymentAddModal({
   const [method, setMethod] = useState<PaymentMethod | ''>('');
   const [paidDate, setPaidDate] = useState(nowLocal());
   const [note, setNote] = useState('');
+  const [cardDetail, setCardDetail] = useState<CardPaymentDetailData>(createEmptyCardDetail);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isCard = method === '카드';
 
   const handleSubmit = async () => {
     setError(null);
@@ -43,6 +50,13 @@ export default function PaymentAddModal({
     if (kind === 'REFUND' && n > 0) n = -n;
     if (kind !== 'REFUND' && n < 0) { setError('일반 납부는 양수여야 합니다'); return; }
 
+    if (isCard) {
+      if (!cardDetail.cardCompany) { setError('카드사를 선택하세요'); return; }
+      if (!/^\d{8}$/.test(cardDetail.cardNumber)) { setError('카드번호 앞 8자리를 입력하세요'); return; }
+      if (!cardDetail.cardApprovalDate) { setError('승인 날짜를 입력하세요'); return; }
+      if (!cardDetail.cardApprovalNumber.trim()) { setError('승인번호를 입력하세요'); return; }
+    }
+
     setSubmitting(true);
     try {
       await memberApi.addPayment(memberSeq, mmSeq, {
@@ -51,6 +65,7 @@ export default function PaymentAddModal({
         method: method || undefined,
         paidDate: paidDate ? `${paidDate}:00` : undefined,
         note: note || undefined,
+        cardDetail: isCard ? cardDetail : undefined,
       });
       onSaved();
     } catch (e: any) {
@@ -120,6 +135,10 @@ export default function PaymentAddModal({
             {methods.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </Row>
+
+        {isCard && (
+          <CardPaymentFields value={cardDetail} onChange={setCardDetail} />
+        )}
 
         <Row label="납부 일시">
           <input type="datetime-local" value={paidDate}

@@ -20,6 +20,8 @@ export function useMemberForm(seq?: number) {
   const [form, setForm] = useState<MemberFormData>(emptyMemberForm);
   const [formError, setFormError] = useState<string | null>(null);
   const clearFormError = useCallback(() => setFormError(null), []);
+  /** 회원 생성에 활용한 설문 제출 seq — 신규 등록 경로에서만 의미 있음 */
+  const [surveySubmissionSeq, setSurveySubmissionSeq] = useState<number | null>(null);
   const { allClasses } = useClassSlots();
   const staff = useStaffForm({ seq, isEdit, allClasses });
   const membership = useMembership({ memberSeq: seq, isEdit, memberName: form.name, memberPhone: form.phoneNumber });
@@ -91,6 +93,7 @@ export function useMemberForm(seq?: number) {
     phoneNumber: form.phoneNumber,
     info: form.info || undefined,
     comment: form.comment || undefined,
+    surveySubmissionSeq: surveySubmissionSeq ?? undefined,
   });
 
   const buildMetaData = () => ({
@@ -149,12 +152,20 @@ export function useMemberForm(seq?: number) {
       return;
     }
 
-    await doSubmit();
+    try {
+      await doSubmit();
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : '저장 중 오류가 발생했습니다.');
+    }
   };
 
   const confirmMismatchAndSubmit = async () => {
     setShowTransferMismatch(false);
-    await doSubmit();
+    try {
+      await doSubmit();
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : '저장 중 오류가 발생했습니다.');
+    }
   };
 
   const dismissMismatch = () => {
@@ -168,5 +179,6 @@ export function useMemberForm(seq?: number) {
     handleSubmit, run, modal, isEdit,
     showTransferMismatch, confirmMismatchAndSubmit, dismissMismatch,
     formError, clearFormError,
+    setSurveySubmissionSeq,
   };
 }

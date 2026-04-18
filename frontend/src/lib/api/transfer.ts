@@ -21,7 +21,10 @@ export interface TransferRequestItem {
   inviteToken: string | null;
   toCustomerSeq: number | null;
   toCustomerName: string | null;
+  toCustomerPhone: string | null;
   adminMessage: string | null;
+  /** 참조 완료 여부 — true면 기본 리스트에서 숨김 */
+  referenced: boolean;
   createdDate: string;
 }
 
@@ -53,13 +56,35 @@ export interface TransferInviteSubmitData {
 
 // ── 관리자 API ──
 
+export interface TransferListParams {
+  /** 양수자(toCustomer) 이름 부분 매칭 — 서버는 양수자 기준으로만 필터 */
+  name?: string;
+  /** 양수자(toCustomer) 전화 부분 매칭 */
+  phone?: string;
+  /** 생성/접수 상태만 (status가 지정되면 무시됨) */
+  activeOnly?: boolean;
+  /** 특정 상태만 (지정 시 activeOnly보다 우선) */
+  status?: TransferStatus;
+  /** 참조 완료된(=활용된) 요청까지 포함할지 여부. 기본 false → 참조 완료 건은 숨김 */
+  includeReferenced?: boolean;
+}
+
 export const transferApi = {
-  list: () => api.get<TransferRequestItem[]>('/transfer-requests'),
+  list: (params?: TransferListParams) => {
+    const sp = new URLSearchParams();
+    if (params?.name) sp.set('name', params.name);
+    if (params?.phone) sp.set('phone', params.phone);
+    if (params?.activeOnly) sp.set('activeOnly', 'true');
+    if (params?.status) sp.set('status', params.status);
+    if (params?.includeReferenced) sp.set('includeReferenced', 'true');
+    const qs = sp.toString();
+    return api.get<TransferRequestItem[]>(`/transfer-requests${qs ? `?${qs}` : ''}`);
+  },
   /** 이름+전화번호로 접수 대기 양도 요청 조회 */
   findPending: (name: string, phone: string) =>
     api.get<TransferRequestItem | null>(`/transfer-requests/pending?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`),
-  create: (memberMembershipSeq: number) =>
-    api.post<TransferRequestItem>('/transfer-requests', { memberMembershipSeq }),
+  create: (memberMembershipSeq: number, transferFee?: number) =>
+    api.post<TransferRequestItem>('/transfer-requests', { memberMembershipSeq, transferFee }),
   updateStatus: (seq: number, status: TransferStatus, adminMessage?: string) =>
     api.put<TransferRequestItem>(
       `/transfer-requests/${seq}/status?status=${status}${adminMessage ? `&adminMessage=${encodeURIComponent(adminMessage)}` : ''}`

@@ -14,6 +14,7 @@ import com.culcom.mapper.ComplexMemberQueryMapper;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ComplexMemberRepository;
 import com.culcom.repository.MembershipPaymentRepository;
+import com.culcom.repository.SurveySubmissionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ public class ComplexMemberService {
     private final ApplicationEventPublisher eventPublisher;
     private final SmsService smsService;
     private final MembershipPaymentRepository membershipPaymentRepository;
+    private final SurveySubmissionRepository surveySubmissionRepository;
 
     public ComplexMemberResponse get(Long seq) {
         ComplexMember member = memberRepository.findById(seq)
@@ -48,6 +50,14 @@ public class ComplexMemberService {
                 .branch(branchRepository.getReferenceById(branchSeq))
                 .build();
         memberRepository.save(member);
+
+        // 설문 제출에서 "불러오기"로 생성된 회원이라면, 해당 제출을 참조 완료로 표시한다.
+        if (req.getSurveySubmissionSeq() != null) {
+            surveySubmissionRepository.findById(req.getSurveySubmissionSeq()).ifPresent(sub -> {
+                sub.setReferenced(true);
+                surveySubmissionRepository.save(sub);
+            });
+        }
 
         eventPublisher.publishEvent(ActivityEvent.of(member, ActivityEventType.MEMBER_CREATE, "회원 등록: " + member.getName()));
 

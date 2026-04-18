@@ -14,6 +14,7 @@
         FROM survey_submissions ss
         LEFT JOIN survey_templates st ON st.seq = ss.template_seq
         WHERE ss.branch_seq = #{branchSeq}
+          AND ss.referenced = FALSE
         ORDER BY ss.created_date DESC
     </select>
 

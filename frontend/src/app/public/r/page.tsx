@@ -1,3 +1,4 @@
+import { headers } from 'next/headers';
 import Image from 'next/image';
 import NavBarClient from './NavBarClient';
 import GalleryClient from './GalleryClient';
@@ -8,7 +9,8 @@ import FadeUpObserver from './FadeUpObserver';
 // 기존 시스템의 카카오 회원가입/로그인 진입점.
 // KakaoOAuthController.login(@GetMapping("/login")) 이 kakao 인가 URL 로 302 redirect.
 // next.config.js 의 rewrites 로 /api/* → backend:8081 매핑되어 있음.
-const KAKAO_LOGIN_URL = '/api/public/kakao/login';
+const KAKAO_LOGIN_URL_DESKTOP = '/api/public/kakao/login?state=1';
+const KAKAO_LOGIN_URL_MOBILE = 'https://pf-link.kakao.com/qr/_kXQxlX/pages/_xlM?query=state%3D3';
 
 const PAIN_POINTS: { img: string; emoji: string; html: React.ReactNode; delay: string }[] = [
   { img: '/images/r/pain-1.png', emoji: '😰', delay: '0.05s', html: <>영어 왕초보, 어디서부터 시작해야 할지 <strong>막막하신가요?</strong></> },
@@ -90,6 +92,11 @@ function ReviewCard({ r, priority }: { r: Review; priority?: boolean }) {
 }
 
 export default function LandingPage() {
+  const ua = headers().get('user-agent') ?? '';
+  const KAKAO_LOGIN_URL = /Mobile|Android|iPhone|iPad|iPod/i.test(ua)
+    ? KAKAO_LOGIN_URL_MOBILE
+    : KAKAO_LOGIN_URL_DESKTOP;
+
   return (
     <div className="eut-landing">
       <FadeUpObserver />

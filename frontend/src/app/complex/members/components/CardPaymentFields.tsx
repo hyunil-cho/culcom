@@ -11,12 +11,28 @@ export interface CardPaymentDetailData {
   cardApprovalNumber: string;
 }
 
-export const emptyCardDetail: CardPaymentDetailData = {
-  cardCompany: '',
-  cardNumber: '',
-  cardApprovalDate: '',
-  cardApprovalNumber: '',
-};
+/** YYYY-MM-DD 형태의 오늘 날짜. 기본 승인 날짜로 사용. */
+function todayYmd(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** 폼 상태 초기화용 팩토리. 호출 시점의 오늘 날짜를 cardApprovalDate 기본값으로 넣는다. */
+export function createEmptyCardDetail(): CardPaymentDetailData {
+  return {
+    cardCompany: '',
+    cardNumber: '',
+    cardApprovalDate: todayYmd(),
+    cardApprovalNumber: '',
+  };
+}
+
+/**
+ * 하위 호환용 상수. 모듈 로드 시점의 오늘 날짜를 담고 있으므로,
+ * 브라우저가 자정을 넘겨 열려있는 경우엔 `createEmptyCardDetail()` 을 호출해 새로 만들 것.
+ */
+export const emptyCardDetail: CardPaymentDetailData = createEmptyCardDetail();
 
 interface Props {
   value: CardPaymentDetailData;

@@ -11,6 +11,7 @@ import ConsentPreviewModal from './ConsentPreviewModal';
 export const CATEGORIES = [
   { value: 'SIGNUP', label: '회원가입' },
   { value: 'TRANSFER', label: '멤버십 양도' },
+  { value: 'SURVEY', label: '설문조사' },
 ] as const;
 
 export interface ConsentItemFormData {

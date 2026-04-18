@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { memberApi, transferApi, type MemberMembershipResponse, type TransferRequestItem } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useFormError } from '@/hooks/useFormError';
-import { Select } from '@/components/ui/FormInput';
+import { Select, CurrencyInput } from '@/components/ui/FormInput';
 import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Button } from '@/components/ui/Button';
 import UnavailableNotice from './UnavailableNotice';
@@ -21,8 +21,16 @@ interface Props {
   onClose: () => void;
 }
 
+/** 잔여 횟수 기반 권장 양도비 — 백엔드 {@code TransferService.calculateTransferFee}와 동일한 공식. */
+function suggestedTransferFee(remaining: number): number {
+  if (remaining <= 16) return 20000;
+  if (remaining <= 48) return 30000;
+  return 50000;
+}
+
 export default function TransferLinkModal({ memberSeq, memberName, memberPhone, onClose }: Props) {
   const [selectedMmSeq, setSelectedMmSeq] = useState('');
+  const [transferFee, setTransferFee] = useState('');
   const [creating, setCreating] = useState(false);
   const [result, setResult] = useState<TransferRequestItem | null>(null);
   const { error: formError, setError, clear: clearError } = useFormError();
@@ -51,16 +59,29 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
 
   const selectedMs = memberships.find((ms) => ms.seq === Number(selectedMmSeq));
 
+  // 멤버십 선택 시 권장 양도비를 기본값으로 세팅
+  useEffect(() => {
+    if (!selectedMs) return;
+    const remaining = Math.max(0, selectedMs.totalCount - selectedMs.usedCount);
+    setTransferFee(String(suggestedTransferFee(remaining)));
+  }, [selectedMs]);
+
+  const numericFee = Number(transferFee.replace(/,/g, ''));
+  const feeValid = !Number.isNaN(numericFee) && numericFee >= 0;
+
   const handleCreate = async () => {
     if (!selectedMmSeq || !selectedMs) { setError('양도할 멤버십을 선택하세요.'); return; }
-    // 방어적 재검증 (선택 이후 상태가 바뀌었을 수 있으니)
     if (!isTransferable(selectedMs)) {
       setError('선택한 멤버십은 양도할 수 없습니다.');
       return;
     }
+    if (!feeValid) {
+      setError('양도비는 0 이상의 숫자여야 합니다.');
+      return;
+    }
     clearError();
     setCreating(true);
-    const res = await transferApi.create(Number(selectedMmSeq));
+    const res = await transferApi.create(Number(selectedMmSeq), numericFee);
     if (res.success) setResult(res.data);
     else setError(res.message || '양도 요청 생성에 실패했습니다.');
     setCreating(false);
@@ -117,42 +138,47 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
 
                     return (
                       <>
-                        <div style={{
-                          padding: 12,
-                          background: blocked ? '#fef2f2' : '#f0fdf4',
-                          border: `1px solid ${blocked ? '#fca5a5' : '#bbf7d0'}`,
-                          borderRadius: 8, marginBottom: 14, fontSize: '0.85rem',
-                          color: blocked ? '#991b1b' : '#166534',
-                        }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
-                            <div>잔여: <strong>{selectedMs.totalCount - selectedMs.usedCount}회</strong></div>
-                            <div>만료: <strong>{selectedMs.expiryDate}</strong></div>
-                            <div>미수금: <strong>{selectedMs.outstanding != null ? `${selectedMs.outstanding.toLocaleString()}원` : '-'}</strong></div>
-                            <div>양도: <strong>{selectedMs.transferable ? '가능' : '불가'}</strong></div>
+                        <MembershipUsagePanel ms={selectedMs} />
+
+                        {/* 양도비 편집 */}
+                        <div style={{ marginBottom: 14 }}>
+                          <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: 8 }}>
+                            양도비 <span style={{ color: '#dc2626' }}>*</span>
                           </div>
-                          {outstanding && (
-                            <div style={{ marginTop: 8, fontWeight: 700, fontSize: '0.82rem' }}>
-                              ⚠ 미수금이 있어 양도할 수 없습니다. 미수금 완납 후 진행해주세요.
-                            </div>
-                          )}
-                          {notTransferable && (
-                            <div style={{ marginTop: outstanding ? 4 : 8, fontWeight: 700, fontSize: '0.82rem' }}>
-                              ⚠ 양도 불가 멤버십입니다.
-                            </div>
-                          )}
-                          {isTransferred && (
-                            <div style={{ marginTop: (outstanding || notTransferable) ? 4 : 8, fontWeight: 700, fontSize: '0.82rem' }}>
-                              ⚠ 양도로 받은 멤버십은 재양도할 수 없습니다.
+                          <CurrencyInput
+                            value={transferFee}
+                            onValueChange={setTransferFee}
+                            placeholder="예: 30,000"
+                          />
+                          <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 6, lineHeight: 1.5 }}>
+                            권장 양도비는 잔여 횟수 기준입니다 — 16회 이하 20,000원 / 48회 이하 30,000원 / 그 이상 50,000원.
+                            위 사용 이력을 참고해 관리자가 직접 조정할 수 있습니다.
+                          </div>
+                          {!feeValid && (
+                            <div style={{ fontSize: '0.78rem', color: '#dc2626', marginTop: 6 }}>
+                              0 이상의 숫자를 입력해주세요.
                             </div>
                           )}
                         </div>
 
-                        <button onClick={handleCreate} disabled={creating || blocked}
+                        {blocked && (
+                          <div style={{
+                            padding: 12, background: '#fef2f2', border: '1px solid #fca5a5',
+                            borderRadius: 8, marginBottom: 14, fontSize: '0.82rem', color: '#991b1b',
+                          }}>
+                            {outstanding && <div style={{ fontWeight: 700 }}>⚠ 미수금이 있어 양도할 수 없습니다. 미수금 완납 후 진행해주세요.</div>}
+                            {notTransferable && <div style={{ fontWeight: 700, marginTop: outstanding ? 4 : 0 }}>⚠ 양도 불가 멤버십입니다.</div>}
+                            {isTransferred && <div style={{ fontWeight: 700, marginTop: (outstanding || notTransferable) ? 4 : 0 }}>⚠ 양도로 받은 멤버십은 재양도할 수 없습니다.</div>}
+                          </div>
+                        )}
+
+                        <button onClick={handleCreate} disabled={creating || blocked || !feeValid}
                           style={{
                             width: '100%', padding: '10px', border: 'none', borderRadius: 6,
-                            background: blocked ? '#d1d5db' : '#10b981',
-                            color: blocked ? '#9ca3af' : '#fff',
-                            fontWeight: 700, fontSize: '0.9rem', cursor: blocked ? 'not-allowed' : 'pointer',
+                            background: (blocked || !feeValid) ? '#d1d5db' : '#10b981',
+                            color: (blocked || !feeValid) ? '#9ca3af' : '#fff',
+                            fontWeight: 700, fontSize: '0.9rem',
+                            cursor: (blocked || !feeValid) ? 'not-allowed' : 'pointer',
                           }}>
                           {creating ? '생성 중...' : blocked ? '양도 불가' : '양도 요청 생성'}
                         </button>
@@ -188,6 +214,90 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
           <Button onClick={onClose} variant="secondary">닫기</Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** 선택된 멤버십의 사용 이력(기간·납입·미수금·수업 진행)을 표시. */
+function MembershipUsagePanel({ ms }: { ms: MemberMembershipResponse }) {
+  const price = Number((ms.price ?? '').replace(/,/g, ''));
+  const hasPrice = !!price && !Number.isNaN(price);
+  const total = ms.totalCount ?? 0;
+  const used = ms.usedCount ?? 0;
+  const remaining = Math.max(0, total - used);
+  const usageRatio = total > 0 ? used / total : 0;
+  const remainingRatio = 1 - usageRatio;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = ms.startDate ? new Date(ms.startDate) : null;
+  const expiry = ms.expiryDate ? new Date(ms.expiryDate) : null;
+  const totalDays = start && expiry ? Math.max(1, Math.round((expiry.getTime() - start.getTime()) / 86400000)) : null;
+  const daysElapsed = start ? Math.max(0, Math.round((today.getTime() - start.getTime()) / 86400000)) : null;
+  const daysRemaining = expiry ? Math.max(0, Math.round((expiry.getTime() - today.getTime()) / 86400000)) : null;
+
+  const paidAmount = ms.paidAmount ?? 0;
+  const outstanding = ms.outstanding ?? 0;
+
+  return (
+    <div data-testid="transfer-usage-panel" style={{
+      background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8,
+      padding: 14, marginBottom: 14,
+    }}>
+      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: 10 }}>
+        멤버십 사용 이력
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 14px', fontSize: '0.82rem' }}>
+        <DetailRow label="멤버십" value={ms.membershipName} />
+        <DetailRow label="상태" value={ms.status} />
+        <DetailRow
+          label="기간"
+          value={start && expiry
+            ? `${ms.startDate} ~ ${ms.expiryDate}${totalDays ? ` (${totalDays}일)` : ''}`
+            : '-'}
+        />
+        <DetailRow
+          label="경과 / 잔여"
+          value={daysElapsed != null && daysRemaining != null
+            ? `${daysElapsed}일 경과 / ${daysRemaining}일 잔여`
+            : '-'}
+        />
+        <DetailRow label="결제 금액" value={hasPrice ? `${price.toLocaleString()}원` : '-'} />
+        <DetailRow label="납입 금액" value={`${paidAmount.toLocaleString()}원`} />
+        {outstanding > 0 && (
+          <DetailRow label="미수금" value={`${outstanding.toLocaleString()}원`} danger />
+        )}
+        <DetailRow label="양도 가능" value={ms.transferable ? '가능' : '불가'} danger={!ms.transferable} />
+      </div>
+
+      <div style={{ marginTop: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#475569', marginBottom: 4 }}>
+          <span>수업 사용</span>
+          <span>
+            <strong>{used}/{total}회</strong>
+            {total > 0 && ` (사용 ${Math.round(usageRatio * 100)}% · 잔여 ${Math.round(remainingRatio * 100)}%)`}
+          </span>
+        </div>
+        <div style={{ height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
+          <div style={{
+            width: `${Math.round(usageRatio * 100)}%`, height: '100%',
+            background: '#10b981', transition: 'width 0.2s',
+          }} />
+        </div>
+        {total > 0 && <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 4 }}>
+          잔여 {remaining}회
+        </div>}
+      </div>
+    </div>
+  );
+}
+
+function DetailRow({ label, value, danger }: { label: string; value: string; danger?: boolean }) {
+  return (
+    <div>
+      <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginBottom: 2 }}>{label}</div>
+      <div style={{ fontWeight: 600, color: danger ? '#dc2626' : '#0f172a' }}>{value}</div>
     </div>
   );
 }

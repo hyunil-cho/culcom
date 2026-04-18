@@ -9,6 +9,13 @@ interface UseConsentOptions {
   category: string;
   /** 외부에서 직접 주입할 동의항목 목록 (API 호출 대신 사용) */
   items?: ConsentItem[];
+  /**
+   * true 로 설정하면 어떤 경우에도 /api/consent-items API 를 호출하지 않는다.
+   * items 가 비동기로 (다른 API 응답에서 파생되어) 주입되는 호출자가 사용해야 한다.
+   * 그렇지 않으면 items 가 도착하기 전 첫 렌더에서 인증이 필요한 /api/consent-items 로 요청이 나가
+   * 비로그인 사용자의 공개 페이지가 로그인 화면으로 튀는 버그가 발생한다.
+   */
+  external?: boolean;
 }
 
 interface UseConsentReturn {
@@ -30,7 +37,7 @@ interface UseConsentReturn {
   toSubmitData: () => { consentItemSeq: number; agreed: boolean }[];
 }
 
-export function useConsent({ category, items: externalItems }: UseConsentOptions): UseConsentReturn {
+export function useConsent({ category, items: externalItems, external }: UseConsentOptions): UseConsentReturn {
   const [items, setItems] = useState<ConsentItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [agreements, setAgreements] = useState<Map<number, boolean>>(new Map());
@@ -41,10 +48,10 @@ export function useConsent({ category, items: externalItems }: UseConsentOptions
   const { data: fetchedItems, isLoading: queryLoading, error: queryError } = useApiQuery<ConsentItem[]>(
     ['consentItems', category],
     () => consentItemApi.list(category),
-    { enabled: !externalItems },
+    { enabled: !external && !externalItems },
   );
 
-  const loading = externalItems ? false : queryLoading;
+  const loading = external || externalItems ? false : queryLoading;
 
   useEffect(() => {
     if (externalItems) {

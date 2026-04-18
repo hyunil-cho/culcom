@@ -63,6 +63,8 @@ const baseMembership: MemberMembershipResponse = {
   status: '활성',
   transferable: true,
   transferred: false,
+  changedFromSeq: null,
+  changeFee: null,
   createdDate: '2026-01-01',
   paidAmount: 300000,
   outstanding: 0,

@@ -17,7 +17,21 @@ const STATUS_STYLE: Record<TransferStatus, { color: string; bg: string }> = {
   '거절': { color: '#dc2626', bg: '#fee2e2' },
 };
 
-const DEFAULTS = { keyword: '' };
+/**
+ * 기본은 '전체' — 참조 완료(양도 확정된) 건은 서버에서 자동으로 숨겨지므로,
+ * 실제로는 진행 중/거절 건만 노출된다. "참조 완료 포함" 토글로 전체 이력을 볼 수 있다.
+ */
+const DEFAULT_STATUS_FILTER: TransferStatus | 'ALL' = 'ALL';
+
+const STATUS_OPTIONS: { value: TransferStatus | 'ALL'; label: string }[] = [
+  { value: 'ALL', label: '전체' },
+  { value: '생성', label: '생성' },
+  { value: '접수', label: '접수 대기' },
+  { value: '확인', label: '승인' },
+  { value: '거절', label: '거절' },
+];
+
+const DEFAULTS = { keyword: '', status: DEFAULT_STATUS_FILTER as string, includeReferenced: 'false' };
 
 export default function TransferRequestsPage() {
   return <Suspense><TransferRequestsContent /></Suspense>;
@@ -26,8 +40,16 @@ export default function TransferRequestsPage() {
 function TransferRequestsContent() {
   const { params, setParams } = useQueryParams(DEFAULTS);
   const searchedKeyword = params.keyword;
+  const statusFilter = (params.status as TransferStatus | 'ALL') ?? DEFAULT_STATUS_FILTER;
+  const includeReferenced = params.includeReferenced === 'true';
 
-  const { data: items = [] } = useApiQuery<TransferRequestItem[]>(['transferRequests'], () => transferApi.list());
+  const { data: items = [] } = useApiQuery<TransferRequestItem[]>(
+    ['transferRequests', statusFilter, includeReferenced],
+    () => transferApi.list({
+      status: statusFilter === 'ALL' ? undefined : (statusFilter as TransferStatus),
+      includeReferenced,
+    }),
+  );
   const [keyword, setKeyword] = useState(searchedKeyword);
   const detailModal = useModal<TransferRequestItem>();
 
@@ -84,11 +106,48 @@ function TransferRequestsContent() {
         <h2 className="page-title" style={{ marginBottom: 0 }}>양도 요청 관리</h2>
       </div>
 
+      {/* 상태 필터 + 참조 완료 포함 토글 */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+        {STATUS_OPTIONS.map(opt => {
+          const active = statusFilter === opt.value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setParams({ status: opt.value, keyword, includeReferenced: String(includeReferenced) })}
+              aria-pressed={active}
+              style={{
+                padding: '6px 14px', borderRadius: 16,
+                border: `1.5px solid ${active ? '#4a90e2' : '#d1d5db'}`,
+                background: active ? '#4a90e2' : '#fff',
+                color: active ? '#fff' : '#475569',
+                fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
+        <label style={{
+          display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto',
+          fontSize: '0.82rem', color: '#475569', cursor: 'pointer',
+        }}>
+          <input
+            type="checkbox"
+            checked={includeReferenced}
+            onChange={(e) => setParams({
+              keyword, status: statusFilter, includeReferenced: String(e.target.checked),
+            })}
+          />
+          참조 완료 포함 (완료된 양도 이력까지 표시)
+        </label>
+      </div>
+
       <SearchBar
         keyword={keyword}
         onKeywordChange={setKeyword}
-        onSearch={() => setParams({ keyword })}
-        onReset={keyword ? () => { setKeyword(''); setParams({ keyword: '' }); } : undefined}
+        onSearch={() => setParams({ keyword, status: statusFilter, includeReferenced: String(includeReferenced) })}
+        onReset={keyword ? () => { setKeyword(''); setParams({ keyword: '', status: statusFilter, includeReferenced: String(includeReferenced) }); } : undefined}
         placeholder="양도자/양수자/멤버십 검색"
       />
 

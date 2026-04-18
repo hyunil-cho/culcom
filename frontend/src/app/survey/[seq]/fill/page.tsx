@@ -40,7 +40,7 @@ export default function SurveyFillPage() {
 
   if (loading) return <div className={s.loading}>로딩 중...</div>;
   if (!template) return <div className={s.loading}>설문지를 찾을 수 없습니다.</div>;
-  if (submitted) return <SurveyComplete name={basicInfo.name || customerName} />;
+  if (submitted) return <SurveyComplete name={basicInfo.name || customerName} phone={basicInfo.phone || customerPhone} />;
 
   if (!consentData) {
     return <SurveyConsentStep templateName={template.name} onConsented={(data) => setConsentData(data)} />;

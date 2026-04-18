@@ -26,7 +26,9 @@ public class TransferRequestResponse {
     private String inviteToken;
     private Long toCustomerSeq;
     private String toCustomerName;
+    private String toCustomerPhone;
     private String adminMessage;
+    private Boolean referenced;
     private LocalDateTime createdDate;
 
     public static TransferRequestResponse from(TransferRequest entity) {
@@ -47,7 +49,9 @@ public class TransferRequestResponse {
                 .inviteToken(entity.getInviteToken())
                 .toCustomerSeq(entity.getToCustomer() != null ? entity.getToCustomer().getSeq() : null)
                 .toCustomerName(entity.getToCustomer() != null ? entity.getToCustomer().getName() : null)
+                .toCustomerPhone(entity.getToCustomer() != null ? entity.getToCustomer().getPhoneNumber() : null)
                 .adminMessage(entity.getAdminMessage())
+                .referenced(entity.getReferenced())
                 .createdDate(entity.getCreatedDate())
                 .build();
     }

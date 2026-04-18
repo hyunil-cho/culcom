@@ -22,6 +22,8 @@ export const emptyBranchForm: BranchFormData = {
 };
 
 export function validateBranchForm(form: BranchFormData): string | null {
+  if (!form.branchName.trim()) return '지점명을 입력해주세요.';
+  if (!form.alias.trim()) return '별칭을 입력해주세요.';
   if (!/^[a-zA-Z]+$/.test(form.alias)) return '별칭은 영문만 입력 가능합니다.';
   return null;
 }

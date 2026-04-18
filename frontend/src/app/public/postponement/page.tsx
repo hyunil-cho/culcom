@@ -12,6 +12,7 @@ import { useFormError } from '@/hooks/useFormError';
 import { ROUTES } from '@/lib/routes';
 import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Input, Select, Textarea } from '@/components/ui/FormInput';
+import { isLinkExpired, INVALID_LINK_MESSAGE } from '@/lib/linkExpiry';
 import s from './page.module.css';
 
 export default function PublicPostponementPage() {
@@ -26,19 +27,22 @@ function PublicPostponementPageInner() {
     try {
       const d = searchParams.get('d');
       if (!d) return null;
-      return JSON.parse(decodeURIComponent(atob(d))) as { memberSeq: number; name: string; phone: string };
+      return JSON.parse(decodeURIComponent(atob(d))) as { memberSeq: number; name: string; phone: string; t?: number };
     } catch { return null; }
   })();
+
+  const expired = !!decoded && isLinkExpired(decoded.t);
 
   const { data: memberSearchResult, isLoading: loading, error: queryError } = useApiQuery(
     ['publicPostponementMember', decoded?.name, decoded?.phone],
     () => publicPostponementApi.searchMember(decoded!.name, decoded!.phone),
-    { enabled: !!decoded },
+    { enabled: !!decoded && !expired },
   );
 
   const member: PublicMemberInfo | null = memberSearchResult?.members?.[0] ?? null;
 
-  const error = !decoded ? '유효하지 않은 링크입니다. 관리자에게 문의해주세요.'
+  const error = !decoded ? INVALID_LINK_MESSAGE
+    : expired ? INVALID_LINK_MESSAGE
     : queryError ? (queryError.message || '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.')
     : (!loading && !member) ? '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'
     : '';

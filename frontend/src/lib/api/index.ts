@@ -13,6 +13,7 @@ export {
   memberApi, outstandingApi,
   type ComplexMember, type MemberMembershipRequest, type MemberMembershipResponse, type MemberActivityTimelineItem,
   type MembershipPaymentRequest, type MembershipPaymentResponse,
+  type MembershipChangeRequest,
   type MembershipStatus, type PaymentKind, type PaymentMethod, type OutstandingItem,
   type PublicMemberInfo, type PublicMembershipInfo, type PublicClassInfo,
 } from './members';

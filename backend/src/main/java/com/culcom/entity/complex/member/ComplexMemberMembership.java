@@ -78,6 +78,21 @@ public class ComplexMemberMembership extends BaseTimeEntity {
     @Builder.Default
     private Boolean transferred = false;
 
+    /**
+     * 멤버십 변경으로 새로 생성된 경우 원본 멤버십의 seq.
+     * null이면 변경 이력 없는 일반 멤버십.
+     */
+    @Column(name = "changed_from_seq")
+    private Long changedFromSeq;
+
+    /**
+     * 멤버십 변경 시 관리자가 입력한 추가 비용.
+     * 음수 허용(비싼 것을 싼 것으로 변경 시 차액 환급).
+     * null이면 변경으로 생성된 멤버십이 아님.
+     */
+    @Column(name = "change_fee")
+    private Long changeFee;
+
     @OneToMany(mappedBy = "memberMembership", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<MembershipPayment> payments = new ArrayList<>();

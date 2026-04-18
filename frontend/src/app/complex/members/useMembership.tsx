@@ -1,11 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { memberApi, membershipApi, type Membership } from '@/lib/api';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memberApi, membershipApi, type MemberMembershipResponse, type Membership } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
+import { queryClient } from '@/lib/queryClient';
 import { usePaymentOptions } from '@/lib/usePaymentOptions';
 import MembershipInfoModal from './components/MembershipInfoModal';
 import MembershipFormSection from './components/MembershipFormSection';
+import MembershipChangeModal from './components/MembershipChangeModal';
 import { emptyCardDetail } from './components/CardPaymentFields';
 import { validateMembershipForm, nowDateTimeLocal, type MembershipFormData } from './memberFormTypes';
 import { useTransfer } from './useTransfer';
@@ -49,6 +51,8 @@ export function useMembership(options?: UseMembershipOptions) {
     setForm,
     setEnabled: (v: boolean) => setEnabled(v),
     emptyForm: EMPTY_FORM,
+    memberName,
+    memberPhone,
   });
 
   // 수정 모드: 기존 멤버십 로드
@@ -196,6 +200,41 @@ export function useMembership(options?: UseMembershipOptions) {
     }
   }, [existingMemberships]);
 
+  // ── 멤버십 변경 (활성 → 다른 상품) ──
+  const activeExisting: MemberMembershipResponse | null = useMemo(() => {
+    return existingMemberships?.find(m => m.status === '활성') ?? null;
+  }, [existingMemberships]);
+
+  const [changeTarget, setChangeTarget] = useState<MemberMembershipResponse | null>(null);
+  const canChange = !!isEdit && !!memberSeq && !!activeExisting && !renewalMode;
+
+  const changeButton = canChange ? (
+    <button
+      type="button"
+      onClick={() => setChangeTarget(activeExisting)}
+      style={{
+        padding: '6px 14px', background: '#eef2ff', border: '1px solid #c7d2fe',
+        borderRadius: 6, color: '#4338ca', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
+      }}
+    >
+      멤버십 변경
+    </button>
+  ) : null;
+
+  const changeModal = changeTarget && memberSeq ? (
+    <MembershipChangeModal
+      memberSeq={memberSeq}
+      current={changeTarget}
+      onClose={() => setChangeTarget(null)}
+      onSuccess={() => {
+        setChangeTarget(null);
+        queryClient.invalidateQueries({ queryKey: ['memberMemberships', memberSeq] });
+        queryClient.invalidateQueries({ queryKey: ['member', memberSeq] });
+        queryClient.invalidateQueries({ queryKey: ['membershipChanges'] });
+      }}
+    />
+  ) : null;
+
   // ── 폼 섹션 JSX ──
   const isExisting = !!memberMembershipSeq;
   const formSection = (
@@ -224,6 +263,7 @@ export function useMembership(options?: UseMembershipOptions) {
     form, setForm, enabled,
     formSection,
     openInfoModal, infoModal,
+    changeButton, changeModal,
     save, validate,
     transferMode: transfer.mode,
     selectedTransfer: transfer.selected,

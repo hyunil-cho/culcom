@@ -43,6 +43,7 @@ function makeMembership(overrides: Partial<MemberMembershipResponse> = {}): Memb
     totalCount: 30, usedCount: 6, postponeTotal: 3, postponeUsed: 0,
     price: '300000', paymentMethod: '카드', paymentDate: '2026-01-01T10:00:00',
     status: '활성', transferable: true, transferred: false,
+    changedFromSeq: null, changeFee: null,
     createdDate: '2026-01-01T10:00:00',
     paidAmount: 300000, outstanding: 0, paymentStatus: '완납',
     ...overrides,

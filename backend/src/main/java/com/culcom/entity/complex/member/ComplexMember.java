@@ -7,9 +7,12 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "complex_members", uniqueConstraints = {
-        @UniqueConstraint(name = "name_phone", columnNames = {"name","phone_number"})
-})
+@Table(name = "complex_members",
+        indexes = {
+            @Index(name = "user_name_phone_idx", columnList = "name, phone_number")},
+        uniqueConstraints = {
+            @UniqueConstraint(name = "name_phone", columnNames = {"name","phone_number"})}
+)
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder

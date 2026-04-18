@@ -61,4 +61,12 @@ public class TransferRequest extends BaseTimeEntity {
     /** 관리자 메시지 (승인 코멘트 또는 반려 사유) */
     @Column(name = "admin_message", length = 300)
     private String adminMessage;
+
+    /**
+     * 참조 완료 여부 — 이 양도 요청이 실제로 활용(완료·거절 등 종결 처리)되어
+     * 관리 리스트에서 숨겨도 되는지 여부. 기본 false.
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean referenced = false;
 }

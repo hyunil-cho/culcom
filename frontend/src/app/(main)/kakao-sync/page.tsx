@@ -1,17 +1,26 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { QRCodeCanvas } from 'qrcode.react';
 import { kakaoSyncApi } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
+import { useSessionStore } from '@/lib/store';
+import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import Spinner from '@/components/ui/Spinner';
 import styles from './page.module.css';
 
 export default function KakaoSyncPage() {
+  const router = useRouter();
+  const selectedBranchSeq = useSessionStore((s) => s.session?.selectedBranchSeq ?? null);
+  const hasBranch = selectedBranchSeq != null;
+
   const { data: kakaoSyncData } = useApiQuery<{ kakaoSyncUrl: string; branchName: string }>(
-    ['kakaoSync'],
+    ['kakaoSync', selectedBranchSeq],
     () => kakaoSyncApi.getUrl(),
+    { enabled: hasBranch },
   );
   const kakaoSyncUrl = kakaoSyncData?.kakaoSyncUrl ?? '';
   const branchName = kakaoSyncData?.branchName ?? '';
@@ -67,6 +76,19 @@ export default function KakaoSyncPage() {
     { label: '중형 (600px)', value: 600 },
     { label: '인쇄용 (1000px)', value: 1000 },
   ];
+
+  if (!hasBranch) {
+    return (
+      <ConfirmModal
+        title="지점 선택 필요"
+        onCancel={() => router.push(ROUTES.BRANCHES)}
+        onConfirm={() => router.push(ROUTES.BRANCHES)}
+        confirmLabel="지점 목록으로 이동"
+      >
+        <p>카카오싱크 기능을 이용하려면 먼저 지점을 선택해 주세요.</p>
+      </ConfirmModal>
+    );
+  }
 
   if (!kakaoSyncUrl) {
     return <Spinner />;

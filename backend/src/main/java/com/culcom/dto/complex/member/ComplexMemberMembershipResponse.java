@@ -31,6 +31,10 @@ public class ComplexMemberMembershipResponse {
     private MembershipStatus status;
     private Boolean transferable;
     private Boolean transferred;
+    /** 변경으로 생성된 경우 원본 멤버십 seq (아니면 null) */
+    private Long changedFromSeq;
+    /** 변경 시 관리자 입력 추가 비용 (아니면 null). 음수 허용. */
+    private Long changeFee;
     private LocalDateTime createdDate;
 
     /** 누적 납부 금액 (sum of payments.amount; 음수 환불정정 포함) */
@@ -75,6 +79,8 @@ public class ComplexMemberMembershipResponse {
                 .status(entity.getStatus())
                 .transferable(entity.getMembership().getTransferable())
                 .transferred(entity.getTransferred())
+                .changedFromSeq(entity.getChangedFromSeq())
+                .changeFee(entity.getChangeFee())
                 .createdDate(entity.getCreatedDate())
                 .paidAmount(paid)
                 .outstanding(out)

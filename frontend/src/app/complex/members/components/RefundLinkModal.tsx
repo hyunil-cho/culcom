@@ -93,6 +93,7 @@ export default function RefundLinkModal({ memberSeq, memberName, memberPhone, on
       memberSeq, name: memberName, phone: memberPhone,
       memberMembershipSeq: selectedMs.seq,
       refundAmount: numericAmount,
+      t: Date.now(),
     })));
   }, [memberSeq, memberName, memberPhone, selectedMs, numericAmount, amountValid]);
 

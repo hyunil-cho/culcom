@@ -16,7 +16,7 @@ export default function MessageTemplateEditPage() {
 
   const { form, setForm, handleChange, submitting, submit, showError, modal } = useFormState<MessageTemplateFormData>(
     { templateName: '', description: '', messageContext: '', isActive: true, eventType: '' },
-    { redirectPath: ROUTES.MESSAGE_TEMPLATES },
+    { redirectPath: ROUTES.MESSAGE_TEMPLATES, invalidateKeys: ['messageTemplates', 'messageTemplate'] },
   );
 
   const { data: templateData, isLoading: loading } = useApiQuery(
