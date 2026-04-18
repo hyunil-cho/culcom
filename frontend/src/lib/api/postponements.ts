@@ -10,8 +10,12 @@ export interface PostponementRequest {
   endDate: string;
   reason: string;
   status: '대기' | '승인' | '반려';
-  rejectReason: string | null;
+  adminMessage: string | null;
   createdDate: string;
+  desiredClassName: string | null;
+  desiredTimeSlotName: string | null;
+  desiredStartTime: string | null;
+  desiredEndTime: string | null;
 }
 
 export interface PostponementReason {
@@ -23,9 +27,9 @@ export interface PostponementReason {
 export const postponementApi = {
   list: (params?: string) =>
     api.get<PageResponse<PostponementRequest>>(`${API.COMPLEX_POSTPONEMENTS}${params ? `?${params}` : ''}`),
-  updateStatus: (seq: number, status: string, rejectReason?: string) =>
+  updateStatus: (seq: number, status: string, adminMessage?: string) =>
     api.put<PostponementRequest>(
-      `${API.COMPLEX_POSTPONEMENT_STATUS(seq)}?status=${encodeURIComponent(status)}${rejectReason ? `&rejectReason=${encodeURIComponent(rejectReason)}` : ''}`
+      `${API.COMPLEX_POSTPONEMENT_STATUS(seq)}?status=${encodeURIComponent(status)}${adminMessage ? `&adminMessage=${encodeURIComponent(adminMessage)}` : ''}`
     ),
   reasons: () => api.get<PostponementReason[]>(API.COMPLEX_POSTPONEMENT_REASONS),
   addReason: (reason: string) => api.post<PostponementReason>(API.COMPLEX_POSTPONEMENT_REASONS, { reason }),
@@ -39,6 +43,7 @@ export interface PostponementSubmitRequest {
   name: string; phone: string; branchSeq: number; memberSeq: number;
   memberMembershipSeq: number;
   startDate: string; endDate: string; reason: string;
+  desiredClassSeq?: number | null;
 }
 
 export interface PostponementSubmitResponse {

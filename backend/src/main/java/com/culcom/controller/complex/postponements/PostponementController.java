@@ -2,12 +2,10 @@ package com.culcom.controller.complex.postponements;
 
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.complex.ReasonDto;
-import com.culcom.dto.complex.postponement.PostponementCreateRequest;
 import com.culcom.dto.complex.postponement.PostponementResponse;
 import com.culcom.entity.enums.RequestStatus;
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.service.PostponementService;
-import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,19 +20,12 @@ public class PostponementController {
 
     private final PostponementService postponementService;
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<PostponementResponse>> create(
-            @Valid @RequestBody PostponementCreateRequest req, @AuthenticationPrincipal CustomUserPrincipal principal) {
-        PostponementResponse result = postponementService.create(req, principal.getSelectedBranchSeq());
-        return ResponseEntity.ok(ApiResponse.ok("연기 요청 등록 완료", result));
-    }
-
     @PutMapping("/{seq}/status")
     public ResponseEntity<ApiResponse<PostponementResponse>> updateStatus(
             @PathVariable Long seq,
             @RequestParam RequestStatus status,
-            @RequestParam(required = false) String rejectReason) {
-        PostponementResponse result = postponementService.updateStatus(seq, status, rejectReason);
+            @RequestParam(required = false) String adminMessage) {
+        PostponementResponse result = postponementService.updateStatus(seq, status, adminMessage);
         return ResponseEntity.ok(ApiResponse.ok("상태 변경 완료", result));
     }
 

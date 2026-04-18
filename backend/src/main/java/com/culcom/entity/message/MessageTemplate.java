@@ -2,6 +2,7 @@ package com.culcom.entity.message;
 
 import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.branch.Branch;
+import com.culcom.entity.enums.SmsEventType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -36,4 +37,8 @@ public class MessageTemplate extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "branch_seq", nullable = false)
     private Branch branch;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "event_type", nullable = false, length = 20)
+    private SmsEventType eventType;
 }

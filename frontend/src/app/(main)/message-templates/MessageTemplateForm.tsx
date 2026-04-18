@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { messageTemplateApi, PlaceholderItem } from '@/lib/api';
+import { messageTemplateApi, PlaceholderItem, type SmsEventType } from '@/lib/api';
 import { Input, Textarea, Checkbox } from '@/components/ui/FormInput';
 import { Button, LinkButton } from '@/components/ui/Button';
 import styles from './MessageTemplateForm.module.css';
@@ -11,11 +11,24 @@ export interface MessageTemplateFormData {
   description: string;
   messageContext: string;
   isActive: boolean;
+  eventType: SmsEventType | '';
 }
+
+const EVENT_TYPE_OPTIONS: { value: SmsEventType; label: string; group: string }[] = [
+  { value: '예약확정', label: '예약 확정', group: '예약 · 등록' },
+  { value: '고객등록', label: '고객 등록', group: '예약 · 등록' },
+  { value: '회원등록', label: '회원 등록', group: '예약 · 등록' },
+  { value: '연기승인', label: '연기 승인', group: '연기' },
+  { value: '연기반려', label: '연기 반려', group: '연기' },
+  { value: '환불승인', label: '환불 승인', group: '환불' },
+  { value: '환불반려', label: '환불 반려', group: '환불' },
+  { value: '양도완료', label: '양도 완료', group: '양도' },
+  { value: '양도거절', label: '양도 거절', group: '양도' },
+];
 
 interface MessageTemplateFormProps {
   form: MessageTemplateFormData;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   onSubmit: (e: React.FormEvent) => void;
   heading: string;
   submitLabel: string;
@@ -31,10 +44,11 @@ export default function MessageTemplateForm({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    messageTemplateApi.placeholders().then((res) => {
+    const eventType = form.eventType || undefined;
+    messageTemplateApi.placeholders(eventType).then((res) => {
       if (res.success) setPlaceholders(res.data);
     });
-  }, []);
+  }, [form.eventType]);
 
   const insertPlaceholder = (value: string) => {
     const el = textareaRef.current;
@@ -58,6 +72,11 @@ export default function MessageTemplateForm({
     ? placeholders.reduce((text, ph) => text.replaceAll(ph.name || '', ph.examples || ph.name || ''), form.messageContext)
     : '';
 
+  const groupedOptions: Record<string, typeof EVENT_TYPE_OPTIONS> = EVENT_TYPE_OPTIONS.reduce((acc, opt) => {
+    (acc[opt.group] ??= []).push(opt);
+    return acc;
+  }, {} as Record<string, typeof EVENT_TYPE_OPTIONS>);
+
   return (
     <div className={styles.grid}>
       <div className={`content-card ${styles.formCard}`}>
@@ -66,12 +85,28 @@ export default function MessageTemplateForm({
         <div className={styles.infoBox}>
           <div className={styles.infoTitle}>플레이스홀더 사용하기</div>
           <div className={styles.infoDesc}>
-            오른쪽 패널에서 플레이스홀더를 클릭하면 메시지 내용에 자동으로 삽입됩니다.<br />
+            이벤트 타입을 먼저 선택하면, 해당 이벤트에서 허용된 플레이스홀더만 오른쪽 패널에 표시됩니다.<br />
             플레이스홀더는 실제 발송 시 고객 정보로 자동 치환됩니다.
           </div>
         </div>
 
         <form onSubmit={onSubmit}>
+          <div className={styles.fieldGroup}>
+            <label className="form-label">이벤트 타입 <span style={{ color: 'var(--danger)' }}>*</span></label>
+            <select name="eventType" value={form.eventType} onChange={onChange} required
+              style={{ width: '100%', padding: '8px 10px', border: '1px solid #ccc', borderRadius: 4, fontSize: 14 }}>
+              <option value="">이벤트 타입을 선택하세요</option>
+              {Object.entries(groupedOptions).map(([group, opts]) => (
+                <optgroup key={group} label={group}>
+                  {opts.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+            <div className={styles.hint}>이 템플릿이 사용될 이벤트를 지정합니다. 이벤트별로 허용되는 플레이스홀더가 다릅니다.</div>
+          </div>
+
           <div className={styles.fieldGroup}>
             <label className="form-label">템플릿 이름 <span style={{ color: 'var(--danger)' }}>*</span></label>
             <Input type="text" name="templateName" value={form.templateName} onChange={onChange}
@@ -118,17 +153,25 @@ export default function MessageTemplateForm({
       </div>
 
       <div className={`content-card ${styles.placeholderPanel}`}>
-        <h3 className={styles.panelTitle}>사용 가능한 플레이스홀더</h3>
+        <h3 className={styles.panelTitle}>
+          사용 가능한 플레이스홀더
+          {form.eventType && <span style={{ fontSize: '0.75rem', fontWeight: 400, color: '#999', marginLeft: 8 }}>({form.eventType})</span>}
+        </h3>
         <div className={styles.panelScroll}>
-          {placeholders.map((ph) => (
-            <div key={ph.seq} onClick={() => ph.name && insertPlaceholder(ph.name)} className={styles.phCard}>
-              {ph.value && <span className={styles.phValue}>{ph.value}</span>}
-              <div className={styles.phName}>{ph.name}</div>
-              {ph.comment && <div className={styles.phComment}>{ph.comment}</div>}
-              {ph.examples && <div className={styles.phExample}>예시: {ph.examples}</div>}
-            </div>
-          ))}
-          {placeholders.length === 0 && <div className={styles.emptyPh}>등록된 플레이스홀더가 없습니다</div>}
+          {!form.eventType ? (
+            <div className={styles.emptyPh}>이벤트 타입을 먼저 선택해 주세요.</div>
+          ) : placeholders.length === 0 ? (
+            <div className={styles.emptyPh}>사용 가능한 플레이스홀더가 없습니다</div>
+          ) : (
+            placeholders.map((ph) => (
+              <div key={ph.seq} onClick={() => ph.name && insertPlaceholder(ph.name)} className={styles.phCard}>
+                {ph.value && <span className={styles.phValue}>{ph.value}</span>}
+                <div className={styles.phName}>{ph.name}</div>
+                {ph.comment && <div className={styles.phComment}>{ph.comment}</div>}
+                {ph.examples && <div className={styles.phExample}>예시: {ph.examples}</div>}
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

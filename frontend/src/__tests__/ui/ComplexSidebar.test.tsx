@@ -42,11 +42,6 @@ describe('ComplexSidebar', () => {
     expect(screen.getByText('메인으로')).toBeInTheDocument();
   });
 
-  it('설정 그룹 항목을 표시한다', () => {
-    renderSidebar();
-    expect(screen.getByText('옵션 카탈로그')).toBeInTheDocument();
-  });
-
   it('수업 관리 그룹 타이틀 표시', () => {
     renderSidebar();
     expect(screen.getByText('수업 관리')).toBeInTheDocument();

@@ -121,6 +121,8 @@ public class ComplexDashboardController {
                 .refunds(complexDashboardMapper.selectRefunds(branchSeq, normalized, count))
                 .transfers(complexDashboardMapper.selectTransfers(branchSeq, normalized, count))
                 .postponementReturns(complexDashboardMapper.selectPostponementReturns(branchSeq, normalized, count))
+                .returnSmsSuccess(complexDashboardMapper.selectReturnSmsSuccess(branchSeq, normalized, count))
+                .returnSmsFail(complexDashboardMapper.selectReturnSmsFail(branchSeq, normalized, count))
                 .build()));
     }
 

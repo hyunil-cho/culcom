@@ -137,7 +137,7 @@ class RefundServiceDetachClassesTest {
         // when / then — 승인 → 대기, 승인 → 반려 모두 차단
         assertThatThrownBy(() -> refundService.updateStatus(refund.getSeq(), RequestStatus.대기, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("이미 승인된");
+                .hasMessageContaining("이미 처리된");
 
         assertThatThrownBy(() -> refundService.updateStatus(refund.getSeq(), RequestStatus.반려, "변심"))
                 .isInstanceOf(IllegalStateException.class);

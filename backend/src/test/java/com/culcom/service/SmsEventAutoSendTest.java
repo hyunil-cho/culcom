@@ -43,6 +43,7 @@ class SmsEventAutoSendTest {
                 .templateName("테스트 템플릿")
                 .messageContext(content)
                 .branch(branch)
+                .eventType(SmsEventType.고객등록)
                 .build());
     }
 

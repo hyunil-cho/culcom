@@ -18,4 +18,6 @@ public class TrendResponse {
     private List<TrendItem> refunds;
     private List<TrendItem> transfers;
     private List<TrendItem> postponementReturns;
+    private List<TrendItem> returnSmsSuccess;
+    private List<TrendItem> returnSmsFail;
 }

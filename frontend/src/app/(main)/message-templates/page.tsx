@@ -68,6 +68,10 @@ function MessageTemplatesContent() {
                 {t.isDefault && <span className={s.defaultBadge}>기본</span>}
               </h3>
 
+              <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: 6 }}>
+                이벤트: <strong style={{ color: '#4a90e2' }}>{t.eventType}</strong>
+              </div>
+
               {t.description && <p className={s.templateDesc}>{t.description}</p>}
 
               {t.messageContext && <div className={s.messageContent}>{t.messageContext}</div>}

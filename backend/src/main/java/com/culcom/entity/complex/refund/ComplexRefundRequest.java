@@ -51,7 +51,7 @@ public class ComplexRefundRequest extends BaseTimeEntity {
     @Builder.Default
     private RequestStatus status = RequestStatus.대기;
 
-    @Column(name = "reject_reason", length = 300)
-    private String rejectReason;
+    @Column(name = "admin_message", length = 300)
+    private String adminMessage;
 
 }

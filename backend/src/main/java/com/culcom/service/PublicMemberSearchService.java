@@ -64,6 +64,7 @@ public class PublicMemberSearchService {
                         bSeq -> classRepository.findAllWithTimeSlotByBranch(bSeq));
                 classInfos = classes.stream()
                         .map(c -> new ClassInfo(
+                                c.getSeq(),
                                 c.getName(),
                                 c.getTimeSlot().getName(),
                                 c.getTimeSlot().getStartTime().toString(),

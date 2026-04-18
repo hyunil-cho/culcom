@@ -14,6 +14,8 @@ import com.culcom.repository.ComplexMemberMembershipRepository;
 import com.culcom.repository.ComplexMemberRepository;
 import com.culcom.repository.ComplexRefundReasonRepository;
 import com.culcom.repository.ComplexRefundRequestRepository;
+import com.culcom.repository.MembershipPaymentRepository;
+import com.culcom.util.PriceUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -31,11 +33,41 @@ public class PublicRefundService {
     private final ComplexMemberMembershipRepository memberMembershipRepository;
     private final ComplexRefundRequestRepository refundRequestRepository;
     private final ComplexRefundReasonRepository refundReasonRepository;
+    private final MembershipPaymentRepository paymentRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final PublicMemberSearchService memberSearchService;
 
     public MemberSearchResponse searchMember(String name, String phone) {
-        return memberSearchService.search(name, phone, ComplexMemberMembership::isActive, false);
+        MemberSearchResponse raw = memberSearchService.search(name, phone, ComplexMemberMembership::isActive, false);
+
+        // 이미 대기/반려 상태의 환불 요청이 있는 멤버십은 선택 목록에서 제외한다.
+        java.util.List<Long> allMmSeqs = raw.getMembers().stream()
+                .flatMap(m -> m.getMemberships().stream())
+                .map(com.culcom.dto.publicapi.MembershipInfo::getSeq)
+                .toList();
+        if (allMmSeqs.isEmpty()) return raw;
+
+        java.util.Set<Long> blocked = new java.util.HashSet<>(
+                refundRequestRepository.findBlockedMemberMembershipSeqs(allMmSeqs));
+        if (blocked.isEmpty()) return raw;
+
+        java.util.List<com.culcom.dto.publicapi.MemberInfo> filtered = raw.getMembers().stream()
+                .map(m -> new com.culcom.dto.publicapi.MemberInfo(
+                        m.getSeq(), m.getName(), m.getPhoneNumber(),
+                        m.getBranchSeq(), m.getBranchName(), m.getLevel(),
+                        m.getMemberships().stream()
+                                .filter(ms -> !blocked.contains(ms.getSeq()))
+                                .toList(),
+                        m.getClasses()))
+                .toList();
+
+        // 활성 멤버십이 전부 차단된 경우 링크 만료로 처리한다.
+        boolean allFiltered = !raw.getMembers().isEmpty()
+                && filtered.stream().allMatch(m -> m.getMemberships().isEmpty());
+        if (allFiltered) {
+            throw new IllegalStateException("이미 만료된 링크입니다.");
+        }
+        return new MemberSearchResponse(filtered);
     }
 
     @Transactional
@@ -54,6 +86,17 @@ public class PublicRefundService {
                 : null;
         if (targetMembership != null && !targetMembership.isActive()) {
             throw new IllegalStateException("사용할 수 없는 멤버십에는 환불 신청을 할 수 없습니다.");
+        }
+        if (targetMembership != null
+                && refundRequestRepository.existsBlockingByMemberMembershipSeq(targetMembership.getSeq())) {
+            throw new IllegalStateException("이미 만료된 링크입니다.");
+        }
+        if (targetMembership != null) {
+            long paid = paymentRepository.sumAmountByMemberMembershipSeq(targetMembership.getSeq());
+            Long total = PriceUtils.parse(targetMembership.getPrice());
+            if (total != null && paid < total) {
+                throw new IllegalStateException("미수금이 있어 환불 신청을 할 수 없습니다. 미수금을 완납 후 진행해주세요.");
+            }
         }
 
         ComplexRefundRequest refund = ComplexRefundRequest.builder()

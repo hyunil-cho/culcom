@@ -21,9 +21,12 @@ export const emptyCardDetail: CardPaymentDetailData = {
 interface Props {
   value: CardPaymentDetailData;
   onChange: (value: CardPaymentDetailData) => void;
+  readOnly?: boolean;
 }
 
-export default function CardPaymentFields({ value, onChange }: Props) {
+const readOnlyStyle = { background: '#f3f4f6', color: '#6b7280' };
+
+export default function CardPaymentFields({ value, onChange, readOnly = false }: Props) {
   const { cardCompanies } = useCardCompanies();
   const update = (field: keyof CardPaymentDetailData, v: string) =>
     onChange({ ...value, [field]: v });
@@ -42,46 +45,56 @@ export default function CardPaymentFields({ value, onChange }: Props) {
         카드 결제 정보
       </div>
 
-      <FormField label="카드사" required>
-        <select
-          className="form-input"
-          value={value.cardCompany}
-          required
-          onChange={(e) => update('cardCompany', e.target.value)}
-        >
-          <option value="">-- 선택 --</option>
-          {options.map(c => <option key={c.seq} value={c.code}>{c.code}</option>)}
-        </select>
+      <FormField label="카드사" required={!readOnly}>
+        {readOnly ? (
+          <Input value={value.cardCompany || '-'} readOnly style={readOnlyStyle} />
+        ) : (
+          <select
+            className="form-input"
+            value={value.cardCompany}
+            required
+            onChange={(e) => update('cardCompany', e.target.value)}
+          >
+            <option value="">-- 선택 --</option>
+            {options.map(c => <option key={c.seq} value={c.code}>{c.code}</option>)}
+          </select>
+        )}
       </FormField>
 
-      <FormField label="카드번호 (앞 8자리)" required>
+      <FormField label="카드번호 (앞 8자리)" required={!readOnly}>
         <Input
           type="text"
           inputMode="numeric"
           maxLength={8}
           placeholder="12345678"
           value={value.cardNumber}
-          required
+          required={!readOnly}
+          readOnly={readOnly}
+          style={readOnly ? readOnlyStyle : undefined}
           onChange={(e) => update('cardNumber', e.target.value.replace(/\D/g, '').slice(0, 8))}
         />
       </FormField>
 
-      <FormField label="승인 날짜" required>
+      <FormField label="승인 날짜" required={!readOnly}>
         <Input
           type="date"
           value={value.cardApprovalDate}
-          required
+          required={!readOnly}
+          readOnly={readOnly}
+          style={readOnly ? readOnlyStyle : undefined}
           onChange={(e) => update('cardApprovalDate', e.target.value)}
         />
       </FormField>
 
-      <FormField label="승인번호" required>
+      <FormField label="승인번호" required={!readOnly}>
         <Input
           type="text"
           maxLength={50}
           placeholder="승인번호 입력"
           value={value.cardApprovalNumber}
-          required
+          required={!readOnly}
+          readOnly={readOnly}
+          style={readOnly ? readOnlyStyle : undefined}
           onChange={(e) => update('cardApprovalNumber', e.target.value)}
         />
       </FormField>

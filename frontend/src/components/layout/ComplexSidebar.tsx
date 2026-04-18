@@ -30,12 +30,6 @@ const groups = [
       { href: ROUTES.ROOT, label: '메인으로', icon: '✅' },
     ],
   },
-  {
-    title: '설정',
-    items: [
-      { href: ROUTES.COMPLEX_SETTINGS_CATALOGS, label: '옵션 카탈로그', icon: '🗂️' },
-    ],
-  },
 ];
 
 export default function ComplexSidebar() {

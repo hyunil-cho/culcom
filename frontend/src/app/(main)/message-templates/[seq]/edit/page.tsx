@@ -15,7 +15,7 @@ export default function MessageTemplateEditPage() {
   const seq = Number(params.seq);
 
   const { form, setForm, handleChange, submitting, submit, showError, modal } = useFormState<MessageTemplateFormData>(
-    { templateName: '', description: '', messageContext: '', isActive: true },
+    { templateName: '', description: '', messageContext: '', isActive: true, eventType: '' },
     { redirectPath: ROUTES.MESSAGE_TEMPLATES },
   );
 
@@ -31,6 +31,7 @@ export default function MessageTemplateEditPage() {
         description: templateData.description || '',
         messageContext: templateData.messageContext || '',
         isActive: templateData.isActive,
+        eventType: templateData.eventType,
       });
     }
   }, [templateData]);
@@ -41,11 +42,16 @@ export default function MessageTemplateEditPage() {
       showError('템플릿 이름과 메시지 내용은 필수 입력 항목입니다.');
       return;
     }
+    if (!form.eventType) {
+      showError('이벤트 타입을 선택해 주세요.');
+      return;
+    }
     await submit(messageTemplateApi.update(seq, {
       templateName: form.templateName,
       description: form.description || undefined,
       messageContext: form.messageContext,
       isActive: form.isActive,
+      eventType: form.eventType,
     }), '템플릿이 수정되었습니다.');
   };
 

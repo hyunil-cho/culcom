@@ -57,4 +57,8 @@ public class TransferRequest extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "to_customer_seq")
     private Customer toCustomer;
+
+    /** 관리자 메시지 (승인 코멘트 또는 반려 사유) */
+    @Column(name = "admin_message", length = 300)
+    private String adminMessage;
 }

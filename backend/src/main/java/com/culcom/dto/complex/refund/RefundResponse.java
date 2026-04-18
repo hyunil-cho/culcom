@@ -22,7 +22,7 @@ public class RefundResponse {
     private String price;
     private String reason;
     private RequestStatus status;
-    private String rejectReason;
+    private String adminMessage;
     private LocalDateTime createdDate;
 
     // 멤버십 사용 내역
@@ -41,7 +41,7 @@ public class RefundResponse {
                 .price(entity.getPrice())
                 .reason(entity.getReason())
                 .status(entity.getStatus())
-                .rejectReason(entity.getRejectReason())
+                .adminMessage(entity.getAdminMessage())
                 .createdDate(entity.getCreatedDate())
                 .build();
     }

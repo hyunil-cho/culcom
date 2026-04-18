@@ -20,7 +20,9 @@ function Inner() {
     { enabled: !!token },
   );
 
-  const error = !token ? '유효하지 않은 링크입니다.' : queryError ? '양도 요청을 찾을 수 없습니다.' : '';
+  const error = !token ? '유효하지 않은 링크입니다.'
+    : queryError ? (queryError.message || '양도 요청을 찾을 수 없습니다.')
+    : '';
   const [confirming, setConfirming] = useState(false);
   const [copied, setCopied] = useState(false);
 

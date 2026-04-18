@@ -4,12 +4,17 @@ import { API } from '@/lib/routes';
 // ── Settings ──
 
 export interface MessageTemplateSimple {
-  seq: number; templateName: string;
+  seq: number; templateName: string; eventType: SmsEventType;
 }
 
 // ── SMS 이벤트 설정 ──
 
-export type SmsEventType = '예약확정' | '고객등록' | '회원등록';
+export type SmsEventType =
+  | '예약확정' | '고객등록' | '회원등록'
+  | '연기승인' | '연기반려'
+  | '환불승인' | '환불반려'
+  | '양도완료' | '양도거절'
+  | '복귀안내';
 
 export interface SmsEventConfig {
   seq: number; eventType: SmsEventType; templateSeq: number;
@@ -25,7 +30,8 @@ export const smsEventApi = {
   get: (eventType: SmsEventType) => api.get<SmsEventConfig | null>(`${API.SETTINGS_SMS_EVENTS}/${eventType}`),
   save: (data: SmsEventConfigRequest) => api.post<SmsEventConfig>(API.SETTINGS_SMS_EVENTS, data),
   delete: (eventType: SmsEventType) => api.delete<void>(`${API.SETTINGS_SMS_EVENTS}/${eventType}`),
-  getTemplates: () => api.get<MessageTemplateSimple[]>(API.SETTINGS_SMS_EVENTS_TEMPLATES),
+  getTemplates: (eventType?: SmsEventType) =>
+    api.get<MessageTemplateSimple[]>(`${API.SETTINGS_SMS_EVENTS_TEMPLATES}${eventType ? `?eventType=${encodeURIComponent(eventType)}` : ''}`),
   getSenderNumbers: () => api.get<string[]>(API.SETTINGS_SMS_EVENTS_SENDERS),
 };
 

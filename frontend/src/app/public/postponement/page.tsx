@@ -39,7 +39,7 @@ function PublicPostponementPageInner() {
   const member: PublicMemberInfo | null = memberSearchResult?.members?.[0] ?? null;
 
   const error = !decoded ? '유효하지 않은 링크입니다. 관리자에게 문의해주세요.'
-    : queryError ? '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'
+    : queryError ? (queryError.message || '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.')
     : (!loading && !member) ? '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'
     : '';
 

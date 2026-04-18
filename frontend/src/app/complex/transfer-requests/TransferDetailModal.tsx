@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { transferApi, type TransferRequestItem, type TransferStatus } from '@/lib/api';
 import { useModal } from '@/hooks/useModal';
-import ConfirmModal from '@/components/ui/ConfirmModal';
+import AdminActionMessageModal from '../members/components/AdminActionMessageModal';
 
 const STEPS: { status: TransferStatus; label: string; desc: string }[] = [
   { status: '생성', label: '요청 생성', desc: '관리자가 양도 요청을 생성하고 양도자에게 URL을 전달했습니다.' },
@@ -28,18 +28,18 @@ export default function TransferDetailModal({
   const [updating, setUpdating] = useState(false);
   const currentStep = getStepIndex(item.status);
   const isRejected = item.status === '거절';
-  const statusConfirmModal = useModal<TransferStatus>();
+  const messageModal = useModal<TransferStatus>();
 
   const handleStatus = (status: TransferStatus) => {
-    statusConfirmModal.open(status);
+    messageModal.open(status);
   };
 
-  const confirmStatus = async () => {
-    if (!statusConfirmModal.data) return;
-    const status = statusConfirmModal.data;
-    statusConfirmModal.close();
+  const submitStatus = async (adminMessage: string) => {
+    if (!messageModal.data) return;
+    const status = messageModal.data;
+    messageModal.close();
     setUpdating(true);
-    await transferApi.updateStatus(item.seq, status);
+    await transferApi.updateStatus(item.seq, status, adminMessage);
     setUpdating(false);
     onStatusChange();
     onClose();
@@ -146,6 +146,20 @@ export default function TransferDetailModal({
             </button>
           </div>
 
+          {/* 관리자 메시지 */}
+          {item.adminMessage && (
+            <div style={{
+              background: item.status === '거절' ? '#fef2f2' : '#f0fdf4',
+              border: `1px solid ${item.status === '거절' ? '#fca5a5' : '#bbf7d0'}`,
+              borderRadius: 8, padding: 12, marginBottom: 14,
+            }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, marginBottom: 4, color: item.status === '거절' ? '#991b1b' : '#166534' }}>
+                관리자 메시지 {item.status === '거절' ? '(거절 사유)' : '(승인 메시지)'}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: '#333', whiteSpace: 'pre-wrap' }}>{item.adminMessage}</div>
+            </div>
+          )}
+
           {/* 초대 URL */}
           {item.inviteToken && (
             <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: 12 }}>
@@ -183,18 +197,25 @@ export default function TransferDetailModal({
           </button>
         </div>
 
-        {statusConfirmModal.isOpen && (
-          <ConfirmModal
-            title="상태 변경 확인"
-            confirmLabel={statusConfirmModal.data === '거절' ? '거절' : '확인'}
-            confirmColor={statusConfirmModal.data === '거절' ? '#e03131' : undefined}
-            onCancel={statusConfirmModal.close}
-            onConfirm={confirmStatus}
-          >
-            {statusConfirmModal.data === '거절' ? '양도 요청을 거절하시겠습니까?' : '양도를 확인하시겠습니까?'}
-          </ConfirmModal>
-        )}
       </div>
+
+      {messageModal.isOpen && (
+        <AdminActionMessageModal
+          key={messageModal.data}
+          title={messageModal.data === '확인' ? '양도 승인 메시지 입력' : '양도 거절 사유 입력'}
+          memberName={item.fromMemberName}
+          actionLabel={messageModal.data === '확인' ? '승인' : '거절'}
+          summary="양도 요청을"
+          tone={messageModal.data === '확인' ? 'success' : 'danger'}
+          inputLabel={messageModal.data === '확인' ? '승인 메시지' : '거절 사유'}
+          placeholder={messageModal.data === '확인'
+            ? '양도자·양수자에게 전달할 메시지를 입력해주세요...'
+            : '거절 사유를 입력해주세요...'}
+          submitLabel={messageModal.data === '확인' ? '양도 승인' : '거절 처리'}
+          onCancel={messageModal.close}
+          onSubmit={submitStatus}
+        />
+      )}
     </div>
   );
 }

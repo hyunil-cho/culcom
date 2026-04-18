@@ -48,6 +48,8 @@ export interface TrendResponse {
   refunds: TrendItem[];
   transfers: TrendItem[];
   postponementReturns: TrendItem[];
+  returnSmsSuccess: TrendItem[];
+  returnSmsFail: TrendItem[];
 }
 
 export const complexDashboardApi = {

@@ -38,4 +38,14 @@ public interface ComplexDashboardMapper {
             @Param("branchSeq") Long branchSeq,
             @Param("period") String period,
             @Param("count") int count);
+
+    List<TrendItem> selectReturnSmsSuccess(
+            @Param("branchSeq") Long branchSeq,
+            @Param("period") String period,
+            @Param("count") int count);
+
+    List<TrendItem> selectReturnSmsFail(
+            @Param("branchSeq") Long branchSeq,
+            @Param("period") String period,
+            @Param("count") int count);
 }

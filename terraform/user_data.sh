@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+# ─── 시간대 설정 (KST) ───
+# 시스템 로그, journal, CloudWatch 에이전트 타임스탬프를 모두 한국 시간대로 맞춘다.
+timedatectl set-timezone Asia/Seoul
+
 # ─── 패키지 설치 ───
 dnf update -y
 dnf install -y docker amazon-cloudwatch-agent
@@ -38,6 +42,7 @@ docker run -d \
   --log-opt awslogs-multiline-pattern="^[0-9]{4}-[0-9]{2}-[0-9]{2}" \
   -p 3000:3000 \
   -p 8081:8081 \
+  -e TZ=Asia/Seoul \
   -e SPRING_PROFILES_ACTIVE=${environment} \
   -e SPRING_DATASOURCE_URL="jdbc:mysql://${db_endpoint}/${db_name}?useSSL=true&serverTimezone=Asia/Seoul" \
   -e SPRING_DATASOURCE_USERNAME="$DB_USERNAME" \

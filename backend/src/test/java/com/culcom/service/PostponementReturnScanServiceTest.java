@@ -178,7 +178,7 @@ class PostponementReturnScanServiceTest {
         // 1건을 반려로 변경하고, 새로 2건 승인 추가 → 승인 건수 3건 (keep2, new1, new2)
         ComplexPostponementRequest toReject = postponementRepository.findById(keep1Seq).orElseThrow();
         toReject.setStatus(RequestStatus.반려);
-        toReject.setRejectReason("검증용 반려");
+        toReject.setAdminMessage("검증용 반려");
         postponementRepository.save(toReject);
         savePostponement(branch, RequestStatus.승인, returnDate, "추가1", "01033330003");
         savePostponement(branch, RequestStatus.승인, returnDate, "추가2", "01033330004");

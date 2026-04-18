@@ -22,7 +22,10 @@ function PublicRefundPageInner() {
     try {
       const d = searchParams.get('d');
       if (!d) return null;
-      return JSON.parse(decodeURIComponent(atob(d))) as { memberSeq: number; name: string; phone: string };
+      return JSON.parse(decodeURIComponent(atob(d))) as {
+        memberSeq: number; name: string; phone: string;
+        memberMembershipSeq?: number; refundAmount?: number;
+      };
     } catch { return null; }
   })();
 
@@ -41,16 +44,20 @@ function PublicRefundPageInner() {
   );
 
   const error = !decoded ? '유효하지 않은 링크입니다. 관리자에게 문의해주세요.'
-    : queryError ? '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'
+    : queryError ? (queryError.message || '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.')
     : (!loading && !member) ? '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'
     : '';
 
-  const [selectedMembershipSeq, setSelectedMembershipSeq] = useState<number | null>(null);
+  const [selectedMembershipSeq, setSelectedMembershipSeq] = useState<number | null>(
+    decoded?.memberMembershipSeq ?? null,
+  );
   const [reasonSelect, setReasonSelect] = useState('');
   const [reasonCustom, setReasonCustom] = useState('');
   const { error: formError, setError, clear: clearError } = useFormError();
 
   const selectedMembership = member?.memberships.find(ms => ms.seq === selectedMembershipSeq);
+  const preAssignedAmount = decoded?.refundAmount;
+  const hasPreAssignedAmount = typeof preAssignedAmount === 'number';
 
   const submitMutation = useApiMutation<number, RefundSubmitRequest>(
     (data) => publicRefundApi.submit(data),
@@ -82,7 +89,8 @@ function PublicRefundPageInner() {
       memberMembershipSeq: selectedMembershipSeq,
       memberName: member.name, phoneNumber: member.phoneNumber,
       membershipName: selectedMembership.membershipName,
-      price: '', reason: reason.trim(),
+      price: hasPreAssignedAmount ? String(preAssignedAmount) : '',
+      reason: reason.trim(),
     });
   };
 
@@ -134,6 +142,22 @@ function PublicRefundPageInner() {
             {selectedMembershipSeq && (
               <form onSubmit={handleSubmit}>
                 <FormErrorBanner error={formError} />
+                {hasPreAssignedAmount && (
+                  <div style={{
+                    background: '#fff5f5', border: '1.5px solid #ffa8a8', borderRadius: 8,
+                    padding: 14, marginBottom: 16,
+                  }}>
+                    <div style={{ fontSize: '0.78rem', color: '#c92a2a', fontWeight: 700, marginBottom: 4 }}>
+                      환불 예정 금액
+                    </div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#c92a2a' }}>
+                      {preAssignedAmount!.toLocaleString()}원
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#868e96', marginTop: 4 }}>
+                      관리자가 사전 안내한 환불 금액입니다.
+                    </div>
+                  </div>
+                )}
                 <FormGroup label="환불 사유">
                   <Select value={reasonSelect} onChange={(e) => { setReasonSelect(e.target.value); setReasonCustom(''); }} required>
                     <option value="">사유를 선택해 주세요</option>

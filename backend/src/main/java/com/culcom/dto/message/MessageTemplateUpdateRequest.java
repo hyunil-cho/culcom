@@ -1,5 +1,6 @@
 package com.culcom.dto.message;
 
+import com.culcom.entity.enums.SmsEventType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,4 +11,5 @@ public class MessageTemplateUpdateRequest {
     private String description;
     private String messageContext;
     private Boolean isActive;
+    private SmsEventType eventType;
 }

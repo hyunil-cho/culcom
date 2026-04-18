@@ -27,6 +27,12 @@ public class GlobalExceptionHandler {
         return badRequest(e.getMessage());
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalState(IllegalStateException e) {
+        log.info("잘못된 상태 값: {}", e.getMessage());
+        return badRequest(e.getMessage());
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleMessageNotReadable(HttpMessageNotReadableException e) {
         log.info("요청 본문 파싱 실패: {}", e.getMessage());
@@ -69,6 +75,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleDataIntegrity(DataIntegrityViolationException e) {
+        if (e.getCause() instanceof org.hibernate.exception.ConstraintViolationException cve) {
+            log.warn("유니크 제약 조건 위반: {}", cve.getMessage());
+            return respond(HttpStatus.CONFLICT, "이미 존재하는 데이터입니다: " + cve.getMessage());
+        }
         log.warn("데이터 무결성 위반: {}", e.getMostSpecificCause().getMessage());
         return respond(HttpStatus.CONFLICT, "데이터 제약 조건에 위배됩니다. 중복되거나 참조 중인 데이터가 있는지 확인해주세요.");
     }

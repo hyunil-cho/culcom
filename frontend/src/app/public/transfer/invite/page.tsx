@@ -32,7 +32,9 @@ function Inner() {
     : queryError ? 'error'
     : userStep;
 
-  const error = !token ? '유효하지 않은 링크입니다.' : queryError ? '양도 초대를 찾을 수 없습니다.' : '';
+  const error = !token ? '유효하지 않은 링크입니다.'
+    : queryError ? (queryError.message || '양도 초대를 찾을 수 없습니다.')
+    : '';
 
   const consent = useConsent({
     category: 'TRANSFER',

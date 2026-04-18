@@ -1,5 +1,8 @@
 spring:
   datasource:
+    # 여러 Spring 컨텍스트가 로드되는 테스트 환경에서, 컨텍스트가 evict 될 때
+    # create-drop 이 테이블을 드롭하면 캐시된 다른 컨텍스트가 "Table not found" 로 실패한다.
+    # → ddl-auto=update 와 함께, DB_CLOSE_DELAY=-1 로 in-memory DB 를 JVM 수명 동안 유지한다.
     url: jdbc:h2:mem:culcom-test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL
     username: sa
     password:
@@ -7,7 +10,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect

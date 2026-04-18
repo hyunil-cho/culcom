@@ -137,6 +137,20 @@ public class MemberMembershipService {
 
         memberMembershipRepository.save(mm);
 
+        // 카드 결제 정보 정정 — 카드 결제 payments의 cardPaymentDetail 일괄 갱신
+        // (관리자가 초기 입력 시 오타 등을 수정할 수 있도록)
+        if (req.getCardDetail() != null && CARD_METHOD.equals(req.getPaymentMethod())) {
+            req.getCardDetail().validate();
+            com.culcom.entity.complex.member.CardPaymentDetail updated = req.getCardDetail().toEntity();
+            List<MembershipPayment> payments = paymentRepository.findByMemberMembershipSeqOrderByPaidDateAscSeqAsc(mmSeq);
+            for (MembershipPayment p : payments) {
+                if (CARD_METHOD.equals(p.getMethod())) {
+                    p.setCardPaymentDetail(updated);
+                    paymentRepository.save(p);
+                }
+            }
+        }
+
         if (!Objects.equals(oldStatus, mm.getStatus())) {
             eventPublisher.publishEvent(ActivityEvent.withMembershipChange(
                     mm.getMember(), ActivityEventType.MEMBERSHIP_UPDATE, mm.getSeq(),

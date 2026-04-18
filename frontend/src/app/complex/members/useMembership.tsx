@@ -63,6 +63,7 @@ export function useMembership(options?: UseMembershipOptions) {
     existingMsLoaded.current = true;
     if (existingMemberships.length > 0) {
       const ms = existingMemberships.find(m => m.status === '활성') ?? existingMemberships[0];
+      const firstCardDetail = (ms.payments ?? []).find(p => p.cardDetail)?.cardDetail;
       setForm({
         membershipSeq: String(ms.membershipSeq),
         startDate: ms.startDate ?? '',
@@ -72,7 +73,7 @@ export function useMembership(options?: UseMembershipOptions) {
         depositAmount: '',
         paymentMethod: ms.paymentMethod ?? '',
         status: ms.status ?? '활성',
-        cardDetail: emptyCardDetail,
+        cardDetail: firstCardDetail ?? emptyCardDetail,
       });
       setMemberMembershipSeq(ms.seq);
     }
@@ -179,6 +180,7 @@ export function useMembership(options?: UseMembershipOptions) {
     setRenewalMode(false);
     if (existingMemberships && existingMemberships.length > 0) {
       const ms = existingMemberships[0];
+      const firstCardDetail = (ms.payments ?? []).find(p => p.cardDetail)?.cardDetail;
       setForm({
         membershipSeq: String(ms.membershipSeq),
         startDate: ms.startDate ?? '',
@@ -188,7 +190,7 @@ export function useMembership(options?: UseMembershipOptions) {
         depositAmount: '',
         paymentMethod: ms.paymentMethod ?? '',
         status: ms.status ?? '활성',
-        cardDetail: emptyCardDetail,
+        cardDetail: firstCardDetail ?? emptyCardDetail,
       });
       setMemberMembershipSeq(ms.seq);
     }

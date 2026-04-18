@@ -126,7 +126,7 @@ class TransferControllerTest {
         TransferRequestResponse response = TransferRequestResponse.builder()
                 .seq(1L).status(TransferStatus.접수).build();
 
-        given(transferService.updateStatus(eq(1L), eq(TransferStatus.접수)))
+        given(transferService.updateStatus(eq(1L), eq(TransferStatus.접수), any()))
                 .willReturn(response);
 
         mockMvc.perform(put("/api/transfer-requests/{seq}/status", 1L)

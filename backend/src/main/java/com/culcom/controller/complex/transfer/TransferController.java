@@ -47,8 +47,10 @@ public class TransferController {
 
     @PutMapping("/{seq}/status")
     public ResponseEntity<ApiResponse<TransferRequestResponse>> updateStatus(
-            @PathVariable Long seq, @RequestParam TransferStatus status) {
-        return ResponseEntity.ok(ApiResponse.ok("양도 요청 상태가 변경되었습니다.", transferService.updateStatus(seq, status)));
+            @PathVariable Long seq, @RequestParam TransferStatus status,
+            @RequestParam(required = false) String adminMessage) {
+        return ResponseEntity.ok(ApiResponse.ok("양도 요청 상태가 변경되었습니다.",
+                transferService.updateStatus(seq, status, adminMessage)));
     }
 
     @PostMapping("/{seq}/complete")

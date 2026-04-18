@@ -24,9 +24,15 @@
             p.end_date AS endDate,
             p.reason,
             p.status,
-            p.reject_reason AS rejectReason,
-            p.created_date AS createdDate
+            p.admin_message AS adminMessage,
+            p.created_date AS createdDate,
+            c.name AS desiredClassName,
+            ts.name AS desiredTimeSlotName,
+            ts.start_time AS desiredStartTime,
+            ts.end_time AS desiredEndTime
         FROM complex_postponement_requests p
+        LEFT JOIN complex_classes c ON c.seq = p.desired_class_seq
+        LEFT JOIN class_time_slots ts ON ts.seq = c.time_slot_seq
         <include refid="searchCondition"/>
         ORDER BY p.created_date DESC
         LIMIT #{size} OFFSET #{offset}
@@ -47,9 +53,15 @@
             p.end_date AS endDate,
             p.reason,
             p.status,
-            p.reject_reason AS rejectReason,
-            p.created_date AS createdDate
+            p.admin_message AS adminMessage,
+            p.created_date AS createdDate,
+            c.name AS desiredClassName,
+            ts.name AS desiredTimeSlotName,
+            ts.start_time AS desiredStartTime,
+            ts.end_time AS desiredEndTime
         FROM complex_postponement_requests p
+        LEFT JOIN complex_classes c ON c.seq = p.desired_class_seq
+        LEFT JOIN class_time_slots ts ON ts.seq = c.time_slot_seq
         WHERE p.member_seq = #{memberSeq}
         ORDER BY p.created_date DESC
     </select>

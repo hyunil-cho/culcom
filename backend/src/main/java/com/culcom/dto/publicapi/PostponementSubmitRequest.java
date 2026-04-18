@@ -20,4 +20,5 @@ public class PostponementSubmitRequest {
     private String startDate;
     private String endDate;
     private String reason;
+    private Long desiredClassSeq;
 }

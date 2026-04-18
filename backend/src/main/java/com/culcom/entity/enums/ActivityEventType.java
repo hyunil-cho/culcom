@@ -19,5 +19,7 @@ public enum ActivityEventType {
     REFUND_APPROVE,
     REFUND_REJECT,
     TRANSFER_OUT,
-    TRANSFER_IN
+    TRANSFER_IN,
+    TRANSFER_REQUEST,
+    TRANSFER_REJECT
 }

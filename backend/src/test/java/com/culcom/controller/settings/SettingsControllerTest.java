@@ -91,7 +91,7 @@ class SettingsControllerTest {
 
         @Test
         void SMS이벤트_템플릿_목록_조회() throws Exception {
-            given(settingsService.getTemplates(anyLong())).willReturn(List.of());
+            given(settingsService.getTemplates(anyLong(), any())).willReturn(List.of());
 
             mockMvc.perform(get("/api/settings/sms-events/templates").with(auth()))
                     .andExpect(status().isOk());

@@ -41,27 +41,27 @@ class SmsMessageResolverTest {
             placeholderRepository.deleteAll();
 
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{고객명}}").value("{customer.name}").comment("고객의 이름").build());
+                    .name("{{고객명}}").value("{customer.name}").comment("고객의 이름").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{전화번호}}").value("{customer.phone_number}").comment("고객의 전화번호").build());
+                    .name("{{전화번호}}").value("{customer.phone_number}").comment("고객의 전화번호").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{지점명}}").value("{branch.name}").comment("지점 이름").build());
+                    .name("{{지점명}}").value("{branch.name}").comment("지점 이름").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{지점주소}}").value("{branch.address}").comment("지점 주소").build());
+                    .name("{{지점주소}}").value("{branch.address}").comment("지점 주소").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{담당자}}").value("{branch.manager}").comment("담당자").build());
+                    .name("{{담당자}}").value("{branch.manager}").comment("담당자").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{오시는길}}").value("{branch.directions}").comment("오시는 길").build());
+                    .name("{{오시는길}}").value("{branch.directions}").comment("오시는 길").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{현재날짜}}").value("{system.current_date}").comment("오늘 날짜").build());
+                    .name("{{현재날짜}}").value("{system.current_date}").comment("오늘 날짜").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{현재시간}}").value("{system.current_time}").comment("현재 시각").build());
+                    .name("{{현재시간}}").value("{system.current_time}").comment("현재 시각").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{현재날짜시간}}").value("{system.current_datetime}").comment("현재 날짜시각").build());
+                    .name("{{현재날짜시간}}").value("{system.current_datetime}").comment("현재 날짜시각").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{예약일자}}").value("{reservation.interview_date}").comment("예약 일시").build());
+                    .name("{{예약일자}}").value("{reservation.interview_date}").comment("예약 일시").category(com.culcom.entity.enums.PlaceholderCategory.RESERVATION).build());
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{예약시간}}").value("{reservation.interview_datetime}").comment("예약 날짜시간").build());
+                    .name("{{예약시간}}").value("{reservation.interview_datetime}").comment("예약 날짜시간").category(com.culcom.entity.enums.PlaceholderCategory.RESERVATION).build());
 
             branch = branchRepository.save(Branch.builder()
                     .branchName("강남지점")
@@ -196,7 +196,7 @@ class SmsMessageResolverTest {
         @Test
         void name이_빈문자열인_플레이스홀더는_치환에_영향없음() {
             placeholderRepository.save(Placeholder.builder()
-                    .name("").value("{test.value}").comment("빈 이름 항목").build());
+                    .name("").value("{test.value}").comment("빈 이름 항목").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
 
             String result = resolver.resolveWithContext(
                     "{{고객명}}님 안녕하세요",
@@ -208,7 +208,7 @@ class SmsMessageResolverTest {
         @Test
         void value가_null인_플레이스홀더는_무시() {
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{특수항목}}").value(null).comment("값없는 항목").build());
+                    .name("{{특수항목}}").value(null).comment("값없는 항목").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
 
             String result = resolver.resolveWithContext(
                     "{{고객명}}님 {{특수항목}} 입니다",

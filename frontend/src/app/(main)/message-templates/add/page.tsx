@@ -8,7 +8,7 @@ import MessageTemplateForm, { MessageTemplateFormData } from '../MessageTemplate
 
 export default function MessageTemplateAddPage() {
   const { form, handleChange, submitting, submit, showError, modal } = useFormState<MessageTemplateFormData>(
-    { templateName: '', description: '', messageContext: '', isActive: true },
+    { templateName: '', description: '', messageContext: '', isActive: true, eventType: '' },
     { redirectPath: ROUTES.MESSAGE_TEMPLATES },
   );
 
@@ -18,11 +18,16 @@ export default function MessageTemplateAddPage() {
       showError('템플릿 이름과 메시지 내용은 필수 입력 항목입니다.');
       return;
     }
+    if (!form.eventType) {
+      showError('이벤트 타입을 선택해 주세요.');
+      return;
+    }
     await submit(messageTemplateApi.create({
       templateName: form.templateName,
       description: form.description || undefined,
       messageContext: form.messageContext,
       isActive: form.isActive,
+      eventType: form.eventType,
     }), '템플릿이 등록되었습니다.');
   };
 

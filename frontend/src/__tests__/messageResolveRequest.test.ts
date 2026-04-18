@@ -72,8 +72,8 @@ describe('PlaceholderItem - 사유 항목', () => {
 
   it('플레이스홀더 목록에 사유 항목이 포함될 수 있다', async () => {
     const placeholders: PlaceholderItem[] = [
-      { seq: 1, name: '{{고객명}}', comment: '고객의 이름', examples: '홍길동', value: '{customer.name}' },
-      { seq: 12, name: '{{사유}}', comment: '관리자 반려 사유', examples: '서류 미비로 인한 반려', value: '{action.reason}' },
+      { seq: 1, name: '{{고객명}}', comment: '고객의 이름', examples: '홍길동', value: '{customer.name}', category: 'COMMON' },
+      { seq: 12, name: '{{사유}}', comment: '관리자 반려 사유', examples: '서류 미비로 인한 반려', value: '{action.reason}', category: 'COMMON' },
     ];
 
     mockFetch.mockResolvedValue(mockResponse(200, {

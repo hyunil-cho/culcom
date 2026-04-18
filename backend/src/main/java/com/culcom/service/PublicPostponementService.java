@@ -2,6 +2,7 @@ package com.culcom.service;
 
 import com.culcom.dto.publicapi.*;
 import com.culcom.entity.branch.Branch;
+import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.postponement.ComplexPostponementReason;
@@ -12,6 +13,7 @@ import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.*;
 import com.culcom.util.DateTimeUtils;
+import com.culcom.util.PriceUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -28,7 +30,9 @@ public class PublicPostponementService {
     private final ComplexMemberMembershipRepository memberMembershipRepository;
     private final ComplexPostponementRequestRepository postponementRepository;
     private final ComplexPostponementReasonRepository reasonRepository;
+    private final MembershipPaymentRepository paymentRepository;
     private final BranchRepository branchRepository;
+    private final ComplexClassRepository classRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final PublicMemberSearchService memberSearchService;
 
@@ -50,6 +54,37 @@ public class PublicPostponementService {
         if (membership != null && !membership.isActive()) {
             throw new IllegalStateException("사용할 수 없는 멤버십에는 연기 신청을 할 수 없습니다.");
         }
+        if (membership != null) {
+            long paid = paymentRepository.sumAmountByMemberMembershipSeq(membership.getSeq());
+            Long total = PriceUtils.parse(membership.getPrice());
+            if (total != null && paid < total) {
+                throw new IllegalStateException("미수금이 있어 연기 신청을 할 수 없습니다. 미수금을 완납 후 진행해주세요.");
+            }
+        }
+
+        // 중복/겹침 검증: 같은 멤버십에 대해 이미 대기 중인 요청이 있거나, 기존 연기 기간과 겹치면 차단.
+        if (membership != null) {
+            java.time.LocalDate newStart = DateTimeUtils.parseDate(req.getStartDate());
+            java.time.LocalDate newEnd = DateTimeUtils.parseDate(req.getEndDate());
+            if (postponementRepository.existsPendingByMemberMembershipSeq(membership.getSeq())) {
+                throw new IllegalStateException("이미 처리 대기 중인 연기 요청이 있습니다.");
+            }
+            if (newStart != null && newEnd != null) {
+                if (postponementRepository.existsApprovedOverlap(membership.getSeq(), newStart, newEnd)) {
+                    throw new IllegalStateException("이미 승인된 연기 기간과 겹칩니다.");
+                }
+                if (postponementRepository.existsPendingOverlap(membership.getSeq(), newStart, newEnd)) {
+                    throw new IllegalStateException("이미 신청 중인 연기 기간과 겹칩니다.");
+                }
+            }
+        }
+
+        ComplexClass desiredClass = null;
+        if (req.getDesiredClassSeq() != null) {
+            desiredClass = classRepository.findById(req.getDesiredClassSeq())
+                    .filter(c -> c.getBranch() != null && c.getBranch().getSeq().equals(req.getBranchSeq()))
+                    .orElse(null);
+        }
 
         ComplexPostponementRequest postponement = ComplexPostponementRequest.builder()
                 .branch(branch)
@@ -61,6 +96,7 @@ public class PublicPostponementService {
                 .endDate(DateTimeUtils.parseDate(req.getEndDate()))
                 .reason(req.getReason())
                 .status(RequestStatus.대기)
+                .desiredClass(desiredClass)
                 .build();
 
         postponementRepository.save(postponement);

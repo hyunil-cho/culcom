@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import UnavailableNotice from './UnavailableNotice';
 import CopyableUrlField from './CopyableUrlField';
 import SmsSendSection from './SmsSendSection';
+import { hasOutstanding, isTransferable } from '../membershipEligibility';
 import shared from './LinkShared.module.css';
 import s from './MembershipLinkModal.module.css';
 
@@ -30,15 +31,33 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
     ['transferLinkMemberships', memberSeq],
     () => memberApi.getMemberships(memberSeq),
   );
-  const memberships = allMemberships.filter((ms) => ms.status === '활성');
+  const activeMemberships = allMemberships.filter((ms) => ms.status === '활성');
+
+  /** 양도 가능한 멤버십만 드롭다운에 노출 */
+  const memberships = allMemberships.filter(isTransferable);
+
+  const unavailableReason =
+    activeMemberships.length === 0
+      ? '활성 멤버십이 없습니다.'
+      : memberships.length === 0
+      ? '양도 가능한 멤버십이 없습니다. (미수금이 남아있거나, 양도 불가 상품이거나, 이미 양도받은 멤버십입니다.)'
+      : '';
+  const canTransfer = !unavailableReason;
 
   const transferUrl = result
     ? `${window.location.origin}/public/transfer?token=${result.token}`
     : '';
   const smsMessage = `[멤버십 양도 안내]\n\n${memberName}님, 아래 링크에서 양도 절차를 진행하실 수 있습니다.\n\n${transferUrl}`;
 
+  const selectedMs = memberships.find((ms) => ms.seq === Number(selectedMmSeq));
+
   const handleCreate = async () => {
-    if (!selectedMmSeq) { setError('양도할 멤버십을 선택하세요.'); return; }
+    if (!selectedMmSeq || !selectedMs) { setError('양도할 멤버십을 선택하세요.'); return; }
+    // 방어적 재검증 (선택 이후 상태가 바뀌었을 수 있으니)
+    if (!isTransferable(selectedMs)) {
+      setError('선택한 멤버십은 양도할 수 없습니다.');
+      return;
+    }
     clearError();
     setCreating(true);
     const res = await transferApi.create(Number(selectedMmSeq));
@@ -46,8 +65,6 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
     else setError(res.message || '양도 요청 생성에 실패했습니다.');
     setCreating(false);
   };
-
-  const selectedMs = memberships.find((ms) => ms.seq === Number(selectedMmSeq));
 
   return (
     <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
@@ -73,8 +90,8 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
             <>
               {loading ? (
                 <div className={shared.loadingText}>멤버십 정보 확인 중...</div>
-              ) : memberships.length === 0 ? (
-                <UnavailableNotice title="양도 요청이 불가능합니다" description="활성 멤버십이 없습니다." />
+              ) : !canTransfer ? (
+                <UnavailableNotice title="양도 요청이 불가능합니다" description={unavailableReason} />
               ) : (
                 <>
                   <div className={s.fieldGroup}>
@@ -93,10 +110,10 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
                   </div>
 
                   {selectedMs && (() => {
-                    const hasOutstanding = selectedMs.outstanding != null && selectedMs.outstanding > 0;
+                    const outstanding = hasOutstanding(selectedMs);
                     const notTransferable = !selectedMs.transferable;
                     const isTransferred = selectedMs.transferred;
-                    const blocked = hasOutstanding || notTransferable || isTransferred;
+                    const blocked = outstanding || notTransferable || isTransferred;
 
                     return (
                       <>
@@ -113,18 +130,18 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
                             <div>미수금: <strong>{selectedMs.outstanding != null ? `${selectedMs.outstanding.toLocaleString()}원` : '-'}</strong></div>
                             <div>양도: <strong>{selectedMs.transferable ? '가능' : '불가'}</strong></div>
                           </div>
-                          {hasOutstanding && (
+                          {outstanding && (
                             <div style={{ marginTop: 8, fontWeight: 700, fontSize: '0.82rem' }}>
                               ⚠ 미수금이 있어 양도할 수 없습니다. 미수금 완납 후 진행해주세요.
                             </div>
                           )}
                           {notTransferable && (
-                            <div style={{ marginTop: hasOutstanding ? 4 : 8, fontWeight: 700, fontSize: '0.82rem' }}>
+                            <div style={{ marginTop: outstanding ? 4 : 8, fontWeight: 700, fontSize: '0.82rem' }}>
                               ⚠ 양도 불가 멤버십입니다.
                             </div>
                           )}
                           {isTransferred && (
-                            <div style={{ marginTop: (hasOutstanding || notTransferable) ? 4 : 8, fontWeight: 700, fontSize: '0.82rem' }}>
+                            <div style={{ marginTop: (outstanding || notTransferable) ? 4 : 8, fontWeight: 700, fontSize: '0.82rem' }}>
                               ⚠ 양도로 받은 멤버십은 재양도할 수 없습니다.
                             </div>
                           )}

@@ -24,18 +24,27 @@ public class SmsMessageResolver {
     /**
      * DB 플레이스홀더 정의와 컨텍스트 값을 기반으로 템플릿을 치환한다.
      * 값이 없는 플레이스홀더는 빈 문자열로 치환된다.
-     *
-     * @param template      원본 메시지 템플릿
-     * @param branch        지점 정보 (nullable)
-     * @param customerName  고객명 (nullable)
-     * @param customerPhone 고객 전화번호 (nullable)
-     * @param interviewDate 예약 일시 (nullable)
-     * @return 치환된 메시지
      */
     public String resolveWithContext(String template, Branch branch,
                                      String customerName, String customerPhone,
                                      String interviewDate) {
+        return resolveWithContext(template, branch, customerName, customerPhone, interviewDate, Map.of());
+    }
+
+    /**
+     * extraContext는 고정 컨텍스트에 덮어쓰이거나 추가 키를 제공한다.
+     * 예: {@code {action.reject_reason}}, {@code {action.event_type}}.
+     */
+    public String resolveWithContext(String template, Branch branch,
+                                     String customerName, String customerPhone,
+                                     String interviewDate,
+                                     Map<String, String> extraContext) {
         Map<String, String> valueMap = buildValueMap(branch, customerName, customerPhone, interviewDate);
+        if (extraContext != null) {
+            for (Map.Entry<String, String> e : extraContext.entrySet()) {
+                valueMap.put(e.getKey(), e.getValue() != null ? e.getValue() : "");
+            }
+        }
 
         List<Placeholder> placeholders = placeholderRepository.findAll();
         String result = template;
@@ -63,6 +72,11 @@ public class SmsMessageResolver {
         map.put("{system.current_datetime}", now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
         map.put("{reservation.interview_date}", interviewDate != null ? interviewDate : "");
         map.put("{reservation.interview_datetime}", interviewDate != null ? interviewDate : "");
+
+        // 액션 플레이스홀더 기본값(빈 문자열). 호출부가 extraContext 로 덮어쓴다.
+        map.put("{action.event_type}", "");
+        map.put("{action.reject_reason}", "");
+        map.put("{action.approve_comment}", "");
 
         return map;
     }

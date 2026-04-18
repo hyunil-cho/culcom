@@ -90,7 +90,14 @@ public class TransferService {
                 .token(UUID.randomUUID().toString().replace("-", ""))
                 .build();
 
-        return TransferRequestResponse.from(transferRequestRepository.save(transfer));
+        TransferRequest saved = transferRequestRepository.save(transfer);
+
+        eventPublisher.publishEvent(ActivityEvent.ofMembership(
+                mm.getMember(), ActivityEventType.TRANSFER_REQUEST, mm.getSeq(),
+                String.format("%s 양도 요청 생성 (잔여 %d회, 양도비 %,d원)",
+                        mm.getMembership().getName(), remaining, fee)));
+
+        return TransferRequestResponse.from(saved);
     }
 
     // ── 관리자: 목록 조회 ──
@@ -113,15 +120,28 @@ public class TransferService {
     // ── 관리자: 상태 변경 (확인/거절) ──
 
     @Transactional
-    public TransferRequestResponse updateStatus(Long seq, TransferStatus status) {
+    public TransferRequestResponse updateStatus(Long seq, TransferStatus status, String adminMessage) {
         TransferRequest tr = transferRequestRepository.findById(seq)
                 .orElseThrow(() -> new EntityNotFoundException("양도 요청"));
         tr.setStatus(status);
+        tr.setAdminMessage(adminMessage);
         TransferRequestResponse response = TransferRequestResponse.from(transferRequestRepository.save(tr));
 
-        if (status == TransferStatus.거절 && tr.getFromMember() != null && tr.getBranch() != null) {
-            smsService.sendEventSmsIfConfigured(tr.getBranch().getSeq(), SmsEventType.양도거절,
-                    tr.getFromMember().getName(), tr.getFromMember().getPhoneNumber());
+        if (status == TransferStatus.거절 && tr.getFromMember() != null) {
+            Long mmSeq = tr.getMemberMembership() != null ? tr.getMemberMembership().getSeq() : null;
+            String membershipName = tr.getMemberMembership() != null
+                    ? tr.getMemberMembership().getMembership().getName() : "멤버십";
+            eventPublisher.publishEvent(ActivityEvent.ofMembership(
+                    tr.getFromMember(), ActivityEventType.TRANSFER_REJECT, mmSeq,
+                    String.format("%s 양도 요청 거절%s",
+                            membershipName,
+                            adminMessage != null && !adminMessage.isBlank() ? " (사유: " + adminMessage + ")" : "")));
+
+            if (tr.getBranch() != null) {
+                smsService.sendEventSmsIfConfigured(tr.getBranch().getSeq(), SmsEventType.양도거절,
+                        tr.getFromMember().getName(), tr.getFromMember().getPhoneNumber(),
+                        SmsActionContext.ofTransfer(status, adminMessage));
+            }
         }
 
         return response;
@@ -194,10 +214,12 @@ public class TransferService {
 
         // 7. SMS 알림
         if (tr.getBranch() != null) {
+            java.util.Map<String, String> ctx = SmsActionContext.ofTransfer(
+                    com.culcom.entity.enums.TransferStatus.확인, tr.getAdminMessage());
             smsService.sendEventSmsIfConfigured(tr.getBranch().getSeq(), SmsEventType.양도완료,
-                    fromMember.getName(), fromMember.getPhoneNumber());
+                    fromMember.getName(), fromMember.getPhoneNumber(), ctx);
             smsService.sendEventSmsIfConfigured(tr.getBranch().getSeq(), SmsEventType.양도완료,
-                    newMember.getName(), newMember.getPhoneNumber());
+                    newMember.getName(), newMember.getPhoneNumber(), ctx);
         }
 
         return TransferRequestResponse.from(transferRequestRepository.save(tr));
@@ -208,6 +230,10 @@ public class TransferService {
     public TransferPublicInfoResponse getByToken(String token) {
         TransferRequest tr = transferRequestRepository.findByToken(token)
                 .orElseThrow(() -> new EntityNotFoundException("양도 요청"));
+
+        if (tr.getStatus() != TransferStatus.생성) {
+            throw new IllegalStateException("이미 만료된 링크입니다.");
+        }
 
         return TransferPublicInfoResponse.builder()
                 .membershipName(tr.getMemberMembership().getMembership().getName())
@@ -226,6 +252,10 @@ public class TransferService {
     public TransferPublicInfoResponse confirmAndGenerateInvite(String token) {
         TransferRequest tr = transferRequestRepository.findByToken(token)
                 .orElseThrow(() -> new EntityNotFoundException("양도 요청"));
+
+        if (tr.getStatus() != TransferStatus.생성) {
+            throw new IllegalStateException("이미 만료된 링크입니다.");
+        }
 
         if (tr.getInviteToken() == null) {
             tr.setInviteToken(UUID.randomUUID().toString().replace("-", ""));
@@ -249,6 +279,10 @@ public class TransferService {
         TransferRequest tr = transferRequestRepository.findByInviteToken(inviteToken)
                 .orElseThrow(() -> new EntityNotFoundException("양도 초대"));
 
+        if (tr.getStatus() != TransferStatus.생성) {
+            throw new IllegalStateException("이미 만료된 링크입니다.");
+        }
+
         List<ConsentItemResponse> consents = consentItemRepository.findByCategory("TRANSFER")
                 .stream().map(ConsentItemResponse::from).toList();
 
@@ -270,7 +304,7 @@ public class TransferService {
                 .orElseThrow(() -> new EntityNotFoundException("양도 초대"));
 
         if (tr.getStatus() != TransferStatus.생성) {
-            throw new IllegalStateException("이미 처리된 양도 요청입니다.");
+            throw new IllegalStateException("이미 만료된 링크입니다.");
         }
 
         // 코멘트 구성

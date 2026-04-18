@@ -86,60 +86,6 @@ class RefundControllerTest {
     // ========== RefundController ==========
 
     @Test
-    void 환불요청_생성_성공() throws Exception {
-        RefundResponse response = RefundResponse.builder()
-                .seq(1L).memberName("홍길동").status(RequestStatus.대기)
-                .membershipName("3개월권").price("300000")
-                .build();
-
-        given(refundService.create(any(), eq(1L))).willReturn(response);
-
-        Map<String, Object> body = new HashMap<>();
-        body.put("memberSeq", 10L);
-        body.put("memberMembershipSeq", 20L);
-        body.put("memberName", "홍길동");
-        body.put("phoneNumber", "01012345678");
-        body.put("membershipName", "3개월권");
-        body.put("price", "300000");
-        body.put("reason", "개인 사정");
-        mockMvc.perform(post("/api/complex/refunds")
-                        .with(auth())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(body)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("환불 요청 등록 완료"))
-                .andExpect(jsonPath("$.data.memberName").value("홍길동"));
-    }
-
-    @Test
-    void 환불요청_생성시_memberSeq_없으면_400() throws Exception {
-        Map<String, Object> body = new HashMap<>();
-        body.put("memberMembershipSeq", 20L);
-        body.put("memberName", "홍길동");
-
-        mockMvc.perform(post("/api/complex/refunds")
-                        .with(auth())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(body)))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void 환불요청_생성시_memberName_빈값이면_400() throws Exception {
-        Map<String, Object> body = new HashMap<>();
-        body.put("memberSeq", 10L);
-        body.put("memberMembershipSeq", 20L);
-        body.put("memberName", "");
-
-        mockMvc.perform(post("/api/complex/refunds")
-                        .with(auth())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(body)))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
     void 환불요청_상태_승인으로_변경() throws Exception {
         RefundResponse response = RefundResponse.builder()
                 .seq(1L).status(RequestStatus.승인).build();
@@ -159,7 +105,7 @@ class RefundControllerTest {
     @Test
     void 환불요청_상태_반려로_변경() throws Exception {
         RefundResponse response = RefundResponse.builder()
-                .seq(1L).status(RequestStatus.반려).rejectReason("서류 미비").build();
+                .seq(1L).status(RequestStatus.반려).adminMessage("서류 미비").build();
 
         given(refundService.updateStatus(eq(1L), eq(RequestStatus.반려), eq("서류 미비")))
                 .willReturn(response);
@@ -167,10 +113,10 @@ class RefundControllerTest {
         mockMvc.perform(put("/api/complex/refunds/{seq}/status", 1L)
                         .with(auth())
                         .param("status", "반려")
-                        .param("rejectReason", "서류 미비"))
+                        .param("adminMessage", "서류 미비"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("반려"))
-                .andExpect(jsonPath("$.data.rejectReason").value("서류 미비"));
+                .andExpect(jsonPath("$.data.adminMessage").value("서류 미비"));
     }
 
     @Test

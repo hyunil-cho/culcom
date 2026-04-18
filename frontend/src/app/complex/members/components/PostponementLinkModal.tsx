@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import UnavailableNotice from './UnavailableNotice';
 import CopyableUrlField from './CopyableUrlField';
 import SmsSendSection from './SmsSendSection';
+import { hasOutstanding, isPostponable } from '../membershipEligibility';
 import shared from './LinkShared.module.css';
 import s from './PostponementLinkModal.module.css';
 
@@ -42,23 +43,25 @@ export default function PostponementLinkModal({ memberSeq, memberName, memberPho
   );
   const loading = msLoading || histLoading;
 
-  const { canPostpone, unavailableReason } = useMemo(() => {
-    const usableMemberships = memberships.filter((m) => m.status === '활성');
-    if (usableMemberships.length === 0) {
-      return { canPostpone: false, unavailableReason: '사용 가능한 멤버십이 없습니다.' };
+  /**
+   * 연기 가능: 활성 + 미수금 없음 + 연기 잔여 횟수 있음.
+   * 하나라도 만족하는 멤버십이 있어야 링크 생성 허용.
+   */
+  const { canPostpone, unavailableReason, postponableMemberships, activeMemberships } = useMemo(() => {
+    const actives = memberships.filter((m) => m.status === '활성');
+    if (actives.length === 0) {
+      return { canPostpone: false, unavailableReason: '사용 가능한 멤버십이 없습니다.', postponableMemberships: [], activeMemberships: actives };
     }
-    const hasOutstanding = usableMemberships.some((m) => m.outstanding != null && m.outstanding > 0);
-    if (hasOutstanding) {
-      return { canPostpone: false, unavailableReason: '미수금이 남아있어 연기 신청을 할 수 없습니다. 미수금을 완납 후 진행해주세요.' };
+    const postponables = actives.filter(isPostponable);
+    if (postponables.length === 0) {
+      const allOutstanding = actives.every(hasOutstanding);
+      const reason = allOutstanding
+        ? '미수금이 남아있어 연기 신청을 할 수 없습니다. 미수금을 완납 후 진행해주세요.'
+        : '연기 가능한 멤버십이 없습니다. (미수금 잔액 또는 연기 가능 횟수 소진)';
+      return { canPostpone: false, unavailableReason: reason, postponableMemberships: [], activeMemberships: actives };
     }
-    const hasRemaining = usableMemberships.some((m) => m.postponeTotal - m.postponeUsed > 0);
-    if (!hasRemaining) {
-      return { canPostpone: false, unavailableReason: '연기 가능 횟수가 소진되었습니다.' };
-    }
-    return { canPostpone: true, unavailableReason: '' };
+    return { canPostpone: true, unavailableReason: '', postponableMemberships: postponables, activeMemberships: actives };
   }, [memberships]);
-
-  const activeMemberships = memberships.filter((m) => m.status === '활성');
 
   const historySection = history.length > 0 && (
     <>
@@ -78,8 +81,10 @@ export default function PostponementLinkModal({ memberSeq, memberName, memberPho
                 {h.startDate && h.endDate && <span>{h.startDate} ~ {h.endDate}</span>}
               </div>
               <div className={s.historyReason}>{h.reason}</div>
-              {h.status === '반려' && h.rejectReason && (
-                <div className={s.historyReject}>반려 사유: {h.rejectReason}</div>
+              {h.adminMessage && (
+                <div className={s.historyReject}>
+                  {h.status === '반려' ? '반려 사유' : '관리자 메시지'}: {h.adminMessage}
+                </div>
               )}
             </div>
           );

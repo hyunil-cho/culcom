@@ -94,4 +94,26 @@
         ORDER BY bucket
     </select>
 
+    <!-- 복귀 안내 SMS 발송 성공 추이 -->
+    <select id="selectReturnSmsSuccess" resultType="com.culcom.dto.complex.dashboard.TrendItem">
+        SELECT <include refid="bucketExpr"><property name="col" value="s.scan_date"/></include> AS bucket,
+               COALESCE(SUM(s.sms_success_count), 0) AS count
+        FROM complex_postponement_return_scan_logs s
+        WHERE s.branch_seq = #{branchSeq}
+          AND s.scan_date >= <include refid="sinceExpr"/>
+        GROUP BY bucket
+        ORDER BY bucket
+    </select>
+
+    <!-- 복귀 안내 SMS 발송 실패 추이 -->
+    <select id="selectReturnSmsFail" resultType="com.culcom.dto.complex.dashboard.TrendItem">
+        SELECT <include refid="bucketExpr"><property name="col" value="s.scan_date"/></include> AS bucket,
+               COALESCE(SUM(s.sms_fail_count), 0) AS count
+        FROM complex_postponement_return_scan_logs s
+        WHERE s.branch_seq = #{branchSeq}
+          AND s.scan_date >= <include refid="sinceExpr"/>
+        GROUP BY bucket
+        ORDER BY bucket
+    </select>
+
 </mapper>

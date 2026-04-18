@@ -21,6 +21,7 @@ export interface TransferRequestItem {
   inviteToken: string | null;
   toCustomerSeq: number | null;
   toCustomerName: string | null;
+  adminMessage: string | null;
   createdDate: string;
 }
 
@@ -59,8 +60,10 @@ export const transferApi = {
     api.get<TransferRequestItem | null>(`/transfer-requests/pending?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`),
   create: (memberMembershipSeq: number) =>
     api.post<TransferRequestItem>('/transfer-requests', { memberMembershipSeq }),
-  updateStatus: (seq: number, status: TransferStatus) =>
-    api.put<TransferRequestItem>(`/transfer-requests/${seq}/status?status=${status}`),
+  updateStatus: (seq: number, status: TransferStatus, adminMessage?: string) =>
+    api.put<TransferRequestItem>(
+      `/transfer-requests/${seq}/status?status=${status}${adminMessage ? `&adminMessage=${encodeURIComponent(adminMessage)}` : ''}`
+    ),
   complete: (seq: number, memberSeq: number) =>
     api.post<TransferRequestItem>(`/transfer-requests/${seq}/complete?memberSeq=${memberSeq}`),
 };

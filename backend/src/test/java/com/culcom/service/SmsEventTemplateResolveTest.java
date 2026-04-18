@@ -65,10 +65,10 @@ class SmsEventTemplateResolveTest {
     @BeforeEach
     void setUp() {
         placeholderRepository.deleteAll();
-        placeholderRepository.save(Placeholder.builder().name("{{고객명}}").value("{customer.name}").build());
-        placeholderRepository.save(Placeholder.builder().name("{{전화번호}}").value("{customer.phone_number}").build());
-        placeholderRepository.save(Placeholder.builder().name("{{지점명}}").value("{branch.name}").build());
-        placeholderRepository.save(Placeholder.builder().name("{{지점주소}}").value("{branch.address}").build());
+        placeholderRepository.save(Placeholder.builder().name("{{고객명}}").value("{customer.name}").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
+        placeholderRepository.save(Placeholder.builder().name("{{전화번호}}").value("{customer.phone_number}").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
+        placeholderRepository.save(Placeholder.builder().name("{{지점명}}").value("{branch.name}").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
+        placeholderRepository.save(Placeholder.builder().name("{{지점주소}}").value("{branch.address}").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
 
         branch = branchRepository.save(Branch.builder()
                 .branchName("강남지점")
@@ -79,10 +79,15 @@ class SmsEventTemplateResolveTest {
     }
 
     private MessageTemplate createTemplate(String content) {
+        return createTemplate(content, com.culcom.entity.enums.SmsEventType.회원등록);
+    }
+
+    private MessageTemplate createTemplate(String content, com.culcom.entity.enums.SmsEventType eventType) {
         return templateRepository.save(MessageTemplate.builder()
                 .templateName("테스트 템플릿")
                 .messageContext(content)
                 .branch(branch)
+                .eventType(eventType)
                 .build());
     }
 
@@ -129,7 +134,7 @@ class SmsEventTemplateResolveTest {
     private String captureResolvedTemplate() {
         ArgumentCaptor<String> templateCaptor = ArgumentCaptor.forClass(String.class);
         verify(messageResolver, atLeastOnce()).resolveWithContext(
-                templateCaptor.capture(), any(), any(), any(), any());
+                templateCaptor.capture(), any(), any(), any(), any(), any());
         return templateCaptor.getValue();
     }
 
@@ -154,7 +159,8 @@ class SmsEventTemplateResolveTest {
                     argThat(b -> "강남지점".equals(b.getBranchName())),
                     eq("홍길동"),
                     eq("01012345678"),
-                    isNull());
+                    isNull(),
+                    any());
         }
 
         @Test
@@ -194,7 +200,8 @@ class SmsEventTemplateResolveTest {
                     argThat(b -> "강남지점".equals(b.getBranchName())),
                     eq("이철수"),
                     eq("01055556666"),
-                    isNull());
+                    isNull(),
+                    any());
         }
     }
 
@@ -227,7 +234,8 @@ class SmsEventTemplateResolveTest {
                     argThat(b -> "강남지점".equals(b.getBranchName())),
                     eq("박지성"),
                     eq("01033334444"),
-                    isNull());
+                    isNull(),
+                    any());
         }
     }
 
@@ -260,7 +268,8 @@ class SmsEventTemplateResolveTest {
                     argThat(b -> "강남지점".equals(b.getBranchName())),
                     eq("손흥민"),
                     eq("01077778888"),
-                    isNull());
+                    isNull(),
+                    any());
         }
     }
 
@@ -293,7 +302,8 @@ class SmsEventTemplateResolveTest {
                     argThat(b -> "강남지점".equals(b.getBranchName())),
                     eq("김민재"),
                     eq("01011119999"),
-                    isNull());
+                    isNull(),
+                    any());
         }
     }
 
@@ -326,7 +336,8 @@ class SmsEventTemplateResolveTest {
                     argThat(b -> "강남지점".equals(b.getBranchName())),
                     eq("이강인"),
                     eq("01022223333"),
-                    isNull());
+                    isNull(),
+                    any());
         }
     }
 
@@ -352,7 +363,7 @@ class SmsEventTemplateResolveTest {
             req.setPhoneNumber("01000000000");
             complexMemberService.create(req, branch.getSeq());
 
-            verify(messageResolver, never()).resolveWithContext(any(), any(), any(), any(), any());
+            verify(messageResolver, never()).resolveWithContext(any(), any(), any(), any(), any(), any());
         }
     }
 
@@ -370,7 +381,7 @@ class SmsEventTemplateResolveTest {
             req.setPhoneNumber("01000000001");
             complexMemberService.create(req, branch.getSeq());
 
-            verify(messageResolver, never()).resolveWithContext(any(), any(), any(), any(), any());
+            verify(messageResolver, never()).resolveWithContext(any(), any(), any(), any(), any(), any());
         }
     }
 }

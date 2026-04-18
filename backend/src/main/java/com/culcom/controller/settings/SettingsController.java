@@ -54,8 +54,9 @@ public class SettingsController {
 
     @GetMapping("/sms-events/templates")
     public ResponseEntity<ApiResponse<List<MessageTemplateSimpleResponse>>> getSmsEventTemplates(
-            @AuthenticationPrincipal CustomUserPrincipal principal) {
-        return ResponseEntity.ok(ApiResponse.ok(settingsService.getTemplates(principal.getSelectedBranchSeq())));
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @RequestParam(required = false) SmsEventType eventType) {
+        return ResponseEntity.ok(ApiResponse.ok(settingsService.getTemplates(principal.getSelectedBranchSeq(), eventType)));
     }
 
     @GetMapping("/sms-events/sender-numbers")

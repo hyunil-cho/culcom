@@ -2,6 +2,8 @@ package com.culcom.service;
 
 import com.culcom.dto.message.*;
 import com.culcom.entity.branch.Branch;
+import com.culcom.entity.enums.PlaceholderCategory;
+import com.culcom.entity.enums.SmsEventType;
 import com.culcom.entity.message.MessageTemplate;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +48,7 @@ public class MessageTemplateService {
                 .description(request.getDescription())
                 .messageContext(request.getMessageContext())
                 .isActive(request.getIsActive() != null ? request.getIsActive() : true)
+                .eventType(request.getEventType())
                 .build();
         branchRepository.findById(branchSeq).ifPresent(template::setBranch);
         return MessageTemplateResponse.from(templateRepository.save(template));
@@ -59,6 +63,9 @@ public class MessageTemplateService {
         t.setMessageContext(request.getMessageContext());
         if (request.getIsActive() != null) {
             t.setIsActive(request.getIsActive());
+        }
+        if (request.getEventType() != null) {
+            t.setEventType(request.getEventType());
         }
         return MessageTemplateResponse.from(templateRepository.save(t));
     }
@@ -86,11 +93,15 @@ public class MessageTemplateService {
         );
     }
 
-    public List<PlaceholderResponse> getPlaceholders() {
-        return placeholderRepository.findAll()
-                .stream()
-                .map(PlaceholderResponse::from)
-                .toList();
+    public List<PlaceholderResponse> getPlaceholders(SmsEventType eventType) {
+        List<com.culcom.entity.message.Placeholder> entities;
+        if (eventType == null) {
+            entities = placeholderRepository.findAll();
+        } else {
+            Set<PlaceholderCategory> allowed = PlaceholderCategory.allowedFor(eventType);
+            entities = placeholderRepository.findByCategoryIn(allowed);
+        }
+        return entities.stream().map(PlaceholderResponse::from).toList();
     }
 
     @Transactional

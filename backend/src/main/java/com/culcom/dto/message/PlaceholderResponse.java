@@ -1,5 +1,6 @@
 package com.culcom.dto.message;
 
+import com.culcom.entity.enums.PlaceholderCategory;
 import com.culcom.entity.message.Placeholder;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +16,7 @@ public class PlaceholderResponse {
     private String comment;
     private String examples;
     private String value;
+    private PlaceholderCategory category;
 
     public static PlaceholderResponse from(Placeholder entity) {
         return PlaceholderResponse.builder()
@@ -23,6 +25,7 @@ public class PlaceholderResponse {
                 .comment(entity.getComment())
                 .examples(entity.getExamples())
                 .value(entity.getValue())
+                .category(entity.getCategory())
                 .build();
     }
 }

@@ -5,6 +5,7 @@ import lombok.Data;
 
 @Data @AllArgsConstructor
 public class ClassInfo {
+    private Long seq;
     private String name;
     private String timeSlotName;
     private String startTime;

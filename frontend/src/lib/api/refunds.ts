@@ -10,7 +10,7 @@ export interface RefundRequest {
   price: string | null;
   reason: string;
   status: '대기' | '승인' | '반려';
-  rejectReason: string | null;
+  adminMessage: string | null;
   createdDate: string;
   startDate: string | null;
   expiryDate: string | null;
@@ -28,9 +28,9 @@ export interface RefundReason {
 export const refundApi = {
   list: (params?: string) =>
     api.get<PageResponse<RefundRequest>>(`${API.COMPLEX_REFUNDS}${params ? `?${params}` : ''}`),
-  updateStatus: (seq: number, status: string, rejectReason?: string) =>
+  updateStatus: (seq: number, status: string, adminMessage?: string) =>
     api.put<RefundRequest>(
-      `${API.COMPLEX_REFUND_STATUS(seq)}?status=${encodeURIComponent(status)}${rejectReason ? `&rejectReason=${encodeURIComponent(rejectReason)}` : ''}`
+      `${API.COMPLEX_REFUND_STATUS(seq)}?status=${encodeURIComponent(status)}${adminMessage ? `&adminMessage=${encodeURIComponent(adminMessage)}` : ''}`
     ),
   reasons: () => api.get<RefundReason[]>(API.COMPLEX_REFUND_REASONS),
   addReason: (reason: string) => api.post<RefundReason>(API.COMPLEX_REFUND_REASONS, { reason }),

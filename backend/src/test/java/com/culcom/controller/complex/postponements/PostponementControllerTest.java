@@ -102,58 +102,6 @@ class PostponementControllerTest {
     // ========== PostponementController ==========
 
     @Test
-    void 연기요청_생성_성공() throws Exception {
-        PostponementResponse response = PostponementResponse.builder()
-                .seq(1L).memberName("홍길동").status(RequestStatus.대기).build();
-
-        given(postponementService.create(any(), eq(1L))).willReturn(response);
-
-        Map<String, Object> body = new HashMap<>();
-        body.put("memberSeq", 10L);
-        body.put("memberMembershipSeq", 20L);
-        body.put("memberName", "홍길동");
-        body.put("phoneNumber", "01012345678");
-        body.put("startDate", "2026-04-01");
-        body.put("endDate", "2026-04-15");
-        body.put("reason", "개인 사정");
-
-        mockMvc.perform(post("/api/complex/postponements")
-                        .with(auth())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(body)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("연기 요청 등록 완료"))
-                .andExpect(jsonPath("$.data.memberName").value("홍길동"));
-    }
-
-    @Test
-    void 연기요청_생성시_memberSeq_없으면_400() throws Exception {
-        Map<String, Object> body = new HashMap<>();
-        body.put("memberMembershipSeq", 20L);
-        body.put("memberName", "홍길동");
-
-        mockMvc.perform(post("/api/complex/postponements")
-                        .with(auth())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(body)))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void 연기요청_생성시_memberMembershipSeq_없으면_400() throws Exception {
-        Map<String, Object> body = new HashMap<>();
-        body.put("memberSeq", 10L);
-        body.put("memberName", "홍길동");
-
-        mockMvc.perform(post("/api/complex/postponements")
-                        .with(auth())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(body)))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
     void 연기요청_상태_승인으로_변경() throws Exception {
         PostponementResponse response = PostponementResponse.builder()
                 .seq(1L).status(RequestStatus.승인).build();
@@ -173,7 +121,7 @@ class PostponementControllerTest {
     @Test
     void 연기요청_상태_반려로_변경() throws Exception {
         PostponementResponse response = PostponementResponse.builder()
-                .seq(1L).status(RequestStatus.반려).rejectReason("사유 부족").build();
+                .seq(1L).status(RequestStatus.반려).adminMessage("사유 부족").build();
 
         given(postponementService.updateStatus(eq(1L), eq(RequestStatus.반려), eq("사유 부족")))
                 .willReturn(response);
@@ -181,10 +129,10 @@ class PostponementControllerTest {
         mockMvc.perform(put("/api/complex/postponements/{seq}/status", 1L)
                         .with(auth())
                         .param("status", "반려")
-                        .param("rejectReason", "사유 부족"))
+                        .param("adminMessage", "사유 부족"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("반려"))
-                .andExpect(jsonPath("$.data.rejectReason").value("사유 부족"));
+                .andExpect(jsonPath("$.data.adminMessage").value("사유 부족"));
     }
 
     @Test

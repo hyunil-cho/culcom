@@ -89,7 +89,7 @@ export const ROUTES = {
   COMPLEX_MEMBER_LINKS: `${R.COMPLEX}/members/links`,
   COMPLEX_OUTSTANDING: `${R.COMPLEX}/members/outstanding`,
   COMPLEX_SETTINGS: `${R.COMPLEX}/settings`,
-  COMPLEX_SETTINGS_CATALOGS: `${R.COMPLEX}/settings/catalogs`,
+  SETTINGS_CATALOGS: `${R.SETTINGS}/catalogs`,
   COMPLEX_MEMBER_EDIT: (seq: number) => `${R.COMPLEX}/members/${seq}/edit`,
   COMPLEX_STAFFS: `${R.COMPLEX}/staffs`,
   COMPLEX_STAFFS_ADD: `${R.COMPLEX}/staffs/add`,

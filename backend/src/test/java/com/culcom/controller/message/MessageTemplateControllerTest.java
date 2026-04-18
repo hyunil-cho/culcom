@@ -75,6 +75,7 @@ class MessageTemplateControllerTest {
                 .templateName(name)
                 .messageContext(content)
                 .branch(branch)
+                .eventType(com.culcom.entity.enums.SmsEventType.회원등록)
                 .build());
     }
 
@@ -101,7 +102,8 @@ class MessageTemplateControllerTest {
             Branch otherBranch = branchRepository.save(Branch.builder()
                     .branchName("다른지점").alias("other-" + System.nanoTime()).build());
             templateRepository.save(MessageTemplate.builder()
-                    .templateName("다른지점템플릿").messageContext("다른내용").branch(otherBranch).build());
+                    .templateName("다른지점템플릿").messageContext("다른내용").branch(otherBranch)
+                    .eventType(com.culcom.entity.enums.SmsEventType.회원등록).build());
 
             mockMvc.perform(get("/api/message-templates").with(auth()))
                     .andExpect(status().isOk())
@@ -149,7 +151,8 @@ class MessageTemplateControllerTest {
             Map<String, Object> body = Map.of(
                     "templateName", "새 템플릿",
                     "messageContext", "{{고객명}}님 안녕하세요",
-                    "isActive", true);
+                    "isActive", true,
+                    "eventType", "회원등록");
 
             mockMvc.perform(post("/api/message-templates")
                             .with(auth())
@@ -159,7 +162,8 @@ class MessageTemplateControllerTest {
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.message").value("템플릿 추가 완료"))
                     .andExpect(jsonPath("$.data.templateName").value("새 템플릿"))
-                    .andExpect(jsonPath("$.data.messageContext").value("{{고객명}}님 안녕하세요"));
+                    .andExpect(jsonPath("$.data.messageContext").value("{{고객명}}님 안녕하세요"))
+                    .andExpect(jsonPath("$.data.eventType").value("회원등록"));
         }
 
         @Test
@@ -297,9 +301,9 @@ class MessageTemplateControllerTest {
             // DataInitializer가 test에서는 동작하지 않을 수 있으므로 직접 세팅
             placeholderRepository.deleteAll();
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{고객명}}").value("{customer.name}").comment("고객 이름").build());
+                    .name("{{고객명}}").value("{customer.name}").comment("고객 이름").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{전화번호}}").value("{customer.phone_number}").comment("전화번호").build());
+                    .name("{{전화번호}}").value("{customer.phone_number}").comment("전화번호").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
 
             mockMvc.perform(get("/api/message-templates/placeholders").with(auth()))
                     .andExpect(status().isOk())
@@ -317,15 +321,15 @@ class MessageTemplateControllerTest {
         void setUpPlaceholders() {
             placeholderRepository.deleteAll();
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{고객명}}").value("{customer.name}").comment("고객 이름").build());
+                    .name("{{고객명}}").value("{customer.name}").comment("고객 이름").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{전화번호}}").value("{customer.phone_number}").comment("전화번호").build());
+                    .name("{{전화번호}}").value("{customer.phone_number}").comment("전화번호").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{지점명}}").value("{branch.name}").comment("지점 이름").build());
+                    .name("{{지점명}}").value("{branch.name}").comment("지점 이름").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{지점주소}}").value("{branch.address}").comment("주소").build());
+                    .name("{{지점주소}}").value("{branch.address}").comment("주소").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
             placeholderRepository.save(Placeholder.builder()
-                    .name("{{예약일자}}").value("{reservation.interview_date}").comment("예약일").build());
+                    .name("{{예약일자}}").value("{reservation.interview_date}").comment("예약일").category(com.culcom.entity.enums.PlaceholderCategory.RESERVATION).build());
         }
 
         @Test

@@ -2,6 +2,7 @@ package com.culcom.entity.complex.postponement;
 
 import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.branch.Branch;
+import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.enums.RequestStatus;
@@ -52,7 +53,11 @@ public class ComplexPostponementRequest extends BaseTimeEntity {
     @Builder.Default
     private RequestStatus status = RequestStatus.대기;
 
-    @Column(name = "reject_reason", length = 300)
-    private String rejectReason;
+    @Column(name = "admin_message", length = 300)
+    private String adminMessage;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "desired_class_seq")
+    private ComplexClass desiredClass;
 
 }

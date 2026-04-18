@@ -68,7 +68,7 @@ class PostponementServiceSmsTest {
         postponementService.updateStatus(1L, RequestStatus.승인, null);
 
         then(smsService).should().sendEventSmsIfConfigured(
-                eq(1L), eq(SmsEventType.연기승인), eq("홍길동"), eq("01012345678"));
+                eq(1L), eq(SmsEventType.연기승인), eq("홍길동"), eq("01012345678"), anyMap());
     }
 
     @Test
@@ -79,7 +79,8 @@ class PostponementServiceSmsTest {
         postponementService.updateStatus(1L, RequestStatus.반려, "사유 부족");
 
         then(smsService).should().sendEventSmsIfConfigured(
-                eq(1L), eq(SmsEventType.연기반려), eq("홍길동"), eq("01012345678"));
+                eq(1L), eq(SmsEventType.연기반려), eq("홍길동"), eq("01012345678"),
+                eq(java.util.Map.of("{action.reject_reason}", "사유 부족")));
     }
 
     @Test
@@ -90,7 +91,7 @@ class PostponementServiceSmsTest {
         postponementService.updateStatus(1L, RequestStatus.승인, null);
 
         then(smsService).should(never()).sendEventSmsIfConfigured(
-                anyLong(), eq(SmsEventType.연기반려), anyString(), anyString());
+                anyLong(), eq(SmsEventType.연기반려), anyString(), anyString(), anyMap());
     }
 
     @Test

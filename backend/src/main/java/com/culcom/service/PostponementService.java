@@ -1,7 +1,6 @@
 package com.culcom.service;
 
 import com.culcom.dto.complex.ReasonDto;
-import com.culcom.dto.complex.postponement.PostponementCreateRequest;
 import com.culcom.dto.complex.postponement.PostponementResponse;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.postponement.ComplexPostponementReason;
@@ -13,7 +12,6 @@ import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ComplexMemberMembershipRepository;
-import com.culcom.repository.ComplexMemberRepository;
 import com.culcom.repository.ComplexPostponementReasonRepository;
 import com.culcom.repository.ComplexPostponementRequestRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,68 +29,16 @@ public class PostponementService {
     private final ComplexPostponementRequestRepository postponementRepository;
     private final ComplexPostponementReasonRepository reasonRepository;
     private final BranchRepository branchRepository;
-    private final ComplexMemberRepository complexMemberRepository;
     private final ComplexMemberMembershipRepository complexMemberMembershipRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final SmsService smsService;
 
     @Transactional
-    public PostponementResponse create(PostponementCreateRequest req, Long branchSeq) {
-        if (req.getMemberMembershipSeq() != null) {
-            ComplexMemberMembership mm = complexMemberMembershipRepository.findById(req.getMemberMembershipSeq())
-                    .orElseThrow(() -> new EntityNotFoundException("멤버십"));
-            // 사용할 수 없는 멤버십(환불/만료/정지/기간소진/횟수소진)에는 연기 신청을 받지 않는다.
-            if (!mm.isActive()) {
-                throw new IllegalStateException("사용할 수 없는 멤버십에는 연기 신청을 할 수 없습니다.");
-            }
-            // 멤버십이 허용한 최대 연기 횟수(postponeTotal)를 초과하는 신청은 거부한다.
-            int used = mm.getPostponeUsed() != null ? mm.getPostponeUsed() : 0;
-            int total = mm.getPostponeTotal() != null ? mm.getPostponeTotal() : 0;
-            if (used >= total) {
-                throw new IllegalStateException("연기 가능 횟수를 초과했습니다. (사용 " + used + "/" + total + ")");
-            }
-            // 이미 승인된 연기 기간과 겹치는 신청은 거부한다.
-            if (req.getStartDate() != null && req.getEndDate() != null
-                    && postponementRepository.existsApprovedOverlap(mm.getSeq(), req.getStartDate(), req.getEndDate())) {
-                throw new IllegalStateException("이미 승인된 연기 기간과 겹칩니다.");
-            }
-        }
-
-        ComplexPostponementRequest entity = ComplexPostponementRequest.builder()
-                .memberName(req.getMemberName())
-                .phoneNumber(req.getPhoneNumber())
-                .startDate(req.getStartDate())
-                .endDate(req.getEndDate())
-                .reason(req.getReason())
-                .build();
-        if (req.getMemberSeq() != null) {
-            entity.setMember(complexMemberRepository.findById(req.getMemberSeq())
-                    .orElseThrow(() -> new EntityNotFoundException("회원")));
-        }
-        if (req.getMemberMembershipSeq() != null) {
-            entity.setMemberMembership(complexMemberMembershipRepository.findById(req.getMemberMembershipSeq())
-                    .orElseThrow(() -> new EntityNotFoundException("멤버십")));
-        }
-        branchRepository.findById(branchSeq).ifPresent(entity::setBranch);
-        postponementRepository.save(entity);
-
-        if (entity.getMember() != null) {
-            eventPublisher.publishEvent(ActivityEvent.of(entity.getMember(),
-                    ActivityEventType.POSTPONEMENT_REQUEST,
-                    "연기 요청: " + entity.getStartDate() + " ~ " + entity.getEndDate() + " / " + entity.getReason()));
-        }
-
-        return PostponementResponse.from(entity);
-    }
-
-    @Transactional
-    public PostponementResponse updateStatus(Long seq, RequestStatus status, String rejectReason) {
+    public PostponementResponse updateStatus(Long seq, RequestStatus status, String adminMessage) {
         ComplexPostponementRequest req = postponementRepository.findById(seq)
                 .orElseThrow(() -> new EntityNotFoundException("연기 요청"));
         req.setStatus(status);
-        if (status == RequestStatus.반려) {
-            req.setRejectReason(rejectReason);
-        }
+        req.setAdminMessage(adminMessage);
         if (status == RequestStatus.승인) {
             ComplexMemberMembership mm = req.getMemberMembership();
             if (mm != null) {
@@ -105,14 +51,15 @@ public class PostponementService {
         postponementRepository.save(req);
 
         RequestStatusEventHelper.publishStatusChangeEvent(eventPublisher,
-                req.getMember(), req.getMemberMembership(), status, rejectReason,
+                req.getMember(), req.getMemberMembership(), status, adminMessage,
                 ActivityEventType.POSTPONEMENT_APPROVE, ActivityEventType.POSTPONEMENT_REJECT,
                 "연기 " + status.name() + ": " + req.getStartDate() + " ~ " + req.getEndDate());
 
         if (req.getMember() != null && req.getBranch() != null) {
             SmsEventType smsType = status == RequestStatus.승인 ? SmsEventType.연기승인 : SmsEventType.연기반려;
             smsService.sendEventSmsIfConfigured(req.getBranch().getSeq(), smsType,
-                    req.getMemberName(), req.getPhoneNumber());
+                    req.getMemberName(), req.getPhoneNumber(),
+                    SmsActionContext.of(status, adminMessage));
         }
 
         return PostponementResponse.from(req);

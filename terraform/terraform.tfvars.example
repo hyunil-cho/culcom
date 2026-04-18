@@ -1,16 +1,21 @@
 # ─── 필수 변수 ───
 db_password         = "CHANGE_ME_strong_password_here"
 kakao_client_id     = "CHANGE_ME"
+kakao_client_secret = "CHANGE_ME"
 kakao_admin_key     = "CHANGE_ME"
 kakao_redirect_uri  = "http://ELASTIC_IP/api/public/board/kakao/callback"
+meta_verify_token   = "CHANGE_ME"
 app_image           = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/culcom-app:latest"
+root_domain         = "example.co.kr"
+domain_name         = "www.example.co.kr"
+route53_zone_id     = "Z0123456789ABCDEF"  # AWS 콘솔에서 수동 생성한 Hosted Zone ID
+alarm_emails        = ["admin1@example.co.kr", "admin2@example.co.kr"]
 
 # ─── 선택 변수 (기본값 존재) ───
 # aws_region        = "ap-northeast-2"
 # environment       = "stg"      # local / stg / prod. local 이면 RDS 가 퍼블릭 서브넷에 배치되고 외부 접근 허용
 # db_instance_class = "db.t3.micro"
 # ec2_instance_type = "t3.small"
-# domain_name       = "culcom.example.com"
 
 # ─── local 환경에서만 사용 ───
 # environment      = "local"

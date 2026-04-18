@@ -31,4 +31,14 @@ public class ComplexPostponementReturnScanLog extends BaseTimeEntity {
 
     @Column(name = "member_count", nullable = false)
     private int memberCount;
+
+    /** 복귀 안내 SMS 발송에 성공한 회원 수 */
+    @Column(name = "sms_success_count", nullable = false)
+    @Builder.Default
+    private int smsSuccessCount = 0;
+
+    /** 복귀 안내 SMS 발송에 실패한 회원 수 (템플릿 미설정·네트워크 오류 포함) */
+    @Column(name = "sms_fail_count", nullable = false)
+    @Builder.Default
+    private int smsFailCount = 0;
 }

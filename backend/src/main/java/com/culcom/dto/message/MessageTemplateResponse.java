@@ -1,5 +1,6 @@
 package com.culcom.dto.message;
 
+import com.culcom.entity.enums.SmsEventType;
 import com.culcom.entity.message.MessageTemplate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,6 +17,7 @@ public class MessageTemplateResponse {
     private String messageContext;
     private Boolean isDefault;
     private Boolean isActive;
+    private SmsEventType eventType;
     private String createdDate;
     private String lastUpdateDate;
 
@@ -27,6 +29,7 @@ public class MessageTemplateResponse {
                 .messageContext(entity.getMessageContext())
                 .isDefault(entity.getIsDefault())
                 .isActive(entity.getIsActive())
+                .eventType(entity.getEventType())
                 .createdDate(entity.getCreatedDate() != null ? entity.getCreatedDate().toString() : null)
                 .lastUpdateDate(entity.getLastUpdateDate() != null ? entity.getLastUpdateDate().toString() : null)
                 .build();

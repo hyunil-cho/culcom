@@ -24,7 +24,7 @@
             r.price,
             r.reason,
             r.status,
-            r.reject_reason AS rejectReason,
+            r.admin_message AS adminMessage,
             r.created_date AS createdDate,
             mm.start_date AS startDate,
             mm.expiry_date AS expiryDate,

@@ -102,7 +102,19 @@
       "Bash(git stash:*)",
       "Bash(git restore:*)",
       "Bash(./gradlew compileJava compileTestJava)",
-      "Bash(./gradlew compileJava --rerun-tasks)"
+      "Bash(./gradlew compileJava --rerun-tasks)",
+      "Bash(cd C:\\\\\\\\Users\\\\\\\\lookh\\\\\\\\IdeaProjects\\\\\\\\culcom\\\\\\\\frontend)",
+      "Bash(bash css-audit.sh)",
+      "Bash(tee /tmp/css-audit-result.txt)",
+      "Bash(bash *)",
+      "Bash(echo \"=== badge-info ===\" grep -rnE \"badge-info|badge-\\\\\\\\\\\\$|badge \\\\\\\\\\\\$\\\\{\" src --include='*.tsx' --include='*.ts')",
+      "Bash(./gradlew compileJava compileTestJava -q)",
+      "Bash(sed -i 's|\\\\.requiredMark { color: #e53e3e; }|.requiredMark { color: var\\(--danger\\); }|' \"src/app/\\(main\\)/survey/[seq]/options/page.module.css\")",
+      "Bash(sed -i 's|\\\\.requiredMark { color: #e53e3e; margin-left: 3px; }|.requiredMark { color: var\\(--danger\\); margin-left: 3px; }|' \"src/app/survey/[seq]/fill/page.module.css\")",
+      "Bash(awk '/^\\\\.requiredMark/{p=1} p{print; if\\(/}/\\)exit}' \"src/app/\\(main\\)/survey/page.module.css\")",
+      "Bash(awk '/^\\\\.requiredMark/{p=1} p{print; if\\(/}/\\)exit}' src/app/public/postponement/page.module.css)",
+      "Bash(./gradlew compileTestJava -q)",
+      "Bash(xargs -0 grep -l \"transfer\" -i)"
     ]
   }
 }

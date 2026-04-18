@@ -74,10 +74,10 @@ class TransferServiceSmsTest {
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
         given(transferRequestRepository.save(any())).willReturn(tr);
 
-        transferService.updateStatus(1L, TransferStatus.거절);
+        transferService.updateStatus(1L, TransferStatus.거절, null);
 
         then(smsService).should().sendEventSmsIfConfigured(
-                eq(1L), eq(SmsEventType.양도거절), eq("홍길동"), eq("01012345678"));
+                eq(1L), eq(SmsEventType.양도거절), eq("홍길동"), eq("01012345678"), any());
     }
 
     @Test
@@ -86,7 +86,7 @@ class TransferServiceSmsTest {
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
         given(transferRequestRepository.save(any())).willReturn(tr);
 
-        transferService.updateStatus(1L, TransferStatus.확인);
+        transferService.updateStatus(1L, TransferStatus.확인, null);
 
         then(smsService).shouldHaveNoInteractions();
     }
@@ -97,10 +97,10 @@ class TransferServiceSmsTest {
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
         given(transferRequestRepository.save(any())).willReturn(tr);
 
-        transferService.updateStatus(1L, TransferStatus.거절);
+        transferService.updateStatus(1L, TransferStatus.거절, null);
 
         then(smsService).should(never()).sendEventSmsIfConfigured(
-                anyLong(), eq(SmsEventType.양도완료), anyString(), anyString());
+                anyLong(), eq(SmsEventType.양도완료), anyString(), anyString(), any());
     }
 
     @Test
@@ -113,9 +113,9 @@ class TransferServiceSmsTest {
         transferService.completeTransfer(1L, 20L);
 
         then(smsService).should().sendEventSmsIfConfigured(
-                eq(1L), eq(SmsEventType.양도완료), eq("홍길동"), eq("01012345678"));
+                eq(1L), eq(SmsEventType.양도완료), eq("홍길동"), eq("01012345678"), any());
         then(smsService).should().sendEventSmsIfConfigured(
-                eq(1L), eq(SmsEventType.양도완료), eq("김철수"), eq("01098765432"));
+                eq(1L), eq(SmsEventType.양도완료), eq("김철수"), eq("01098765432"), any());
     }
 
     @Test
@@ -128,6 +128,6 @@ class TransferServiceSmsTest {
         transferService.completeTransfer(1L, 20L);
 
         then(smsService).should(never()).sendEventSmsIfConfigured(
-                anyLong(), eq(SmsEventType.양도거절), anyString(), anyString());
+                anyLong(), eq(SmsEventType.양도거절), anyString(), anyString(), any());
     }
 }

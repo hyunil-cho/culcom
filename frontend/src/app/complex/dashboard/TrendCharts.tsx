@@ -127,9 +127,13 @@ export default function TrendCharts() {
     양도: filledTransfers[i].count,
   }));
 
-  const returnData = fillBuckets(data.postponementReturns ?? [], period, count).map(m => ({
+  const filledReturnSuccess = fillBuckets(data.returnSmsSuccess ?? [], period, count);
+  const filledReturnFail = fillBuckets(data.returnSmsFail ?? [], period, count);
+  const returnData = fillBuckets(data.postponementReturns ?? [], period, count).map((m, i) => ({
     bucket: m.bucket,
-    복귀예정: m.count,
+    전체: m.count,
+    성공: filledReturnSuccess[i]?.count ?? 0,
+    실패: filledReturnFail[i]?.count ?? 0,
   }));
 
   const tickFormatter = formatBucket(period);
@@ -185,18 +189,20 @@ export default function TrendCharts() {
         </div>
 
         <div style={CARD}>
-          <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: '#333' }}>복귀 예정자 추이</h3>
+          <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: '#333' }}>복귀 예정자 및 안내 SMS 발송</h3>
           <p style={{ margin: '0 0 12px', fontSize: '0.75rem', color: '#888' }}>
-            매일 오전 11시 스케줄러가 다음날 복귀 회원을 집계한 결과
+            매일 오전 11시 스케줄러가 다음날 복귀 회원을 집계하고 안내 SMS를 발송한 결과
           </p>
-          <ResponsiveContainer width="100%" height={240}>
+          <ResponsiveContainer width="100%" height={260}>
             <BarChart data={returnData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="bucket" tickFormatter={tickFormatter} fontSize={12} />
               <YAxis allowDecimals={false} fontSize={12} />
               <Tooltip labelFormatter={tickFormatter} />
               <Legend />
-              <Bar dataKey="복귀예정" fill="#0ca678" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="전체" fill="#0ca678" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="성공" fill="#4a90e2" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="실패" fill="#e03131" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

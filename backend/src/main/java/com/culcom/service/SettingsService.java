@@ -2,6 +2,7 @@ package com.culcom.service;
 
 import com.culcom.dto.settings.*;
 import com.culcom.entity.enums.SmsEventType;
+import com.culcom.entity.message.MessageTemplate;
 import com.culcom.entity.settings.SmsEventConfig;
 import com.culcom.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -19,12 +20,13 @@ public class SettingsService {
     private final MymunjaConfigInfoRepository mymunjaConfigInfoRepository;
     private final BranchRepository branchRepository;
 
-    public List<MessageTemplateSimpleResponse> getTemplates(Long branchSeq) {
-        return messageTemplateRepository
-                .findByBranchSeqAndIsActiveTrueOrderByIsDefaultDescLastUpdateDateDesc(branchSeq)
-                .stream()
-                .map(MessageTemplateSimpleResponse::from)
-                .toList();
+    public List<MessageTemplateSimpleResponse> getTemplates(Long branchSeq, SmsEventType eventType) {
+        List<MessageTemplate> templates = eventType == null
+                ? messageTemplateRepository
+                        .findByBranchSeqAndIsActiveTrueOrderByIsDefaultDescLastUpdateDateDesc(branchSeq)
+                : messageTemplateRepository
+                        .findByBranchSeqAndEventTypeAndIsActiveTrueOrderByIsDefaultDescLastUpdateDateDesc(branchSeq, eventType);
+        return templates.stream().map(MessageTemplateSimpleResponse::from).toList();
     }
 
     public List<String> getSenderNumbers(Long branchSeq) {
@@ -45,6 +47,14 @@ public class SettingsService {
 
     public SmsEventConfigResponse saveSmsEventConfig(SmsEventConfigRequest request, Long branchSeq) {
         SmsEventType eventType = SmsEventType.valueOf(request.getEventType());
+
+        MessageTemplate template = messageTemplateRepository.findById(request.getTemplateSeq())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 템플릿입니다."));
+        if (template.getEventType() != eventType) {
+            throw new IllegalArgumentException(
+                    "선택한 템플릿은 '" + eventType + "' 이벤트용이 아닙니다. (템플릿 이벤트: " + template.getEventType() + ")");
+        }
+
         SmsEventConfig config = smsEventConfigRepository.findByBranchSeqAndEventType(branchSeq, eventType)
                 .orElseGet(() -> {
                     SmsEventConfig newConfig = new SmsEventConfig();
@@ -53,7 +63,7 @@ public class SettingsService {
                     return newConfig;
                 });
 
-        messageTemplateRepository.findById(request.getTemplateSeq()).ifPresent(config::setTemplate);
+        config.setTemplate(template);
         config.setSenderNumber(request.getSenderNumber());
         config.setAutoSend(request.getAutoSend());
 

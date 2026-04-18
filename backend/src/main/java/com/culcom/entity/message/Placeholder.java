@@ -1,5 +1,6 @@
 package com.culcom.entity.message;
 
+import com.culcom.entity.enums.PlaceholderCategory;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,4 +26,8 @@ public class Placeholder {
 
     @Column(name = "placeholder_value", length = 100)
     private String value;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private PlaceholderCategory category;
 }

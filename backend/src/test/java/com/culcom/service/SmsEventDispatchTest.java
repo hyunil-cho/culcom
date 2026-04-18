@@ -151,7 +151,7 @@ class SmsEventDispatchTest {
         // 승인 시 회원에게 알림이 가야 한다 — 어떤 이벤트 타입이든 최소 1회 발송이 기대된다
         verify(smsService, atLeastOnce()).sendEventSmsIfConfigured(
                 eq(b.getSeq()), any(SmsEventType.class),
-                eq(m.getName()), eq(m.getPhoneNumber()));
+                eq(m.getName()), eq(m.getPhoneNumber()), any());
     }
 
     @Test
@@ -173,7 +173,7 @@ class SmsEventDispatchTest {
 
         verify(smsService, atLeastOnce()).sendEventSmsIfConfigured(
                 eq(b.getSeq()), any(SmsEventType.class),
-                eq(m.getName()), eq(m.getPhoneNumber()));
+                eq(m.getName()), eq(m.getPhoneNumber()), any());
     }
 
     // ── 3) 환불 승인/반려 ─ 현재 미구현 (예상 실패) ────────────────────
@@ -197,7 +197,7 @@ class SmsEventDispatchTest {
 
         verify(smsService, atLeastOnce()).sendEventSmsIfConfigured(
                 eq(b.getSeq()), any(SmsEventType.class),
-                eq(m.getName()), eq(m.getPhoneNumber()));
+                eq(m.getName()), eq(m.getPhoneNumber()), any());
     }
 
     @Test
@@ -219,7 +219,7 @@ class SmsEventDispatchTest {
 
         verify(smsService, atLeastOnce()).sendEventSmsIfConfigured(
                 eq(b.getSeq()), any(SmsEventType.class),
-                eq(m.getName()), eq(m.getPhoneNumber()));
+                eq(m.getName()), eq(m.getPhoneNumber()), any());
     }
 
     // ── 4) 양도 승인(확인)/거절 ─ 현재 미구현 (예상 실패) ─────────────
@@ -244,7 +244,7 @@ class SmsEventDispatchTest {
         // 양도자와 양수자 양쪽 다 알림을 받는 것이 자연스럽지만,
         // 이 테스트는 최소한 '어떤 알림이든' 가는지만 느슨하게 확인한다.
         verify(smsService, atLeastOnce()).sendEventSmsIfConfigured(
-                anyLong(), any(SmsEventType.class), anyString(), anyString());
+                anyLong(), any(SmsEventType.class), anyString(), anyString(), any());
     }
 
     @Test
@@ -261,11 +261,11 @@ class SmsEventDispatchTest {
                 .build());
         clearInvocations(smsService);
 
-        transferService.updateStatus(tr.getSeq(), TransferStatus.거절);
+        transferService.updateStatus(tr.getSeq(), TransferStatus.거절, null);
 
         verify(smsService, atLeastOnce()).sendEventSmsIfConfigured(
                 eq(b.getSeq()), any(SmsEventType.class),
-                eq(from.getName()), eq(from.getPhoneNumber()));
+                eq(from.getName()), eq(from.getPhoneNumber()), any());
     }
 
     // ── 5) 회원 등록 — branchSeq가 null이거나 이상한 값이어도 발송 시도는 해야 ──

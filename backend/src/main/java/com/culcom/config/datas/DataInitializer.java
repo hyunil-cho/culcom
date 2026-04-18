@@ -79,7 +79,7 @@ public class DataInitializer implements ApplicationRunner {
 
     private void initSignupChannels() {
         if (signupChannelConfigRepository.count() > 0) return;
-        String[] seeds = {"INSTAGRAM", "NAVER", "REFERRAL", "FLYER", "HOMEPAGE"};
+        String[] seeds = {"INSTAGRAM", "광고", "워크인", "HOMEPAGE"};
         for (String code : seeds) {
             signupChannelConfigRepository.save(SignupChannelConfig.builder().code(code).isActive(true).build());
         }
@@ -134,19 +134,24 @@ public class DataInitializer implements ApplicationRunner {
             return;
         }
 
-        placeholderRepository.save(Placeholder.builder().name("{{고객명}}").comment("고객의 이름").examples("홍길동").value("{customer.name}").build());
-        placeholderRepository.save(Placeholder.builder().name("{{전화번호}}").comment("고객의 전화번호").examples("010-1234-5678").value("{customer.phone_number}").build());
-        placeholderRepository.save(Placeholder.builder().name("{{지점명}}").comment("소속 지점 이름").examples("강남지점").value("{branch.name}").build());
-        placeholderRepository.save(Placeholder.builder().name("{{현재날짜}}").comment("오늘 날짜").examples("2026-01-27").value("{system.current_date}").build());
-        placeholderRepository.save(Placeholder.builder().name("{{현재시간}}").comment("현재 시각").examples("14:30").value("{system.current_time}").build());
-        placeholderRepository.save(Placeholder.builder().name("{{현재날짜시간}}").comment("현재 날짜와 시각").examples("2026-01-27 14:30").value("{system.current_datetime}").build());
-        placeholderRepository.save(Placeholder.builder().name("{{예약일자}}").comment("예약 확정 일시").examples("2026년 2월 15일 14:30").value("{reservation.interview_date}").build());
-        placeholderRepository.save(Placeholder.builder().name("{{예약시간}}").comment("예약 확정 날짜와 시간").examples("2026년 2월 15일 오후 2:30").value("{reservation.interview_datetime}").build());
-        placeholderRepository.save(Placeholder.builder().name("{{지점주소}}").comment("지점 주소").examples("서울시 강남구").value("{branch.address}").build());
-        placeholderRepository.save(Placeholder.builder().name("{{담당자}}").comment("지점 담당자 이름").examples("홍길동").value("{branch.manager}").build());
-        placeholderRepository.save(Placeholder.builder().name("{{오시는길}}").comment("지점 오시는 길 안내").examples("2호선 강남역 3번 출구 도보 5분").value("{branch.directions}").build());
+        placeholderRepository.save(Placeholder.builder().name("{{고객명}}").comment("고객의 이름").examples("홍길동").value("{customer.name}").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
+        placeholderRepository.save(Placeholder.builder().name("{{전화번호}}").comment("고객의 전화번호").examples("010-1234-5678").value("{customer.phone_number}").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
+        placeholderRepository.save(Placeholder.builder().name("{{지점명}}").comment("소속 지점 이름").examples("강남지점").value("{branch.name}").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
+        placeholderRepository.save(Placeholder.builder().name("{{현재날짜}}").comment("오늘 날짜").examples("2026-01-27").value("{system.current_date}").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
+        placeholderRepository.save(Placeholder.builder().name("{{현재시간}}").comment("현재 시각").examples("14:30").value("{system.current_time}").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
+        placeholderRepository.save(Placeholder.builder().name("{{현재날짜시간}}").comment("현재 날짜와 시각").examples("2026-01-27 14:30").value("{system.current_datetime}").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
+        placeholderRepository.save(Placeholder.builder().name("{{예약일자}}").comment("예약 확정 일시").examples("2026년 2월 15일 14:30").value("{reservation.interview_date}").category(com.culcom.entity.enums.PlaceholderCategory.RESERVATION).build());
+        placeholderRepository.save(Placeholder.builder().name("{{예약시간}}").comment("예약 확정 날짜와 시간").examples("2026년 2월 15일 오후 2:30").value("{reservation.interview_datetime}").category(com.culcom.entity.enums.PlaceholderCategory.RESERVATION).build());
+        placeholderRepository.save(Placeholder.builder().name("{{지점주소}}").comment("지점 주소").examples("서울시 강남구").value("{branch.address}").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
+        placeholderRepository.save(Placeholder.builder().name("{{담당자}}").comment("지점 담당자 이름").examples("홍길동").value("{branch.manager}").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
+        placeholderRepository.save(Placeholder.builder().name("{{오시는길}}").comment("지점 오시는 길 안내").examples("2호선 강남역 3번 출구 도보 5분").value("{branch.directions}").category(com.culcom.entity.enums.PlaceholderCategory.COMMON).build());
 
-        log.info("초기 플레이스홀더 11건 생성 완료");
+        // 연기/환불/양도 공통 액션 플레이스홀더 (ACTION_REASON 카테고리)
+        placeholderRepository.save(Placeholder.builder().name("{{이벤트}}").comment("요청 이벤트 종류 (연기/환불/양도)").examples("연기").value("{action.event_type}").category(com.culcom.entity.enums.PlaceholderCategory.ACTION_REASON).build());
+        placeholderRepository.save(Placeholder.builder().name("{{사유}}").comment("거절 시 관리자가 작성한 사유").examples("제출 서류 미비").value("{action.reject_reason}").category(com.culcom.entity.enums.PlaceholderCategory.ACTION_REASON).build());
+        placeholderRepository.save(Placeholder.builder().name("{{코멘트}}").comment("승인 시 관리자가 작성한 코멘트").examples("정상 처리되었습니다").value("{action.approve_comment}").category(com.culcom.entity.enums.PlaceholderCategory.ACTION_REASON).build());
+
+        log.info("초기 플레이스홀더 14건 생성 완료");
     }
 
     /**

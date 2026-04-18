@@ -1,7 +1,6 @@
 package com.culcom.service;
 
 import com.culcom.dto.complex.ReasonDto;
-import com.culcom.dto.complex.refund.RefundCreateRequest;
 import com.culcom.dto.complex.refund.RefundResponse;
 import com.culcom.entity.complex.refund.ComplexRefundReason;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
@@ -13,7 +12,6 @@ import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ComplexMemberMembershipRepository;
-import com.culcom.repository.ComplexMemberRepository;
 import com.culcom.repository.ComplexRefundReasonRepository;
 import com.culcom.repository.ComplexRefundRequestRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,53 +29,13 @@ public class RefundService {
     private final ComplexRefundRequestRepository refundRepository;
     private final ComplexRefundReasonRepository reasonRepository;
     private final BranchRepository branchRepository;
-    private final ComplexMemberRepository complexMemberRepository;
     private final ComplexMemberMembershipRepository complexMemberMembershipRepository;
     private final MemberClassService memberClassService;
     private final ApplicationEventPublisher eventPublisher;
     private final SmsService smsService;
 
     @Transactional
-    public RefundResponse create(RefundCreateRequest req, Long branchSeq) {
-        // 이미 환불/만료/정지된 멤버십(또는 기간/횟수 소진)에는 환불 신청을 받지 않는다.
-        // isActive()가 네 가지 사용 불가 케이스를 단일 진입점으로 판정한다.
-        if (req.getMemberMembershipSeq() != null) {
-            ComplexMemberMembership target = complexMemberMembershipRepository.findById(req.getMemberMembershipSeq())
-                    .orElseThrow(() -> new EntityNotFoundException("멤버십"));
-            if (!target.isActive()) {
-                throw new IllegalStateException("사용할 수 없는 멤버십에는 환불 신청을 할 수 없습니다.");
-            }
-        }
-
-        ComplexRefundRequest entity = ComplexRefundRequest.builder()
-                .memberName(req.getMemberName())
-                .phoneNumber(req.getPhoneNumber())
-                .membershipName(req.getMembershipName())
-                .price(req.getPrice())
-                .reason(req.getReason())
-                .build();
-        if (req.getMemberSeq() != null) {
-            entity.setMember(complexMemberRepository.findById(req.getMemberSeq())
-                    .orElseThrow(() -> new EntityNotFoundException("회원")));
-        }
-        if (req.getMemberMembershipSeq() != null) {
-            entity.setMemberMembership(complexMemberMembershipRepository.findById(req.getMemberMembershipSeq())
-                    .orElseThrow(() -> new EntityNotFoundException("멤버십")));
-        }
-        branchRepository.findById(branchSeq).ifPresent(entity::setBranch);
-        refundRepository.save(entity);
-
-        if (entity.getMember() != null) {
-            eventPublisher.publishEvent(ActivityEvent.of(entity.getMember(),
-                    ActivityEventType.REFUND_REQUEST,
-                    "환불 요청: " + entity.getMembershipName() + " / " + entity.getReason()));
-        }
-
-        return RefundResponse.from(entity);
-    }
-
-    @Transactional
-    public RefundResponse updateStatus(Long seq, RequestStatus status, String rejectReason) {
+    public RefundResponse updateStatus(Long seq, RequestStatus status, String adminMessage) {
         ComplexRefundRequest req = refundRepository.findById(seq)
                 .orElseThrow(() -> new EntityNotFoundException("환불 요청"));
         // 승인/반려는 종결 상태로 비가역 처리한다.
@@ -85,9 +43,7 @@ public class RefundService {
             throw new IllegalStateException("이미 처리된 환불 요청은 상태를 변경할 수 없습니다.");
         }
         req.setStatus(status);
-        if (status == RequestStatus.반려) {
-            req.setRejectReason(rejectReason);
-        }
+        req.setAdminMessage(adminMessage);
         if (status == RequestStatus.승인) {
             ComplexMemberMembership mm = req.getMemberMembership();
             if (mm != null) {
@@ -102,14 +58,15 @@ public class RefundService {
         refundRepository.save(req);
 
         RequestStatusEventHelper.publishStatusChangeEvent(eventPublisher,
-                req.getMember(), req.getMemberMembership(), status, rejectReason,
+                req.getMember(), req.getMemberMembership(), status, adminMessage,
                 ActivityEventType.REFUND_APPROVE, ActivityEventType.REFUND_REJECT,
                 "환불 " + status.name() + ": " + req.getMembershipName());
 
         if (req.getMember() != null && req.getBranch() != null) {
             SmsEventType smsType = status == RequestStatus.승인 ? SmsEventType.환불승인 : SmsEventType.환불반려;
             smsService.sendEventSmsIfConfigured(req.getBranch().getSeq(), smsType,
-                    req.getMemberName(), req.getPhoneNumber());
+                    req.getMemberName(), req.getPhoneNumber(),
+                    SmsActionContext.of(status, adminMessage));
         }
 
         return RefundResponse.from(req);

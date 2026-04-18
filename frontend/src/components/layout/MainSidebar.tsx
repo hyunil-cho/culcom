@@ -43,7 +43,10 @@ export default function MainSidebar() {
     ...(SessionRole.canManageUsers(session) ? [{
       title: '관리',
       items: [
-        { href: ROUTES.SETTINGS, label: '설정', icon: '⚙️' },
+        { href: ROUTES.SETTINGS, label: '설정', icon: '⚙️', children: [
+          { href: ROUTES.SETTINGS, label: '설정' },
+          { href: ROUTES.SETTINGS_CATALOGS, label: '옵션 카탈로그' },
+        ]},
       ],
     }] : []),
   ];

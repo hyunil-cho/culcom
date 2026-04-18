@@ -26,6 +26,7 @@ public class TransferRequestResponse {
     private String inviteToken;
     private Long toCustomerSeq;
     private String toCustomerName;
+    private String adminMessage;
     private LocalDateTime createdDate;
 
     public static TransferRequestResponse from(TransferRequest entity) {
@@ -46,6 +47,7 @@ public class TransferRequestResponse {
                 .inviteToken(entity.getInviteToken())
                 .toCustomerSeq(entity.getToCustomer() != null ? entity.getToCustomer().getSeq() : null)
                 .toCustomerName(entity.getToCustomer() != null ? entity.getToCustomer().getName() : null)
+                .adminMessage(entity.getAdminMessage())
                 .createdDate(entity.getCreatedDate())
                 .build();
     }

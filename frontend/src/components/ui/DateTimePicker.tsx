@@ -63,7 +63,7 @@ export default function DateTimePicker({
     <div className="dtp-root" style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
       <DatePicker
         selected={parseDate(date)}
-        onChange={(d) => emit(formatDate(d), hour, minute)}
+        onChange={(d: Date | null) => emit(formatDate(d), hour, minute)}
         dateFormat="yyyy-MM-dd"
         locale="ko"
         placeholderText={placeholder}

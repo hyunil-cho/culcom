@@ -45,6 +45,7 @@ class MessageTemplateCascadeDeleteTest {
         req.setTemplateName("테스트 메시지 템플릿");
         req.setDescription("삭제 테스트용");
         req.setMessageContext("안녕하세요 {고객명}님");
+        req.setEventType(SmsEventType.예약확정);
         template = messageTemplateService.create(req, branch.getSeq());
     }
 
@@ -99,6 +100,7 @@ class MessageTemplateCascadeDeleteTest {
         MessageTemplateCreateRequest req2 = new MessageTemplateCreateRequest();
         req2.setTemplateName("다른 템플릿");
         req2.setMessageContext("다른 내용");
+        req2.setEventType(SmsEventType.고객등록);
         MessageTemplateResponse template2 = messageTemplateService.create(req2, branch.getSeq());
 
         MessageTemplate entity1 = messageTemplateRepository.findById(template.getSeq()).orElseThrow();

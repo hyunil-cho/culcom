@@ -15,6 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 @Slf4j
 @Service
@@ -78,6 +81,16 @@ public class SmsService {
      */
     public String sendEventSmsIfConfigured(Long branchSeq, SmsEventType eventType,
                                             String name, String phoneNumber) {
+        return sendEventSmsIfConfigured(branchSeq, eventType, name, phoneNumber, Map.of());
+    }
+
+    /**
+     * 추가 컨텍스트(예: 반려 사유 / 승인 코멘트)를 포함하여 발송한다.
+     * {@code {action.event_type}} 은 {@code eventType} 에서 자동 도출되므로 호출부가 넣지 않아도 된다.
+     */
+    public String sendEventSmsIfConfigured(Long branchSeq, SmsEventType eventType,
+                                            String name, String phoneNumber,
+                                            Map<String, String> extraContext) {
         var optConfig = smsEventConfigRepository.findByBranchSeqAndEventType(branchSeq, eventType);
         if (optConfig.isEmpty()) {
             return null; // 설정 자체가 없음 → 경고 없이 정상 처리
@@ -92,7 +105,14 @@ public class SmsService {
             log.warn("SMS 이벤트 설정({})의 템플릿 내용이 비어있습니다.", eventType);
             return "문자 발송 실패: 메시지 템플릿 내용이 비어있습니다.";
         }
-        message = messageResolver.resolveWithContext(message, config.getBranch(), name, phoneNumber, null);
+
+        Map<String, String> fullContext = new HashMap<>();
+        if (extraContext != null) fullContext.putAll(extraContext);
+        // eventType 기반 자동 주입 (호출부가 명시적으로 덮어쓰면 그 값이 우선)
+        fullContext.putIfAbsent("{action.event_type}", eventCategoryLabel(eventType));
+
+        message = messageResolver.resolveWithContext(
+                message, config.getBranch(), name, phoneNumber, null, fullContext);
 
         SmsSendResponse result = sendByBranch(branchSeq, config.getSenderNumber(), phoneNumber, message, null);
         if (result.isSuccess()) {
@@ -103,6 +123,18 @@ public class SmsService {
             log.warn("SMS 자동발송 실패 - 이벤트: {}, 수신자: {}, 사유: {}", eventType, phoneNumber, result.getMessage());
             return "문자 발송 실패: " + result.getMessage();
         }
+    }
+
+    /** SmsEventType 을 사용자 표시용 카테고리 레이블로 변환 (예: 연기승인 → "연기"). */
+    private static String eventCategoryLabel(SmsEventType eventType) {
+        return switch (eventType) {
+            case 연기승인, 연기반려, 복귀안내 -> "연기";
+            case 환불승인, 환불반려 -> "환불";
+            case 양도완료, 양도거절 -> "양도";
+            case 예약확정 -> "예약 확정";
+            case 고객등록 -> "고객 등록";
+            case 회원등록 -> "회원 등록";
+        };
     }
 
     private MymunjaConfigInfo findSmsConfig(Long branchSeq) {

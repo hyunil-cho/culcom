@@ -338,7 +338,7 @@ export default function MembershipFormSection({
                 )}
               </FormField>
 
-              {!locked && form.paymentMethod === '카드' && (
+              {form.paymentMethod === '카드' && (
                 <CardPaymentFields
                   value={form.cardDetail}
                   onChange={(v) => setForm(prev => ({ ...prev, cardDetail: v }))}

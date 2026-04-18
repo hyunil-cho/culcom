@@ -4,6 +4,7 @@ import { memberApi, type MemberMembershipResponse } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import Spinner from '@/components/ui/Spinner';
 import MembershipCard from './MembershipCard';
+import MembershipPostponementHistorySection from './MembershipPostponementHistorySection';
 import styles from './MembershipInfoModal.module.css';
 
 export default function MembershipInfoModal({
@@ -27,11 +28,16 @@ export default function MembershipInfoModal({
         <div className="modal-body" style={{ maxHeight: '60vh' }}>
           {loading ? (
             <Spinner />
-          ) : memberships.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>활성 멤버십이 없습니다.</div>
-          ) : memberships.map(ms => (
-            <MembershipCard key={ms.seq} ms={ms} />
-          ))}
+          ) : (
+            <>
+              {memberships.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>활성 멤버십이 없습니다.</div>
+              ) : memberships.map(ms => (
+                <MembershipCard key={ms.seq} ms={ms} />
+              ))}
+              <MembershipPostponementHistorySection memberSeq={memberSeq} />
+            </>
+          )}
         </div>
         <div className={styles.footer}>
           <button onClick={onClose} className={styles.closeBtn}>닫기</button>
