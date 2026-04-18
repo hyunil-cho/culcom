@@ -49,6 +49,9 @@ meta:
   webhook:
     verify-token: ${META_VERIFY_TOKEN:}
 
+zapier:
+  secret: ${ZAPIER_SECRET:}
+
 kakao:
   oauth:
     client-id: ${KAKAO_CLIENT_ID:}

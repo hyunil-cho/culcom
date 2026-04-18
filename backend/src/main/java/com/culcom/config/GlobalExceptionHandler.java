@@ -55,6 +55,15 @@ public class GlobalExceptionHandler {
         return badRequest("필수 파라미터가 누락되었습니다: " + e.getParameterName());
     }
 
+    // ── 401 Unauthorized ──
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(
+            org.springframework.security.access.AccessDeniedException e) {
+        log.info("접근 거부: {}", e.getMessage());
+        return respond(HttpStatus.UNAUTHORIZED, e.getMessage());
+    }
+
     // ── 404 Not Found ──
 
     @ExceptionHandler(EntityNotFoundException.class)
