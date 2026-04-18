@@ -22,6 +22,7 @@ const pageTitles: Record<string, string> = {
   [ROUTES.COMPLEX_REFUNDS]: '환불 요청',
   [ROUTES.SURVEY]: '설문 관리',
   [ROUTES.USERS]: '사용자 관리',
+  [ROUTES.MY_PAGE]: '마이페이지',
 };
 
 function getPageTitle(pathname: string): string {
@@ -90,6 +91,14 @@ export default function Header() {
           <div className={styles.userSection}>
             <span>👤</span>
             <span className={styles.userName}>{SessionRole.displayName(session)}</span>
+            <a
+              href="javascript:void(0);"
+              onClick={() => router.push(ROUTES.MY_PAGE)}
+              className={styles.logoutLink}
+              style={{ marginRight: 8 }}
+            >
+              마이페이지
+            </a>
             <a
               href="javascript:void(0);"
               onClick={() => setShowLogoutModal(true)}

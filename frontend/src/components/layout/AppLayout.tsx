@@ -30,6 +30,10 @@ export default function AppLayout({
 
   useEffect(() => {
     if (!loaded || !session) return;
+    if (session.requirePasswordChange) {
+      router.replace(ROUTES.FORCE_PASSWORD_CHANGE);
+      return;
+    }
     if (SessionRole.isRoot(session)) return;
     if (branches.length === 0) {
       if (!pathname.startsWith(ROUTES.BRANCHES)) {

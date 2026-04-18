@@ -56,6 +56,7 @@ public class AuthController {
                             .role(user.getRole().name())
                             .selectedBranchSeq(branchSeq)
                             .selectedBranchName(branchName)
+                            .requirePasswordChange(Boolean.TRUE.equals(user.getRequirePasswordChange()))
                             .build();
 
                     return ResponseEntity.ok(ApiResponse.ok("로그인 성공", info));
@@ -77,6 +78,10 @@ public class AuthController {
                     .map(Branch::getBranchName).orElse(null);
         }
 
+        UserInfo currentUser = userInfoRepository.findById(principal.getUserSeq()).orElse(null);
+        boolean requirePasswordChange = currentUser != null
+                && Boolean.TRUE.equals(currentUser.getRequirePasswordChange());
+
         var info = SessionInfo.builder()
                 .userSeq(principal.getUserSeq())
                 .userId(principal.getUserId())
@@ -84,6 +89,7 @@ public class AuthController {
                 .role(principal.getRole().name())
                 .selectedBranchSeq(branchSeq)
                 .selectedBranchName(branchName)
+                .requirePasswordChange(requirePasswordChange)
                 .build();
 
         return ResponseEntity.ok(ApiResponse.ok(info));

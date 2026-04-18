@@ -36,6 +36,10 @@ public class UserInfo extends BaseTimeEntity {
     @JoinColumn(name = "created_by")
     private UserInfo createdBy;
 
+    @Column(name = "require_password_change", nullable = false)
+    @Builder.Default
+    private Boolean requirePasswordChange = false;
+
 
     public boolean isManager() {
         return this.role.equals(UserRole.BRANCH_MANAGER);

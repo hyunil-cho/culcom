@@ -542,6 +542,43 @@ th {
   font-weight: bold;
 }
 
+/* 체크박스 목록 (담당 지점 다중 선택 등) */
+.branch-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fafbfc;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.branch-checklist > * {
+  margin: 0;
+}
+
+.branch-empty {
+  padding: 10px 12px;
+  color: #95a5a6;
+  font-size: 0.9rem;
+  border: 1px dashed #e0e0e0;
+  border-radius: 8px;
+  background: #fafbfc;
+}
+
+/* 체크박스 목록이 들어간 form-row 는 라벨을 상단 정렬 */
+.form-row:has(.branch-checklist),
+.form-row:has(.branch-empty) {
+  align-items: start;
+}
+
+.form-row:has(.branch-checklist) > .form-label,
+.form-row:has(.branch-empty) > .form-label {
+  padding-top: 12px;
+}
+
 /* 폼 액션 */
 .form-actions {
   display: flex;

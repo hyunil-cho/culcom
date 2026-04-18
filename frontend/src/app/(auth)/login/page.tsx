@@ -22,6 +22,10 @@ export default function LoginPage() {
         setError(result.message || '로그인에 실패했습니다.');
         return;
       }
+      if (result.data?.requirePasswordChange) {
+        router.push(ROUTES.FORCE_PASSWORD_CHANGE);
+        return;
+      }
       router.push(ROUTES.DASHBOARD);
     } catch {
       setError('아이디 또는 비밀번호가 올바르지 않습니다.');

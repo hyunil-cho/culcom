@@ -2,9 +2,11 @@ package com.culcom.service;
 
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.entity.branch.Branch;
+import com.culcom.entity.auth.UserBranch;
 import com.culcom.entity.auth.UserInfo;
 import com.culcom.entity.enums.UserRole;
 import com.culcom.repository.BranchRepository;
+import com.culcom.repository.UserBranchRepository;
 import com.culcom.repository.UserInfoRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,6 +28,7 @@ public class AuthService {
 
     private final UserInfoRepository userInfoRepository;
     private final BranchRepository branchRepository;
+    private final UserBranchRepository userBranchRepository;
     private final SecurityContextRepository securityContextRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -65,14 +68,17 @@ public class AuthService {
     /**
      * 해당 유저가 관리하는 지점 목록 조회.
      * BRANCH_MANAGER: 본인이 생성한 지점
-     * STAFF: 생성자(BRANCH_MANAGER)의 지점
+     * STAFF: UserBranch 매핑으로 지정된 지점 (없으면 빈 목록)
      * ROOT: 전체 지점
      */
     public List<Branch> getManagedBranches(UserInfo user) {
         if (user.getRole() == UserRole.ROOT) {
             return branchRepository.findAll();
         }
-        UserInfo manager = user.isManager() ? user : user.getCreatedBy();
-        return branchRepository.findAllByCreatedBy(manager);
+        if (user.isManager()) {
+            return branchRepository.findAllByCreatedBy(user);
+        }
+        return userBranchRepository.findAllByUser(user).stream()
+                .map(UserBranch::getBranch).toList();
     }
 }

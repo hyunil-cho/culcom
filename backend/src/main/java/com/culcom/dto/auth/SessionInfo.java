@@ -14,4 +14,5 @@ public class SessionInfo {
     private String role;
     private Long selectedBranchSeq;
     private String selectedBranchName;
+    private Boolean requirePasswordChange;
 }

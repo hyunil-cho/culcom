@@ -60,7 +60,7 @@ export {
   type SmsEventType, type SmsEventConfig, type SmsEventConfigRequest,
   type IntegrationService, type SmsConfig, type SmsConfigSaveRequest,
   type KakaoSyncUrlResponse, type DailyStats, type CallerStats, type DashboardData,
-  type UserResponse, type UserCreateRequest,
+  type UserResponse, type UserCreateRequest, type PasswordChangeRequest,
 } from './settings';
 export { calendarApi, type CalendarReservation, type CalendarEvent, type CalendarEventRequest } from './calendar';
 export { consentItemApi, type ConsentItem, type ConsentItemRequest } from './consent';

@@ -114,7 +114,9 @@
       "Bash(awk '/^\\\\.requiredMark/{p=1} p{print; if\\(/}/\\)exit}' \"src/app/\\(main\\)/survey/page.module.css\")",
       "Bash(awk '/^\\\\.requiredMark/{p=1} p{print; if\\(/}/\\)exit}' src/app/public/postponement/page.module.css)",
       "Bash(./gradlew compileTestJava -q)",
-      "Bash(xargs -0 grep -l \"transfer\" -i)"
+      "Bash(xargs -0 grep -l \"transfer\" -i)",
+      "Bash(cat vitest.config.*)",
+      "Bash(cat vite.config.*)"
     ]
   }
 }

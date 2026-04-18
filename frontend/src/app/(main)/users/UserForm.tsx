@@ -3,13 +3,15 @@
 import FormField from '@/components/ui/FormField';
 import FormLayout from '@/components/ui/FormLayout';
 import FormErrorBanner from '@/components/ui/FormErrorBanner';
-import { Input, PhoneInput, PasswordInput } from '@/components/ui/FormInput';
+import { Input, PhoneInput, PasswordInput, Checkbox } from '@/components/ui/FormInput';
+import type { Branch } from '@/lib/api';
 
 export interface UserFormData {
   userId: string;
   password: string;
   name: string;
   phone: string;
+  branchSeqs: number[];
 }
 
 export const emptyUserForm: UserFormData = {
@@ -17,17 +19,26 @@ export const emptyUserForm: UserFormData = {
   password: '',
   name: '',
   phone: '',
+  branchSeqs: [],
 };
 
-export function validateUserForm(form: UserFormData, isEdit: boolean): string | null {
+export function validateUserForm(
+  form: UserFormData,
+  isEdit: boolean,
+  opts?: { requireBranches?: boolean },
+): string | null {
   if (!form.userId.trim()) return '아이디를 입력하세요.';
   if (!isEdit && !form.password.trim()) return '비밀번호를 입력하세요.';
   if (!form.name.trim()) return '이름을 입력하세요.';
+  if (opts?.requireBranches && form.branchSeqs.length === 0) {
+    return '담당 지점을 하나 이상 선택하세요.';
+  }
   return null;
 }
 
 export default function UserForm({
   form, onChange, onSubmit, isEdit, backHref, submitLabel, formError,
+  showBranchSelector, branches,
 }: {
   form: UserFormData;
   onChange: (form: UserFormData) => void;
@@ -36,7 +47,17 @@ export default function UserForm({
   backHref: string;
   submitLabel: string;
   formError?: string | null;
+  showBranchSelector?: boolean;
+  branches?: Branch[];
 }) {
+  const toggleBranch = (seq: number) => {
+    const has = form.branchSeqs.includes(seq);
+    onChange({
+      ...form,
+      branchSeqs: has ? form.branchSeqs.filter((s) => s !== seq) : [...form.branchSeqs, seq],
+    });
+  };
+
   return (
     <FormLayout
       title={isEdit ? '사용자 정보 수정' : '사용자 등록'}
@@ -49,7 +70,7 @@ export default function UserForm({
           onChange={(e) => onChange({ ...form, userId: e.target.value })}
           disabled={isEdit} required />
       </FormField>
-      <FormField label="비밀번호" required={!isEdit} hint={isEdit ? '변경 시에만 입력하세요.' : undefined}>
+      <FormField label="비밀번호" required={!isEdit} hint={isEdit ? '변경 시에만 입력하세요. 변경 시 대상은 최초 로그인처럼 재변경이 강제됩니다.' : undefined}>
         <PasswordInput placeholder={isEdit ? '변경할 비밀번호' : '비밀번호'}
           value={form.password}
           onChange={(e) => onChange({ ...form, password: e.target.value })}
@@ -63,6 +84,28 @@ export default function UserForm({
         <PhoneInput value={form.phone}
           onChange={(e) => onChange({ ...form, phone: e.target.value })} />
       </FormField>
+      {showBranchSelector && (
+        <FormField
+          label="담당 지점"
+          required
+          hint="직원이 관리할 수 있는 지점을 선택하세요. (복수 선택 가능)"
+        >
+          {(branches?.length ?? 0) === 0 ? (
+            <div className="branch-empty">선택할 수 있는 지점이 없습니다.</div>
+          ) : (
+            <div className="branch-checklist">
+              {branches!.map((b) => (
+                <Checkbox
+                  key={b.seq}
+                  label={b.branchName}
+                  checked={form.branchSeqs.includes(b.seq)}
+                  onChange={() => toggleBranch(b.seq)}
+                />
+              ))}
+            </div>
+          )}
+        </FormField>
+      )}
     </FormLayout>
   );
 }

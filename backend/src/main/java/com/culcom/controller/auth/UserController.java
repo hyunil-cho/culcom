@@ -2,6 +2,7 @@ package com.culcom.controller.auth;
 
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
+import com.culcom.dto.auth.PasswordChangeRequest;
 import com.culcom.dto.auth.UserCreateRequest;
 import com.culcom.dto.auth.UserResponse;
 import com.culcom.service.UserService;
@@ -30,6 +31,17 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
+    @GetMapping("/{seq}")
+    public ResponseEntity<ApiResponse<UserResponse>> get(
+            @PathVariable Long seq,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        try {
+            return ResponseEntity.ok(ApiResponse.ok(userService.get(seq, principal.getUserSeq())));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
     @PostMapping
     public ResponseEntity<ApiResponse<UserResponse>> create(
             @Valid @RequestBody UserCreateRequest request,
@@ -51,6 +63,8 @@ public class UserController {
         try {
             UserResponse result = userService.update(seq, request, principal.getUserSeq());
             return ResponseEntity.ok(ApiResponse.ok("사용자 수정 완료", result));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         } catch (SecurityException e) {
             return ResponseEntity.status(403).body(ApiResponse.error(e.getMessage()));
         }
@@ -66,6 +80,21 @@ public class UserController {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         } catch (SecurityException e) {
             return ResponseEntity.status(403).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PutMapping("/me/password")
+    public ResponseEntity<ApiResponse<Void>> changeMyPassword(
+            @Valid @RequestBody PasswordChangeRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(401).body(ApiResponse.error("인증되지 않았습니다."));
+        }
+        try {
+            userService.changeOwnPassword(principal.getUserSeq(), request);
+            return ResponseEntity.ok(ApiResponse.ok("비밀번호가 변경되었습니다.", null));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 }

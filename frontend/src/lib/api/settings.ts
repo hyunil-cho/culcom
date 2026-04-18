@@ -83,15 +83,25 @@ export const dashboardApi = {
 
 export interface UserResponse {
   seq: number; userId: string; name: string | null; role: string; createdDate: string;
+  requirePasswordChange: boolean;
+  branchSeqs: number[];
 }
 
 export interface UserCreateRequest {
   userId: string; password: string; name: string; phone: string;
+  branchSeqs?: number[];
+}
+
+export interface PasswordChangeRequest {
+  currentPassword: string;
+  newPassword: string;
 }
 
 export const userApi = {
   list: () => api.get<UserResponse[]>(API.USERS),
+  get: (seq: number) => api.get<UserResponse>(API.USER(seq)),
   create: (data: UserCreateRequest) => api.post<UserResponse>(API.USERS, data),
   update: (seq: number, data: Partial<UserCreateRequest>) => api.put<UserResponse>(API.USER(seq), data),
   delete: (seq: number) => api.delete<void>(API.USER(seq)),
+  changeMyPassword: (data: PasswordChangeRequest) => api.put<void>(API.USER_ME_PASSWORD, data),
 };

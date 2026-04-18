@@ -55,6 +55,10 @@ export const ROUTES = {
   USERS_CREATE: `${R.USERS}/create`,
   USER_EDIT: (seq: number) => `${R.USERS}/${seq}/edit`,
 
+  // 마이페이지
+  MY_PAGE: '/my-page',
+  FORCE_PASSWORD_CHANGE: '/force-password-change',
+
   // 공지사항
   NOTICES: R.NOTICES,
   NOTICES_ADD: `${R.NOTICES}/add`,
@@ -234,6 +238,7 @@ export const API = {
   // 사용자
   USERS: A.USERS,
   USER: (seq: number) => `${A.USERS}/${seq}`,
+  USER_ME_PASSWORD: `${A.USERS}/me/password`,
 
   // 설정
   SETTINGS_SMS_EVENTS: A.SETTINGS_SMS_EVENTS,

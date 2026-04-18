@@ -8,6 +8,7 @@ export interface SessionInfo {
   role: string;
   selectedBranchSeq: number | null;
   selectedBranchName: string | null;
+  requirePasswordChange: boolean;
 }
 
 export const SessionRole = {
