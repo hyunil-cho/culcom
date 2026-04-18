@@ -37,6 +37,10 @@ public class PostponementService {
     public PostponementResponse updateStatus(Long seq, RequestStatus status, String adminMessage) {
         ComplexPostponementRequest req = postponementRepository.findById(seq)
                 .orElseThrow(() -> new EntityNotFoundException("연기 요청"));
+        // 승인/반려는 종결 상태로 비가역 처리한다.
+        if (req.getStatus() == RequestStatus.승인 || req.getStatus() == RequestStatus.반려) {
+            throw new IllegalStateException("이미 처리된 연기 요청은 상태를 변경할 수 없습니다.");
+        }
         req.setStatus(status);
         req.setAdminMessage(adminMessage);
         if (status == RequestStatus.승인) {

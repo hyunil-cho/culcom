@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import SearchBar from '@/components/ui/SearchBar';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import AdminActionMessageModal from '../members/components/AdminActionMessageModal';
 import { useResultModal } from '@/hooks/useResultModal';
 import { useModal } from '@/hooks/useModal';
@@ -27,12 +28,17 @@ export default function PostponementsPage() {
   const { run, modal } = useResultModal({ onConfirm: () => list.load(list.pagination.page) });
 
   const messageModal = useModal<{ req: PostponementRequest; newStatus: '승인' | '반려' }>();
+  const infoAlert = useModal<string>();
 
   const handleStatusFilter = (status: string) => { setStatusFilter(status); list.load(0, { status, keyword }); };
   const handleSearch = () => { list.load(0, { status: statusFilter, keyword }); };
 
   const handleStatusChange = (req: PostponementRequest, newStatus: string) => {
     if (newStatus === req.status) return;
+    if (req.status === '승인' || req.status === '반려') {
+      infoAlert.open('이미 처리된 연기 요청은 상태를 변경할 수 없습니다.');
+      return;
+    }
     if (newStatus !== '승인' && newStatus !== '반려') return;
     messageModal.open({ req, newStatus });
   };
@@ -63,7 +69,9 @@ export default function PostponementsPage() {
     { header: '관리자 메시지', render: (r) => r.adminMessage
       ? <span className={s.rejectReasonText}>{r.adminMessage}</span>
       : <span className={s.emptyText}>-</span> },
-    { header: '처리', render: (r) => (
+    { header: '처리', render: (r) => (r.status === '승인' || r.status === '반려') ? (
+      <span className={s.emptyText}>처리 완료</span>
+    ) : (
       <select value={r.status} onChange={(e) => handleStatusChange(r, e.target.value)} className={s.statusSelect}>
         <option value="대기">대기</option><option value="승인">승인</option><option value="반려">반려</option>
       </select>
@@ -102,9 +110,32 @@ export default function PostponementsPage() {
           placeholder={messageModal.data!.newStatus === '승인'
             ? '고객에게 전달할 메시지를 입력해주세요...'
             : '반려 사유를 입력해주세요...'}
+          warning={
+            <div style={{
+              padding: '12px 14px',
+              background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 6,
+              color: '#991b1b', fontSize: '0.82rem', lineHeight: 1.6,
+            }}>
+              <div style={{ fontWeight: 700, color: '#dc2626' }}>
+                ⚠️ 처리 후에는 다른 상태로 변경할 수 없습니다.
+              </div>
+            </div>
+          }
           onCancel={messageModal.close}
           onSubmit={handleMessageSubmit}
         />
+      )}
+
+      {infoAlert.isOpen && (
+        <ConfirmModal
+          title="알림"
+          confirmLabel="확인"
+          confirmColor="#4a90e2"
+          onCancel={infoAlert.close}
+          onConfirm={infoAlert.close}
+        >
+          <p style={{ margin: 0 }}>{infoAlert.data}</p>
+        </ConfirmModal>
       )}
 
       {modal}

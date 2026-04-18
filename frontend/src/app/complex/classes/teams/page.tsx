@@ -97,16 +97,32 @@ function ClassTeamsPageInner() {
     if (!selectedClass || !pending) return;
     try {
       if (pending.kind === 'member-add') {
-        await classApi.addMember(selectedClass.seq, pending.member.seq);
+        const res = await classApi.addMember(selectedClass.seq, pending.member.seq);
+        if (!res.success) {
+          resultModal.open({ success: false, message: res.message ?? '팀에 멤버를 추가하지 못했습니다.' });
+          return;
+        }
         queryClient.invalidateQueries({ queryKey: ['classMembers', selectedClass.seq] });
       } else if (pending.kind === 'member-remove') {
-        await classApi.removeMember(selectedClass.seq, pending.member.seq);
+        const res = await classApi.removeMember(selectedClass.seq, pending.member.seq);
+        if (!res.success) {
+          resultModal.open({ success: false, message: res.message ?? '팀에서 멤버를 제외하지 못했습니다.' });
+          return;
+        }
         queryClient.invalidateQueries({ queryKey: ['classMembers', selectedClass.seq] });
       } else if (pending.kind === 'leader-set') {
-        await classApi.setLeader(selectedClass.seq, pending.staff.seq);
+        const res = await classApi.setLeader(selectedClass.seq, pending.staff.seq);
+        if (!res.success) {
+          resultModal.open({ success: false, message: res.message ?? '리더를 변경하지 못했습니다.' });
+          return;
+        }
         refreshSelectedClass(selectedClass.seq);
       } else if (pending.kind === 'leader-clear') {
-        await classApi.setLeader(selectedClass.seq, null);
+        const res = await classApi.setLeader(selectedClass.seq, null);
+        if (!res.success) {
+          resultModal.open({ success: false, message: res.message ?? '리더를 해제하지 못했습니다.' });
+          return;
+        }
         refreshSelectedClass(selectedClass.seq);
       }
     } catch (e: unknown) {

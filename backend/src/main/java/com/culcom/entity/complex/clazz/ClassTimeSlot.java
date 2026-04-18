@@ -21,7 +21,7 @@ public class ClassTimeSlot extends BaseTimeEntity {
     @JoinColumn(name = "branch_seq", nullable = false)
     private Branch branch;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 100, unique = true)
     private String name;
 
     @Column(name = "days_of_week", nullable = false, length = 100)

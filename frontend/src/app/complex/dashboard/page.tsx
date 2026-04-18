@@ -1,12 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { complexDashboardApi, smsEventApi, type AutoExpiredItem, type MembershipAlertItem, type MembershipAlertsResponse, type SmsEventConfig } from '@/lib/api';
+import { complexDashboardApi, type AutoExpiredItem, type MembershipAlertItem, type MembershipAlertsResponse } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import Spinner from '@/components/ui/Spinner';
 import TrendCharts from './TrendCharts';
-import ReturnTemplateMissingModal from './ReturnTemplateMissingModal';
 
 // 고정 기준 — 추후 사용자 설정으로 빼는 것을 고려
 const WINDOW_DAYS = 30;
@@ -21,19 +20,8 @@ export default function ComplexDashboardPage() {
     { refetchOnMount: 'always' },
   );
 
-  // 복귀안내 템플릿 설정 여부 체크
-  const { data: returnConfig } = useApiQuery<SmsEventConfig | null>(
-    ['smsEventConfig', '복귀안내'],
-    () => smsEventApi.get('복귀안내'),
-  );
-  const returnTemplateMissing = !returnConfig || !returnConfig.autoSend;
-
   const goToMember = (memberSeq: number) => {
     router.push(ROUTES.COMPLEX_MEMBER_EDIT(memberSeq));
-  };
-
-  const goToSmsConfig = () => {
-    router.push(ROUTES.SETTINGS_SMS_CONFIG);
   };
 
   return (
@@ -41,8 +29,6 @@ export default function ComplexDashboardPage() {
       <div className="page-toolbar">
         <h2 className="page-title" style={{ marginBottom: 0 }}>대시보드</h2>
       </div>
-
-      {returnTemplateMissing && <ReturnTemplateMissingModal onConfirm={goToSmsConfig} />}
 
       <TrendCharts />
 

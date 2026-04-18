@@ -123,6 +123,10 @@ public class TransferService {
     public TransferRequestResponse updateStatus(Long seq, TransferStatus status, String adminMessage) {
         TransferRequest tr = transferRequestRepository.findById(seq)
                 .orElseThrow(() -> new EntityNotFoundException("양도 요청"));
+        // 확인/거절은 종결 상태로 비가역 처리한다.
+        if (tr.getStatus() == TransferStatus.확인 || tr.getStatus() == TransferStatus.거절) {
+            throw new IllegalStateException("이미 처리된 양도 요청은 상태를 변경할 수 없습니다.");
+        }
         tr.setStatus(status);
         tr.setAdminMessage(adminMessage);
         TransferRequestResponse response = TransferRequestResponse.from(transferRequestRepository.save(tr));

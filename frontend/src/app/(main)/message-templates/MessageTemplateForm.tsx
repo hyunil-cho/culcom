@@ -24,6 +24,7 @@ const EVENT_TYPE_OPTIONS: { value: SmsEventType; label: string; group: string }[
   { value: '환불반려', label: '환불 반려', group: '환불' },
   { value: '양도완료', label: '양도 완료', group: '양도' },
   { value: '양도거절', label: '양도 거절', group: '양도' },
+  { value: '복귀안내', label: '복귀 안내', group: '복귀 안내' },
 ];
 
 interface MessageTemplateFormProps {

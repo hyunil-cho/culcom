@@ -6,7 +6,9 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 import { queryClient } from '@/lib/queryClient';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import DataTable, { type Column } from '@/components/ui/DataTable';
+import { useModal } from '@/hooks/useModal';
 import { useResultModal } from '@/hooks/useResultModal';
 
 function formatDuration(days: number): string {
@@ -22,8 +24,15 @@ function formatPrice(price: number): string {
 export default function MembershipsPage() {
   const router = useRouter();
   const { data: memberships = [] } = useApiQuery<Membership[]>(['memberships'], () => membershipApi.list());
-  const { modal } = useResultModal({ onConfirm: () => queryClient.invalidateQueries({ queryKey: ['memberships'] }) });
+  const { run, modal } = useResultModal({ onConfirm: () => queryClient.invalidateQueries({ queryKey: ['memberships'] }) });
+  const deleteModal = useModal<Membership>();
 
+  const handleDelete = async () => {
+    if (!deleteModal.data) return;
+    const target = deleteModal.data;
+    deleteModal.close();
+    await run(membershipApi.delete(target.seq), '멤버십이 삭제되었습니다.');
+  };
 
   const columns: Column<Membership>[] = [
     { header: '멤버십 이름', render: (m) => m.name },
@@ -36,6 +45,15 @@ export default function MembershipsPage() {
       </span>
     )},
     { header: '등록일', render: (m) => m.createdDate?.split('T')[0] ?? '-' },
+    { header: '삭제', render: (m) => (
+      <button
+        className="btn-inline"
+        style={{ background: '#ffebee', borderColor: '#f44336', color: '#d32f2f' }}
+        onClick={(e) => { e.stopPropagation(); deleteModal.open(m); }}
+      >
+        삭제
+      </button>
+    )},
   ];
 
   return (
@@ -53,6 +71,19 @@ export default function MembershipsPage() {
         emptyAction={<Button onClick={() => router.push(ROUTES.COMPLEX_MEMBERSHIPS_ADD)}>+ 신규 멤버십 등록</Button>}
         onRowClick={(m) => router.push(ROUTES.COMPLEX_MEMBERSHIP_EDIT(m.seq))}
       />
+
+      {deleteModal.isOpen && (
+        <ConfirmModal
+          title="멤버십 삭제"
+          onCancel={deleteModal.close}
+          onConfirm={handleDelete}
+          confirmLabel="삭제"
+          confirmColor="#f44336"
+        >
+          <p><strong>{deleteModal.data!.name}</strong> 멤버십을 삭제하시겠습니까?</p>
+          <p style={{ color: '#dc2626', fontWeight: 600, marginTop: 8 }}>⚠️ 이 작업은 되돌릴 수 없습니다.</p>
+        </ConfirmModal>
+      )}
 
       {modal}
     </>

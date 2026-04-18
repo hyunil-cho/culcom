@@ -2,6 +2,7 @@ package com.culcom.config;
 
 import com.culcom.dto.ApiResponse;
 import com.culcom.exception.EntityNotFoundException;
+import com.culcom.exception.ForbiddenException;
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.MyBatisSystemException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -62,6 +63,14 @@ public class GlobalExceptionHandler {
             org.springframework.security.access.AccessDeniedException e) {
         log.info("접근 거부: {}", e.getMessage());
         return respond(HttpStatus.UNAUTHORIZED, e.getMessage());
+    }
+
+    // ── 403 Forbidden ──
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiResponse<Void>> handleForbidden(ForbiddenException e) {
+        log.info("권한 부족: {}", e.getMessage());
+        return respond(HttpStatus.FORBIDDEN, e.getMessage());
     }
 
     // ── 404 Not Found ──
