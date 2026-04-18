@@ -6,6 +6,7 @@ import { memberApi, type AttendanceViewMember } from '@/lib/api';
 import { useClassSlots } from '../../hooks/useClassSlots';
 import { ROUTES } from '@/lib/routes';
 import ModalOverlay from '@/components/ui/ModalOverlay';
+import { useSubmitLock } from '@/hooks/useSubmitLock';
 
 interface Props {
   member: AttendanceViewMember;
@@ -18,8 +19,8 @@ export default function MemberManageModal({ member, currentClassName, onClose, o
   const router = useRouter();
   const [view, setView] = useState<'main' | 'move'>('main');
   const [search, setSearch] = useState('');
-  const [moving, setMoving] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState<{ classSeq: number; name: string } | null>(null);
+  const { submitting: moving, run } = useSubmitLock();
 
   const { timeSlots, allClasses } = useClassSlots();
 
@@ -40,16 +41,14 @@ export default function MemberManageModal({ member, currentClassName, onClose, o
     );
   }, [classesWithSlot, search]);
 
-  const handleMove = async (classSeq: number) => {
-    setMoving(true);
+  const handleMove = (classSeq: number) => run(async () => {
     try {
       await memberApi.reassignClass(member.memberSeq, classSeq);
       onMoved();
     } catch {
       alert('수업 이동에 실패했습니다.');
     }
-    setMoving(false);
-  };
+  });
 
   return (
     <ModalOverlay size="md" onClose={onClose}>

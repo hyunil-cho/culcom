@@ -3,14 +3,15 @@
 import { useState } from 'react';
 import { attendanceViewApi, AttendanceViewClass, AttendanceViewMember, BulkAttendanceResult } from '@/lib/api';
 import ModalOverlay from '@/components/ui/ModalOverlay';
+import { useSubmitLock } from '@/hooks/useSubmitLock';
 import s from './BulkAttendanceModal.module.css';
 
 export function useBulkAttendance(onComplete: () => void) {
   const [bulkModal, setBulkModal] = useState<{ classSeq: number; className: string; members: AttendanceViewMember[] } | null>(null);
   const [bulkChecked, setBulkChecked] = useState<Record<number, boolean>>({});
   const [resultModal, setResultModal] = useState<{ className: string; results: BulkAttendanceResult[] } | null>(null);
-  const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { submitting: saving, run } = useSubmitLock();
 
   const open = (cls: AttendanceViewClass) => {
     // 체크박스 초기값은 "오늘자 출석" 기록만 반영한다.
@@ -34,10 +35,8 @@ export function useBulkAttendance(onComplete: () => void) {
     setErrorMessage(null);
   };
 
-  const save = async () => {
-    // 이중 제출 가드: 이미 저장 중이거나 모달이 없으면 무시한다.
-    if (!bulkModal || saving) return;
-    setSaving(true);
+  const save = () => run(async () => {
+    if (!bulkModal) return;
     setErrorMessage(null);
     try {
       const members = bulkModal.members
@@ -58,10 +57,8 @@ export function useBulkAttendance(onComplete: () => void) {
       }
     } catch (e) {
       setErrorMessage(e instanceof Error ? e.message : '일괄 출석 처리에 실패했습니다.');
-    } finally {
-      setSaving(false);
     }
-  };
+  });
 
   const rendered = (
     <>

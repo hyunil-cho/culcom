@@ -1,8 +1,9 @@
 'use client';
 
-import { ReactNode, useRef, useState } from 'react';
+import { ReactNode } from 'react';
 import Link from 'next/link';
 import { Button, LinkButton } from './Button';
+import { useSubmitLock } from '@/hooks/useSubmitLock';
 
 interface FormLayoutProps {
   title: string;
@@ -29,23 +30,8 @@ export default function FormLayout({
   headerExtra,
   children,
 }: FormLayoutProps) {
-  // useRef 로 동기적 재진입 가드. useState 만으로는 연속 fireEvent/click 사이에
-  // 리렌더가 없어 막히지 않음.
-  const pendingRef = useRef(false);
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmit = async () => {
-    if (pendingRef.current) return;
-    pendingRef.current = true;
-    setSubmitting(true);
-    try {
-      await onSubmit();
-    } finally {
-      pendingRef.current = false;
-      setSubmitting(false);
-    }
-  };
-
+  const { submitting, run } = useSubmitLock();
+  const handleSubmit = () => run(async () => { await onSubmit(); });
   const label = submitting ? '처리 중...' : submitLabel;
 
   return (

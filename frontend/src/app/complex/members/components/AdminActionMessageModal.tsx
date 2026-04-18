@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from 'react';
 import ModalOverlay from '@/components/ui/ModalOverlay';
 import FormErrorBanner from '@/components/ui/FormErrorBanner';
+import { useSubmitLock } from '@/hooks/useSubmitLock';
 
 interface Props {
   /** 모달 제목. 예: "연기 승인 메시지 입력" */
@@ -43,6 +44,7 @@ export default function AdminActionMessageModal({
 }: Props) {
   const [message, setMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const { submitting, run } = useSubmitLock();
 
   const effectiveTone: 'success' | 'danger' = tone ?? (
     actionLabel === '승인' || actionLabel === '확인' ? 'success' : 'danger'
@@ -51,14 +53,14 @@ export default function AdminActionMessageModal({
   const submitBg = effectiveTone === 'success' ? '#10b981' : '#f44336';
   const badgeClass = effectiveTone === 'success' ? 'badge-success' : 'badge-danger';
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => run(async () => {
     if (!message.trim()) {
       setError(emptyErrorMessage ?? `${inputLabel}을(를) 입력해주세요.`);
       return;
     }
     setError(null);
     await onSubmit(message);
-  };
+  });
 
   return (
     <ModalOverlay onClose={onCancel}>
@@ -93,19 +95,20 @@ export default function AdminActionMessageModal({
         />
       </div>
       <div style={{ padding: '1rem 2rem', borderTop: '1px solid #e5e7eb', display: 'flex', gap: 8 }}>
-        <button onClick={onCancel} style={{
+        <button onClick={onCancel} disabled={submitting} style={{
           flex: 1, padding: '0.75rem', fontSize: '0.95rem',
           border: '1px solid #d1d5db', background: '#fff', color: '#6b7280',
-          borderRadius: 6, cursor: 'pointer',
+          borderRadius: 6, cursor: submitting ? 'not-allowed' : 'pointer',
         }}>
           취소
         </button>
-        <button onClick={handleSubmit} style={{
+        <button onClick={handleSubmit} disabled={submitting} style={{
           flex: 1, padding: '0.75rem', fontSize: '0.95rem',
           border: 'none', background: submitBg, color: '#fff',
-          borderRadius: 6, cursor: 'pointer', fontWeight: 700,
+          borderRadius: 6, cursor: submitting ? 'not-allowed' : 'pointer',
+          fontWeight: 700, opacity: submitting ? 0.7 : 1,
         }}>
-          {submitLabel ?? `${actionLabel} 처리`}
+          {submitting ? '처리 중...' : (submitLabel ?? `${actionLabel} 처리`)}
         </button>
       </div>
     </ModalOverlay>

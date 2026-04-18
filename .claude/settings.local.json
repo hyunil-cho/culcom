@@ -116,7 +116,9 @@
       "Bash(./gradlew compileTestJava -q)",
       "Bash(xargs -0 grep -l \"transfer\" -i)",
       "Bash(cat vitest.config.*)",
-      "Bash(cat vite.config.*)"
+      "Bash(cat vite.config.*)",
+      "Bash(git reset *)",
+      "Bash(git log *)"
     ]
   }
 }

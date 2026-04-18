@@ -10,6 +10,7 @@ import { Input, Textarea } from '@/components/ui/FormInput';
 import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import CardPaymentFields, { createEmptyCardDetail, type CardPaymentDetailData } from './CardPaymentFields';
 import { nowDateTimeLocal } from '../memberFormTypes';
+import { useSubmitLock } from '@/hooks/useSubmitLock';
 
 interface Props {
   memberSeq: number;
@@ -46,8 +47,8 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
   const [paymentDate, setPaymentDate] = useState(nowDateTimeLocal());
   const [cardDetail, setCardDetail] = useState<CardPaymentDetailData>(() => createEmptyCardDetail());
   const [changeNote, setChangeNote] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { submitting, run } = useSubmitLock();
 
   const selectedProduct = useMemo(
     () => products.find(p => p.seq === Number(newMembershipSeq)),
@@ -78,7 +79,7 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
     setChangeFee(String(fee));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => run(async () => {
     if (!newMembershipSeq) {
       setError('변경할 멤버십을 선택해 주세요.');
       return;
@@ -95,28 +96,23 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
       }
     }
     setError(null);
-    setSubmitting(true);
-    try {
-      const res = await memberApi.changeMembership(memberSeq, current.seq, {
-        newMembershipSeq: Number(newMembershipSeq),
-        startDate,
-        expiryDate,
-        price,
-        changeFee: Number(changeFee),
-        paymentMethod: paymentMethod || undefined,
-        paymentDate,
-        cardDetail: paymentMethod === '카드' ? cardDetail : undefined,
-        changeNote: changeNote || undefined,
-      });
-      if (!res.success) {
-        setError(res.message ?? '변경에 실패했습니다.');
-        return;
-      }
-      onSuccess();
-    } finally {
-      setSubmitting(false);
+    const res = await memberApi.changeMembership(memberSeq, current.seq, {
+      newMembershipSeq: Number(newMembershipSeq),
+      startDate,
+      expiryDate,
+      price,
+      changeFee: Number(changeFee),
+      paymentMethod: paymentMethod || undefined,
+      paymentDate,
+      cardDetail: paymentMethod === '카드' ? cardDetail : undefined,
+      changeNote: changeNote || undefined,
+    });
+    if (!res.success) {
+      setError(res.message ?? '변경에 실패했습니다.');
+      return;
     }
-  };
+    onSuccess();
+  });
 
   const remaining = current.totalCount - current.usedCount;
 

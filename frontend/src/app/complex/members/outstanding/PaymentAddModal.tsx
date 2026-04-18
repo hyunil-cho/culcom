@@ -8,6 +8,7 @@ import CardPaymentFields, {
   createEmptyCardDetail,
   type CardPaymentDetailData,
 } from '@/app/complex/members/components/CardPaymentFields';
+import { useSubmitLock } from '@/hooks/useSubmitLock';
 
 interface Props {
   memberSeq: number;
@@ -35,12 +36,12 @@ export default function PaymentAddModal({
   const [paidDate, setPaidDate] = useState(nowLocal());
   const [note, setNote] = useState('');
   const [cardDetail, setCardDetail] = useState<CardPaymentDetailData>(createEmptyCardDetail);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { submitting, run } = useSubmitLock();
 
   const isCard = method === '카드';
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => run(async () => {
     setError(null);
     const raw = amount.replace(/,/g, '').trim();
     if (!raw) { setError('금액을 입력하세요'); return; }
@@ -57,7 +58,6 @@ export default function PaymentAddModal({
       if (!cardDetail.cardApprovalNumber.trim()) { setError('승인번호를 입력하세요'); return; }
     }
 
-    setSubmitting(true);
     try {
       await memberApi.addPayment(memberSeq, mmSeq, {
         amount: n,
@@ -70,10 +70,8 @@ export default function PaymentAddModal({
       onSaved();
     } catch (e: any) {
       setError(e?.message ?? '저장 실패');
-    } finally {
-      setSubmitting(false);
     }
-  };
+  });
 
   const fillOutstanding = () => {
     if (outstanding > 0) setAmount(String(outstanding));

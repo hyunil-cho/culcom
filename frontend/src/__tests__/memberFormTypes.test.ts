@@ -14,7 +14,7 @@ import type { MemberFormData, MembershipFormData } from '@/app/complex/members/m
 describe('emptyMemberForm', () => {
   it('모든 필드가 빈 문자열', () => {
     expect(emptyMemberForm).toEqual({
-      name: '', phoneNumber: '', level: '', language: '',
+      name: '', phoneNumber: '', level: '', language: '', interviewer: '',
       info: '', signupChannel: '', comment: '',
     });
   });
@@ -68,7 +68,7 @@ describe('nowDateTimeLocal', () => {
 describe('validateMemberForm', () => {
   const validForm: MemberFormData = {
     name: '홍길동', phoneNumber: '01012345678',
-    level: '', language: '', info: '', signupChannel: '', comment: '',
+    level: '', language: '', interviewer: '', info: '', signupChannel: '', comment: '',
   };
 
   it('유효한 폼은 null 반환', () => {
@@ -101,6 +101,12 @@ describe('validateMembershipForm', () => {
     membershipSeq: '1', startDate: '2026-01-01', expiryDate: '2026-12-31',
     price: '100000', paymentDate: '2026-01-01T10:00', depositAmount: '50000',
     paymentMethod: '카드', status: '활성',
+    cardDetail: {
+      cardCompany: '현대카드',
+      cardNumber: '12345678',
+      cardApprovalDate: '2026-01-01',
+      cardApprovalNumber: 'APP-001',
+    },
   };
 
   it('유효한 폼은 null 반환', () => {

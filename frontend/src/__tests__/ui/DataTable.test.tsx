@@ -55,10 +55,12 @@ describe('DataTable', () => {
     expect(screen.getByText('데이터를 불러오는 중...')).toBeInTheDocument();
   });
 
-  it('행 클릭 핸들러', () => {
+  it('상세 버튼 클릭 시 onRowClick 호출', () => {
     const onRowClick = vi.fn();
     render(<DataTable columns={columns} data={testData} rowKey={(item) => item.seq} onRowClick={onRowClick} />);
-    fireEvent.click(screen.getByText('홍길동'));
+    // onRowClick가 지정된 경우 DataTable은 각 행에 "상세" 버튼을 노출한다.
+    const detailButtons = screen.getAllByRole('button', { name: '상세' });
+    fireEvent.click(detailButtons[0]);
     expect(onRowClick).toHaveBeenCalledWith(testData[0]);
   });
 

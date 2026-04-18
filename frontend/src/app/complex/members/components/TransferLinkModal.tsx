@@ -7,6 +7,7 @@ import { useFormError } from '@/hooks/useFormError';
 import { Select, CurrencyInput } from '@/components/ui/FormInput';
 import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Button } from '@/components/ui/Button';
+import { useSubmitLock } from '@/hooks/useSubmitLock';
 import UnavailableNotice from './UnavailableNotice';
 import CopyableUrlField from './CopyableUrlField';
 import SmsSendSection from './SmsSendSection';
@@ -31,9 +32,9 @@ function suggestedTransferFee(remaining: number): number {
 export default function TransferLinkModal({ memberSeq, memberName, memberPhone, onClose }: Props) {
   const [selectedMmSeq, setSelectedMmSeq] = useState('');
   const [transferFee, setTransferFee] = useState('');
-  const [creating, setCreating] = useState(false);
   const [result, setResult] = useState<TransferRequestItem | null>(null);
   const { error: formError, setError, clear: clearError } = useFormError();
+  const { submitting: creating, run } = useSubmitLock();
 
   const { data: allMemberships = [], isLoading: loading } = useApiQuery<MemberMembershipResponse[]>(
     ['transferLinkMemberships', memberSeq],
@@ -69,7 +70,7 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
   const numericFee = Number(transferFee.replace(/,/g, ''));
   const feeValid = !Number.isNaN(numericFee) && numericFee >= 0;
 
-  const handleCreate = async () => {
+  const handleCreate = () => run(async () => {
     if (!selectedMmSeq || !selectedMs) { setError('양도할 멤버십을 선택하세요.'); return; }
     if (!isTransferable(selectedMs)) {
       setError('선택한 멤버십은 양도할 수 없습니다.');
@@ -80,12 +81,10 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
       return;
     }
     clearError();
-    setCreating(true);
     const res = await transferApi.create(Number(selectedMmSeq), numericFee);
     if (res.success) setResult(res.data);
     else setError(res.message || '양도 요청 생성에 실패했습니다.');
-    setCreating(false);
-  };
+  });
 
   return (
     <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
