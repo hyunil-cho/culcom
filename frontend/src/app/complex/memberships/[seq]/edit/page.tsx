@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { membershipApi } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
-import ConfirmModal from '@/components/ui/ConfirmModal';
 import { ROUTES } from '@/lib/routes';
 import MembershipForm, {
   emptyMembershipForm,
@@ -18,7 +17,6 @@ import { useFormError } from '@/hooks/useFormError';
 
 export default function MembershipEditPage() {
   const params = useParams();
-  const router = useRouter();
   const seq = Number(params.seq);
   const [form, setForm] = useState<MembershipFormData>(emptyMembershipForm);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.COMPLEX_MEMBERSHIPS, invalidateKeys: ['memberships'] });

@@ -21,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -84,6 +85,12 @@ class TransferServiceLinkExpireTest {
                 .status(status).build();
     }
 
+    private TransferRequest trWithCreatedDate(TransferStatus status, LocalDateTime createdDate) {
+        TransferRequest tr = trWithStatus(status);
+        tr.setCreatedDate(createdDate);
+        return tr;
+    }
+
     // ── 공개 API 만료 처리 ──
 
     @Test
@@ -114,6 +121,67 @@ class TransferServiceLinkExpireTest {
         assertThatThrownBy(() -> transferService.getByInviteToken("invTok"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("이미 만료된 링크입니다.");
+    }
+
+    // ── 7일 경과 만료 처리 ──
+
+    @Test
+    void getByToken_생성된지_7일_초과면_유효하지_않은_링크_예외() {
+        TransferRequest tr = trWithCreatedDate(TransferStatus.생성, LocalDateTime.now().minusDays(8));
+        given(transferRequestRepository.findByToken("tok")).willReturn(Optional.of(tr));
+
+        assertThatThrownBy(() -> transferService.getByToken("tok"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("유효하지 않은 링크입니다.");
+    }
+
+    @Test
+    void getByToken_생성된지_7일_이내면_정상_조회() {
+        TransferRequest tr = trWithCreatedDate(TransferStatus.생성, LocalDateTime.now().minusDays(3));
+        given(transferRequestRepository.findByToken("tok")).willReturn(Optional.of(tr));
+
+        assertThat(transferService.getByToken("tok")).isNotNull();
+    }
+
+    @Test
+    void confirmAndGenerateInvite_생성된지_7일_초과면_유효하지_않은_링크_예외() {
+        TransferRequest tr = trWithCreatedDate(TransferStatus.생성, LocalDateTime.now().minusDays(10));
+        given(transferRequestRepository.findByToken("tok")).willReturn(Optional.of(tr));
+
+        assertThatThrownBy(() -> transferService.confirmAndGenerateInvite("tok"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("유효하지 않은 링크입니다.");
+    }
+
+    @Test
+    void getByInviteToken_생성된지_7일_초과면_유효하지_않은_링크_예외() {
+        TransferRequest tr = trWithCreatedDate(TransferStatus.생성, LocalDateTime.now().minusDays(8));
+        given(transferRequestRepository.findByInviteToken("invTok")).willReturn(Optional.of(tr));
+
+        assertThatThrownBy(() -> transferService.getByInviteToken("invTok"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("유효하지 않은 링크입니다.");
+    }
+
+    @Test
+    void submitInvite_생성된지_7일_초과면_유효하지_않은_링크_예외() {
+        TransferRequest tr = trWithCreatedDate(TransferStatus.생성, LocalDateTime.now().minusDays(8));
+        given(transferRequestRepository.findByInviteToken("invTok")).willReturn(Optional.of(tr));
+
+        assertThatThrownBy(() -> transferService.submitInvite("invTok",
+                new com.culcom.dto.transfer.TransferInviteSubmitRequest()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("유효하지 않은 링크입니다.");
+    }
+
+    @Test
+    void getByToken_정확히_7일_경계는_유효() {
+        // 7일 - 1초는 유효
+        TransferRequest tr = trWithCreatedDate(TransferStatus.생성,
+                LocalDateTime.now().minusDays(7).plusSeconds(1));
+        given(transferRequestRepository.findByToken("tok")).willReturn(Optional.of(tr));
+
+        assertThat(transferService.getByToken("tok")).isNotNull();
     }
 
     // ── 히스토리 이벤트 ──
