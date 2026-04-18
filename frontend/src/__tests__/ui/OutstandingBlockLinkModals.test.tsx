@@ -111,14 +111,14 @@ describe('RefundLinkModal 미납금 차단', () => {
     expect(screen.queryByText('환불 요청이 불가능합니다')).not.toBeInTheDocument();
   });
 
-  it('멤버십이 없으면 환불 링크 정상 생성', async () => {
+  it('활성 멤버십이 없으면 환불 링크 생성 차단 안내 표시', async () => {
     mockGetMemberships.mockResolvedValue({ success: true, data: [] });
 
     wrap(<RefundLinkModal memberSeq={10} memberName="홍길동" memberPhone="01012345678" onClose={vi.fn()} />);
 
-    await waitFor(() => {
-      expect(screen.getByText('환불 요청 URL')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('환불 요청이 불가능합니다')).toBeInTheDocument();
+    expect(screen.getByText('활성 멤버십이 없습니다.')).toBeInTheDocument();
+    expect(screen.queryByText('환불 요청 URL')).not.toBeInTheDocument();
   });
 });
 

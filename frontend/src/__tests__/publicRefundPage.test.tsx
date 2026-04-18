@@ -102,10 +102,19 @@ describe('PublicRefundPage', () => {
       expect(screen.getByText('강남점')).toBeInTheDocument();
     });
 
-    it('회원 검색 실패 시 에러 메시지', async () => {
+    it('회원 검색 실패 시 서버가 내려준 메시지를 그대로 노출 (없을 때만 폴백)', async () => {
+      // 백엔드는 "이미 만료된 링크입니다." 같은 구체 메시지를 보내주므로 그대로 사용자에게 보여준다.
       mockSearchMember.mockResolvedValue({ success: false, message: '검색 실패' });
       renderPage();
-      expect(await screen.findByText('회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.')).toBeInTheDocument();
+      expect(await screen.findByText('검색 실패')).toBeInTheDocument();
+    });
+
+    it('회원 검색 실패 + 메시지 없음 → 폴백 에러 메시지', async () => {
+      mockSearchMember.mockResolvedValue({ success: false });
+      renderPage();
+      expect(
+        await screen.findByText('회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'),
+      ).toBeInTheDocument();
     });
 
     it('멤버십 목록 표시', async () => {
