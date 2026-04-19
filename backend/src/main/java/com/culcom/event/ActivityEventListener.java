@@ -1,6 +1,6 @@
 package com.culcom.event;
 
-import com.culcom.entity.complex.member.logs.MemberActivityLog;
+import com.culcom.entity.complex.member.track.MemberActivityLog;
 import com.culcom.repository.MemberActivityLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

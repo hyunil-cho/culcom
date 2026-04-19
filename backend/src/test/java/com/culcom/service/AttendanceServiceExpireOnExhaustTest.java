@@ -10,7 +10,7 @@ import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.product.Membership;
-import com.culcom.entity.complex.member.logs.MemberActivityLog;
+import com.culcom.entity.complex.member.track.MemberActivityLog;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.ClassTimeSlotRepository;
 import com.culcom.repository.ComplexClassRepository;

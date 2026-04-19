@@ -46,19 +46,7 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
-    maxHeapSize = "2g"
 }
 tasks.withType<Test> {
     useJUnitPlatform()
-    maxHeapSize = "2g"
-    finalizedBy(tasks.jacocoTestReport)
-}
-
-tasks.jacocoTestReport {
-    dependsOn(tasks.test)
-    reports {
-        xml.required.set(true)
-        html.required.set(true)
-        csv.required.set(true)
-    }
 }

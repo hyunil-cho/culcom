@@ -7,7 +7,7 @@ import com.culcom.dto.complex.dashboard.MembershipAlertItem;
 import com.culcom.dto.complex.dashboard.MembershipAlertsResponse;
 import com.culcom.dto.complex.dashboard.TrendResponse;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
-import com.culcom.entity.complex.member.logs.MemberActivityLog;
+import com.culcom.entity.complex.member.track.MemberActivityLog;
 import com.culcom.mapper.ComplexDashboardMapper;
 import com.culcom.repository.ComplexMemberMembershipRepository;
 import com.culcom.repository.MemberActivityLogRepository;

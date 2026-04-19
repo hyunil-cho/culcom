@@ -37,8 +37,6 @@ export const smsEventApi = {
 
 // ── SMS 이벤트 설정 ──
 
-export type SmsEventType = '예약확정' | '고객등록' | '회원등록';
-
 export interface SmsEventConfig {
   seq: number; eventType: SmsEventType; templateSeq: number;
   templateName: string; senderNumber: string; autoSend: boolean;
@@ -47,20 +45,8 @@ export interface SmsEventConfig {
 export interface SmsEventConfigRequest {
   eventType: SmsEventType; templateSeq: number; senderNumber: string; autoSend: boolean;
 }
-
-export const smsEventApi = {
-  list: () => api.get<SmsEventConfig[]>(API.SETTINGS_SMS_EVENTS),
-  get: (eventType: SmsEventType) => api.get<SmsEventConfig | null>(`${API.SETTINGS_SMS_EVENTS}/${eventType}`),
-  save: (data: SmsEventConfigRequest) => api.post<SmsEventConfig>(API.SETTINGS_SMS_EVENTS, data),
-  delete: (eventType: SmsEventType) => api.delete<void>(`${API.SETTINGS_SMS_EVENTS}/${eventType}`),
-  getTemplates: () => api.get<MessageTemplateSimple[]>(API.SETTINGS_SMS_EVENTS_TEMPLATES),
-  getSenderNumbers: () => api.get<string[]>(API.SETTINGS_SMS_EVENTS_SENDERS),
-};
-
 // ── SMS 이벤트 설정 ──
 
-export type SmsEventType = '예약확정' | '고객등록' | '회원등록';
-
 export interface SmsEventConfig {
   seq: number; eventType: SmsEventType; templateSeq: number;
   templateName: string; senderNumber: string; autoSend: boolean;
@@ -69,15 +55,6 @@ export interface SmsEventConfig {
 export interface SmsEventConfigRequest {
   eventType: SmsEventType; templateSeq: number; senderNumber: string; autoSend: boolean;
 }
-
-export const smsEventApi = {
-  list: () => api.get<SmsEventConfig[]>(API.SETTINGS_SMS_EVENTS),
-  get: (eventType: SmsEventType) => api.get<SmsEventConfig | null>(`${API.SETTINGS_SMS_EVENTS}/${eventType}`),
-  save: (data: SmsEventConfigRequest) => api.post<SmsEventConfig>(API.SETTINGS_SMS_EVENTS, data),
-  delete: (eventType: SmsEventType) => api.delete<void>(`${API.SETTINGS_SMS_EVENTS}/${eventType}`),
-  getTemplates: () => api.get<MessageTemplateSimple[]>(API.SETTINGS_SMS_EVENTS_TEMPLATES),
-  getSenderNumbers: () => api.get<string[]>(API.SETTINGS_SMS_EVENTS_SENDERS),
-};
 
 // ── Integrations ──
 

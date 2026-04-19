@@ -6,7 +6,7 @@ import com.culcom.entity.complex.clazz.ClassTimeSlot;
 import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
-import com.culcom.entity.complex.member.logs.MemberActivityLog;
+import com.culcom.entity.complex.member.track.MemberActivityLog;
 import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.product.Membership;
 import com.culcom.repository.*;

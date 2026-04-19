@@ -1,7 +1,6 @@
 package com.culcom.repository;
 
-import com.culcom.entity.complex.member.logs.MemberActivityLog;
-import com.culcom.entity.enums.ActivityEventType;
+import com.culcom.entity.complex.member.track.MemberActivityLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

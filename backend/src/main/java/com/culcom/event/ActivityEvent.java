@@ -1,8 +1,8 @@
 package com.culcom.event;
 
 import com.culcom.entity.complex.member.ComplexMember;
-import com.culcom.entity.complex.member.logs.AttendanceDetail;
-import com.culcom.entity.complex.member.logs.ChangeDetail;
+import com.culcom.entity.complex.member.track.AttendanceDetail;
+import com.culcom.entity.complex.member.track.ChangeDetail;
 import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.ActivityFieldType;
 import lombok.Getter;
