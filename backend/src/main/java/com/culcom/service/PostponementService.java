@@ -45,14 +45,8 @@ public class PostponementService {
         req.setAdminMessage(adminMessage);
         if (status == RequestStatus.승인) {
             ComplexMemberMembership mm = req.getMemberMembership();
-            if (mm != null) {
-                mm.setPostponeUsed(mm.getPostponeUsed() + 1);
-                // 연기는 멤버십 status를 변경하지 않는다.
-                // "오늘 연기 중인지"는 complex_postponement_requests에서 기간으로 판정한다.
-                complexMemberMembershipRepository.save(mm);
-            }
+            mm.applyPostponement(req.getStartDate(), req.getEndDate());
         }
-        postponementRepository.save(req);
 
         RequestStatusEventHelper.publishStatusChangeEvent(eventPublisher,
                 req.getMember(), req.getMemberMembership(), status, adminMessage,

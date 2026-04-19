@@ -5,8 +5,10 @@ import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.product.Membership;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -123,5 +125,16 @@ public class ComplexMemberMembership extends BaseTimeEntity {
      */
     public boolean isUsable() {
         return isActive();
+    }
+
+    /**
+     * 승인된 연기를 적용한다 — 만료일을 연기 기간(양끝 포함)만큼 연장하고 사용 횟수를 1 증가.
+     * 연기는 멤버십 status를 변경하지 않으며, "오늘 연기 중인지"는
+     * complex_postponement_requests 테이블에서 기간으로 판정한다.
+     */
+    public void applyPostponement(LocalDate startDate, LocalDate endDate) {
+        long postponeDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
+        this.expiryDate = this.expiryDate.plusDays(postponeDays);
+        this.postponeUsed = this.postponeUsed + 1;
     }
 }

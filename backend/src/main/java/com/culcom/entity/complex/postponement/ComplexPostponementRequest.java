@@ -31,7 +31,7 @@ public class ComplexPostponementRequest extends BaseTimeEntity {
     private ComplexMember member;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_membership_seq")
+    @JoinColumn(name = "member_membership_seq", nullable = false)
     private ComplexMemberMembership memberMembership;
 
     @Column(name = "member_name", nullable = false, length = 100)
