@@ -9,6 +9,10 @@ const mockChange = vi.fn();
 const mockListProducts = vi.fn();
 const mockGetMemberships = vi.fn();
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+}));
+
 vi.mock('@/lib/api', async () => {
   const actual = await vi.importActual<typeof import('@/lib/api')>('@/lib/api');
   return {

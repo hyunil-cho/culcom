@@ -67,6 +67,9 @@ export function useMembership(options?: UseMembershipOptions) {
     existingMsLoaded.current = true;
     if (existingMemberships.length > 0) {
       const ms = existingMemberships.find(m => m.status === '활성') ?? existingMemberships[0];
+      // 완납 상태에서는 추가 납부 입력 필드(결제수단/카드상세)를 비워, 이전 납부 정보가
+      // 새 납부 입력처럼 노출되는 혼동을 방지한다.
+      const fullyPaid = ms.paymentStatus === '완납' || ms.outstanding === 0;
       const firstCardDetail = (ms.payments ?? []).find(p => p.cardDetail)?.cardDetail;
       setForm({
         membershipSeq: String(ms.membershipSeq),
@@ -75,9 +78,9 @@ export function useMembership(options?: UseMembershipOptions) {
         price: ms.price ?? '',
         paymentDate: ms.paymentDate ?? '',
         depositAmount: '',
-        paymentMethod: ms.paymentMethod ?? '',
+        paymentMethod: fullyPaid ? '' : (ms.paymentMethod ?? ''),
         status: ms.status ?? '활성',
-        cardDetail: firstCardDetail ?? emptyCardDetail,
+        cardDetail: fullyPaid ? emptyCardDetail : (firstCardDetail ?? emptyCardDetail),
       });
       setMemberMembershipSeq(ms.seq);
     }
@@ -184,6 +187,7 @@ export function useMembership(options?: UseMembershipOptions) {
     setRenewalMode(false);
     if (existingMemberships && existingMemberships.length > 0) {
       const ms = existingMemberships[0];
+      const fullyPaid = ms.paymentStatus === '완납' || ms.outstanding === 0;
       const firstCardDetail = (ms.payments ?? []).find(p => p.cardDetail)?.cardDetail;
       setForm({
         membershipSeq: String(ms.membershipSeq),
@@ -192,9 +196,9 @@ export function useMembership(options?: UseMembershipOptions) {
         price: ms.price ?? '',
         paymentDate: ms.paymentDate ?? '',
         depositAmount: '',
-        paymentMethod: ms.paymentMethod ?? '',
+        paymentMethod: fullyPaid ? '' : (ms.paymentMethod ?? ''),
         status: ms.status ?? '활성',
-        cardDetail: firstCardDetail ?? emptyCardDetail,
+        cardDetail: fullyPaid ? emptyCardDetail : (firstCardDetail ?? emptyCardDetail),
       });
       setMemberMembershipSeq(ms.seq);
     }

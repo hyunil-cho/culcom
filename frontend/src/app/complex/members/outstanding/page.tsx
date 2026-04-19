@@ -159,7 +159,15 @@ function OutstandingContent() {
           membershipName={paymentModal.data!.membershipName}
           outstanding={paymentModal.data!.outstanding}
           onClose={paymentModal.close}
-          onSaved={() => { paymentModal.close(); queryClient.invalidateQueries({ queryKey: ['outstanding'] }); }}
+          onSaved={() => {
+            const targetMemberSeq = paymentModal.data?.memberSeq;
+            paymentModal.close();
+            queryClient.invalidateQueries({ queryKey: ['outstanding'] });
+            if (targetMemberSeq != null) {
+              queryClient.invalidateQueries({ queryKey: ['memberMemberships', targetMemberSeq] });
+              queryClient.invalidateQueries({ queryKey: ['member', targetMemberSeq] });
+            }
+          }}
         />
       )}
 

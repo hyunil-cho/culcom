@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { memberApi, membershipApi, type MemberMembershipResponse, type Membership } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { usePaymentOptions } from '@/lib/usePaymentOptions';
+import { ROUTES } from '@/lib/routes';
 import ModalOverlay from '@/components/ui/ModalOverlay';
 import FormField from '@/components/ui/FormField';
 import { Input, Textarea } from '@/components/ui/FormInput';
@@ -11,6 +13,7 @@ import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import CardPaymentFields, { createEmptyCardDetail, type CardPaymentDetailData } from './CardPaymentFields';
 import { nowDateTimeLocal } from '../memberFormTypes';
 import { useSubmitLock } from '@/hooks/useSubmitLock';
+import { hasOutstanding } from '../membershipEligibility';
 
 interface Props {
   memberSeq: number;
@@ -35,8 +38,10 @@ function suggestedFee(current: MemberMembershipResponse, newPrice: number): numb
 }
 
 export default function MembershipChangeModal({ memberSeq, current, onClose, onSuccess }: Props) {
+  const router = useRouter();
   const { methods } = usePaymentOptions();
   const { data: products = [] } = useApiQuery<Membership[]>(['memberships'], () => membershipApi.list());
+  const outstandingBlocked = hasOutstanding(current);
 
   const [newMembershipSeq, setNewMembershipSeq] = useState<string>('');
   const [price, setPrice] = useState('');
@@ -80,6 +85,11 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
   };
 
   const handleSubmit = () => run(async () => {
+    if (outstandingBlocked) {
+      // 안전망: UI로 이미 차단되지만 우회 호출 대비
+      setError('미수금이 남아 있어 멤버십을 변경할 수 없습니다.');
+      return;
+    }
     if (!newMembershipSeq) {
       setError('변경할 멤버십을 선택해 주세요.');
       return;
@@ -126,6 +136,52 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
         }}>×</button>
       </div>
 
+      {outstandingBlocked ? (
+        <div
+          data-testid="membership-change-outstanding-block"
+          style={{ padding: '1.5rem', minWidth: 420 }}
+        >
+          <div style={{
+            padding: 16, background: '#fef2f2', border: '1.5px solid #fca5a5',
+            borderRadius: 8, marginBottom: 16, color: '#991b1b',
+          }}>
+            <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: 6 }}>
+              ⚠ 미수금이 남아 있어 멤버십을 변경할 수 없습니다.
+            </div>
+            <div style={{ fontSize: '0.85rem' }}>
+              현재 미수금: <strong>{(current.outstanding ?? 0).toLocaleString()}원</strong>
+              <br />
+              미수금 완납 후 다시 시도해 주세요.
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={onClose}
+              style={{
+                flex: 1, padding: '0.7rem', border: '1px solid #d1d5db',
+                background: '#fff', color: '#6b7280', borderRadius: 6,
+                cursor: 'pointer', fontSize: '0.92rem',
+              }}
+            >
+              닫기
+            </button>
+            <button
+              onClick={() => {
+                onClose();
+                router.push(ROUTES.COMPLEX_OUTSTANDING);
+              }}
+              style={{
+                flex: 1, padding: '0.7rem', border: 'none',
+                background: '#dc2626', color: '#fff', borderRadius: 6,
+                cursor: 'pointer', fontSize: '0.92rem', fontWeight: 700,
+              }}
+            >
+              미수금 관리로 이동
+            </button>
+          </div>
+        </div>
+      ) : (
+      <>
       <div style={{ padding: '1.25rem 1.5rem', maxHeight: '70vh', overflowY: 'auto', minWidth: 480 }}>
         <FormErrorBanner error={error} />
 
@@ -270,6 +326,8 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
           {submitting ? '처리 중...' : '변경 확정'}
         </button>
       </div>
+      </>
+      )}
     </ModalOverlay>
   );
 }

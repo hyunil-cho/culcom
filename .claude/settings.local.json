@@ -118,7 +118,13 @@
       "Bash(cat vitest.config.*)",
       "Bash(cat vite.config.*)",
       "Bash(git reset *)",
-      "Bash(git log *)"
+      "Bash(git log *)",
+      "Bash(npx vitest *)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(tasklist)",
+      "Bash(./gradlew jacocoTestReport --no-daemon)",
+      "Bash(./gradlew jacocoTestReport -x test --no-daemon)",
+      "Bash(awk *)"
     ]
   }
 }

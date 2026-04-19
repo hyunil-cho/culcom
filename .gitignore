@@ -14,10 +14,10 @@
 
 # Code coverage profiles and other test artifacts
 *.out
-coverage.*
+*/coverage.*
 *.coverprofile
 profile.cov
-
+.gradle/*
 # 환경 설정 파일
 .env.*
 # 데이터베이스 파일
@@ -38,3 +38,4 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+frontend/coverage/*

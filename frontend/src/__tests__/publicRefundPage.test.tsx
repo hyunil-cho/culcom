@@ -109,8 +109,8 @@ describe('PublicRefundPage', () => {
       expect(await screen.findByText('검색 실패')).toBeInTheDocument();
     });
 
-    it('회원 검색 실패 + 메시지 없음 → 폴백 에러 메시지', async () => {
-      mockSearchMember.mockResolvedValue({ success: false });
+    it('검색 성공했지만 member가 비어있으면 폴백 에러 메시지', async () => {
+      mockSearchMember.mockResolvedValue({ success: true, data: { members: [] } });
       renderPage();
       expect(
         await screen.findByText('회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'),
