@@ -7,6 +7,7 @@ import com.culcom.entity.complex.clazz.ClassTimeSlot;
 import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
+import com.culcom.entity.enums.BulkAttendanceResultStatus;
 import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.product.Membership;
 import com.culcom.repository.BranchRepository;
@@ -90,7 +91,7 @@ class AttendanceServiceAbsentConsumeTest {
         List<BulkAttendanceResultResponse> results = attendanceService.processBulkAttendance(req);
 
         // then — 결석으로 기록되었지만 usedCount는 +1
-        assertThat(results.get(0).getStatus()).isEqualTo("결석");
+        assertThat(results.get(0).getStatus()).isEqualTo(BulkAttendanceResultStatus.결석);
 
         ComplexMemberMembership reloaded = memberMembershipRepository.findById(mm.getSeq()).orElseThrow();
         assertThat(reloaded.getUsedCount())

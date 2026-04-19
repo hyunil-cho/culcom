@@ -3,6 +3,7 @@ package com.culcom.service;
 import com.culcom.dto.complex.attendance.BulkAttendanceRequest;
 import com.culcom.dto.complex.attendance.BulkAttendanceResultResponse;
 import com.culcom.entity.branch.Branch;
+import com.culcom.entity.enums.BulkAttendanceResultStatus;
 import com.culcom.entity.complex.clazz.ClassTimeSlot;
 import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.member.ComplexMember;
@@ -90,8 +91,8 @@ class AttendanceServiceQuotaTest {
         // then — 한도 초과로 skip 되고 usedCount는 그대로
         assertThat(results).hasSize(1);
         assertThat(results.get(0).getStatus())
-                .as("멤버십 사용횟수 초과 시 skip_quota_exceeded 반환")
-                .isEqualTo("skip_quota_exceeded");
+                .as("멤버십 사용횟수 초과 시 횟수소진 반환")
+                .isEqualTo(BulkAttendanceResultStatus.횟수소진);
 
         ComplexMemberMembership reloaded = memberMembershipRepository.findById(mm.getSeq()).orElseThrow();
         assertThat(reloaded.getUsedCount())
@@ -141,7 +142,7 @@ class AttendanceServiceQuotaTest {
         List<BulkAttendanceResultResponse> first = attendanceService.processBulkAttendance(req);
 
         // then — 출석 정상 처리 + usedCount == totalCount
-        assertThat(first.get(0).getStatus()).isEqualTo("출석");
+        assertThat(first.get(0).getStatus()).isEqualTo(BulkAttendanceResultStatus.출석);
         assertThat(memberMembershipRepository.findById(mm.getSeq()).orElseThrow().getUsedCount())
                 .as("한도에 도달했지만 마지막 한 회는 정상 사용되어야 한다")
                 .isEqualTo(2);

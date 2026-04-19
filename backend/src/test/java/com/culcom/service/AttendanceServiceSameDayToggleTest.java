@@ -9,6 +9,7 @@ import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberAttendance;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.enums.AttendanceStatus;
+import com.culcom.entity.enums.BulkAttendanceResultStatus;
 import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.product.Membership;
 import com.culcom.repository.BranchRepository;
@@ -150,7 +151,7 @@ class AttendanceServiceSameDayToggleTest {
         submit(f, true);   // 출석: +1
         BulkAttendanceResultResponse second = submit(f, true);  // 다시 출석 → skip
 
-        assertThat(second.getStatus()).isEqualTo("skip_already");
+        assertThat(second.getStatus()).isEqualTo(BulkAttendanceResultStatus.이미처리됨);
 
         ComplexMemberMembership reloaded =
                 memberMembershipRepository.findById(f.mm().getSeq()).orElseThrow();

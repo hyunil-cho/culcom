@@ -2,6 +2,7 @@ package com.culcom.controller.complex.attendance;
 
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.complex.attendance.BulkAttendanceResultResponse;
+import com.culcom.entity.enums.BulkAttendanceResultStatus;
 import com.culcom.entity.enums.UserRole;
 import com.culcom.service.AttendanceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,7 +59,7 @@ class AttendanceControllerTest {
         BulkAttendanceResultResponse result = BulkAttendanceResultResponse.builder()
             .memberSeq(10L)
             .name("홍길동")
-            .status("출석")
+            .status(BulkAttendanceResultStatus.출석)
             .build();
         given(attendanceService.processBulkAttendance(any())).willReturn(List.of(result));
 
