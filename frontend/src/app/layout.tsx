@@ -3,8 +3,8 @@ import QueryProvider from '@/components/providers/QueryProvider';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Culcom Backoffice',
-  description: 'Culcom 백오피스 관리 시스템',
+  title: 'E-UT 백오피스',
+  description: 'E-UT 백오피스 관리 시스템',
 };
 
 export default function RootLayout({
