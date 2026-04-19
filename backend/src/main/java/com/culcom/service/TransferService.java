@@ -22,21 +22,13 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class TransferService {
-
-    /** 양도 링크(토큰/초대 토큰) 유효 기간: 생성 시점으로부터 7일. */
-    private static final java.time.Duration LINK_VALID_DURATION = java.time.Duration.ofDays(7);
-
-    private static boolean isLinkExpired(TransferRequest tr) {
-        LocalDateTime created = tr.getCreatedDate();
-        return created != null && created.plus(LINK_VALID_DURATION).isBefore(LocalDateTime.now());
-    }
 
     private final TransferRequestRepository transferRequestRepository;
     private final ComplexMemberMembershipRepository memberMembershipRepository;
@@ -51,7 +43,7 @@ public class TransferService {
 
     // ── 양도비 계산 ──
 
-    public int calculateTransferFee(int remainingCount) {
+    private int calculateTransferFee(int remainingCount) {
         if (remainingCount <= 16) return 20000;
         if (remainingCount <= 48) return 30000;
         return 50000;
@@ -60,7 +52,7 @@ public class TransferService {
     // ── 관리자: 양도 요청 생성 ──
 
     @Transactional
-    public TransferRequestResponse create(TransferCreateRequest req, Long branchSeq) {
+    public TransferRequestResponse create(TransferCreateRequest req) {
         ComplexMemberMembership mm = memberMembershipRepository.findById(req.getMemberMembershipSeq())
                 .orElseThrow(() -> new EntityNotFoundException("멤버십"));
 
@@ -156,7 +148,7 @@ public class TransferService {
         tr.setAdminMessage(adminMessage);
         // 참조 완료는 "실제로 양수로 활용된 경우"만. 거절은 종결이지만 참조된 것이 아니므로 플래그를 올리지 않는다.
         // (거절 건을 리스트에서 감추려면 status=거절 필터를 사용한다.)
-        TransferRequestResponse response = TransferRequestResponse.from(transferRequestRepository.save(tr));
+        TransferRequestResponse response = TransferRequestResponse.from(tr);
 
         if (status == TransferStatus.거절 && tr.getFromMember() != null) {
             Long mmSeq = tr.getMemberMembership() != null ? tr.getMemberMembership().getSeq() : null;
@@ -206,27 +198,12 @@ public class TransferService {
 
         // 1. 양도자 멤버십 비활성화
         original.setStatus(MembershipStatus.만료);
-        memberMembershipRepository.save(original);
 
         // 2. 양도자 수업/팀 자동 제외
         memberClassService.detachMemberFromAllClasses(fromMember, "양도");
 
         // 3. 양수자에게 동일한 멤버십 생성 (양도 불가 표시)
-        ComplexMemberMembership newMm = ComplexMemberMembership.builder()
-                .member(newMember)
-                .membership(original.getMembership())
-                .startDate(original.getStartDate())
-                .expiryDate(original.getExpiryDate())
-                .totalCount(original.getTotalCount())
-                .usedCount(original.getUsedCount())
-                .postponeTotal(original.getPostponeTotal())
-                .postponeUsed(original.getPostponeUsed())
-                .price(original.getPrice())
-                .paymentMethod(original.getPaymentMethod())
-                .paymentDate(original.getPaymentDate())
-                .status(MembershipStatus.활성)
-                .transferred(true)
-                .build();
+        ComplexMemberMembership newMm = original.copyForTransferTo(newMember);
         memberMembershipRepository.save(newMm);
 
         // 4. 히스토리 기록 — 양도자 (양도 발신)
@@ -248,7 +225,7 @@ public class TransferService {
         // 7. SMS 알림 — 양도자/양수자 두 명에게 발송, 경고는 합쳐서 응답에 담는다
         String smsWarning = null;
         if (tr.getBranch() != null) {
-            java.util.Map<String, String> ctx = SmsActionContext.ofTransfer(
+            Map<String, String> ctx = SmsActionContext.ofTransfer(
                     com.culcom.entity.enums.TransferStatus.확인, tr.getAdminMessage());
             String warnFrom = smsService.sendEventSmsIfConfigured(tr.getBranch().getSeq(), SmsEventType.양도완료,
                     fromMember.getName(), fromMember.getPhoneNumber(), ctx);
@@ -257,7 +234,7 @@ public class TransferService {
             smsWarning = mergeSmsWarnings(warnFrom, warnTo);
         }
 
-        TransferRequestResponse response = TransferRequestResponse.from(transferRequestRepository.save(tr));
+        TransferRequestResponse response = TransferRequestResponse.from(tr);
         response.setSmsWarning(smsWarning);
         return response;
     }
@@ -266,7 +243,7 @@ public class TransferService {
      * 양도자/양수자 SMS 경고를 합친다.
      * 동일 메시지면 한 번만, 둘 다 있고 다르면 양쪽 누구에게 실패했는지 표기한다.
      */
-    private static String mergeSmsWarnings(String warnFrom, String warnTo) {
+    private String mergeSmsWarnings(String warnFrom, String warnTo) {
         if (warnFrom == null && warnTo == null) return null;
         if (warnFrom == null) return "양수자 " + warnTo;
         if (warnTo == null) return "양도자 " + warnFrom;
@@ -280,12 +257,7 @@ public class TransferService {
         TransferRequest tr = transferRequestRepository.findByToken(token)
                 .orElseThrow(() -> new EntityNotFoundException("양도 요청"));
 
-        if (isLinkExpired(tr)) {
-            throw new IllegalStateException("유효하지 않은 링크입니다.");
-        }
-        if (tr.getStatus() != TransferStatus.생성) {
-            throw new IllegalStateException("이미 만료된 링크입니다.");
-        }
+        tr.ensureLinkUsable();
 
         return TransferPublicInfoResponse.builder()
                 .membershipName(tr.getMemberMembership().getMembership().getName())
@@ -305,12 +277,7 @@ public class TransferService {
         TransferRequest tr = transferRequestRepository.findByToken(token)
                 .orElseThrow(() -> new EntityNotFoundException("양도 요청"));
 
-        if (isLinkExpired(tr)) {
-            throw new IllegalStateException("유효하지 않은 링크입니다.");
-        }
-        if (tr.getStatus() != TransferStatus.생성) {
-            throw new IllegalStateException("이미 만료된 링크입니다.");
-        }
+        tr.ensureLinkUsable();
 
         if (tr.getInviteToken() == null) {
             tr.setInviteToken(UUID.randomUUID().toString().replace("-", ""));
@@ -334,12 +301,7 @@ public class TransferService {
         TransferRequest tr = transferRequestRepository.findByInviteToken(inviteToken)
                 .orElseThrow(() -> new EntityNotFoundException("양도 초대"));
 
-        if (isLinkExpired(tr)) {
-            throw new IllegalStateException("유효하지 않은 링크입니다.");
-        }
-        if (tr.getStatus() != TransferStatus.생성) {
-            throw new IllegalStateException("이미 만료된 링크입니다.");
-        }
+        tr.ensureLinkUsable();
 
         List<ConsentItemResponse> consents = consentItemRepository.findByCategory("TRANSFER")
                 .stream().map(ConsentItemResponse::from).toList();
@@ -361,12 +323,7 @@ public class TransferService {
         TransferRequest tr = transferRequestRepository.findByInviteToken(inviteToken)
                 .orElseThrow(() -> new EntityNotFoundException("양도 초대"));
 
-        if (isLinkExpired(tr)) {
-            throw new IllegalStateException("유효하지 않은 링크입니다.");
-        }
-        if (tr.getStatus() != TransferStatus.생성) {
-            throw new IllegalStateException("이미 만료된 링크입니다.");
-        }
+        tr.ensureLinkUsable();
 
         // 코멘트 구성
         String comment = String.format("[멤버십 양도] %s님으로부터 %s 양도 (잔여 %d회, 양도비 %,d원)%s",

@@ -19,8 +19,17 @@ export interface AttendanceViewSlot {
   timeSlotSeq: number; slotName: string; classes: AttendanceViewClass[];
 }
 
+export type BulkAttendanceResultStatus =
+  | '멤버십없음'
+  | '횟수소진'
+  | '이미처리됨'
+  | '출석'
+  | '결석'
+  | '출석변경'
+  | '결석변경';
+
 export interface BulkAttendanceResult {
-  memberSeq: number; name: string; status: string;
+  memberSeq: number; name: string; status: BulkAttendanceResultStatus;
 }
 
 export interface AttendanceHistoryDetail {

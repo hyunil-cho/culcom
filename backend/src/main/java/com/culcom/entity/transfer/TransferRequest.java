@@ -9,12 +9,18 @@ import com.culcom.entity.enums.TransferStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "transfer_requests")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
 public class TransferRequest extends BaseTimeEntity {
+
+    /** 양도 링크(토큰/초대 토큰) 유효 기간: 생성 시점으로부터 7일. */
+    private static final Duration LINK_VALID_DURATION = Duration.ofDays(7);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -69,4 +75,18 @@ public class TransferRequest extends BaseTimeEntity {
     @Column(nullable = false)
     @Builder.Default
     private Boolean referenced = false;
+
+    /**
+     * 공개 링크(양도자/양수자 페이지)에서 이 요청을 계속 진행할 수 있는지 검증한다.
+     * 링크가 만료되었거나 상태가 생성이 아니면 예외를 던진다.
+     */
+    public void ensureLinkUsable() {
+        LocalDateTime created = getCreatedDate();
+        if (created != null && created.plus(LINK_VALID_DURATION).isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("유효하지 않은 링크입니다.");
+        }
+        if (status != TransferStatus.생성) {
+            throw new IllegalStateException("이미 만료된 링크입니다.");
+        }
+    }
 }

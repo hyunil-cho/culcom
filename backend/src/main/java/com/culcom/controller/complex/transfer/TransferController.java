@@ -52,10 +52,8 @@ public class TransferController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<TransferRequestResponse>> create(
-            @Valid @RequestBody TransferCreateRequest req,
-            @AuthenticationPrincipal CustomUserPrincipal principal) {
-        Long branchSeq = principal.getSelectedBranchSeq();
-        return ResponseEntity.ok(ApiResponse.ok("양도 요청이 생성되었습니다.", transferService.create(req, branchSeq)));
+            @Valid @RequestBody TransferCreateRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("양도 요청이 생성되었습니다.", transferService.create(req)));
     }
 
     @PutMapping("/{seq}/status")

@@ -75,8 +75,8 @@ public class PostponementService {
     public ReasonDto.Response addReason(ReasonDto.Request req, Long branchSeq) {
         ComplexPostponementReason entity = ComplexPostponementReason.builder()
                 .reason(req.getReason())
+                .branch(branchRepository.getReferenceById(branchSeq))
                 .build();
-        branchRepository.findById(branchSeq).ifPresent(entity::setBranch);
         return ReasonDto.Response.from(reasonRepository.save(entity));
     }
 

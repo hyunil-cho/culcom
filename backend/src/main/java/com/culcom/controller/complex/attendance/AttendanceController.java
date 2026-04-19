@@ -1,5 +1,6 @@
 package com.culcom.controller.complex.attendance;
 
+import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.ApiResponse;
 import com.culcom.dto.complex.attendance.*;
 import com.culcom.dto.complex.classes.ClassReorderRequest;
@@ -7,6 +8,7 @@ import com.culcom.dto.complex.classes.MemberReorderRequest;
 import com.culcom.service.AttendanceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -34,8 +36,10 @@ public class AttendanceController {
     }
 
     @PostMapping("/reorder/members")
-    public ResponseEntity<ApiResponse<Void>> reorderMembers(@RequestBody MemberReorderRequest req) {
-        attendanceService.reorderMembers(req);
+    public ResponseEntity<ApiResponse<Void>> reorderMembers(
+            @RequestBody MemberReorderRequest req,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        attendanceService.reorderMembers(req, principal.getSelectedBranchSeq());
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }

@@ -128,6 +128,18 @@ public class ComplexMemberMembership extends BaseTimeEntity {
     }
 
     /**
+     * 멤버십을 환불 상태로 전환한다.
+     * 시스템 내부 멤버십(internal=true)은 사용자에게 노출되지 않는 자동 부여
+     * 멤버십이므로 환불 대상이 아니다.
+     */
+    public void refund() {
+        if (Boolean.TRUE.equals(internal)) {
+            throw new IllegalStateException("시스템 내부 멤버십은 환불할 수 없습니다.");
+        }
+        this.status = MembershipStatus.환불;
+    }
+
+    /**
      * 승인된 연기를 적용한다 — 만료일을 연기 기간(양끝 포함)만큼 연장하고 사용 횟수를 1 증가.
      * 연기는 멤버십 status를 변경하지 않으며, "오늘 연기 중인지"는
      * complex_postponement_requests 테이블에서 기간으로 판정한다.
@@ -136,5 +148,33 @@ public class ComplexMemberMembership extends BaseTimeEntity {
         long postponeDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
         this.expiryDate = this.expiryDate.plusDays(postponeDays);
         this.postponeUsed = this.postponeUsed + 1;
+    }
+
+    /**
+     * 양도용 사본을 생성한다 — 양도 받은 회원에게 동일한 멤버십(상품/기간/잔여 횟수/결제 정보)을
+     * 부여하되 다음 차이를 둔다:
+     *   - 소유자: {@code newMember}
+     *   - status: 활성 (원본의 상태와 무관)
+     *   - transferred: true (재양도 차단 마커)
+     *   - 결제 이력(payments): 복사하지 않음 (원본에 귀속)
+     *   - 멤버십 변경 이력(changedFromSeq, changeFee): 복사하지 않음 (양도와 무관)
+     *   - internal: 기본값 false (양도는 시스템 내부 부여가 아님)
+     */
+    public ComplexMemberMembership copyForTransferTo(ComplexMember newMember) {
+        return ComplexMemberMembership.builder()
+                .member(newMember)
+                .membership(this.membership)
+                .startDate(this.startDate)
+                .expiryDate(this.expiryDate)
+                .totalCount(this.totalCount)
+                .usedCount(this.usedCount)
+                .postponeTotal(this.postponeTotal)
+                .postponeUsed(this.postponeUsed)
+                .price(this.price)
+                .paymentMethod(this.paymentMethod)
+                .paymentDate(this.paymentDate)
+                .status(MembershipStatus.활성)
+                .transferred(true)
+                .build();
     }
 }

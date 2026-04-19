@@ -54,4 +54,21 @@ public class ComplexRefundRequest extends BaseTimeEntity {
     @Column(name = "admin_message", length = 300)
     private String adminMessage;
 
+    /**
+     * 환불 요청이 종결 상태(승인/반려)인지.
+     * 종결 상태는 비가역이라 더 이상 상태 변경이 불가능하다.
+     */
+    public boolean isTerminated() {
+        return status == RequestStatus.승인 || status == RequestStatus.반려;
+    }
+
+    /**
+     * 상태 변경 가능 여부를 검증한다.
+     * 이미 종결된 요청에 대해서는 {@link IllegalStateException} 을 던진다.
+     */
+    public void assertChangeable() {
+        if (isTerminated()) {
+            throw new IllegalStateException("이미 처리된 환불 요청은 상태를 변경할 수 없습니다.");
+        }
+    }
 }

@@ -11,11 +11,14 @@ import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.member.track.AttendanceDetail;
 import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.AttendanceStatus;
+import com.culcom.entity.enums.BulkAttendanceResultStatus;
 import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.event.ActivityEvent;
 import com.culcom.exception.EntityNotFoundException;
+import com.culcom.exception.ForbiddenException;
 import com.culcom.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AttendanceService {
@@ -48,21 +52,54 @@ public class AttendanceService {
     }
 
     @Transactional
-    public void reorderMembers(MemberReorderRequest req) {
+    public void reorderMembers(MemberReorderRequest req, Long branchSeq) {
         Long classSeq = req.getClassSeq();
-        List<Long> memberSeqs = req.getMemberOrders().stream()
-                .map(MemberReorderRequest.MemberOrder::getMemberSeq).toList();
-        if (memberSeqs.isEmpty()) return;
+        if (classSeq == null) {
+            throw new IllegalArgumentException("classSeq는 필수입니다.");
+        }
+        List<MemberReorderRequest.MemberOrder> orders = req.getMemberOrders();
+        if (orders == null || orders.isEmpty()) return;
 
+        // 입력 검증: memberSeq/sortOrder null·음수·중복 금지.
+        Set<Long> memberSeqSet = new LinkedHashSet<>();
+        Set<Integer> sortOrderSet = new HashSet<>();
+        for (MemberReorderRequest.MemberOrder o : orders) {
+            if (o.getMemberSeq() == null || o.getSortOrder() == null) {
+                throw new IllegalArgumentException("memberSeq와 sortOrder는 필수입니다.");
+            }
+            if (o.getSortOrder() < 0) {
+                throw new IllegalArgumentException("sortOrder는 0 이상이어야 합니다.");
+            }
+            if (!memberSeqSet.add(o.getMemberSeq())) {
+                throw new IllegalArgumentException("중복된 memberSeq가 있습니다: " + o.getMemberSeq());
+            }
+            if (!sortOrderSet.add(o.getSortOrder())) {
+                throw new IllegalArgumentException("중복된 sortOrder가 있습니다: " + o.getSortOrder());
+            }
+        }
+
+        // 권한 검증: 대상 수업이 현재 세션 지점 소속이어야 한다.
+        ComplexClass cls = classRepository.findById(classSeq)
+                .orElseThrow(() -> new EntityNotFoundException("수업"));
+        if (!cls.getBranch().getSeq().equals(branchSeq)) {
+            throw new ForbiddenException("다른 지점의 수업은 변경할 수 없습니다.");
+        }
+
+        List<Long> memberSeqs = new ArrayList<>(memberSeqSet);
         Map<Long, ComplexMemberClassMapping> mappingMap = new HashMap<>();
         memberClassMappingRepository.findByComplexClassSeqAndMemberSeqIn(classSeq, memberSeqs)
                 .forEach(m -> mappingMap.put(m.getMember().getSeq(), m));
 
-        for (MemberReorderRequest.MemberOrder order : req.getMemberOrders()) {
+        List<Long> missing = memberSeqs.stream()
+                .filter(seq -> !mappingMap.containsKey(seq)).toList();
+        if (!missing.isEmpty()) {
+            log.warn("reorderMembers: classSeq={} 에 속하지 않은 회원 요청 무시 {}", classSeq, missing);
+        }
+
+        for (MemberReorderRequest.MemberOrder order : orders) {
             ComplexMemberClassMapping m = mappingMap.get(order.getMemberSeq());
             if (m != null) m.setSortOrder(order.getSortOrder());
         }
-        memberClassMappingRepository.saveAll(mappingMap.values());
     }
 
     @Transactional
@@ -111,7 +148,7 @@ public class AttendanceService {
             return BulkAttendanceResultResponse.builder()
                     .memberSeq(bm.getMemberSeq())
                     .name(name)
-                    .status("skip_no_membership")
+                    .status(BulkAttendanceResultStatus.멤버십없음)
                     .build();
         }
 
@@ -121,11 +158,11 @@ public class AttendanceService {
         // 멤버십 사용 횟수는 출석/결석 무관하게 "수업이 진행됐다는 사실 자체"로 1회 차감된다.
         // → 신규 기록일 때만 차감 (출석↔결석 상태 변경은 추가 차감하지 않음)
         boolean willConsume = (existing == null);
-        if (willConsume && mm.getUsedCount() >= mm.getTotalCount()) {
+        if (willConsume && mm.getUsedCount() >= mm.getTotalCount()){
             return BulkAttendanceResultResponse.builder()
                     .memberSeq(bm.getMemberSeq())
                     .name(name)
-                    .status("skip_quota_exceeded")
+                    .status(BulkAttendanceResultStatus.횟수소진)
                     .build();
         }
 
@@ -134,7 +171,10 @@ public class AttendanceService {
             AttendanceStatus oldStatus = existing.getStatus();
             if (oldStatus == newStatus) {
                 return BulkAttendanceResultResponse.builder()
-                        .memberSeq(bm.getMemberSeq()).name(name).status("skip_already").build();
+                        .memberSeq(bm.getMemberSeq())
+                        .name(name)
+                        .status(BulkAttendanceResultStatus.이미처리됨)
+                        .build();
             }
 
             existing.setStatus(newStatus);
@@ -144,7 +184,10 @@ public class AttendanceService {
 
             return BulkAttendanceResultResponse.builder()
                     .memberSeq(bm.getMemberSeq()).name(name)
-                    .status("변경: " + (newStatus == AttendanceStatus.출석 ? "출석" : "결석")).build();
+                    .status(newStatus == AttendanceStatus.출석
+                            ? BulkAttendanceResultStatus.출석변경
+                            : BulkAttendanceResultStatus.결석변경)
+                    .build();
         }
 
         // 신규 기록 — 출석/결석 모두 usedCount +1
@@ -163,7 +206,10 @@ public class AttendanceService {
 
         return BulkAttendanceResultResponse.builder()
                 .memberSeq(bm.getMemberSeq()).name(name)
-                .status(newStatus == AttendanceStatus.출석 ? "출석" : "결석").build();
+                .status(newStatus == AttendanceStatus.출석
+                        ? BulkAttendanceResultStatus.출석
+                        : BulkAttendanceResultStatus.결석)
+                .build();
     }
 
     /**

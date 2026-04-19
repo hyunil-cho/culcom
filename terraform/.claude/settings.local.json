@@ -17,7 +17,9 @@
       "WebFetch(domain:developers.facebook.com)",
       "Bash(./gradlew compileJava)",
       "Read(//c/Users/lookh/IdeaProjects/temp/culcom/backend/**)",
-      "Bash(./gradlew test *)"
+      "Bash(./gradlew test *)",
+      "Bash(./gradlew compileJava compileTestJava)",
+      "Bash(./gradlew --stop)"
     ]
   }
 }

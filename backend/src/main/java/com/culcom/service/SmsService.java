@@ -93,7 +93,9 @@ public class SmsService {
                                             Map<String, String> extraContext) {
         var optConfig = smsEventConfigRepository.findByBranchSeqAndEventType(branchSeq, eventType);
         if (optConfig.isEmpty()) {
-            return null; // 설정 자체가 없음 → 경고 없이 정상 처리
+            // 자동발송 설정 자체가 등록되지 않은 경우 — 처리는 완료됐지만 SMS는 못 나갔음을
+            // 관리자에게 명시적으로 노출하기 위해 경고를 반환한다.
+            return "문자 자동발송 설정이 등록되지 않아 발송하지 못했습니다.";
         }
         SmsEventConfig config = optConfig.get();
         if (!config.getAutoSend()) {

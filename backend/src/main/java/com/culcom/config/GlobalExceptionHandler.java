@@ -2,6 +2,7 @@ package com.culcom.config;
 
 import com.culcom.dto.ApiResponse;
 import com.culcom.exception.EntityNotFoundException;
+import com.culcom.exception.ForbiddenException;
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.MyBatisSystemException;
 import org.springframework.dao.DataIntegrityViolationException;

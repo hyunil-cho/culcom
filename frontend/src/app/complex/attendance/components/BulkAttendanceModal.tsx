@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { attendanceViewApi, AttendanceViewClass, AttendanceViewMember, BulkAttendanceResult } from '@/lib/api';
+import { attendanceViewApi, AttendanceViewClass, AttendanceViewMember, BulkAttendanceResult, BulkAttendanceResultStatus } from '@/lib/api';
 import ModalOverlay from '@/components/ui/ModalOverlay';
 import { useSubmitLock } from '@/hooks/useSubmitLock';
 import s from './BulkAttendanceModal.module.css';
@@ -167,19 +167,19 @@ export function useBulkAttendance(onComplete: () => void) {
 }
 
 function BulkResultSummary({ results }: { results: BulkAttendanceResult[] }) {
-  const groups: { filter: string; label: string; icon: string; dot: string }[] = [
-    { filter: '출석',               label: '출석',           icon: '✅', dot: '#2e7d32' },
-    { filter: '변경: 출석',          label: '결석→출석 변경', icon: '🔄', dot: '#1565c0' },
-    { filter: '결석',               label: '결석',           icon: '⬜', dot: '#868e96' },
-    { filter: '변경: 결석',          label: '출석→결석 변경', icon: '🔄', dot: '#e65100' },
-    { filter: '연기',               label: '연기',           icon: '⏸️', dot: '#e67700' },
-    { filter: 'skip_already',       label: '이미 처리됨',     icon: '⏭️', dot: '#adb5bd' },
-    { filter: 'skip_no_membership', label: '멤버십 없음',     icon: '⚠️', dot: '#c92a2a' },
+  const groups: { filter: BulkAttendanceResultStatus; label: string; icon: string; dot: string }[] = [
+    { filter: '출석',       label: '출석',            icon: '✅', dot: '#2e7d32' },
+    { filter: '출석변경',    label: '결석→출석 변경',  icon: '🔄', dot: '#1565c0' },
+    { filter: '결석',       label: '결석',            icon: '⬜', dot: '#868e96' },
+    { filter: '결석변경',    label: '출석→결석 변경',  icon: '🔄', dot: '#e65100' },
+    { filter: '이미처리됨',  label: '이미 처리됨',     icon: '⏭️', dot: '#adb5bd' },
+    { filter: '멤버십없음',  label: '멤버십 없음',     icon: '⚠️', dot: '#c92a2a' },
+    { filter: '횟수소진',    label: '횟수 소진',       icon: '🚫', dot: '#c92a2a' },
   ];
 
-  const successCount = results.filter(r => r.status === '출석' || r.status === '변경: 출석').length;
-  const changeCount  = results.filter(r => r.status === '변경: 출석' || r.status === '변경: 결석').length;
-  const skipCount    = results.filter(r => r.status === 'skip_already' || r.status === 'skip_no_membership').length;
+  const successCount = results.filter(r => r.status === '출석' || r.status === '출석변경').length;
+  const changeCount  = results.filter(r => r.status === '출석변경' || r.status === '결석변경').length;
+  const skipCount    = results.filter(r => r.status === '이미처리됨' || r.status === '멤버십없음' || r.status === '횟수소진').length;
 
   return (
     <>
