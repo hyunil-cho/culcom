@@ -33,4 +33,8 @@ public class Membership extends BaseTimeEntity {
     @Builder.Default
     private Boolean transferable = true;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean deleted = false;
+
 }

@@ -18,12 +18,12 @@ public class MembershipService {
     private final MembershipRepository membershipRepository;
 
     public List<MembershipResponse> list() {
-        return membershipRepository.findByIsInternalFalse()
+        return membershipRepository.findByIsInternalFalseAndDeletedFalse()
                 .stream().map(MembershipResponse::from).toList();
     }
 
     public MembershipResponse get(Long seq) {
-        Membership m = membershipRepository.findById(seq)
+        Membership m = membershipRepository.findBySeqAndDeletedFalse(seq)
                 .orElseThrow(() -> new EntityNotFoundException("멤버십"));
         return MembershipResponse.from(m);
     }
@@ -42,7 +42,7 @@ public class MembershipService {
 
     @Transactional
     public MembershipResponse update(Long seq, MembershipRequest req) {
-        Membership m = membershipRepository.findById(seq)
+        Membership m = membershipRepository.findBySeqAndDeletedFalse(seq)
                 .orElseThrow(() -> new EntityNotFoundException("멤버십"));
         m.setName(req.getName());
         m.setDuration(req.getDuration());
@@ -54,6 +54,9 @@ public class MembershipService {
 
     @Transactional
     public void delete(Long seq) {
-        membershipRepository.deleteById(seq);
+        Membership m = membershipRepository.findBySeqAndDeletedFalse(seq)
+                .orElseThrow(() -> new EntityNotFoundException("멤버십"));
+        m.setDeleted(true);
+        membershipRepository.save(m);
     }
 }

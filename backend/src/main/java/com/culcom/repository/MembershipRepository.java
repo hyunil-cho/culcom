@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface MembershipRepository extends JpaRepository<Membership, Long> {
     Optional<Membership> findByName(String name);
-    List<Membership> findByIsInternalFalse();
+    List<Membership> findByIsInternalFalseAndDeletedFalse();
+    Optional<Membership> findBySeqAndDeletedFalse(Long seq);
     Optional<Membership> findFirstByIsInternalTrue();
 }
