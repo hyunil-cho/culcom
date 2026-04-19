@@ -95,6 +95,7 @@ public class SurveyService {
         if (req.getName() != null) t.setName(req.getName());
         if (req.getDescription() != null) t.setDescription(req.getDescription());
         if (req.getCustomerFieldOptions() != null) t.setCustomerFieldOptions(req.getCustomerFieldOptions());
+        if (req.getCustomerFieldOrder() != null) t.setCustomerFieldOrder(req.getCustomerFieldOrder());
         SurveyTemplate saved = templateRepository.save(t);
         return SurveyTemplateResponse.from(saved, optionRepository.countByTemplateSeq(saved.getSeq()));
     }
@@ -165,6 +166,9 @@ public class SurveyService {
 
     @Transactional
     public SurveyQuestionResponse createQuestion(Long templateSeq, SurveyQuestionRequest req) {
+        if (req.getSectionSeq() != null && questionRepository.existsBySectionSeqAndQuestionKey(req.getSectionSeq(), req.getQuestionKey())) {
+            throw new IllegalArgumentException("같은 섹션에 이미 동일한 질문 키가 존재합니다: " + req.getQuestionKey());
+        }
         int maxOrder = questionRepository.findMaxSortOrder(templateSeq);
         SurveyTemplateQuestion entity = SurveyTemplateQuestion.builder()
                 .questionKey(req.getQuestionKey())
@@ -184,6 +188,18 @@ public class SurveyService {
     public SurveyQuestionResponse updateQuestion(Long questionSeq, SurveyQuestionRequest req) {
         SurveyTemplateQuestion q = questionRepository.findById(questionSeq)
                 .orElseThrow(() -> new EntityNotFoundException("질문"));
+
+        Long targetSectionSeq = req.getSectionSeq() != null ? req.getSectionSeq()
+                : (q.getSection() != null ? q.getSection().getSeq() : null);
+        String targetKey = req.getQuestionKey() != null ? req.getQuestionKey() : q.getQuestionKey();
+        boolean sectionChanged = req.getSectionSeq() != null
+                && (q.getSection() == null || !req.getSectionSeq().equals(q.getSection().getSeq()));
+        boolean keyChanged = req.getQuestionKey() != null && !req.getQuestionKey().equals(q.getQuestionKey());
+        if (targetSectionSeq != null && (sectionChanged || keyChanged)
+                && questionRepository.existsBySectionSeqAndQuestionKey(targetSectionSeq, targetKey)) {
+            throw new IllegalArgumentException("같은 섹션에 이미 동일한 질문 키가 존재합니다: " + targetKey);
+        }
+
         if (req.getQuestionKey() != null) q.setQuestionKey(req.getQuestionKey());
         if (req.getTitle() != null) q.setTitle(req.getTitle());
         if (req.getInputType() != null) q.setInputType(req.getInputType());
@@ -207,6 +223,20 @@ public class SurveyService {
         List<Long> seqs = req.getItems().stream().map(QuestionReorderRequest.QuestionReorderItem::getSeq).toList();
         Map<Long, SurveyTemplateQuestion> questionMap = new HashMap<>();
         questionRepository.findAllById(seqs).forEach(q -> questionMap.put(q.getSeq(), q));
+
+        Map<String, String> seenInSection = new HashMap<>();
+        for (QuestionReorderRequest.QuestionReorderItem item : req.getItems()) {
+            SurveyTemplateQuestion q = questionMap.get(item.getSeq());
+            if (q == null) continue;
+            String key = item.getNewQuestionKey() != null ? item.getNewQuestionKey() : q.getQuestionKey();
+            Long sectionSeq = q.getSection() != null ? q.getSection().getSeq() : null;
+            if (sectionSeq == null) continue;
+            String composite = sectionSeq + ":" + key;
+            if (seenInSection.containsKey(composite)) {
+                throw new IllegalArgumentException("같은 섹션에 중복된 질문 키가 포함되어 있습니다: " + key);
+            }
+            seenInSection.put(composite, key);
+        }
 
         for (QuestionReorderRequest.QuestionReorderItem item : req.getItems()) {
             SurveyTemplateQuestion q = questionMap.get(item.getSeq());
@@ -278,6 +308,7 @@ public class SurveyService {
                 .name(source.getName() + " (복사본)")
                 .description(source.getDescription())
                 .customerFieldOptions(source.getCustomerFieldOptions())
+                .customerFieldOrder(source.getCustomerFieldOrder())
                 .build();
         branchRepository.findById(branchSeq).ifPresent(copy::setBranch);
         SurveyTemplate savedTemplate = templateRepository.save(copy);

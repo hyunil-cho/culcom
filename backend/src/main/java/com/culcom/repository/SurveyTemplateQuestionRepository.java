@@ -8,6 +8,7 @@ import java.util.List;
 public interface SurveyTemplateQuestionRepository extends JpaRepository<SurveyTemplateQuestion, Long> {
     List<SurveyTemplateQuestion> findByTemplateSeqOrderBySortOrder(Long templateSeq);
     List<SurveyTemplateQuestion> findBySectionSeqOrderBySortOrder(Long sectionSeq);
+    boolean existsBySectionSeqAndQuestionKey(Long sectionSeq, String questionKey);
     void deleteByTemplateSeq(Long templateSeq);
     void deleteBySectionSeq(Long sectionSeq);
 

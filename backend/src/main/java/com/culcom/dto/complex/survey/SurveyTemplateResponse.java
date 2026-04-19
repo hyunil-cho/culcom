@@ -20,6 +20,7 @@ public class SurveyTemplateResponse {
     private LocalDateTime lastUpdateDate;
     private int optionCount;
     private Map<String, List<String>> customerFieldOptions;
+    private List<String> customerFieldOrder;
 
     public static SurveyTemplateResponse from(SurveyTemplate entity) {
         return from(entity, 0);
@@ -35,6 +36,7 @@ public class SurveyTemplateResponse {
                 .lastUpdateDate(entity.getLastUpdateDate())
                 .optionCount(optionCount)
                 .customerFieldOptions(entity.getCustomerFieldOptions())
+                .customerFieldOrder(entity.getCustomerFieldOrder())
                 .build();
     }
 }

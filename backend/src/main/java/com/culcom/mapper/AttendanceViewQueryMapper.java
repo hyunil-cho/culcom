@@ -17,7 +17,8 @@ public interface AttendanceViewQueryMapper {
     /** 등록현황 통합 뷰 (시간대별 > 수업별 > 회원/스태프) */
     List<AttendanceViewRow> selectAttendanceView(
             @Param("branchSeq") Long branchSeq,
-            @Param("today") LocalDate today);
+            @Param("today") LocalDate today,
+            @Param("sevenDaysAgo") LocalDate sevenDaysAgo);
 
     /** 등록현황 상세 뷰 (특정 시간대) */
     List<AttendanceViewRow> selectAttendanceDetail(

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { SurveyQuestion } from '@/lib/api';
 import { useSurveyData } from '../_shared/useSurveyData';
-import { BASIC_INFO_FIELDS, getFieldOptions, hintText, questionsForSection } from '../_shared/surveyConstants';
+import { answerKey, getFieldOptions, getOrderedBasicFields, hintText, questionsForSection } from '../_shared/surveyConstants';
 import SurveyShell from '../_shared/SurveyShell';
 import fillStyles from '../fill/page.module.css';
 import s from './page.module.css';
@@ -23,11 +23,12 @@ export default function SurveyPreviewPage() {
 
   const renderInput = (q: SurveyQuestion) => {
     const opts = optionsByQ[q.seq] || [];
-    const inputName = q.questionKey + (q.inputType === 'checkbox' ? '[]' : '');
+    const key = answerKey(q);
+    const inputName = key + (q.inputType === 'checkbox' ? '[]' : '');
     const groups = q.isGrouped && q.groupLabel ? q.groupLabel.split(',').map(g => g.trim()).filter(Boolean) : [];
 
     if (q.inputType === 'text') {
-      return <textarea name={q.questionKey} className={fillStyles.textInput} placeholder="직접 입력해주세요." readOnly />;
+      return <textarea name={key} className={fillStyles.textInput} placeholder="직접 입력해주세요." readOnly />;
     }
 
     if (q.isGrouped && groups.length > 0) {
@@ -83,7 +84,7 @@ export default function SurveyPreviewPage() {
               <span className={fillStyles.sectionBadge}>Section 1</span>
               <span className={fillStyles.sectionTitle}>고객 기본 정보</span>
             </div>
-            {BASIC_INFO_FIELDS.map(field => {
+            {getOrderedBasicFields(template).map(field => {
               const options = getFieldOptions(template, field.key);
               return (
                 <div key={field.key} className={fillStyles.fieldGroup}>

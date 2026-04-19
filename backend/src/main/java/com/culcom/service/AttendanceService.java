@@ -8,6 +8,7 @@ import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberAttendance;
 import com.culcom.entity.complex.member.ComplexMemberClassMapping;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
+import com.culcom.entity.complex.member.track.AttendanceDetail;
 import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.enums.AttendanceStatus;
 import com.culcom.entity.enums.MembershipStatus;

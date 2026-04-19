@@ -14,4 +14,5 @@ public class SurveyTemplateRequest {
     private String name;
     private String description;
     private Map<String, List<String>> customerFieldOptions;
+    private List<String> customerFieldOrder;
 }

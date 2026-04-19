@@ -131,6 +131,11 @@ export default function AttendancePage() {
             </div>
 
             <div className="complex-grid" ref={() => {}}>
+              {slot.classes.length === 0 && (
+                <div style={{ padding: 24, textAlign: 'center', color: '#888', fontSize: '0.9rem', border: '1px dashed #ddd', borderRadius: 6, background: '#fafafa' }}>
+                  등록된 분반이 없습니다.
+                </div>
+              )}
               {slot.classes.map(cls => {
                 const rate = calcTodayRate(cls.members);
                 return (

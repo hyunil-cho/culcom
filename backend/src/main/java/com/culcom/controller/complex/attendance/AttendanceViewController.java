@@ -33,20 +33,22 @@ public class AttendanceViewController {
     public ResponseEntity<ApiResponse<List<AttendanceViewSlotResponse>>> attendanceView(
             @AuthenticationPrincipal CustomUserPrincipal principal) {
         Long branchSeq = principal.getSelectedBranchSeq();
-        List<AttendanceViewRow> rows = attendanceViewQueryMapper.selectAttendanceView(branchSeq, LocalDate.now());
+        LocalDate today = LocalDate.now();
+        List<AttendanceViewRow> rows = attendanceViewQueryMapper.selectAttendanceView(branchSeq, today, today.minusDays(7));
 
         LinkedHashMap<Long, AttendanceViewSlotResponse.AttendanceViewSlotResponseBuilder> slotMap = new LinkedHashMap<>();
         LinkedHashMap<String, List<AttendanceViewMemberResponse>> classMembersMap = new LinkedHashMap<>();
         LinkedHashMap<String, AttendanceViewRow> classInfoMap = new LinkedHashMap<>();
 
         for (AttendanceViewRow row : rows) {
-            String slotClassKey = row.getTimeSlotSeq() + "-" + row.getClassSeq();
-
             slotMap.computeIfAbsent(row.getTimeSlotSeq(), k ->
                     AttendanceViewSlotResponse.builder()
                             .timeSlotSeq(row.getTimeSlotSeq())
                             .slotName(formatSlotName(row)));
 
+            if (row.getClassSeq() == null) continue;
+
+            String slotClassKey = row.getTimeSlotSeq() + "-" + row.getClassSeq();
             classInfoMap.putIfAbsent(slotClassKey, row);
             if (row.getMemberSeq() != null) {
                 classMembersMap.computeIfAbsent(slotClassKey, k -> new ArrayList<>())

@@ -192,7 +192,8 @@ class QueryMapperTest {
 
     @Test
     void attendanceView_selectAttendanceView() {
-        List<AttendanceViewRow> result = attendanceViewQueryMapper.selectAttendanceView(1L, LocalDate.now());
+        LocalDate today = LocalDate.now();
+        List<AttendanceViewRow> result = attendanceViewQueryMapper.selectAttendanceView(1L, today, today.minusDays(7));
         assertThat(result).isNotNull();
     }
 

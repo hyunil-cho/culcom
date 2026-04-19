@@ -31,3 +31,25 @@ export function hintText(q: SurveyQuestion): string {
 export function questionsForSection(questions: SurveyQuestion[], sectionSeq: number) {
   return questions.filter(q => q.sectionSeq === sectionSeq);
 }
+
+export function answerKey(q: Pick<SurveyQuestion, 'sectionSeq' | 'questionKey'>): string {
+  return `${q.sectionSeq ?? ''}:${q.questionKey}`;
+}
+
+type BasicField = typeof BASIC_INFO_FIELDS[number];
+
+export function getOrderedBasicFields(
+  template: { customerFieldOrder?: string[] | null } | null,
+): BasicField[] {
+  const order = template?.customerFieldOrder;
+  if (!order || order.length === 0) return [...BASIC_INFO_FIELDS];
+  const byKey = new Map<string, BasicField>(BASIC_INFO_FIELDS.map(f => [f.key, f]));
+  const ordered: BasicField[] = [];
+  const seen = new Set<string>();
+  for (const key of order) {
+    const f = byKey.get(key);
+    if (f) { ordered.push(f); seen.add(key); }
+  }
+  for (const f of BASIC_INFO_FIELDS) if (!seen.has(f.key)) ordered.push(f);
+  return ordered;
+}

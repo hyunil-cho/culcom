@@ -10,8 +10,7 @@ import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { Checkbox } from '@/components/ui/FormInput';
-import { useFormError } from '@/hooks/useFormError';
-import FormErrorBanner from '@/components/ui/FormErrorBanner';
+import { useResultModal } from '@/hooks/useResultModal';
 import Spinner from '@/components/ui/Spinner';
 import { BASIC_INFO_FIELDS, getFieldOptions } from '@/app/survey/[seq]/_shared/surveyConstants';
 import s from './page.module.css';
@@ -58,7 +57,11 @@ export default function SurveyEditorPage() {
   const dragOverItem = useRef<{ seq: number; sectionSeq: number } | null>(null);
   const dragOption = useRef<{ seq: number; questionSeq: number } | null>(null);
   const dragOverOption = useRef<{ seq: number; questionSeq: number } | null>(null);
-  const { error: formError, setError, clear: clearError } = useFormError();
+  const dragFixedField = useRef<string | null>(null);
+  const dragOverFixedField = useRef<string | null>(null);
+  const dragFixedOption = useRef<{ key: string; label: string } | null>(null);
+  const dragOverFixedOption = useRef<{ key: string; label: string } | null>(null);
+  const { showError, modal: resultModal } = useResultModal();
   const deleteSectionModal = useModal<SurveySection>();
   const deleteQuestionModal = useModal<SurveyQuestion>();
   const deleteOptionModal = useModal<{ seq: number; label: string }>();
@@ -146,24 +149,24 @@ export default function SurveyEditorPage() {
   };
   const cancelEditTemplate = () => { setEditTemplateName(null); setEditTemplateDesc(null); };
   const handleUpdateTemplateName = async () => {
-    if (editTemplateName == null || !editTemplateName.trim()) { setError('설문지 이름을 입력해주세요.'); return; }
-    clearError();
+    if (editTemplateName == null || !editTemplateName.trim()) { showError('설문지 이름을 입력해주세요.'); return; }
     const res = await surveyApi.updateTemplate(templateSeq, { name: editTemplateName.trim(), description: editTemplateDesc?.trim() || undefined });
     if (res.success) { cancelEditTemplate(); load(); }
+    else showError(res.message || '설문지 이름 변경에 실패했습니다.');
   };
 
   const handleAddSection = async () => {
-    if (!addSectionForm || !addSectionForm.title.trim()) { setError('섹션 제목을 입력해주세요.'); return; }
-    clearError();
+    if (!addSectionForm || !addSectionForm.title.trim()) { showError('섹션 제목을 입력해주세요.'); return; }
     const res = await surveyApi.createSection(templateSeq, { title: addSectionForm.title.trim() });
     if (res.success) { setAddSectionForm(null); load(); }
+    else showError(res.message || '섹션 추가에 실패했습니다.');
   };
   const startEditSection = (sec: SurveySection) => { setEditSectionSeq(sec.seq); setEditSectionTitle(sec.title); };
   const handleUpdateSection = async () => {
-    if (editSectionSeq == null || !editSectionTitle.trim()) { setError('섹션 제목을 입력해주세요.'); return; }
-    clearError();
+    if (editSectionSeq == null || !editSectionTitle.trim()) { showError('섹션 제목을 입력해주세요.'); return; }
     const res = await surveyApi.updateSection(templateSeq, editSectionSeq, { title: editSectionTitle.trim() });
     if (res.success) { setEditSectionSeq(null); load(); }
+    else showError(res.message || '섹션 수정에 실패했습니다.');
   };
   const handleDeleteSection = (sec: SurveySection) => {
     deleteSectionModal.open(sec);
@@ -186,11 +189,11 @@ export default function SurveyEditorPage() {
   const handleAddQuestion = async (sectionSeq: number) => {
     const form = questionAddForms[sectionSeq];
     if (!form) return;
-    if (!form.questionKey.trim()) { setError('질문 키를 입력해주세요.'); return; }
-    if (!form.title.trim()) { setError('질문 제목을 입력해주세요.'); return; }
-    clearError();
+    if (!form.questionKey.trim()) { showError('질문 키를 입력해주세요.'); return; }
+    if (!form.title.trim()) { showError('질문 제목을 입력해주세요.'); return; }
     const res = await surveyApi.createQuestion(templateSeq, { sectionSeq, questionKey: form.questionKey.trim(), title: form.title.trim(), inputType: form.inputType, required: form.required });
     if (res.success) { toggleQuestionAddForm(sectionSeq); load(); }
+    else showError(res.message || '질문 추가에 실패했습니다.');
   };
   const toggleEditQuestion = (q: SurveyQuestion) => {
     setQuestionEditForms(prev => {
@@ -201,10 +204,10 @@ export default function SurveyEditorPage() {
   const handleUpdateQuestion = async (q: SurveyQuestion) => {
     const form = questionEditForms[q.seq];
     if (!form) return;
-    if (!form.title.trim()) { setError('질문 제목을 입력해주세요.'); return; }
-    clearError();
+    if (!form.title.trim()) { showError('질문 제목을 입력해주세요.'); return; }
     const res = await surveyApi.updateQuestion(templateSeq, q.seq, { sectionSeq: q.sectionSeq!, questionKey: form.questionKey, title: form.title, inputType: form.inputType, required: form.required });
     if (res.success) { setQuestionEditForms(prev => { const next = { ...prev }; delete next[q.seq]; return next; }); load(); }
+    else showError(res.message || '질문 수정에 실패했습니다.');
   };
   const handleDeleteQuestion = (q: SurveyQuestion) => {
     deleteQuestionModal.open(q);
@@ -240,8 +243,7 @@ export default function SurveyEditorPage() {
     const label = fixedOptionAddForms[key];
     if (!label?.trim()) return;
     const currentOptions = getFieldOptions(template, key) ?? [];
-    if (currentOptions.includes(label.trim())) { setError('이미 존재하는 선택지입니다.'); return; }
-    clearError();
+    if (currentOptions.includes(label.trim())) { showError('이미 존재하는 선택지입니다.'); return; }
     await saveFixedOptions(key, [...currentOptions, label.trim()]);
     setFixedOptionAddForms(prev => { const n = { ...prev }; delete n[key]; return n; });
   };
@@ -257,6 +259,54 @@ export default function SurveyEditorPage() {
     delete updated[key];
     await surveyApi.updateTemplate(templateSeq, { customerFieldOptions: Object.keys(updated).length > 0 ? updated : {} });
     load();
+  };
+
+  const handleFixedFieldDragStart = (key: string) => { dragFixedField.current = key; };
+  const handleFixedFieldDragOver = (e: React.DragEvent, key: string) => {
+    e.preventDefault();
+    dragFixedField.current && (dragOverFixedField.current = key);
+  };
+  const handleFixedFieldDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    const from = dragFixedField.current;
+    const to = dragOverFixedField.current;
+    dragFixedField.current = null;
+    dragOverFixedField.current = null;
+    if (!from || !to || from === to) return;
+    const current = (template?.customerFieldOrder && template.customerFieldOrder.length > 0)
+      ? template.customerFieldOrder.filter(k => DEFAULT_CUSTOMER_FIELDS.some(f => f.key === k))
+      : DEFAULT_CUSTOMER_FIELDS.map(f => f.key);
+    for (const f of DEFAULT_CUSTOMER_FIELDS) if (!current.includes(f.key)) current.push(f.key);
+    const fromIdx = current.indexOf(from);
+    const toIdx = current.indexOf(to);
+    if (fromIdx === -1 || toIdx === -1) return;
+    const next = [...current];
+    const [moved] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, moved);
+    await surveyApi.updateTemplate(templateSeq, { customerFieldOrder: next });
+    load();
+  };
+
+  const handleFixedOptionDragStart = (key: string, label: string) => { dragFixedOption.current = { key, label }; };
+  const handleFixedOptionDragOver = (e: React.DragEvent, key: string, label: string) => {
+    e.preventDefault();
+    if (dragFixedOption.current?.key === key) dragOverFixedOption.current = { key, label };
+  };
+  const handleFixedOptionDrop = async (e: React.DragEvent, key: string) => {
+    e.preventDefault();
+    const from = dragFixedOption.current;
+    const to = dragOverFixedOption.current;
+    dragFixedOption.current = null;
+    dragOverFixedOption.current = null;
+    if (!from || !to || from.key !== key || to.key !== key || from.label === to.label) return;
+    const currentOptions = getFieldOptions(template, key) ?? [];
+    const fromIdx = currentOptions.indexOf(from.label);
+    const toIdx = currentOptions.indexOf(to.label);
+    if (fromIdx === -1 || toIdx === -1) return;
+    const next = [...currentOptions];
+    const [moved] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, moved);
+    await saveFixedOptions(key, next);
   };
 
   const handleOptionDragStart = (o: SurveyOption) => {
@@ -461,7 +511,7 @@ export default function SurveyEditorPage() {
         <div className={s.questionAddTitle}>새 질문</div>
         <div className={s.formGrid}>
           <div>
-            <label className={s.lbl}>질문 키 <span className={s.requiredMark}>*</span></label>
+            <label className={s.lbl}>질문 키 <span className={s.requiredMark}>*</span> <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>(같은 섹션 내에서 중복 불가)</span></label>
             <input type="text" value={form.questionKey} placeholder="q1"
               onChange={e => setQuestionAddForms(p => ({ ...p, [sectionSeq]: { ...p[sectionSeq], questionKey: e.target.value } }))}
               className={s.inp} />
@@ -501,7 +551,7 @@ export default function SurveyEditorPage() {
         <a onClick={() => router.push(ROUTES.SURVEY)} className={s.backLink}>&larr; 설문지 목록</a>
       </div>
 
-      <FormErrorBanner error={formError} />
+      {resultModal}
 
       <div className={s.headerRow}>
         {editTemplateName !== null ? (
@@ -533,20 +583,30 @@ export default function SurveyEditorPage() {
       <p className={s.desc}>섹션을 나누고, 각 섹션에 질문을 추가하세요. 같은 섹션 안에서 질문을 드래그하여 순서를 변경할 수 있습니다.</p>
 
       {/* 고객 기본 정보 (고정 섹션) */}
-      <div className={s.sectionWrap}>
+      <div className={s.sectionWrap} onDrop={handleFixedFieldDrop} onDragOver={e => e.preventDefault()}>
         <div className={s.sectionHeaderFixed}>
           <span className={s.sectionBadgeFixed}>고정</span>
           <span className={s.sectionTitle}>고객 기본 정보</span>
-          <span className={s.sectionMetaFixed}>항상 첫 페이지에 표시됩니다</span>
+          <span className={s.sectionMetaFixed}>항상 첫 페이지에 표시됩니다 · 드래그로 순서 변경</span>
         </div>
-        {DEFAULT_CUSTOMER_FIELDS.map((field, i) => {
+        {(() => {
+          const orderedKeys = (template?.customerFieldOrder && template.customerFieldOrder.length > 0)
+            ? [
+                ...template.customerFieldOrder.filter(k => DEFAULT_CUSTOMER_FIELDS.some(f => f.key === k)),
+                ...DEFAULT_CUSTOMER_FIELDS.filter(f => !template.customerFieldOrder!.includes(f.key)).map(f => f.key),
+              ]
+            : DEFAULT_CUSTOMER_FIELDS.map(f => f.key);
+          const orderedFields = orderedKeys.map(k => DEFAULT_CUSTOMER_FIELDS.find(f => f.key === k)!).filter(Boolean);
+          return orderedFields.map((field) => {
           const isChoice = field.type === '단일선택';
           const isExpanded = isChoice && expandedFixed.has(field.key);
           const fieldOptions = isChoice ? getFieldOptions(template, field.key) ?? [] : [];
           const hasCustom = isChoice && !!template?.customerFieldOptions?.[field.key];
 
           return (
-            <div key={i} className={`card ${s.questionCard}`}>
+            <div key={field.key} className={`card ${s.questionCard}`} draggable
+              onDragStart={() => handleFixedFieldDragStart(field.key)}
+              onDragOver={e => handleFixedFieldDragOver(e, field.key)}>
               <div className={s.fixedCardHeader}
                 onClick={isChoice ? () => toggleFixedField(field.key) : undefined}
                 style={isChoice ? { cursor: 'pointer' } : undefined}>
@@ -569,9 +629,11 @@ export default function SurveyEditorPage() {
                       <button onClick={() => handleResetFixedOptions(field.key)} className={s.btnEdit} style={{ fontSize: '0.78rem' }}>기본값 복원</button>
                     </div>
                   )}
-                  <div className={s.optionTags}>
+                  <div className={s.optionTags} onDrop={e => handleFixedOptionDrop(e, field.key)} onDragOver={e => e.preventDefault()}>
                     {fieldOptions.map(opt => (
-                      <span key={opt} className={s.optionTag}>
+                      <span key={opt} className={s.optionTag} draggable
+                        onDragStart={() => handleFixedOptionDragStart(field.key, opt)}
+                        onDragOver={e => handleFixedOptionDragOver(e, field.key, opt)}>
                         {opt}
                         <button onClick={() => handleDeleteFixedOption(field.key, opt)} title="삭제" className={s.optionDeleteBtn}>x</button>
                       </span>
@@ -597,7 +659,8 @@ export default function SurveyEditorPage() {
               )}
             </div>
           );
-        })}
+        });
+        })()}
       </div>
 
       {sections.length === 0 && !addSectionForm ? (

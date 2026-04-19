@@ -33,8 +33,8 @@
                 ELSE ''
             END AS status,
             a.attendance_date AS attendanceDate
-        FROM complex_classes c
-        JOIN class_time_slots ts ON ts.seq = c.time_slot_seq
+        FROM class_time_slots ts
+        LEFT JOIN complex_classes c ON c.time_slot_seq = ts.seq AND c.branch_seq = #{branchSeq}
         LEFT JOIN (
             SELECT c2.seq AS class_seq, c2.staff_seq AS member_seq, -1 AS sort_order FROM complex_classes c2 WHERE c2.staff_seq IS NOT NULL
             UNION ALL
@@ -66,12 +66,12 @@
                    FROM complex_member_attendance a2
                    WHERE a2.member_seq = m.seq
                      AND a2.class_seq = c.seq
-                     AND a2.attendance_date &gt;= DATE_SUB(#{today}, INTERVAL 7 DAY)
+                     AND a2.attendance_date &gt;= #{sevenDaysAgo}
                      AND a2.attendance_date &lt;= #{today}
                    ORDER BY a2.attendance_date DESC
                    LIMIT 1
                )
-        WHERE c.branch_seq = #{branchSeq}
+        WHERE ts.branch_seq = #{branchSeq}
         ORDER BY ts.seq, c.sort_order, staff DESC, cm.sort_order, m.name
     </select>
 

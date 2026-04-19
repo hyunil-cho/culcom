@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { BASIC_INFO_FIELDS, hintText, questionsForSection } from '@/app/survey/[seq]/_shared/surveyConstants';
+import { answerKey, BASIC_INFO_FIELDS, hintText, questionsForSection } from '@/app/survey/[seq]/_shared/surveyConstants';
 import type { SurveyQuestion } from '@/lib/api';
 
 describe('BASIC_INFO_FIELDS', () => {
@@ -68,6 +68,17 @@ describe('hintText', () => {
 
   it('기타 타입 → "하나만 선택"', () => {
     expect(hintText(makeQ('unknown'))).toBe('하나만 선택');
+  });
+});
+
+describe('answerKey', () => {
+  it('sectionSeq와 questionKey를 콜론으로 결합', () => {
+    expect(answerKey({ sectionSeq: 10, questionKey: 'q1' })).toBe('10:q1');
+  });
+
+  it('다른 섹션의 동일 키는 서로 다른 복합 키를 만든다', () => {
+    expect(answerKey({ sectionSeq: 10, questionKey: 'q1' }))
+      .not.toBe(answerKey({ sectionSeq: 20, questionKey: 'q1' }));
   });
 });
 

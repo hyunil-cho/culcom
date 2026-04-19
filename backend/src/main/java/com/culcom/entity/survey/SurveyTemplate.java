@@ -39,4 +39,8 @@ public class SurveyTemplate extends BaseTimeEntity {
     @Convert(converter = CustomerFieldOptionsConverter.class)
     private Map<String, List<String>> customerFieldOptions;
 
+    @Column(name = "customer_field_order", columnDefinition = "TEXT")
+    @Convert(converter = StringListConverter.class)
+    private List<String> customerFieldOrder;
+
 }

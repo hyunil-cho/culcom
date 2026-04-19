@@ -14,7 +14,9 @@
       "Bash(find C:\\\\Users\\\\lookh\\\\IdeaProjects\\\\culcom\\\\backend\\\\src\\\\main\\\\java\\\\com\\\\culcom\\\\dto:*)",
       "Bash(grep -E \"\\\\.java$\")",
       "Bash(mkdir -p \"C:/Users/lookh/IdeaProjects/culcom/frontend/src/app/\\(main\\)/customers/[seq]\")",
-      "Bash(mkdir -p \"C:/Users/lookh/IdeaProjects/culcom/frontend/src/app/\\(main\\)/customers/[seq]/edit\")"
+      "Bash(mkdir -p \"C:/Users/lookh/IdeaProjects/culcom/frontend/src/app/\\(main\\)/customers/[seq]/edit\")",
+      "Bash(npx vitest *)",
+      "Bash(./gradlew test *)"
     ]
   }
 }

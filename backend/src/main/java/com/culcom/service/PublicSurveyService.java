@@ -66,7 +66,9 @@ public class PublicSurveyService {
             List<SurveyTemplateQuestion> questions = questionRepository.findByTemplateSeqOrderBySortOrder(templateSeq);
             Map<String, String> snapshot = new LinkedHashMap<>();
             for (SurveyTemplateQuestion q : questions) {
-                snapshot.put(q.getQuestionKey(), q.getTitle());
+                Long sectionSeq = q.getSection() != null ? q.getSection().getSeq() : null;
+                String compositeKey = (sectionSeq != null ? sectionSeq : "") + ":" + q.getQuestionKey();
+                snapshot.put(compositeKey, q.getTitle());
             }
             return objectMapper.writeValueAsString(snapshot);
         } catch (Exception e) {

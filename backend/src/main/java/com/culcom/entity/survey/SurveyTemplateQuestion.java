@@ -5,7 +5,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "survey_template_questions")
+@Table(name = "survey_template_questions", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_question_section_key", columnNames = {"section_seq", "question_key"})
+})
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder

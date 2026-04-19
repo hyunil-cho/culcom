@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { publicSurveyApi, SurveyQuestion } from '@/lib/api';
 import { useSurveyData } from '../_shared/useSurveyData';
-import { BASIC_INFO_FIELDS, getFieldOptions, hintText, questionsForSection } from '../_shared/surveyConstants';
+import { answerKey, BASIC_INFO_FIELDS, getFieldOptions, getOrderedBasicFields, hintText, questionsForSection } from '../_shared/surveyConstants';
 import SurveyShell from '../_shared/SurveyShell';
 import SurveyComplete from './SurveyComplete';
 import SurveyConsentStep from './SurveyConsentStep';
@@ -79,7 +79,7 @@ export default function SurveyFillPage() {
         const secQ = questionsForSection(questions, sec.seq);
         for (const q of secQ) {
           if (!q.required) continue;
-          const ans = answers[q.questionKey];
+          const ans = answers[answerKey(q)];
           if (!ans || (Array.isArray(ans) && ans.length === 0) || (typeof ans === 'string' && !ans.trim())) {
             alert(`"${q.title}" 항목은 필수입니다.`); return;
           }
@@ -96,7 +96,7 @@ export default function SurveyFillPage() {
       const secQ = questionsForSection(questions, sec.seq);
       for (const q of secQ) {
         if (!q.required) continue;
-        const ans = answers[q.questionKey];
+        const ans = answers[answerKey(q)];
         if (!ans || (Array.isArray(ans) && ans.length === 0) || (typeof ans === 'string' && !ans.trim())) {
           alert(`"${q.title}" 항목은 필수입니다.`); return;
         }
@@ -122,9 +122,10 @@ export default function SurveyFillPage() {
   const renderInput = (q: SurveyQuestion) => {
     const opts = optionsByQ[q.seq] || [];
     const groups = q.isGrouped && q.groupLabel ? q.groupLabel.split(',').map(g => g.trim()).filter(Boolean) : [];
+    const key = answerKey(q);
 
     if (q.inputType === 'text') {
-      return <textarea value={(answers[q.questionKey] as string) || ''} onChange={e => setAnswer(q.questionKey, e.target.value)}
+      return <textarea value={(answers[key] as string) || ''} onChange={e => setAnswer(key, e.target.value)}
         className={s.textInput} placeholder="직접 입력해주세요." />;
     }
 
@@ -141,10 +142,10 @@ export default function SurveyFillPage() {
                 <div className={s.groupColTitle}>{group}</div>
                 <div className={s.groupItems}>
                   {groupOpts.map(o => {
-                    const checked = inputType === 'radio' ? answers[q.questionKey] === o.label : ((answers[q.questionKey] as string[]) || []).includes(o.label);
+                    const checked = inputType === 'radio' ? answers[key] === o.label : ((answers[key] as string[]) || []).includes(o.label);
                     return (
                       <label key={o.seq} className={checked ? s.chipInGroupChecked : s.chipInGroup}
-                        onClick={() => inputType === 'radio' ? setAnswer(q.questionKey, o.label) : toggleCheckbox(q.questionKey, o.label)}>
+                        onClick={() => inputType === 'radio' ? setAnswer(key, o.label) : toggleCheckbox(key, o.label)}>
                         {o.label}
                       </label>
                     );
@@ -162,10 +163,10 @@ export default function SurveyFillPage() {
     return (
       <div className={s.chipRow}>
         {opts.map(o => {
-          const checked = inputType === 'radio' ? answers[q.questionKey] === o.label : ((answers[q.questionKey] as string[]) || []).includes(o.label);
+          const checked = inputType === 'radio' ? answers[key] === o.label : ((answers[key] as string[]) || []).includes(o.label);
           return (
             <label key={o.seq} className={checked ? s.chipChecked : s.chip}
-              onClick={() => inputType === 'radio' ? setAnswer(q.questionKey, o.label) : toggleCheckbox(q.questionKey, o.label)}>
+              onClick={() => inputType === 'radio' ? setAnswer(key, o.label) : toggleCheckbox(key, o.label)}>
               {o.label}
             </label>
           );
@@ -197,7 +198,7 @@ export default function SurveyFillPage() {
               <span className={s.sectionBadge}>Section 1</span>
               <span className={s.sectionTitle}>고객 기본 정보</span>
             </div>
-            {BASIC_INFO_FIELDS.map(field => {
+            {getOrderedBasicFields(template).map(field => {
               const options = getFieldOptions(template, field.key);
               return (
                 <div key={field.key} className={s.fieldGroup}>
