@@ -1,6 +1,7 @@
 package com.culcom.dto.complex.member;
 
 import com.culcom.entity.enums.PaymentKind;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,8 +18,9 @@ public class MembershipPaymentRequest {
     @NotNull
     private PaymentKind kind;
 
+    @NotBlank(message = "결제 수단은 필수입니다")
     private String method;
-
+    @NotBlank(message = "납부일은 필수입니다.")
     private LocalDateTime paidDate;
 
     private String note;
