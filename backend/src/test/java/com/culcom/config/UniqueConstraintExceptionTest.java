@@ -78,7 +78,7 @@ class UniqueConstraintExceptionTest {
                             .content(body))
                     .andExpect(status().isConflict())
                     .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("이미 존재하는 데이터입니다")));
+                    .andExpect(jsonPath("$.message").value(containsString("데이터 제약 조건에 위배됩니다. 중복되거나 참조 중인 데이터가 있는지 확인해주세요.")));
         }
     }
 
@@ -109,7 +109,7 @@ class UniqueConstraintExceptionTest {
                             .content(body))
                     .andExpect(status().isConflict())
                     .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("이미 존재하는 데이터입니다")));
+                    .andExpect(jsonPath("$.message").value(containsString("데이터 제약 조건에 위배됩니다. 중복되거나 참조 중인 데이터가 있는지 확인해주세요.")));
         }
     }
 }

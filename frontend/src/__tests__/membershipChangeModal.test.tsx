@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import type { MemberMembershipResponse, Membership } from '@/lib/api';
 
@@ -43,6 +43,11 @@ vi.mock('@/lib/useCardCompanies', () => ({
 
 // ── helpers ──
 
+const currentProduct: Membership = {
+  seq: 100, name: '10회권', duration: 60, count: 10, price: 150000,
+  transferable: true, createdDate: null, lastUpdateDate: null,
+};
+
 const current: MemberMembershipResponse = {
   seq: 1, memberSeq: 10, membershipSeq: 100, membershipName: '10회권',
   startDate: '2026-03-01', expiryDate: '2026-05-01',
@@ -55,8 +60,15 @@ const current: MemberMembershipResponse = {
   paidAmount: 150000, outstanding: 0, paymentStatus: '완납',
 };
 
-const newProduct: Membership = {
+// 업그레이드 후보: 가격이 더 높음
+const upgradeProduct: Membership = {
   seq: 200, name: '20회권', duration: 90, count: 20, price: 280000,
+  transferable: true, createdDate: null, lastUpdateDate: null,
+};
+
+// 다운그레이드 후보: 가격이 더 낮음 (드롭다운에서 노출되면 안 됨)
+const downgradeProduct: Membership = {
+  seq: 150, name: '5회권', duration: 30, count: 5, price: 80000,
   transferable: true, createdDate: null, lastUpdateDate: null,
 };
 
@@ -65,7 +77,7 @@ function renderWith(ui: React.ReactNode) {
   return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
 }
 
-/** 상품 드롭다운에 특정 옵션이 들어올 때까지 대기 후 선택 */
+/** 드롭다운에 특정 옵션이 들어올 때까지 대기 후 선택 */
 async function selectNewProduct(value: string) {
   const sel = (await screen.findByLabelText('변경할 멤버십')) as HTMLSelectElement;
   await waitFor(() => {
@@ -73,11 +85,6 @@ async function selectNewProduct(value: string) {
     if (!hasOption) throw new Error('option not loaded');
   });
   fireEvent.change(sel, { target: { value } });
-  // useEffect로 price가 세팅될 때까지 대기
-  await waitFor(() => {
-    const priceInput = screen.getByPlaceholderText('원 단위') as HTMLInputElement;
-    if (!priceInput.value) throw new Error('price not populated');
-  });
   return sel;
 }
 
@@ -86,7 +93,10 @@ let InfoModal: React.ComponentType<any>;
 
 beforeEach(async () => {
   vi.clearAllMocks();
-  mockListProducts.mockResolvedValue({ success: true, data: [newProduct] });
+  mockListProducts.mockResolvedValue({
+    success: true,
+    data: [currentProduct, upgradeProduct, downgradeProduct],
+  });
   mockChange.mockResolvedValue({ success: true, data: null });
   mockGetMemberships.mockResolvedValue({ success: true, data: [current] });
   Modal = (await import('@/app/complex/members/components/MembershipChangeModal')).default;
@@ -105,72 +115,81 @@ describe('MembershipChangeModal', () => {
     expect(summary).toHaveTextContent('잔여 7회');
   });
 
-  it('변경할 멤버십 드롭다운에 현재 상품은 제외된다', async () => {
+  it('드롭다운에는 현재 상품과 다운그레이드 상품이 제외되고 업그레이드 후보만 노출된다', async () => {
     renderWith(<Modal memberSeq={10} current={current} onClose={vi.fn()} onSuccess={vi.fn()} />);
     const sel = (await screen.findByLabelText('변경할 멤버십')) as HTMLSelectElement;
     await waitFor(() => {
       const optionValues = Array.from(sel.options).map(o => o.value);
-      expect(optionValues).toContain('200');
-      expect(optionValues).not.toContain('100');
+      expect(optionValues).toContain('200'); // 업그레이드 (더 높은 가격) 포함
+      expect(optionValues).not.toContain('100'); // 현재 상품 제외
+      expect(optionValues).not.toContain('150'); // 다운그레이드 제외
     });
   });
 
-  it('자동 계산 버튼은 "신규가격 − 현재가격×(잔여/전체)"를 채운다', async () => {
+  it('업그레이드 상품 선택 시 자동 계산 미리보기(시작일/만료일/차액)가 노출된다', async () => {
     renderWith(<Modal memberSeq={10} current={current} onClose={vi.fn()} onSuccess={vi.fn()} />);
     await selectNewProduct('200');
 
-    fireEvent.click(screen.getByText('자동 계산'));
-    await waitFor(() => {
-      const feeInput = screen.getByLabelText('추가 비용') as HTMLInputElement;
-      // 280000 − 150000 × 7/10 = 175000
-      expect(feeInput.value).toBe('175000');
-    });
+    const preview = await screen.findByTestId('upgrade-preview');
+    // 시작일은 원본 그대로
+    expect(preview).toHaveTextContent('2026-03-01');
+    // 만료일은 원본 + (90-60) = 30일 연장 → 2026-05-31
+    expect(preview).toHaveTextContent('2026-05-31');
+    expect(preview).toHaveTextContent('+30일');
+    // 차액 = 280,000 - 150,000 = 130,000
+    expect(preview).toHaveTextContent('130,000원');
   });
 
-  it('변경 확정 클릭 시 changeMembership이 올바른 payload로 호출된다', async () => {
+  it('업그레이드 확정 클릭 시 newMembershipSeq만 포함한 페이로드로 API 호출된다', async () => {
     const onSuccess = vi.fn();
     renderWith(<Modal memberSeq={10} current={current} onClose={vi.fn()} onSuccess={onSuccess} />);
     await selectNewProduct('200');
 
-    const feeInput = screen.getByLabelText('추가 비용') as HTMLInputElement;
-    fireEvent.change(feeInput, { target: { value: '50000' } });
-
-    fireEvent.click(screen.getByText('변경 확정'));
+    fireEvent.click(screen.getByText('업그레이드 확정'));
 
     await waitFor(() => {
       expect(mockChange).toHaveBeenCalledWith(10, 1, expect.objectContaining({
         newMembershipSeq: 200,
-        changeFee: 50000,
       }));
       expect(onSuccess).toHaveBeenCalled();
     });
-  });
-
-  it('음수 changeFee도 제출 가능하다', async () => {
-    renderWith(<Modal memberSeq={10} current={current} onClose={vi.fn()} onSuccess={vi.fn()} />);
-    await selectNewProduct('200');
-
-    const feeInput = screen.getByLabelText('추가 비용') as HTMLInputElement;
-    fireEvent.change(feeInput, { target: { value: '-30000' } });
-
-    fireEvent.click(screen.getByText('변경 확정'));
-    await waitFor(() => {
-      expect(mockChange).toHaveBeenCalledWith(10, 1, expect.objectContaining({
-        changeFee: -30000,
-      }));
-    });
+    // 삭제된 필드들은 페이로드에 포함되지 않아야 한다
+    const payload = mockChange.mock.calls[0][2];
+    expect(payload).not.toHaveProperty('startDate');
+    expect(payload).not.toHaveProperty('expiryDate');
+    expect(payload).not.toHaveProperty('price');
+    expect(payload).not.toHaveProperty('changeFee');
   });
 
   it('신규 멤버십 미선택 상태에서는 제출 시 에러 표시', async () => {
     renderWith(<Modal memberSeq={10} current={current} onClose={vi.fn()} onSuccess={vi.fn()} />);
-    fireEvent.click(screen.getByText('변경 확정'));
+    fireEvent.click(screen.getByText('업그레이드 확정'));
     expect(await screen.findByText('변경할 멤버십을 선택해 주세요.')).toBeInTheDocument();
     expect(mockChange).not.toHaveBeenCalled();
   });
 
+  it('업그레이드 가능한 상품이 하나도 없으면 안내 문구가 표시된다', async () => {
+    // 현재 상품보다 비싼 상품이 목록에 없는 경우
+    mockListProducts.mockResolvedValue({
+      success: true,
+      data: [currentProduct, downgradeProduct],
+    });
+    renderWith(<Modal memberSeq={10} current={current} onClose={vi.fn()} onSuccess={vi.fn()} />);
+    await waitFor(() => {
+      expect(screen.getByText(/상위 등급.*상품이 없습니다/)).toBeInTheDocument();
+    });
+  });
+
   it('비가역 경고 문구가 노출된다', () => {
     renderWith(<Modal memberSeq={10} current={current} onClose={vi.fn()} onSuccess={vi.fn()} />);
-    expect(screen.getByText(/변경은 되돌릴 수 없습니다/)).toBeInTheDocument();
+    expect(screen.getByText(/업그레이드는 되돌릴 수 없습니다/)).toBeInTheDocument();
+  });
+
+  it('자동 계산 / 추가 비용 / 가격 / 시작일 / 만료일 입력 필드는 더 이상 존재하지 않는다', () => {
+    renderWith(<Modal memberSeq={10} current={current} onClose={vi.fn()} onSuccess={vi.fn()} />);
+    expect(screen.queryByText('자동 계산')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('추가 비용')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('원 단위')).not.toBeInTheDocument();
   });
 });
 

@@ -69,10 +69,12 @@ class MemberMembershipServiceChangeTest {
         f.classA = classRepository.save(ComplexClass.builder()
                 .branch(f.branch).timeSlot(slot).name("요가A").capacity(10).sortOrder(0).build());
 
+        // 기존 범용 변경(=다운그레이드/동일 등급 경로) 검증을 위해 new < old로 구성한다.
+        // 업그레이드(new > old)는 별도 테스트에서 다룬다.
         f.oldProduct = membershipRepository.save(Membership.builder()
-                .name("10회권").duration(60).count(10).price(150000).build());
+                .name("20회권-" + suffix).duration(90).count(20).price(280000).build());
         f.newProduct = membershipRepository.save(Membership.builder()
-                .name("20회권").duration(90).count(20).price(280000).build());
+                .name("10회권-" + suffix).duration(60).count(10).price(150000).build());
 
         f.member = memberRepository.save(ComplexMember.builder()
                 .name("김회원").phoneNumber("0101111" + suffix.substring(0, Math.min(4, suffix.length())))
@@ -81,9 +83,9 @@ class MemberMembershipServiceChangeTest {
         f.sourceMm = memberMembershipRepository.save(ComplexMemberMembership.builder()
                 .member(f.member).membership(f.oldProduct)
                 .startDate(LocalDate.now().minusDays(15))
-                .expiryDate(LocalDate.now().plusDays(45))
-                .totalCount(10).usedCount(3)
-                .price("150000")
+                .expiryDate(LocalDate.now().plusDays(75))
+                .totalCount(20).usedCount(3)
+                .price("280000")
                 .status(MembershipStatus.활성)
                 .build());
 

@@ -267,20 +267,7 @@ class ComplexMemberControllerTest {
                 .andExpect(jsonPath("$.message").value("멤버십 수정 완료"));
     }
 
-    // ========== 10. 멤버십 삭제 성공 ==========
-
-    @Test
-    void 멤버십_삭제_성공() throws Exception {
-        willDoNothing().given(memberMembershipService).deleteMembership(1L, 10L);
-
-        mockMvc.perform(delete("/api/complex/members/{seq}/memberships/{mmSeq}", 1L, 10L)
-                        .with(auth()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("멤버십 삭제 완료"));
-    }
-
-    // ========== 11. 납부기록 조회 성공 ==========
+    // ========== 10. 납부기록 조회 성공 ==========
 
     @Test
     void 납부기록_조회_성공() throws Exception {

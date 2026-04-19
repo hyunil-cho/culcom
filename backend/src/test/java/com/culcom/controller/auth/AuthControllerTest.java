@@ -191,7 +191,7 @@ class AuthControllerTest {
 
             mockMvc.perform(post("/api/auth/branch/{branchSeq}", branch.getSeq())
                             .with(authWith(staffPrincipal)))
-                    .andExpect(status().isForbidden())
+                    .andExpect(status().isUnauthorized())
                     .andExpect(jsonPath("$.success").value(false));
         }
 

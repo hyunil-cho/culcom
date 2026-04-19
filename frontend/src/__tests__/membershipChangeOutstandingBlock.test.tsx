@@ -86,7 +86,7 @@ describe('MembershipChangeModal — 미수금 차단', () => {
 
     // 변경 폼/확정 버튼은 렌더되지 않음
     expect(screen.queryByLabelText('변경할 멤버십')).not.toBeInTheDocument();
-    expect(screen.queryByText('변경 확정')).not.toBeInTheDocument();
+    expect(screen.queryByText('업그레이드 확정')).not.toBeInTheDocument();
   });
 
   it('"미수금 관리로 이동" 버튼 클릭 시 미수금 관리 페이지로 라우팅되고 모달이 닫힌다', () => {
@@ -105,7 +105,7 @@ describe('MembershipChangeModal — 미수금 차단', () => {
 
     expect(screen.queryByTestId('membership-change-outstanding-block')).not.toBeInTheDocument();
     expect(screen.getByLabelText('변경할 멤버십')).toBeInTheDocument();
-    expect(screen.getByText('변경 확정')).toBeInTheDocument();
+    expect(screen.getByText('업그레이드 확정')).toBeInTheDocument();
   });
 
   it('미수금이 null이면 정상 렌더 (방어적 처리 검증)', () => {
