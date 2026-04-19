@@ -232,6 +232,9 @@ export function useMembership(options?: UseMembershipOptions) {
       onClose={() => setChangeTarget(null)}
       onSuccess={() => {
         setChangeTarget(null);
+        // 재로드 가드를 해제해 refetch된 새 활성 멤버십으로 폼이 재초기화되도록 한다.
+        existingMsLoaded.current = false;
+        setMemberMembershipSeq(null);
         queryClient.invalidateQueries({ queryKey: ['memberMemberships', memberSeq] });
         queryClient.invalidateQueries({ queryKey: ['member', memberSeq] });
         queryClient.invalidateQueries({ queryKey: ['membershipChanges'] });

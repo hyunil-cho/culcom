@@ -7,12 +7,14 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 import { usePaymentOptions } from '@/lib/usePaymentOptions';
 import { ROUTES } from '@/lib/routes';
 import ModalOverlay from '@/components/ui/ModalOverlay';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import FormField from '@/components/ui/FormField';
 import { Input, Textarea } from '@/components/ui/FormInput';
 import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import CardPaymentFields, { createEmptyCardDetail, type CardPaymentDetailData } from './CardPaymentFields';
 import { nowDateTimeLocal } from '../memberFormTypes';
 import { useSubmitLock } from '@/hooks/useSubmitLock';
+import { useResultModal } from '@/hooks/useResultModal';
 import { hasOutstanding } from '../membershipEligibility';
 import s from './MembershipChangeModal.module.css';
 
@@ -40,7 +42,10 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
   const [cardDetail, setCardDetail] = useState<CardPaymentDetailData>(() => createEmptyCardDetail());
   const [changeNote, setChangeNote] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
   const { submitting, run } = useSubmitLock();
+  // 성공 시 확인 클릭으로 onSuccess 호출 — 상위 훅이 폼을 새 멤버십으로 재로드한다.
+  const { run: runResult, modal: resultModal } = useResultModal({ onConfirm: onSuccess });
 
   // 업그레이드 판정 기준이 되는 "원본 상품" (가격·기간)
   const currentProduct = useMemo(
@@ -76,7 +81,8 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
 
   const isCardPayment = paymentMethod === '카드';
 
-  const handleSubmit = () => run(async () => {
+  // 1단계: 입력 검증 후 확인 모달만 띄운다. 실제 호출은 2단계에서.
+  const handleSubmit = () => {
     if (outstandingBlocked) {
       setError('미수금이 남아 있어 멤버십을 변경할 수 없습니다.');
       return;
@@ -93,18 +99,22 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
       }
     }
     setError(null);
-    const res = await memberApi.changeMembership(memberSeq, current.seq, {
-      newMembershipSeq: Number(newMembershipSeq),
-      paymentMethod: paymentMethod || undefined,
-      paymentDate,
-      cardDetail: isCardPayment ? cardDetail : undefined,
-      changeNote: changeNote || undefined,
-    });
-    if (!res.success) {
-      setError(res.message ?? '변경에 실패했습니다.');
-      return;
-    }
-    onSuccess();
+    setShowConfirm(true);
+  };
+
+  // 2단계: 확인 모달에서 확정 → API 호출 → 결과 모달 표시.
+  const doSubmit = () => run(async () => {
+    setShowConfirm(false);
+    await runResult(
+      memberApi.changeMembership(memberSeq, current.seq, {
+        newMembershipSeq: Number(newMembershipSeq),
+        paymentMethod: paymentMethod || undefined,
+        paymentDate,
+        cardDetail: isCardPayment ? cardDetail : undefined,
+        changeNote: changeNote || undefined,
+      }),
+      `'${selectedProduct?.name ?? '새 멤버십'}'(으)로 업그레이드되었습니다.`,
+    );
   });
 
   const remaining = current.totalCount - current.usedCount;
@@ -237,6 +247,39 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
           </div>
         </>
       )}
+
+      {showConfirm && selectedProduct && (
+        <ConfirmModal
+          title="멤버십 업그레이드 확인"
+          confirmLabel="변경 확정"
+          confirmColor="#4338ca"
+          headerColor="#f59e0b"
+          onCancel={() => setShowConfirm(false)}
+          onConfirm={doSubmit}
+        >
+          <div style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
+            <div style={{ marginBottom: 10 }}>
+              <strong>{current.membershipName}</strong>에서{' '}
+              <strong style={{ color: '#4338ca' }}>{selectedProduct.name}</strong>(으)로 변경합니다.
+            </div>
+            {preview && (
+              <div style={{ marginBottom: 10, color: '#4b5563' }}>
+                추가 결제 차액: <strong>{preview.fee.toLocaleString()}원</strong>
+                {preview.extendDays > 0 && <> · 만료일 +{preview.extendDays}일 연장</>}
+              </div>
+            )}
+            <div style={{
+              background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 6,
+              padding: 10, fontSize: '0.85rem', color: '#92400e',
+            }}>
+              ⚠️ 이 작업은 <strong>되돌릴 수 없습니다</strong>. 원본 멤버십은 &quot;변경&quot; 상태로 종결되고
+              새 멤버십이 활성화됩니다. 정말 진행하시겠습니까?
+            </div>
+          </div>
+        </ConfirmModal>
+      )}
+
+      {resultModal}
     </ModalOverlay>
   );
 }
