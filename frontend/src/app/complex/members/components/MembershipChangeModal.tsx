@@ -14,6 +14,7 @@ import CardPaymentFields, { createEmptyCardDetail, type CardPaymentDetailData } 
 import { nowDateTimeLocal } from '../memberFormTypes';
 import { useSubmitLock } from '@/hooks/useSubmitLock';
 import { hasOutstanding } from '../membershipEligibility';
+import s from './MembershipChangeModal.module.css';
 
 interface Props {
   memberSeq: number;
@@ -60,7 +61,6 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
     [products, newMembershipSeq],
   );
 
-  // 상품 선택 시 가격/만료일 자동 채우기
   useEffect(() => {
     if (!selectedProduct) return;
     setPrice(String(selectedProduct.price));
@@ -84,9 +84,11 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
     setChangeFee(String(fee));
   };
 
+  const isCardPayment = paymentMethod === '카드';
+  const hasFee = changeFee !== '' && changeFee !== '0';
+
   const handleSubmit = () => run(async () => {
     if (outstandingBlocked) {
-      // 안전망: UI로 이미 차단되지만 우회 호출 대비
       setError('미수금이 남아 있어 멤버십을 변경할 수 없습니다.');
       return;
     }
@@ -98,7 +100,7 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
       setError('추가 비용을 숫자로 입력해 주세요.');
       return;
     }
-    if (paymentMethod === '카드' && changeFee !== '0') {
+    if (isCardPayment && hasFee) {
       if (!cardDetail.cardCompany || !cardDetail.cardNumber ||
           !cardDetail.cardApprovalDate || !cardDetail.cardApprovalNumber) {
         setError('카드 결제 상세 정보를 모두 입력해 주세요.');
@@ -114,7 +116,7 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
       changeFee: Number(changeFee),
       paymentMethod: paymentMethod || undefined,
       paymentDate,
-      cardDetail: paymentMethod === '카드' ? cardDetail : undefined,
+      cardDetail: isCardPayment && hasFee ? cardDetail : undefined,
       changeNote: changeNote || undefined,
     });
     if (!res.success) {
@@ -127,206 +129,148 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
   const remaining = current.totalCount - current.usedCount;
 
   return (
-    <ModalOverlay onClose={onClose}>
-      <div style={{ padding: '1rem 1.5rem', borderBottom: '2px solid #6366f1',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#312e81' }}>멤버십 변경</h3>
-        <button onClick={onClose} style={{
-          background: 'transparent', border: 'none', fontSize: '1.3rem', cursor: 'pointer', color: '#6b7280',
-        }}>×</button>
+    <ModalOverlay size="md">
+      <div className={s.header}>
+        <h3 className={s.headerTitle}>멤버십 변경</h3>
+        <button onClick={onClose} className={s.closeBtn} aria-label="닫기">×</button>
       </div>
 
       {outstandingBlocked ? (
-        <div
-          data-testid="membership-change-outstanding-block"
-          style={{ padding: '1.5rem', minWidth: 420 }}
-        >
-          <div style={{
-            padding: 16, background: '#fef2f2', border: '1.5px solid #fca5a5',
-            borderRadius: 8, marginBottom: 16, color: '#991b1b',
-          }}>
-            <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: 6 }}>
-              ⚠ 미수금이 남아 있어 멤버십을 변경할 수 없습니다.
-            </div>
-            <div style={{ fontSize: '0.85rem' }}>
+        <div className={s.blockBody} data-testid="membership-change-outstanding-block">
+          <div className={s.blockMsg}>
+            <div className={s.blockTitle}>⚠ 미수금이 남아 있어 멤버십을 변경할 수 없습니다.</div>
+            <div className={s.blockDesc}>
               현재 미수금: <strong>{(current.outstanding ?? 0).toLocaleString()}원</strong>
               <br />
               미수금 완납 후 다시 시도해 주세요.
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className={s.blockActions}>
+            <button onClick={onClose} className={s.cancelBtn}>닫기</button>
             <button
-              onClick={onClose}
-              style={{
-                flex: 1, padding: '0.7rem', border: '1px solid #d1d5db',
-                background: '#fff', color: '#6b7280', borderRadius: 6,
-                cursor: 'pointer', fontSize: '0.92rem',
-              }}
-            >
-              닫기
-            </button>
-            <button
-              onClick={() => {
-                onClose();
-                router.push(ROUTES.COMPLEX_OUTSTANDING);
-              }}
-              style={{
-                flex: 1, padding: '0.7rem', border: 'none',
-                background: '#dc2626', color: '#fff', borderRadius: 6,
-                cursor: 'pointer', fontSize: '0.92rem', fontWeight: 700,
-              }}
+              onClick={() => { onClose(); router.push(ROUTES.COMPLEX_OUTSTANDING); }}
+              className={s.blockPrimaryBtn}
             >
               미수금 관리로 이동
             </button>
           </div>
         </div>
       ) : (
-      <>
-      <div style={{ padding: '1.25rem 1.5rem', maxHeight: '70vh', overflowY: 'auto', minWidth: 480 }}>
-        <FormErrorBanner error={error} />
+        <>
+          <div className={s.body}>
+            <FormErrorBanner error={error} />
 
-        {/* 현재 멤버십 요약 */}
-        <div data-testid="current-mm-summary" style={{
-          background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8,
-          padding: 12, marginBottom: 12,
-        }}>
-          <div style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 700, marginBottom: 6 }}>
-            현재 멤버십
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px', fontSize: '0.85rem' }}>
-            <div><strong>{current.membershipName}</strong></div>
-            <div style={{ textAlign: 'right' }}>{current.price ?? '-'}원</div>
-            <div style={{ color: '#6b7280' }}>{current.startDate} ~ {current.expiryDate}</div>
-            <div style={{ textAlign: 'right', color: '#6b7280' }}>
-              {current.usedCount} / {current.totalCount}회 (잔여 {remaining}회)
+            <div data-testid="current-mm-summary" className={s.currentBox}>
+              <div className={s.currentLabel}>현재 멤버십</div>
+              <div className={s.currentGrid}>
+                <div><strong>{current.membershipName}</strong></div>
+                <div className="right">{current.price ?? '-'}원</div>
+                <div>{current.startDate} ~ {current.expiryDate}</div>
+                <div className="right">
+                  {current.usedCount} / {current.totalCount}회 (잔여 {remaining}회)
+                </div>
+              </div>
+            </div>
+
+            <div className={s.arrow}>↓</div>
+
+            <FormField label="변경할 멤버십" required>
+              <select
+                className="form-input"
+                value={newMembershipSeq}
+                onChange={(e) => setNewMembershipSeq(e.target.value)}
+                aria-label="변경할 멤버십"
+              >
+                <option value="">-- 선택 --</option>
+                {products
+                  .filter(p => p.seq !== current.membershipSeq)
+                  .map(p => (
+                    <option key={p.seq} value={p.seq}>
+                      {p.name} ({p.count}회 / {p.price.toLocaleString()}원)
+                    </option>
+                  ))}
+              </select>
+            </FormField>
+
+            <FormField label="시작일">
+              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            </FormField>
+            <FormField label="만료일">
+              <Input type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
+            </FormField>
+
+            <FormField label="신규 멤버십 가격">
+              <Input
+                type="text"
+                value={price}
+                onChange={(e) => setPrice(e.target.value.replace(/[^\d]/g, ''))}
+                placeholder="원 단위"
+              />
+            </FormField>
+
+            <FormField label="추가 비용 (음수 가능)" required>
+              <div className={s.feeRow}>
+                <Input
+                  type="text"
+                  value={changeFee}
+                  onChange={(e) => setChangeFee(e.target.value.replace(/[^\d-]/g, ''))}
+                  placeholder="예: 50000 또는 -30000"
+                  aria-label="추가 비용"
+                />
+                <button type="button" onClick={handleAutoCalculate} className={s.autoBtn}>
+                  자동 계산
+                </button>
+              </div>
+              <div className={s.feeHint}>
+                공식: 신규 가격 − 현재 가격 × (잔여 횟수 / 전체 횟수). 결과값은 관리자가 자유롭게 수정 가능합니다.
+              </div>
+            </FormField>
+
+            <FormField label="결제 방법">
+              <select
+                className="form-input"
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                aria-label="결제 방법"
+              >
+                <option value="">-- 선택 --</option>
+                {methods.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+              </select>
+            </FormField>
+            <FormField label="결제 일시">
+              <Input
+                type="datetime-local"
+                value={paymentDate}
+                onChange={(e) => setPaymentDate(e.target.value)}
+              />
+            </FormField>
+
+            {isCardPayment && (
+              <CardPaymentFields value={cardDetail} onChange={setCardDetail} />
+            )}
+
+            <FormField label="변경 사유 / 메모">
+              <Textarea
+                value={changeNote}
+                onChange={(e) => setChangeNote(e.target.value)}
+                rows={3}
+                placeholder="예: 더 긴 기간으로 업그레이드"
+              />
+            </FormField>
+
+            <div className={s.warnBox}>
+              <strong>⚠️ 변경은 되돌릴 수 없습니다.</strong>
+              <br />원본 멤버십은 &quot;변경&quot; 상태로 종결되고 새 멤버십이 활성화됩니다. 수업 배정은 유지됩니다.
             </div>
           </div>
-        </div>
 
-        <div style={{ textAlign: 'center', fontSize: '1.2rem', color: '#9ca3af', margin: '6px 0' }}>↓</div>
-
-        {/* 신규 멤버십 선택 */}
-        <FormField label="변경할 멤버십" required>
-          <select
-            className="form-input"
-            value={newMembershipSeq}
-            onChange={(e) => setNewMembershipSeq(e.target.value)}
-            aria-label="변경할 멤버십"
-          >
-            <option value="">-- 선택 --</option>
-            {products
-              .filter(p => p.seq !== current.membershipSeq)
-              .map(p => (
-                <option key={p.seq} value={p.seq}>
-                  {p.name} ({p.count}회 / {p.price.toLocaleString()}원)
-                </option>
-              ))}
-          </select>
-        </FormField>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <FormField label="시작일">
-            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-          </FormField>
-          <FormField label="만료일">
-            <Input type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
-          </FormField>
-        </div>
-
-        <FormField label="신규 멤버십 가격">
-          <Input
-            type="text"
-            value={price}
-            onChange={(e) => setPrice(e.target.value.replace(/[^\d]/g, ''))}
-            placeholder="원 단위"
-          />
-        </FormField>
-
-        {/* 추가 비용 + 자동 계산 */}
-        <FormField label="추가 비용 (음수 가능)" required>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Input
-              type="text"
-              value={changeFee}
-              onChange={(e) => setChangeFee(e.target.value.replace(/[^\d-]/g, ''))}
-              placeholder="예: 50000 또는 -30000"
-              aria-label="추가 비용"
-              style={{ flex: 1 }}
-            />
-            <button
-              type="button"
-              onClick={handleAutoCalculate}
-              style={{
-                padding: '0 14px', background: '#eef2ff', border: '1px solid #c7d2fe',
-                borderRadius: 6, color: '#4338ca', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              자동 계산
+          <div className={s.footer}>
+            <button onClick={onClose} disabled={submitting} className={s.cancelBtn}>취소</button>
+            <button onClick={handleSubmit} disabled={submitting} className={s.submitBtn}>
+              {submitting ? '처리 중...' : '변경 확정'}
             </button>
           </div>
-          <div style={{ fontSize: '0.72rem', color: '#6b7280', marginTop: 4 }}>
-            공식: 신규 가격 − 현재 가격 × (잔여 횟수 / 전체 횟수). 결과값은 관리자가 자유롭게 수정 가능합니다.
-          </div>
-        </FormField>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <FormField label="결제 방법">
-            <select
-              className="form-input"
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              aria-label="결제 방법"
-            >
-              <option value="">-- 선택 --</option>
-              {methods.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-            </select>
-          </FormField>
-          <FormField label="결제 일시">
-            <Input
-              type="datetime-local"
-              value={paymentDate}
-              onChange={(e) => setPaymentDate(e.target.value)}
-            />
-          </FormField>
-        </div>
-
-        {paymentMethod === '카드' && changeFee !== '0' && (
-          <CardPaymentFields value={cardDetail} onChange={setCardDetail} />
-        )}
-
-        <FormField label="변경 사유 / 메모">
-          <Textarea
-            value={changeNote}
-            onChange={(e) => setChangeNote(e.target.value)}
-            rows={3}
-            placeholder="예: 더 긴 기간으로 업그레이드"
-          />
-        </FormField>
-
-        <div style={{
-          padding: '10px 12px', background: '#fef2f2', border: '1.5px solid #fecaca',
-          borderRadius: 6, color: '#991b1b', fontSize: '0.82rem', marginTop: 8,
-        }}>
-          <strong>⚠️ 변경은 되돌릴 수 없습니다.</strong>
-          <br />원본 멤버십은 &quot;변경&quot; 상태로 종결되고 새 멤버십이 활성화됩니다. 수업 배정은 유지됩니다.
-        </div>
-      </div>
-
-      <div style={{ padding: '0.9rem 1.5rem', borderTop: '1px solid #e5e7eb', display: 'flex', gap: 8 }}>
-        <button onClick={onClose} disabled={submitting} style={{
-          flex: 1, padding: '0.7rem', border: '1px solid #d1d5db',
-          background: '#fff', color: '#6b7280', borderRadius: 6, cursor: 'pointer', fontSize: '0.92rem',
-        }}>취소</button>
-        <button onClick={handleSubmit} disabled={submitting} style={{
-          flex: 1, padding: '0.7rem', border: 'none',
-          background: '#6366f1', color: '#fff', borderRadius: 6, cursor: 'pointer',
-          fontSize: '0.92rem', fontWeight: 700,
-        }}>
-          {submitting ? '처리 중...' : '변경 확정'}
-        </button>
-      </div>
-      </>
+        </>
       )}
     </ModalOverlay>
   );

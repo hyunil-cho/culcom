@@ -169,9 +169,10 @@ public class TransferService {
                             adminMessage != null && !adminMessage.isBlank() ? " (사유: " + adminMessage + ")" : "")));
 
             if (tr.getBranch() != null) {
-                smsService.sendEventSmsIfConfigured(tr.getBranch().getSeq(), SmsEventType.양도거절,
+                String smsWarning = smsService.sendEventSmsIfConfigured(tr.getBranch().getSeq(), SmsEventType.양도거절,
                         tr.getFromMember().getName(), tr.getFromMember().getPhoneNumber(),
                         SmsActionContext.ofTransfer(status, adminMessage));
+                response.setSmsWarning(smsWarning);
             }
         }
 
@@ -244,17 +245,33 @@ public class TransferService {
         tr.setStatus(TransferStatus.확인);
         tr.setReferenced(true);
 
-        // 7. SMS 알림
+        // 7. SMS 알림 — 양도자/양수자 두 명에게 발송, 경고는 합쳐서 응답에 담는다
+        String smsWarning = null;
         if (tr.getBranch() != null) {
             java.util.Map<String, String> ctx = SmsActionContext.ofTransfer(
                     com.culcom.entity.enums.TransferStatus.확인, tr.getAdminMessage());
-            smsService.sendEventSmsIfConfigured(tr.getBranch().getSeq(), SmsEventType.양도완료,
+            String warnFrom = smsService.sendEventSmsIfConfigured(tr.getBranch().getSeq(), SmsEventType.양도완료,
                     fromMember.getName(), fromMember.getPhoneNumber(), ctx);
-            smsService.sendEventSmsIfConfigured(tr.getBranch().getSeq(), SmsEventType.양도완료,
+            String warnTo = smsService.sendEventSmsIfConfigured(tr.getBranch().getSeq(), SmsEventType.양도완료,
                     newMember.getName(), newMember.getPhoneNumber(), ctx);
+            smsWarning = mergeSmsWarnings(warnFrom, warnTo);
         }
 
-        return TransferRequestResponse.from(transferRequestRepository.save(tr));
+        TransferRequestResponse response = TransferRequestResponse.from(transferRequestRepository.save(tr));
+        response.setSmsWarning(smsWarning);
+        return response;
+    }
+
+    /**
+     * 양도자/양수자 SMS 경고를 합친다.
+     * 동일 메시지면 한 번만, 둘 다 있고 다르면 양쪽 누구에게 실패했는지 표기한다.
+     */
+    private static String mergeSmsWarnings(String warnFrom, String warnTo) {
+        if (warnFrom == null && warnTo == null) return null;
+        if (warnFrom == null) return "양수자 " + warnTo;
+        if (warnTo == null) return "양도자 " + warnFrom;
+        if (warnFrom.equals(warnTo)) return warnFrom;
+        return "양도자 " + warnFrom + " / 양수자 " + warnTo;
     }
 
     // ── 공개: 양도자 페이지 조회 (토큰) ──

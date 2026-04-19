@@ -32,6 +32,9 @@ public class PostponementResponse {
     private String desiredStartTime;
     private String desiredEndTime;
 
+    /** SMS 자동발송 경고 메시지 (정상 발송/미설정 시 null) */
+    private String smsWarning;
+
     public static PostponementResponse from(ComplexPostponementRequest entity) {
         ComplexClass dc = entity.getDesiredClass();
         return PostponementResponse.builder()

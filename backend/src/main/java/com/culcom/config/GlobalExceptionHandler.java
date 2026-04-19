@@ -28,6 +28,13 @@ public class GlobalExceptionHandler {
         return badRequest(e.getMessage());
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalState(IllegalStateException e) {
+        log.info("잘못된 상태: {}", e.getMessage());
+        return badRequest(e.getMessage());
+    }
+
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDenial(AccessDeniedException e) {
         log.info("잘못된 접근 요청: {}", e.getMessage());

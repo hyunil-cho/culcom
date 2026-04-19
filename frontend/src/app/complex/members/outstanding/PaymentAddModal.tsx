@@ -50,6 +50,7 @@ export default function PaymentAddModal({
     // 환불정정은 음수로 강제
     if (kind === 'REFUND' && n > 0) n = -n;
     if (kind !== 'REFUND' && n < 0) { setError('일반 납부는 양수여야 합니다'); return; }
+    if (!method) { setError('결제 수단을 선택하세요'); return; }
 
     if (isCard) {
       if (!cardDetail.cardCompany) { setError('카드사를 선택하세요'); return; }
@@ -62,7 +63,7 @@ export default function PaymentAddModal({
       await memberApi.addPayment(memberSeq, mmSeq, {
         amount: n,
         kind,
-        method: method || undefined,
+        method,
         paidDate: paidDate ? `${paidDate}:00` : undefined,
         note: note || undefined,
         cardDetail: isCard ? cardDetail : undefined,
@@ -126,9 +127,9 @@ export default function PaymentAddModal({
           </div>
         </Row>
 
-        <Row label="결제 수단">
+        <Row label="결제 수단 *">
           <select value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod | '')}
-            style={inputStyle}>
+            style={inputStyle} required>
             <option value="">-- 선택 --</option>
             {methods.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>

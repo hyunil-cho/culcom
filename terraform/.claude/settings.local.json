@@ -15,7 +15,9 @@
       "Bash(awk '{print $5, $NF}')",
       "Bash(npm install:*)",
       "WebFetch(domain:developers.facebook.com)",
-      "Bash(./gradlew compileJava)"
+      "Bash(./gradlew compileJava)",
+      "Read(//c/Users/lookh/IdeaProjects/temp/culcom/backend/**)",
+      "Bash(./gradlew test *)"
     ]
   }
 }

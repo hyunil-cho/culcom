@@ -4,6 +4,7 @@ import com.culcom.entity.enums.TransferStatus;
 import com.culcom.entity.transfer.TransferRequest;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -30,6 +31,10 @@ public class TransferRequestResponse {
     private String adminMessage;
     private Boolean referenced;
     private LocalDateTime createdDate;
+
+    /** SMS 자동발송 경고 메시지 (정상 발송/미설정 시 null) */
+    @Setter
+    private String smsWarning;
 
     public static TransferRequestResponse from(TransferRequest entity) {
         return TransferRequestResponse.builder()

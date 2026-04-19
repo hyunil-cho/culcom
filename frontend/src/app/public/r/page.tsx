@@ -10,7 +10,7 @@ import FadeUpObserver from './FadeUpObserver';
 // KakaoOAuthController.login(@GetMapping("/login")) 이 kakao 인가 URL 로 302 redirect.
 // next.config.js 의 rewrites 로 /api/* → backend:8081 매핑되어 있음.
 const KAKAO_LOGIN_URL_DESKTOP = '/api/public/kakao/login?state=1';
-const KAKAO_LOGIN_URL_MOBILE = 'https://pf-link.kakao.com/qr/_kXQxlX/pages/_xlM?query=state%3D3';
+const KAKAO_LOGIN_URL_MOBILE = 'https://pf-link.kakao.com/qr/_kXQxlX/pages/_xlM?query=state%3D1';
 
 const PAIN_POINTS: { img: string; emoji: string; html: React.ReactNode; delay: string }[] = [
   { img: '/images/r/pain-1.png', emoji: '😰', delay: '0.05s', html: <>영어 왕초보, 어디서부터 시작해야 할지 <strong>막막하신가요?</strong></> },

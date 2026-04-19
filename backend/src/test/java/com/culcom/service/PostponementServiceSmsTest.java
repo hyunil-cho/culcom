@@ -3,6 +3,7 @@ package com.culcom.service;
 import com.culcom.entity.branch.Branch;
 import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
+import com.culcom.dto.complex.postponement.PostponementResponse;
 import com.culcom.entity.complex.postponement.ComplexPostponementRequest;
 import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.enums.RequestStatus;
@@ -19,6 +20,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.time.LocalDate;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
@@ -114,5 +116,52 @@ class PostponementServiceSmsTest {
         postponementService.updateStatus(1L, RequestStatus.승인, null);
 
         then(smsService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void SMS_정상_발송시_smsWarning은_null이다() {
+        ComplexPostponementRequest req = createPostponementRequest();
+        given(postponementRepository.findById(1L)).willReturn(Optional.of(req));
+        given(smsService.sendEventSmsIfConfigured(anyLong(), any(), anyString(), anyString(), any()))
+                .willReturn(null);
+
+        PostponementResponse response = postponementService.updateStatus(1L, RequestStatus.승인, null);
+
+        assertThat(response.getSmsWarning()).isNull();
+    }
+
+    @Test
+    void SMS_발송_실패시_경고가_response에_담긴다() {
+        ComplexPostponementRequest req = createPostponementRequest();
+        given(postponementRepository.findById(1L)).willReturn(Optional.of(req));
+        given(smsService.sendEventSmsIfConfigured(anyLong(), any(), anyString(), anyString(), any()))
+                .willReturn("문자 발송 실패: 잔여 건수 부족");
+
+        PostponementResponse response = postponementService.updateStatus(1L, RequestStatus.승인, null);
+
+        assertThat(response.getSmsWarning()).isEqualTo("문자 발송 실패: 잔여 건수 부족");
+    }
+
+    @Test
+    void SMS_자동발송_비활성화시_경고가_response에_담긴다() {
+        ComplexPostponementRequest req = createPostponementRequest();
+        given(postponementRepository.findById(1L)).willReturn(Optional.of(req));
+        given(smsService.sendEventSmsIfConfigured(anyLong(), any(), anyString(), anyString(), any()))
+                .willReturn("문자 자동발송이 비활성화 상태입니다.");
+
+        PostponementResponse response = postponementService.updateStatus(1L, RequestStatus.승인, null);
+
+        assertThat(response.getSmsWarning()).isEqualTo("문자 자동발송이 비활성화 상태입니다.");
+    }
+
+    @Test
+    void SMS_발송_조건_미충족시_smsWarning은_null이다() {
+        ComplexPostponementRequest req = createPostponementRequest();
+        req.setMember(null);
+        given(postponementRepository.findById(1L)).willReturn(Optional.of(req));
+
+        PostponementResponse response = postponementService.updateStatus(1L, RequestStatus.승인, null);
+
+        assertThat(response.getSmsWarning()).isNull();
     }
 }

@@ -124,7 +124,8 @@
       "Bash(tasklist)",
       "Bash(./gradlew jacocoTestReport --no-daemon)",
       "Bash(./gradlew jacocoTestReport -x test --no-daemon)",
-      "Bash(awk *)"
+      "Bash(awk *)",
+      "Bash(git *)"
     ]
   }
 }

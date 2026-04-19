@@ -120,19 +120,21 @@ public class ComplexMemberService {
     }
 
     /**
-     * 회원 목록에 첫 납부(DEPOSIT) 금액과 일자를 매핑한다.
+     * 회원 목록에 가장 최근 멤버십의 첫 납부(DEPOSIT) 금액과 일자를 매핑한다.
+     * 멤버십 변경 후에는 새로 생성된 멤버십의 입금 정보가 반영된다.
      */
     public void populateFirstPayment(List<ComplexMemberResponse> members) {
         if (members.isEmpty()) return;
         List<Long> memberSeqs = members.stream().map(ComplexMemberResponse::getSeq).toList();
+        // 쿼리는 mm.seq DESC 정렬 — 동일 회원의 최신 멤버십이 먼저 들어오므로 putIfAbsent 로 최신 건만 보존된다.
         List<MembershipPayment> deposits = membershipPaymentRepository.findDepositsByMemberSeqs(memberSeqs);
-        Map<Long, MembershipPayment> firstByMember = new HashMap<>();
+        Map<Long, MembershipPayment> latestByMember = new HashMap<>();
         for (MembershipPayment p : deposits) {
             Long memberSeq = p.getMemberMembership().getMember().getSeq();
-            firstByMember.putIfAbsent(memberSeq, p);
+            latestByMember.putIfAbsent(memberSeq, p);
         }
         for (ComplexMemberResponse m : members) {
-            MembershipPayment p = firstByMember.get(m.getSeq());
+            MembershipPayment p = latestByMember.get(m.getSeq());
             if (p != null) {
                 m.setFirstPaymentAmount(p.getAmount());
                 m.setFirstPaymentDate(p.getPaidDate());

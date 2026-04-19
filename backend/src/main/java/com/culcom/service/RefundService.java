@@ -62,14 +62,17 @@ public class RefundService {
                 ActivityEventType.REFUND_APPROVE, ActivityEventType.REFUND_REJECT,
                 "환불 " + status.name() + ": " + req.getMembershipName());
 
+        String smsWarning = null;
         if (req.getMember() != null && req.getBranch() != null) {
             SmsEventType smsType = status == RequestStatus.승인 ? SmsEventType.환불승인 : SmsEventType.환불반려;
-            smsService.sendEventSmsIfConfigured(req.getBranch().getSeq(), smsType,
+            smsWarning = smsService.sendEventSmsIfConfigured(req.getBranch().getSeq(), smsType,
                     req.getMemberName(), req.getPhoneNumber(),
                     SmsActionContext.of(status, adminMessage));
         }
 
-        return RefundResponse.from(req);
+        RefundResponse response = RefundResponse.from(req);
+        response.setSmsWarning(smsWarning);
+        return response;
     }
 
     public List<ReasonDto.Response> reasons(Long branchSeq) {

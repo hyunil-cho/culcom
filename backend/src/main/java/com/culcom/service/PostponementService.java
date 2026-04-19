@@ -53,14 +53,17 @@ public class PostponementService {
                 ActivityEventType.POSTPONEMENT_APPROVE, ActivityEventType.POSTPONEMENT_REJECT,
                 "연기 " + status.name() + ": " + req.getStartDate() + " ~ " + req.getEndDate());
 
+        String smsWarning = null;
         if (req.getMember() != null && req.getBranch() != null) {
             SmsEventType smsType = status == RequestStatus.승인 ? SmsEventType.연기승인 : SmsEventType.연기반려;
-            smsService.sendEventSmsIfConfigured(req.getBranch().getSeq(), smsType,
+            smsWarning = smsService.sendEventSmsIfConfigured(req.getBranch().getSeq(), smsType,
                     req.getMemberName(), req.getPhoneNumber(),
                     SmsActionContext.of(status, adminMessage));
         }
 
-        return PostponementResponse.from(req);
+        PostponementResponse response = PostponementResponse.from(req);
+        response.setSmsWarning(smsWarning);
+        return response;
     }
 
     public List<ReasonDto.Response> reasons(Long branchSeq) {

@@ -24,15 +24,6 @@ public interface ComplexPostponementRequestRepository extends JpaRepository<Comp
                                   @Param("newEnd") java.time.LocalDate newEnd);
 
     /**
-     * 같은 멤버십에 대해 대기 상태의 연기 요청이 있는지 확인.
-     * 공개 링크에서 중복 제출을 막기 위함.
-     */
-    @Query("SELECT COUNT(p) > 0 FROM ComplexPostponementRequest p " +
-           "WHERE p.memberMembership.seq = :mmSeq " +
-           "  AND p.status = com.culcom.entity.enums.RequestStatus.대기")
-    boolean existsPendingByMemberMembershipSeq(@Param("mmSeq") Long mmSeq);
-
-    /**
      * 같은 멤버십에 대해 대기 상태의 연기 기간과 겹치는 레코드가 있는지 확인.
      */
     @Query("SELECT COUNT(p) > 0 FROM ComplexPostponementRequest p " +

@@ -32,7 +32,7 @@ public class ZapierService {
             log.warn("Zapier 시크릿이 서버에 설정되지 않아 모든 요청을 거부합니다.");
             throw new AccessDeniedException("웹훅 시크릿이 서버에 설정되지 않았습니다.");
         }
-        if (token == null || !expected.equals(token)) {
+        if (!expected.equals(token)) {
             log.warn("Zapier 시크릿 검증 실패");
             throw new AccessDeniedException("유효하지 않은 웹훅 토큰입니다.");
         }

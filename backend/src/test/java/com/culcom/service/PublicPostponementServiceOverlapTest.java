@@ -5,6 +5,7 @@ import com.culcom.entity.branch.Branch;
 import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.enums.MembershipStatus;
+import com.culcom.entity.product.Membership;
 import com.culcom.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,13 +25,12 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 
 /**
- * 연기 공개 링크의 중복/겹침 검증.
+ * 연기 공개 링크의 겹침 검증.
  *
  * 규칙:
- *   1) 동일 멤버십에 대기 상태 연기 존재 → 차단
- *   2) 승인된 연기 기간과 겹치면 → 차단
- *   3) 다른 대기 연기와 기간이 겹치면 → 차단
- *   4) 기간이 안 겹치고 중복 없으면 → 정상 제출
+ *   1) 승인된 연기 기간과 겹치면 → 차단
+ *   2) 다른 대기 연기와 기간이 겹치면 → 차단
+ *   3) 기간이 안 겹치면 → 정상 제출 (동시에 여러 요청 허용)
  */
 @ExtendWith(MockitoExtension.class)
 class PublicPostponementServiceOverlapTest {
@@ -55,8 +55,11 @@ class PublicPostponementServiceOverlapTest {
     void setUp() {
         branch = Branch.builder().seq(1L).branchName("테스트지점").alias("test").build();
         member = ComplexMember.builder().seq(10L).name("홍길동").phoneNumber("01012345678").branch(branch).build();
+        Membership membershipProduct = Membership.builder()
+                .seq(100L).name("일반 3개월").duration(90).count(30).price(300_000)
+                .isInternal(false).transferable(true).build();
         membership = ComplexMemberMembership.builder()
-                .seq(20L).member(member).status(MembershipStatus.활성)
+                .seq(20L).member(member).membership(membershipProduct).status(MembershipStatus.활성)
                 .startDate(LocalDate.now()).expiryDate(LocalDate.now().plusMonths(3))
                 .price("300,000").totalCount(30).usedCount(5)
                 .postponeTotal(3).postponeUsed(0).build();
@@ -84,19 +87,8 @@ class PublicPostponementServiceOverlapTest {
     }
 
     @Test
-    void 대기_상태_연기_요청이_존재하면_제출_차단() {
-        baseStubs();
-        given(postponementRepository.existsPendingByMemberMembershipSeq(20L)).willReturn(true);
-
-        assertThatThrownBy(() -> publicPostponementService.submit(createRequest()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("이미 처리 대기 중인 연기 요청이 있습니다");
-    }
-
-    @Test
     void 승인된_연기_기간과_겹치면_제출_차단() {
         baseStubs();
-        given(postponementRepository.existsPendingByMemberMembershipSeq(20L)).willReturn(false);
         given(postponementRepository.existsApprovedOverlap(anyLong(), any(), any())).willReturn(true);
 
         assertThatThrownBy(() -> publicPostponementService.submit(createRequest()))
@@ -107,7 +99,6 @@ class PublicPostponementServiceOverlapTest {
     @Test
     void 다른_대기_연기_기간과_겹치면_제출_차단() {
         baseStubs();
-        given(postponementRepository.existsPendingByMemberMembershipSeq(20L)).willReturn(false);
         given(postponementRepository.existsApprovedOverlap(anyLong(), any(), any())).willReturn(false);
         given(postponementRepository.existsPendingOverlap(anyLong(), any(), any())).willReturn(true);
 
@@ -117,13 +108,24 @@ class PublicPostponementServiceOverlapTest {
     }
 
     @Test
-    void 중복_없고_기간도_안겹치면_정상_제출() {
+    void 겹치지_않으면_정상_제출() {
         baseStubs();
-        given(postponementRepository.existsPendingByMemberMembershipSeq(20L)).willReturn(false);
         given(postponementRepository.existsApprovedOverlap(anyLong(), any(), any())).willReturn(false);
         given(postponementRepository.existsPendingOverlap(anyLong(), any(), any())).willReturn(false);
 
         assertThatCode(() -> publicPostponementService.submit(createRequest()))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    void 스태프용_internal_멤버십은_연기_불가() {
+        membership.getMembership().setInternal(true);
+        given(branchRepository.findById(1L)).willReturn(Optional.of(branch));
+        given(memberRepository.findById(10L)).willReturn(Optional.of(member));
+        given(memberMembershipRepository.findById(20L)).willReturn(Optional.of(membership));
+
+        assertThatThrownBy(() -> publicPostponementService.submit(createRequest()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("사용할 수 없는 멤버십");
     }
 }

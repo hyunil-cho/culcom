@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -31,6 +32,10 @@ public class RefundResponse {
     private Integer totalCount;
     private Integer usedCount;
     private Integer postponeUsed;
+
+    /** SMS 자동발송 경고 메시지 (정상 발송/미설정 시 null) */
+    @Setter
+    private String smsWarning;
 
     public static RefundResponse from(ComplexRefundRequest entity) {
         return RefundResponse.builder()
