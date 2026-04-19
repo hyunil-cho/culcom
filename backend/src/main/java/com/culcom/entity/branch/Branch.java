@@ -6,9 +6,13 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "branches")
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Table(name = "branches", indexes = {
+        @Index(name = "idx_alias", columnList = "alias")
+})
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Branch extends BaseTimeEntity {
 
@@ -16,7 +20,7 @@ public class Branch extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seq;
 
-    @Column(name = "branchName", nullable = false, length = 50)
+    @Column(name = "branchName", nullable = false, length = 50, unique = true)
     private String branchName;
 
     @Column(nullable = false, length = 50, unique = true)

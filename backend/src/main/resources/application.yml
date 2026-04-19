@@ -43,8 +43,7 @@ server:
 
 logging:
   level:
-    org.hibernate.SQL: debug
-    org.hibernate.type.descriptor.sql.BasicBinder: trace
+    org.hibernate.SQL: WARN
 meta:
   webhook:
     verify-token: ${META_VERIFY_TOKEN:}

@@ -83,13 +83,12 @@ export interface MembershipPaymentRequest {
   cardDetail?: CardPaymentDetail;
 }
 
+/**
+ * 업그레이드 요청.
+ * 시작일/만료일/가격/차액은 서버가 원본과 신규 상품 메타데이터로 자동 계산하므로 관리자 입력 필드에서 제외.
+ */
 export interface MembershipChangeRequest {
   newMembershipSeq: number;
-  startDate?: string;
-  expiryDate?: string;
-  price?: string;
-  /** 관리자 입력 추가 비용 (음수 허용). 0이면 결제 기록 남기지 않음. */
-  changeFee: number;
   paymentMethod?: PaymentMethod;
   paymentDate?: string;
   cardDetail?: CardPaymentDetail;
@@ -177,8 +176,6 @@ export const memberApi = {
     api.post<MemberMembershipResponse>(API.COMPLEX_MEMBER_MEMBERSHIPS(seq), data),
   updateMembership: (seq: number, mmSeq: number, data: MemberMembershipRequest) =>
     api.put<MemberMembershipResponse>(API.COMPLEX_MEMBER_MEMBERSHIP(seq, mmSeq), data),
-  deleteMembership: (seq: number, mmSeq: number) =>
-    api.delete<void>(API.COMPLEX_MEMBER_MEMBERSHIP(seq, mmSeq)),
   changeMembership: (seq: number, mmSeq: number, data: MembershipChangeRequest) =>
     api.post<MemberMembershipResponse>(API.COMPLEX_MEMBER_MEMBERSHIP_CHANGE(seq, mmSeq), data),
   assignClass: (seq: number, classSeq: number) =>

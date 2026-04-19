@@ -73,12 +73,6 @@ public class ComplexMemberController {
         return ResponseEntity.ok(ApiResponse.ok("멤버십 수정 완료", memberMembershipService.updateMembership(seq, mmSeq, req)));
     }
 
-    @DeleteMapping("/{seq}/memberships/{mmSeq}")
-    public ResponseEntity<ApiResponse<Void>> deleteMembership(@PathVariable Long seq, @PathVariable Long mmSeq) {
-        memberMembershipService.deleteMembership(seq, mmSeq);
-        return ResponseEntity.ok(ApiResponse.ok("멤버십 삭제 완료", null));
-    }
-
     @PostMapping("/{seq}/memberships/{mmSeq}/change")
     public ResponseEntity<ApiResponse<ComplexMemberMembershipResponse>> changeMembership(
             @PathVariable Long seq, @PathVariable Long mmSeq,

@@ -19,7 +19,8 @@
       "Read(//c/Users/lookh/IdeaProjects/temp/culcom/backend/**)",
       "Bash(./gradlew test *)",
       "Bash(./gradlew compileJava compileTestJava)",
-      "Bash(./gradlew --stop)"
+      "Bash(./gradlew --stop)",
+      "Bash(npx vitest *)"
     ]
   }
 }

@@ -120,14 +120,6 @@ public class ComplexMemberMembership extends BaseTimeEntity {
     }
 
     /**
-     * 멤버십이 사용 가능한 상태인지 (= 활성).
-     * 만료/연기 여부는 서비스 레이어에서 날짜/연기 테이블과 함께 합성하여 판정한다.
-     */
-    public boolean isUsable() {
-        return isActive();
-    }
-
-    /**
      * 멤버십을 환불 상태로 전환한다.
      * 시스템 내부 멤버십(internal=true)은 사용자에게 노출되지 않는 자동 부여
      * 멤버십이므로 환불 대상이 아니다.
@@ -176,5 +168,21 @@ public class ComplexMemberMembership extends BaseTimeEntity {
                 .status(MembershipStatus.활성)
                 .transferred(true)
                 .build();
+    }
+
+    /**
+     *
+     * 해당 멤버십이 변경할 수 있는 멤버십인지 검증
+     * 사용이 불가능한 상태이거나, 리더용 멤버십일 경우, 예외를 발생
+     *
+     */
+    public void isChangeable(){
+        if (!this.isActive()) {
+            throw new IllegalStateException("활성 상태의 멤버십만 변경할 수 있습니다.");
+        }
+
+        if(this.getMembership().isInternal()){
+            throw new IllegalArgumentException("리더 전용 멤버십은 변경할 수 없습니다.");
+        }
     }
 }

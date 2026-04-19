@@ -40,7 +40,7 @@ public class PublicPostponementService {
     private final PublicMemberSearchService memberSearchService;
 
     public MemberSearchResponse searchMember(String name, String phone) {
-        return memberSearchService.search(name, phone, ComplexMemberMembership::isUsable, true);
+        return memberSearchService.search(name, phone, ComplexMemberMembership::isActive, true);
     }
 
     @Transactional

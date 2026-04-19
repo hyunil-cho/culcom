@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { memberApi, membershipApi, type MemberMembershipResponse, type Membership } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
@@ -23,21 +23,11 @@ interface Props {
   onSuccess: () => void;
 }
 
-function parsePrice(v: string | null): number | null {
-  if (!v) return null;
-  const n = Number(v.replace(/[^\d-]/g, ''));
-  return Number.isFinite(n) ? n : null;
-}
-
-/** 자동 계산 공식: 신규 가격 − 현재 가격 × (잔여 / 전체) */
-function suggestedFee(current: MemberMembershipResponse, newPrice: number): number | null {
-  const cur = parsePrice(current.price);
-  if (cur == null || !current.totalCount || current.totalCount <= 0) return null;
-  const remaining = Math.max(0, current.totalCount - current.usedCount);
-  const remainingValue = Math.round(cur * remaining / current.totalCount);
-  return newPrice - remainingValue;
-}
-
+/**
+ * 업그레이드 전용 모달.
+ * 서버 정책: newProduct.price > sourceProduct.price 일 때만 허용, 차액/시작일/만료일은 서버가 자동 계산.
+ * UI는 그 계산 결과를 미리 보여주기만 하고 관리자가 직접 편집할 수 없다.
+ */
 export default function MembershipChangeModal({ memberSeq, current, onClose, onSuccess }: Props) {
   const router = useRouter();
   const { methods } = usePaymentOptions();
@@ -45,10 +35,6 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
   const outstandingBlocked = hasOutstanding(current);
 
   const [newMembershipSeq, setNewMembershipSeq] = useState<string>('');
-  const [price, setPrice] = useState('');
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
-  const [expiryDate, setExpiryDate] = useState('');
-  const [changeFee, setChangeFee] = useState<string>('0');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [paymentDate, setPaymentDate] = useState(nowDateTimeLocal());
   const [cardDetail, setCardDetail] = useState<CardPaymentDetailData>(() => createEmptyCardDetail());
@@ -56,36 +42,39 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
   const [error, setError] = useState<string | null>(null);
   const { submitting, run } = useSubmitLock();
 
+  // 업그레이드 판정 기준이 되는 "원본 상품" (가격·기간)
+  const currentProduct = useMemo(
+    () => products.find(p => p.seq === current.membershipSeq),
+    [products, current.membershipSeq],
+  );
+
+  // 드롭다운은 상위 등급(가격 더 높은 상품)만 노출
+  const upgradeCandidates = useMemo(() => {
+    if (!currentProduct) return [];
+    return products.filter(p => p.seq !== current.membershipSeq && p.price > currentProduct.price);
+  }, [products, currentProduct, current.membershipSeq]);
+
   const selectedProduct = useMemo(
     () => products.find(p => p.seq === Number(newMembershipSeq)),
     [products, newMembershipSeq],
   );
 
-  useEffect(() => {
-    if (!selectedProduct) return;
-    setPrice(String(selectedProduct.price));
-    const d = new Date(startDate);
-    d.setDate(d.getDate() + selectedProduct.duration);
-    setExpiryDate(d.toISOString().split('T')[0]);
-  }, [selectedProduct, startDate]);
-
-  const handleAutoCalculate = () => {
-    const newPrice = parsePrice(price);
-    if (newPrice == null) {
-      setError('신규 가격을 먼저 입력해 주세요.');
-      return;
-    }
-    const fee = suggestedFee(current, newPrice);
-    if (fee == null) {
-      setError('현재 멤버십 가격 또는 횟수 정보가 없어 자동 계산할 수 없습니다.');
-      return;
-    }
-    setError(null);
-    setChangeFee(String(fee));
-  };
+  // 서버 계산식과 동일한 미리보기
+  const preview = useMemo(() => {
+    if (!selectedProduct || !currentProduct) return null;
+    const fee = selectedProduct.price - currentProduct.price;
+    const extendDays = selectedProduct.duration - currentProduct.duration;
+    const newExpiry = new Date(current.expiryDate);
+    newExpiry.setDate(newExpiry.getDate() + extendDays);
+    return {
+      fee,
+      extendDays,
+      startDate: current.startDate,
+      expiryDate: newExpiry.toISOString().split('T')[0],
+    };
+  }, [selectedProduct, currentProduct, current.startDate, current.expiryDate]);
 
   const isCardPayment = paymentMethod === '카드';
-  const hasFee = changeFee !== '' && changeFee !== '0';
 
   const handleSubmit = () => run(async () => {
     if (outstandingBlocked) {
@@ -96,11 +85,7 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
       setError('변경할 멤버십을 선택해 주세요.');
       return;
     }
-    if (!Number.isFinite(Number(changeFee))) {
-      setError('추가 비용을 숫자로 입력해 주세요.');
-      return;
-    }
-    if (isCardPayment && hasFee) {
+    if (isCardPayment) {
       if (!cardDetail.cardCompany || !cardDetail.cardNumber ||
           !cardDetail.cardApprovalDate || !cardDetail.cardApprovalNumber) {
         setError('카드 결제 상세 정보를 모두 입력해 주세요.');
@@ -110,13 +95,9 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
     setError(null);
     const res = await memberApi.changeMembership(memberSeq, current.seq, {
       newMembershipSeq: Number(newMembershipSeq),
-      startDate,
-      expiryDate,
-      price,
-      changeFee: Number(changeFee),
       paymentMethod: paymentMethod || undefined,
       paymentDate,
-      cardDetail: isCardPayment && hasFee ? cardDetail : undefined,
+      cardDetail: isCardPayment ? cardDetail : undefined,
       changeNote: changeNote || undefined,
     });
     if (!res.success) {
@@ -131,7 +112,7 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
   return (
     <ModalOverlay size="md">
       <div className={s.header}>
-        <h3 className={s.headerTitle}>멤버십 변경</h3>
+        <h3 className={s.headerTitle}>멤버십 업그레이드</h3>
         <button onClick={onClose} className={s.closeBtn} aria-label="닫기">×</button>
       </div>
 
@@ -174,7 +155,7 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
 
             <div className={s.arrow}>↓</div>
 
-            <FormField label="변경할 멤버십" required>
+            <FormField label="업그레이드할 멤버십" required>
               <select
                 className="form-input"
                 value={newMembershipSeq}
@@ -182,49 +163,33 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
                 aria-label="변경할 멤버십"
               >
                 <option value="">-- 선택 --</option>
-                {products
-                  .filter(p => p.seq !== current.membershipSeq)
-                  .map(p => (
-                    <option key={p.seq} value={p.seq}>
-                      {p.name} ({p.count}회 / {p.price.toLocaleString()}원)
-                    </option>
-                  ))}
+                {upgradeCandidates.map(p => (
+                  <option key={p.seq} value={p.seq}>
+                    {p.name} ({p.count}회 / {p.price.toLocaleString()}원)
+                  </option>
+                ))}
               </select>
+              {currentProduct && upgradeCandidates.length === 0 && (
+                <div className={s.feeHint}>현재 상품보다 상위 등급(가격) 상품이 없습니다.</div>
+              )}
             </FormField>
 
-            <FormField label="시작일">
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-            </FormField>
-            <FormField label="만료일">
-              <Input type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
-            </FormField>
-
-            <FormField label="신규 멤버십 가격">
-              <Input
-                type="text"
-                value={price}
-                onChange={(e) => setPrice(e.target.value.replace(/[^\d]/g, ''))}
-                placeholder="원 단위"
-              />
-            </FormField>
-
-            <FormField label="추가 비용 (음수 가능)" required>
-              <div className={s.feeRow}>
-                <Input
-                  type="text"
-                  value={changeFee}
-                  onChange={(e) => setChangeFee(e.target.value.replace(/[^\d-]/g, ''))}
-                  placeholder="예: 50000 또는 -30000"
-                  aria-label="추가 비용"
-                />
-                <button type="button" onClick={handleAutoCalculate} className={s.autoBtn}>
-                  자동 계산
-                </button>
+            {preview && (
+              <div data-testid="upgrade-preview" className={s.currentBox}>
+                <div className={s.currentLabel}>업그레이드 후 정보 (자동 계산)</div>
+                <div className={s.currentGrid}>
+                  <div>시작일</div>
+                  <div className="right">{preview.startDate}</div>
+                  <div>만료일</div>
+                  <div className="right">
+                    {preview.expiryDate}
+                    {preview.extendDays > 0 && ` (+${preview.extendDays}일)`}
+                  </div>
+                  <div>차액 (추가 결제)</div>
+                  <div className="right"><strong>{preview.fee.toLocaleString()}원</strong></div>
+                </div>
               </div>
-              <div className={s.feeHint}>
-                공식: 신규 가격 − 현재 가격 × (잔여 횟수 / 전체 횟수). 결과값은 관리자가 자유롭게 수정 가능합니다.
-              </div>
-            </FormField>
+            )}
 
             <FormField label="결제 방법">
               <select
@@ -259,15 +224,15 @@ export default function MembershipChangeModal({ memberSeq, current, onClose, onS
             </FormField>
 
             <div className={s.warnBox}>
-              <strong>⚠️ 변경은 되돌릴 수 없습니다.</strong>
-              <br />원본 멤버십은 &quot;변경&quot; 상태로 종결되고 새 멤버십이 활성화됩니다. 수업 배정은 유지됩니다.
+              <strong>⚠️ 업그레이드는 되돌릴 수 없습니다.</strong>
+              <br />원본 멤버십은 &quot;변경&quot; 상태로 종결되고 새 멤버십이 활성화됩니다. 사용 횟수·연기 한도·결제 이력은 원본을 기준으로 이어지며 수업 배정은 유지됩니다.
             </div>
           </div>
 
           <div className={s.footer}>
             <button onClick={onClose} disabled={submitting} className={s.cancelBtn}>취소</button>
             <button onClick={handleSubmit} disabled={submitting} className={s.submitBtn}>
-              {submitting ? '처리 중...' : '변경 확정'}
+              {submitting ? '처리 중...' : '업그레이드 확정'}
             </button>
           </div>
         </>

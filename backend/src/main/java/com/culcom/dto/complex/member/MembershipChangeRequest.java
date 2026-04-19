@@ -4,13 +4,14 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * 회원의 활성 멤버십을 다른 멤버십 상품으로 교체할 때의 요청.
- * 원본 멤버십은 {@code MembershipStatus.변경}으로 종결되고, 새 멤버십이 {@code 활성}으로 생성된다.
- * 추가 비용({@link #changeFee})은 관리자가 직접 지정하며 음수 허용(차액 환급).
+ * 회원의 활성 멤버십을 다른 상품으로 교체(업그레이드)할 때의 요청.
+ * 원본은 {@code MembershipStatus.변경}으로 종결되고, 새 멤버십이 {@code 활성}으로 생성된다.
+ * <p>
+ * 새 멤버십의 시작일/만료일/가격 및 차액은 서버가 원본과 신규 상품의 메타데이터로 자동 계산한다.
+ * (관리자가 재량으로 덮어쓸 수 없음)
  */
 @Getter
 @NoArgsConstructor
@@ -18,18 +19,6 @@ public class MembershipChangeRequest {
     /** 새로 적용할 멤버십 상품 seq */
     @NotNull
     private Long newMembershipSeq;
-
-    /** 새 멤버십 시작일 (미지정 시 오늘) */
-    private LocalDate startDate;
-    /** 새 멤버십 만료일 (미지정 시 상품 duration 기반 자동 계산) */
-    private LocalDate expiryDate;
-
-    /** 새 멤버십 가격(문자열, 원). 상품 기본값을 관리자가 수정 가능. */
-    private String price;
-
-    /** 관리자 입력 추가 비용 (음수 허용). 0이면 결제 기록을 남기지 않는다. */
-    @NotNull
-    private Long changeFee;
 
     private String paymentMethod;
     private LocalDateTime paymentDate;
