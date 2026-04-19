@@ -102,7 +102,7 @@ class TransferServiceUnpaidBalanceTest {
         Fixture f = setup("none", 300_000, "미납A", "01010000001");
         // payments 미생성 → paid = 0, total = 300,000
 
-        assertThatThrownBy(() -> transferService.create(req(f.mm), f.branch.getSeq()))
+        assertThatThrownBy(() -> transferService.create(req(f.mm)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("미수금");
     }
@@ -113,7 +113,7 @@ class TransferServiceUnpaidBalanceTest {
         // 디포짓 100,000 + 잔금 일부만 납부 → 아직 200,000 미수금
         pay(f.mm, 100_000, PaymentKind.DEPOSIT);
 
-        assertThatThrownBy(() -> transferService.create(req(f.mm), f.branch.getSeq()))
+        assertThatThrownBy(() -> transferService.create(req(f.mm)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("미수금");
     }
@@ -125,7 +125,7 @@ class TransferServiceUnpaidBalanceTest {
         pay(f.mm, 100_000, PaymentKind.DEPOSIT);
         pay(f.mm, 200_000, PaymentKind.BALANCE);
 
-        assertThatCode(() -> transferService.create(req(f.mm), f.branch.getSeq()))
+        assertThatCode(() -> transferService.create(req(f.mm)))
                 .doesNotThrowAnyException();
     }
 
@@ -137,7 +137,7 @@ class TransferServiceUnpaidBalanceTest {
         pay(f.mm, 200_000, PaymentKind.BALANCE);
         pay(f.mm, 20_000, PaymentKind.ADDITIONAL);
 
-        assertThatCode(() -> transferService.create(req(f.mm), f.branch.getSeq()))
+        assertThatCode(() -> transferService.create(req(f.mm)))
                 .doesNotThrowAnyException();
     }
 

@@ -94,7 +94,7 @@ class TransferServiceCreateScenarioTest {
     void 양도불가_상품은_양도요청_생성이_거부된다() {
         Fixture f = setup("non-transferable", false, false, true);
 
-        assertThatThrownBy(() -> transferService.create(req(f.mm, null), f.branch.getSeq()))
+        assertThatThrownBy(() -> transferService.create(req(f.mm, null)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("양도 불가");
     }
@@ -105,7 +105,7 @@ class TransferServiceCreateScenarioTest {
         // transferred=true → 양도로 받은 멤버십
         Fixture f = setup("retransfer", true, true, true);
 
-        assertThatThrownBy(() -> transferService.create(req(f.mm, null), f.branch.getSeq()))
+        assertThatThrownBy(() -> transferService.create(req(f.mm, null)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("재양도");
     }
@@ -116,7 +116,7 @@ class TransferServiceCreateScenarioTest {
         // fullyPaid=false → 납부 기록 없음 → 전액 미수금
         Fixture f = setup("unpaid", true, false, false);
 
-        assertThatThrownBy(() -> transferService.create(req(f.mm, null), f.branch.getSeq()))
+        assertThatThrownBy(() -> transferService.create(req(f.mm, null)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("미수금");
     }
@@ -127,7 +127,7 @@ class TransferServiceCreateScenarioTest {
         // 자동 계산이면 30,000원(잔여 30)이 되었을 상황에서 관리자가 12,345원 지정
         Fixture f = setup("admin-fee", true, false, true);
 
-        TransferRequestResponse res = transferService.create(req(f.mm, 12_345), f.branch.getSeq());
+        TransferRequestResponse res = transferService.create(req(f.mm, 12_345));
 
         assertThat(res.getTransferFee()).isEqualTo(12_345);
     }
@@ -138,7 +138,6 @@ class TransferServiceCreateScenarioTest {
         Fixture f = setup("history", true, false, true);
         Long memberSeq = f.member.getSeq();
         Long mmSeq = f.mm.getSeq();
-        Long branchSeq = f.branch.getSeq();
 
         // 1) 셋업 commit
         TestTransaction.flagForCommit();
@@ -147,7 +146,7 @@ class TransferServiceCreateScenarioTest {
         // 2) 서비스 호출 (자체 트랜잭션 → commit 시 BEFORE_COMMIT 리스너 발화)
         TransferCreateRequest r = new TransferCreateRequest();
         r.setMemberMembershipSeq(mmSeq);
-        transferService.create(r, branchSeq);
+        transferService.create(r);
 
         // 3) 검증용 새 트랜잭션 (읽기 전용 — 롤백으로 종료)
         TestTransaction.start();

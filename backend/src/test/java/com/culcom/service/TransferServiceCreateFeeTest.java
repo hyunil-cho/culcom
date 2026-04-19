@@ -81,7 +81,7 @@ class TransferServiceCreateFeeTest {
     void 관리자가_지정한_양도비는_그대로_저장된다() {
         Fixture f = setup("manual", 30, 0, 300_000);
 
-        TransferRequestResponse res = transferService.create(req(f.mm, 77_777), f.branch.getSeq());
+        TransferRequestResponse res = transferService.create(req(f.mm, 77_777));
 
         assertThat(res.getTransferFee()).isEqualTo(77_777);
     }
@@ -91,7 +91,7 @@ class TransferServiceCreateFeeTest {
         // 잔여 30 - 0 = 30 → 48 이하이므로 30,000
         Fixture f = setup("auto-mid", 30, 0, 300_000);
 
-        TransferRequestResponse res = transferService.create(req(f.mm, null), f.branch.getSeq());
+        TransferRequestResponse res = transferService.create(req(f.mm, null));
 
         assertThat(res.getTransferFee()).isEqualTo(30_000);
     }
@@ -101,7 +101,7 @@ class TransferServiceCreateFeeTest {
         // total 20, used 4 → 잔여 16 → 20,000
         Fixture f = setup("auto-low", 20, 4, 200_000);
 
-        TransferRequestResponse res = transferService.create(req(f.mm, null), f.branch.getSeq());
+        TransferRequestResponse res = transferService.create(req(f.mm, null));
 
         assertThat(res.getTransferFee()).isEqualTo(20_000);
     }
@@ -110,7 +110,7 @@ class TransferServiceCreateFeeTest {
     void 잔여_49이상_자동_50000원() {
         Fixture f = setup("auto-high", 60, 0, 600_000);
 
-        TransferRequestResponse res = transferService.create(req(f.mm, null), f.branch.getSeq());
+        TransferRequestResponse res = transferService.create(req(f.mm, null));
 
         assertThat(res.getTransferFee()).isEqualTo(50_000);
     }
@@ -119,7 +119,7 @@ class TransferServiceCreateFeeTest {
     void 관리자가_0으로_지정하면_무료양도() {
         Fixture f = setup("free", 30, 0, 300_000);
 
-        TransferRequestResponse res = transferService.create(req(f.mm, 0), f.branch.getSeq());
+        TransferRequestResponse res = transferService.create(req(f.mm, 0));
 
         assertThat(res.getTransferFee()).isEqualTo(0);
     }
@@ -128,7 +128,7 @@ class TransferServiceCreateFeeTest {
     void 음수_양도비는_거부된다() {
         Fixture f = setup("neg", 30, 0, 300_000);
 
-        assertThatThrownBy(() -> transferService.create(req(f.mm, -1), f.branch.getSeq()))
+        assertThatThrownBy(() -> transferService.create(req(f.mm, -1)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("0 이상");
     }

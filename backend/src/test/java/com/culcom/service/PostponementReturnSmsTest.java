@@ -283,12 +283,11 @@ class PostponementReturnSmsTest {
         ComplexPostponementReturnScanLog log = scanLogRepository
                 .findByBranchSeqAndScanDate(branchSeq, scanDate)
                 .orElseThrow();
-        // 설정이 없으면 sendEventSmsIfConfigured 가 null을 반환(설정 없음 경고 없이 정상 리턴).
-        // 현재 구현은 null = 성공으로 간주하므로 전원이 성공으로 집계된다.
-        // 단, 이 경우 실제로는 SMS가 발송되지 않았음을 의미하므로 운영상 별도 경고 대시보드에서 체크한다.
-        // (미설정 체크는 대시보드 ReturnTemplateMissingModal 이 담당)
+        // 자동발송 설정이 없으면 sendEventSmsIfConfigured 가 경고 문자열을 반환하므로
+        // 모두 실패로 집계된다. (미설정도 SMS 미발송이라는 점에서 실패의 한 종류)
         assertThat(log.getMemberCount()).isEqualTo(2);
-        assertThat(log.getSmsSuccessCount() + log.getSmsFailCount()).isEqualTo(2);
+        assertThat(log.getSmsSuccessCount()).isEqualTo(0);
+        assertThat(log.getSmsFailCount()).isEqualTo(2);
 
         cleanup(scanDate);
     }

@@ -101,7 +101,7 @@ class TransferControllerTest {
         TransferRequestResponse response = TransferRequestResponse.builder()
                 .seq(1L).memberMembershipSeq(20L).status(TransferStatus.생성).build();
 
-        given(transferService.create(any(), eq(1L))).willReturn(response);
+        given(transferService.create(any())).willReturn(response);
 
         Map<String, Object> body = Map.of("memberMembershipSeq", 20L);
 

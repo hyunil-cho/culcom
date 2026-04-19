@@ -8,17 +8,21 @@ import com.culcom.entity.enums.SmsEventType;
 import com.culcom.entity.enums.TransferStatus;
 import com.culcom.entity.product.Membership;
 import com.culcom.dto.transfer.TransferRequestResponse;
+import com.culcom.entity.enums.ActivityEventType;
 import com.culcom.entity.transfer.TransferRequest;
+import com.culcom.event.ActivityEvent;
 import com.culcom.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,7 +78,6 @@ class TransferServiceSmsTest {
     void 양도_거절시_양도거절_SMS_발송() {
         TransferRequest tr = createTransferRequest();
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
-        given(transferRequestRepository.save(any())).willReturn(tr);
 
         transferService.updateStatus(1L, TransferStatus.거절, null);
 
@@ -86,7 +89,6 @@ class TransferServiceSmsTest {
     void 양도_확인시_SMS_발송하지_않음() {
         TransferRequest tr = createTransferRequest();
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
-        given(transferRequestRepository.save(any())).willReturn(tr);
 
         transferService.updateStatus(1L, TransferStatus.확인, null);
 
@@ -97,7 +99,6 @@ class TransferServiceSmsTest {
     void 양도_거절시_양도완료_SMS는_발송하지_않음() {
         TransferRequest tr = createTransferRequest();
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
-        given(transferRequestRepository.save(any())).willReturn(tr);
 
         transferService.updateStatus(1L, TransferStatus.거절, null);
 
@@ -110,7 +111,6 @@ class TransferServiceSmsTest {
         TransferRequest tr = createTransferRequest();
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
         given(complexMemberRepository.findById(20L)).willReturn(Optional.of(toMember));
-        given(transferRequestRepository.save(any())).willReturn(tr);
 
         transferService.completeTransfer(1L, 20L);
 
@@ -125,7 +125,6 @@ class TransferServiceSmsTest {
         TransferRequest tr = createTransferRequest();
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
         given(complexMemberRepository.findById(20L)).willReturn(Optional.of(toMember));
-        given(transferRequestRepository.save(any())).willReturn(tr);
 
         transferService.completeTransfer(1L, 20L);
 
@@ -139,7 +138,6 @@ class TransferServiceSmsTest {
     void 거절_SMS_정상_발송시_smsWarning은_null이다() {
         TransferRequest tr = createTransferRequest();
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
-        given(transferRequestRepository.save(any())).willReturn(tr);
         given(smsService.sendEventSmsIfConfigured(anyLong(), any(), anyString(), anyString(), any()))
                 .willReturn(null);
 
@@ -152,7 +150,6 @@ class TransferServiceSmsTest {
     void 거절_SMS_발송_실패시_경고가_response에_담긴다() {
         TransferRequest tr = createTransferRequest();
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
-        given(transferRequestRepository.save(any())).willReturn(tr);
         given(smsService.sendEventSmsIfConfigured(anyLong(), any(), anyString(), anyString(), any()))
                 .willReturn("문자 발송 실패: 잔여 건수 부족");
 
@@ -168,7 +165,6 @@ class TransferServiceSmsTest {
         TransferRequest tr = createTransferRequest();
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
         given(complexMemberRepository.findById(20L)).willReturn(Optional.of(toMember));
-        given(transferRequestRepository.save(any())).willReturn(tr);
         given(smsService.sendEventSmsIfConfigured(anyLong(), any(), anyString(), anyString(), any()))
                 .willReturn(null);
 
@@ -182,7 +178,6 @@ class TransferServiceSmsTest {
         TransferRequest tr = createTransferRequest();
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
         given(complexMemberRepository.findById(20L)).willReturn(Optional.of(toMember));
-        given(transferRequestRepository.save(any())).willReturn(tr);
         given(smsService.sendEventSmsIfConfigured(anyLong(), any(), eq("홍길동"), eq("01012345678"), any()))
                 .willReturn("문자 발송 실패: 번호 오류");
         given(smsService.sendEventSmsIfConfigured(anyLong(), any(), eq("김철수"), eq("01098765432"), any()))
@@ -198,7 +193,6 @@ class TransferServiceSmsTest {
         TransferRequest tr = createTransferRequest();
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
         given(complexMemberRepository.findById(20L)).willReturn(Optional.of(toMember));
-        given(transferRequestRepository.save(any())).willReturn(tr);
         given(smsService.sendEventSmsIfConfigured(anyLong(), any(), eq("홍길동"), eq("01012345678"), any()))
                 .willReturn(null);
         given(smsService.sendEventSmsIfConfigured(anyLong(), any(), eq("김철수"), eq("01098765432"), any()))
@@ -214,7 +208,6 @@ class TransferServiceSmsTest {
         TransferRequest tr = createTransferRequest();
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
         given(complexMemberRepository.findById(20L)).willReturn(Optional.of(toMember));
-        given(transferRequestRepository.save(any())).willReturn(tr);
         given(smsService.sendEventSmsIfConfigured(anyLong(), any(), anyString(), anyString(), any()))
                 .willReturn("문자 자동발송이 비활성화 상태입니다.");
 
@@ -224,11 +217,49 @@ class TransferServiceSmsTest {
     }
 
     @Test
+    void 양도_완료시_양도자와_양수자_모두에게_히스토리_이벤트가_발행된다() {
+        TransferRequest tr = createTransferRequest();
+        given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
+        given(complexMemberRepository.findById(20L)).willReturn(Optional.of(toMember));
+
+        transferService.completeTransfer(1L, 20L);
+
+        ArgumentCaptor<ActivityEvent> captor = ArgumentCaptor.forClass(ActivityEvent.class);
+        then(eventPublisher).should(atLeastOnce()).publishEvent(captor.capture());
+        List<ActivityEvent> events = captor.getAllValues();
+
+        assertThat(events)
+                .as("양도자에게 TRANSFER_OUT 이벤트가 발행되어야 한다")
+                .anySatisfy(e -> {
+                    assertThat(e.getEventType()).isEqualTo(ActivityEventType.TRANSFER_OUT);
+                    assertThat(e.getMember()).isEqualTo(fromMember);
+                });
+        assertThat(events)
+                .as("양수자에게 TRANSFER_IN 이벤트가 발행되어야 한다")
+                .anySatisfy(e -> {
+                    assertThat(e.getEventType()).isEqualTo(ActivityEventType.TRANSFER_IN);
+                    assertThat(e.getMember()).isEqualTo(toMember);
+                });
+    }
+
+    @Test
+    void 양도_완료시_branch가_null이면_SMS를_발송하지_않는다() {
+        TransferRequest tr = createTransferRequest();
+        tr.setBranch(null);
+        given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
+        given(complexMemberRepository.findById(20L)).willReturn(Optional.of(toMember));
+
+        TransferRequestResponse response = transferService.completeTransfer(1L, 20L);
+
+        then(smsService).shouldHaveNoInteractions();
+        assertThat(response.getSmsWarning()).isNull();
+    }
+
+    @Test
     void 완료_서로_다른_사유로_실패하면_양쪽_모두_표기된다() {
         TransferRequest tr = createTransferRequest();
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
         given(complexMemberRepository.findById(20L)).willReturn(Optional.of(toMember));
-        given(transferRequestRepository.save(any())).willReturn(tr);
         given(smsService.sendEventSmsIfConfigured(anyLong(), any(), eq("홍길동"), eq("01012345678"), any()))
                 .willReturn("문자 발송 실패: 잔여 건수 부족");
         given(smsService.sendEventSmsIfConfigured(anyLong(), any(), eq("김철수"), eq("01098765432"), any()))

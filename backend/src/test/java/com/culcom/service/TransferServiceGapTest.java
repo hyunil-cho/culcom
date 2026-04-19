@@ -180,7 +180,7 @@ class TransferServiceGapTest {
         ComplexMemberMembership mm = makeMm(f, MembershipStatus.활성, LocalDate.now().plusDays(80));
         long before = transferRequestRepository.count();
 
-        assertThatCode(() -> transferService.create(req(mm.getSeq()), f.branch.getSeq()))
+        assertThatCode(() -> transferService.create(req(mm.getSeq())))
                 .doesNotThrowAnyException();
 
         assertThat(transferRequestRepository.count())
@@ -213,7 +213,7 @@ class TransferServiceGapTest {
                 .build());
         // 납부 미존재 → 미수금도 있음
 
-        assertThatThrownBy(() -> transferService.create(req(mm.getSeq()), branch.getSeq()))
+        assertThatThrownBy(() -> transferService.create(req(mm.getSeq())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("사용할 수 없는")
                 .as("isActive 가드가 가장 먼저 걸려야 한다 (나중 가드의 메시지가 노출되면 안 됨)");
@@ -225,7 +225,7 @@ class TransferServiceGapTest {
         MembershipStatus beforeStatus = mm.getStatus();
         Integer beforeUsedCount = mm.getUsedCount();
 
-        assertThatThrownBy(() -> transferService.create(req(mm.getSeq()), f.branch.getSeq()))
+        assertThatThrownBy(() -> transferService.create(req(mm.getSeq())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("사용할 수 없는");
 

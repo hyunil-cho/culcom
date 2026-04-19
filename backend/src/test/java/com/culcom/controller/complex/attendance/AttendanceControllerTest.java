@@ -100,7 +100,7 @@ class AttendanceControllerTest {
     @Test
     @DisplayName("회원_순서_변경")
     void 회원_순서_변경() throws Exception {
-        willDoNothing().given(attendanceService).reorderMembers(any());
+        willDoNothing().given(attendanceService).reorderMembers(any(), any());
 
         Map<String, Object> body = new HashMap<>();
         body.put("classSeq", 1);

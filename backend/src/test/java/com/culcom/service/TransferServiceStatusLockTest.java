@@ -121,7 +121,6 @@ class TransferServiceStatusLockTest {
     void 접수상태에서는_정상적으로_확인_가능하다() {
         TransferRequest tr = requestWithStatus(TransferStatus.접수);
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
-        given(transferRequestRepository.save(any())).willReturn(tr);
 
         // 예외가 던져지지 않아야 한다.
         transferService.updateStatus(1L, TransferStatus.확인, null);

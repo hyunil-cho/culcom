@@ -232,7 +232,7 @@ class ComplexMemberServiceOverpaymentTest {
         TransferCreateRequest tr = new TransferCreateRequest();
         tr.setMemberMembershipSeq(f.mm.getSeq());
 
-        assertThatThrownBy(() -> transferService.create(tr, f.mm.getMember().getBranch().getSeq()))
+        assertThatThrownBy(() -> transferService.create(tr))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("미수금");
     }

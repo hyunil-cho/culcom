@@ -123,6 +123,17 @@ class TransferServiceLinkExpireTest {
                 .hasMessageContaining("이미 만료된 링크입니다.");
     }
 
+    @Test
+    void submitInvite_생성_상태가_아니면_만료된_링크_예외() {
+        given(transferRequestRepository.findByInviteToken("invTok"))
+                .willReturn(Optional.of(trWithStatus(TransferStatus.접수)));
+
+        assertThatThrownBy(() -> transferService.submitInvite("invTok",
+                new com.culcom.dto.transfer.TransferInviteSubmitRequest()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("이미 만료된 링크입니다.");
+    }
+
     // ── 7일 경과 만료 처리 ──
 
     @Test
@@ -195,7 +206,7 @@ class TransferServiceLinkExpireTest {
 
         TransferCreateRequest req = new TransferCreateRequest();
         req.setMemberMembershipSeq(20L);
-        transferService.create(req, 1L);
+        transferService.create(req);
 
         ArgumentCaptor<ActivityEvent> captor = ArgumentCaptor.forClass(ActivityEvent.class);
         verify(eventPublisher).publishEvent(captor.capture());
@@ -210,7 +221,6 @@ class TransferServiceLinkExpireTest {
     void updateStatus_거절_시_TRANSFER_REJECT_이벤트_발행() {
         TransferRequest tr = trWithStatus(TransferStatus.생성);
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
-        given(transferRequestRepository.save(any(TransferRequest.class))).willReturn(tr);
 
         transferService.updateStatus(1L, TransferStatus.거절, "요청 반려 사유");
 
@@ -226,7 +236,6 @@ class TransferServiceLinkExpireTest {
     void updateStatus_확인_시_TRANSFER_REJECT_이벤트_미발행() {
         TransferRequest tr = trWithStatus(TransferStatus.접수);
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
-        given(transferRequestRepository.save(any(TransferRequest.class))).willReturn(tr);
 
         transferService.updateStatus(1L, TransferStatus.확인, "승인");
 
