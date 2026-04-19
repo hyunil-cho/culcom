@@ -31,7 +31,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDenial(AccessDeniedException e) {
         log.info("잘못된 접근 요청: {}", e.getMessage());
-        return badRequest(e.getMessage());
+        return unauthorized(e.getMessage());
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -98,6 +98,10 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<ApiResponse<Void>> badRequest(String message) {
         return ResponseEntity.badRequest().body(ApiResponse.error(message));
+    }
+
+    private ResponseEntity<ApiResponse<Void>> unauthorized(String message) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error(message));
     }
 
     private ResponseEntity<ApiResponse<Void>> internalError(String message) {
