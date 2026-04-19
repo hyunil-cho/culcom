@@ -2,7 +2,6 @@ package com.culcom.config;
 
 import com.culcom.dto.ApiResponse;
 import com.culcom.exception.EntityNotFoundException;
-import com.culcom.exception.ForbiddenException;
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.MyBatisSystemException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -28,12 +27,6 @@ public class GlobalExceptionHandler {
         return badRequest(e.getMessage());
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ApiResponse<Void>> handleIllegalState(IllegalStateException e) {
-        log.info("잘못된 상태 값: {}", e.getMessage());
-        return badRequest(e.getMessage());
-    }
-
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleMessageNotReadable(HttpMessageNotReadableException e) {
         log.info("요청 본문 파싱 실패: {}", e.getMessage());
@@ -56,23 +49,6 @@ public class GlobalExceptionHandler {
         return badRequest("필수 파라미터가 누락되었습니다: " + e.getParameterName());
     }
 
-    // ── 401 Unauthorized ──
-
-    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
-    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(
-            org.springframework.security.access.AccessDeniedException e) {
-        log.info("접근 거부: {}", e.getMessage());
-        return respond(HttpStatus.UNAUTHORIZED, e.getMessage());
-    }
-
-    // ── 403 Forbidden ──
-
-    @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<ApiResponse<Void>> handleForbidden(ForbiddenException e) {
-        log.info("권한 부족: {}", e.getMessage());
-        return respond(HttpStatus.FORBIDDEN, e.getMessage());
-    }
-
     // ── 404 Not Found ──
 
     @ExceptionHandler(EntityNotFoundException.class)
@@ -93,10 +69,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleDataIntegrity(DataIntegrityViolationException e) {
-        if (e.getCause() instanceof org.hibernate.exception.ConstraintViolationException cve) {
-            log.warn("유니크 제약 조건 위반: {}", cve.getMessage());
-            return respond(HttpStatus.CONFLICT, "이미 존재하는 데이터입니다: " + cve.getMessage());
-        }
         log.warn("데이터 무결성 위반: {}", e.getMostSpecificCause().getMessage());
         return respond(HttpStatus.CONFLICT, "데이터 제약 조건에 위배됩니다. 중복되거나 참조 중인 데이터가 있는지 확인해주세요.");
     }

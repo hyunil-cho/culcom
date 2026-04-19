@@ -290,15 +290,9 @@ export default function SurveyEditorPage() {
     const res = await surveyApi.createOption(templateSeq, { questionSeq, groupName: groupName || undefined, label: label.trim() });
     if (res.success) { setOptionAddForms(prev => { const n = { ...prev }; delete n[formId]; return n; }); load(); }
   };
-  const handleDeleteOption = (optionSeq: number, label: string) => {
-    deleteOptionModal.open({ seq: optionSeq, label });
-  };
-
-  const confirmDeleteOption = async () => {
-    if (!deleteOptionModal.data) return;
-    const { seq } = deleteOptionModal.data;
-    deleteOptionModal.close();
-    await surveyApi.deleteOption(templateSeq, seq);
+  const handleDeleteOption = async (optionSeq: number, label: string) => {
+    if (!confirm(`"${label}" 선택지를 삭제하시겠습니까?`)) return;
+    await surveyApi.deleteOption(templateSeq, optionSeq);
     load();
   };
 

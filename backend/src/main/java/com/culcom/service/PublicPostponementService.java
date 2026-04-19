@@ -3,6 +3,7 @@ package com.culcom.service;
 import com.culcom.dto.publicapi.*;
 import com.culcom.entity.branch.Branch;
 import com.culcom.entity.complex.clazz.ComplexClass;
+import com.culcom.entity.complex.clazz.ComplexClass;
 import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.postponement.ComplexPostponementReason;

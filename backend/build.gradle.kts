@@ -46,8 +46,8 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
+    maxHeapSize = "2g"
 }
-
 tasks.withType<Test> {
     useJUnitPlatform()
     maxHeapSize = "2g"

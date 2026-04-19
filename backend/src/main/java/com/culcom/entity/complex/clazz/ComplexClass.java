@@ -4,6 +4,8 @@ import com.culcom.entity.BaseTimeEntity;
 import com.culcom.entity.branch.Branch;
 import com.culcom.entity.complex.member.ComplexMember;
 import jakarta.persistence.*;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 @Entity
@@ -42,5 +44,4 @@ public class ComplexClass extends BaseTimeEntity {
     @Column(name = "sort_order", nullable = false)
     @Builder.Default
     private Integer sortOrder = 0;
-
 }
