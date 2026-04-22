@@ -111,10 +111,7 @@ export default function Header() {
       </header>
 
       {showLogoutModal && (
-        <div
-          className="modal-overlay"
-          onClick={(e) => { if (e.target === e.currentTarget) setShowLogoutModal(false); }}
-        >
+        <div className="modal-overlay">
           <div className={`modal-content ${styles.logoutModalContent}`}>
             <div className={styles.logoutModalHeader}>
               <h3 className={styles.logoutModalTitle}>로그아웃 확인</h3>

@@ -30,6 +30,7 @@ export {
   complexDashboardApi,
   type MembershipAlertItem, type MembershipAlertsResponse, type AutoExpiredItem,
   type TrendResponse, type TrendItem, type TrendPeriod,
+  type ReturnScanLogItem, type ReturnScanStatusResponse,
 } from './complex-dashboard';
 export {
   paymentMethodConfigApi, bankConfigApi, signupChannelConfigApi, cardCompanyConfigApi,

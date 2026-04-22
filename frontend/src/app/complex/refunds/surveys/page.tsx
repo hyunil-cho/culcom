@@ -52,7 +52,7 @@ export default function RefundSurveysPage() {
         emptyMessage="설문 응답이 없습니다." pagination={list.pagination} />
 
       {detailModal.isOpen && detailModal.data && (
-        <ModalOverlay onClose={detailModal.close}>
+        <ModalOverlay>
           <SurveyDetailView survey={detailModal.data} onClose={detailModal.close} />
         </ModalOverlay>
       )}

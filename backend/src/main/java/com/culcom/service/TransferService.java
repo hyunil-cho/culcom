@@ -19,6 +19,8 @@ import com.culcom.repository.*;
 import com.culcom.repository.MembershipPaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -116,12 +118,12 @@ public class TransferService {
      * @param activeOnly status가 null일 때만 적용. true면 생성/접수 상태만 반환
      * @param status     특정 상태 필터 (null이면 활성/전체는 {@code activeOnly}로 결정)
      */
-    public List<TransferRequestResponse> list(
+    public Page<TransferRequestResponse> list(
             Long branchSeq, String name, String phone,
             boolean activeOnly, com.culcom.entity.enums.TransferStatus status,
-            boolean includeReferenced) {
-        return transferRequestRepository.findFiltered(branchSeq, name, phone, activeOnly, status, includeReferenced)
-                .stream().map(TransferRequestResponse::from).toList();
+            boolean includeReferenced, Pageable pageable) {
+        return transferRequestRepository.findFiltered(branchSeq, name, phone, activeOnly, status, includeReferenced, pageable)
+                .map(TransferRequestResponse::from);
     }
 
     /**

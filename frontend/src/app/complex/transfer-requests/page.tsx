@@ -2,8 +2,9 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { transferApi, type TransferRequestItem, type TransferStatus } from '@/lib/api';
+import type { PageResponse } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
-import { queryClient } from '@/lib/queryClient';
+import { invalidateAll, MEMBERSHIP_RELATED } from '@/lib/invalidate';
 import { useQueryParams } from '@/lib/useQueryParams';
 import SearchBar from '@/components/ui/SearchBar';
 import DataTable, { type Column } from '@/components/ui/DataTable';
@@ -17,10 +18,6 @@ const STATUS_STYLE: Record<TransferStatus, { color: string; bg: string }> = {
   '거절': { color: '#dc2626', bg: '#fee2e2' },
 };
 
-/**
- * 기본은 '전체' — 참조 완료(양도 확정된) 건은 서버에서 자동으로 숨겨지므로,
- * 실제로는 진행 중/거절 건만 노출된다. "참조 완료 포함" 토글로 전체 이력을 볼 수 있다.
- */
 const DEFAULT_STATUS_FILTER: TransferStatus | 'ALL' = 'ALL';
 
 const STATUS_OPTIONS: { value: TransferStatus | 'ALL'; label: string }[] = [
@@ -31,7 +28,7 @@ const STATUS_OPTIONS: { value: TransferStatus | 'ALL'; label: string }[] = [
   { value: '거절', label: '거절' },
 ];
 
-const DEFAULTS = { keyword: '', status: DEFAULT_STATUS_FILTER as string, includeReferenced: 'false' };
+const DEFAULTS = { keyword: '', status: DEFAULT_STATUS_FILTER as string, page: '0' };
 
 export default function TransferRequestsPage() {
   return <Suspense><TransferRequestsContent /></Suspense>;
@@ -41,15 +38,19 @@ function TransferRequestsContent() {
   const { params, setParams } = useQueryParams(DEFAULTS);
   const searchedKeyword = params.keyword;
   const statusFilter = (params.status as TransferStatus | 'ALL') ?? DEFAULT_STATUS_FILTER;
-  const includeReferenced = params.includeReferenced === 'true';
+  const page = Number(params.page) || 0;
 
-  const { data: items = [] } = useApiQuery<TransferRequestItem[]>(
-    ['transferRequests', statusFilter, includeReferenced],
+  const { data: pageData } = useApiQuery<PageResponse<TransferRequestItem>>(
+    ['transferRequests', statusFilter, page],
     () => transferApi.list({
       status: statusFilter === 'ALL' ? undefined : (statusFilter as TransferStatus),
-      includeReferenced,
+      includeReferenced: true,
+      page,
+      size: 20,
     }),
   );
+  const items = pageData?.content ?? [];
+  const totalPages = pageData?.totalPages ?? 0;
   const [keyword, setKeyword] = useState(searchedKeyword);
   const detailModal = useModal<TransferRequestItem>();
 
@@ -106,7 +107,6 @@ function TransferRequestsContent() {
         <h2 className="page-title" style={{ marginBottom: 0 }}>양도 요청 관리</h2>
       </div>
 
-      {/* 상태 필터 + 참조 완료 포함 토글 */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
         {STATUS_OPTIONS.map(opt => {
           const active = statusFilter === opt.value;
@@ -114,7 +114,7 @@ function TransferRequestsContent() {
             <button
               key={opt.value}
               type="button"
-              onClick={() => setParams({ status: opt.value, keyword, includeReferenced: String(includeReferenced) })}
+              onClick={() => setParams({ status: opt.value, keyword, page: '0' })}
               aria-pressed={active}
               style={{
                 padding: '6px 14px', borderRadius: 16,
@@ -128,26 +128,13 @@ function TransferRequestsContent() {
             </button>
           );
         })}
-        <label style={{
-          display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto',
-          fontSize: '0.82rem', color: '#475569', cursor: 'pointer',
-        }}>
-          <input
-            type="checkbox"
-            checked={includeReferenced}
-            onChange={(e) => setParams({
-              keyword, status: statusFilter, includeReferenced: String(e.target.checked),
-            })}
-          />
-          참조 완료 포함 (완료된 양도 이력까지 표시)
-        </label>
       </div>
 
       <SearchBar
         keyword={keyword}
         onKeywordChange={setKeyword}
-        onSearch={() => setParams({ keyword, status: statusFilter, includeReferenced: String(includeReferenced) })}
-        onReset={keyword ? () => { setKeyword(''); setParams({ keyword: '', status: statusFilter, includeReferenced: String(includeReferenced) }); } : undefined}
+        onSearch={() => setParams({ keyword, status: statusFilter, page: '0' })}
+        onReset={keyword ? () => { setKeyword(''); setParams({ keyword: '', status: statusFilter, page: '0' }); } : undefined}
         placeholder="양도자/양수자/멤버십 검색"
       />
 
@@ -157,13 +144,18 @@ function TransferRequestsContent() {
         rowKey={(item) => item.seq}
         emptyMessage="양도 요청이 없습니다."
         onRowClick={(item) => detailModal.open(item)}
+        pagination={{
+          page,
+          totalPages,
+          onPageChange: (p) => setParams({ page: String(p) }),
+        }}
       />
 
       {detailModal.isOpen && (
         <TransferDetailModal
           item={detailModal.data!}
           onClose={detailModal.close}
-          onStatusChange={() => queryClient.invalidateQueries({ queryKey: ['transferRequests'] })}
+          onStatusChange={() => invalidateAll(['transferRequests', ...MEMBERSHIP_RELATED])}
         />
       )}
     </>

@@ -30,19 +30,19 @@ public class NoticeController {
             @Valid @RequestBody NoticeCreateRequest request,
             @AuthenticationPrincipal CustomUserPrincipal principal) {
         NoticeDetailResponse result = noticeService.create(request, principal.getSelectedBranchSeq());
-        return ResponseEntity.ok(ApiResponse.ok("공지사항이 등록되었습니다.", result));
+        return ResponseEntity.ok(ApiResponse.ok("스터디시간이 등록되었습니다.", result));
     }
 
     @PutMapping("/{seq}")
     public ResponseEntity<ApiResponse<NoticeDetailResponse>> update(
             @PathVariable Long seq, @RequestBody NoticeUpdateRequest request) {
         NoticeDetailResponse result = noticeService.update(seq, request);
-        return ResponseEntity.ok(ApiResponse.ok("공지사항이 수정되었습니다.", result));
+        return ResponseEntity.ok(ApiResponse.ok("스터디시간이 수정되었습니다.", result));
     }
 
     @DeleteMapping("/{seq}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long seq) {
         noticeService.delete(seq);
-        return ResponseEntity.ok(ApiResponse.ok("공지사항이 삭제되었습니다.", null));
+        return ResponseEntity.ok(ApiResponse.ok("스터디시간이 삭제되었습니다.", null));
     }
 }

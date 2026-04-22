@@ -94,7 +94,7 @@ export default function PostponementLinkModal({ memberSeq, memberName, memberPho
   );
 
   return (
-    <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay">
       <div className={`modal-content ${s.content}`}>
         <div className={s.header}>
           <h3 className={s.title}>수업 연기 요청</h3>

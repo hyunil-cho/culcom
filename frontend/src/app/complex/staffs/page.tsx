@@ -17,7 +17,7 @@ function StaffTeamModal({ staff, classes, onClose }: {
   onClose: () => void;
 }) {
   return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="modal-overlay">
       <div className="modal-content" style={{ width: '90%', maxWidth: 560 }}>
         <div className="modal-header">
           <h3 style={{ margin: 0 }}>{staff.name} - 팀현황 ({classes.length}개)</h3>

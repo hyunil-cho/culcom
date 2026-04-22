@@ -39,8 +39,8 @@ export default function ReservationStatusModal({ reservation, onClose, onStatusC
   };
 
   return (
-    <div className={s.statusModalOverlay} onClick={onClose}>
-      <div className={s.statusModalContent} onClick={e => e.stopPropagation()}>
+    <div className={s.statusModalOverlay}>
+      <div className={s.statusModalContent}>
         <div className={s.statusModalHeader}>
           <div className={s.statusModalHeaderRow}>
             <h3 className={s.statusModalTitle}>{step === 'select' ? '예약 상태 변경' : '설문지 선택'}</h3>

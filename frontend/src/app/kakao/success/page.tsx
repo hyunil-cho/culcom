@@ -10,19 +10,17 @@ export default function KakaoSuccessPage() {
     <div className={s.wrapper}>
       <div className={s.card}>
         <div className={s.logoSection}>
-          <h1 className={s.logo}>CulCom</h1>
+          <h1 className={s.logo}>E-UT</h1>
         </div>
 
         <div className={s.titleSection}>
-          <p className={s.subtitle}>20년 된 컬컴 영어, 일어, 중국어</p>
-          <h1 className={s.mainTitle}>스터디 지원 성공!</h1>
+          <p className={s.subtitle}>영어로 만나 서로를 알아가는 공간</p>
+          <h1 className={s.mainTitle}>영어회화 지원 성공!</h1>
         </div>
 
         <div className={s.charSection}>
-          <div className={s.charEmoji}>💗🐱</div>
           <div className={s.charRow}>
-            <span className={s.charText}>Be cultured 💕</span>
-            <span className={s.charText}>speak better ✨</span>
+            <span className={s.charText}>Be cultured 💕   speak better ✨</span>
           </div>
         </div>
 
@@ -30,10 +28,12 @@ export default function KakaoSuccessPage() {
           <p className={s.messageTitle}>한 걸음 나아가셨군요 :D</p>
           <p className={s.messageBody}>
             <span className={s.userName}>{session.memberName}</span>님, 환영합니다!
-            <br />스터디 안내 연락드릴게요!
             <br /><br />
-            교육청 인가받은, 16단계 레벨별 커리큘럼으로
-            <br />영어, 일어, 중국어를 잘 갖춰서!
+            교육청에서 허가받은, 7단계 커리큘럼 구미영어회화학원에서 안내 연락드릴게요!
+            <br />
+            <br />“Experience, You Together”
+            <br />
+            E:UT
           </p>
         </div>
 

@@ -48,7 +48,7 @@ export default function TransferDetailModal({
   const transferUrl = `${window.location.origin}/public/transfer?token=${item.token}`;
 
   return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="modal-overlay">
       <div className="modal-content" style={{ width: '90%', maxWidth: 560, maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
         {/* 헤더 */}
         <div style={{ padding: '1rem 1.5rem', background: '#6366f1', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

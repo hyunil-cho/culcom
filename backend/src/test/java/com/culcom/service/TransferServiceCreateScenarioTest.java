@@ -50,7 +50,7 @@ class TransferServiceCreateScenarioTest {
     private Fixture setup(String suffix, boolean transferable, boolean transferred, boolean fullyPaid) {
         long nonce = System.nanoTime();
         Branch branch = branchRepository.save(Branch.builder()
-                .branchName("테스트지점")
+                .branchName("테스트지점-tc-" + suffix + "-" + nonce)
                 .alias("tc-" + suffix + "-" + nonce)
                 .build());
 

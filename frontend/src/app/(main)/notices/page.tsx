@@ -16,8 +16,8 @@ import { Button, LinkButton } from '@/components/ui/Button';
 
 const CATEGORY_FILTERS = [
   { value: 'all', label: '전체' },
-  { value: '공지사항', label: '공지사항' },
-  { value: '이벤트', label: '이벤트' },
+  { value: '스터디시간', label: '스터디시간' },
+  { value: '상담가능시간', label: '상담가능시간' },
 ];
 
 const DEFAULTS = { page: '0', filter: 'all', searchKeyword: '' };
@@ -79,7 +79,7 @@ function NoticesContent() {
     if (!deleteModal.data) return;
     const target = deleteModal.data;
     deleteModal.close();
-    const res = await run(noticeApi.delete(target.seq), '공지사항이 삭제되었습니다.');
+    const res = await run(noticeApi.delete(target.seq), '스터디시간이 삭제되었습니다.');
     if (res.success) queryClient.invalidateQueries({ queryKey: ['notices'] });
   };
 
@@ -87,7 +87,7 @@ function NoticesContent() {
     {
       header: '카테고리',
       render: (n: NoticeListItem) => (
-        <span className={`status-badge ${n.category === '이벤트' ? 'status-warning' : 'status-active'}`}>
+        <span className={`status-badge ${n.category === '상담가능시간' ? 'status-warning' : 'status-active'}`}>
           {n.category}
         </span>
       ),
@@ -110,7 +110,7 @@ function NoticesContent() {
       render: (n: NoticeListItem) => n.viewCount,
     },
     {
-      header: '이벤트 기간',
+      header: '상담가능시간 기간',
       render: (n: NoticeListItem) =>
         n.eventStartDate ? `${n.eventStartDate} ~ ${n.eventEndDate || ''}` : '-',
     },
@@ -123,7 +123,7 @@ function NoticesContent() {
   return (
     <>
       <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>공지사항 · 이벤트 관리</h1>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>스터디시간 · 상담가능시간 관리</h1>
         <LinkButton href={ROUTES.NOTICES_ADD} style={{ padding: '0.6rem 1.2rem' }}>
           새 글 작성
         </LinkButton>
@@ -167,7 +167,7 @@ function NoticesContent() {
 
       {deleteModal.isOpen && (
         <ConfirmModal
-          title="공지사항 삭제"
+          title="스터디시간 삭제"
           onCancel={deleteModal.close}
           onConfirm={handleDelete}
           confirmLabel="삭제"

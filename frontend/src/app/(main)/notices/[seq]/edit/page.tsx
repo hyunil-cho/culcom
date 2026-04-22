@@ -15,7 +15,7 @@ export default function NoticeEditPage() {
   const seq = Number(params.seq);
 
   const { form, setForm, handleChange, submitting, submit, showError, modal } = useFormState<NoticeFormData>(
-    { title: '', content: '', category: '공지사항', isPinned: false, createdBy: '', eventStartDate: '', eventEndDate: '' },
+    { title: '', content: '', category: '스터디시간', isPinned: false, createdBy: '', eventStartDate: '', eventEndDate: '' },
     { redirectPath: ROUTES.NOTICE_DETAIL(seq), invalidateKeys: ['notices'] },
   );
 
@@ -51,7 +51,7 @@ export default function NoticeEditPage() {
       isPinned: form.isPinned,
       eventStartDate: form.eventStartDate || undefined,
       eventEndDate: form.eventEndDate || undefined,
-    }), '공지사항이 수정되었습니다.');
+    }), '스터디시간이 수정되었습니다.');
   };
 
   if (loading) {

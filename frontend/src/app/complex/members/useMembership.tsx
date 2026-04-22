@@ -67,20 +67,19 @@ export function useMembership(options?: UseMembershipOptions) {
     existingMsLoaded.current = true;
     if (existingMemberships.length > 0) {
       const ms = existingMemberships.find(m => m.status === '활성') ?? existingMemberships[0];
-      // 완납 상태에서는 추가 납부 입력 필드(결제수단/카드상세)를 비워, 이전 납부 정보가
-      // 새 납부 입력처럼 노출되는 혼동을 방지한다.
-      const fullyPaid = ms.paymentStatus === '완납' || ms.outstanding === 0;
-      const firstCardDetail = (ms.payments ?? []).find(p => p.cardDetail)?.cardDetail;
+      // 결제 정보는 '가장 최초의 한 건'만 노출 — 이후 내역은 결제/미수금 탭에서 확인.
+      const firstPayment = [...(ms.payments ?? [])]
+        .sort((a, b) => (a.paidDate ?? '').localeCompare(b.paidDate ?? ''))[0] ?? null;
       setForm({
         membershipSeq: String(ms.membershipSeq),
         startDate: ms.startDate ?? '',
         expiryDate: ms.expiryDate ?? '',
         price: ms.price ?? '',
-        paymentDate: ms.paymentDate ?? '',
+        paymentDate: firstPayment?.paidDate ?? ms.paymentDate ?? '',
         depositAmount: '',
-        paymentMethod: fullyPaid ? '' : (ms.paymentMethod ?? ''),
+        paymentMethod: firstPayment?.method ?? ms.paymentMethod ?? '',
         status: ms.status ?? '활성',
-        cardDetail: fullyPaid ? emptyCardDetail : (firstCardDetail ?? emptyCardDetail),
+        cardDetail: firstPayment?.cardDetail ?? emptyCardDetail,
       });
       setMemberMembershipSeq(ms.seq);
     }
@@ -187,18 +186,18 @@ export function useMembership(options?: UseMembershipOptions) {
     setRenewalMode(false);
     if (existingMemberships && existingMemberships.length > 0) {
       const ms = existingMemberships[0];
-      const fullyPaid = ms.paymentStatus === '완납' || ms.outstanding === 0;
-      const firstCardDetail = (ms.payments ?? []).find(p => p.cardDetail)?.cardDetail;
+      const firstPayment = [...(ms.payments ?? [])]
+        .sort((a, b) => (a.paidDate ?? '').localeCompare(b.paidDate ?? ''))[0] ?? null;
       setForm({
         membershipSeq: String(ms.membershipSeq),
         startDate: ms.startDate ?? '',
         expiryDate: ms.expiryDate ?? '',
         price: ms.price ?? '',
-        paymentDate: ms.paymentDate ?? '',
+        paymentDate: firstPayment?.paidDate ?? ms.paymentDate ?? '',
         depositAmount: '',
-        paymentMethod: fullyPaid ? '' : (ms.paymentMethod ?? ''),
+        paymentMethod: firstPayment?.method ?? ms.paymentMethod ?? '',
         status: ms.status ?? '활성',
-        cardDetail: fullyPaid ? emptyCardDetail : (firstCardDetail ?? emptyCardDetail),
+        cardDetail: firstPayment?.cardDetail ?? emptyCardDetail,
       });
       setMemberMembershipSeq(ms.seq);
     }

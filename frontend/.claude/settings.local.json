@@ -16,7 +16,15 @@
       "Bash(mkdir -p \"C:/Users/lookh/IdeaProjects/culcom/frontend/src/app/\\(main\\)/customers/[seq]\")",
       "Bash(mkdir -p \"C:/Users/lookh/IdeaProjects/culcom/frontend/src/app/\\(main\\)/customers/[seq]/edit\")",
       "Bash(npx vitest *)",
-      "Bash(./gradlew test *)"
+      "Bash(./gradlew test *)",
+      "Bash(cat C:\\\\\\\\Users\\\\\\\\lookh\\\\\\\\IdeaProjects\\\\\\\\temp\\\\\\\\culcom\\\\\\\\frontend\\\\\\\\package.json)",
+      "Bash(./gradlew compileTestJava)",
+      "Bash(./gradlew compileJava -q)",
+      "Bash(\"C:/Users/lookh/IdeaProjects/temp/culcom/backend/gradlew.bat\" -p \"C:/Users/lookh/IdeaProjects/temp/culcom/backend\" compileJava -q)",
+      "Bash(\"../backend/gradlew.bat\" -p \"../backend\" compileJava)",
+      "Bash(\"../backend/gradlew.bat\" -p \"../backend\" compileJava --rerun-tasks)",
+      "Bash(\"../backend/gradlew.bat\" -p \"../backend\" test --tests \"com.culcom.service.CustomerServiceCreateReservationSmsTest\")",
+      "Bash(\"../backend/gradlew.bat\" -p \"../backend\" test --tests \"com.culcom.controller.customer.CustomerControllerTest\")"
     ]
   }
 }

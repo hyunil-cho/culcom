@@ -63,7 +63,7 @@ export default function AdminActionMessageModal({
   });
 
   return (
-    <ModalOverlay onClose={onCancel}>
+    <ModalOverlay>
       <div style={{ padding: '1.5rem 2rem', borderBottom: `2px solid ${borderColor}` }}>
         <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{title}</h3>
       </div>

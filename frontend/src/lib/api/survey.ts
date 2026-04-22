@@ -1,4 +1,5 @@
 import { api } from './client';
+import type { PageResponse } from './client';
 import { API } from '@/lib/routes';
 
 export interface SurveyTemplate {
@@ -39,7 +40,15 @@ export interface SurveySubmissionDetail {
 }
 
 export const surveyApi = {
-  listSubmissions: () => api.get<SurveySubmissionItem[]>(API.SURVEY_SUBMISSIONS),
+  listSubmissions: (params?: { page?: number; size?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.page != null) sp.set('page', String(params.page));
+    if (params?.size != null) sp.set('size', String(params.size));
+    const qs = sp.toString();
+    return api.get<PageResponse<SurveySubmissionItem>>(
+      `${API.SURVEY_SUBMISSIONS}${qs ? `?${qs}` : ''}`
+    );
+  },
   getSubmission: (seq: number) => api.get<SurveySubmissionDetail>(API.SURVEY_SUBMISSION(seq)),
   listTemplates: () => api.get<SurveyTemplate[]>(API.SURVEY_TEMPLATES),
   getTemplate: (seq: number) => api.get<SurveyTemplate>(API.SURVEY_TEMPLATE(seq)),

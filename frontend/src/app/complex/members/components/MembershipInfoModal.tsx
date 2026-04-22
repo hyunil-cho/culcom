@@ -20,7 +20,7 @@ export default function MembershipInfoModal({
   );
 
   return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="modal-overlay">
       <div className={`modal-content ${styles.content}`}>
         <div className={styles.header}>
           <h3 style={{ margin: 0, fontSize: '1.05rem' }}>{memberName} - 멤버십 정보 ({memberships.length}건)</h3>

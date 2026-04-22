@@ -5,6 +5,7 @@ import com.culcom.entity.branch.Branch;
 import com.culcom.entity.complex.member.ComplexMember;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.enums.MembershipStatus;
+import com.culcom.entity.product.Membership;
 import com.culcom.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,8 +44,10 @@ class PublicPostponementServiceOutstandingTest {
     void setUp() {
         branch = Branch.builder().seq(1L).branchName("테스트지점").alias("test").build();
         member = ComplexMember.builder().seq(10L).name("홍길동").phoneNumber("01012345678").branch(branch).build();
+        Membership product = Membership.builder()
+                .seq(100L).name("3개월권").duration(90).count(30).price(300_000).build();
         membership = ComplexMemberMembership.builder()
-                .seq(20L).member(member).status(MembershipStatus.활성)
+                .seq(20L).member(member).membership(product).status(MembershipStatus.활성)
                 .startDate(LocalDate.now()).expiryDate(LocalDate.now().plusMonths(3))
                 .price("300,000").totalCount(30).usedCount(5)
                 .postponeTotal(3).postponeUsed(0).build();
@@ -99,8 +102,10 @@ class PublicPostponementServiceOutstandingTest {
 
     @Test
     void 비활성_멤버십이면_연기_신청_실패() {
+        Membership product = Membership.builder()
+                .seq(100L).name("3개월권").duration(90).count(30).price(300_000).build();
         membership = ComplexMemberMembership.builder()
-                .seq(20L).member(member).status(MembershipStatus.만료)
+                .seq(20L).member(member).membership(product).status(MembershipStatus.만료)
                 .startDate(LocalDate.now().minusMonths(3)).expiryDate(LocalDate.now().minusDays(1))
                 .price("300,000").totalCount(30).usedCount(5)
                 .postponeTotal(3).postponeUsed(0).build();

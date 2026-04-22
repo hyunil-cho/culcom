@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { transferApi, type TransferRequestItem } from '@/lib/api/transfer';
-import type { Membership } from '@/lib/api';
+import type { Membership, PageResponse } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import type { MembershipFormData } from './MemberForm';
 
@@ -37,17 +37,20 @@ export function useTransfer({
   const autoDetectedRef = useRef(false);
 
   // 양도 모드 ON → 목록 조회 (서버측에서 지점 + 이름/전화 + active 필터 적용)
+  // name/phone으로 좁혀진 결과라 결과는 통상 0~수 건 → 첫 페이지만 사용하면 충분
   const filterName = (memberName ?? '').trim();
   const filterPhone = (memberPhone ?? '').trim();
-  const { data: queryTransfers = [] } = useApiQuery<TransferRequestItem[]>(
+  const { data: queryPage } = useApiQuery<PageResponse<TransferRequestItem>>(
     ['transfers', filterName, filterPhone],
     () => transferApi.list({
       name: filterName || undefined,
       phone: filterPhone || undefined,
       activeOnly: true,
+      size: 100,
     }),
     { enabled: mode },
   );
+  const queryTransfers = queryPage?.content ?? [];
   const transfers = manualTransfers ?? queryTransfers;
 
   const setMode = useCallback((on: boolean) => {
@@ -94,9 +97,9 @@ export function useTransfer({
         setModeState(true);
         // 선택 대상과 동일한 조건으로 목록 로드
         const listRes = await transferApi.list({
-          name: name.trim(), phone: phone.trim(), activeOnly: true,
+          name: name.trim(), phone: phone.trim(), activeOnly: true, size: 100,
         });
-        setManualTransfers(listRes.data ?? []);
+        setManualTransfers(listRes.data?.content ?? []);
         applyTransfer(res.data);
         autoDetectedRef.current = true;
       }

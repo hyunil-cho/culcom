@@ -24,7 +24,7 @@ public class NoticeService {
     @Transactional
     public NoticeDetailResponse get(Long seq) {
         Notice notice = noticeRepository.findById(seq)
-                .orElseThrow(() -> new EntityNotFoundException("공지사항"));
+                .orElseThrow(() -> new EntityNotFoundException("스터디시간"));
         noticeRepository.incrementViewCount(seq);
         notice.setViewCount(notice.getViewCount() + 1);
         return NoticeDetailResponse.from(notice);
@@ -49,7 +49,7 @@ public class NoticeService {
 
     public NoticeDetailResponse update(Long seq, NoticeUpdateRequest request) {
         Notice notice = noticeRepository.findById(seq)
-                .orElseThrow(() -> new EntityNotFoundException("공지사항"));
+                .orElseThrow(() -> new EntityNotFoundException("스터디시간"));
         notice.setTitle(request.getTitle());
         notice.setContent(request.getContent());
         notice.setCategory(NoticeCategory.valueOf(request.getCategory()));

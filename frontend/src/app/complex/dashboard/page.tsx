@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { complexDashboardApi, type AutoExpiredItem, type MembershipAlertItem, type MembershipAlertsResponse } from '@/lib/api';
+import { complexDashboardApi, type AutoExpiredItem, type MembershipAlertItem, type MembershipAlertsResponse, type ReturnScanStatusResponse } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import Spinner from '@/components/ui/Spinner';
@@ -17,6 +17,12 @@ export default function ComplexDashboardPage() {
   const { data = null, isLoading: loading } = useApiQuery<MembershipAlertsResponse>(
     ['complexDashboard', 'membershipAlerts', WINDOW_DAYS, COUNT_THRESHOLD],
     () => complexDashboardApi.membershipAlerts(WINDOW_DAYS, COUNT_THRESHOLD),
+    { refetchOnMount: 'always' },
+  );
+
+  const { data: scanStatus = null } = useApiQuery<ReturnScanStatusResponse>(
+    ['complexDashboard', 'returnScanStatus', 7],
+    () => complexDashboardApi.returnScanStatus(7),
     { refetchOnMount: 'always' },
   );
 
@@ -67,8 +73,87 @@ export default function ComplexDashboardPage() {
           />
 
           <AutoExpiredWidget items={data.autoExpiredToday ?? []} onClickMember={goToMember} />
+
+          <ReturnScanStatusWidget status={scanStatus} />
         </div>
       )}
+    </div>
+  );
+}
+
+/** 복귀 예정자 및 안내 SMS 발송 상태 — 최근 7일치 스캔 로그 요약 */
+function ReturnScanStatusWidget({ status }: { status: ReturnScanStatusResponse | null }) {
+  const accentColor = '#0ca678';
+  const days = status?.days ?? 7;
+  const logs = status?.logs ?? [];
+  const failCount = logs.reduce((acc, l) => acc + l.smsFailCount, 0);
+  const hasFailure = failCount > 0;
+
+  const badgeColor = hasFailure ? '#e03131' : accentColor;
+  const badgeText = hasFailure ? `실패 ${failCount}건` : '정상';
+
+  return (
+    <div style={{
+      background: '#fff', border: '1px solid #e9ecef', borderRadius: 8,
+      borderTop: `4px solid ${accentColor}`, overflow: 'hidden',
+      display: 'flex', flexDirection: 'column', maxHeight: 480,
+    }}>
+      <div style={{ padding: '14px 18px', borderBottom: '1px solid #f1f3f5' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h3 style={{ margin: 0, fontSize: '1rem', color: '#333' }}>
+            <span style={{ marginRight: 6 }}>📨</span>복귀 예정자 및 안내 SMS 발송
+          </h3>
+          <span style={{
+            fontSize: '0.78rem', fontWeight: 700, color: '#fff',
+            background: badgeColor, borderRadius: 12, padding: '2px 10px',
+          }}>{badgeText}</span>
+        </div>
+        <div style={{ fontSize: '0.75rem', color: '#888', marginTop: 4 }}>최근 {days}일 스캔 로그 (매일 11시)</div>
+      </div>
+
+      <div style={{ overflowY: 'auto', flex: 1 }}>
+        {logs.length === 0 ? (
+          <div style={{ padding: 30, textAlign: 'center', color: '#bbb', fontSize: '0.85rem' }}>
+            최근 스캔 이력이 없습니다.
+          </div>
+        ) : (
+          logs.map(l => {
+            const fail = l.smsFailCount > 0;
+            return (
+              <div key={l.scanDate} style={{
+                padding: '10px 18px', borderBottom: '1px solid #f8f9fa',
+                background: fail ? '#fff5f5' : undefined,
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: '0.85rem', color: '#333', fontWeight: 600 }}>
+                      {l.scanDate} <span style={{ color: '#999', fontWeight: 400 }}>→ 복귀 {l.returnDate}</span>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#666', marginTop: 2 }}>
+                      대상 {l.memberCount}명 · 성공 <span style={{ color: '#0ca678', fontWeight: 600 }}>{l.smsSuccessCount}</span>
+                      {' / '}실패 <span style={{ color: fail ? '#e03131' : '#999', fontWeight: 600 }}>{l.smsFailCount}</span>
+                    </div>
+                    {fail && l.errorMessage && (
+                      <div title={l.errorMessage} style={{
+                        fontSize: '0.72rem', color: '#c92a2a', marginTop: 4,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        사유: {l.errorMessage}
+                      </div>
+                    )}
+                  </div>
+                  {fail && (
+                    <span style={{
+                      flexShrink: 0, fontSize: '0.72rem', fontWeight: 700, color: '#fff',
+                      background: '#e03131', borderRadius: 10, padding: '2px 8px',
+                    }}>실패</span>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }

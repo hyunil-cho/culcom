@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -157,10 +158,18 @@ public class CustomerService {
         customer.setStatus(CustomerStatus.예약확정);
         customerRepository.save(customer);
 
+        String formattedInterviewDate = DateTimeUtils.format(interviewDate);
+        String smsWarning = smsService.sendEventSmsIfConfigured(
+                branchSeq, SmsEventType.예약확정, customer.getName(), customer.getPhoneNumber(),
+                Map.of(
+                        "{reservation.interview_date}", formattedInterviewDate,
+                        "{reservation.interview_datetime}", formattedInterviewDate));
+
         return CustomerReservationResponse.builder()
                 .reservationId(reservation.getSeq())
                 .customerSeq(customerSeq)
-                .interviewDate(DateTimeUtils.format(interviewDate))
+                .interviewDate(formattedInterviewDate)
+                .smsWarning(smsWarning)
                 .build();
     }
 

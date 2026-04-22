@@ -44,7 +44,7 @@ export default function AttendanceHistoryModal({ seq, name, type, onClose }: Att
   };
 
   return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="modal-overlay">
       <div className={`modal-content ${styles.content}`}>
         <div className={styles.header}>
           <div>

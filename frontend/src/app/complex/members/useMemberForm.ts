@@ -5,6 +5,7 @@ import { memberApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useResultModal } from '@/hooks/useResultModal';
+import { MEMBERSHIP_RELATED } from '@/lib/invalidate';
 import {
   emptyMemberForm, emptyClassAssign,
   validateMemberForm,
@@ -26,7 +27,11 @@ export function useMemberForm(seq?: number) {
   const staff = useStaffForm({ seq, isEdit, allClasses });
   const membership = useMembership({ memberSeq: seq, isEdit, memberName: form.name, memberPhone: form.phoneNumber });
   const [classAssign, setClassAssign] = useState<ClassAssignData>(emptyClassAssign);
-  const { run, modal } = useResultModal({ redirectPath: staff.staffMode ? ROUTES.COMPLEX_STAFFS : ROUTES.COMPLEX_MEMBERS, invalidateKeys: ['members', 'staffs'] });
+  const { run, modal } = useResultModal({
+    redirectPath: staff.staffMode ? ROUTES.COMPLEX_STAFFS : ROUTES.COMPLEX_MEMBERS,
+    // 멤버 저장은 멤버 목록·스태프뿐 아니라 멤버십·미수금·대시보드 위젯까지 갱신되어야 함.
+    invalidateKeys: ['staffs', ...MEMBERSHIP_RELATED],
+  });
 
   // 양도 불일치 모달 상태
   const [showTransferMismatch, setShowTransferMismatch] = useState(false);

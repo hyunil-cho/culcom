@@ -36,8 +36,14 @@ public class PostponementReturnScanService {
     @Scheduled(cron = "0 0 11 * * *", zone = "Asia/Seoul")
     @Transactional
     public void scheduledScan() {
-        int total = scanForDate(LocalDate.now());
-        log.info("[PostponementReturnScan] 복귀 예정자 스캔 완료 — 총 {}명", total);
+        LocalDate today = LocalDate.now();
+        try {
+            int total = scanForDate(today);
+            log.info("[PostponementReturnScan] 복귀 예정자 스캔 완료 — 총 {}명", total);
+        } catch (Exception ex) {
+            log.error("[PostponementReturnScan] 스케줄 스캔 실패 - scanDate={}, error={}",
+                    today, ex.getMessage(), ex);
+        }
     }
 
     /**
@@ -53,10 +59,22 @@ public class PostponementReturnScanService {
         int total;
         int success;
         int fail;
+        /** 가장 최근 실패 사유 — SMS 미발송 warn 메시지 또는 예외 메시지. */
+        String lastFailReason;
     }
 
     @Transactional
     public int scanForDate(LocalDate scanDate) {
+        try {
+            return doScanForDate(scanDate);
+        } catch (Exception ex) {
+            log.error("[PostponementReturnScan] scanForDate 실패 - scanDate={}, error={}",
+                    scanDate, ex.getMessage(), ex);
+            throw ex;
+        }
+    }
+
+    private int doScanForDate(LocalDate scanDate) {
         LocalDate returnDate = scanDate.plusDays(1);
         List<ComplexPostponementRequest> returners =
                 postponementRepository.findApprovedByReturnDate(returnDate);
@@ -70,6 +88,7 @@ public class PostponementReturnScanService {
             tally.total++;
 
             boolean sentOk = false;
+            String failReason = null;
             try {
                 Map<String, String> ctx = new HashMap<>();
                 ctx.put("{postponement.return_date}", returnDate.toString());
@@ -81,14 +100,21 @@ public class PostponementReturnScanService {
                         req.getMemberName(), req.getPhoneNumber(), ctx);
                 sentOk = (warn == null);
                 if (!sentOk) {
+                    failReason = warn;
                     log.debug("[PostponementReturnScan] 복귀 안내 SMS 미발송 - branch={}, 회원={}, 사유={}",
                             branchSeq, req.getMemberName(), warn);
                 }
             } catch (Exception ex) {
+                failReason = "발송 예외: " + ex.getMessage();
                 log.warn("[PostponementReturnScan] 복귀 안내 SMS 발송 예외 - branch={}, 회원={}, error={}",
                         branchSeq, req.getMemberName(), ex.getMessage());
             }
-            if (sentOk) tally.success++; else tally.fail++;
+            if (sentOk) {
+                tally.success++;
+            } else {
+                tally.fail++;
+                tally.lastFailReason = failReason;
+            }
         }
 
         // 지점별 scan log upsert
@@ -112,9 +138,15 @@ public class PostponementReturnScanService {
             entity.setMemberCount(tally.total);
             entity.setSmsSuccessCount(tally.success);
             entity.setSmsFailCount(tally.fail);
+            entity.setErrorMessage(tally.fail > 0 ? truncate(tally.lastFailReason, 500) : null);
             scanLogRepository.save(entity);
         }
         return total;
+    }
+
+    private static String truncate(String s, int max) {
+        if (s == null) return null;
+        return s.length() <= max ? s : s.substring(0, max);
     }
 
     /** @deprecated 내부 구현이 findApprovedByReturnDate 기반으로 바뀌었지만 기존 API 유지용. */

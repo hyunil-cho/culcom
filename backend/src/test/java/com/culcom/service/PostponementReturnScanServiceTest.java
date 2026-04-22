@@ -1,12 +1,19 @@
 package com.culcom.service;
 
 import com.culcom.entity.branch.Branch;
+import com.culcom.entity.complex.member.ComplexMember;
+import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.postponement.ComplexPostponementRequest;
 import com.culcom.entity.complex.postponement.ComplexPostponementReturnScanLog;
+import com.culcom.entity.enums.MembershipStatus;
 import com.culcom.entity.enums.RequestStatus;
+import com.culcom.entity.product.Membership;
 import com.culcom.repository.BranchRepository;
+import com.culcom.repository.ComplexMemberMembershipRepository;
+import com.culcom.repository.ComplexMemberRepository;
 import com.culcom.repository.ComplexPostponementRequestRepository;
 import com.culcom.repository.ComplexPostponementReturnScanLogRepository;
+import com.culcom.repository.MembershipRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,6 +43,9 @@ class PostponementReturnScanServiceTest {
 
     @Autowired PostponementReturnScanService postponementReturnScanService;
     @Autowired BranchRepository branchRepository;
+    @Autowired MembershipRepository membershipRepository;
+    @Autowired ComplexMemberRepository memberRepository;
+    @Autowired ComplexMemberMembershipRepository memberMembershipRepository;
     @Autowired ComplexPostponementRequestRepository postponementRepository;
     @Autowired ComplexPostponementReturnScanLogRepository scanLogRepository;
 
@@ -279,8 +289,20 @@ class PostponementReturnScanServiceTest {
 
     private ComplexPostponementRequest savePostponement(Branch branch, RequestStatus status,
                                                         LocalDate returnDate, String name, String phone) {
+        Membership product = membershipRepository.save(Membership.builder()
+                .name("10회권-scan-" + System.nanoTime()).duration(60).count(10).price(150000).build());
+        ComplexMember member = memberRepository.save(ComplexMember.builder()
+                .name(name).phoneNumber(phone).branch(branch).build());
+        ComplexMemberMembership mm = memberMembershipRepository.save(ComplexMemberMembership.builder()
+                .member(member).membership(product)
+                .startDate(LocalDate.now().minusDays(30))
+                .expiryDate(LocalDate.now().plusDays(60))
+                .totalCount(10).usedCount(0)
+                .status(MembershipStatus.활성).build());
         return postponementRepository.save(ComplexPostponementRequest.builder()
                 .branch(branch)
+                .member(member)
+                .memberMembership(mm)
                 .memberName(name)
                 .phoneNumber(phone)
                 .startDate(returnDate.minusDays(14))

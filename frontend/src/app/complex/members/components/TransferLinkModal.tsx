@@ -87,7 +87,7 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
   });
 
   return (
-    <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay">
       <div className={`modal-content ${s.content}`}>
         <div className={s.header}>
           <h3 className={s.title}>멤버십 양도 링크</h3>

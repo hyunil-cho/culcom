@@ -95,7 +95,7 @@ export default function MemberTimelineModal({ memberSeq, memberName, type = 'mem
   const filtered = activeGroup ? items.filter(i => activeGroup.types.includes(i.type)) : items;
 
   return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="modal-overlay">
       <div className={`modal-content ${s.content}`}>
         <div className={s.header}>
           <div>

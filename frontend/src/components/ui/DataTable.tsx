@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Button } from './Button';
 import Spinner from './Spinner';
 
@@ -48,6 +48,8 @@ interface DataTableProps<T> {
   loading?: boolean;
   /** 페이지네이션 (usePagination().paginationProps) */
   pagination?: PaginationProps;
+  /** 클라이언트 페이징 (외부 pagination 미지정 시 이 크기로 자동 슬라이스). 기본 20 */
+  pageSize?: number;
 }
 
 export default function DataTable<T>({
@@ -62,9 +64,25 @@ export default function DataTable<T>({
   emptyAction,
   loading,
   pagination,
+  pageSize = 20,
 }: DataTableProps<T>) {
   const showHeader = headerInfo || headerRight;
-  const showPagination = pagination && pagination.totalPages > 1;
+
+  const [clientPage, setClientPage] = useState(0);
+  const clientTotalPages = Math.ceil(data.length / pageSize);
+  useEffect(() => {
+    if (clientPage > 0 && clientPage >= clientTotalPages) setClientPage(Math.max(0, clientTotalPages - 1));
+  }, [clientPage, clientTotalPages]);
+
+  const effectivePagination: PaginationProps | undefined = pagination ?? (
+    clientTotalPages > 1
+      ? { page: clientPage, totalPages: clientTotalPages, onPageChange: setClientPage }
+      : undefined
+  );
+  const visibleData = pagination
+    ? data
+    : (clientTotalPages > 1 ? data.slice(clientPage * pageSize, (clientPage + 1) * pageSize) : data);
+  const showPagination = effectivePagination && effectivePagination.totalPages > 1;
 
   return (
     <>
@@ -101,10 +119,12 @@ export default function DataTable<T>({
                   </td>
                 </tr>
               ) : (
-                data.map((item, rowIdx) => (
+                visibleData.map((item, rowIdx) => {
+                  const absoluteIdx = pagination ? rowIdx : (clientTotalPages > 1 ? clientPage * pageSize + rowIdx : rowIdx);
+                  return (
                   <tr key={rowKey(item)} style={rowStyle?.(item)}>
                     {columns.map((col, i) => (
-                      <td key={i} style={{ textAlign: 'center', ...col.style }}>{col.render(item, rowIdx)}</td>
+                      <td key={i} style={{ textAlign: 'center', ...col.style }}>{col.render(item, absoluteIdx)}</td>
                     ))}
                     {onRowClick && (
                       <td style={{ textAlign: 'center' }}>
@@ -117,23 +137,24 @@ export default function DataTable<T>({
                       </td>
                     )}
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {showPagination && (
+      {showPagination && effectivePagination && (
         <div className="pagination">
-          <Button variant="secondary" disabled={pagination.page === 0} onClick={() => pagination.onPageChange(pagination.page - 1)}>이전</Button>
-          {pageNumbers(pagination.page, pagination.totalPages).map((p, i) =>
+          <Button variant="secondary" disabled={effectivePagination.page === 0} onClick={() => effectivePagination.onPageChange(effectivePagination.page - 1)}>이전</Button>
+          {pageNumbers(effectivePagination.page, effectivePagination.totalPages).map((p, i) =>
             p === -1 ? <span key={`dot-${i}`} className="pagination-dots">…</span> : (
-              <button key={p} className={`pagination-num${p === pagination.page ? ' pagination-num-active' : ''}`}
-                onClick={() => pagination.onPageChange(p)}>{p + 1}</button>
+              <button key={p} className={`pagination-num${p === effectivePagination.page ? ' pagination-num-active' : ''}`}
+                onClick={() => effectivePagination.onPageChange(p)}>{p + 1}</button>
             )
           )}
-          <Button variant="secondary" disabled={pagination.page >= pagination.totalPages - 1} onClick={() => pagination.onPageChange(pagination.page + 1)}>다음</Button>
+          <Button variant="secondary" disabled={effectivePagination.page >= effectivePagination.totalPages - 1} onClick={() => effectivePagination.onPageChange(effectivePagination.page + 1)}>다음</Button>
         </div>
       )}
     </>

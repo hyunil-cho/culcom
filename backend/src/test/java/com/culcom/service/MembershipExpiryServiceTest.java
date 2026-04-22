@@ -50,9 +50,10 @@ class MembershipExpiryServiceTest {
     @Test
     void 기간_만료된_활성_멤버십이_자동으로_만료_상태가_되고_히스토리에_기록되며_수업이_해제된다() {
         // given
+        long uniq = System.nanoTime();
         Branch branch = branchRepository.save(Branch.builder()
-                .branchName("테스트지점")
-                .alias("test-expire-cron-" + System.nanoTime())
+                .branchName("테스트지점-expire-cron-" + uniq)
+                .alias("test-expire-cron-" + uniq)
                 .build());
 
         ClassTimeSlot slot = classTimeSlotRepository.save(ClassTimeSlot.builder()
@@ -153,9 +154,10 @@ class MembershipExpiryServiceTest {
     @Test
     void scheduledExpire_엔트리포인트가_만료_처리를_위임한다() {
         // given — 어제 만료된 활성 멤버십 1건
+        long uniq = System.nanoTime();
         Branch branch = branchRepository.save(Branch.builder()
-                .branchName("테스트지점")
-                .alias("test-sched-" + System.nanoTime())
+                .branchName("테스트지점-sched-" + uniq)
+                .alias("test-sched-" + uniq)
                 .build());
         Membership product = membershipRepository.save(Membership.builder()
                 .name("10회권").duration(60).count(10).price(150000).build());

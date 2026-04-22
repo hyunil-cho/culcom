@@ -54,9 +54,10 @@ class MembershipExpiryDashboardIntegrationTest {
     @Test
     void 출석으로_횟수_소진되면_오늘_자동_만료에_노출된다() {
         // given — totalCount=3, usedCount=2 → 한 번 더 출석하면 소진
+        long uniq = System.nanoTime();
         Branch branch = branchRepository.save(Branch.builder()
-                .branchName("대시보드테스트지점")
-                .alias("dash-expire-" + System.nanoTime())
+                .branchName("대시보드테스트지점-" + uniq)
+                .alias("dash-expire-" + uniq)
                 .build());
 
         ClassTimeSlot slot = classTimeSlotRepository.save(ClassTimeSlot.builder()
@@ -132,9 +133,10 @@ class MembershipExpiryDashboardIntegrationTest {
     @Test
     void 기간만료_스케줄러_실행_전에는_이미만료_실행_후에는_오늘_자동만료에_노출된다() {
         // given — 만료일이 어제인 활성 멤버십
+        long uniq = System.nanoTime();
         Branch branch = branchRepository.save(Branch.builder()
-                .branchName("기간만료테스트")
-                .alias("dash-date-expire-" + System.nanoTime())
+                .branchName("기간만료테스트-" + uniq)
+                .alias("dash-date-expire-" + uniq)
                 .build());
 
         Membership product = membershipRepository.save(Membership.builder()

@@ -8,11 +8,12 @@ import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.service.TransferService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 관리자용 양도 요청 API.
@@ -30,16 +31,19 @@ public class TransferController {
      * status가 지정되면 그 상태만, 없으면 activeOnly로 생성/접수만 vs 전체 결정.
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<TransferRequestResponse>>> list(
+    public ResponseEntity<ApiResponse<Page<TransferRequestResponse>>> list(
             @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String phone,
             @RequestParam(defaultValue = "false") boolean activeOnly,
             @RequestParam(required = false) com.culcom.entity.enums.TransferStatus status,
-            @RequestParam(defaultValue = "false") boolean includeReferenced) {
+            @RequestParam(defaultValue = "false") boolean includeReferenced,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         Long branchSeq = principal.getSelectedBranchSeq();
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdDate"));
         return ResponseEntity.ok(ApiResponse.ok(
-                transferService.list(branchSeq, name, phone, activeOnly, status, includeReferenced)));
+                transferService.list(branchSeq, name, phone, activeOnly, status, includeReferenced, pageable)));
     }
 
     /** 이름+전화번호로 접수 상태의 양도 요청 조회 (회원등록 시 자동 감지용) */

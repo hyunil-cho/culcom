@@ -21,7 +21,7 @@ export default function NoticeDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const { run, modal } = useResultModal({ redirectPath: ROUTES.NOTICES, invalidateKeys: ['notices'] });
 
-  const handleDelete = async () => { setDeleting(false); await run(noticeApi.delete(seq), '공지사항이 삭제되었습니다.'); };
+  const handleDelete = async () => { setDeleting(false); await run(noticeApi.delete(seq), '스터디시간이 삭제되었습니다.'); };
 
   if (!notice) return <Spinner />;
 
@@ -34,7 +34,7 @@ export default function NoticeDetailPage() {
       <div className={`content-card ${s.detailCard}`}>
         <div className={s.metaSection}>
           <div className={s.badges}>
-            <span className={`status-badge ${notice.category === '이벤트' ? 'status-warning' : 'status-active'}`}>
+            <span className={`status-badge ${notice.category === '상담가능시간' ? 'status-warning' : 'status-active'}`}>
               {notice.category}
             </span>
             {notice.isPinned && <span className={`status-badge ${s.pinnedBadge}`}>📌 고정글</span>}
@@ -45,7 +45,7 @@ export default function NoticeDetailPage() {
             <span>{notice.createdBy}</span>
             <span>{notice.createdDate}</span>
             <span>조회 {notice.viewCount}</span>
-            {notice.eventStartDate && <span>이벤트 기간: {notice.eventStartDate} ~ {notice.eventEndDate}</span>}
+            {notice.eventStartDate && <span>상담가능시간 기간: {notice.eventStartDate} ~ {notice.eventEndDate}</span>}
           </div>
         </div>
 
@@ -61,7 +61,7 @@ export default function NoticeDetailPage() {
       </div>
 
       {deleting && (
-        <ConfirmModal title="공지사항 삭제" onCancel={() => setDeleting(false)} onConfirm={handleDelete}
+        <ConfirmModal title="스터디시간 삭제" onCancel={() => setDeleting(false)} onConfirm={handleDelete}
           confirmLabel="삭제" confirmColor="var(--danger)">
           <p>삭제된 게시글은 복구할 수 없습니다.</p>
         </ConfirmModal>

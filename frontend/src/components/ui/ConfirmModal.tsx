@@ -23,7 +23,7 @@ export default function ConfirmModal({
   children,
 }: ConfirmModalProps) {
   return (
-    <ModalOverlay onClose={onCancel}>
+    <ModalOverlay>
       <div className={styles.header} style={{ borderBottom: `2px solid ${headerColor ?? confirmColor}` }}>
         <h3 className={styles.title}>{title}</h3>
       </div>

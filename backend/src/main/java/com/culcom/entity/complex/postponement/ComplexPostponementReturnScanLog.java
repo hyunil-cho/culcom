@@ -41,4 +41,8 @@ public class ComplexPostponementReturnScanLog extends BaseTimeEntity {
     @Column(name = "sms_fail_count", nullable = false)
     @Builder.Default
     private int smsFailCount = 0;
+
+    /** 가장 최근 실패 사유 (없으면 null). SMS 템플릿 미설정·네트워크 오류 등 요약 메시지. */
+    @Column(name = "error_message", length = 500)
+    private String errorMessage;
 }

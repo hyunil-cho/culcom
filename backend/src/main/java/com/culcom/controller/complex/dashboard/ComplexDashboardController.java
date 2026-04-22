@@ -5,11 +5,15 @@ import com.culcom.dto.ApiResponse;
 import com.culcom.dto.complex.dashboard.AutoExpiredItem;
 import com.culcom.dto.complex.dashboard.MembershipAlertItem;
 import com.culcom.dto.complex.dashboard.MembershipAlertsResponse;
+import com.culcom.dto.complex.dashboard.ReturnScanLogItem;
+import com.culcom.dto.complex.dashboard.ReturnScanStatusResponse;
 import com.culcom.dto.complex.dashboard.TrendResponse;
 import com.culcom.entity.complex.member.ComplexMemberMembership;
 import com.culcom.entity.complex.member.track.MemberActivityLog;
+import com.culcom.entity.complex.postponement.ComplexPostponementReturnScanLog;
 import com.culcom.mapper.ComplexDashboardMapper;
 import com.culcom.repository.ComplexMemberMembershipRepository;
+import com.culcom.repository.ComplexPostponementReturnScanLogRepository;
 import com.culcom.repository.MemberActivityLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +36,7 @@ public class ComplexDashboardController {
 
     private final ComplexMemberMembershipRepository membershipRepository;
     private final MemberActivityLogRepository memberActivityLogRepository;
+    private final ComplexPostponementReturnScanLogRepository returnScanLogRepository;
     private final ComplexDashboardMapper complexDashboardMapper;
 
     /**
@@ -124,6 +129,41 @@ public class ComplexDashboardController {
                 .returnSmsSuccess(complexDashboardMapper.selectReturnSmsSuccess(branchSeq, normalized, count))
                 .returnSmsFail(complexDashboardMapper.selectReturnSmsFail(branchSeq, normalized, count))
                 .build()));
+    }
+
+    /**
+     * 복귀 예정자 스캔 상태 — 최근 N일치 스캔 로그.
+     * SMS 실패 카운트가 0보다 크거나, 특정 날짜에 로그가 없는 경우를 UI에서 실패/미실행으로 표시한다.
+     */
+    @GetMapping("/return-scan-status")
+    public ResponseEntity<ApiResponse<ReturnScanStatusResponse>> returnScanStatus(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @RequestParam(defaultValue = "7") int days) {
+
+        Long branchSeq = principal.getSelectedBranchSeq();
+        LocalDate since = LocalDate.now().minusDays(days);
+
+        List<ReturnScanLogItem> logs = returnScanLogRepository
+                .findByBranchSeqAndScanDateGreaterThanEqualOrderByScanDateDesc(branchSeq, since)
+                .stream()
+                .map(ComplexDashboardController::toReturnScanLogItem)
+                .toList();
+
+        return ResponseEntity.ok(ApiResponse.ok(ReturnScanStatusResponse.builder()
+                .days(days)
+                .logs(logs)
+                .build()));
+    }
+
+    private static ReturnScanLogItem toReturnScanLogItem(ComplexPostponementReturnScanLog l) {
+        return ReturnScanLogItem.builder()
+                .scanDate(l.getScanDate())
+                .returnDate(l.getReturnDate())
+                .memberCount(l.getMemberCount())
+                .smsSuccessCount(l.getSmsSuccessCount())
+                .smsFailCount(l.getSmsFailCount())
+                .errorMessage(l.getErrorMessage())
+                .build();
     }
 
     private static AutoExpiredItem toAutoExpiredItem(MemberActivityLog log) {

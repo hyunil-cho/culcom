@@ -117,7 +117,7 @@ export default function BoardMypagePage() {
 
       {/* 회원탈퇴 확인 모달 */}
       {showModal && (
-        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}>
+        <div className="modal-overlay">
           <div className="modal-box">
             <h3 className="modal-title">정말 탈퇴하시겠습니까?</h3>
             <p className="modal-desc">

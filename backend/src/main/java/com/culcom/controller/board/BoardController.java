@@ -24,7 +24,7 @@ public class BoardController {
     public ResponseEntity<ApiResponse<BoardNoticeResponse>> getNoticeDetail(@PathVariable Long seq) {
         BoardNoticeResponse result = noticeService.getBoardNoticeDetail(seq);
         if (result == null) {
-            return ResponseEntity.ok(ApiResponse.error("공지사항을 찾을 수 없습니다"));
+            return ResponseEntity.ok(ApiResponse.error("스터디시간을 찾을 수 없습니다"));
         }
         return ResponseEntity.ok(ApiResponse.ok(result));
     }

@@ -68,14 +68,16 @@ class SurveyControllerTest {
         row.setTemplateName("회원가입 설문");
         row.setCreatedDate("2026-04-10");
 
-        given(surveyQueryMapper.selectSubmissions(eq(1L))).willReturn(List.of(row));
+        given(surveyQueryMapper.selectSubmissions(eq(1L), org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt()))
+                .willReturn(List.of(row));
+        given(surveyQueryMapper.countSubmissions(eq(1L))).willReturn(1);
 
         mockMvc.perform(get("/api/complex/survey/submissions")
                         .with(auth()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data", hasSize(1)))
-                .andExpect(jsonPath("$.data[0].name").value("홍길동"));
+                .andExpect(jsonPath("$.data.content", hasSize(1)))
+                .andExpect(jsonPath("$.data.content[0].name").value("홍길동"));
     }
 
     @Test

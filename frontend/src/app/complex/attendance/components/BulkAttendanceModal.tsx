@@ -63,7 +63,7 @@ export function useBulkAttendance(onComplete: () => void) {
   const rendered = (
     <>
       {bulkModal && (
-        <ModalOverlay size="md" onClose={closeForm}>
+        <ModalOverlay size="md">
             <div className={`modal-header ${s.headerGreen}`}>
               <h3>{bulkModal.className} — 일괄 출석</h3>
             </div>
@@ -146,7 +146,7 @@ export function useBulkAttendance(onComplete: () => void) {
       )}
 
       {resultModal && (
-        <ModalOverlay size="md" onClose={() => setResultModal(null)}>
+        <ModalOverlay size="md">
             <div className={`modal-header ${s.headerGreen}`}>
               <h3>{resultModal.className} — 출석 처리 결과</h3>
             </div>

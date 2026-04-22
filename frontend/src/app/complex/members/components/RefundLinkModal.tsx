@@ -103,7 +103,7 @@ export default function RefundLinkModal({ memberSeq, memberName, memberPhone, on
   const smsMessage = `[환불 요청 안내]\n\n${memberName}님, 아래 링크에서 환불 요청을 진행해주세요.\n\n${refundUrl}`;
 
   return (
-    <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay">
       <div className={`modal-content ${s.content}`}>
         <div className={s.header}>
           <h3 className={s.title}>환불 요청 링크</h3>

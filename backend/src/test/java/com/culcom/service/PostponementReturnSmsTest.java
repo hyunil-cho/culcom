@@ -73,9 +73,10 @@ class PostponementReturnSmsTest {
     void setUp() {
         placeholderRepository.deleteAll();
         seedPlaceholders();
+        long uniq = System.nanoTime();
         branch = branchRepository.save(Branch.builder()
-                .branchName("강남지점")
-                .alias("return-sms-" + System.nanoTime())
+                .branchName("강남지점-" + uniq)
+                .alias("return-sms-" + uniq)
                 .build());
     }
 
@@ -113,7 +114,7 @@ class PostponementReturnSmsTest {
     private ComplexPostponementRequest saveApprovedPostponement(String name, String phone,
                                                                 LocalDate start, LocalDate end) {
         Membership product = membershipRepository.save(Membership.builder()
-                .name("3개월권").duration(90).count(30).price(300_000).build());
+                .name("3개월권-" + System.nanoTime()).duration(90).count(30).price(300_000).build());
         ComplexMember member = memberRepository.save(ComplexMember.builder()
                 .name(name).phoneNumber(phone).branch(branch).build());
         ComplexMemberMembership mm = memberMembershipRepository.save(ComplexMemberMembership.builder()

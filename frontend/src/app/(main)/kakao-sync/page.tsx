@@ -158,8 +158,7 @@ export default function KakaoSyncPage() {
       </div>
 
       {previewOpen && (
-        <div className={styles.previewOverlay}
-          onClick={(e) => { if (e.target === e.currentTarget) setPreviewOpen(false); }}>
+        <div className={styles.previewOverlay}>
           <div className={styles.previewModal}>
             <div className={styles.previewHeader}>
               <h3 className={styles.previewTitle}>QR 코드 실제 크기 미리보기 ({qrSize}px)</h3>

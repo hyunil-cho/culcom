@@ -6,6 +6,9 @@ import com.culcom.mapper.SurveyQueryMapper;
 import com.culcom.service.SurveyService;
 import com.culcom.config.security.CustomUserPrincipal;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,9 +27,16 @@ public class SurveyController {
     // ── 설문 제출 조회 ──
 
     @GetMapping("/submissions")
-    public ResponseEntity<ApiResponse<List<SurveySubmissionRow>>> listSubmissions(
-            @AuthenticationPrincipal CustomUserPrincipal principal) {
-        return ResponseEntity.ok(ApiResponse.ok(surveyQueryMapper.selectSubmissions(principal.getSelectedBranchSeq())));
+    public ResponseEntity<ApiResponse<Page<SurveySubmissionRow>>> listSubmissions(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Long branchSeq = principal.getSelectedBranchSeq();
+        int offset = page * size;
+        List<SurveySubmissionRow> list = surveyQueryMapper.selectSubmissions(branchSeq, offset, size);
+        int total = surveyQueryMapper.countSubmissions(branchSeq);
+        Page<SurveySubmissionRow> result = new PageImpl<>(list, PageRequest.of(page, size), total);
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
     @GetMapping("/submissions/{seq}")

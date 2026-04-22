@@ -78,7 +78,7 @@ class QueryMapperTest {
 
     @Test
     void noticeSearch_withCategoryAndKeyword() {
-        List<NoticeListResponse> result = noticeQueryMapper.search(1L, "공지사항", "테스트", 0, 10);
+        List<NoticeListResponse> result = noticeQueryMapper.search(1L, "스터디시간", "테스트", 0, 10);
         assertThat(result).isNotNull();
     }
 
@@ -98,7 +98,7 @@ class QueryMapperTest {
 
     @Test
     void noticeSearchPublic_withFilter() {
-        List<NoticeListResponse> result = noticeQueryMapper.searchPublic("공지사항", "키워드", 0, 12);
+        List<NoticeListResponse> result = noticeQueryMapper.searchPublic("스터디시간", "키워드", 0, 12);
         assertThat(result).isNotNull();
     }
 

@@ -110,7 +110,7 @@ class ComplexMemberCreateSurveyReferencedTest {
         surveySubmissionRepository.flush();
 
         // when
-        List<SurveySubmissionRow> rows = surveyQueryMapper.selectSubmissions(branch.getSeq());
+        List<SurveySubmissionRow> rows = surveyQueryMapper.selectSubmissions(branch.getSeq(), 0, 100);
 
         // then — referenced=false 인 것만 조회되어야 한다
         assertThat(rows).extracting(SurveySubmissionRow::getSeq)

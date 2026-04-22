@@ -112,8 +112,8 @@ function BoardListContent() {
       <section className="board-hero">
         <div className="board-container">
           <div className="hero-content">
-            <h1 className="hero-title">공지사항 · 이벤트</h1>
-            <p className="hero-subtitle">각 지점의 새로운 소식과 특별한 이벤트를 확인하세요</p>
+            <h1 className="hero-title">스터디시간 · 상담가능시간</h1>
+            <p className="hero-subtitle">각 지점의 새로운 소식과 특별한 상담가능시간을 확인하세요</p>
           </div>
           <div className="hero-visual">
             <div className="hero-shape hero-shape-1"></div>
@@ -139,17 +139,17 @@ function BoardListContent() {
               </a>
               <a
                 href="#"
-                className={`tab-item${filter === '공지사항' ? ' active' : ''}`}
-                onClick={(e) => { e.preventDefault(); handleFilterClick('공지사항'); }}
+                className={`tab-item${filter === '스터디시간' ? ' active' : ''}`}
+                onClick={(e) => { e.preventDefault(); handleFilterClick('스터디시간'); }}
               >
-                📌 공지사항
+                📌 스터디시간
               </a>
               <a
                 href="#"
-                className={`tab-item${filter === '이벤트' ? ' active' : ''}`}
-                onClick={(e) => { e.preventDefault(); handleFilterClick('이벤트'); }}
+                className={`tab-item${filter === '상담가능시간' ? ' active' : ''}`}
+                onClick={(e) => { e.preventDefault(); handleFilterClick('상담가능시간'); }}
               >
-                🎉 이벤트
+                🎉 상담가능시간
               </a>
             </div>
             <form className="toolbar-search" onSubmit={handleSearch}>

@@ -51,7 +51,7 @@ export default function MemberManageModal({ member, currentClassName, onClose, o
   });
 
   return (
-    <ModalOverlay size="md" onClose={onClose}>
+    <ModalOverlay size="md">
         <div className="modal-header">
           <h3>회원 관리 - {member.name}</h3>
         </div>

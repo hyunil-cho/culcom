@@ -121,7 +121,7 @@ export function useMessageModal() {
     const successes = sendResults.filter(r => r.success);
     const failures = sendResults.filter(r => !r.success);
     return (
-      <ModalOverlay size="md" onClose={close}>
+      <ModalOverlay size="md">
           <div className={`modal-header ${styles.headerDark}`}>
             <h3>메시지 발송 결과</h3>
           </div>
@@ -175,7 +175,7 @@ export function useMessageModal() {
 
   // ── 발송 폼 모달 ──
   const formModal = modal && !sendResults ? (
-    <ModalOverlay size={step === 2 ? 'xl' : 'md'} onClose={close}>
+    <ModalOverlay size={step === 2 ? 'xl' : 'md'}>
         <div className={`modal-header ${styles.headerDark}`}>
           <h3>{step === 1 ? '메시지 발송 대상 선택' : '메시지 작성'}</h3>
         </div>

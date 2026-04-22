@@ -37,8 +37,9 @@ class UniqueConstraintExceptionTest {
 
     @BeforeEach
     void setUp() {
+        String suffix = "test-uc-" + System.nanoTime();
         Branch branch = branchRepository.save(
-                Branch.builder().branchName("테스트지점").alias("test-uc-" + System.nanoTime()).build());
+                Branch.builder().branchName("테스트지점-" + suffix).alias(suffix).build());
         branchSeq = branch.getSeq();
     }
 

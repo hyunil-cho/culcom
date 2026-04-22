@@ -20,7 +20,7 @@ public class MembershipPaymentRequest {
 
     @NotBlank(message = "결제 수단은 필수입니다")
     private String method;
-    @NotBlank(message = "납부일은 필수입니다.")
+    @NotNull(message = "납부일은 필수입니다.")
     private LocalDateTime paidDate;
 
     private String note;

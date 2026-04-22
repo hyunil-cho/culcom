@@ -12,6 +12,7 @@ import AdminActionMessageModal from '../members/components/AdminActionMessageMod
 import { useResultModal } from '@/hooks/useResultModal';
 import { useModal } from '@/hooks/useModal';
 import { useListPageQuery } from '@/hooks/useListPageQuery';
+import { MEMBERSHIP_RELATED } from '@/lib/invalidate';
 import s from './page.module.css';
 
 const STATUS_BADGE: Record<string, string> = {
@@ -25,7 +26,8 @@ export default function PostponementsPage() {
   const list = useListPageQuery<PostponementRequest>('postponements', (q) => postponementApi.list(q));
   const [statusFilter, setStatusFilter] = useState('');
   const [keyword, setKeyword] = useState('');
-  const { run, modal } = useResultModal({ onConfirm: () => list.load(list.pagination.page) });
+  // 연기 승인 시 만료일이 연장되므로 멤버십 관련 캐시도 함께 무효화.
+  const { run, modal } = useResultModal({ invalidateKeys: ['postponements', ...MEMBERSHIP_RELATED] });
 
   const messageModal = useModal<{ req: PostponementRequest; newStatus: '승인' | '반려' }>();
   const infoAlert = useModal<string>();

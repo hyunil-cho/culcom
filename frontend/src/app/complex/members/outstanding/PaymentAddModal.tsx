@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { memberApi, type PaymentKind, type PaymentMethod } from '@/lib/api';
+import { invalidateAll, MEMBERSHIP_RELATED } from '@/lib/invalidate';
 import { usePaymentOptions } from '@/lib/usePaymentOptions';
 import ModalOverlay from '@/components/ui/ModalOverlay';
 import CardPaymentFields, {
@@ -60,7 +61,7 @@ export default function PaymentAddModal({
     }
 
     try {
-      await memberApi.addPayment(memberSeq, mmSeq, {
+      const res = await memberApi.addPayment(memberSeq, mmSeq, {
         amount: n,
         kind,
         method,
@@ -68,6 +69,12 @@ export default function PaymentAddModal({
         note: note || undefined,
         cardDetail: isCard ? cardDetail : undefined,
       });
+      if (!res.success) {
+        setError(res.message ?? '저장 실패');
+        return;
+      }
+      // 호출자가 일부 키만 무효화하는 경우를 대비해 모달 쪽에서도 공통 키 일괄 무효화.
+      invalidateAll(MEMBERSHIP_RELATED);
       onSaved();
     } catch (e: any) {
       setError(e?.message ?? '저장 실패');
@@ -79,7 +86,7 @@ export default function PaymentAddModal({
   };
 
   return (
-    <ModalOverlay onClose={onClose} size="md">
+    <ModalOverlay size="md">
       <div style={{ borderBottom: '2px solid #4a90e2', padding: '14px 18px' }}>
         <h3 style={{ margin: 0, fontSize: 16 }}>납부 기록 추가</h3>
         <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>

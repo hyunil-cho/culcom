@@ -4,6 +4,8 @@ import type { PublicMemberInfo } from './members';
 
 export interface RefundRequest {
   seq: number;
+  memberSeq: number | null;
+  memberMembershipSeq: number | null;
   memberName: string;
   phoneNumber: string;
   membershipName: string;

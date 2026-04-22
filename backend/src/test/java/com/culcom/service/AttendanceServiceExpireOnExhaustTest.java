@@ -53,9 +53,10 @@ class AttendanceServiceExpireOnExhaustTest {
     @Test
     void 마지막_출석으로_횟수_소진되면_상태가_만료로_전환된다() {
         // given — totalCount=3, usedCount=2 → 한 번만 더 사용하면 소진
+        long uniq = System.nanoTime();
         Branch branch = branchRepository.save(Branch.builder()
-                .branchName("테스트지점")
-                .alias("test-expire-" + System.nanoTime())
+                .branchName("테스트지점-expire-" + uniq)
+                .alias("test-expire-" + uniq)
                 .build());
 
         ClassTimeSlot slot = classTimeSlotRepository.save(ClassTimeSlot.builder()
@@ -137,9 +138,10 @@ class AttendanceServiceExpireOnExhaustTest {
     @Test
     void 횟수가_남아있을_때는_상태가_활성으로_유지된다() {
         // given — totalCount=5, usedCount=2 → 출석 후에도 여유 있음
+        long uniq = System.nanoTime();
         Branch branch = branchRepository.save(Branch.builder()
-                .branchName("테스트지점")
-                .alias("test-expire-keep-" + System.nanoTime())
+                .branchName("테스트지점-expire-keep-" + uniq)
+                .alias("test-expire-keep-" + uniq)
                 .build());
 
         ClassTimeSlot slot = classTimeSlotRepository.save(ClassTimeSlot.builder()

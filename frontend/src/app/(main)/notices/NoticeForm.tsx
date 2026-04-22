@@ -29,8 +29,6 @@ interface NoticeFormProps {
 export default function NoticeForm({
   form, onChange, onSubmit, heading, submitLabel, submittingLabel, submitting, cancelHref, disableCreatedBy = false,
 }: NoticeFormProps) {
-  const showEventDate = form.category === '이벤트';
-
   return (
     <div className={`content-card ${st.formCard}`}>
       <h2 className={st.heading}>{heading}</h2>
@@ -40,8 +38,8 @@ export default function NoticeForm({
           <div>
             <label className="form-label">카테고리 <span className={st.requiredMark}>*</span></label>
             <Select name="category" value={form.category} onChange={onChange}>
-              <option value="공지사항">공지사항</option>
-              <option value="이벤트">이벤트</option>
+              <option value="스터디시간">스터디시간</option>
+              <option value="상담가능시간">상담가능시간</option>
             </Select>
           </div>
           <div>
@@ -63,19 +61,6 @@ export default function NoticeForm({
           <label className="form-label">내용 <span className={st.requiredMark}>*</span></label>
           <Textarea name="content" value={form.content} onChange={onChange} rows={12} placeholder="내용을 입력하세요" required style={{ resize: 'vertical' }} />
         </div>
-
-        {showEventDate && (
-          <div className={st.twoCol}>
-            <div>
-              <label className="form-label">이벤트 시작일</label>
-              <Input type="date" name="eventStartDate" value={form.eventStartDate} onChange={onChange} />
-            </div>
-            <div>
-              <label className="form-label">이벤트 종료일</label>
-              <Input type="date" name="eventEndDate" value={form.eventEndDate} onChange={onChange} />
-            </div>
-          </div>
-        )}
 
         <div className={st.fieldGroupLg}>
           <Checkbox label="상단 고정" name="isPinned" checked={form.isPinned} onChange={onChange} />

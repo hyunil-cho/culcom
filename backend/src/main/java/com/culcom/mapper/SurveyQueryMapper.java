@@ -9,5 +9,9 @@ import java.util.List;
 @Mapper
 public interface SurveyQueryMapper {
 
-    List<SurveySubmissionRow> selectSubmissions(@Param("branchSeq") Long branchSeq);
+    List<SurveySubmissionRow> selectSubmissions(@Param("branchSeq") Long branchSeq,
+                                                 @Param("offset") int offset,
+                                                 @Param("size") int size);
+
+    int countSubmissions(@Param("branchSeq") Long branchSeq);
 }

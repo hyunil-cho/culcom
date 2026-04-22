@@ -5,7 +5,7 @@ import { useDragReorder } from '@/hooks/useDragReorder';
 import { useRouter } from 'next/navigation';
 import { attendanceViewApi, type AttendanceViewSlot, type AttendanceViewMember } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
-import { queryClient } from '@/lib/queryClient';
+import { invalidateAll, ATTENDANCE_RELATED } from '@/lib/invalidate';
 import { useSessionStore } from '@/lib/store';
 import { ROUTES } from '@/lib/routes';
 import { useHighlightSearch } from '@/lib/useHighlightSearch';
@@ -32,16 +32,8 @@ export default function AttendancePage() {
     { refetchOnMount: 'always' },
   );
 
-  // 일괄 출석으로 상태가 바뀌면 히스토리 모달이 보여주는 데이터도 즉시 stale 해져야 한다.
-  // AttendanceHistoryModal 이 사용하는 attendanceHistory / attendanceHistorySummary 키를 함께 무효화한다.
-  // 또한 '최근 출석기록' 셀이 포함된 상세 뷰(attendanceViewDetail)와 회원 목록(members) 쿼리도 무효화한다.
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ['attendanceView'] });
-    queryClient.invalidateQueries({ queryKey: ['attendanceViewDetail'] });
-    queryClient.invalidateQueries({ queryKey: ['attendanceHistory'] });
-    queryClient.invalidateQueries({ queryKey: ['attendanceHistorySummary'] });
-    queryClient.invalidateQueries({ queryKey: ['members'] });
-  };
+  // 출석 변경은 잔여 횟수(멤버십)·대시보드 위젯에도 영향을 주므로 연관 키까지 묶어서 무효화.
+  const invalidate = () => invalidateAll(ATTENDANCE_RELATED);
 
   // 드래그 정렬 실패 시 서버 상태로 UI를 되돌리기 위한 공통 처리.
   const handleReorderError = (kind: '분반' | '멤버', message?: string) => {

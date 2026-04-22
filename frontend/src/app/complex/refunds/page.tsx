@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { refundApi, refundSurveyApi, type RefundRequest, type RefundSurveyResponse } from '@/lib/api';
+import { memberApi, refundApi, refundSurveyApi, type MembershipPaymentResponse, type RefundRequest, type RefundSurveyResponse } from '@/lib/api';
+import { usePaymentOptions } from '@/lib/usePaymentOptions';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
 import DataTable, { type Column } from '@/components/ui/DataTable';
@@ -13,6 +15,7 @@ import AdminActionMessageModal from '../members/components/AdminActionMessageMod
 import { useResultModal } from '@/hooks/useResultModal';
 import { useModal } from '@/hooks/useModal';
 import { useListPageQuery } from '@/hooks/useListPageQuery';
+import { MEMBERSHIP_RELATED } from '@/lib/invalidate';
 import SurveyDetailView from './SurveyDetailView';
 import s from './page.module.css';
 
@@ -25,11 +28,13 @@ export default function RefundsPage() {
   const list = useListPageQuery<RefundRequest>('refunds', (q) => refundApi.list(q));
   const [statusFilter, setStatusFilter] = useState('');
   const [keyword, setKeyword] = useState('');
-  const { run, modal } = useResultModal({ onConfirm: () => list.load(list.pagination.page) });
+  // 환불 승인 시 멤버십 상태·미수금·대시보드 지표에 영향.
+  const { run, modal } = useResultModal({ invalidateKeys: ['refunds', ...MEMBERSHIP_RELATED] });
 
   const messageModal = useModal<{ req: RefundRequest; newStatus: '승인' | '반려' }>();
   const infoAlert = useModal<string>();
   const surveyModal = useModal<RefundSurveyResponse>();
+  const paymentModal = useModal<RefundRequest>();
   const [surveyLoading, setSurveyLoading] = useState(false);
 
   const openSurvey = async (req: RefundRequest) => {
@@ -99,6 +104,21 @@ export default function RefundsPage() {
       r.price
         ? <div className={s.priceText}>{Number(r.price).toLocaleString()}원</div>
         : <span className={s.emptyText}>-</span>
+    )},
+    { header: '결제방법', render: (r) => (
+      r.memberSeq && r.memberMembershipSeq ? (
+        <button
+          type="button"
+          onClick={() => paymentModal.open(r)}
+          style={{
+            padding: '4px 10px', border: '1px solid #4a90e2', borderRadius: 4,
+            background: '#fff', color: '#4a90e2', fontSize: '0.78rem',
+            cursor: 'pointer', fontWeight: 600,
+          }}
+        >
+          결제 정보
+        </button>
+      ) : <span className={s.emptyText}>-</span>
     )},
     { header: '사유', render: (r) => <span className={s.reasonText}>{r.reason}</span> },
     { header: '상태', render: (r) => <span className={`badge ${STATUS_BADGE[r.status] ?? ''}`}>{r.status}</span> },
@@ -201,8 +221,14 @@ export default function RefundsPage() {
       )}
 
       {surveyModal.isOpen && surveyModal.data && (
-        <ModalOverlay onClose={surveyModal.close}>
+        <ModalOverlay>
           <SurveyDetailView survey={surveyModal.data} onClose={surveyModal.close} />
+        </ModalOverlay>
+      )}
+
+      {paymentModal.isOpen && paymentModal.data && (
+        <ModalOverlay size="lg">
+          <PaymentInfoView refund={paymentModal.data} onClose={paymentModal.close} />
         </ModalOverlay>
       )}
 
@@ -210,3 +236,114 @@ export default function RefundsPage() {
     </>
   );
 }
+
+function PaymentInfoView({ refund, onClose }: { refund: RefundRequest; onClose: () => void }) {
+  const { methods, kinds } = usePaymentOptions();
+  const methodLabel = (v: string | null) => methods.find(m => m.value === v)?.label ?? v ?? '-';
+  const kindLabel = (v: string) => kinds.find(k => k.value === v)?.label ?? v;
+
+  const { data: payments = [], isLoading } = useApiQuery<MembershipPaymentResponse[]>(
+    ['refundMembershipPayments', refund.memberSeq, refund.memberMembershipSeq],
+    () => memberApi.listPayments(refund.memberSeq!, refund.memberMembershipSeq!),
+    { enabled: !!refund.memberSeq && !!refund.memberMembershipSeq },
+  );
+
+  const totalPaid = payments.reduce((sum, p) => sum + (p.amount ?? 0), 0);
+
+  return (
+    <>
+      <div style={{
+        padding: '1.25rem 1.5rem', borderBottom: '1px solid #e6ecf2',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      }}>
+        <div>
+          <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#212529' }}>결제 정보</div>
+          <div style={{ fontSize: '0.82rem', color: '#868e96', marginTop: 2 }}>
+            {refund.memberName} · {refund.membershipName}
+          </div>
+        </div>
+        <button type="button" onClick={onClose}
+          style={{
+            background: 'transparent', border: 'none', fontSize: '1.4rem',
+            color: '#868e96', cursor: 'pointer', lineHeight: 1, padding: 4,
+          }} aria-label="닫기">×</button>
+      </div>
+
+      <div style={{ padding: '1.25rem 1.5rem', maxHeight: '70vh', overflowY: 'auto' }}>
+        {isLoading ? (
+          <div style={{ textAlign: 'center', color: '#868e96', padding: '2rem 0' }}>불러오는 중...</div>
+        ) : payments.length === 0 ? (
+          <div style={{ textAlign: 'center', color: '#868e96', padding: '2rem 0' }}>결제 내역이 없습니다.</div>
+        ) : (
+          <>
+            <div style={{
+              background: '#f8f9fa', borderRadius: 8, padding: 12, marginBottom: 14,
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}>
+              <span style={{ fontSize: '0.85rem', color: '#495057', fontWeight: 600 }}>총 납부 합계</span>
+              <span style={{ fontSize: '1.05rem', color: '#212529', fontWeight: 800 }}>
+                {totalPaid.toLocaleString()}원
+              </span>
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: '#fafbfc', color: '#888', fontSize: 12 }}>
+                  <th style={paymentTh}>일시</th>
+                  <th style={paymentTh}>구분</th>
+                  <th style={{ ...paymentTh, textAlign: 'right' }}>금액</th>
+                  <th style={paymentTh}>결제수단</th>
+                  <th style={paymentTh}>메모</th>
+                </tr>
+              </thead>
+              <tbody>
+                {payments.map(p => {
+                  const isRefund = p.kind === 'REFUND' || p.amount < 0;
+                  return (
+                    <tr key={p.seq} style={{ borderTop: '1px solid #f1f3f5' }}>
+                      <td style={paymentTd}>
+                        <span style={{ fontFamily: 'monospace', color: '#666' }}>
+                          {p.paidDate.replace('T', ' ').slice(0, 16)}
+                        </span>
+                      </td>
+                      <td style={paymentTd}>
+                        <span style={{
+                          padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600,
+                          background: isRefund ? '#fff5f5' : '#eff6ff',
+                          color: isRefund ? '#e03131' : '#2563eb',
+                        }}>{kindLabel(p.kind)}</span>
+                      </td>
+                      <td style={{ ...paymentTd, textAlign: 'right', fontWeight: 700, color: isRefund ? '#e03131' : '#2e7d32' }}>
+                        {p.amount.toLocaleString()}원
+                      </td>
+                      <td style={paymentTd}>
+                        {methodLabel(p.method)}
+                        {p.cardDetail && (
+                          <div style={{ marginTop: 4, fontSize: 11, color: '#666', lineHeight: 1.5 }}>
+                            <div>{p.cardDetail.cardCompany} · {p.cardDetail.cardNumber}****</div>
+                            <div>승인 {p.cardDetail.cardApprovalDate} / {p.cardDetail.cardApprovalNumber}</div>
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ ...paymentTd, color: '#666' }}>{p.note || '-'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </>
+        )}
+      </div>
+
+      <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid #e6ecf2' }}>
+        <button type="button" onClick={onClose}
+          style={{
+            width: '100%', padding: 10, background: '#495057', color: 'white',
+            border: 'none', borderRadius: 6, fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer',
+          }}>닫기</button>
+      </div>
+    </>
+  );
+}
+
+const paymentTh: React.CSSProperties = { padding: '8px 12px', textAlign: 'left', fontWeight: 600 };
+const paymentTd: React.CSSProperties = { padding: '10px 12px' };

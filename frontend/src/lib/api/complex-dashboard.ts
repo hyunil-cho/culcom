@@ -52,9 +52,25 @@ export interface TrendResponse {
   returnSmsFail: TrendItem[];
 }
 
+export interface ReturnScanLogItem {
+  scanDate: string;
+  returnDate: string;
+  memberCount: number;
+  smsSuccessCount: number;
+  smsFailCount: number;
+  errorMessage: string | null;
+}
+
+export interface ReturnScanStatusResponse {
+  days: number;
+  logs: ReturnScanLogItem[];
+}
+
 export const complexDashboardApi = {
   membershipAlerts: (windowDays: number, countThreshold: number) =>
     api.get<MembershipAlertsResponse>(`/complex/dashboard/membership-alerts?windowDays=${windowDays}&countThreshold=${countThreshold}`),
   trends: (period: TrendPeriod = 'month', count = 6) =>
     api.get<TrendResponse>(`/complex/dashboard/trends?period=${period}&count=${count}`),
+  returnScanStatus: (days = 7) =>
+    api.get<ReturnScanStatusResponse>(`/complex/dashboard/return-scan-status?days=${days}`),
 };

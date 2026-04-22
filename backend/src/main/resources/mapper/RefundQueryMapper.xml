@@ -18,6 +18,8 @@
     <select id="search" resultType="com.culcom.dto.complex.refund.RefundResponse">
         SELECT
             r.seq,
+            r.member_seq AS memberSeq,
+            r.member_membership_seq AS memberMembershipSeq,
             r.member_name AS memberName,
             r.phone_number AS phoneNumber,
             r.membership_name AS membershipName,

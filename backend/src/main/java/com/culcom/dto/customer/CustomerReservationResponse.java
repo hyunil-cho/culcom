@@ -11,4 +11,5 @@ public class CustomerReservationResponse {
     private Long reservationId;
     private Long customerSeq;
     private String interviewDate;
+    private String smsWarning;
 }

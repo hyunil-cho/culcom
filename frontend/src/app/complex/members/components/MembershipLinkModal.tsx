@@ -36,7 +36,7 @@ export default function MembershipLinkModal({ memberSeq, memberName, memberPhone
   const smsMessage = `[멤버십 조회 안내]\n\n${memberName}님, 아래 링크에서 멤버십 현황을 확인하실 수 있습니다.\n\n${membershipUrl}`;
 
   return (
-    <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay">
       <div className={`modal-content ${s.content}`}>
         <div className={s.header}>
           <h3 className={s.title}>멤버십 조회 링크</h3>

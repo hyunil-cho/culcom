@@ -16,7 +16,14 @@
         WHERE ss.branch_seq = #{branchSeq}
           AND ss.referenced = FALSE
         ORDER BY ss.created_date DESC
+        LIMIT #{size} OFFSET #{offset}
     </select>
 
+    <select id="countSubmissions" resultType="int">
+        SELECT COUNT(*)
+        FROM survey_submissions ss
+        WHERE ss.branch_seq = #{branchSeq}
+          AND ss.referenced = FALSE
+    </select>
 
 </mapper>

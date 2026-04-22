@@ -49,8 +49,9 @@ function MemberAddPageInner() {
   const openImport = async () => {
     setShowImport(true);
     setImportLoading(true);
-    const res = await surveyApi.listSubmissions();
-    if (res.success) setSubmissions(res.data);
+    // 모달에서는 미참조 설문 전체를 한 번에 노출 — 참조 완료된 것은 서버에서 이미 제외됨.
+    const res = await surveyApi.listSubmissions({ size: 500 });
+    if (res.success) setSubmissions(res.data.content);
     setImportLoading(false);
   };
 
@@ -92,10 +93,10 @@ function MemberAddPageInner() {
     const targetPhone = phoneParam ? normalize(phoneParam) : null;
 
     (async () => {
-      const res = await surveyApi.listSubmissions();
+      const res = await surveyApi.listSubmissions({ size: 500 });
       let match: SurveySubmissionItem | undefined;
       if (res.success) {
-        const candidates = res.data.filter(s =>
+        const candidates = res.data.content.filter(s =>
           s.name === nameParam &&
           (targetPhone == null || normalize(s.phoneNumber) === targetPhone),
         );
@@ -141,7 +142,7 @@ function MemberAddPageInner() {
       )}
 
       {showImport && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowImport(false)}>
+        <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: 650, maxHeight: '80vh' }}>
             <div className="modal-header">
               <h3>설문지 정보 불러오기</h3>

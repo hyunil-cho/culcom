@@ -1,4 +1,5 @@
 import { api } from './client';
+import type { PageResponse } from './client';
 import type { ConsentItem } from './consent';
 
 // ── 타입 ──
@@ -67,6 +68,10 @@ export interface TransferListParams {
   status?: TransferStatus;
   /** 참조 완료된(=활용된) 요청까지 포함할지 여부. 기본 false → 참조 완료 건은 숨김 */
   includeReferenced?: boolean;
+  /** 0-index 페이지 번호 */
+  page?: number;
+  /** 페이지 크기 (기본 20) */
+  size?: number;
 }
 
 export const transferApi = {
@@ -77,8 +82,10 @@ export const transferApi = {
     if (params?.activeOnly) sp.set('activeOnly', 'true');
     if (params?.status) sp.set('status', params.status);
     if (params?.includeReferenced) sp.set('includeReferenced', 'true');
+    if (params?.page != null) sp.set('page', String(params.page));
+    if (params?.size != null) sp.set('size', String(params.size));
     const qs = sp.toString();
-    return api.get<TransferRequestItem[]>(`/transfer-requests${qs ? `?${qs}` : ''}`);
+    return api.get<PageResponse<TransferRequestItem>>(`/transfer-requests${qs ? `?${qs}` : ''}`);
   },
   /** 이름+전화번호로 접수 대기 양도 요청 조회 */
   findPending: (name: string, phone: string) =>

@@ -17,6 +17,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class RefundResponse {
     private Long seq;
+    private Long memberSeq;
+    private Long memberMembershipSeq;
     private String memberName;
     private String phoneNumber;
     private String membershipName;
@@ -40,6 +42,8 @@ public class RefundResponse {
     public static RefundResponse from(ComplexRefundRequest entity) {
         return RefundResponse.builder()
                 .seq(entity.getSeq())
+                .memberSeq(entity.getMember() != null ? entity.getMember().getSeq() : null)
+                .memberMembershipSeq(entity.getMemberMembership() != null ? entity.getMemberMembership().getSeq() : null)
                 .memberName(entity.getMemberName())
                 .phoneNumber(entity.getPhoneNumber())
                 .membershipName(entity.getMembershipName())

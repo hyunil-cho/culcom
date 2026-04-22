@@ -31,7 +31,7 @@ public class Notice extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private NoticeCategory category = NoticeCategory.공지사항;
+    private NoticeCategory category = NoticeCategory.스터디시간;
 
     @Column(name = "is_pinned", nullable = false)
     @Builder.Default

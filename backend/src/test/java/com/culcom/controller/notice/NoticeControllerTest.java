@@ -115,7 +115,7 @@ class NoticeControllerTest {
                                     "content", "공지내용",
                                     "category", "일반"))))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.message").value("공지사항이 등록되었습니다."));
+                    .andExpect(jsonPath("$.message").value("스터디시간이 등록되었습니다."));
         }
 
         @Test
@@ -164,7 +164,7 @@ class NoticeControllerTest {
                             .content(objectMapper.writeValueAsString(Map.of(
                                     "title", "수정제목", "content", "수정내용"))))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.message").value("공지사항이 수정되었습니다."));
+                    .andExpect(jsonPath("$.message").value("스터디시간이 수정되었습니다."));
         }
     }
 
@@ -179,7 +179,7 @@ class NoticeControllerTest {
 
             mockMvc.perform(delete("/api/notices/{seq}", 1L).with(auth()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.message").value("공지사항이 삭제되었습니다."));
+                    .andExpect(jsonPath("$.message").value("스터디시간이 삭제되었습니다."));
         }
     }
 

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { customerApi, externalApi, smsEventApi, messageTemplateApi, type Customer, type PageResponse } from '@/lib/api';
+import { customerApi, type Customer, type PageResponse } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { queryClient } from '@/lib/queryClient';
 import { ROUTES } from '@/lib/routes';
@@ -78,7 +78,7 @@ function CustomersContent() {
   // 인터뷰 확정 상태
   const [interviewInputs, setInterviewInputs] = useState<Record<number, string>>({});
   const interviewConfirmModal = useModal<InterviewModal>();
-  const [result, setResult] = useState<{ success: boolean; message: string; redirectPath?: string } | null>(null);
+  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
   const { error: formError, setError: setFormError, clear: clearFormError } = useFormError();
 
   // SMS 모달
@@ -128,67 +128,22 @@ function CustomersContent() {
     interviewConfirmModal.open({ customerSeq: seq, customerName: customer.name, caller });
   };
 
-  // 예약 확정 SMS 자동 발송
-  const sendReservationSms = async (customer: Customer | undefined, interviewDate: string) => {
-    try {
-      const configRes = await smsEventApi.get('예약확정');
-      if (!configRes.success || !configRes.data) {
-        setResult({ success: false, message: '예약은 완료되었으나, 예약 SMS 설정이 되어 있지 않습니다. 설정 페이지에서 구성해주세요.', redirectPath: ROUTES.SETTINGS_SMS_CONFIG });
-        return;
-      }
-      if (!configRes.data.autoSend) {
-        setResult({ success: false, message: '예약은 완료되었으나, 예약 후 자동 문자 발송이 비활성화 상태입니다. 설정 페이지에서 활성화해주세요.', redirectPath: ROUTES.SETTINGS_SMS_CONFIG });
-        return;
-      }
-
-      const { templateSeq, senderNumber } = configRes.data;
-      if (!senderNumber) {
-        setResult({ success: false, message: '예약은 완료되었으나, 발신번호가 설정되지 않았습니다. 설정 페이지에서 발신번호를 지정해주세요.', redirectPath: ROUTES.SETTINGS_SMS_CONFIG });
-        return;
-      }
-
-      const resolveRes = await messageTemplateApi.resolve(templateSeq, {
-        customerName: customer?.name,
-        customerPhone: customer?.phoneNumber,
-        interviewDate,
-      });
-      if (!resolveRes.success || !resolveRes.data) {
-        setResult({ success: false, message: '예약은 완료되었으나, 메시지 템플릿을 불러올 수 없습니다. 설정을 확인해주세요.', redirectPath: ROUTES.MESSAGE_TEMPLATES });
-        return;
-      }
-      const message = resolveRes.data;
-
-      const smsRes = await externalApi.sendSms({
-        senderPhone: senderNumber,
-        receiverPhone: customer?.phoneNumber ?? '',
-        message,
-      });
-
-      if (!smsRes.success || !smsRes.data?.success) {
-        setResult({ success: false, message: `예약은 완료되었으나, SMS 자동 발송에 실패했습니다: ${smsRes.data?.message || smsRes.message || '알 수 없는 오류'}` });
-      }
-    } catch {
-      setResult({ success: false, message: '예약은 완료되었으나, SMS 자동 발송 중 오류가 발생했습니다.' });
-    }
-  };
-
   const confirmInterview = async () => {
     if (!interviewConfirmModal.data) return;
     const { customerSeq, caller } = interviewConfirmModal.data;
     const input = interviewInputs[customerSeq]?.trim();
     if (!input) return;
 
-    const customer = customers.find(c => c.seq === customerSeq);
     const normalized = toServerDateTime(input);
     const res = await customerApi.createReservation(customerSeq, caller, normalized);
     if (res.success) {
       setInterviewInputs(prev => ({ ...prev, [customerSeq]: '' }));
       interviewConfirmModal.close();
       invalidateCustomers();
-      setResult({ success: true, message: '예약이 생성되었습니다.' });
-
-      // 예약 확정 SMS 자동 발송
-      sendReservationSms(customer, normalized);
+      const message = res.data.smsWarning
+        ? `예약이 생성되었습니다.\n(${res.data.smsWarning})`
+        : '예약이 생성되었습니다.';
+      setResult({ success: true, message });
     }
   };
 
@@ -376,9 +331,7 @@ function CustomersContent() {
         <ResultModal
           success={result.success}
           message={result.message}
-          {...(result.redirectPath
-            ? { redirectPath: result.redirectPath }
-            : { onConfirm: () => { setResult(null); invalidateCustomers(); } })}
+          onConfirm={() => { setResult(null); invalidateCustomers(); }}
         />
       )}
     </>

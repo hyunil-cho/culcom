@@ -26,7 +26,7 @@ export default function BoardNav({ isLoggedIn, memberName, activePage }: BoardNa
       <div className="board-container nav-inner">
         <Link href="/board" className="board-logo">
           <span className="logo-icon">📢</span>
-          <span className="logo-text">CulCom</span>
+          <span className="logo-text">E:UT</span>
           <span className="logo-divider"></span>
           <span className="logo-sub">공지 · 이벤트</span>
         </Link>

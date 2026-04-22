@@ -346,6 +346,7 @@ export default function MembershipFormSection({
                 <CardPaymentFields
                   value={form.cardDetail}
                   onChange={(v) => setForm(prev => ({ ...prev, cardDetail: v }))}
+                  readOnly={locked}
                 />
               )}
             </>
