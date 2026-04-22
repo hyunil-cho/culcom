@@ -45,6 +45,9 @@ public class PostponementService {
         req.setAdminMessage(adminMessage);
         if (status == RequestStatus.승인) {
             ComplexMemberMembership mm = req.getMemberMembership();
+            if (!mm.isActive()) {
+                throw new IllegalStateException("사용할 수 없는 멤버십의 연기 요청은 승인할 수 없습니다.");
+            }
             mm.applyPostponement(req.getStartDate(), req.getEndDate());
         }
 

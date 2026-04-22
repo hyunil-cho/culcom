@@ -78,7 +78,7 @@ public class TransferRequest extends BaseTimeEntity {
 
     /**
      * 공개 링크(양도자/양수자 페이지)에서 이 요청을 계속 진행할 수 있는지 검증한다.
-     * 링크가 만료되었거나 상태가 생성이 아니면 예외를 던진다.
+     * 링크가 만료되었거나, 상태가 생성이 아니거나, 연결된 멤버십이 비활성(환불/변경/만료 등)이면 예외를 던진다.
      */
     public void ensureLinkUsable() {
         LocalDateTime created = getCreatedDate();
@@ -87,6 +87,9 @@ public class TransferRequest extends BaseTimeEntity {
         }
         if (status != TransferStatus.생성) {
             throw new IllegalStateException("이미 만료된 링크입니다.");
+        }
+        if (memberMembership == null || !memberMembership.isActive()) {
+            throw new IllegalStateException("사용할 수 없는 멤버십의 양도 링크입니다.");
         }
     }
 }

@@ -46,10 +46,14 @@ public interface ComplexPostponementRequestRepository extends JpaRepository<Comp
            "GROUP BY p.branch.seq")
     java.util.List<BranchReturnCount> countApprovedByReturnDateGroupByBranch(@Param("returnDate") java.time.LocalDate returnDate);
 
-    /** 지정한 복귀일(endDate)을 가진 승인된 연기 요청 목록 조회. SMS 발송용. */
+    /**
+     * 지정한 복귀일(endDate)을 가진 승인된 연기 요청 목록 조회. SMS 발송용.
+     * 연결된 멤버십이 환불/변경 등으로 비활성이면 복귀 안내 대상에서 제외한다.
+     */
     @Query("SELECT p FROM ComplexPostponementRequest p " +
            "WHERE p.status = com.culcom.entity.enums.RequestStatus.승인 " +
-           "  AND p.endDate = :returnDate")
+           "  AND p.endDate = :returnDate " +
+           "  AND p.memberMembership.status = com.culcom.entity.enums.MembershipStatus.활성")
     java.util.List<ComplexPostponementRequest> findApprovedByReturnDate(@Param("returnDate") java.time.LocalDate returnDate);
 
     interface BranchReturnCount {
