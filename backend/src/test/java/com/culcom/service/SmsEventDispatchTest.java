@@ -236,6 +236,7 @@ class SmsEventDispatchTest {
                 .memberMembership(mm).fromMember(from).branch(b)
                 .transferFee(30_000).remainingCount(30)
                 .token(UUID.randomUUID().toString().replace("-", ""))
+                .status(com.culcom.entity.enums.TransferStatus.확인)
                 .build());
         clearInvocations(smsService);
 

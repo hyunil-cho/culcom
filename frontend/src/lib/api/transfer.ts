@@ -55,6 +55,22 @@ export interface TransferInviteSubmitData {
   consents: { consentItemSeq: number; agreed: boolean }[];
 }
 
+export interface TransferCardDetail {
+  cardCompany: string;
+  cardNumber: string;
+  cardApprovalDate: string;
+  cardApprovalNumber: string;
+}
+
+export interface TransferCompleteRequest {
+  /** 양수금 결제방법 (카드/현금/계좌이체 등). */
+  paymentMethod?: string;
+  /** 양수금 납부 시각 (ISO 문자열, 예: 2026-04-22T18:30). 미지정 시 서버 현재 시각. */
+  paymentDate?: string;
+  /** 카드 결제 시 카드 상세. 카드가 아니면 생략. */
+  cardDetail?: TransferCardDetail;
+}
+
 // ── 관리자 API ──
 
 export interface TransferListParams {
@@ -87,17 +103,25 @@ export const transferApi = {
     const qs = sp.toString();
     return api.get<PageResponse<TransferRequestItem>>(`/transfer-requests${qs ? `?${qs}` : ''}`);
   },
-  /** 이름+전화번호로 접수 대기 양도 요청 조회 */
-  findPending: (name: string, phone: string) =>
-    api.get<TransferRequestItem | null>(`/transfer-requests/pending?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`),
+  /**
+   * 신규 회원 등록 화면에서 고를 수 있는 양도 요청 목록.
+   * - 관리자 최종 '확인' 승인 완료
+   * - 연결된 멤버십이 아직 활성
+   * - 아직 다른 회원 등록에 사용되지 않음
+   */
+  listSelectable: () =>
+    api.get<TransferRequestItem[]>('/transfer-requests/selectable'),
   create: (memberMembershipSeq: number, transferFee?: number) =>
     api.post<TransferRequestItem>('/transfer-requests', { memberMembershipSeq, transferFee }),
   updateStatus: (seq: number, status: TransferStatus, adminMessage?: string) =>
     api.put<TransferRequestItem>(
       `/transfer-requests/${seq}/status?status=${status}${adminMessage ? `&adminMessage=${encodeURIComponent(adminMessage)}` : ''}`
     ),
-  complete: (seq: number, memberSeq: number) =>
-    api.post<TransferRequestItem>(`/transfer-requests/${seq}/complete?memberSeq=${memberSeq}`),
+  complete: (seq: number, memberSeq: number, data?: TransferCompleteRequest) =>
+    api.post<TransferRequestItem>(
+      `/transfer-requests/${seq}/complete?memberSeq=${memberSeq}`,
+      data ?? {},
+    ),
 };
 
 // ── 공개 API ──

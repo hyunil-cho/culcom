@@ -116,4 +116,23 @@ class PublicRefundServiceOutstandingTest {
         assertThatCode(() -> publicRefundService.submit(req))
                 .doesNotThrowAnyException();
     }
+
+    @Test
+    void 양도받은_멤버십은_환불_신청이_차단된다() {
+        // 양도 받은 멤버십은 정가와 양수자 실제 지불가가 달라 환불 금액 산정이 모호하므로 차단한다.
+        // (연기는 허용되지만 환불/변경은 거부되는 정책)
+        ComplexMemberMembership transferred = ComplexMemberMembership.builder()
+                .seq(20L).member(member).status(MembershipStatus.활성)
+                .startDate(LocalDate.now()).expiryDate(LocalDate.now().plusMonths(3))
+                .price("30000").totalCount(30).usedCount(5)
+                .transferred(true)
+                .build();
+
+        given(memberRepository.findById(10L)).willReturn(Optional.of(member));
+        given(memberMembershipRepository.findById(20L)).willReturn(Optional.of(transferred));
+
+        assertThatThrownBy(() -> publicRefundService.submit(createRequest()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("양도 받은 멤버십");
+    }
 }

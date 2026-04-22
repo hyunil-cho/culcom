@@ -27,10 +27,6 @@ interface Props {
   transfers?: TransferRequestItem[];
   selectedTransfer?: TransferRequestItem | null;
   onSelectTransfer?: (transfer: TransferRequestItem) => void;
-  /** 기본정보 탭에서 입력한 회원 이름 */
-  memberName?: string;
-  /** 기본정보 탭에서 입력한 회원 전화번호 */
-  memberPhone?: string;
   // 갱신 관련
   canRenew?: boolean;
   renewalMode?: boolean;
@@ -53,7 +49,6 @@ export default function MembershipFormSection({
   isEdit, isExisting, memberships, paymentMethods, onSelect,
   transferMode, onTransferModeChange,
   transfers, selectedTransfer, onSelectTransfer,
-  memberName, memberPhone,
   canRenew, renewalMode, onStartRenewal, onCancelRenewal,
 }: Props) {
   const effectiveIsEdit = isEdit && !renewalMode;
@@ -62,20 +57,8 @@ export default function MembershipFormSection({
     ? memberships.find(m => m.seq === Number(form.membershipSeq))
     : null;
 
-  // 양도 요청 필터 (확인/거절 제외, 입력된 이름/전화번호는 양수자 정보로만 매칭).
-  // 서버가 이미 양수자(toCustomer) 기준으로 필터링하지만, 방어적 재확인을 유지한다.
-  const filteredTransfers = (transfers ?? [])
-    .filter(t => t.status === '생성' || t.status === '접수')
-    .filter(t => {
-      const name = (memberName ?? '').trim().toLowerCase();
-      const phone = (memberPhone ?? '').trim();
-      if (!name && !phone) return true;
-      const toName = (t.toCustomerName ?? '').toLowerCase();
-      const toPhone = t.toCustomerPhone ?? '';
-      const nameMatch = !!name && toName.includes(name);
-      const phoneMatch = !!phone && !!toPhone && toPhone.includes(phone);
-      return nameMatch || phoneMatch;
-    });
+  // 서버가 이미 '확인' 상태 + 활성 멤버십 + 미사용으로 필터링한 상태로 내려주므로 추가 필터 불필요.
+  const selectableTransfers = transfers ?? [];
 
   return (
     <>
@@ -175,20 +158,20 @@ export default function MembershipFormSection({
             </FormField>
           )}
 
-          {/* 양도 모드: 양도 요청 검색/선택 */}
+          {/* 양도 모드: 양도 요청 선택 */}
           {transferMode && onSelectTransfer && (
             <>
               <FormField label="양도 요청 선택" required
-                hint="기본정보에 입력한 이름/전화번호로 자동 검색됩니다.">
-                {filteredTransfers.length > 0 ? (
+                hint="관리자 확인을 받은 양도 요청 중에서 선택하세요.">
+                {selectableTransfers.length > 0 ? (
                   <div style={{
                     border: '1px solid #dee2e6',
                     borderRadius: '8px',
-                    maxHeight: '200px',
+                    maxHeight: '240px',
                     overflowY: 'auto',
                     marginTop: '8px',
                   }}>
-                    {filteredTransfers.map(t => {
+                    {selectableTransfers.map(t => {
                       const isSelected = selectedTransfer?.seq === t.seq;
                       return (
                         <div key={t.seq}
@@ -198,14 +181,14 @@ export default function MembershipFormSection({
                             cursor: 'pointer',
                             borderBottom: '1px solid #f0f0f0',
                             backgroundColor: isSelected ? '#eef2ff' : 'transparent',
-                            display: 'flex', alignItems: 'center', gap: '10px',
+                            display: 'flex', alignItems: 'flex-start', gap: '10px',
                             transition: 'background 0.15s',
                           }}
                           onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = '#f8f9fa'; }}
                           onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = ''; }}
                         >
                           <span style={{
-                            width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+                            width: 20, height: 20, borderRadius: '50%', flexShrink: 0, marginTop: 2,
                             border: isSelected ? '2px solid #4a90e2' : '2px solid #ccc',
                             backgroundColor: isSelected ? '#4a90e2' : 'transparent',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -213,11 +196,27 @@ export default function MembershipFormSection({
                           }}>
                             {isSelected && '✓'}
                           </span>
-                          <div>
-                            <span style={{ fontWeight: 600 }}>{t.fromMemberName}</span>
-                            <span style={{ color: '#888', marginLeft: '8px', fontSize: '0.9em' }}>
-                              {t.fromMemberPhone} · {t.membershipName} · 잔여 {t.remainingCount}회
-                            </span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: '0.9rem' }}>
+                              <span style={{ fontWeight: 600 }}>{t.membershipName}</span>
+                              <span style={{ color: '#666', marginLeft: 8 }}>
+                                · 잔여 {t.remainingCount}회 · 양수비 {t.transferFee.toLocaleString()}원
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: 3 }}>
+                              양도자 <span style={{ color: '#1e40af', fontWeight: 600 }}>{t.fromMemberName}</span>
+                              <span style={{ fontFamily: 'monospace', marginLeft: 6 }}>{t.fromMemberPhone}</span>
+                              {' → '}
+                              양수자{' '}
+                              {t.toCustomerName ? (
+                                <>
+                                  <span style={{ color: '#15803d', fontWeight: 600 }}>{t.toCustomerName}</span>
+                                  <span style={{ fontFamily: 'monospace', marginLeft: 6 }}>{t.toCustomerPhone ?? ''}</span>
+                                </>
+                              ) : (
+                                <span style={{ color: '#9ca3af' }}>(미접수)</span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );
@@ -225,7 +224,7 @@ export default function MembershipFormSection({
                   </div>
                 ) : (
                   <p style={{ color: '#888', marginTop: '8px', fontSize: '0.85rem' }}>
-                    선택 가능한 양도 요청이 없습니다.
+                    선택 가능한 양도 요청이 없습니다. (양도 리스트에서 '양도 확인'을 먼저 완료해주세요.)
                   </p>
                 )}
               </FormField>

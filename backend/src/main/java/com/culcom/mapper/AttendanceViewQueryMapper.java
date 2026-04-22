@@ -1,8 +1,6 @@
 package com.culcom.mapper;
 
-import com.culcom.dto.complex.attendance.AttendanceHistoryDetailRow;
 import com.culcom.dto.complex.attendance.AttendanceHistoryRow;
-import com.culcom.dto.complex.attendance.AttendanceHistorySummary;
 import com.culcom.dto.complex.attendance.AttendanceViewRow;
 import com.culcom.dto.complex.attendance.StaffAttendanceRateSummary;
 import org.apache.ibatis.annotations.Mapper;
@@ -30,40 +28,6 @@ public interface AttendanceViewQueryMapper {
     List<AttendanceHistoryRow> selectRecentHistory(
             @Param("branchSeq") Long branchSeq,
             @Param("slotSeq") Long slotSeq);
-
-    /** 회원 개인별 출석 히스토리 (페이징) */
-    List<AttendanceHistoryDetailRow> selectMemberAttendanceHistory(
-            @Param("branchSeq") Long branchSeq,
-            @Param("memberSeq") Long memberSeq,
-            @Param("offset") int offset,
-            @Param("size") int size);
-
-    /** 회원 개인별 출석 히스토리 총 건수 */
-    int countMemberAttendanceHistory(
-            @Param("branchSeq") Long branchSeq,
-            @Param("memberSeq") Long memberSeq);
-
-    /** 스태프 개인별 출석 히스토리 (페이징) */
-    List<AttendanceHistoryDetailRow> selectStaffAttendanceHistory(
-            @Param("branchSeq") Long branchSeq,
-            @Param("staffSeq") Long staffSeq,
-            @Param("offset") int offset,
-            @Param("size") int size);
-
-    /** 스태프 개인별 출석 히스토리 총 건수 */
-    int countStaffAttendanceHistory(
-            @Param("branchSeq") Long branchSeq,
-            @Param("staffSeq") Long staffSeq);
-
-    /** 회원 출석 히스토리 요약 (출석/결석/지각 건수) */
-    AttendanceHistorySummary selectMemberAttendanceSummary(
-            @Param("branchSeq") Long branchSeq,
-            @Param("memberSeq") Long memberSeq);
-
-    /** 스태프 출석 히스토리 요약 (출석/결석/지각 건수) */
-    AttendanceHistorySummary selectStaffAttendanceSummary(
-            @Param("branchSeq") Long branchSeq,
-            @Param("staffSeq") Long staffSeq);
 
     /** 전체 스태프 출석율 요약 (최근 3개월) */
     List<StaffAttendanceRateSummary> selectAllStaffAttendanceRates(

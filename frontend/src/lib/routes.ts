@@ -192,10 +192,6 @@ export const API = {
   COMPLEX_ATTENDANCE_VIEW_DETAIL: '/complex/attendance/view/detail',
   COMPLEX_ATTENDANCE_BULK: '/complex/attendance/bulk',
   COMPLEX_ATTENDANCE_REORDER: '/complex/attendance/reorder',
-  COMPLEX_ATTENDANCE_MEMBER_HISTORY: (memberSeq: number) => `/complex/attendance/history/member/${memberSeq}`,
-  COMPLEX_ATTENDANCE_STAFF_HISTORY: (staffSeq: number) => `/complex/attendance/history/staff/${staffSeq}`,
-  COMPLEX_ATTENDANCE_MEMBER_HISTORY_SUMMARY: (memberSeq: number) => `/complex/attendance/history/member/${memberSeq}/summary`,
-  COMPLEX_ATTENDANCE_STAFF_HISTORY_SUMMARY: (staffSeq: number) => `/complex/attendance/history/staff/${staffSeq}/summary`,
   COMPLEX_ATTENDANCE_STAFF_RATES: '/complex/attendance/history/staff-rates',
 
   // 멤버십

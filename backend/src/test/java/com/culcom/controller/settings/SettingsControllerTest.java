@@ -8,8 +8,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,7 +15,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -27,11 +24,13 @@ import static org.mockito.BDDMockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-@SpringBootTest
-@AutoConfigureMockMvc
+import com.culcom.config.GlobalExceptionHandler;
+import com.culcom.config.SecurityConfig;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+@WebMvcTest(SettingsController.class)
+@Import({SecurityConfig.class, GlobalExceptionHandler.class})
 @ActiveProfiles("test")
-@Transactional
 class SettingsControllerTest {
 
     @Autowired MockMvc mockMvc;
@@ -73,7 +72,7 @@ class SettingsControllerTest {
                             .with(auth())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(Map.of(
-                                    "eventType", "RESERVATION_CONFIRM",
+                                    "eventType", "예약확정",
                                     "enabled", true))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.message").value("설정이 저장되었습니다"));
@@ -83,7 +82,7 @@ class SettingsControllerTest {
         void SMS이벤트_설정_삭제() throws Exception {
             willDoNothing().given(settingsService).deleteSmsEventConfig(anyLong(), any());
 
-            mockMvc.perform(delete("/api/settings/sms-events/{eventType}", "RESERVATION_CONFIRM")
+            mockMvc.perform(delete("/api/settings/sms-events/{eventType}", "예약확정")
                             .with(auth()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.message").value("설정이 삭제되었습니다"));

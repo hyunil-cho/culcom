@@ -62,12 +62,22 @@ export default function MembershipPostponementHistorySection({ memberSeq }: Prop
                 background: '#fafbfc',
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <span style={{
-                    padding: '2px 10px', borderRadius: 10, fontSize: '0.72rem', fontWeight: 700,
-                    background: badge.bg, color: badge.color,
-                  }}>
-                    {h.status}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{
+                      padding: '2px 10px', borderRadius: 10, fontSize: '0.72rem', fontWeight: 700,
+                      background: badge.bg, color: badge.color,
+                    }}>
+                      {h.status}
+                    </span>
+                    {h.membershipName && (
+                      <span style={{
+                        padding: '2px 8px', borderRadius: 4, fontSize: '0.72rem', fontWeight: 600,
+                        background: '#f1f5f9', color: '#475569',
+                      }}>
+                        {h.membershipName}
+                      </span>
+                    )}
+                  </div>
                   <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
                     요청: {h.createdDate?.split('T')[0] ?? '-'}
                   </span>

@@ -20,6 +20,7 @@
             p.seq,
             p.member_name AS memberName,
             p.phone_number AS phoneNumber,
+            m.name AS membershipName,
             p.start_date AS startDate,
             p.end_date AS endDate,
             p.reason,
@@ -31,6 +32,8 @@
             ts.start_time AS desiredStartTime,
             ts.end_time AS desiredEndTime
         FROM complex_postponement_requests p
+        LEFT JOIN complex_member_memberships mm ON mm.seq = p.member_membership_seq
+        LEFT JOIN memberships m ON m.seq = mm.membership_seq
         LEFT JOIN complex_classes c ON c.seq = p.desired_class_seq
         LEFT JOIN class_time_slots ts ON ts.seq = c.time_slot_seq
         <include refid="searchCondition"/>
@@ -49,6 +52,7 @@
             p.seq,
             p.member_name AS memberName,
             p.phone_number AS phoneNumber,
+            m.name AS membershipName,
             p.start_date AS startDate,
             p.end_date AS endDate,
             p.reason,
@@ -60,6 +64,8 @@
             ts.start_time AS desiredStartTime,
             ts.end_time AS desiredEndTime
         FROM complex_postponement_requests p
+        LEFT JOIN complex_member_memberships mm ON mm.seq = p.member_membership_seq
+        LEFT JOIN memberships m ON m.seq = mm.membership_seq
         LEFT JOIN complex_classes c ON c.seq = p.desired_class_seq
         LEFT JOIN class_time_slots ts ON ts.seq = c.time_slot_seq
         WHERE p.member_seq = #{memberSeq}

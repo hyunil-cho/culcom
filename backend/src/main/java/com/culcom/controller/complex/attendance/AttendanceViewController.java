@@ -9,10 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-
 import java.time.LocalDate;
 import java.util.*;
 
@@ -111,7 +107,7 @@ public class AttendanceViewController {
 
             if (row.getMemberSeq() != null) {
                 String histKey = row.getClassSeq() + "-" + row.getMemberSeq();
-                List<String> history = row.isStaff() ? List.of() : historyMap.getOrDefault(histKey, List.of());
+                List<String> history = historyMap.getOrDefault(histKey, List.of());
 
                 classMembersMap.computeIfAbsent(row.getClassSeq(), k -> new ArrayList<>())
                         .add(AttendanceViewMemberResponse.builder()
@@ -146,58 +142,6 @@ public class AttendanceViewController {
         }
 
         return ResponseEntity.ok(ApiResponse.ok(result));
-    }
-
-    // ── 회원 개인별 출석 히스토리 (페이징) ──
-
-    @GetMapping("/history/member/{memberSeq}")
-    public ResponseEntity<ApiResponse<Page<AttendanceHistoryDetailRow>>> memberHistory(
-            @AuthenticationPrincipal CustomUserPrincipal principal,
-            @PathVariable Long memberSeq,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        Long branchSeq = principal.getSelectedBranchSeq();
-        int total = attendanceViewQueryMapper.countMemberAttendanceHistory(branchSeq, memberSeq);
-        List<AttendanceHistoryDetailRow> rows = attendanceViewQueryMapper.selectMemberAttendanceHistory(
-                branchSeq, memberSeq, page * size, size);
-        return ResponseEntity.ok(ApiResponse.ok(new PageImpl<>(rows, PageRequest.of(page, size), total)));
-    }
-
-    // ── 스태프 개인별 출석 히스토리 (페이징) ──
-
-    @GetMapping("/history/staff/{staffSeq}")
-    public ResponseEntity<ApiResponse<Page<AttendanceHistoryDetailRow>>> staffHistory(
-            @AuthenticationPrincipal CustomUserPrincipal principal,
-            @PathVariable Long staffSeq,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        Long branchSeq = principal.getSelectedBranchSeq();
-        int total = attendanceViewQueryMapper.countStaffAttendanceHistory(branchSeq, staffSeq);
-        List<AttendanceHistoryDetailRow> rows = attendanceViewQueryMapper.selectStaffAttendanceHistory(
-                branchSeq, staffSeq, page * size, size);
-        return ResponseEntity.ok(ApiResponse.ok(new PageImpl<>(rows, PageRequest.of(page, size), total)));
-    }
-
-    // ── 회원 출석 히스토리 요약 ──
-
-    @GetMapping("/history/member/{memberSeq}/summary")
-    public ResponseEntity<ApiResponse<AttendanceHistorySummary>> memberHistorySummary(
-            @AuthenticationPrincipal CustomUserPrincipal principal,
-            @PathVariable Long memberSeq) {
-        Long branchSeq = principal.getSelectedBranchSeq();
-        AttendanceHistorySummary summary = attendanceViewQueryMapper.selectMemberAttendanceSummary(branchSeq, memberSeq);
-        return ResponseEntity.ok(ApiResponse.ok(summary));
-    }
-
-    // ── 스태프 출석 히스토리 요약 ──
-
-    @GetMapping("/history/staff/{staffSeq}/summary")
-    public ResponseEntity<ApiResponse<AttendanceHistorySummary>> staffHistorySummary(
-            @AuthenticationPrincipal CustomUserPrincipal principal,
-            @PathVariable Long staffSeq) {
-        Long branchSeq = principal.getSelectedBranchSeq();
-        AttendanceHistorySummary summary = attendanceViewQueryMapper.selectStaffAttendanceSummary(branchSeq, staffSeq);
-        return ResponseEntity.ok(ApiResponse.ok(summary));
     }
 
     // ── 전체 스태프 출석율 요약 ──

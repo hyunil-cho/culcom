@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * SMS 이벤트 자동발송 시나리오별 경고 메시지 검증:
- * 1) 설정이 없으면 경고 없이 null 반환
+ * 1) 설정이 없으면 "설정 미등록" 경고 메시지 반환 (관리자에게 명시적으로 노출하기 위함)
  * 2) autoSend=false면 비활성 경고 메시지 반환
  * 3) 템플릿 내용이 비어있으면 실패 메시지 반환
  * 4) SMS 연동 설정이 없으면 (sendByBranch 실패) 실패 메시지 반환
@@ -48,15 +48,15 @@ class SmsEventAutoSendTest {
     }
 
     @Test
-    void 설정이_없으면_경고없이_null_반환() {
+    void 설정이_없으면_미등록_경고_메시지_반환() {
         Branch branch = createBranch();
 
         String result = smsService.sendEventSmsIfConfigured(
                 branch.getSeq(), SmsEventType.고객등록, "홍길동", "01012345678");
 
         assertThat(result)
-                .as("SMS 설정이 없으면 경고 없이 null이어야 한다")
-                .isNull();
+                .as("SMS 자동발송 설정이 등록되지 않은 경우 관리자가 알 수 있도록 경고 메시지를 반환해야 한다")
+                .contains("등록되지 않아");
     }
 
     @Test

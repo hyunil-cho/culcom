@@ -97,7 +97,7 @@ export default function AttendanceDetailPage() {
                       const remaining = (m.totalCount ?? 0) - (m.usedCount ?? 0);
                       const stats = m.totalCount != null ? `${m.usedCount ?? 0}회 사용 / ${Math.max(0, remaining)}회 남음` : '';
 
-                      // 멤버십 상태 분류 (스태프 제외)
+                      // 멤버십 상태 분류 (스태프 포함 — 내부 멤버십도 동일 기준으로 상태 표시)
                       // - none      : 활성 멤버십 자체가 없음
                       // - exhausted : 횟수 모두 소진 (잔여 0 이하)
                       // - expired   : 종료일 지남
@@ -106,15 +106,13 @@ export default function AttendanceDetailPage() {
                       // - active    : 그 외 정상
                       const today = new Date().toISOString().slice(0, 10);
                       let mState: 'none' | 'exhausted' | 'expired' | 'lowCount' | 'lowDays' | 'active' = 'active';
-                      if (!m.staff) {
-                        if (!m.membershipName) mState = 'none';
-                        else if (m.totalCount != null && remaining <= 0) mState = 'exhausted';
-                        else if (m.expiryDate && m.expiryDate < today) mState = 'expired';
-                        else if (m.totalCount != null && remaining <= 3) mState = 'lowCount';
-                        else if (m.expiryDate) {
-                          const days = Math.ceil((new Date(m.expiryDate).getTime() - new Date(today).getTime()) / 86400000);
-                          if (days <= 7) mState = 'lowDays';
-                        }
+                      if (!m.membershipName) mState = 'none';
+                      else if (m.totalCount != null && remaining <= 0) mState = 'exhausted';
+                      else if (m.expiryDate && m.expiryDate < today) mState = 'expired';
+                      else if (m.totalCount != null && remaining <= 3) mState = 'lowCount';
+                      else if (m.expiryDate) {
+                        const days = Math.ceil((new Date(m.expiryDate).getTime() - new Date(today).getTime()) / 86400000);
+                        if (days <= 7) mState = 'lowDays';
                       }
                       const stateStyle: Record<string, CSSProperties> = {
                         none:      { background: '#f1f3f5', color: '#868e96' },
@@ -128,9 +126,7 @@ export default function AttendanceDetailPage() {
                         none: '없음', exhausted: '소진', expired: '만료',
                         lowCount: '잔여 임박', lowDays: '만료 임박', active: '활성',
                       };
-                      const badgeStyle: CSSProperties = m.staff
-                        ? { background: '#fff4e6', color: '#e67e22' }
-                        : stateStyle[mState];
+                      const badgeStyle: CSSProperties = stateStyle[mState];
 
                       return (
                         <tr key={`${m.memberSeq}-${i}`} style={m.staff ? { background: '#fff8f0' } : {}}>
@@ -149,7 +145,7 @@ export default function AttendanceDetailPage() {
                               display: 'inline-block', padding: '2px 8px', borderRadius: 10,
                               fontSize: '0.75rem', whiteSpace: 'nowrap', ...badgeStyle,
                             }}>
-                              {m.staff ? 'STAFF' : `${m.membershipName || '-'} · ${stateLabel[mState]}`}
+                              {`${m.membershipName || '-'} · ${stateLabel[mState]}`}
                             </span>
                           </td>
                           <td>

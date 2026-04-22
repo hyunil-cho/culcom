@@ -23,8 +23,6 @@ export const MEMBERSHIP_RELATED: string[] = [
 export const ATTENDANCE_RELATED: string[] = [
   'attendanceView',
   'attendanceViewDetail',
-  'attendanceHistory',
-  'attendanceHistorySummary',
   'members',
   'memberMemberships',
   'complexDashboard',

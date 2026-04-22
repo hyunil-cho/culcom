@@ -1,6 +1,7 @@
 package com.culcom.controller.complex.transfer;
 
 import com.culcom.dto.ApiResponse;
+import com.culcom.dto.transfer.TransferCompleteRequest;
 import com.culcom.dto.transfer.TransferCreateRequest;
 import com.culcom.dto.transfer.TransferRequestResponse;
 import com.culcom.entity.enums.TransferStatus;
@@ -14,6 +15,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 관리자용 양도 요청 API.
@@ -46,12 +49,12 @@ public class TransferController {
                 transferService.list(branchSeq, name, phone, activeOnly, status, includeReferenced, pageable)));
     }
 
-    /** 이름+전화번호로 접수 상태의 양도 요청 조회 (회원등록 시 자동 감지용) */
-    @GetMapping("/pending")
-    public ResponseEntity<ApiResponse<TransferRequestResponse>> findPending(
-            @RequestParam String name, @RequestParam String phone) {
-        TransferRequestResponse result = transferService.findPendingByRecipient(name, phone);
-        return ResponseEntity.ok(ApiResponse.ok(result));
+    /** 신규 회원 등록 화면에서 고를 수 있는 양도 요청 목록 (확인 + 활성 멤버십 + 미사용). */
+    @GetMapping("/selectable")
+    public ResponseEntity<ApiResponse<List<TransferRequestResponse>>> selectable(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        Long branchSeq = principal.getSelectedBranchSeq();
+        return ResponseEntity.ok(ApiResponse.ok(transferService.listSelectable(branchSeq)));
     }
 
     @PostMapping
@@ -70,7 +73,10 @@ public class TransferController {
 
     @PostMapping("/{seq}/complete")
     public ResponseEntity<ApiResponse<TransferRequestResponse>> complete(
-            @PathVariable Long seq, @RequestParam Long memberSeq) {
-        return ResponseEntity.ok(ApiResponse.ok("양도가 완료되었습니다.", transferService.completeTransfer(seq, memberSeq)));
+            @PathVariable Long seq, @RequestParam Long memberSeq,
+            @RequestBody(required = false) TransferCompleteRequest paymentInfo) {
+        return ResponseEntity.ok(ApiResponse.ok("양도가 완료되었습니다.",
+                transferService.completeTransfer(seq, memberSeq,
+                        paymentInfo != null ? paymentInfo : new TransferCompleteRequest())));
     }
 }

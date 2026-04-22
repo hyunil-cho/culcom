@@ -22,15 +22,13 @@ const EMPTY_FORM: MembershipFormData = {
 interface UseMembershipOptions {
   memberSeq?: number;
   isEdit?: boolean;
-  memberName?: string;
-  memberPhone?: string;
 }
 
 /**
  * 멤버십 관련 상태·UI·로직을 통합하는 훅.
  */
 export function useMembership(options?: UseMembershipOptions) {
-  const { memberSeq, isEdit, memberName, memberPhone } = options ?? {};
+  const { memberSeq, isEdit } = options ?? {};
   const { methods: paymentMethods } = usePaymentOptions();
 
   // ── 멤버십 상품 목록 ──
@@ -47,12 +45,9 @@ export function useMembership(options?: UseMembershipOptions) {
 
   // ── 양도 (별도 훅) ──
   const transfer = useTransfer({
-    memberships,
     setForm,
     setEnabled: (v: boolean) => setEnabled(v),
     emptyForm: EMPTY_FORM,
-    memberName,
-    memberPhone,
   });
 
   // 수정 모드: 기존 멤버십 로드
@@ -136,8 +131,13 @@ export function useMembership(options?: UseMembershipOptions) {
     if (!form.membershipSeq) return;
 
     // 양도 모드: 백엔드에서 멤버십 이전 처리 (양도자 비활성화 + 양수자 생성)
+    // 양수자가 실제로 낸 양도비의 결제수단/결제일/카드 상세를 함께 전달한다.
     if (transfer.mode && transfer.selected) {
-      await transfer.confirmTransfer(targetMemberSeq);
+      await transfer.confirmTransfer(targetMemberSeq, {
+        paymentMethod: (form.paymentMethod && form.paymentMethod !== '기타') ? form.paymentMethod : undefined,
+        paymentDate: form.paymentDate || undefined,
+        cardDetail: form.paymentMethod === '카드' ? form.cardDetail : undefined,
+      });
       return;
     }
 
@@ -256,8 +256,6 @@ export function useMembership(options?: UseMembershipOptions) {
       transfers={transfer.transfers}
       selectedTransfer={transfer.selected}
       onSelectTransfer={transfer.select}
-      memberName={memberName}
-      memberPhone={memberPhone}
       canRenew={canRenew}
       renewalMode={renewalMode}
       onStartRenewal={startRenewal}
@@ -273,6 +271,5 @@ export function useMembership(options?: UseMembershipOptions) {
     save, validate,
     transferMode: transfer.mode,
     selectedTransfer: transfer.selected,
-    checkPendingTransfer: transfer.checkPending,
   };
 }

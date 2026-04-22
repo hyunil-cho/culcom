@@ -162,6 +162,10 @@ class InactiveMembershipBlocksRelatedRequestsTest {
     void 환불된_멤버십에_대한_completeTransfer_시도는_거부된다() {
         // 회귀 방지 — 이 가드는 이미 구현되어 있음
         Fixture f = Fixture.forTransfer(this, "refund-blocks-complete");
+        // 관리자 확인까지 마친 양도 요청을 가정 — 그 후에 원본 멤버십이 환불되는 시나리오
+        f.transfer.setStatus(TransferStatus.확인);
+        transferRequestRepository.save(f.transfer);
+
         ComplexMember newMember = memberRepository.save(ComplexMember.builder()
                 .name("양수자").phoneNumber("0109" + (System.nanoTime() % 10_000_000L)).branch(f.branch).build());
 

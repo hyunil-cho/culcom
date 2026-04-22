@@ -236,6 +236,7 @@ class ActionMessageSmsTemplateTest {
                 .transferFee(30_000).remainingCount(25)
                 .token(UUID.randomUUID().toString().replace("-", ""))
                 .adminMessage("관리자 현장 확인 완료")
+                .status(com.culcom.entity.enums.TransferStatus.확인)
                 .build());
         clearInvocations(smsService);
 

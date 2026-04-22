@@ -73,21 +73,22 @@ public interface TransferRequestRepository extends JpaRepository<TransferRequest
     @Query("delete from TransferRequest tr where tr.toCustomer.seq = :customerSeq")
     void deleteByToCustomerSeq(@Param("customerSeq") Long customerSeq);
 
+    /**
+     * 신규 회원 등록 화면에서 선택 가능한 양도 요청 목록.
+     * - 관리자 최종 '확인' 받은 건
+     * - 연결된 멤버십이 아직 활성 상태
+     * - 아직 다른 회원 등록에 사용되지 않음(referenced=false)
+     * 지점 단위로 제한한다.
+     */
     @Query("SELECT tr FROM TransferRequest tr " +
            "JOIN FETCH tr.memberMembership mm " +
            "JOIN FETCH mm.membership " +
            "JOIN FETCH tr.fromMember " +
-           "WHERE tr.toCustomer.seq = :customerSeq " +
-           "  AND tr.status = com.culcom.entity.enums.TransferStatus.접수")
-    Optional<TransferRequest> findPendingByToCustomerSeq(@Param("customerSeq") Long customerSeq);
-
-    @Query("SELECT tr FROM TransferRequest tr " +
-           "JOIN FETCH tr.memberMembership mm " +
-           "JOIN FETCH mm.membership " +
-           "JOIN FETCH tr.fromMember " +
-           "JOIN tr.toCustomer c " +
-           "WHERE c.name = :name AND c.phoneNumber = :phone " +
-           "  AND tr.status = com.culcom.entity.enums.TransferStatus.접수")
-    Optional<TransferRequest> findPendingByToCustomerNameAndPhone(
-            @Param("name") String name, @Param("phone") String phone);
+           "LEFT JOIN FETCH tr.toCustomer " +
+           "WHERE tr.branch.seq = :branchSeq " +
+           "  AND tr.status = com.culcom.entity.enums.TransferStatus.확인 " +
+           "  AND tr.referenced = false " +
+           "  AND mm.status = com.culcom.entity.enums.MembershipStatus.활성 " +
+           "ORDER BY tr.createdDate DESC")
+    List<TransferRequest> findSelectable(@Param("branchSeq") Long branchSeq);
 }

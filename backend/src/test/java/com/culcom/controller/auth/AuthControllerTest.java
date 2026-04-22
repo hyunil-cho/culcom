@@ -1,20 +1,20 @@
 package com.culcom.controller.auth;
 
+import com.culcom.config.GlobalExceptionHandler;
+import com.culcom.config.SecurityConfig;
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.auth.SessionInfo;
-import com.culcom.entity.branch.Branch;
 import com.culcom.entity.enums.UserRole;
 import com.culcom.exception.ForbiddenException;
-import com.culcom.repository.BranchRepository;
 import com.culcom.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,7 +22,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -33,28 +32,24 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(AuthController.class)
+@Import({SecurityConfig.class, GlobalExceptionHandler.class})
 @ActiveProfiles("test")
-@Transactional
 class AuthControllerTest {
+
+    private static final Long BRANCH_SEQ = 1L;
+    private static final String BRANCH_NAME = "테스트지점";
 
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
-    @Autowired BranchRepository branchRepository;
 
     @MockBean AuthService authService;
 
-    private Branch branch;
     private CustomUserPrincipal principal;
 
     @BeforeEach
     void setUp() {
-        branch = branchRepository.save(Branch.builder()
-                .branchName("테스트지점").alias("auth-test-" + System.nanoTime())
-                .address("서울시").branchManager("김매니저").build());
-
-        principal = new CustomUserPrincipal(1L, "testuser", "테스트", UserRole.ROOT, branch.getSeq());
+        principal = new CustomUserPrincipal(1L, "testuser", "테스트", UserRole.ROOT, BRANCH_SEQ);
     }
 
     private RequestPostProcessor auth() {
@@ -85,8 +80,7 @@ class AuthControllerTest {
 
         @Test
         void 로그인_성공() throws Exception {
-            SessionInfo info = sessionInfo("admin", "관리자", UserRole.ROOT,
-                    branch.getSeq(), branch.getBranchName());
+            SessionInfo info = sessionInfo("admin", "관리자", UserRole.ROOT, BRANCH_SEQ, BRANCH_NAME);
             given(authService.login(any(), any(), any())).willReturn(info);
 
             mockMvc.perform(post("/api/auth/login")
@@ -139,14 +133,13 @@ class AuthControllerTest {
         @Test
         void 세션정보_조회_성공() throws Exception {
             given(authService.getCurrentSession(any())).willReturn(
-                    sessionInfo("testuser", "테스트", UserRole.ROOT,
-                            branch.getSeq(), branch.getBranchName()));
+                    sessionInfo("testuser", "테스트", UserRole.ROOT, BRANCH_SEQ, BRANCH_NAME));
 
             mockMvc.perform(get("/api/auth/me").with(auth()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.data.userId").value("testuser"))
-                    .andExpect(jsonPath("$.data.selectedBranchSeq").value(branch.getSeq()));
+                    .andExpect(jsonPath("$.data.selectedBranchSeq").value(BRANCH_SEQ));
         }
 
         @Test
@@ -163,9 +156,9 @@ class AuthControllerTest {
 
         @Test
         void 지점_변경_성공() throws Exception {
-            willDoNothing().given(authService).selectBranch(eq(branch.getSeq()), any(), any(), any());
+            willDoNothing().given(authService).selectBranch(eq(BRANCH_SEQ), any(), any(), any());
 
-            mockMvc.perform(post("/api/auth/branch/{branchSeq}", branch.getSeq())
+            mockMvc.perform(post("/api/auth/branch/{branchSeq}", BRANCH_SEQ)
                             .with(auth()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.message").value("지점 변경 완료"));
@@ -185,11 +178,11 @@ class AuthControllerTest {
         @Test
         void ROOT가_아닌_사용자가_권한없는_지점_선택시_403() throws Exception {
             CustomUserPrincipal staffPrincipal = new CustomUserPrincipal(
-                    2L, "staff", "스태프", UserRole.STAFF, branch.getSeq());
+                    2L, "staff", "스태프", UserRole.STAFF, BRANCH_SEQ);
             willThrow(new ForbiddenException("접근 권한이 없는 지점입니다."))
-                    .given(authService).selectBranch(eq(branch.getSeq()), any(), any(), any());
+                    .given(authService).selectBranch(eq(BRANCH_SEQ), any(), any(), any());
 
-            mockMvc.perform(post("/api/auth/branch/{branchSeq}", branch.getSeq())
+            mockMvc.perform(post("/api/auth/branch/{branchSeq}", BRANCH_SEQ)
                             .with(authWith(staffPrincipal)))
                     .andExpect(status().isUnauthorized())
                     .andExpect(jsonPath("$.success").value(false));
@@ -197,7 +190,7 @@ class AuthControllerTest {
 
         @Test
         void 인증_없으면_401() throws Exception {
-            mockMvc.perform(post("/api/auth/branch/{branchSeq}", branch.getSeq()))
+            mockMvc.perform(post("/api/auth/branch/{branchSeq}", BRANCH_SEQ))
                     .andExpect(status().isUnauthorized());
         }
     }

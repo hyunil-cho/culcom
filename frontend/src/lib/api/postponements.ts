@@ -6,6 +6,8 @@ export interface PostponementRequest {
   seq: number;
   memberName: string;
   phoneNumber: string;
+  /** 연기가 적용된 멤버십 이름 (어떤 멤버십을 쓰는 중 연기했는지 식별) */
+  membershipName: string | null;
   startDate: string;
   endDate: string;
   reason: string;

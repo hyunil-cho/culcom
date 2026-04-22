@@ -87,6 +87,9 @@ public class PublicRefundService {
         if (targetMembership != null && !targetMembership.isActive()) {
             throw new IllegalStateException("사용할 수 없는 멤버십에는 환불 신청을 할 수 없습니다.");
         }
+        if (targetMembership != null && Boolean.TRUE.equals(targetMembership.getTransferred())) {
+            throw new IllegalStateException("양도 받은 멤버십은 환불할 수 없습니다.");
+        }
         if (targetMembership != null
                 && refundRequestRepository.existsBlockingByMemberMembershipSeq(targetMembership.getSeq())) {
             throw new IllegalStateException("이미 만료된 링크입니다.");

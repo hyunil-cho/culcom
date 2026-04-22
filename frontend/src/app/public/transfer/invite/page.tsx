@@ -8,6 +8,7 @@ import { useConsent } from '@/hooks/useConsent';
 import { useFormError } from '@/hooks/useFormError';
 import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import ConsentStep from '@/components/ui/ConsentStep';
+import { PhoneInput } from '@/components/ui/FormInput';
 
 export default function PublicTransferInvitePage() {
   return <Suspense fallback={null}><Inner /></Suspense>;
@@ -123,7 +124,7 @@ function Inner() {
 
             <div style={{ marginBottom: 14 }}>
               <label style={labelStyle}>전화번호 <span style={{ color: '#dc2626' }}>*</span></label>
-              <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="010-0000-0000"
+              <PhoneInput value={phone} onChange={e => setPhone(e.target.value)}
                 style={inputStyle} />
             </div>
 

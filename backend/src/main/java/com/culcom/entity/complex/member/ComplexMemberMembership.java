@@ -143,16 +143,19 @@ public class ComplexMemberMembership extends BaseTimeEntity {
     }
 
     /**
-     * 양도용 사본을 생성한다 — 양도 받은 회원에게 동일한 멤버십(상품/기간/잔여 횟수/결제 정보)을
-     * 부여하되 다음 차이를 둔다:
+     * 양도용 사본을 생성한다 — 양수자에게 동일한 상품/기간/잔여 횟수를 부여하되 다음 차이를 둔다:
      *   - 소유자: {@code newMember}
-     *   - status: 활성 (원본의 상태와 무관)
-     *   - transferred: true (재양도 차단 마커)
+     *   - price: 양수자가 실제로 지불한 {@code transferFee} 를 저장한다.
+     *            정가를 복사하면 양수자의 미수금이 정가만큼 발생하는 것으로 오인되므로 지양.
+     *   - 결제수단/결제일: 복사하지 않음 — 양수자 측 양도비 결제 정보는 완료 시 별도 기록된다
      *   - 결제 이력(payments): 복사하지 않음 (원본에 귀속)
-     *   - 멤버십 변경 이력(changedFromSeq, changeFee): 복사하지 않음 (양도와 무관)
+     *   - changedFromSeq: 원본 멤버십 seq — 양수자 멤버십의 유래를 추적
+     *   - changeFee: transferFee — 양수자가 이 멤버십을 취득하며 지불한 금액
+     *   - status: 활성 (원본의 상태와 무관)
+     *   - transferred: true (재양도 차단 + 멤버십 변경 차단 마커)
      *   - internal: 기본값 false (양도는 시스템 내부 부여가 아님)
      */
-    public ComplexMemberMembership copyForTransferTo(ComplexMember newMember) {
+    public ComplexMemberMembership copyForTransferTo(ComplexMember newMember, int transferFee) {
         return ComplexMemberMembership.builder()
                 .member(newMember)
                 .membership(this.membership)
@@ -162,9 +165,9 @@ public class ComplexMemberMembership extends BaseTimeEntity {
                 .usedCount(this.usedCount)
                 .postponeTotal(this.postponeTotal)
                 .postponeUsed(this.postponeUsed)
-                .price(this.price)
-                .paymentMethod(this.paymentMethod)
-                .paymentDate(this.paymentDate)
+                .price(String.valueOf(transferFee))
+                .changedFromSeq(this.seq)
+                .changeFee((long) transferFee)
                 .status(MembershipStatus.활성)
                 .transferred(true)
                 .build();
@@ -173,7 +176,7 @@ public class ComplexMemberMembership extends BaseTimeEntity {
     /**
      *
      * 해당 멤버십이 변경할 수 있는 멤버십인지 검증
-     * 사용이 불가능한 상태이거나, 리더용 멤버십일 경우, 예외를 발생
+     * 사용이 불가능한 상태이거나, 리더용/양도받은 멤버십일 경우, 예외를 발생
      *
      */
     public void isChangeable(){
@@ -183,6 +186,10 @@ public class ComplexMemberMembership extends BaseTimeEntity {
 
         if(this.getMembership().isInternal()){
             throw new IllegalArgumentException("리더 전용 멤버십은 변경할 수 없습니다.");
+        }
+
+        if (Boolean.TRUE.equals(this.transferred)) {
+            throw new IllegalStateException("양도 받은 멤버십은 변경할 수 없습니다.");
         }
     }
 }

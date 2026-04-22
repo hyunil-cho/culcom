@@ -88,17 +88,6 @@ function TransferRequestsContent() {
     { header: '잔여', render: (item) => `${item.remainingCount}회` },
     { header: '양도비', render: (item) => `${item.transferFee.toLocaleString()}원` },
     { header: '요청일', render: (item) => <span style={{ fontSize: '0.75rem', color: '#666' }}>{item.createdDate?.split('T')[0] ?? '-'}</span> },
-    { header: '상세', render: (item) => (
-      <button
-        onClick={(e) => { e.stopPropagation(); detailModal.open(item); }}
-        style={{
-          background: '#6366f1', color: '#fff', border: 'none', borderRadius: 3,
-          padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600,
-        }}
-      >
-        상세
-      </button>
-    )},
   ];
 
   return (

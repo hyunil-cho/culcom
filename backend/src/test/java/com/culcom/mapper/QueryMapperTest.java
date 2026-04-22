@@ -21,11 +21,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * MyBatis Mapper XML의 SQL/컬럼 매핑이 실제 DB 스키마와 일치하는지 검증한다.
- * H2(local 프로필)에서 JPA가 생성한 스키마 위에 mapper 쿼리를 실행하여,
+ * H2(test 프로필)에서 JPA가 생성한 스키마 위에 mapper 쿼리를 실행하여,
  * 컬럼명 오타나 스키마 불일치를 빌드 타임에 잡는다.
+ * 다른 서비스 테스트와 동일 프로필을 쓰므로 Spring 컨텍스트가 공유되어 부팅 비용을 절약한다.
  */
 @SpringBootTest
-@ActiveProfiles("local")
+@ActiveProfiles("test")
 class QueryMapperTest {
 
     @Autowired CustomerQueryMapper customerQueryMapper;

@@ -25,7 +25,7 @@ export function useMemberForm(seq?: number) {
   const [surveySubmissionSeq, setSurveySubmissionSeq] = useState<number | null>(null);
   const { allClasses } = useClassSlots();
   const staff = useStaffForm({ seq, isEdit, allClasses });
-  const membership = useMembership({ memberSeq: seq, isEdit, memberName: form.name, memberPhone: form.phoneNumber });
+  const membership = useMembership({ memberSeq: seq, isEdit });
   const [classAssign, setClassAssign] = useState<ClassAssignData>(emptyClassAssign);
   const { run, modal } = useResultModal({
     redirectPath: staff.staffMode ? ROUTES.COMPLEX_STAFFS : ROUTES.COMPLEX_MEMBERS,
@@ -33,20 +33,22 @@ export function useMemberForm(seq?: number) {
     invalidateKeys: ['staffs', ...MEMBERSHIP_RELATED],
   });
 
-  // 양도 불일치 모달 상태
-  const [showTransferMismatch, setShowTransferMismatch] = useState(false);
-
-  // 신규 등록 시 이름+전화번호로 대기 양도 자동 감지 (디바운스 500ms)
-  const pendingCheckTimer = useRef<ReturnType<typeof setTimeout>>();
+  // 양도 요청을 선택하면, 비어 있는 이름/전화번호에 양수자 정보를 자동으로 채워 넣는다.
+  // 관리자가 수동으로 다른 값을 미리 입력해둔 경우엔 덮어쓰지 않는다.
+  const selectedTransfer = membership.selectedTransfer;
   useEffect(() => {
-    if (isEdit) return;
-    if (!form.name.trim() || !form.phoneNumber.trim()) return;
-    clearTimeout(pendingCheckTimer.current);
-    pendingCheckTimer.current = setTimeout(() => {
-      membership.checkPendingTransfer(form.name, form.phoneNumber);
-    }, 500);
-    return () => clearTimeout(pendingCheckTimer.current);
-  }, [form.name, form.phoneNumber, isEdit]);
+    if (!selectedTransfer) return;
+    setForm(prev => {
+      const next = { ...prev };
+      if (!prev.name.trim() && selectedTransfer.toCustomerName) {
+        next.name = selectedTransfer.toCustomerName;
+      }
+      if (!prev.phoneNumber.trim() && selectedTransfer.toCustomerPhone) {
+        next.phoneNumber = selectedTransfer.toCustomerPhone;
+      }
+      return next;
+    });
+  }, [selectedTransfer]);
 
   // 수정 모드: 회원 기본 정보 로드
   const { data: memberData } = useApiQuery(
@@ -108,13 +110,6 @@ export function useMemberForm(seq?: number) {
     signupChannel: (form.signupChannel && form.signupChannel !== '기타') ? form.signupChannel : undefined,
   });
 
-  /** 양도 불일치 여부 확인 */
-  const checkTransferMismatch = (): boolean => {
-    if (!membership.transferMode || !membership.selectedTransfer) return false;
-    const t = membership.selectedTransfer;
-    return form.name.trim() !== t.fromMemberName || form.phoneNumber !== t.fromMemberPhone;
-  };
-
   /** 실제 저장 로직 */
   const doSubmit = async () => {
     if (isEdit) {
@@ -152,29 +147,11 @@ export function useMemberForm(seq?: number) {
     if (msError) { setFormError(msError); return; }
     clearFormError();
 
-    if (checkTransferMismatch()) {
-      setShowTransferMismatch(true);
-      return;
-    }
-
     try {
       await doSubmit();
     } catch (e) {
       setFormError(e instanceof Error ? e.message : '저장 중 오류가 발생했습니다.');
     }
-  };
-
-  const confirmMismatchAndSubmit = async () => {
-    setShowTransferMismatch(false);
-    try {
-      await doSubmit();
-    } catch (e) {
-      setFormError(e instanceof Error ? e.message : '저장 중 오류가 발생했습니다.');
-    }
-  };
-
-  const dismissMismatch = () => {
-    setShowTransferMismatch(false);
   };
 
   return {
@@ -182,7 +159,6 @@ export function useMemberForm(seq?: number) {
     staffForm: staff.staffForm, setStaffForm: staff.setStaffForm,
     staffClassAssign: staff.staffClassAssign, setStaffClassAssign: staff.setStaffClassAssign,
     handleSubmit, run, modal, isEdit,
-    showTransferMismatch, confirmMismatchAndSubmit, dismissMismatch,
     formError, clearFormError,
     setSurveySubmissionSeq,
   };

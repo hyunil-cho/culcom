@@ -247,11 +247,12 @@ class TransferServiceGapTest {
         Fixture f = setup("B1");
         ComplexMemberMembership mm = makeMm(f, MembershipStatus.활성, LocalDate.now().plusDays(80));
 
-        // 정상 상태에서 요청 생성
+        // 정상 상태에서 요청 생성 후 관리자 확인까지 완료된 상태를 가정
         TransferRequest tr = transferRequestRepository.save(TransferRequest.builder()
                 .memberMembership(mm).fromMember(f.member).branch(f.branch)
                 .transferFee(30_000).remainingCount(30)
                 .token(UUID.randomUUID().toString().replace("-", ""))
+                .status(com.culcom.entity.enums.TransferStatus.확인)
                 .build());
 
         // 그 사이 환불이 승인되어 멤버십 상태가 환불로 바뀐 상황 시뮬레이션
@@ -278,6 +279,7 @@ class TransferServiceGapTest {
                 .memberMembership(mm).fromMember(f.member).branch(f.branch)
                 .transferFee(30_000).remainingCount(30)
                 .token(UUID.randomUUID().toString().replace("-", ""))
+                .status(com.culcom.entity.enums.TransferStatus.확인)
                 .build());
 
         // 양도자 == 양수자

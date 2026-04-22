@@ -44,11 +44,12 @@
         <!--
           "사용 가능한" 멤버십만 join — status가 활성이라도 기간 만료 / 횟수 소진이면 제외.
           이렇게 해야 noMembership 플래그가 진짜 출석 가능 여부와 일치한다.
+          스태프의 내부 멤버십(internal=TRUE)도 출석 가능한 활성 멤버십이므로 internal 필터는 두지 않는다
+          — 스태프가 다른 팀에 일반 멤버로 배정된 경우에도 noMembership이 TRUE로 오판되지 않도록.
         -->
         LEFT JOIN complex_member_memberships mm
                ON mm.member_seq = m.seq
               AND mm.status = '활성'
-              AND mm.internal = FALSE
               AND (mm.expiry_date IS NULL OR mm.expiry_date &gt;= #{today})
               AND (mm.total_count IS NULL OR mm.used_count &lt; mm.total_count)
         LEFT JOIN complex_postponement_requests pr
@@ -109,11 +110,13 @@
         ) cm ON cm.class_seq = c.seq
         LEFT JOIN complex_members m ON m.seq = cm.member_seq
         LEFT JOIN complex_member_metadata md ON md.member_seq = m.seq
-        <!-- 상세 뷰는 만료/소진 멤버십도 화면에 보여줘야 하므로 활성 조건만 유지 -->
+        <!--
+          상세 뷰는 만료/소진 멤버십도 화면에 보여줘야 하므로 활성 조건만 유지.
+          스태프의 내부 멤버십(internal=TRUE)도 잔여횟수/만료일 표시 대상이므로 internal 필터는 두지 않는다.
+        -->
         LEFT JOIN complex_member_memberships mm
                ON mm.member_seq = m.seq
               AND mm.status = '활성'
-              AND mm.internal = FALSE
         LEFT JOIN complex_postponement_requests pr
                ON pr.member_membership_seq = mm.seq
               AND pr.status = '승인'
@@ -151,93 +154,20 @@
         ORDER BY sub.classSeq, sub.memberSeq, sub.rn
     </select>
 
-    <!-- 회원/스태프 공통 출석 히스토리 (페이징) -->
-    <select id="selectMemberAttendanceHistory" resultType="com.culcom.dto.complex.attendance.AttendanceHistoryDetailRow">
-        SELECT
-            a.seq             AS seq,
-            a.attendance_date AS attendanceDate,
-            a.status          AS status,
-            c.name            AS className,
-            a.note            AS note
-        FROM complex_member_attendance a
-        JOIN complex_classes c ON c.seq = a.class_seq
-        WHERE a.member_seq = #{memberSeq}
-          AND c.branch_seq = #{branchSeq}
-        ORDER BY a.attendance_date DESC, c.name
-        LIMIT #{size} OFFSET #{offset}
-    </select>
-
-    <select id="countMemberAttendanceHistory" resultType="int">
-        SELECT COUNT(*)
-        FROM complex_member_attendance a
-        JOIN complex_classes c ON c.seq = a.class_seq
-        WHERE a.member_seq = #{memberSeq}
-          AND c.branch_seq = #{branchSeq}
-    </select>
-
-    <!-- 스태프 출석 히스토리 — 동일 테이블, 동일 쿼리 -->
-    <select id="selectStaffAttendanceHistory" resultType="com.culcom.dto.complex.attendance.AttendanceHistoryDetailRow">
-        SELECT
-            a.seq             AS seq,
-            a.attendance_date AS attendanceDate,
-            a.status          AS status,
-            c.name            AS className,
-            a.note            AS note
-        FROM complex_member_attendance a
-        JOIN complex_classes c ON c.seq = a.class_seq
-        WHERE a.member_seq = #{staffSeq}
-          AND c.branch_seq = #{branchSeq}
-        ORDER BY a.attendance_date DESC, c.name
-        LIMIT #{size} OFFSET #{offset}
-    </select>
-
-    <select id="countStaffAttendanceHistory" resultType="int">
-        SELECT COUNT(*)
-        FROM complex_member_attendance a
-        JOIN complex_classes c ON c.seq = a.class_seq
-        WHERE a.member_seq = #{staffSeq}
-          AND c.branch_seq = #{branchSeq}
-    </select>
-
-    <!-- 회원 출석 히스토리 요약 -->
-    <select id="selectMemberAttendanceSummary" resultType="com.culcom.dto.complex.attendance.AttendanceHistorySummary">
-        SELECT
-            COUNT(*)                                    AS totalCount,
-            SUM(CASE WHEN a.status = '출석' THEN 1 ELSE 0 END) AS presentCount,
-            SUM(CASE WHEN a.status = '결석' THEN 1 ELSE 0 END) AS absentCount,
-            SUM(CASE WHEN a.status = '연기' THEN 1 ELSE 0 END) AS postponeCount,
-            MIN(a.attendance_date)                      AS startDate,
-            MAX(a.attendance_date)                      AS endDate
-        FROM complex_member_attendance a
-        JOIN complex_classes c ON c.seq = a.class_seq
-        WHERE a.member_seq = #{memberSeq}
-          AND c.branch_seq = #{branchSeq}
-    </select>
-
-    <!-- 스태프 출석 히스토리 요약 — 동일 쿼리 -->
-    <select id="selectStaffAttendanceSummary" resultType="com.culcom.dto.complex.attendance.AttendanceHistorySummary">
-        SELECT
-            COUNT(*)                                    AS totalCount,
-            SUM(CASE WHEN a.status = '출석' THEN 1 ELSE 0 END) AS presentCount,
-            SUM(CASE WHEN a.status = '결석' THEN 1 ELSE 0 END) AS absentCount,
-            SUM(CASE WHEN a.status = '연기' THEN 1 ELSE 0 END) AS postponeCount,
-            MIN(a.attendance_date)                      AS startDate,
-            MAX(a.attendance_date)                      AS endDate
-        FROM complex_member_attendance a
-        JOIN complex_classes c ON c.seq = a.class_seq
-        WHERE a.member_seq = #{staffSeq}
-          AND c.branch_seq = #{branchSeq}
-    </select>
-
-    <!-- 전체 스태프 출석율 요약 (fromDate 이후) -->
+    <!--
+      전체 스태프 출석율 요약 (fromDate 이후)
+      "리더로서 자기 팀 수업에 찍은 출석"만 집계한다 — c.staff_seq = a.member_seq.
+      (주의: staff_seq는 현재 리더만 가리키므로 리더 교체 이력이 있으면 시점 분리는 되지 않음.)
+    -->
     <select id="selectAllStaffAttendanceRates" resultType="com.culcom.dto.complex.attendance.StaffAttendanceRateSummary">
         SELECT
             a.member_seq                                         AS staffSeq,
             COUNT(*)                                             AS totalCount,
             SUM(CASE WHEN a.status = '출석' THEN 1 ELSE 0 END)  AS presentCount
         FROM complex_member_attendance a
-        JOIN complex_classes c ON c.seq = a.class_seq
-        JOIN complex_staff_info si ON si.member_seq = a.member_seq
+        JOIN complex_classes c
+          ON c.seq = a.class_seq
+         AND c.staff_seq = a.member_seq
         WHERE c.branch_seq = #{branchSeq}
           AND a.attendance_date &gt;= #{fromDate}
         GROUP BY a.member_seq

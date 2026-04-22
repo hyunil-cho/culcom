@@ -1,4 +1,4 @@
-import { api, type PageResponse } from './client';
+import { api } from './client';
 import { API } from '@/lib/routes';
 
 export interface AttendanceViewMember {
@@ -32,15 +32,6 @@ export interface BulkAttendanceResult {
   memberSeq: number; name: string; status: BulkAttendanceResultStatus;
 }
 
-export interface AttendanceHistoryDetail {
-  seq: number; attendanceDate: string; status: string; className: string; note: string | null;
-}
-
-export interface AttendanceHistorySummary {
-  totalCount: number; presentCount: number; absentCount: number; postponeCount: number;
-  startDate: string | null; endDate: string | null;
-}
-
 export interface StaffAttendanceRateSummary {
   staffSeq: number; totalCount: number; presentCount: number;
 }
@@ -55,14 +46,6 @@ export const attendanceViewApi = {
     api.post<void>(API.COMPLEX_ATTENDANCE_REORDER, { classOrders }),
   reorderMembers: (classSeq: number, memberOrders: { memberSeq: number; sortOrder: number }[]) =>
     api.post<void>(`${API.COMPLEX_ATTENDANCE_REORDER}/members`, { classSeq, memberOrders }),
-  memberHistory: (memberSeq: number, page: number = 0, size: number = 20) =>
-    api.get<PageResponse<AttendanceHistoryDetail>>(`${API.COMPLEX_ATTENDANCE_MEMBER_HISTORY(memberSeq)}?page=${page}&size=${size}`),
-  staffHistory: (staffSeq: number, page: number = 0, size: number = 20) =>
-    api.get<PageResponse<AttendanceHistoryDetail>>(`${API.COMPLEX_ATTENDANCE_STAFF_HISTORY(staffSeq)}?page=${page}&size=${size}`),
-  memberHistorySummary: (memberSeq: number) =>
-    api.get<AttendanceHistorySummary>(API.COMPLEX_ATTENDANCE_MEMBER_HISTORY_SUMMARY(memberSeq)),
-  staffHistorySummary: (staffSeq: number) =>
-    api.get<AttendanceHistorySummary>(API.COMPLEX_ATTENDANCE_STAFF_HISTORY_SUMMARY(staffSeq)),
   staffAttendanceRates: (months?: number) =>
     api.get<StaffAttendanceRateSummary[]>(
       months ? `${API.COMPLEX_ATTENDANCE_STAFF_RATES}?months=${months}` : API.COMPLEX_ATTENDANCE_STAFF_RATES

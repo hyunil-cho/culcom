@@ -7,15 +7,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -23,6 +20,10 @@ import static org.mockito.BDDMockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.culcom.config.GlobalExceptionHandler;
+import com.culcom.config.SecurityConfig;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 
 /**
  * POST /api/complex/classes/{seq}/members/{memberSeq}
@@ -30,10 +31,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * ComplexClassServiceCapacityTest 가 담당하고, 이 테스트는 컨트롤러가
  * 그 예외를 400 Bad Request + 메시지로 내려주는지 확인한다.
  */
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(ComplexClassController.class)
+@Import({SecurityConfig.class, GlobalExceptionHandler.class})
 @ActiveProfiles("test")
-@Transactional
 class ComplexClassControllerCapacityTest {
 
     @Autowired MockMvc mockMvc;

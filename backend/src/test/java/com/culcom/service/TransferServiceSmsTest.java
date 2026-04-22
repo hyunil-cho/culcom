@@ -66,17 +66,22 @@ class TransferServiceSmsTest {
                 .build();
     }
 
+    /** completeTransfer 기본 진입 상태(관리자 확인 완료)로 생성. */
     private TransferRequest createTransferRequest() {
+        return createTransferRequest(TransferStatus.확인);
+    }
+
+    private TransferRequest createTransferRequest(TransferStatus status) {
         return TransferRequest.builder()
                 .seq(1L).memberMembership(memberMembership).fromMember(fromMember)
-                .branch(branch).status(TransferStatus.생성)
+                .branch(branch).status(status)
                 .transferFee(20000).remainingCount(25).token("test-token")
                 .build();
     }
 
     @Test
     void 양도_거절시_양도거절_SMS_발송() {
-        TransferRequest tr = createTransferRequest();
+        TransferRequest tr = createTransferRequest(TransferStatus.접수);
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
 
         transferService.updateStatus(1L, TransferStatus.거절, null);
@@ -87,7 +92,7 @@ class TransferServiceSmsTest {
 
     @Test
     void 양도_확인시_SMS_발송하지_않음() {
-        TransferRequest tr = createTransferRequest();
+        TransferRequest tr = createTransferRequest(TransferStatus.접수);
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
 
         transferService.updateStatus(1L, TransferStatus.확인, null);
@@ -97,7 +102,7 @@ class TransferServiceSmsTest {
 
     @Test
     void 양도_거절시_양도완료_SMS는_발송하지_않음() {
-        TransferRequest tr = createTransferRequest();
+        TransferRequest tr = createTransferRequest(TransferStatus.접수);
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
 
         transferService.updateStatus(1L, TransferStatus.거절, null);
@@ -136,7 +141,7 @@ class TransferServiceSmsTest {
 
     @Test
     void 거절_SMS_정상_발송시_smsWarning은_null이다() {
-        TransferRequest tr = createTransferRequest();
+        TransferRequest tr = createTransferRequest(TransferStatus.접수);
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
         given(smsService.sendEventSmsIfConfigured(anyLong(), any(), anyString(), anyString(), any()))
                 .willReturn(null);
@@ -148,7 +153,7 @@ class TransferServiceSmsTest {
 
     @Test
     void 거절_SMS_발송_실패시_경고가_response에_담긴다() {
-        TransferRequest tr = createTransferRequest();
+        TransferRequest tr = createTransferRequest(TransferStatus.접수);
         given(transferRequestRepository.findById(1L)).willReturn(Optional.of(tr));
         given(smsService.sendEventSmsIfConfigured(anyLong(), any(), anyString(), anyString(), any()))
                 .willReturn("문자 발송 실패: 잔여 건수 부족");

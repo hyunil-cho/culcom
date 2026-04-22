@@ -196,8 +196,4 @@ describe('API - 동적 엔드포인트 함수', () => {
   it('CALENDAR_RESERVATION_STATUS(20)', () => {
     expect(API.CALENDAR_RESERVATION_STATUS(20)).toBe('/calendar/reservations/20/status');
   });
-
-  it('COMPLEX_ATTENDANCE_MEMBER_HISTORY(5)', () => {
-    expect(API.COMPLEX_ATTENDANCE_MEMBER_HISTORY(5)).toBe('/complex/attendance/history/member/5');
-  });
 });

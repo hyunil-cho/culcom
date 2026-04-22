@@ -18,7 +18,7 @@ vi.mock('@/lib/api', async () => {
     transferApi: {
       ...actual.transferApi,
       list: (...a: unknown[]) => mockListTransfers(...a),
-      findPending: vi.fn().mockResolvedValue({ success: true, data: null }),
+      listSelectable: vi.fn().mockResolvedValue({ success: true, data: [] }),
     },
   };
 });

@@ -101,6 +101,31 @@ class PublicPostponementServiceOutstandingTest {
     }
 
     @Test
+    void 양도받은_멤버십도_연기_신청이_가능해야_한다() {
+        // 양도받은 멤버십은 price=양도비(예: 30,000)로 저장되고 양수자가 양도비만큼만 납부한다.
+        // paid == mm.price 이므로 미수금 가드를 통과해 연기 신청이 허용되어야 한다.
+        // (멤버십 변경은 별도 가드로 차단되지만, 연기는 양수자의 당연한 권리로 유지.)
+        Membership product = Membership.builder()
+                .seq(100L).name("3개월권").duration(90).count(30).price(300_000).build();
+        ComplexMemberMembership transferred = ComplexMemberMembership.builder()
+                .seq(20L).member(member).membership(product).status(MembershipStatus.활성)
+                .startDate(LocalDate.now()).expiryDate(LocalDate.now().plusMonths(3))
+                .price("30000")        // 양도비가 price 로 저장됨
+                .totalCount(30).usedCount(5)
+                .postponeTotal(3).postponeUsed(0)
+                .transferred(true)     // 양도 취득 마커
+                .build();
+
+        given(branchRepository.findById(1L)).willReturn(Optional.of(branch));
+        given(memberRepository.findById(10L)).willReturn(Optional.of(member));
+        given(memberMembershipRepository.findById(20L)).willReturn(Optional.of(transferred));
+        given(paymentRepository.sumAmountByMemberMembershipSeq(20L)).willReturn(30_000L); // 양도비 납부 = 완납
+
+        assertThatCode(() -> publicPostponementService.submit(createRequest()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
     void 비활성_멤버십이면_연기_신청_실패() {
         Membership product = Membership.builder()
                 .seq(100L).name("3개월권").duration(90).count(30).price(300_000).build();

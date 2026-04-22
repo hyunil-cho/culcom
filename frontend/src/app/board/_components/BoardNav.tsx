@@ -28,7 +28,6 @@ export default function BoardNav({ isLoggedIn, memberName, activePage }: BoardNa
           <span className="logo-icon">📢</span>
           <span className="logo-text">E:UT</span>
           <span className="logo-divider"></span>
-          <span className="logo-sub">공지 · 이벤트</span>
         </Link>
         {isLoggedIn ? (
           <div className="nav-right">

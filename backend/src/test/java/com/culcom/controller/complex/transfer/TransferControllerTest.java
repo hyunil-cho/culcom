@@ -8,8 +8,6 @@ import com.culcom.service.TransferService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,7 +15,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.*;
 import java.util.*;
@@ -28,11 +25,13 @@ import static org.mockito.BDDMockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-@SpringBootTest
-@AutoConfigureMockMvc
+import com.culcom.config.GlobalExceptionHandler;
+import com.culcom.config.SecurityConfig;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+@WebMvcTest(TransferController.class)
+@Import({SecurityConfig.class, GlobalExceptionHandler.class})
 @ActiveProfiles("test")
-@Transactional
 class TransferControllerTest {
 
     @Autowired MockMvc mockMvc;
@@ -81,21 +80,21 @@ class TransferControllerTest {
     }
 
     @Test
-    void 접수상태_양도요청_검색() throws Exception {
+    void 선택가능한_양도요청_목록() throws Exception {
         TransferRequestResponse item = TransferRequestResponse.builder()
-                .seq(1L).fromMemberName("홍길동").status(TransferStatus.접수)
+                .seq(1L).fromMemberName("홍길동").status(TransferStatus.확인)
                 .toCustomerName("김철수").build();
 
-        given(transferService.findPendingByRecipient(eq("김철수"), eq("01098765432")))
-                .willReturn(item);
+        given(transferService.listSelectable(eq(1L)))
+                .willReturn(List.of(item));
 
-        mockMvc.perform(get("/api/transfer-requests/pending")
-                        .with(auth())
-                        .param("name", "김철수")
-                        .param("phone", "01098765432"))
+        mockMvc.perform(get("/api/transfer-requests/selectable")
+                        .with(auth()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.toCustomerName").value("김철수"));
+                .andExpect(jsonPath("$.data", hasSize(1)))
+                .andExpect(jsonPath("$.data[0].toCustomerName").value("김철수"))
+                .andExpect(jsonPath("$.data[0].status").value("확인"));
     }
 
     @Test
@@ -151,12 +150,15 @@ class TransferControllerTest {
         TransferRequestResponse response = TransferRequestResponse.builder()
                 .seq(1L).status(TransferStatus.확인).toCustomerName("김철수").build();
 
-        given(transferService.completeTransfer(eq(1L), eq(100L)))
+        given(transferService.completeTransfer(eq(1L), eq(100L),
+                org.mockito.ArgumentMatchers.any(com.culcom.dto.transfer.TransferCompleteRequest.class)))
                 .willReturn(response);
 
         mockMvc.perform(post("/api/transfer-requests/{seq}/complete", 1L)
                         .with(auth())
-                        .param("memberSeq", "100"))
+                        .param("memberSeq", "100")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"paymentMethod\":\"현금\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("양도가 완료되었습니다."))

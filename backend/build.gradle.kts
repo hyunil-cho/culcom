@@ -49,4 +49,9 @@ dependencies {
 }
 tasks.withType<Test> {
     useJUnitPlatform()
+    // 테스트 fork 를 CPU 수 절반까지 병렬 실행 — Spring 컨텍스트 로딩이 대부분의 비용이므로
+    // CPU 여유분만큼 선형 단축 효과. fork 별로 H2 in-memory DB 가 독립되므로 데이터 간섭 없음.
+    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+    // 각 fork 가 일정 테스트 수를 수행하면 JVM 을 재시작 — 메모리 누수·context leakage 방지.
+    forkEvery = 100
 }

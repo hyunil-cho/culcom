@@ -56,6 +56,7 @@ class TransferServiceCompleteTest {
     @Autowired ComplexMemberMembershipRepository memberMembershipRepository;
     @Autowired ComplexMemberClassMappingRepository classMappingRepository;
     @Autowired TransferRequestRepository transferRequestRepository;
+    @Autowired MembershipPaymentRepository paymentRepository;
 
     @Test
     void 양도_완료시_양도자_멤버십_만료_양수자에게_동일_멤버십_이전_수업_해제() {
@@ -92,7 +93,7 @@ class TransferServiceCompleteTest {
         classMappingRepository.save(ComplexMemberClassMapping.builder()
                 .member(fromMember).complexClass(clazz).sortOrder(0).build());
 
-        // given — 양도 요청 생성
+        // given — 양도 요청 생성 (관리자 확인 완료된 상태로)
         TransferRequest tr = transferRequestRepository.save(TransferRequest.builder()
                 .memberMembership(originalMm)
                 .fromMember(fromMember)
@@ -100,6 +101,7 @@ class TransferServiceCompleteTest {
                 .transferFee(50000)
                 .remainingCount(99)
                 .token(UUID.randomUUID().toString().replace("-", ""))
+                .status(TransferStatus.확인)
                 .build());
 
         // given — 양수자(신규 회원) 등록
@@ -181,7 +183,8 @@ class TransferServiceCompleteTest {
         TransferRequest tr = transferRequestRepository.save(TransferRequest.builder()
                 .memberMembership(mm).fromMember(fromMember).branch(branch)
                 .transferFee(20000).remainingCount(30)
-                .token(UUID.randomUUID().toString().replace("-", "")).build());
+                .token(UUID.randomUUID().toString().replace("-", ""))
+                .status(TransferStatus.확인).build());
 
         assertThatThrownBy(() -> transferService.completeTransfer(tr.getSeq(), fromMember.getSeq()))
                 .isInstanceOf(IllegalStateException.class)
@@ -206,7 +209,8 @@ class TransferServiceCompleteTest {
         TransferRequest tr = transferRequestRepository.save(TransferRequest.builder()
                 .memberMembership(mm).fromMember(fromMember).branch(branch)
                 .transferFee(20000).remainingCount(30)
-                .token(UUID.randomUUID().toString().replace("-", "")).build());
+                .token(UUID.randomUUID().toString().replace("-", ""))
+                .status(TransferStatus.확인).build());
 
         assertThatThrownBy(() -> transferService.completeTransfer(tr.getSeq(), toMember.getSeq()))
                 .isInstanceOf(IllegalStateException.class)
@@ -214,7 +218,7 @@ class TransferServiceCompleteTest {
     }
 
     @Test
-    void 양도_완료시_모든_핵심_필드가_양수자_멤버십으로_이전된다() {
+    void 양도_완료시_양수자_멤버십의_핵심_필드가_올바르게_세팅된다() {
         Branch branch = branchRepository.save(Branch.builder()
                 .branchName("테스트지점").alias("test-fields-" + System.nanoTime()).build());
         Membership product = membershipRepository.save(Membership.builder()
@@ -234,22 +238,306 @@ class TransferServiceCompleteTest {
                 .postponeTotal(5).postponeUsed(2)
                 .price("400000").paymentMethod("카드").paymentDate(paymentAt)
                 .status(MembershipStatus.활성).build());
+        // 완납 처리 (미수금 가드에 걸리지 않도록)
+        paymentRepository.save(com.culcom.entity.complex.member.MembershipPayment.builder()
+                .memberMembership(originalMm).amount(400_000L)
+                .paidDate(paymentAt).method("카드")
+                .kind(com.culcom.entity.enums.PaymentKind.BALANCE).build());
 
         TransferRequest tr = transferRequestRepository.save(TransferRequest.builder()
                 .memberMembership(originalMm).fromMember(fromMember).branch(branch)
                 .transferFee(30000).remainingCount(43)
-                .token(UUID.randomUUID().toString().replace("-", "")).build());
+                .token(UUID.randomUUID().toString().replace("-", ""))
+                .status(TransferStatus.확인).build());
 
         transferService.completeTransfer(tr.getSeq(), toMember.getSeq());
 
         ComplexMemberMembership newMm = memberMembershipRepository
                 .findByMemberSeqAndInternalFalse(toMember.getSeq()).get(0);
+        // 기간/잔여/연기 횟수 등 "멤버십 사용권" 관련 필드는 그대로 이전
         assertThat(newMm.getStartDate()).as("시작일 이전").isEqualTo(start);
         assertThat(newMm.getPostponeTotal()).as("연기 가능 횟수 이전").isEqualTo(5);
         assertThat(newMm.getPostponeUsed()).as("연기 사용 횟수 이전").isEqualTo(2);
-        assertThat(newMm.getPrice()).as("가격 이전").isEqualTo("400000");
-        assertThat(newMm.getPaymentMethod()).as("결제 수단 이전").isEqualTo("카드");
-        assertThat(newMm.getPaymentDate()).as("결제일 이전").isEqualTo(paymentAt);
+
+        // 가격은 원본 정가가 아닌 '양도비' 기준이어야 한다 — 양수자가 지불한 금액만 기록
+        assertThat(newMm.getPrice()).as("가격은 양도비만 기록되어야 함").isEqualTo("30000");
+
+        // 원본 결제수단/결제일은 복사되지 않아야 한다 — 양수자 측 결제는 완료 시점에 별도 기록됨
+        assertThat(newMm.getPaymentMethod()).as("원본 결제수단이 양수자에게 복사되면 안 됨").isNull();
+        assertThat(newMm.getPaymentDate()).as("원본 결제일이 양수자에게 복사되면 안 됨").isNull();
+
+        // 양수자 멤버십이 원본과 연결되어 있어야 함 (유래 추적)
+        assertThat(newMm.getChangedFromSeq()).as("원본 멤버십 seq 링크").isEqualTo(originalMm.getSeq());
+        assertThat(newMm.getChangeFee()).as("지불한 양도비 기록").isEqualTo(30_000L);
+    }
+
+    @Test
+    void 양도_완료시_요청에_담긴_결제수단_결제일이_납부기록에_반영된다() {
+        // 관리자가 양수자의 양도비 결제수단/시각을 입력하면, 그 값이 양수자 멤버십의 납부 기록에 그대로 들어가야 한다.
+        Branch branch = branchRepository.save(Branch.builder()
+                .branchName("테스트지점").alias("test-pm-" + System.nanoTime()).build());
+        Membership product = membershipRepository.save(Membership.builder()
+                .name("상품").duration(90).count(30).price(300_000).transferable(true).build());
+        ComplexMember fromMember = memberRepository.save(ComplexMember.builder()
+                .name("양도자").phoneNumber("01010000021").branch(branch).build());
+        ComplexMember toMember = memberRepository.save(ComplexMember.builder()
+                .name("양수자").phoneNumber("01010000022").branch(branch).build());
+        ComplexMemberMembership originalMm = memberMembershipRepository.save(ComplexMemberMembership.builder()
+                .member(fromMember).membership(product)
+                .startDate(LocalDate.now()).expiryDate(LocalDate.now().plusDays(90))
+                .totalCount(30).usedCount(0)
+                .price("300000").status(MembershipStatus.활성).build());
+        paymentRepository.save(com.culcom.entity.complex.member.MembershipPayment.builder()
+                .memberMembership(originalMm).amount(300_000L)
+                .paidDate(LocalDateTime.now()).method("카드")
+                .kind(com.culcom.entity.enums.PaymentKind.BALANCE).build());
+
+        TransferRequest tr = transferRequestRepository.save(TransferRequest.builder()
+                .memberMembership(originalMm).fromMember(fromMember).branch(branch)
+                .transferFee(30_000).remainingCount(30)
+                .token(UUID.randomUUID().toString().replace("-", ""))
+                .status(TransferStatus.확인).build());
+
+        LocalDateTime paidAt = LocalDateTime.of(2026, 4, 22, 15, 30);
+        com.culcom.dto.transfer.TransferCompleteRequest req = new com.culcom.dto.transfer.TransferCompleteRequest();
+        req.setPaymentMethod("현금");
+        req.setPaymentDate(paidAt);
+
+        transferService.completeTransfer(tr.getSeq(), toMember.getSeq(), req);
+
+        ComplexMemberMembership newMm = memberMembershipRepository
+                .findByMemberSeqAndInternalFalse(toMember.getSeq()).get(0);
+        java.util.List<com.culcom.entity.complex.member.MembershipPayment> payments =
+                paymentRepository.findByMemberMembershipSeqOrderByPaidDateAscSeqAsc(newMm.getSeq());
+
+        assertThat(payments).hasSize(1);
+        com.culcom.entity.complex.member.MembershipPayment p = payments.get(0);
+        assertThat(p.getMethod()).as("요청의 결제수단이 납부기록에 반영").isEqualTo("현금");
+        assertThat(p.getPaidDate()).as("요청의 결제일이 납부기록에 반영").isEqualTo(paidAt);
+        assertThat(p.getAmount()).as("납부 금액 = 양도비").isEqualTo(30_000L);
+
+        // 양수자 멤버십 자체의 paymentMethod/paymentDate 에도 반영됨
+        assertThat(newMm.getPaymentMethod()).isEqualTo("현금");
+        assertThat(newMm.getPaymentDate()).isEqualTo(paidAt);
+    }
+
+    @Test
+    void 양도_완료시_카드결제이면_카드상세가_납부기록에_저장된다() {
+        Branch branch = branchRepository.save(Branch.builder()
+                .branchName("테스트지점").alias("test-card-" + System.nanoTime()).build());
+        Membership product = membershipRepository.save(Membership.builder()
+                .name("상품").duration(90).count(30).price(300_000).transferable(true).build());
+        ComplexMember fromMember = memberRepository.save(ComplexMember.builder()
+                .name("양도자").phoneNumber("01010000031").branch(branch).build());
+        ComplexMember toMember = memberRepository.save(ComplexMember.builder()
+                .name("양수자").phoneNumber("01010000032").branch(branch).build());
+        ComplexMemberMembership originalMm = memberMembershipRepository.save(ComplexMemberMembership.builder()
+                .member(fromMember).membership(product)
+                .startDate(LocalDate.now()).expiryDate(LocalDate.now().plusDays(90))
+                .totalCount(30).usedCount(0)
+                .price("300000").status(MembershipStatus.활성).build());
+        paymentRepository.save(com.culcom.entity.complex.member.MembershipPayment.builder()
+                .memberMembership(originalMm).amount(300_000L)
+                .paidDate(LocalDateTime.now()).method("카드")
+                .kind(com.culcom.entity.enums.PaymentKind.BALANCE).build());
+
+        TransferRequest tr = transferRequestRepository.save(TransferRequest.builder()
+                .memberMembership(originalMm).fromMember(fromMember).branch(branch)
+                .transferFee(30_000).remainingCount(30)
+                .token(UUID.randomUUID().toString().replace("-", ""))
+                .status(TransferStatus.확인).build());
+
+        com.culcom.dto.complex.member.CardPaymentDetailDto cardDto =
+                com.culcom.dto.complex.member.CardPaymentDetailDto.builder()
+                        .cardCompany("삼성").cardNumber("12345678")
+                        .cardApprovalDate(LocalDate.of(2026, 4, 22))
+                        .cardApprovalNumber("A12345").build();
+        com.culcom.dto.transfer.TransferCompleteRequest req = new com.culcom.dto.transfer.TransferCompleteRequest();
+        req.setPaymentMethod("카드");
+        req.setCardDetail(cardDto);
+
+        transferService.completeTransfer(tr.getSeq(), toMember.getSeq(), req);
+
+        ComplexMemberMembership newMm = memberMembershipRepository
+                .findByMemberSeqAndInternalFalse(toMember.getSeq()).get(0);
+        java.util.List<com.culcom.entity.complex.member.MembershipPayment> payments =
+                paymentRepository.findByMemberMembershipSeqOrderByPaidDateAscSeqAsc(newMm.getSeq());
+        assertThat(payments).hasSize(1);
+        com.culcom.entity.complex.member.MembershipPayment p = payments.get(0);
+        assertThat(p.getMethod()).isEqualTo("카드");
+
+        com.culcom.entity.complex.member.CardPaymentDetail card = p.getCardPaymentDetail();
+        assertThat(card).as("카드 결제 시 카드 상세가 납부기록에 저장되어야 함").isNotNull();
+        assertThat(card.getCardCompany()).isEqualTo("삼성");
+        assertThat(card.getCardNumber()).isEqualTo("12345678");
+        assertThat(card.getCardApprovalDate()).isEqualTo(LocalDate.of(2026, 4, 22));
+        assertThat(card.getCardApprovalNumber()).isEqualTo("A12345");
+    }
+
+    @Test
+    void 양도_완료시_카드결제인데_카드상세가_없으면_거부된다() {
+        Branch branch = branchRepository.save(Branch.builder()
+                .branchName("테스트지점").alias("test-nocard-" + System.nanoTime()).build());
+        Membership product = membershipRepository.save(Membership.builder()
+                .name("상품").duration(90).count(30).price(300_000).transferable(true).build());
+        ComplexMember fromMember = memberRepository.save(ComplexMember.builder()
+                .name("양도자").phoneNumber("01010000041").branch(branch).build());
+        ComplexMember toMember = memberRepository.save(ComplexMember.builder()
+                .name("양수자").phoneNumber("01010000042").branch(branch).build());
+        ComplexMemberMembership originalMm = memberMembershipRepository.save(ComplexMemberMembership.builder()
+                .member(fromMember).membership(product)
+                .startDate(LocalDate.now()).expiryDate(LocalDate.now().plusDays(90))
+                .totalCount(30).usedCount(0)
+                .price("300000").status(MembershipStatus.활성).build());
+        paymentRepository.save(com.culcom.entity.complex.member.MembershipPayment.builder()
+                .memberMembership(originalMm).amount(300_000L)
+                .paidDate(LocalDateTime.now()).method("카드")
+                .kind(com.culcom.entity.enums.PaymentKind.BALANCE).build());
+
+        TransferRequest tr = transferRequestRepository.save(TransferRequest.builder()
+                .memberMembership(originalMm).fromMember(fromMember).branch(branch)
+                .transferFee(30_000).remainingCount(30)
+                .token(UUID.randomUUID().toString().replace("-", ""))
+                .status(TransferStatus.확인).build());
+
+        com.culcom.dto.transfer.TransferCompleteRequest req = new com.culcom.dto.transfer.TransferCompleteRequest();
+        req.setPaymentMethod("카드");
+        // cardDetail 누락
+
+        assertThatThrownBy(() -> transferService.completeTransfer(tr.getSeq(), toMember.getSeq(), req))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("카드");
+    }
+
+    @Test
+    void 양도_완료시_결제수단_미지정이면_납부기록의_method는_null이다() {
+        // 2-arg 기본 오버로드(기존 테스트/기존 호출부 호환) — 결제 정보가 없으면 납부기록의 method 는 null.
+        Branch branch = branchRepository.save(Branch.builder()
+                .branchName("테스트지점").alias("test-nopm-" + System.nanoTime()).build());
+        Membership product = membershipRepository.save(Membership.builder()
+                .name("상품").duration(90).count(30).price(300_000).transferable(true).build());
+        ComplexMember fromMember = memberRepository.save(ComplexMember.builder()
+                .name("양도자").phoneNumber("01010000051").branch(branch).build());
+        ComplexMember toMember = memberRepository.save(ComplexMember.builder()
+                .name("양수자").phoneNumber("01010000052").branch(branch).build());
+        ComplexMemberMembership originalMm = memberMembershipRepository.save(ComplexMemberMembership.builder()
+                .member(fromMember).membership(product)
+                .startDate(LocalDate.now()).expiryDate(LocalDate.now().plusDays(90))
+                .totalCount(30).usedCount(0)
+                .price("300000").status(MembershipStatus.활성).build());
+        paymentRepository.save(com.culcom.entity.complex.member.MembershipPayment.builder()
+                .memberMembership(originalMm).amount(300_000L)
+                .paidDate(LocalDateTime.now()).method("카드")
+                .kind(com.culcom.entity.enums.PaymentKind.BALANCE).build());
+
+        TransferRequest tr = transferRequestRepository.save(TransferRequest.builder()
+                .memberMembership(originalMm).fromMember(fromMember).branch(branch)
+                .transferFee(30_000).remainingCount(30)
+                .token(UUID.randomUUID().toString().replace("-", ""))
+                .status(TransferStatus.확인).build());
+
+        transferService.completeTransfer(tr.getSeq(), toMember.getSeq());
+
+        ComplexMemberMembership newMm = memberMembershipRepository
+                .findByMemberSeqAndInternalFalse(toMember.getSeq()).get(0);
+        java.util.List<com.culcom.entity.complex.member.MembershipPayment> payments =
+                paymentRepository.findByMemberMembershipSeqOrderByPaidDateAscSeqAsc(newMm.getSeq());
+        assertThat(payments).hasSize(1);
+        assertThat(payments.get(0).getMethod()).isNull();
+        assertThat(payments.get(0).getAmount()).isEqualTo(30_000L);
+    }
+
+    @Test
+    void 양도_완료시_양수자_멤버십의_미수금은_0원이어야_한다() {
+        // 버그 방지 회귀 테스트.
+        // 기존엔 양수자 멤버십에 원본 정가(예: 300,000원)가 복사되고, 결제 기록은 원본에 귀속되어
+        // 양수자는 '정가 전액 미수금'으로 잘못 표시되는 문제가 있었다.
+        // 수정 후엔 price=양도비, 양도비 납부 기록이 양수자 멤버십에 귀속되어 미수금이 0이어야 한다.
+        Branch branch = branchRepository.save(Branch.builder()
+                .branchName("테스트지점").alias("test-unpaid-" + System.nanoTime()).build());
+        Membership product = membershipRepository.save(Membership.builder()
+                .name("상품").duration(90).count(30).price(300_000).transferable(true).build());
+        ComplexMember fromMember = memberRepository.save(ComplexMember.builder()
+                .name("양도자").phoneNumber("01010000011").branch(branch).build());
+        ComplexMember toMember = memberRepository.save(ComplexMember.builder()
+                .name("양수자").phoneNumber("01010000012").branch(branch).build());
+        ComplexMemberMembership originalMm = memberMembershipRepository.save(ComplexMemberMembership.builder()
+                .member(fromMember).membership(product)
+                .startDate(LocalDate.now()).expiryDate(LocalDate.now().plusDays(90))
+                .totalCount(30).usedCount(0)
+                .price("300000").status(MembershipStatus.활성).build());
+        paymentRepository.save(com.culcom.entity.complex.member.MembershipPayment.builder()
+                .memberMembership(originalMm).amount(300_000L)
+                .paidDate(LocalDateTime.now()).method("카드")
+                .kind(com.culcom.entity.enums.PaymentKind.BALANCE).build());
+
+        TransferRequest tr = transferRequestRepository.save(TransferRequest.builder()
+                .memberMembership(originalMm).fromMember(fromMember).branch(branch)
+                .transferFee(30_000).remainingCount(30)
+                .token(UUID.randomUUID().toString().replace("-", ""))
+                .status(TransferStatus.확인).build());
+
+        transferService.completeTransfer(tr.getSeq(), toMember.getSeq());
+
+        ComplexMemberMembership newMm = memberMembershipRepository
+                .findByMemberSeqAndInternalFalse(toMember.getSeq()).get(0);
+        long paid = paymentRepository.sumAmountByMemberMembershipSeq(newMm.getSeq());
+        long price = Long.parseLong(newMm.getPrice());
+
+        assertThat(paid).as("양수자 멤버십 납부 합계는 양도비와 같아야 한다").isEqualTo(30_000L);
+        assertThat(price).as("양수자 멤버십 price 는 양도비와 같아야 한다").isEqualTo(30_000L);
+        assertThat(paid - price).as("양수자 미수금은 0이어야 한다").isZero();
+    }
+
+    @Test
+    void 관리자_확인을_받지_않은_양도요청은_회원에_연결할_수_없다() {
+        Branch branch = branchRepository.save(Branch.builder()
+                .branchName("테스트지점").alias("test-notconfirmed-" + System.nanoTime()).build());
+        Membership product = membershipRepository.save(Membership.builder()
+                .name("상품").duration(90).count(30).price(300000).transferable(true).build());
+        ComplexMember fromMember = memberRepository.save(ComplexMember.builder()
+                .name("양도자").phoneNumber("01011111111").branch(branch).build());
+        ComplexMember toMember = memberRepository.save(ComplexMember.builder()
+                .name("양수자").phoneNumber("01022222222").branch(branch).build());
+        ComplexMemberMembership mm = memberMembershipRepository.save(ComplexMemberMembership.builder()
+                .member(fromMember).membership(product)
+                .startDate(LocalDate.now()).expiryDate(LocalDate.now().plusDays(90))
+                .totalCount(30).usedCount(0).status(MembershipStatus.활성).build());
+        // status = 접수 — 양수자 정보는 제출됐지만 관리자 확인 전
+        TransferRequest tr = transferRequestRepository.save(TransferRequest.builder()
+                .memberMembership(mm).fromMember(fromMember).branch(branch)
+                .transferFee(20000).remainingCount(30)
+                .token(UUID.randomUUID().toString().replace("-", ""))
+                .status(TransferStatus.접수).build());
+
+        assertThatThrownBy(() -> transferService.completeTransfer(tr.getSeq(), toMember.getSeq()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("관리자 확인");
+    }
+
+    @Test
+    void 이미_사용된_양도요청은_재사용할_수_없다() {
+        Branch branch = branchRepository.save(Branch.builder()
+                .branchName("테스트지점").alias("test-reuse-" + System.nanoTime()).build());
+        Membership product = membershipRepository.save(Membership.builder()
+                .name("상품").duration(90).count(30).price(300000).transferable(true).build());
+        ComplexMember fromMember = memberRepository.save(ComplexMember.builder()
+                .name("양도자").phoneNumber("01011111111").branch(branch).build());
+        ComplexMember toMember = memberRepository.save(ComplexMember.builder()
+                .name("양수자").phoneNumber("01022222222").branch(branch).build());
+        ComplexMemberMembership mm = memberMembershipRepository.save(ComplexMemberMembership.builder()
+                .member(fromMember).membership(product)
+                .startDate(LocalDate.now()).expiryDate(LocalDate.now().plusDays(90))
+                .totalCount(30).usedCount(0).status(MembershipStatus.활성).build());
+        TransferRequest tr = transferRequestRepository.save(TransferRequest.builder()
+                .memberMembership(mm).fromMember(fromMember).branch(branch)
+                .transferFee(20000).remainingCount(30)
+                .token(UUID.randomUUID().toString().replace("-", ""))
+                .status(TransferStatus.확인).referenced(true).build());
+
+        assertThatThrownBy(() -> transferService.completeTransfer(tr.getSeq(), toMember.getSeq()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("이미 사용된");
     }
 
     @Test
@@ -278,7 +566,8 @@ class TransferServiceCompleteTest {
         TransferRequest tr = transferRequestRepository.save(TransferRequest.builder()
                 .memberMembership(mm).fromMember(fromMember).branch(branch)
                 .transferFee(20000).remainingCount(30)
-                .token(UUID.randomUUID().toString().replace("-", "")).build());
+                .token(UUID.randomUUID().toString().replace("-", ""))
+                .status(TransferStatus.확인).build());
 
         assertThatThrownBy(() -> transferService.completeTransfer(tr.getSeq(), 9_999_999L))
                 .isInstanceOf(EntityNotFoundException.class);

@@ -21,6 +21,8 @@ public class PostponementResponse {
     private Long seq;
     private String memberName;
     private String phoneNumber;
+    /** 연기가 적용된 회원의 해당 멤버십 이름 — 어떤 멤버십을 사용하던 중 연기했는지 식별용 */
+    private String membershipName;
     private LocalDate startDate;
     private LocalDate endDate;
     private String reason;
@@ -37,10 +39,14 @@ public class PostponementResponse {
 
     public static PostponementResponse from(ComplexPostponementRequest entity) {
         ComplexClass dc = entity.getDesiredClass();
+        String membershipName = entity.getMemberMembership() != null
+                && entity.getMemberMembership().getMembership() != null
+                ? entity.getMemberMembership().getMembership().getName() : null;
         return PostponementResponse.builder()
                 .seq(entity.getSeq())
                 .memberName(entity.getMemberName())
                 .phoneNumber(entity.getPhoneNumber())
+                .membershipName(membershipName)
                 .startDate(entity.getStartDate())
                 .endDate(entity.getEndDate())
                 .reason(entity.getReason())

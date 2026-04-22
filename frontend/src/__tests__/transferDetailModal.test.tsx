@@ -13,7 +13,7 @@ vi.mock('@/lib/api', async () => {
     ...actual,
     transferApi: {
       list: vi.fn(),
-      findPending: vi.fn(),
+      listSelectable: vi.fn(),
       create: vi.fn(),
       updateStatus: (...args: unknown[]) => mockUpdateStatus(...args),
       complete: vi.fn(),

@@ -85,8 +85,6 @@ class MemberMembershipServiceSingleActiveTest {
     void 변경_후_활성은_오직_새_멤버십() {
         MembershipChangeRequest req = new MembershipChangeRequest();
         setField(req, "newMembershipSeq", p20.getSeq());
-        setField(req, "price", "280000");
-        setField(req, "changeFee", 50_000L);
 
         ComplexMemberMembershipResponse created =
                 memberMembershipService.changeMembership(member.getSeq(), firstActive.getSeq(), req);
@@ -126,8 +124,6 @@ class MemberMembershipServiceSingleActiveTest {
 
         MembershipChangeRequest req = new MembershipChangeRequest();
         setField(req, "newMembershipSeq", p30.getSeq());
-        setField(req, "price", "400000");
-        setField(req, "changeFee", 100_000L);
 
         memberMembershipService.changeMembership(member.getSeq(), firstActive.getSeq(), req);
 
@@ -155,16 +151,12 @@ class MemberMembershipServiceSingleActiveTest {
         // 1차 변경: p10 → p20
         MembershipChangeRequest req1 = new MembershipChangeRequest();
         setField(req1, "newMembershipSeq", p20.getSeq());
-        setField(req1, "price", "280000");
-        setField(req1, "changeFee", 50_000L);
         ComplexMemberMembershipResponse first =
                 memberMembershipService.changeMembership(member.getSeq(), firstActive.getSeq(), req1);
 
         // 2차 변경: p20 → p30
         MembershipChangeRequest req2 = new MembershipChangeRequest();
         setField(req2, "newMembershipSeq", p30.getSeq());
-        setField(req2, "price", "400000");
-        setField(req2, "changeFee", 20_000L);
         ComplexMemberMembershipResponse second =
                 memberMembershipService.changeMembership(member.getSeq(), first.getSeq(), req2);
 
@@ -192,8 +184,6 @@ class MemberMembershipServiceSingleActiveTest {
     void 쿼리_레벨에서도_활성_1개() {
         MembershipChangeRequest req = new MembershipChangeRequest();
         setField(req, "newMembershipSeq", p20.getSeq());
-        setField(req, "price", "280000");
-        setField(req, "changeFee", 0L);
         memberMembershipService.changeMembership(member.getSeq(), firstActive.getSeq(), req);
 
         assertThat(memberMembershipRepository.existsActiveByMemberSeq(member.getSeq()))

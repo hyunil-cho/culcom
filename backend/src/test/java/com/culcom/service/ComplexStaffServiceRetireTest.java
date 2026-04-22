@@ -47,12 +47,13 @@ class ComplexStaffServiceRetireTest {
     private record Fixture(Branch branch, ClassTimeSlot slot, ComplexMember staff) {}
 
     private Fixture bootstrapStaff(String name, String aliasSuffix) {
+        long nonce = System.nanoTime();
         Branch branch = branchRepository.save(Branch.builder()
-                .branchName("테스트지점")
-                .alias("test-retire-" + aliasSuffix + "-" + System.nanoTime())
+                .branchName("테스트지점-" + aliasSuffix + "-" + nonce)
+                .alias("test-retire-" + aliasSuffix + "-" + nonce)
                 .build());
         ClassTimeSlot slot = classTimeSlotRepository.save(ClassTimeSlot.builder()
-                .branch(branch).name("월수금 오전")
+                .branch(branch).name("월수금 오전-" + aliasSuffix + "-" + nonce)
                 .daysOfWeek("MON,WED,FRI")
                 .startTime(LocalTime.of(9, 0)).endTime(LocalTime.of(10, 0))
                 .build());

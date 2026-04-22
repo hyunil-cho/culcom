@@ -53,8 +53,6 @@ describe('invalidate helpers', () => {
     for (const k of [
       'attendanceView',
       'attendanceViewDetail',
-      'attendanceHistory',
-      'attendanceHistorySummary',
       'members',
       'memberMemberships',
       'complexDashboard',

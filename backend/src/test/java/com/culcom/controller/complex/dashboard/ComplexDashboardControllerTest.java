@@ -4,12 +4,11 @@ import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.entity.enums.UserRole;
 import com.culcom.mapper.ComplexDashboardMapper;
 import com.culcom.repository.ComplexMemberMembershipRepository;
+import com.culcom.repository.ComplexPostponementReturnScanLogRepository;
 import com.culcom.repository.MemberActivityLogRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,7 +16,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.*;
 import java.util.*;
@@ -28,11 +26,13 @@ import static org.mockito.BDDMockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-@SpringBootTest
-@AutoConfigureMockMvc
+import com.culcom.config.GlobalExceptionHandler;
+import com.culcom.config.SecurityConfig;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+@WebMvcTest(ComplexDashboardController.class)
+@Import({SecurityConfig.class, GlobalExceptionHandler.class})
 @ActiveProfiles("test")
-@Transactional
 class ComplexDashboardControllerTest {
 
     @Autowired MockMvc mockMvc;
@@ -41,6 +41,7 @@ class ComplexDashboardControllerTest {
     @MockBean ComplexMemberMembershipRepository membershipRepository;
     @MockBean MemberActivityLogRepository memberActivityLogRepository;
     @MockBean ComplexDashboardMapper complexDashboardMapper;
+    @MockBean ComplexPostponementReturnScanLogRepository returnScanLogRepository;
 
     private CustomUserPrincipal principal;
 

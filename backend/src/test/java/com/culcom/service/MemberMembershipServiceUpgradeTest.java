@@ -245,6 +245,20 @@ class MemberMembershipServiceUpgradeTest {
                 .hasMessageContaining("활성");
     }
 
+    @Test
+    void U11_양도로_받은_멤버십은_변경할_수_없다() {
+        // 양도 받은 멤버십(transferred=true)은 정가와 양수자 실제 지불가가 달라 업그레이드 계산이
+        // 애매해지므로 명시적으로 변경을 차단한다.
+        Fixture f = setup("u11", 60, 10, 150_000, 90, 20, 280_000, 0, 0);
+        f.sourceMm.setTransferred(true);
+        memberMembershipRepository.save(f.sourceMm);
+
+        assertThatThrownBy(() ->
+                memberMembershipService.changeMembership(f.member.getSeq(), f.sourceMm.getSeq(), req(f.newProduct.getSeq())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("양도 받은 멤버십");
+    }
+
     // ── 미수금 정합성 ────────────────────────────────────────────
 
     @Test

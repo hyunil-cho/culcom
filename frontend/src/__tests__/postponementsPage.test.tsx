@@ -34,6 +34,7 @@ const makeRequest = (overrides: Partial<PostponementRequest>): PostponementReque
   seq: 1,
   memberName: '홍길동',
   phoneNumber: '01012345678',
+  membershipName: null,
   startDate: '2026-05-01',
   endDate: '2026-05-15',
   reason: '개인 사정',
