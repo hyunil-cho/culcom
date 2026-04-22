@@ -57,17 +57,17 @@ class MembershipExpiryServiceTest {
                 .build());
 
         ClassTimeSlot slot = classTimeSlotRepository.save(ClassTimeSlot.builder()
-                .branch(branch).name("월수금").daysOfWeek("MON,WED,FRI")
+                .branch(branch).name("월수금-" + uniq).daysOfWeek("MON,WED,FRI")
                 .startTime(LocalTime.of(9, 0)).endTime(LocalTime.of(10, 0))
                 .build());
 
         ComplexClass clazzA = classRepository.save(ComplexClass.builder()
-                .branch(branch).timeSlot(slot).name("요가A").capacity(10).sortOrder(0).build());
+                .branch(branch).timeSlot(slot).name("요가A-" + uniq).capacity(10).sortOrder(0).build());
         ComplexClass clazzB = classRepository.save(ComplexClass.builder()
-                .branch(branch).timeSlot(slot).name("필라테스B").capacity(10).sortOrder(1).build());
+                .branch(branch).timeSlot(slot).name("필라테스B-" + uniq).capacity(10).sortOrder(1).build());
 
         Membership product = membershipRepository.save(Membership.builder()
-                .name("10회권").duration(60).count(10).price(150000).build());
+                .name("10회권-" + uniq).duration(60).count(10).price(150000).build());
 
         // 만료된 회원 (어제 만료, 활성 상태)
         ComplexMember expiredMember = memberRepository.save(ComplexMember.builder()
@@ -160,7 +160,7 @@ class MembershipExpiryServiceTest {
                 .alias("test-sched-" + uniq)
                 .build());
         Membership product = membershipRepository.save(Membership.builder()
-                .name("10회권").duration(60).count(10).price(150000).build());
+                .name("10회권-sched-" + uniq).duration(60).count(10).price(150000).build());
         ComplexMember member = memberRepository.save(ComplexMember.builder()
                 .name("스케줄대상").phoneNumber("01099998888").branch(branch).build());
         ComplexMemberMembership mm = memberMembershipRepository.save(ComplexMemberMembership.builder()

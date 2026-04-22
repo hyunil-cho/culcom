@@ -61,16 +61,16 @@ class MembershipExpiryDashboardIntegrationTest {
                 .build());
 
         ClassTimeSlot slot = classTimeSlotRepository.save(ClassTimeSlot.builder()
-                .branch(branch).name("월수금").daysOfWeek("MON,WED,FRI")
+                .branch(branch).name("월수금-" + uniq).daysOfWeek("MON,WED,FRI")
                 .startTime(LocalTime.of(9, 0)).endTime(LocalTime.of(10, 0))
                 .build());
 
         ComplexClass clazz = classRepository.save(ComplexClass.builder()
-                .branch(branch).timeSlot(slot).name("요가B").capacity(10).sortOrder(0)
+                .branch(branch).timeSlot(slot).name("요가B-" + uniq).capacity(10).sortOrder(0)
                 .build());
 
         Membership product = membershipRepository.save(Membership.builder()
-                .name("3회권-대시보드").duration(30).count(3).price(60000).build());
+                .name("3회권-대시보드-" + uniq).duration(30).count(3).price(60000).build());
 
         ComplexMember member = memberRepository.save(ComplexMember.builder()
                 .name("홍길동").phoneNumber("01011112222").branch(branch).build());
@@ -140,7 +140,7 @@ class MembershipExpiryDashboardIntegrationTest {
                 .build());
 
         Membership product = membershipRepository.save(Membership.builder()
-                .name("월간권-기간만료").duration(30).count(999).price(100000).build());
+                .name("월간권-기간만료-" + uniq).duration(30).count(999).price(100000).build());
 
         ComplexMember member = memberRepository.save(ComplexMember.builder()
                 .name("이순신").phoneNumber("01033334444").branch(branch).build());

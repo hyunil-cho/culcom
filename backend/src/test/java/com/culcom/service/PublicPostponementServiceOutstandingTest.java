@@ -120,14 +120,18 @@ class PublicPostponementServiceOutstandingTest {
     }
 
     @Test
-    void 멤버십_지정_없으면_미수금_체크_건너뜀() {
+    void 멤버십_지정이_없으면_EntityNotFoundException이_발생한다() {
+        // 현재 PublicPostponementService.submit 은 memberMembershipSeq 를 필수로 보고
+        // findById(null) → EntityNotFoundException 을 던진다. 공개 연기 신청 시에는
+        // 회원이 어떤 멤버십을 대상으로 하는지 명시하도록 UI 가 강제하는 전제.
         PostponementSubmitRequest req = createRequest();
         req.setMemberMembershipSeq(null);
 
         given(branchRepository.findById(1L)).willReturn(Optional.of(branch));
         given(memberRepository.findById(10L)).willReturn(Optional.of(member));
 
-        assertThatCode(() -> publicPostponementService.submit(req))
-                .doesNotThrowAnyException();
+        assertThatThrownBy(() -> publicPostponementService.submit(req))
+                .isInstanceOf(com.culcom.exception.EntityNotFoundException.class)
+                .hasMessageContaining("멤버십");
     }
 }

@@ -60,16 +60,16 @@ class AttendanceServiceExpireOnExhaustTest {
                 .build());
 
         ClassTimeSlot slot = classTimeSlotRepository.save(ClassTimeSlot.builder()
-                .branch(branch).name("월수금").daysOfWeek("MON,WED,FRI")
+                .branch(branch).name("월수금-" + uniq).daysOfWeek("MON,WED,FRI")
                 .startTime(LocalTime.of(9, 0)).endTime(LocalTime.of(10, 0))
                 .build());
 
         ComplexClass clazz = classRepository.save(ComplexClass.builder()
-                .branch(branch).timeSlot(slot).name("요가A").capacity(10).sortOrder(0)
+                .branch(branch).timeSlot(slot).name("요가A-" + uniq).capacity(10).sortOrder(0)
                 .build());
 
         Membership product = membershipRepository.save(Membership.builder()
-                .name("3회권").duration(30).count(3).price(60000).build());
+                .name("3회권-" + uniq).duration(30).count(3).price(60000).build());
 
         ComplexMember member = memberRepository.save(ComplexMember.builder()
                 .name("심청").phoneNumber("01055556666").branch(branch).build());
@@ -104,7 +104,7 @@ class AttendanceServiceExpireOnExhaustTest {
         List<BulkAttendanceResultResponse> results = attendanceService.processBulkAttendance(req);
 
         // then — 출석 정상 처리 + 횟수 소진 + 상태 자동 만료
-        assertThat(results.get(0).getStatus()).isEqualTo("출석");
+        assertThat(results.get(0).getStatus()).hasToString("출석");
 
         // 3) 검증용 새 트랜잭션 시작
         TestTransaction.start();
@@ -145,16 +145,16 @@ class AttendanceServiceExpireOnExhaustTest {
                 .build());
 
         ClassTimeSlot slot = classTimeSlotRepository.save(ClassTimeSlot.builder()
-                .branch(branch).name("화목").daysOfWeek("TUE,THU")
+                .branch(branch).name("화목-" + uniq).daysOfWeek("TUE,THU")
                 .startTime(LocalTime.of(19, 0)).endTime(LocalTime.of(20, 0))
                 .build());
 
         ComplexClass clazz = classRepository.save(ComplexClass.builder()
-                .branch(branch).timeSlot(slot).name("필라테스").capacity(10).sortOrder(0)
+                .branch(branch).timeSlot(slot).name("필라테스-" + uniq).capacity(10).sortOrder(0)
                 .build());
 
         Membership product = membershipRepository.save(Membership.builder()
-                .name("5회권").duration(30).count(5).price(100000).build());
+                .name("5회권-" + uniq).duration(30).count(5).price(100000).build());
 
         ComplexMember member = memberRepository.save(ComplexMember.builder()
                 .name("흥부").phoneNumber("01077778888").branch(branch).build());
