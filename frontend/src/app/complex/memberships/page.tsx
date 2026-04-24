@@ -36,7 +36,7 @@ export default function MembershipsPage() {
 
   const columns: Column<Membership>[] = [
     { header: '멤버십 이름', render: (m) => m.name },
-    { header: '유효 기간', render: (m) => formatDuration(m.duration) },
+    { header: '사용 기간', render: (m) => formatDuration(m.duration) },
     { header: '수강 횟수', render: (m) => `${m.count}회` },
     { header: '판매 가격', render: (m) => formatPrice(m.price) },
     { header: '양도', render: (m) => (
