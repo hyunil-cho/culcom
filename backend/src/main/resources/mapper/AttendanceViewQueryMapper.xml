@@ -34,7 +34,7 @@
             END AS status,
             a.attendance_date AS attendanceDate
         FROM class_time_slots ts
-        LEFT JOIN complex_classes c ON c.time_slot_seq = ts.seq AND c.branch_seq = #{branchSeq}
+        LEFT JOIN complex_classes c ON c.time_slot_seq = ts.seq AND c.branch_seq = #{branchSeq} AND c.deleted = 0
         LEFT JOIN (
             SELECT c2.seq AS class_seq, c2.staff_seq AS member_seq, -1 AS sort_order FROM complex_classes c2 WHERE c2.staff_seq IS NOT NULL
             UNION ALL
@@ -72,7 +72,7 @@
                    ORDER BY a2.attendance_date DESC
                    LIMIT 1
                )
-        WHERE ts.branch_seq = #{branchSeq}
+        WHERE ts.branch_seq = #{branchSeq} and ts.deleted=0
         ORDER BY ts.seq, c.sort_order, staff DESC, cm.sort_order, m.name
     </select>
 
@@ -124,6 +124,7 @@
         LEFT JOIN memberships ms ON ms.seq = mm.membership_seq
         WHERE c.branch_seq = #{branchSeq}
           AND c.time_slot_seq = #{slotSeq}
+          AND c.deleted=0
         ORDER BY c.sort_order, staff DESC, cm.sort_order, m.name
     </select>
 
