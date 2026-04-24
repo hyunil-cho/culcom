@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/FormInput';
 import { useResultModal } from '@/hooks/useResultModal';
 import Spinner from '@/components/ui/Spinner';
 import { BASIC_INFO_FIELDS, getFieldOptions } from '@/app/survey/[seq]/_shared/surveyConstants';
+import { swapInArray } from '@/lib/arrayUtils';
 import s from './page.module.css';
 
 type InputType = 'radio' | 'checkbox' | 'text';
@@ -128,12 +129,11 @@ export default function SurveyEditorPage() {
     if (!dragItem.current || !dragOverItem.current) return;
     if (dragItem.current.sectionSeq !== sectionSeq || dragOverItem.current.sectionSeq !== sectionSeq) return;
     if (dragItem.current.seq === dragOverItem.current.seq) return;
-    const secQuestions = [...questionsForSection(sectionSeq)];
-    const fromIdx = secQuestions.findIndex(q => q.seq === dragItem.current!.seq);
-    const toIdx = secQuestions.findIndex(q => q.seq === dragOverItem.current!.seq);
+    const current = questionsForSection(sectionSeq);
+    const fromIdx = current.findIndex(q => q.seq === dragItem.current!.seq);
+    const toIdx = current.findIndex(q => q.seq === dragOverItem.current!.seq);
     if (fromIdx === -1 || toIdx === -1) return;
-    const [moved] = secQuestions.splice(fromIdx, 1);
-    secQuestions.splice(toIdx, 0, moved);
+    const secQuestions = swapInArray(current, fromIdx, toIdx);
     const items = secQuestions.map((q, i) => ({ seq: q.seq, sortOrder: i + 1, newQuestionKey: `q${i + 1}` }));
     dragItem.current = null;
     dragOverItem.current = null;
@@ -280,9 +280,7 @@ export default function SurveyEditorPage() {
     const fromIdx = current.indexOf(from);
     const toIdx = current.indexOf(to);
     if (fromIdx === -1 || toIdx === -1) return;
-    const next = [...current];
-    const [moved] = next.splice(fromIdx, 1);
-    next.splice(toIdx, 0, moved);
+    const next = swapInArray(current, fromIdx, toIdx);
     await surveyApi.updateTemplate(templateSeq, { customerFieldOrder: next });
     load();
   };
@@ -303,9 +301,7 @@ export default function SurveyEditorPage() {
     const fromIdx = currentOptions.indexOf(from.label);
     const toIdx = currentOptions.indexOf(to.label);
     if (fromIdx === -1 || toIdx === -1) return;
-    const next = [...currentOptions];
-    const [moved] = next.splice(fromIdx, 1);
-    next.splice(toIdx, 0, moved);
+    const next = swapInArray(currentOptions, fromIdx, toIdx);
     await saveFixedOptions(key, next);
   };
 
@@ -321,12 +317,11 @@ export default function SurveyEditorPage() {
     if (!dragOption.current || !dragOverOption.current) return;
     if (dragOption.current.questionSeq !== questionSeq || dragOverOption.current.questionSeq !== questionSeq) return;
     if (dragOption.current.seq === dragOverOption.current.seq) return;
-    const opts = [...(optionsByQ[questionSeq] || [])];
-    const fromIdx = opts.findIndex(o => o.seq === dragOption.current!.seq);
-    const toIdx = opts.findIndex(o => o.seq === dragOverOption.current!.seq);
+    const current = optionsByQ[questionSeq] || [];
+    const fromIdx = current.findIndex(o => o.seq === dragOption.current!.seq);
+    const toIdx = current.findIndex(o => o.seq === dragOverOption.current!.seq);
     if (fromIdx === -1 || toIdx === -1) return;
-    const [moved] = opts.splice(fromIdx, 1);
-    opts.splice(toIdx, 0, moved);
+    const opts = swapInArray(current, fromIdx, toIdx);
     const items = opts.map((o, i) => ({ seq: o.seq, sortOrder: i + 1 }));
     dragOption.current = null;
     dragOverOption.current = null;

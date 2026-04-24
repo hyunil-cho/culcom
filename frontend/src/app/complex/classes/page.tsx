@@ -5,19 +5,30 @@ import { useRouter } from 'next/navigation';
 import { classApi, type ComplexClass } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import ResultModal from '@/components/ui/ResultModal';
 import SearchBar from '@/components/ui/SearchBar';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import { useListPageQuery } from '@/hooks/useListPageQuery';
 import { useModal } from '@/hooks/useModal';
+import { useResultModal } from '@/hooks/useResultModal';
 
 export default function ClassesPage() {
   const router = useRouter();
   const list = useListPageQuery<ComplexClass>('classes', (q) => classApi.list(q));
   const [keyword, setKeyword] = useState('');
   const resultModal = useModal<{ success: boolean; message: string }>();
+  const deleteModal = useModal<ComplexClass>();
+  const { run, modal: resultModalNode } = useResultModal({ onConfirm: () => list.load(list.pagination.page) });
 
   const handleSearch = () => { list.load(0, { keyword }); };
+
+  const handleDelete = async () => {
+    if (!deleteModal.data) return;
+    const target = deleteModal.data;
+    deleteModal.close();
+    await run(classApi.delete(target.seq), '팀이 삭제되었습니다.');
+  };
 
 
   const columns: Column<ComplexClass>[] = [
@@ -76,6 +87,18 @@ export default function ClassesPage() {
         </span>
       ),
     },
+    {
+      header: '삭제',
+      render: (c) => (
+        <button
+          className="btn-inline"
+          style={{ background: '#ffebee', borderColor: '#f44336', color: '#d32f2f' }}
+          onClick={(e) => { e.stopPropagation(); deleteModal.open(c); }}
+        >
+          삭제
+        </button>
+      ),
+    },
   ];
 
   return (
@@ -102,6 +125,23 @@ export default function ClassesPage() {
         pagination={list.pagination}
         onRowClick={(c) => router.push(ROUTES.COMPLEX_CLASS_EDIT(c.seq))}
       />
+
+      {deleteModal.isOpen && (
+        <ConfirmModal
+          title="팀 삭제"
+          onCancel={deleteModal.close}
+          onConfirm={handleDelete}
+          confirmLabel="삭제"
+          confirmColor="#f44336"
+        >
+          <p><strong>{deleteModal.data!.name}</strong> 팀을 삭제하시겠습니까?</p>
+          <p style={{ color: '#dc2626', fontWeight: 600, marginTop: 8 }}>
+            ⚠️ 등록된 회원이 있거나 리더가 배정된 팀은 삭제할 수 없습니다.
+          </p>
+        </ConfirmModal>
+      )}
+
+      {resultModalNode}
 
       {resultModal.isOpen && (
         <ResultModal

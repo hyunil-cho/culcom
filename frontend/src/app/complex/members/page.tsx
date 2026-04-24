@@ -74,7 +74,6 @@ function MembersContent() {
     { header: '가입경로', render: (m) => <span style={{ color: '#555', fontSize: '70%' }}>{m.signupChannel || ''}</span> },
     { header: '인터뷰어', render: (m) => <span style={{ color: '#555', fontSize: '70%' }}>{m.interviewer || ''}</span> },
     { header: '등록일자', render: (m) => <span style={{ fontSize: '0.75rem', color: '#666' }}>{m.createdDate?.split('T')[0] ?? ''}</span> },
-    { header: '특이사항', render: (m) => <span style={{ color: '#888', fontSize: '70%' }}>{m.comment || ''}</span> },
     recentHistoryColumn,
   ];
 
