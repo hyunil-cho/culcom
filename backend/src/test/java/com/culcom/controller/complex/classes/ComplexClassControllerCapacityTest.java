@@ -3,18 +3,22 @@ package com.culcom.controller.complex.classes;
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.entity.enums.UserRole;
 import com.culcom.service.ComplexClassService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.BDDMockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
@@ -37,8 +41,17 @@ import org.springframework.context.annotation.Import;
 class ComplexClassControllerCapacityTest {
 
     @Autowired MockMvc mockMvc;
+    @Autowired ObjectMapper objectMapper;
 
     @MockBean ComplexClassService complexClassService;
+
+    private Map<String, Object> body(Object name, Object capacity, Object timeSlotSeq) {
+        Map<String, Object> b = new HashMap<>();
+        b.put("name", name);
+        b.put("capacity", capacity);
+        b.put("timeSlotSeq", timeSlotSeq);
+        return b;
+    }
 
     private RequestPostProcessor auth() {
         var principal = new CustomUserPrincipal(1L, "admin", "관리자", UserRole.ROOT, 1L);
@@ -91,5 +104,86 @@ class ComplexClassControllerCapacityTest {
     void 비인증_401() throws Exception {
         mockMvc.perform(post("/api/complex/classes/{seq}/members/{memberSeq}", 1L, 10L))
                 .andExpect(status().isUnauthorized());
+    }
+
+    // ===== capacity Bean Validation (DTO @NotNull / @Min) =====
+    // GlobalExceptionHandler 가 메시지를 "필드명: 메시지" 형태로 내려주므로 containsString 으로 검증한다.
+
+    @Test
+    @DisplayName("create: capacity = 0 이면 400 + '정원은 1명 이상이어야 합니다.'")
+    void create_capacity_0_400() throws Exception {
+        mockMvc.perform(post("/api/complex/classes")
+                        .with(auth())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body("초급반", 0, 10))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value(
+                        org.hamcrest.Matchers.containsString("정원은 1명 이상이어야 합니다.")));
+    }
+
+    @Test
+    @DisplayName("create: capacity = -5 이면 400 + '정원은 1명 이상이어야 합니다.'")
+    void create_capacity_음수_400() throws Exception {
+        mockMvc.perform(post("/api/complex/classes")
+                        .with(auth())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body("초급반", -5, 10))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value(
+                        org.hamcrest.Matchers.containsString("정원은 1명 이상이어야 합니다.")));
+    }
+
+    @Test
+    @DisplayName("create: capacity = null 이면 400 + '정원은 필수값입니다.'")
+    void create_capacity_null_400() throws Exception {
+        mockMvc.perform(post("/api/complex/classes")
+                        .with(auth())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body("초급반", null, 10))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value(
+                        org.hamcrest.Matchers.containsString("정원은 필수값입니다.")));
+    }
+
+    @Test
+    @DisplayName("update: capacity = 0 이면 400 + '정원은 1명 이상이어야 합니다.'")
+    void update_capacity_0_400() throws Exception {
+        mockMvc.perform(put("/api/complex/classes/{seq}", 1L)
+                        .with(auth())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body("이름", 0, 10))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value(
+                        org.hamcrest.Matchers.containsString("정원은 1명 이상이어야 합니다.")));
+    }
+
+    @Test
+    @DisplayName("update: capacity = -1 이면 400 + '정원은 1명 이상이어야 합니다.'")
+    void update_capacity_음수_400() throws Exception {
+        mockMvc.perform(put("/api/complex/classes/{seq}", 1L)
+                        .with(auth())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body("이름", -1, 10))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value(
+                        org.hamcrest.Matchers.containsString("정원은 1명 이상이어야 합니다.")));
+    }
+
+    @Test
+    @DisplayName("update: capacity = null 이면 400 + '정원은 필수값입니다.'")
+    void update_capacity_null_400() throws Exception {
+        mockMvc.perform(put("/api/complex/classes/{seq}", 1L)
+                        .with(auth())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body("이름", null, 10))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value(
+                        org.hamcrest.Matchers.containsString("정원은 필수값입니다.")));
     }
 }

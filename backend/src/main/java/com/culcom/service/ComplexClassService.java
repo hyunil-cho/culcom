@@ -43,20 +43,16 @@ public class ComplexClassService {
     }
 
     public ComplexClassResponse create(ComplexClassRequest req, Long branchSeq) {
-        if (req.getCapacity() == null || req.getCapacity() <= 0) {
-            throw new IllegalArgumentException("정원은 1명 이상이어야 합니다.");
-        }
         ComplexClass entity = ComplexClass.builder()
                 .name(req.getName())
                 .description(req.getDescription())
                 .capacity(req.getCapacity())
-                .sortOrder(req.getSortOrder() != null ? req.getSortOrder() : classRepository.findMaxSortOrderByBranchSeq(branchSeq) + 1)
+                .sortOrder(classRepository.findMaxSortOrderByBranchSeq(branchSeq) + 1)
                 .branch(branchRepository.findById(branchSeq)
                         .orElseThrow(() -> new EntityNotFoundException("지점")))
                 .timeSlot(timeSlotRepository.findById(req.getTimeSlotSeq())
                         .orElseThrow(() -> new EntityNotFoundException("시간대")))
-                .staff(req.getStaffSeq() != null ? memberRepository.findById(req.getStaffSeq())
-                        .orElseThrow(() -> new EntityNotFoundException("스태프")) : null)
+                .staff(null)
                 .build();
         ComplexClass result = classRepository.save(entity);
         return ComplexClassResponse.from(result);
@@ -67,39 +63,14 @@ public class ComplexClassService {
         ComplexClass cls = classRepository.findById(seq)
                 .orElseThrow(() -> new EntityNotFoundException("수업"));
 
-        Long oldStaffSeq = cls.getStaff() != null ? cls.getStaff().getSeq() : null;
-        Long newStaffSeq = req.getStaffSeq();
-
-        if (req.getCapacity() == null || req.getCapacity() <= 0) {
-            throw new IllegalArgumentException("정원은 1명 이상이어야 합니다.");
-        }
         cls.setName(req.getName());
         cls.setDescription(req.getDescription());
         cls.setCapacity(req.getCapacity());
-        cls.setSortOrder(req.getSortOrder());
-        if (req.getTimeSlotSeq() != null) {
-            timeSlotRepository.findById(req.getTimeSlotSeq()).ifPresent(cls::setTimeSlot);
-        }
-        if (newStaffSeq != null) {
-            memberRepository.findById(newStaffSeq).ifPresent(cls::setStaff);
-        } else {
-            cls.setStaff(null);
-        }
+        cls.setStaff(null);
+        timeSlotRepository.findById(req.getTimeSlotSeq()).ifPresent(cls::setTimeSlot);
 
         ComplexClass saved = classRepository.save(cls);
 
-        if (!Objects.equals(oldStaffSeq, newStaffSeq)) {
-            if (oldStaffSeq != null) {
-                memberRepository.findById(oldStaffSeq).ifPresent(oldStaff ->
-                        eventPublisher.publishEvent(ActivityEvent.withChange(
-                                oldStaff, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, cls.getName(), null)));
-            }
-            if (newStaffSeq != null) {
-                memberRepository.findById(newStaffSeq).ifPresent(newStaff ->
-                        eventPublisher.publishEvent(ActivityEvent.withChange(
-                                newStaff, ActivityEventType.CLASS_ASSIGN, ActivityFieldType.CLASS, null, cls.getName())));
-            }
-        }
 
         return ComplexClassResponse.from(saved);
     }

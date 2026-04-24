@@ -37,7 +37,7 @@ public class ComplexClassController {
 
     @PutMapping("/{seq}")
     public ResponseEntity<ApiResponse<ComplexClassResponse>> update(
-            @PathVariable Long seq, @RequestBody ComplexClassRequest req) {
+            @PathVariable Long seq, @Valid @RequestBody ComplexClassRequest req) {
         ComplexClassResponse result = complexClassService.update(seq, req);
         return ResponseEntity.ok(ApiResponse.ok("수업 수정 완료", result));
     }
