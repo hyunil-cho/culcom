@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { publicRefundSurveyApi } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import { decodeLinkPayload } from '@/lib/linkPayload';
 
 export default function PublicRefundSurveyPage() {
   return <Suspense fallback={null}><PublicRefundSurveyInner /></Suspense>;
@@ -27,9 +28,9 @@ function PublicRefundSurveyInner() {
     try {
       const d = searchParams.get('d');
       if (!d) return null;
-      return JSON.parse(decodeURIComponent(atob(d))) as {
+      return decodeLinkPayload<{
         branchSeq: number; refundRequestSeq?: number; name: string; phone: string;
-      };
+      }>(d);
     } catch { return null; }
   })();
 

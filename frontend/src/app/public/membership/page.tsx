@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { publicMembershipApi, type MembershipCheckMember } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { isLinkExpired, INVALID_LINK_MESSAGE } from '@/lib/linkExpiry';
+import { decodeLinkPayload } from '@/lib/linkPayload';
 
 export default function PublicMembershipPage() {
   return <Suspense fallback={null}><PublicMembershipPageInner /></Suspense>;
@@ -17,7 +18,7 @@ function PublicMembershipPageInner() {
     try {
       const d = searchParams.get('d');
       if (!d) return null;
-      return JSON.parse(decodeURIComponent(atob(d))) as { memberSeq: number; name: string; phone: string; t?: number };
+      return decodeLinkPayload<{ memberSeq: number; name: string; phone: string; t?: number }>(d);
     } catch { return null; }
   })();
 

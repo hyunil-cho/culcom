@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { calendarApi, surveyApi, type SurveyTemplate } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import { encodeLinkPayload } from '@/lib/linkPayload';
 import { type Reservation } from '../utils';
 import s from './calendar.module.css';
 
@@ -33,7 +34,7 @@ export default function ReservationStatusModal({ reservation, onClose, onStatusC
   };
 
   const handleSurveySelect = (surveySeq: number) => {
-    const payload = btoa(encodeURIComponent(JSON.stringify({ name: reservation.name, phone: reservation.phone, reservationSeq: reservation.seq })));
+    const payload = encodeLinkPayload({ name: reservation.name, phone: reservation.phone, reservationSeq: reservation.seq });
     window.open(ROUTES.SURVEY_FILL(surveySeq) + `?d=${payload}`, '_blank');
     onClose();
   };

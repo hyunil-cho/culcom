@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { memberApi, type MemberMembershipResponse } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import { encodeLinkPayload } from '@/lib/linkPayload';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { Button } from '@/components/ui/Button';
 import UnavailableNotice from './UnavailableNotice';
@@ -31,7 +32,7 @@ export default function MembershipLinkModal({ memberSeq, memberName, memberPhone
     return { canView: true, unavailableReason: '' };
   }, [memberships]);
 
-  const payload = btoa(encodeURIComponent(JSON.stringify({ memberSeq, name: memberName, phone: memberPhone, t: Date.now() })));
+  const payload = encodeLinkPayload({ memberSeq, name: memberName, phone: memberPhone, t: Date.now() });
   const membershipUrl = `${window.location.origin}${ROUTES.PUBLIC_MEMBERSHIP}?d=${payload}`;
   const smsMessage = `[멤버십 조회 안내]\n\n${memberName}님, 아래 링크에서 멤버십 현황을 확인하실 수 있습니다.\n\n${membershipUrl}`;
 

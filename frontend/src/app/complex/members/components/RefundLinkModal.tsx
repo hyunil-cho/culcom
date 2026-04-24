@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { memberApi, type MemberMembershipResponse } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import { encodeLinkPayload } from '@/lib/linkPayload';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { Button } from '@/components/ui/Button';
 import { CurrencyInput } from '@/components/ui/FormInput';
@@ -89,12 +90,12 @@ export default function RefundLinkModal({ memberSeq, memberName, memberPhone, on
 
   const payload = useMemo(() => {
     if (!selectedMs || !amountValid) return null;
-    return btoa(encodeURIComponent(JSON.stringify({
+    return encodeLinkPayload({
       memberSeq, name: memberName, phone: memberPhone,
       memberMembershipSeq: selectedMs.seq,
       refundAmount: numericAmount,
       t: Date.now(),
-    })));
+    });
   }, [memberSeq, memberName, memberPhone, selectedMs, numericAmount, amountValid]);
 
   const refundUrl = payload

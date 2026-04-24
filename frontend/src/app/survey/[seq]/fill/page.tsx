@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { publicSurveyApi, SurveyQuestion } from '@/lib/api';
+import { decodeLinkPayload } from '@/lib/linkPayload';
 import { useSurveyData } from '../_shared/useSurveyData';
 import { answerKey, BASIC_INFO_FIELDS, getFieldOptions, getOrderedBasicFields, hintText, questionsForSection } from '../_shared/surveyConstants';
 import SurveyShell from '../_shared/SurveyShell';
@@ -20,7 +21,7 @@ export default function SurveyFillPage() {
     try {
       const d = searchParams.get('d');
       if (!d) return { name: '', phone: '', reservationSeq: '' };
-      return JSON.parse(decodeURIComponent(atob(d))) as { name: string; phone: string; reservationSeq: string | number };
+      return decodeLinkPayload<{ name: string; phone: string; reservationSeq: string | number }>(d);
     } catch { return { name: '', phone: '', reservationSeq: '' }; }
   })();
   const customerName = decoded.name || '';

@@ -13,6 +13,7 @@ import { ROUTES } from '@/lib/routes';
 import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Input, Select, Textarea } from '@/components/ui/FormInput';
 import { isLinkExpired, INVALID_LINK_MESSAGE } from '@/lib/linkExpiry';
+import { decodeLinkPayload } from '@/lib/linkPayload';
 import s from './page.module.css';
 
 export default function PublicPostponementPage() {
@@ -27,7 +28,7 @@ function PublicPostponementPageInner() {
     try {
       const d = searchParams.get('d');
       if (!d) return null;
-      return JSON.parse(decodeURIComponent(atob(d))) as { memberSeq: number; name: string; phone: string; t?: number };
+      return decodeLinkPayload<{ memberSeq: number; name: string; phone: string; t?: number }>(d);
     } catch { return null; }
   })();
 

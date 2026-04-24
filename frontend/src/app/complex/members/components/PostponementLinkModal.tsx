@@ -6,6 +6,7 @@ import {
   type MemberMembershipResponse, type PostponementRequest,
 } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
+import { encodeLinkPayload } from '@/lib/linkPayload';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { Button } from '@/components/ui/Button';
 import UnavailableNotice from './UnavailableNotice';
@@ -29,7 +30,7 @@ const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
 };
 
 export default function PostponementLinkModal({ memberSeq, memberName, memberPhone, onClose }: Props) {
-  const payload = btoa(encodeURIComponent(JSON.stringify({ memberSeq, name: memberName, phone: memberPhone, t: Date.now() })));
+  const payload = encodeLinkPayload({ memberSeq, name: memberName, phone: memberPhone, t: Date.now() });
   const postponementUrl = `${window.location.origin}${ROUTES.PUBLIC_POSTPONEMENT}?d=${payload}`;
   const smsMessage = `[수업 연기 요청 안내]\n\n${memberName}님, 아래 링크에서 수업 연기 요청을 진행해주세요.\n\n${postponementUrl}`;
 

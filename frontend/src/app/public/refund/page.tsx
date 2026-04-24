@@ -10,6 +10,7 @@ import { ROUTES } from '@/lib/routes';
 import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Select, Textarea } from '@/components/ui/FormInput';
 import { isLinkExpired, INVALID_LINK_MESSAGE } from '@/lib/linkExpiry';
+import { decodeLinkPayload, encodeLinkPayload } from '@/lib/linkPayload';
 
 export default function PublicRefundPage() {
   return <Suspense fallback={null}><PublicRefundPageInner /></Suspense>;
@@ -23,10 +24,10 @@ function PublicRefundPageInner() {
     try {
       const d = searchParams.get('d');
       if (!d) return null;
-      return JSON.parse(decodeURIComponent(atob(d))) as {
+      return decodeLinkPayload<{
         memberSeq: number; name: string; phone: string;
         memberMembershipSeq?: number; refundAmount?: number; t?: number;
-      };
+      }>(d);
     } catch { return null; }
   })();
 
@@ -67,12 +68,12 @@ function PublicRefundPageInner() {
     (data) => publicRefundApi.submit(data),
     {
       onSuccess: (refundRequestSeq) => {
-        const surveyData = btoa(encodeURIComponent(JSON.stringify({
+        const surveyData = encodeLinkPayload({
           branchSeq: member!.branchSeq,
           refundRequestSeq,
           name: member!.name,
           phone: member!.phoneNumber,
-        })));
+        });
         router.push(`${ROUTES.PUBLIC_REFUND_SURVEY}?d=${surveyData}&from=refund`);
       },
       onError: (err) => {
