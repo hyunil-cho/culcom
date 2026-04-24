@@ -39,7 +39,7 @@ export function fromDurationDays(days: number): { value: number; unit: 'day' | '
 
 export function validateMembershipForm(form: MembershipFormData): string | null {
   if (!form.name.trim()) return '멤버십 이름을 입력하세요.';
-  if (form.durationValue <= 0) return '유효 기간을 입력하세요.';
+  if (form.durationValue <= 0) return '사용 기간을 입력하세요.';
   if (form.count <= 0) return '수강 횟수를 입력하세요.';
   if (form.price < 0) return '판매 가격을 입력하세요.';
   return null;
@@ -71,7 +71,7 @@ export default function MembershipForm({
           onChange={(e) => set('name', e.target.value)} required />
       </FormField>
 
-      <FormField label="유효 기간" required hint="멤버십이 유지되는 기간을 선택하세요.">
+      <FormField label="사용 기간" required hint="멤버십의 사용 기간을 선택하세요.">
         <div style={{ display: 'flex', gap: 10 }}>
           <NumberInput style={{ flex: 2 }} value={form.durationValue}
             onChange={(e) => set('durationValue', Number(e.target.value))} min={1} required />
