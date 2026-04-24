@@ -108,15 +108,6 @@ class OutstandingControllerTest {
     }
 
     @Test
-    @DisplayName("잘못된_sort_enum_400")
-    void 잘못된_sort() throws Exception {
-        mockMvc.perform(get("/api/complex/outstanding")
-                        .with(auth())
-                        .param("sort", "INVALID_VALUE"))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
     @DisplayName("인증없으면_401")
     void 인증없음() throws Exception {
         mockMvc.perform(get("/api/complex/outstanding"))

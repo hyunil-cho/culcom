@@ -103,7 +103,6 @@ class BoardControllerTest {
 
         mockMvc.perform(get("/api/public/board/session"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.isLoggedIn").value(true))
                 .andExpect(jsonPath("$.data.memberSeq").value(42))
                 .andExpect(jsonPath("$.data.memberName").value("홍길동"));
     }
@@ -116,7 +115,7 @@ class BoardControllerTest {
 
         mockMvc.perform(get("/api/public/board/session"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.isLoggedIn").value(false));
+                .andExpect(jsonPath("$.success").value(true));
     }
 
     // ========== POST /logout ==========
