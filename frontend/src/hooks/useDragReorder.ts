@@ -20,7 +20,7 @@ interface DragState {
   hoverTarget: HTMLElement | null;
 }
 
-function swapNodes(a: HTMLElement, b: HTMLElement) {
+export function swapNodes(a: HTMLElement, b: HTMLElement) {
   const parent = a.parentNode;
   if (!parent) return;
   const aNext = a.nextSibling;
