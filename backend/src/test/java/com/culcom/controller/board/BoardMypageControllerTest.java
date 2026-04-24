@@ -8,6 +8,7 @@ import com.culcom.service.BoardSessionService.BoardSessionData;
 import com.culcom.service.CustomerService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -35,13 +36,27 @@ class BoardMypageControllerTest {
     @MockBean CustomerService customerService;
     @MockBean BoardSessionService boardSessionService;
 
+    private BoardSessionData loggedIn(long seq, String name) {
+        BoardSessionData data = Mockito.mock(BoardSessionData.class);
+        given(data.isLoggedIn()).willReturn(true);
+        given(data.getMemberSeq()).willReturn(seq);
+        given(data.getMemberName()).willReturn(name);
+        return data;
+    }
+
+    private BoardSessionData loggedOut() {
+        BoardSessionData data = Mockito.mock(BoardSessionData.class);
+        given(data.isLoggedIn()).willReturn(false);
+        return data;
+    }
+
     // ========== GET /mypage ==========
 
     @Test
     @DisplayName("마이페이지_로그인_안되어있으면_에러")
     void 마이페이지_비로그인() throws Exception {
-        given(boardSessionService.getSession(any(), any()))
-                .willReturn(new BoardSessionData(false, null, null));
+        BoardSessionData session = loggedOut();
+        given(boardSessionService.getSession(any(), any())).willReturn(session);
 
         mockMvc.perform(get("/api/public/board/mypage"))
                 .andExpect(status().isOk())
@@ -54,8 +69,8 @@ class BoardMypageControllerTest {
     @Test
     @DisplayName("마이페이지_Customer_없으면_에러")
     void 마이페이지_고객없음() throws Exception {
-        given(boardSessionService.getSession(any(), any()))
-                .willReturn(new BoardSessionData(true, 42L, "홍길동"));
+        BoardSessionData session = loggedIn(42L, "홍길동");
+        given(boardSessionService.getSession(any(), any())).willReturn(session);
         given(customerService.findById(42L)).willReturn(null);
 
         mockMvc.perform(get("/api/public/board/mypage"))
@@ -67,8 +82,8 @@ class BoardMypageControllerTest {
     @Test
     @DisplayName("마이페이지_조회_성공")
     void 마이페이지_성공() throws Exception {
-        given(boardSessionService.getSession(any(), any()))
-                .willReturn(new BoardSessionData(true, 42L, "홍길동"));
+        BoardSessionData session = loggedIn(42L, "홍길동");
+        given(boardSessionService.getSession(any(), any())).willReturn(session);
         Customer customer = new Customer();
         customer.setSeq(42L);
         customer.setName("홍길동");
@@ -87,8 +102,8 @@ class BoardMypageControllerTest {
     @Test
     @DisplayName("탈퇴_비로그인이면_에러")
     void 탈퇴_비로그인() throws Exception {
-        given(boardSessionService.getSession(any(), any()))
-                .willReturn(new BoardSessionData(false, null, null));
+        BoardSessionData session = loggedOut();
+        given(boardSessionService.getSession(any(), any())).willReturn(session);
 
         mockMvc.perform(post("/api/public/board/withdraw"))
                 .andExpect(status().isOk())
@@ -101,8 +116,8 @@ class BoardMypageControllerTest {
     @Test
     @DisplayName("탈퇴_Customer_없으면_에러")
     void 탈퇴_고객없음() throws Exception {
-        given(boardSessionService.getSession(any(), any()))
-                .willReturn(new BoardSessionData(true, 42L, "홍길동"));
+        BoardSessionData session = loggedIn(42L, "홍길동");
+        given(boardSessionService.getSession(any(), any())).willReturn(session);
         given(customerService.findById(42L)).willReturn(null);
 
         mockMvc.perform(post("/api/public/board/withdraw"))
@@ -116,8 +131,8 @@ class BoardMypageControllerTest {
     @Test
     @DisplayName("탈퇴_성공시_Customer_삭제_및_세션_로그아웃")
     void 탈퇴_성공() throws Exception {
-        given(boardSessionService.getSession(any(), any()))
-                .willReturn(new BoardSessionData(true, 42L, "홍길동"));
+        BoardSessionData session = loggedIn(42L, "홍길동");
+        given(boardSessionService.getSession(any(), any())).willReturn(session);
         Customer customer = new Customer();
         customer.setSeq(42L);
         customer.setName("홍길동");

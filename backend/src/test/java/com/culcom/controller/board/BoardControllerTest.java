@@ -7,6 +7,7 @@ import com.culcom.entity.enums.NoticeCategory;
 import com.culcom.service.BoardSessionService;
 import com.culcom.service.BoardSessionService.BoardSessionData;
 import com.culcom.service.NoticeService;
+import org.mockito.Mockito;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,8 +45,8 @@ class BoardControllerTest {
                 .branchName("본점")
                 .title("공지 제목")
                 .content("본문")
-                .category(NoticeCategory.공지사항)
-                .categoryClass("badge-event")
+                .category(NoticeCategory.스터디시간)
+                .categoryClass("badge-notice")
                 .isPinned(false)
                 .viewCount(10)
                 .hasEventDate(false)
@@ -80,11 +81,25 @@ class BoardControllerTest {
 
     // ========== GET /session ==========
 
+    private BoardSessionData loggedIn(long seq, String name) {
+        BoardSessionData data = Mockito.mock(BoardSessionData.class);
+        given(data.isLoggedIn()).willReturn(true);
+        given(data.getMemberSeq()).willReturn(seq);
+        given(data.getMemberName()).willReturn(name);
+        return data;
+    }
+
+    private BoardSessionData loggedOut() {
+        BoardSessionData data = Mockito.mock(BoardSessionData.class);
+        given(data.isLoggedIn()).willReturn(false);
+        return data;
+    }
+
     @Test
     @DisplayName("세션_로그인_상태")
     void 세션_로그인됨() throws Exception {
-        given(boardSessionService.getSession(any(), any()))
-                .willReturn(new BoardSessionData(true, 42L, "홍길동"));
+        BoardSessionData session = loggedIn(42L, "홍길동");
+        given(boardSessionService.getSession(any(), any())).willReturn(session);
 
         mockMvc.perform(get("/api/public/board/session"))
                 .andExpect(status().isOk())
@@ -96,8 +111,8 @@ class BoardControllerTest {
     @Test
     @DisplayName("세션_비로그인_상태")
     void 세션_비로그인() throws Exception {
-        given(boardSessionService.getSession(any(), any()))
-                .willReturn(new BoardSessionData(false, null, null));
+        BoardSessionData session = loggedOut();
+        given(boardSessionService.getSession(any(), any())).willReturn(session);
 
         mockMvc.perform(get("/api/public/board/session"))
                 .andExpect(status().isOk())
