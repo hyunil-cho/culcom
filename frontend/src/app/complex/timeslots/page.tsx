@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation';
 import { timeslotApi, type ClassTimeSlot } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
-import { queryClient } from '@/lib/queryClient';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@/components/ui/Button';
 import ConfirmModal from '@/components/ui/ConfirmModal';
@@ -14,7 +13,7 @@ import { useResultModal } from '@/hooks/useResultModal';
 export default function TimeslotsPage() {
   const router = useRouter();
   const { data: slots = [] } = useApiQuery<ClassTimeSlot[]>(['timeslots'], () => timeslotApi.list());
-  const { run, modal } = useResultModal({ onConfirm: () => queryClient.invalidateQueries({ queryKey: ['timeslots'] }) });
+  const { run, modal } = useResultModal({ invalidateKeys: ['timeslots'] });
   const deleteModal = useModal<ClassTimeSlot>();
 
   const handleDelete = async () => {

@@ -7,6 +7,7 @@ import {
 } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { queryClient } from '@/lib/queryClient';
+import { invalidateAll, ATTENDANCE_RELATED } from '@/lib/invalidate';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ROUTES } from '@/lib/routes';
 import ResultModal from '@/components/ui/ResultModal';
@@ -77,7 +78,7 @@ function ClassTeamsPageInner() {
   const refreshSelectedClass = (seq: number) => {
     classApi.get(seq).then((res) => {
       setSelectedClass(res.data);
-      queryClient.invalidateQueries({ queryKey: ['classes', 'teams'] });
+      queryClient.invalidateQueries({ queryKey: ['classes'] });
     });
   };
 
@@ -103,6 +104,7 @@ function ClassTeamsPageInner() {
           return;
         }
         queryClient.invalidateQueries({ queryKey: ['classMembers', selectedClass.seq] });
+        queryClient.invalidateQueries({ queryKey: ['classes'] });
       } else if (pending.kind === 'member-remove') {
         const res = await classApi.removeMember(selectedClass.seq, pending.member.seq);
         if (!res.success) {
@@ -110,6 +112,8 @@ function ClassTeamsPageInner() {
           return;
         }
         queryClient.invalidateQueries({ queryKey: ['classMembers', selectedClass.seq] });
+        queryClient.invalidateQueries({ queryKey: ['classes'] });
+        invalidateAll(ATTENDANCE_RELATED);
       } else if (pending.kind === 'leader-set') {
         const res = await classApi.setLeader(selectedClass.seq, pending.staff.seq);
         if (!res.success) {

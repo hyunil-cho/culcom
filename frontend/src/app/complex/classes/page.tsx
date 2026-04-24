@@ -19,7 +19,7 @@ export default function ClassesPage() {
   const [keyword, setKeyword] = useState('');
   const resultModal = useModal<{ success: boolean; message: string }>();
   const deleteModal = useModal<ComplexClass>();
-  const { run, modal: resultModalNode } = useResultModal({ onConfirm: () => list.load(list.pagination.page) });
+  const { run, modal: resultModalNode } = useResultModal({ invalidateKeys: ['classes'] });
 
   const handleSearch = () => { list.load(0, { keyword }); };
 
