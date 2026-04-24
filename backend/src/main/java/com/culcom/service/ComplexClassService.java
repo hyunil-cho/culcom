@@ -66,17 +66,12 @@ public class ComplexClassService {
         cls.setName(req.getName());
         cls.setDescription(req.getDescription());
         cls.setCapacity(req.getCapacity());
-        cls.setStaff(null);
         timeSlotRepository.findById(req.getTimeSlotSeq()).ifPresent(cls::setTimeSlot);
 
         ComplexClass saved = classRepository.save(cls);
 
 
         return ComplexClassResponse.from(saved);
-    }
-
-    public void delete(Long seq) {
-        classRepository.deleteById(seq);
     }
 
     @Transactional(readOnly = true)

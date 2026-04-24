@@ -168,18 +168,6 @@ class ComplexClassControllerTest {
                 .andExpect(jsonPath("$.data.name").value("중급반"));
     }
 
-    // ========== 6. 수업 삭제 성공 ==========
-
-    @Test
-    void 수업_삭제_성공() throws Exception {
-        willDoNothing().given(complexClassService).delete(1L);
-
-        mockMvc.perform(delete("/api/complex/classes/{seq}", 1L).with(auth()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("수업 삭제 완료"));
-    }
-
     // ========== 7. 수업 멤버 목록 조회 ==========
 
     @Test
