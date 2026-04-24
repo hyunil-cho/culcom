@@ -30,8 +30,10 @@ public class AttendanceController {
     }
 
     @PostMapping("/reorder")
-    public ResponseEntity<ApiResponse<Void>> reorderClasses(@RequestBody ClassReorderRequest req) {
-        attendanceService.reorderClasses(req);
+    public ResponseEntity<ApiResponse<Void>> reorderClasses(
+            @RequestBody ClassReorderRequest req,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        attendanceService.reorderClasses(req, principal.getSelectedBranchSeq());
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 

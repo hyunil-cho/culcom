@@ -114,7 +114,7 @@ class AttendanceServiceReorderTest {
                     classOrder(b.getSeq(), 1),
                     classOrder(a.getSeq(), 2)
             ));
-            attendanceService.reorderClasses(req);
+            attendanceService.reorderClasses(req, branch.getSeq());
             em.flush();
             em.clear();
 
@@ -136,7 +136,7 @@ class AttendanceServiceReorderTest {
                     classOrder(b.getSeq(), 0),
                     classOrder(a.getSeq(), 1)
             ));
-            attendanceService.reorderClasses(req);
+            attendanceService.reorderClasses(req, branch.getSeq());
             em.flush();
             em.clear();
 

@@ -18,15 +18,15 @@ import com.culcom.exception.EntityNotFoundException;
 import com.culcom.exception.ForbiddenException;
 import com.culcom.repository.*;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AttendanceService {
@@ -39,16 +39,21 @@ public class AttendanceService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public void reorderClasses(ClassReorderRequest req) {
-        List<Long> ids = req.getClassOrders().stream().map(ClassReorderRequest.ClassOrder::getId).toList();
-        Map<Long, ComplexClass> classMap = new HashMap<>();
-        classRepository.findAllById(ids).forEach(c -> classMap.put(c.getSeq(), c));
+    public void reorderClasses(ClassReorderRequest req, Long branchSeq) {
+        List<ClassReorderRequest.ClassOrder> orders = req.getClassOrders();
+        if (orders == null || orders.isEmpty()) return;
 
-        for (ClassReorderRequest.ClassOrder order : req.getClassOrders()) {
-            ComplexClass c = classMap.get(order.getId());
-            if (c != null) c.setSortOrder(order.getSortOrder());
+        Set<Long> idSet = validateOrders(
+                orders, ClassReorderRequest.ClassOrder::getId,
+                ClassReorderRequest.ClassOrder::getSortOrder, "id");
+
+        Map<Long, ComplexClass> classMap = classRepository.findAllById(idSet).stream()
+                .collect(Collectors.toMap(ComplexClass::getSeq, Function.identity()));
+        assertAllClassesInBranch(idSet, classMap, branchSeq);
+
+        for (ClassReorderRequest.ClassOrder order : orders) {
+            classMap.get(order.getId()).setSortOrder(order.getSortOrder());
         }
-        classRepository.saveAll(classMap.values());
     }
 
     @Transactional
@@ -60,23 +65,9 @@ public class AttendanceService {
         List<MemberReorderRequest.MemberOrder> orders = req.getMemberOrders();
         if (orders == null || orders.isEmpty()) return;
 
-        // 입력 검증: memberSeq/sortOrder null·음수·중복 금지.
-        Set<Long> memberSeqSet = new LinkedHashSet<>();
-        Set<Integer> sortOrderSet = new HashSet<>();
-        for (MemberReorderRequest.MemberOrder o : orders) {
-            if (o.getMemberSeq() == null || o.getSortOrder() == null) {
-                throw new IllegalArgumentException("memberSeq와 sortOrder는 필수입니다.");
-            }
-            if (o.getSortOrder() < 0) {
-                throw new IllegalArgumentException("sortOrder는 0 이상이어야 합니다.");
-            }
-            if (!memberSeqSet.add(o.getMemberSeq())) {
-                throw new IllegalArgumentException("중복된 memberSeq가 있습니다: " + o.getMemberSeq());
-            }
-            if (!sortOrderSet.add(o.getSortOrder())) {
-                throw new IllegalArgumentException("중복된 sortOrder가 있습니다: " + o.getSortOrder());
-            }
-        }
+        Set<Long> memberSeqSet = validateOrders(
+                orders, MemberReorderRequest.MemberOrder::getMemberSeq,
+                MemberReorderRequest.MemberOrder::getSortOrder, "memberSeq");
 
         // 권한 검증: 대상 수업이 현재 세션 지점 소속이어야 한다.
         ComplexClass cls = classRepository.findById(classSeq)
@@ -85,20 +76,61 @@ public class AttendanceService {
             throw new ForbiddenException("다른 지점의 수업은 변경할 수 없습니다.");
         }
 
-        List<Long> memberSeqs = new ArrayList<>(memberSeqSet);
-        Map<Long, ComplexMemberClassMapping> mappingMap = new HashMap<>();
-        memberClassMappingRepository.findByComplexClassSeqAndMemberSeqIn(classSeq, memberSeqs)
-                .forEach(m -> mappingMap.put(m.getMember().getSeq(), m));
-
-        List<Long> missing = memberSeqs.stream()
-                .filter(seq -> !mappingMap.containsKey(seq)).toList();
-        if (!missing.isEmpty()) {
-            log.warn("reorderMembers: classSeq={} 에 속하지 않은 회원 요청 무시 {}", classSeq, missing);
+        Map<Long, ComplexMemberClassMapping> mappingMap = memberClassMappingRepository
+                .findByComplexClassSeqAndMemberSeqIn(classSeq, new ArrayList<>(memberSeqSet))
+                .stream().collect(Collectors.toMap(m -> m.getMember().getSeq(), Function.identity()));
+        if (mappingMap.size() != memberSeqSet.size()) {
+            List<Long> missing = memberSeqSet.stream()
+                    .filter(seq -> !mappingMap.containsKey(seq)).toList();
+            throw new IllegalArgumentException("해당 수업에 속하지 않은 회원이 있습니다: " + missing);
         }
 
         for (MemberReorderRequest.MemberOrder order : orders) {
-            ComplexMemberClassMapping m = mappingMap.get(order.getMemberSeq());
-            if (m != null) m.setSortOrder(order.getSortOrder());
+            mappingMap.get(order.getMemberSeq()).setSortOrder(order.getSortOrder());
+        }
+    }
+
+    /**
+     * 재정렬 요청의 공통 입력 검증. id/sortOrder null·음수 금지, id·sortOrder 각각 중복 금지.
+     * 호출측에서 바로 사용할 수 있도록 중복 제거된 id 집합을 반환한다 (입력 순서 유지).
+     */
+    private <T> Set<Long> validateOrders(
+            List<T> orders,
+            Function<T, Long> idGetter,
+            Function<T, Integer> sortOrderGetter,
+            String idFieldName) {
+        Set<Long> idSet = new LinkedHashSet<>();
+        Set<Integer> sortOrderSet = new HashSet<>();
+        for (T o : orders) {
+            Long id = idGetter.apply(o);
+            Integer sortOrder = sortOrderGetter.apply(o);
+            if (id == null || sortOrder == null) {
+                throw new IllegalArgumentException(idFieldName + "와 sortOrder는 필수입니다.");
+            }
+            if (sortOrder < 0) {
+                throw new IllegalArgumentException("sortOrder는 0 이상이어야 합니다.");
+            }
+            if (!idSet.add(id)) {
+                throw new IllegalArgumentException("중복된 " + idFieldName + "가 있습니다: " + id);
+            }
+            if (!sortOrderSet.add(sortOrder)) {
+                throw new IllegalArgumentException("중복된 sortOrder가 있습니다: " + sortOrder);
+            }
+        }
+        return idSet;
+    }
+
+    private void assertAllClassesInBranch(Set<Long> requestedIds,
+                                          Map<Long, ComplexClass> found, Long branchSeq) {
+        if (found.size() != requestedIds.size()) {
+            List<Long> missing = requestedIds.stream()
+                    .filter(id -> !found.containsKey(id)).toList();
+            throw new EntityNotFoundException("수업: " + missing);
+        }
+        for (ComplexClass c : found.values()) {
+            if (!c.getBranch().getSeq().equals(branchSeq)) {
+                throw new ForbiddenException("다른 지점의 수업은 변경할 수 없습니다.");
+            }
         }
     }
 

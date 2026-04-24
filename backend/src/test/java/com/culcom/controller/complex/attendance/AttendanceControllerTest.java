@@ -81,7 +81,7 @@ class AttendanceControllerTest {
     @Test
     @DisplayName("수업_순서_변경")
     void 수업_순서_변경() throws Exception {
-        willDoNothing().given(attendanceService).reorderClasses(any());
+        willDoNothing().given(attendanceService).reorderClasses(any(), any());
 
         Map<String, Object> body = new HashMap<>();
         body.put("classOrders", List.of(
