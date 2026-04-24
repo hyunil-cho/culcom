@@ -73,7 +73,8 @@ export default function AttendancePage() {
   });
 
   const { start: startMemberDrag } = useDragReorder({
-    itemSelector: '.member-item',
+    // 스태프(리더)는 재정렬 대상에서 제외 — 서버 요청에 포함되지 않는다.
+    itemSelector: '.member-item:not(.is-staff)',
     getItemId: (el) => {
       const id = parseInt(el.dataset.memberSeq || '0');
       return id || null;
