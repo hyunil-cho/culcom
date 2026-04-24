@@ -25,7 +25,7 @@ export function useAttendanceHistory<T extends { seq: number; name: string }>(ty
           padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600,
         }}
       >
-        히스토리
+        🔍
       </button>
     ),
   };

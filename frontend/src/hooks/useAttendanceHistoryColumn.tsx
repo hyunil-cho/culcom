@@ -16,13 +16,21 @@ function cellStyle(mark: string): React.CSSProperties {
 
 export function AttendanceHistoryCells({ history, size = 14 }: { history?: string[]; size?: number }) {
   const list = history || [];
+  const padded: (string | null)[] = [
+    ...list,
+    ...Array.from({ length: Math.max(0, size - list.length) }, () => null),
+  ];
+  const rowCount = 3;
+  const perRow = Math.ceil(size / rowCount);
+  const rows = Array.from({ length: rowCount }, (_, r) => padded.slice(r * perRow, (r + 1) * perRow));
   return (
-    <div style={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-      {list.map((h, i) => (
-        <div key={i} style={cellStyle(h)}>{h}</div>
-      ))}
-      {Array.from({ length: Math.max(0, size - list.length) }).map((_, i) => (
-        <div key={`e${i}`} style={cellStyle('')} />
+    <div style={{ display: 'inline-flex', flexDirection: 'column', gap: 2, alignItems: 'flex-start' }}>
+      {rows.map((row, r) => (
+        <div key={r} style={{ display: 'flex', gap: 2 }}>
+          {row.map((h, i) => (
+            <div key={i} style={cellStyle(h ?? '')}>{h ?? ''}</div>
+          ))}
+        </div>
       ))}
     </div>
   );

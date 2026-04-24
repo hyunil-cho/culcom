@@ -43,35 +43,26 @@ function MembersContent() {
   useEffect(() => { setKeyword(searchedKeyword); }, [searchedKeyword]);
 
   const columns: Column<ComplexMember>[] = [
-    { header: '번호', render: (_, i) => page * 20 + (i ?? 0) + 1, style: { width: 50, color: '#adb5bd' } },
     {
       header: '이름', render: (m) => (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontWeight: 'bold', color: '#4a90e2' }}>{m.name}</span>
-          {m.staffStatus && (
-            <span style={{
-              fontSize: '0.65rem', fontWeight: 700, color: '#fff',
-              background: '#6366f1', borderRadius: 3, padding: '1px 6px',
-            }}>STAFF</span>
-          )}
-        </span>
+        <span style={{ fontWeight: 'bold', color: '#4a90e2' }}>{m.name}</span>
       ),
     },
-    { header: '연락처', render: (m) => <span style={{ fontFamily: 'monospace' }}>{m.phoneNumber}</span> },
-    { header: '레벨', render: (m) => m.level || '' },
-    { header: '언어', render: (m) => m.language || '' },
-    { header: '인적사항', render: (m) => <span style={{ color: '#888' }}>{m.info || ''}</span> },
+    { header: '연락처', render: (m) => <span style={{ fontFamily: 'monospace', fontSize: '70%' }}>{m.phoneNumber}</span> },
+    { header: '레벨', render: (m) => <span style={{ fontSize: '70%' }}>{m.level || ''}</span> },
+    { header: '언어', render: (m) => <span style={{ fontSize: '70%' }}>{m.language || ''}</span> },
+    { header: '인적사항', render: (m) => <span style={{ color: '#888', fontSize: '70%' }}>{m.info || ''}</span> },
     {
       header: '멤버쉽', render: (m) => (
         <button onClick={(e) => { e.stopPropagation(); openInfoModal(m.seq, m.name); }}
           style={{ background: '#6366f1', color: '#fff', border: 'none', borderRadius: 3, padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}>
-          정보
+          🔍
         </button>
       ),
     },
     {
       header: '입금액', render: (m) => m.firstPaymentAmount != null
-        ? <span style={{ fontWeight: 600 }}>{m.firstPaymentAmount.toLocaleString()}원</span>
+        ? <span style={{ fontWeight: 600, fontSize: '70%' }}>{m.firstPaymentAmount.toLocaleString()}원</span>
         : <span style={{ color: '#ccc', fontSize: '0.78rem' }}>—</span>,
     },
     {
@@ -80,10 +71,10 @@ function MembersContent() {
       </span>,
     },
     historyColumn,
-    { header: '가입경로', render: (m) => <span style={{ color: '#555' }}>{m.signupChannel || ''}</span> },
-    { header: '인터뷰어', render: (m) => <span style={{ color: '#555' }}>{m.interviewer || ''}</span> },
+    { header: '가입경로', render: (m) => <span style={{ color: '#555', fontSize: '70%' }}>{m.signupChannel || ''}</span> },
+    { header: '인터뷰어', render: (m) => <span style={{ color: '#555', fontSize: '70%' }}>{m.interviewer || ''}</span> },
     { header: '등록일자', render: (m) => <span style={{ fontSize: '0.75rem', color: '#666' }}>{m.createdDate?.split('T')[0] ?? ''}</span> },
-    { header: '특이사항', render: (m) => <span style={{ color: '#888' }}>{m.comment || ''}</span> },
+    { header: '특이사항', render: (m) => <span style={{ color: '#888', fontSize: '70%' }}>{m.comment || ''}</span> },
     recentHistoryColumn,
   ];
 
