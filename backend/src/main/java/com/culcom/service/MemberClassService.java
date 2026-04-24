@@ -84,7 +84,7 @@ public class MemberClassService {
         }
 
         // 2) 리더 역할(ComplexClass.staff) 해제 — 복수 팀에 걸쳐 있을 수 있으므로 전체 순회
-        List<ComplexClass> leaderOf = classRepository.findByStaffSeq(member.getSeq());
+        List<ComplexClass> leaderOf = classRepository.findByStaffSeqAndDeletedFalse(member.getSeq());
         int leaderCount = leaderOf.size();
         if (leaderCount > 0) {
             for (ComplexClass c : leaderOf) {

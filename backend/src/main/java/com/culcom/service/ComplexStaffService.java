@@ -133,7 +133,7 @@ public class ComplexStaffService {
 
         // 휴직/퇴직 시 배정된 수업에서 제외
         if (oldStatus == StaffStatus.활동중 && newStatus != StaffStatus.활동중) {
-            List<ComplexClass> assignedClasses = classRepository.findByStaffSeq(seq);
+            List<ComplexClass> assignedClasses = classRepository.findByStaffSeqAndDeletedFalse(seq);
             for (ComplexClass cls : assignedClasses) {
                 cls.setStaff(null);
                 classRepository.save(cls);

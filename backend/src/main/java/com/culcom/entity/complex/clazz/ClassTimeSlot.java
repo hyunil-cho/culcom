@@ -7,7 +7,9 @@ import lombok.*;
 import java.time.LocalTime;
 
 @Entity
-@Table(name = "class_time_slots")
+@Table(name = "class_time_slots", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_class_time_slots_name_deleted", columnNames = {"name", "deleted"})
+})
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
@@ -21,7 +23,7 @@ public class ClassTimeSlot extends BaseTimeEntity {
     @JoinColumn(name = "branch_seq", nullable = false)
     private Branch branch;
 
-    @Column(nullable = false, length = 100, unique = true)
+    @Column(nullable = false, length = 100)
     private String name;
 
     @Column(name = "days_of_week", nullable = false, length = 100)
@@ -33,4 +35,7 @@ public class ClassTimeSlot extends BaseTimeEntity {
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean deleted = false;
 }

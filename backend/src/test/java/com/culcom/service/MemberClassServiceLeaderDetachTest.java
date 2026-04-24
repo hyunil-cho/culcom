@@ -91,14 +91,14 @@ class MemberClassServiceLeaderDetachTest {
         Fixture f = setupTwoTeamLeader("basic");
 
         // 사전 검증 — 3개 팀 모두 리더 배정됨
-        List<ComplexClass> before = classRepository.findByStaffSeq(f.leader.getSeq());
+        List<ComplexClass> before = classRepository.findByStaffSeqAndDeletedFalse(f.leader.getSeq());
         assertThat(before).hasSize(3);
 
         // when
         memberClassService.detachMemberFromAllClasses(f.leader, "정지");
 
         // then — 속한 모든 팀에서 리더 해제
-        List<ComplexClass> after = classRepository.findByStaffSeq(f.leader.getSeq());
+        List<ComplexClass> after = classRepository.findByStaffSeqAndDeletedFalse(f.leader.getSeq());
         assertThat(after).as("리더 자격 상실 시 3개 팀 모두에서 해제되어야 한다").isEmpty();
 
         assertThat(classRepository.findById(f.classA.getSeq()).orElseThrow().getStaff()).isNull();
@@ -118,7 +118,7 @@ class MemberClassServiceLeaderDetachTest {
 
         assertThat(classMappingRepository.findByMemberSeq(f.leader.getSeq()))
                 .as("일반 수강 매핑도 전부 삭제").isEmpty();
-        assertThat(classRepository.findByStaffSeq(f.leader.getSeq()))
+        assertThat(classRepository.findByStaffSeqAndDeletedFalse(f.leader.getSeq()))
                 .as("리더 역할도 전부 해제").isEmpty();
     }
 
@@ -144,7 +144,7 @@ class MemberClassServiceLeaderDetachTest {
         refundService.updateStatus(refund.getSeq(), RequestStatus.승인, null);
 
         // then — 리더로 배정돼 있던 3개 팀 모두에서 해제되어야 한다
-        assertThat(classRepository.findByStaffSeq(f.leader.getSeq()))
+        assertThat(classRepository.findByStaffSeqAndDeletedFalse(f.leader.getSeq()))
                 .as("환불 승인 시 리더가 속한 모든 팀에서 해제되어야 한다")
                 .isEmpty();
     }
@@ -176,7 +176,7 @@ class MemberClassServiceLeaderDetachTest {
 
         // then — 일반 수강만 정리, 기존 리더(f.leader)는 건드리지 않음
         assertThat(classMappingRepository.findByMemberSeq(regular.getSeq())).isEmpty();
-        assertThat(classRepository.findByStaffSeq(f.leader.getSeq()))
+        assertThat(classRepository.findByStaffSeqAndDeletedFalse(f.leader.getSeq()))
                 .as("다른 회원의 자격 상실이 리더 배정에 영향을 주면 안 된다")
                 .hasSize(3);
     }

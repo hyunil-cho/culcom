@@ -9,7 +9,9 @@ import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 @Entity
-@Table(name = "complex_classes")
+@Table(name = "complex_classes", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_complex_classes_name_deleted", columnNames = {"name", "deleted"})
+})
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
@@ -31,7 +33,7 @@ public class ComplexClass extends BaseTimeEntity {
     @JoinColumn(name = "staff_seq")
     private ComplexMember staff;
 
-    @Column(nullable = false, length = 100, unique = true)
+    @Column(nullable = false, length = 100)
     private String name;
 
     @Column(length = 500)
@@ -44,4 +46,8 @@ public class ComplexClass extends BaseTimeEntity {
     @Column(name = "sort_order", nullable = false)
     @Builder.Default
     private Integer sortOrder = 0;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean deleted = false;
 }

@@ -42,7 +42,7 @@ public class ClassTimeSlotController {
 
     @DeleteMapping("/{seq}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long seq) {
-        classTimeSlotService.delete(seq);
+        classTimeSlotService. delete(seq);
         return ResponseEntity.ok(ApiResponse.ok("시간대 삭제 완료", null));
     }
 }

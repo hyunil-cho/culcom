@@ -42,6 +42,12 @@ public class ComplexClassController {
         return ResponseEntity.ok(ApiResponse.ok("수업 수정 완료", result));
     }
 
+    @DeleteMapping("/{seq}")
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long seq) {
+        complexClassService.delete(seq);
+        return ResponseEntity.ok(ApiResponse.ok("팀 삭제 완료", null));
+    }
+
     @GetMapping("/{seq}/members")
     public ResponseEntity<ApiResponse<List<ComplexMemberResponse>>> listMembers(@PathVariable Long seq) {
         List<ComplexMemberResponse> result = complexClassService.listMembers(seq);

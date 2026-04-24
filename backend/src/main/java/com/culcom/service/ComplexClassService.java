@@ -37,7 +37,7 @@ public class ComplexClassService {
     private final ApplicationEventPublisher eventPublisher;
 
     public ComplexClassResponse get(Long seq) {
-        ComplexClass cls = classRepository.findById(seq)
+        ComplexClass cls = classRepository.findBySeqAndDeletedFalse(seq)
                 .orElseThrow(() -> new EntityNotFoundException("수업"));
         return ComplexClassResponse.from(cls);
     }
@@ -50,7 +50,7 @@ public class ComplexClassService {
                 .sortOrder(classRepository.findMaxSortOrderByBranchSeq(branchSeq) + 1)
                 .branch(branchRepository.findById(branchSeq)
                         .orElseThrow(() -> new EntityNotFoundException("지점")))
-                .timeSlot(timeSlotRepository.findById(req.getTimeSlotSeq())
+                .timeSlot(timeSlotRepository.findBySeqAndDeletedFalse(req.getTimeSlotSeq())
                         .orElseThrow(() -> new EntityNotFoundException("시간대")))
                 .staff(null)
                 .build();
@@ -60,18 +60,39 @@ public class ComplexClassService {
 
     @Transactional
     public ComplexClassResponse update(Long seq, ComplexClassRequest req) {
-        ComplexClass cls = classRepository.findById(seq)
+        ComplexClass cls = classRepository.findBySeqAndDeletedFalse(seq)
                 .orElseThrow(() -> new EntityNotFoundException("수업"));
 
         cls.setName(req.getName());
         cls.setDescription(req.getDescription());
         cls.setCapacity(req.getCapacity());
-        timeSlotRepository.findById(req.getTimeSlotSeq()).ifPresent(cls::setTimeSlot);
+        timeSlotRepository.findBySeqAndDeletedFalse(req.getTimeSlotSeq()).ifPresent(cls::setTimeSlot);
 
         ComplexClass saved = classRepository.save(cls);
 
 
         return ComplexClassResponse.from(saved);
+    }
+
+    /**
+     * Soft-delete. 등록된 회원이 한 명이라도 있거나 리더가 배정돼 있으면 차단한다 — 잘못 누른
+     * 삭제로 회원 매핑/리더 배정 정보가 사라지는 것을 방지.
+     */
+    @Transactional
+    public void delete(Long seq) {
+        ComplexClass cls = classRepository.findBySeqAndDeletedFalse(seq)
+                .orElseThrow(() -> new EntityNotFoundException("수업"));
+        long memberCount = mappingRepository.countByComplexClassSeq(seq);
+        if (memberCount > 0) {
+            throw new IllegalStateException(
+                    "이 팀에 등록된 회원이 " + memberCount + "명 있어 삭제할 수 없습니다. 먼저 회원을 모두 제외해주세요.");
+        }
+        if (cls.getStaff() != null) {
+            throw new IllegalStateException(
+                    "이 팀에 리더가 배정돼 있어 삭제할 수 없습니다. 먼저 리더를 해제해주세요.");
+        }
+        cls.setDeleted(true);
+        classRepository.save(cls);
     }
 
     @Transactional(readOnly = true)
@@ -83,7 +104,7 @@ public class ComplexClassService {
 
     @Transactional
     public void addMember(Long classSeq, Long memberSeq) {
-        ComplexClass cls = classRepository.findById(classSeq)
+        ComplexClass cls = classRepository.findBySeqAndDeletedFalse(classSeq)
                 .orElseThrow(() -> new EntityNotFoundException("수업"));
         ComplexMember member = memberRepository.findById(memberSeq)
                 .orElseThrow(() -> new EntityNotFoundException("회원"));
@@ -118,7 +139,7 @@ public class ComplexClassService {
 
     @Transactional
     public void removeMember(Long classSeq, Long memberSeq) {
-        ComplexClass cls = classRepository.findById(classSeq)
+        ComplexClass cls = classRepository.findBySeqAndDeletedFalse(classSeq)
                 .orElseThrow(() -> new EntityNotFoundException("수업"));
         ComplexMember member = memberRepository.findById(memberSeq)
                 .orElseThrow(() -> new EntityNotFoundException("회원"));
@@ -129,7 +150,7 @@ public class ComplexClassService {
 
     @Transactional
     public ComplexClassResponse setLeader(Long classSeq, Long staffSeq) {
-        ComplexClass cls = classRepository.findById(classSeq)
+        ComplexClass cls = classRepository.findBySeqAndDeletedFalse(classSeq)
                 .orElseThrow(() -> new EntityNotFoundException("수업"));
         Long oldStaffSeq = cls.getStaff() != null ? cls.getStaff().getSeq() : null;
 

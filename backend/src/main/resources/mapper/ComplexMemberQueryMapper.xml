@@ -20,7 +20,6 @@
             md.level,
             md.language,
             m.info,
-            m.comment,
             m.join_date AS joinDate,
             md.signup_channel AS signupChannel,
             si.status AS staffStatus,

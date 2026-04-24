@@ -107,7 +107,7 @@ class ComplexStaffServiceRetireTest {
                 .as("활동종료 시 팀 C 의 리더는 해제되어야 한다").isNull();
 
         // DB 쿼리로도 재확인: 해당 스태프가 리더인 수업이 더 이상 존재하지 않는다
-        List<ComplexClass> stillAssigned = classRepository.findByStaffSeq(f.staff().getSeq());
+        List<ComplexClass> stillAssigned = classRepository.findByStaffSeqAndDeletedFalse(f.staff().getSeq());
         assertThat(stillAssigned).as("활동종료된 스태프가 리더로 남은 수업이 있어선 안 된다").isEmpty();
     }
 

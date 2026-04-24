@@ -238,6 +238,20 @@ public class SurveyService {
             seenInSection.put(composite, key);
         }
 
+        // 같은 섹션 내 두 질문이 questionKey 를 swap 하는 케이스에서, 한 행씩 update 하면
+        // (section_seq, question_key) unique 제약이 중간 상태에서 충돌한다. 이를 피하려고
+        // 1단계로 임시 키를 먼저 적용해 flush 한 뒤, 2단계에서 최종 키를 세팅한다.
+        boolean anyKeyChange = req.getItems().stream()
+                .anyMatch(it -> it.getNewQuestionKey() != null && questionMap.containsKey(it.getSeq()));
+        if (anyKeyChange) {
+            for (QuestionReorderRequest.QuestionReorderItem item : req.getItems()) {
+                if (item.getNewQuestionKey() == null) continue;
+                SurveyTemplateQuestion q = questionMap.get(item.getSeq());
+                if (q != null) q.setQuestionKey("__tmp_swap_" + q.getSeq());
+            }
+            questionRepository.saveAllAndFlush(questionMap.values());
+        }
+
         for (QuestionReorderRequest.QuestionReorderItem item : req.getItems()) {
             SurveyTemplateQuestion q = questionMap.get(item.getSeq());
             if (q != null) {

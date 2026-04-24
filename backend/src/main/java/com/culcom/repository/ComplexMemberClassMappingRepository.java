@@ -25,6 +25,8 @@ public interface ComplexMemberClassMappingRepository extends JpaRepository<Compl
 
     boolean existsByComplexClassSeqAndMemberSeq(Long classSeq, Long memberSeq);
 
+    long countByComplexClassSeq(Long classSeq);
+
     void deleteByComplexClassSeqAndMemberSeq(Long classSeq, Long memberSeq);
 
     List<ComplexMemberClassMapping> findByComplexClassSeqAndMemberSeqIn(Long classSeq, List<Long> memberSeqs);

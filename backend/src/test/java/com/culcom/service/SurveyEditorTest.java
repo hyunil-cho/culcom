@@ -83,6 +83,14 @@ class SurveyEditorTest {
         return item;
     }
 
+    private QuestionReorderRequest.QuestionReorderItem questionReorderItem(Long seq, int sortOrder, String newKey) {
+        QuestionReorderRequest.QuestionReorderItem item = new QuestionReorderRequest.QuestionReorderItem();
+        item.setSeq(seq);
+        item.setSortOrder(sortOrder);
+        item.setNewQuestionKey(newKey);
+        return item;
+    }
+
     // ========== 섹션 이름 변경 ==========
 
     @Nested
@@ -445,6 +453,159 @@ class SurveyEditorTest {
             List<SurveyOptionResponse> reordered = surveyService.reorderOptions(reorderReq);
             assertThat(reordered).hasSize(1);
             assertThat(reordered.get(0).getLabel()).isEqualTo("유일");
+        }
+
+        @Test
+        void 첫번째와_마지막만_자리바꿈하면_가운데는_그대로_영속된다() {
+            SurveyOptionResponse a = surveyService.createOption(templateSeq, createOptionRequest(questionSeq, "A"));
+            SurveyOptionResponse b = surveyService.createOption(templateSeq, createOptionRequest(questionSeq, "B"));
+            SurveyOptionResponse c = surveyService.createOption(templateSeq, createOptionRequest(questionSeq, "C"));
+
+            // 자리바꿈(swap): A(1) ↔ C(3). B 는 원래 sortOrder 유지.
+            OptionReorderRequest reorderReq = new OptionReorderRequest();
+            reorderReq.setItems(List.of(
+                    reorderItem(c.getSeq(), 1),
+                    reorderItem(b.getSeq(), 2),
+                    reorderItem(a.getSeq(), 3)
+            ));
+            surveyService.reorderOptions(reorderReq);
+
+            List<SurveyOptionResponse> persisted = surveyService.listOptions(templateSeq, questionSeq);
+            assertThat(persisted).extracting(SurveyOptionResponse::getLabel)
+                    .as("자리바꿈 결과가 sortOrder 기준으로 영속된다")
+                    .containsExactly("C", "B", "A");
+        }
+    }
+
+    // ========== 질문 순서 변경 (자리바꿈 영속성) ==========
+    //
+    // 주의: uk_question_section_key (section_seq, question_key) unique constraint 때문에
+    // reorderQuestions 가 newQuestionKey 로 키를 재할당하면 Hibernate flush 중간 상태에서
+    // 제약 충돌이 발생할 수 있다 (별개의 기존 이슈). 자리바꿈 자체의 영속성은
+    // sortOrder 로 결정되므로, 아래 테스트는 newQuestionKey 없이 sortOrder 만 변경한다.
+    @Nested
+    class 질문_순서_변경 {
+
+        private Long sectionSeq;
+
+        @BeforeEach
+        void createSection() {
+            SurveySectionResponse section = surveyService.createSection(templateSeq, createSectionRequest("섹션"));
+            sectionSeq = section.getSeq();
+        }
+
+        @Test
+        void 질문_자리바꿈_결과가_영속된다() {
+            SurveyQuestionResponse a = surveyService.createQuestion(templateSeq,
+                    createQuestionRequest(sectionSeq, "qa", "A질문"));
+            SurveyQuestionResponse b = surveyService.createQuestion(templateSeq,
+                    createQuestionRequest(sectionSeq, "qb", "B질문"));
+            SurveyQuestionResponse c = surveyService.createQuestion(templateSeq,
+                    createQuestionRequest(sectionSeq, "qc", "C질문"));
+
+            // A(pos1) ↔ C(pos3) 자리바꿈. B 는 가운데 유지.
+            QuestionReorderRequest reorderReq = new QuestionReorderRequest();
+            reorderReq.setItems(List.of(
+                    questionReorderItem(c.getSeq(), 1, null),
+                    questionReorderItem(b.getSeq(), 2, null),
+                    questionReorderItem(a.getSeq(), 3, null)
+            ));
+            surveyService.reorderQuestions(reorderReq);
+
+            List<SurveyQuestionResponse> persisted = surveyService.listQuestions(templateSeq);
+            assertThat(persisted).extracting(SurveyQuestionResponse::getTitle)
+                    .as("자리바꿈된 질문 순서가 DB 에 영속되어 조회 시 sortOrder 기준으로 반영된다")
+                    .containsExactly("C질문", "B질문", "A질문");
+        }
+
+        @Test
+        void 인접한_두_질문의_자리바꿈도_영속된다() {
+            SurveyQuestionResponse a = surveyService.createQuestion(templateSeq,
+                    createQuestionRequest(sectionSeq, "qa", "A"));
+            SurveyQuestionResponse b = surveyService.createQuestion(templateSeq,
+                    createQuestionRequest(sectionSeq, "qb", "B"));
+
+            QuestionReorderRequest reorderReq = new QuestionReorderRequest();
+            reorderReq.setItems(List.of(
+                    questionReorderItem(b.getSeq(), 1, null),
+                    questionReorderItem(a.getSeq(), 2, null)
+            ));
+            surveyService.reorderQuestions(reorderReq);
+
+            List<SurveyQuestionResponse> persisted = surveyService.listQuestions(templateSeq);
+            assertThat(persisted).extracting(SurveyQuestionResponse::getTitle)
+                    .containsExactly("B", "A");
+        }
+
+        @Test
+        void 자리바꿈_후_sortOrder_값이_DB_에_정확히_저장된다() {
+            SurveyQuestionResponse a = surveyService.createQuestion(templateSeq,
+                    createQuestionRequest(sectionSeq, "qa", "A"));
+            SurveyQuestionResponse b = surveyService.createQuestion(templateSeq,
+                    createQuestionRequest(sectionSeq, "qb", "B"));
+            SurveyQuestionResponse c = surveyService.createQuestion(templateSeq,
+                    createQuestionRequest(sectionSeq, "qc", "C"));
+
+            QuestionReorderRequest reorderReq = new QuestionReorderRequest();
+            reorderReq.setItems(List.of(
+                    questionReorderItem(c.getSeq(), 1, null),
+                    questionReorderItem(b.getSeq(), 2, null),
+                    questionReorderItem(a.getSeq(), 3, null)
+            ));
+            surveyService.reorderQuestions(reorderReq);
+
+            List<SurveyQuestionResponse> persisted = surveyService.listQuestions(templateSeq);
+            assertThat(persisted.get(0).getSortOrder()).isEqualTo(1);
+            assertThat(persisted.get(1).getSortOrder()).isEqualTo(2);
+            assertThat(persisted.get(2).getSortOrder()).isEqualTo(3);
+        }
+    }
+
+    // ========== 고객 기본 정보 필드 순서 변경 (자리바꿈 영속성) ==========
+
+    @Nested
+    class 고정필드_순서_변경 {
+
+        @Test
+        void customerFieldOrder_자리바꿈이_영속된다() {
+            SurveyTemplateRequest req = new SurveyTemplateRequest();
+            req.setName("테스트 설문");
+            // 처음 순서: name, phone, gender, location
+            req.setCustomerFieldOrder(List.of("name", "phone", "gender", "location"));
+            surveyService.updateTemplate(templateSeq, req);
+
+            // name(0) 과 location(3) 자리바꿈 → location, phone, gender, name
+            SurveyTemplateRequest swapReq = new SurveyTemplateRequest();
+            swapReq.setName("테스트 설문");
+            swapReq.setCustomerFieldOrder(List.of("location", "phone", "gender", "name"));
+            surveyService.updateTemplate(templateSeq, swapReq);
+
+            SurveyTemplateResponse loaded = surveyService.getTemplate(templateSeq);
+            assertThat(loaded.getCustomerFieldOrder())
+                    .as("첫 필드와 마지막 필드만 자리바꿈되고 가운데는 그대로 영속")
+                    .containsExactly("location", "phone", "gender", "name");
+        }
+
+        @Test
+        void customerFieldOptions_자리바꿈이_영속된다() {
+            java.util.Map<String, java.util.List<String>> initial = new java.util.HashMap<>();
+            initial.put("gender", List.of("남자", "여자", "기타"));
+            SurveyTemplateRequest req = new SurveyTemplateRequest();
+            req.setName("테스트 설문");
+            req.setCustomerFieldOptions(initial);
+            surveyService.updateTemplate(templateSeq, req);
+
+            java.util.Map<String, java.util.List<String>> swapped = new java.util.HashMap<>();
+            swapped.put("gender", List.of("기타", "여자", "남자"));
+            SurveyTemplateRequest swapReq = new SurveyTemplateRequest();
+            swapReq.setName("테스트 설문");
+            swapReq.setCustomerFieldOptions(swapped);
+            surveyService.updateTemplate(templateSeq, swapReq);
+
+            SurveyTemplateResponse loaded = surveyService.getTemplate(templateSeq);
+            assertThat(loaded.getCustomerFieldOptions().get("gender"))
+                    .as("gender 선택지의 첫/마지막 자리바꿈이 영속")
+                    .containsExactly("기타", "여자", "남자");
         }
     }
 }
