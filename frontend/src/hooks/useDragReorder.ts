@@ -17,6 +17,22 @@ interface DragState {
   clone: HTMLElement;
   offsetX: number;
   offsetY: number;
+  hoverTarget: HTMLElement | null;
+}
+
+function swapNodes(a: HTMLElement, b: HTMLElement) {
+  const parent = a.parentNode;
+  if (!parent) return;
+  const aNext = a.nextSibling;
+  const bNext = b.nextSibling;
+  if (aNext === b) {
+    parent.insertBefore(b, a);
+  } else if (bNext === a) {
+    parent.insertBefore(a, b);
+  } else {
+    parent.insertBefore(a, bNext);
+    parent.insertBefore(b, aNext);
+  }
 }
 
 export function useDragReorder({ itemSelector, getItemId, onReorder }: Options) {
@@ -31,7 +47,7 @@ export function useDragReorder({ itemSelector, getItemId, onReorder }: Options) 
     document.body.appendChild(clone);
     item.style.opacity = '0.3';
     item.style.border = '2px dashed #4a90e2';
-    dragRef.current = { el: item, container, clone, offsetX: e.clientX - rect.left, offsetY: e.clientY - rect.top };
+    dragRef.current = { el: item, container, clone, offsetX: e.clientX - rect.left, offsetY: e.clientY - rect.top, hoverTarget: null };
     document.body.style.cursor = 'grabbing';
   };
 
@@ -39,27 +55,36 @@ export function useDragReorder({ itemSelector, getItemId, onReorder }: Options) 
     const handleMove = (e: PointerEvent) => {
       if (!dragRef.current) return;
       e.preventDefault();
-      const { clone, offsetX, offsetY, container, el } = dragRef.current;
+      const state = dragRef.current;
+      const { clone, offsetX, offsetY, container, el } = state;
       clone.style.left = (e.clientX - offsetX) + 'px';
       clone.style.top = (e.clientY - offsetY) + 'px';
+
+      if (state.hoverTarget) state.hoverTarget.style.outline = '';
+      state.hoverTarget = null;
+
       const siblings = Array.from(container.querySelectorAll(itemSelector)) as HTMLElement[];
       for (const sib of siblings) {
         if (sib === el) continue;
         const r = sib.getBoundingClientRect();
         if (e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom) {
-          if (e.clientX < r.left + r.width / 2) container.insertBefore(el, sib);
-          else container.insertBefore(el, sib.nextSibling);
+          state.hoverTarget = sib;
+          sib.style.outline = '2px dashed #4a90e2';
           break;
         }
       }
     };
     const handleUp = () => {
       if (!dragRef.current) return;
-      const { el, clone, container } = dragRef.current;
+      const { el, clone, container, hoverTarget } = dragRef.current;
       clone.remove();
       el.style.opacity = '';
       el.style.border = '';
       document.body.style.cursor = '';
+      if (hoverTarget) {
+        hoverTarget.style.outline = '';
+        if (hoverTarget !== el) swapNodes(el, hoverTarget);
+      }
       const ids: (number | string)[] = [];
       container.querySelectorAll(itemSelector).forEach((node) => {
         const id = getItemId(node as HTMLElement);
