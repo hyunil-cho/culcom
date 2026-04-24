@@ -1,9 +1,11 @@
 .content { width: 90%; max-width: 560px; }
 
-.header { padding: 1.25rem 1.5rem; border-bottom: 2px solid #6366f1; }
+.header { padding: 1.25rem 1.5rem; border-bottom: 2px solid #6366f1; flex-shrink: 0; }
 .title { margin: 0; font-size: var(--font-lg); color: var(--text-dark); }
 
-.body { padding: 1.25rem 1.5rem; }
+/* flex:1 + min-height:0 — modal-content(90vh, flex column) 안에서 body가 남은 공간을 차지하고
+   내용이 넘치면 자체 스크롤. footer 는 flex-shrink:0 으로 항상 노출. */
+.body { padding: 1.25rem 1.5rem; flex: 1; min-height: 0; overflow-y: auto; }
 
 .recipientInfo {
   background: #eef2ff; padding: 0.75rem; border-radius: var(--radius-md);
@@ -18,4 +20,5 @@
 .footer {
   padding: 1rem 1.5rem; border-top: 1px solid var(--border);
   display: flex; justify-content: flex-end; gap: 8px;
+  flex-shrink: 0;
 }
