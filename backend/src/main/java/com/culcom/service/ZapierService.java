@@ -5,6 +5,7 @@ import com.culcom.dto.publicapi.ZapierCustomerRequest;
 import com.culcom.entity.branch.Branch;
 import com.culcom.entity.customer.Customer;
 import com.culcom.entity.enums.CustomerStatus;
+import com.culcom.entity.enums.SmsEventType;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class ZapierService {
     private final ZapierProperties zapierProperties;
     private final BranchRepository branchRepository;
     private final CustomerRepository customerRepository;
+    private final SmsService smsService;
 
     /**
      * Zapier 웹훅 시크릿 검증.
@@ -59,6 +61,14 @@ public class ZapierService {
 
         Customer saved = customerRepository.save(customer);
         log.info("Zapier 고객 생성 완료: seq={}, branchAlias={}", saved.getSeq(), branch.getAlias());
+
+        String smsWarning = smsService.sendEventSmsIfConfigured(
+                branch.getSeq(), SmsEventType.고객등록, saved.getName(), saved.getPhoneNumber());
+        if (smsWarning != null) {
+            log.warn("Zapier 고객등록 SMS 경고: branchSeq={}, customerSeq={}, message={}",
+                    branch.getSeq(), saved.getSeq(), smsWarning);
+        }
+
         return saved.getSeq();
     }
 

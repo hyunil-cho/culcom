@@ -1,9 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { memberApi, type MemberMembershipResponse } from '@/lib/api';
-import { ROUTES } from '@/lib/routes';
-import { encodeLinkPayload } from '@/lib/linkPayload';
+import { memberApi, publicLinkApi, type MemberMembershipResponse } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { Button } from '@/components/ui/Button';
 import { CurrencyInput } from '@/components/ui/FormInput';
@@ -88,18 +86,29 @@ export default function RefundLinkModal({ memberSeq, memberName, memberPhone, on
   const numericAmount = Number(refundAmount.replace(/,/g, ''));
   const amountValid = !Number.isNaN(numericAmount) && numericAmount >= 0;
 
-  const payload = useMemo(() => {
-    if (!selectedMs || !amountValid) return null;
-    return encodeLinkPayload({
-      memberSeq, name: memberName, phone: memberPhone,
-      memberMembershipSeq: selectedMs.seq,
-      refundAmount: numericAmount,
-      t: Date.now(),
-    });
-  }, [memberSeq, memberName, memberPhone, selectedMs, numericAmount, amountValid]);
+  // 사용자가 amount 를 빠르게 조정할 때 매 키 입력마다 코드를 발급하지 않도록 300ms 디바운스.
+  // 디바운스 된 값만 queryKey 에 넣어 react-query 가 그 시점에만 새 발급을 트리거한다.
+  const [debouncedAmount, setDebouncedAmount] = useState(numericAmount);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedAmount(numericAmount), 300);
+    return () => clearTimeout(t);
+  }, [numericAmount]);
 
-  const refundUrl = payload
-    ? `${window.location.origin}${ROUTES.PUBLIC_REFUND}?d=${payload}`
+  const linkEnabled = !!selectedMs && amountValid && debouncedAmount === numericAmount;
+
+  const { data: link, isFetching: linkLoading } = useApiQuery(
+    ['refundLinkCode', memberSeq, selectedMs?.seq, debouncedAmount],
+    () => publicLinkApi.create({
+      memberSeq,
+      kind: '환불',
+      memberMembershipSeq: selectedMs!.seq,
+      refundAmount: debouncedAmount,
+    }),
+    { enabled: linkEnabled },
+  );
+
+  const refundUrl = link
+    ? `${window.location.origin}/public/s/${link.code}`
     : '';
   const smsMessage = `[환불 요청 안내]\n\n${memberName}님, 아래 링크에서 환불 요청을 진행해주세요.\n\n${refundUrl}`;
 
@@ -191,7 +200,11 @@ export default function RefundLinkModal({ memberSeq, memberName, memberPhone, on
                 </div>
               )}
 
-              {refundUrl && (
+              {selectedMs && amountValid && linkLoading && (
+                <div className={shared.loadingText}>링크 생성 중...</div>
+              )}
+
+              {link && refundUrl && (
                 <>
                   <CopyableUrlField
                     label="환불 요청 URL"

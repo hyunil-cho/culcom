@@ -2,11 +2,9 @@
 
 import { useMemo } from 'react';
 import {
-  memberApi, postponementApi,
+  memberApi, postponementApi, publicLinkApi,
   type MemberMembershipResponse, type PostponementRequest,
 } from '@/lib/api';
-import { ROUTES } from '@/lib/routes';
-import { encodeLinkPayload } from '@/lib/linkPayload';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { Button } from '@/components/ui/Button';
 import UnavailableNotice from './UnavailableNotice';
@@ -30,10 +28,6 @@ const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
 };
 
 export default function PostponementLinkModal({ memberSeq, memberName, memberPhone, onClose }: Props) {
-  const payload = encodeLinkPayload({ memberSeq, name: memberName, phone: memberPhone, t: Date.now() });
-  const postponementUrl = `${window.location.origin}${ROUTES.PUBLIC_POSTPONEMENT}?d=${payload}`;
-  const smsMessage = `[수업 연기 요청 안내]\n\n${memberName}님, 아래 링크에서 수업 연기 요청을 진행해주세요.\n\n${postponementUrl}`;
-
   const { data: memberships = [], isLoading: msLoading } = useApiQuery<MemberMembershipResponse[]>(
     ['postponementLinkMemberships', memberSeq],
     () => memberApi.getMemberships(memberSeq),
@@ -63,6 +57,17 @@ export default function PostponementLinkModal({ memberSeq, memberName, memberPho
     }
     return { canPostpone: true, unavailableReason: '', postponableMemberships: postponables, activeMemberships: actives };
   }, [memberships]);
+
+  const { data: link, isLoading: linkLoading } = useApiQuery(
+    ['postponementLinkCode', memberSeq],
+    () => publicLinkApi.create({ memberSeq, kind: '연기' }),
+    { enabled: canPostpone },
+  );
+
+  const postponementUrl = link
+    ? `${window.location.origin}/public/s/${link.code}`
+    : '';
+  const smsMessage = `[수업 연기 요청 안내]\n\n${memberName}님, 아래 링크에서 수업 연기 요청을 진행해주세요.\n\n${postponementUrl}`;
 
   const historySection = history.length > 0 && (
     <>
@@ -113,7 +118,7 @@ export default function PostponementLinkModal({ memberSeq, memberName, memberPho
             </div>
           </div>
 
-          {loading ? (
+          {loading || linkLoading ? (
             <div className={shared.loadingText}>멤버십 정보 확인 중...</div>
           ) : !canPostpone ? (
             <div>
@@ -154,15 +159,19 @@ export default function PostponementLinkModal({ memberSeq, memberName, memberPho
                 );
               })}
 
-              <div style={{ marginTop: '1rem' }}>
-                <CopyableUrlField
-                  label="연기 요청 URL"
-                  url={postponementUrl}
-                  hint="이 링크를 고객에게 전달하면, 수업 연기 요청을 직접 진행할 수 있습니다."
-                />
-              </div>
+              {link && (
+                <>
+                  <div style={{ marginTop: '1rem' }}>
+                    <CopyableUrlField
+                      label="연기 요청 URL"
+                      url={postponementUrl}
+                      hint="이 링크를 고객에게 전달하면, 수업 연기 요청을 직접 진행할 수 있습니다."
+                    />
+                  </div>
 
-              <SmsSendSection receiverPhone={memberPhone} initialMessage={smsMessage} />
+                  <SmsSendSection receiverPhone={memberPhone} initialMessage={smsMessage} />
+                </>
+              )}
 
               {historySection}
             </div>

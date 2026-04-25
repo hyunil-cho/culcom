@@ -6,6 +6,7 @@ import com.culcom.entity.board.enums.BoardLoginType;
 import com.culcom.entity.branch.Branch;
 import com.culcom.entity.customer.Customer;
 import com.culcom.entity.enums.CustomerStatus;
+import com.culcom.entity.enums.SmsEventType;
 import com.culcom.repository.BranchRepository;
 import com.culcom.repository.CustomerRepository;
 import com.culcom.repository.board.BoardAccountRepository;
@@ -45,6 +46,7 @@ public class KakaoOAuthService {
     private final BoardAccountRepository boardAccountRepository;
     private final KakaoOAuthClient kakaoOAuthClient;
     private final BoardSessionService boardSessionService;
+    private final SmsService smsService;
 
     @Value("${kakao.oauth.state-secret:}")
     private String configuredStateSecret;
@@ -134,6 +136,17 @@ public class KakaoOAuthService {
                             .status(CustomerStatus.신규)
                             .build());
                     upsertKakaoBoardAccount(created, info, normalizedEmail);
+
+                    if (defaultBranch != null) {
+                        String smsWarning = smsService.sendEventSmsIfConfigured(
+                                defaultBranch.getSeq(), SmsEventType.고객등록,
+                                created.getName(), created.getPhoneNumber());
+                        if (smsWarning != null) {
+                            log.warn("카카오 신규 고객등록 SMS 경고: branchSeq={}, customerSeq={}, message={}",
+                                    defaultBranch.getSeq(), created.getSeq(), smsWarning);
+                        }
+                    }
+
                     return new UpsertResult(created, true);
                 });
     }

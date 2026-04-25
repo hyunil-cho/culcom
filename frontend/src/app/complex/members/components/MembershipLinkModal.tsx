@@ -1,9 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { memberApi, type MemberMembershipResponse } from '@/lib/api';
-import { ROUTES } from '@/lib/routes';
-import { encodeLinkPayload } from '@/lib/linkPayload';
+import { memberApi, publicLinkApi, type MemberMembershipResponse } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { Button } from '@/components/ui/Button';
 import UnavailableNotice from './UnavailableNotice';
@@ -32,8 +30,15 @@ export default function MembershipLinkModal({ memberSeq, memberName, memberPhone
     return { canView: true, unavailableReason: '' };
   }, [memberships]);
 
-  const payload = encodeLinkPayload({ memberSeq, name: memberName, phone: memberPhone, t: Date.now() });
-  const membershipUrl = `${window.location.origin}${ROUTES.PUBLIC_MEMBERSHIP}?d=${payload}`;
+  const { data: link, isLoading: linkLoading } = useApiQuery(
+    ['membershipLinkCode', memberSeq],
+    () => publicLinkApi.create({ memberSeq, kind: '멤버십' }),
+    { enabled: canView },
+  );
+
+  const membershipUrl = link
+    ? `${window.location.origin}/public/s/${link.code}`
+    : '';
   const smsMessage = `[멤버십 조회 안내]\n\n${memberName}님, 아래 링크에서 멤버십 현황을 확인하실 수 있습니다.\n\n${membershipUrl}`;
 
   return (
@@ -55,11 +60,11 @@ export default function MembershipLinkModal({ memberSeq, memberName, memberPhone
             </div>
           </div>
 
-          {msLoading ? (
+          {msLoading || linkLoading ? (
             <div className={shared.loadingText}>멤버십 정보 확인 중...</div>
           ) : !canView ? (
             <UnavailableNotice title="멤버십 조회가 불가능합니다" description={unavailableReason} />
-          ) : (
+          ) : link ? (
             <>
               <CopyableUrlField
                 label="멤버십 조회 URL"
@@ -68,7 +73,7 @@ export default function MembershipLinkModal({ memberSeq, memberName, memberPhone
               />
               <SmsSendSection receiverPhone={memberPhone} initialMessage={smsMessage} />
             </>
-          )}
+          ) : null}
         </div>
 
         <div className={s.footer}>

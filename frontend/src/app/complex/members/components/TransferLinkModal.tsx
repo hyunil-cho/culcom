@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { memberApi, transferApi, type MemberMembershipResponse, type TransferRequestItem } from '@/lib/api';
+import { memberApi, publicLinkApi, type MemberMembershipResponse, type TransferRequestItem } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useFormError } from '@/hooks/useFormError';
 import { Select, CurrencyInput } from '@/components/ui/FormInput';
@@ -33,6 +33,7 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
   const [selectedMmSeq, setSelectedMmSeq] = useState('');
   const [transferFee, setTransferFee] = useState('');
   const [result, setResult] = useState<TransferRequestItem | null>(null);
+  const [code, setCode] = useState<string | null>(null);
   const { error: formError, setError, clear: clearError } = useFormError();
   const { submitting: creating, run } = useSubmitLock();
 
@@ -53,8 +54,8 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
       : '';
   const canTransfer = !unavailableReason;
 
-  const transferUrl = result
-    ? `${window.location.origin}/public/transfer?token=${result.token}`
+  const transferUrl = code
+    ? `${window.location.origin}/public/s/${code}`
     : '';
   const smsMessage = `[멤버십 양도 안내]\n\n${memberName}님, 아래 링크에서 양도 절차를 진행하실 수 있습니다.\n\n${transferUrl}`;
 
@@ -81,9 +82,13 @@ export default function TransferLinkModal({ memberSeq, memberName, memberPhone, 
       return;
     }
     clearError();
-    const res = await transferApi.create(Number(selectedMmSeq), numericFee);
-    if (res.success) setResult(res.data);
-    else setError(res.message || '양도 요청 생성에 실패했습니다.');
+    const res = await publicLinkApi.createForTransfer(Number(selectedMmSeq), numericFee);
+    if (res.success) {
+      setResult(res.data.transferRequest);
+      setCode(res.data.code);
+    } else {
+      setError(res.message || '양도 요청 생성에 실패했습니다.');
+    }
   });
 
   return (

@@ -75,3 +75,9 @@ export {
   externalApi,
   type SmsSendRequest, type SmsSendResponse,
 } from './external';
+export {
+  publicLinkApi,
+  type PublicLinkKind, type PublicLinkCreateGeneralRequest,
+  type PublicLinkCreateResponse, type PublicLinkTransferCreateResponse,
+  type PublicLinkResolveResponse,
+} from './publicLinks';

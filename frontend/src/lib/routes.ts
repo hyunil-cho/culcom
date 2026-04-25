@@ -27,15 +27,12 @@ export const ROUTES = {
   // 상담 예약 캘린더
   CALENDAR: R.CALENDAR,
 
-  // 공개 페이지
-  PUBLIC_POSTPONEMENT: '/public/postponement',
+  // 공개 페이지 (단축 URL 통합 진입점)
+  PUBLIC_SHORT: (code: string) => `/public/s/${code}`,
   PUBLIC_POSTPONEMENT_SUCCESS: '/public/postponement/success',
-  PUBLIC_REFUND: '/public/refund',
   PUBLIC_REFUND_SUCCESS: '/public/refund/success',
   PUBLIC_REFUND_SURVEY: '/public/refund-survey',
   PUBLIC_REFUND_SURVEY_SUCCESS: '/public/refund-survey/success',
-  PUBLIC_MEMBERSHIP: '/public/membership',
-  PUBLIC_TRANSFER: '/public/transfer',
   PUBLIC_TRANSFER_INVITE: '/public/transfer/invite',
 
   // 고객 관리

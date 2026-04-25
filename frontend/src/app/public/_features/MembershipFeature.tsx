@@ -1,40 +1,23 @@
 'use client';
 
-import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { publicMembershipApi, type MembershipCheckMember } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
-import { isLinkExpired, INVALID_LINK_MESSAGE } from '@/lib/linkExpiry';
-import { decodeLinkPayload } from '@/lib/linkPayload';
 
-export default function PublicMembershipPage() {
-  return <Suspense fallback={null}><PublicMembershipPageInner /></Suspense>;
+interface Props {
+  memberName: string;
+  memberPhone: string;
 }
 
-function PublicMembershipPageInner() {
-  const searchParams = useSearchParams();
-
-  const decoded = (() => {
-    try {
-      const d = searchParams.get('d');
-      if (!d) return null;
-      return decodeLinkPayload<{ memberSeq: number; name: string; phone: string; t?: number }>(d);
-    } catch { return null; }
-  })();
-
-  const expired = !!decoded && isLinkExpired(decoded.t);
-
+export default function MembershipFeature({ memberName, memberPhone }: Props) {
   const { data: checkResult, isLoading: loading, error: queryError } = useApiQuery(
-    ['publicMembership', decoded?.name, decoded?.phone],
-    () => publicMembershipApi.check(decoded!.name, decoded!.phone),
-    { enabled: !!decoded && !expired },
+    ['publicMembership', memberName, memberPhone],
+    () => publicMembershipApi.check(memberName, memberPhone),
   );
 
   const member: MembershipCheckMember | null = checkResult?.member ?? null;
 
-  const error = !decoded ? INVALID_LINK_MESSAGE
-    : expired ? INVALID_LINK_MESSAGE
-    : queryError ? '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'
+  const error = queryError
+    ? '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'
     : (!loading && !member) ? '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'
     : '';
 

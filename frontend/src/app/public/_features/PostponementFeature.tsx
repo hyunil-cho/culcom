@@ -1,7 +1,7 @@
 'use client';
 
-import { Suspense, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   publicPostponementApi,
   type PublicMemberInfo,
@@ -12,39 +12,25 @@ import { useFormError } from '@/hooks/useFormError';
 import { ROUTES } from '@/lib/routes';
 import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Input, Select, Textarea } from '@/components/ui/FormInput';
-import { isLinkExpired, INVALID_LINK_MESSAGE } from '@/lib/linkExpiry';
-import { decodeLinkPayload } from '@/lib/linkPayload';
-import s from './page.module.css';
+import s from './PostponementFeature.module.css';
 
-export default function PublicPostponementPage() {
-  return <Suspense fallback={null}><PublicPostponementPageInner /></Suspense>;
+interface Props {
+  memberName: string;
+  memberPhone: string;
 }
 
-function PublicPostponementPageInner() {
+export default function PostponementFeature({ memberName, memberPhone }: Props) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const decoded = (() => {
-    try {
-      const d = searchParams.get('d');
-      if (!d) return null;
-      return decodeLinkPayload<{ memberSeq: number; name: string; phone: string; t?: number }>(d);
-    } catch { return null; }
-  })();
-
-  const expired = !!decoded && isLinkExpired(decoded.t);
 
   const { data: memberSearchResult, isLoading: loading, error: queryError } = useApiQuery(
-    ['publicPostponementMember', decoded?.name, decoded?.phone],
-    () => publicPostponementApi.searchMember(decoded!.name, decoded!.phone),
-    { enabled: !!decoded && !expired },
+    ['publicPostponementMember', memberName, memberPhone],
+    () => publicPostponementApi.searchMember(memberName, memberPhone),
   );
 
   const member: PublicMemberInfo | null = memberSearchResult?.members?.[0] ?? null;
 
-  const error = !decoded ? INVALID_LINK_MESSAGE
-    : expired ? INVALID_LINK_MESSAGE
-    : queryError ? (queryError.message || '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.')
+  const error = queryError
+    ? (queryError.message || '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.')
     : (!loading && !member) ? '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'
     : '';
 
@@ -85,7 +71,7 @@ function PublicPostponementPageInner() {
     setStep(3);
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!member || !selectedMembershipSeq) return;
     if (startDate < minStartDate) {
@@ -165,7 +151,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
             <form onSubmit={handleSubmit}>
               <FormErrorBanner error={formError} />
-<FormGroup label="연기 요청 기간">
+              <FormGroup label="연기 요청 기간">
                 <p style={{ fontSize: '0.82rem', color: '#4a90e2', marginBottom: 8, fontWeight: 600 }}>
                   시작일은 내일부터, 복귀일은 시작일로부터 최소 2주 후부터 선택 가능합니다.
                 </p>

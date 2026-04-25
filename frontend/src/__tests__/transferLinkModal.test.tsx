@@ -13,7 +13,7 @@ vi.mock('@/lib/api', async () => {
   return {
     ...actual,
     memberApi: { ...actual.memberApi, getMemberships: (...a: unknown[]) => mockGetMemberships(...a) },
-    transferApi: { ...actual.transferApi, create: (...a: unknown[]) => mockCreate(...a) },
+    publicLinkApi: { ...actual.publicLinkApi, createForTransfer: (...a: unknown[]) => mockCreate(...a) },
   };
 });
 
@@ -46,9 +46,12 @@ beforeEach(async () => {
   vi.clearAllMocks();
   mockGetMemberships.mockResolvedValue({ success: true, data: [transferable] });
   mockCreate.mockResolvedValue({ success: true, data: {
-    ...transferable, token: 'tok', inviteToken: null, toCustomerSeq: null, toCustomerName: null,
-    adminMessage: null, fromMemberSeq: 10, fromMemberName: '홍길동', fromMemberPhone: '01012345678',
-    transferFee: 30000, remainingCount: 26, status: '생성',
+    code: 'abc12345',
+    transferRequest: {
+      ...transferable, token: 'tok', inviteToken: null, toCustomerSeq: null, toCustomerName: null,
+      adminMessage: null, fromMemberSeq: 10, fromMemberName: '홍길동', fromMemberPhone: '01012345678',
+      transferFee: 30000, remainingCount: 26, status: '생성',
+    },
   }});
   Modal = (await import('@/app/complex/members/components/TransferLinkModal')).default;
 });

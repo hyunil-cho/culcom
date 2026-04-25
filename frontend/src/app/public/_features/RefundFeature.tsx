@@ -1,7 +1,7 @@
 'use client';
 
-import { Suspense, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { publicRefundApi, type PublicMemberInfo, type RefundSubmitRequest } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
@@ -9,34 +9,25 @@ import { useFormError } from '@/hooks/useFormError';
 import { ROUTES } from '@/lib/routes';
 import FormErrorBanner from '@/components/ui/FormErrorBanner';
 import { Select, Textarea } from '@/components/ui/FormInput';
-import { isLinkExpired, INVALID_LINK_MESSAGE } from '@/lib/linkExpiry';
-import { decodeLinkPayload, encodeLinkPayload } from '@/lib/linkPayload';
+import { encodeLinkPayload } from '@/lib/linkPayload';
 
-export default function PublicRefundPage() {
-  return <Suspense fallback={null}><PublicRefundPageInner /></Suspense>;
+interface Props {
+  memberName: string;
+  memberPhone: string;
+  /** 관리자가 사전 선택한 멤버십 (있으면 자동 선택) */
+  memberMembershipSeq?: number;
+  /** 관리자가 사전 안내한 환불 금액 */
+  refundAmount?: number;
 }
 
-function PublicRefundPageInner() {
+export default function RefundFeature({
+  memberName, memberPhone, memberMembershipSeq, refundAmount,
+}: Props) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const decoded = (() => {
-    try {
-      const d = searchParams.get('d');
-      if (!d) return null;
-      return decodeLinkPayload<{
-        memberSeq: number; name: string; phone: string;
-        memberMembershipSeq?: number; refundAmount?: number; t?: number;
-      }>(d);
-    } catch { return null; }
-  })();
-
-  const expired = !!decoded && isLinkExpired(decoded.t);
 
   const { data: memberSearchResult, isLoading: loading, error: queryError } = useApiQuery(
-    ['publicRefundMember', decoded?.name, decoded?.phone],
-    () => publicRefundApi.searchMember(decoded!.name, decoded!.phone),
-    { enabled: !!decoded && !expired },
+    ['publicRefundMember', memberName, memberPhone],
+    () => publicRefundApi.searchMember(memberName, memberPhone),
   );
 
   const member: PublicMemberInfo | null = memberSearchResult?.members?.[0] ?? null;
@@ -47,22 +38,20 @@ function PublicRefundPageInner() {
     { enabled: !!member?.branchSeq },
   );
 
-  const error = !decoded ? INVALID_LINK_MESSAGE
-    : expired ? INVALID_LINK_MESSAGE
-    : queryError ? (queryError.message || '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.')
+  const error = queryError
+    ? (queryError.message || '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.')
     : (!loading && !member) ? '회원 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.'
     : '';
 
   const [selectedMembershipSeq, setSelectedMembershipSeq] = useState<number | null>(
-    decoded?.memberMembershipSeq ?? null,
+    memberMembershipSeq ?? null,
   );
   const [reasonSelect, setReasonSelect] = useState('');
   const [reasonCustom, setReasonCustom] = useState('');
   const { error: formError, setError, clear: clearError } = useFormError();
 
   const selectedMembership = member?.memberships.find(ms => ms.seq === selectedMembershipSeq);
-  const preAssignedAmount = decoded?.refundAmount;
-  const hasPreAssignedAmount = typeof preAssignedAmount === 'number';
+  const hasPreAssignedAmount = typeof refundAmount === 'number';
 
   const submitMutation = useApiMutation<number, RefundSubmitRequest>(
     (data) => publicRefundApi.submit(data),
@@ -94,7 +83,7 @@ function PublicRefundPageInner() {
       memberMembershipSeq: selectedMembershipSeq,
       memberName: member.name, phoneNumber: member.phoneNumber,
       membershipName: selectedMembership.membershipName,
-      price: hasPreAssignedAmount ? String(preAssignedAmount) : '',
+      price: hasPreAssignedAmount ? String(refundAmount) : '',
       reason: reason.trim(),
     });
   };
@@ -156,7 +145,7 @@ function PublicRefundPageInner() {
                       환불 예정 금액
                     </div>
                     <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#c92a2a' }}>
-                      {preAssignedAmount!.toLocaleString()}원
+                      {refundAmount!.toLocaleString()}원
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#868e96', marginTop: 4 }}>
                       관리자가 사전 안내한 환불 금액입니다.

@@ -8,6 +8,7 @@ import type { MemberMembershipResponse } from '@/lib/api';
 const mockGetMemberships = vi.fn();
 const mockMemberHistory = vi.fn();
 const mockGetSenderNumbers = vi.fn();
+const mockPublicLinkCreate = vi.fn();
 
 vi.mock('@/lib/api', async () => {
   const actual = await vi.importActual<typeof import('@/lib/api')>('@/lib/api');
@@ -24,6 +25,10 @@ vi.mock('@/lib/api', async () => {
     smsEventApi: {
       ...actual.smsEventApi,
       getSenderNumbers: (...args: unknown[]) => mockGetSenderNumbers(...args),
+    },
+    publicLinkApi: {
+      ...actual.publicLinkApi,
+      create: (...args: unknown[]) => mockPublicLinkCreate(...args),
     },
   };
 });
@@ -80,6 +85,7 @@ beforeEach(async () => {
   vi.clearAllMocks();
   mockMemberHistory.mockResolvedValue({ success: true, data: [] });
   mockGetSenderNumbers.mockResolvedValue({ success: true, data: [] });
+  mockPublicLinkCreate.mockResolvedValue({ success: true, data: { code: 'abc12345' } });
 
   const refundMod = await import('@/app/complex/members/components/RefundLinkModal');
   RefundLinkModal = refundMod.default;

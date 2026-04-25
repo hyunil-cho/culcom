@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import type { MemberMembershipResponse, TransferRequestItem } from '@/lib/api';
 
 // ── mocks ──────────────────────────────────────────────────────────────────
 
 const mockGetMemberships = vi.fn();
-const mockTransferCreate = vi.fn();
+const mockPublicLinkCreate = vi.fn();
+const mockPublicLinkCreateForTransfer = vi.fn();
 const mockPostponementHistory = vi.fn();
 
 vi.mock('@/lib/api', async () => {
@@ -17,9 +18,10 @@ vi.mock('@/lib/api', async () => {
       ...actual.memberApi,
       getMemberships: (...args: unknown[]) => mockGetMemberships(...args),
     },
-    transferApi: {
-      ...actual.transferApi,
-      create: (...args: unknown[]) => mockTransferCreate(...args),
+    publicLinkApi: {
+      ...actual.publicLinkApi,
+      create: (...args: unknown[]) => mockPublicLinkCreate(...args),
+      createForTransfer: (...args: unknown[]) => mockPublicLinkCreateForTransfer(...args),
     },
     postponementApi: {
       ...actual.postponementApi,
@@ -65,6 +67,16 @@ function renderModal(ui: React.ReactElement) {
 beforeEach(() => {
   vi.clearAllMocks();
   mockPostponementHistory.mockResolvedValue({ success: true, data: [] });
+  mockPublicLinkCreate.mockResolvedValue({ success: true, data: { code: 'abc12345' } });
+  mockPublicLinkCreateForTransfer.mockResolvedValue({
+    success: true,
+    data: {
+      code: 'def67890',
+      transferRequest: {
+        seq: 1, token: 'tok-1', transferFee: 30000, remainingCount: 24,
+      } as unknown as TransferRequestItem,
+    },
+  });
 });
 
 // ── RefundLinkModal ────────────────────────────────────────────────────────
@@ -93,6 +105,8 @@ describe('RefundLinkModal', () => {
     expect(await screen.findByText('환불 요청이 불가능합니다')).toBeInTheDocument();
     expect(screen.getByText(/미수금이 남아있어/)).toBeInTheDocument();
     expect(screen.queryByText(/환불 요청 URL/)).not.toBeInTheDocument();
+    // 발급 API가 호출되어선 안 됨
+    expect(mockPublicLinkCreate).not.toHaveBeenCalled();
   });
 
   it('미수금 있는 멤버십과 정상 멤버십 혼재 시 정상 멤버십에만 링크 생성 허용', async () => {
@@ -109,6 +123,14 @@ describe('RefundLinkModal', () => {
     // 환불 가능한 '정기권'만 라디오 목록에 노출
     expect(await screen.findByText('정기권')).toBeInTheDocument();
     expect(screen.queryByText('추가권')).not.toBeInTheDocument();
+    // 링크 발급 API가 정상 멤버십(seq=100)에 대해 호출됨 (debounce 후)
+    await waitFor(() => {
+      expect(mockPublicLinkCreate).toHaveBeenCalledWith(expect.objectContaining({
+        memberSeq: 10,
+        kind: '환불',
+        memberMembershipSeq: 100,
+      }));
+    });
     // 링크 UI는 표시됨
     expect(await screen.findByText(/환불 요청 URL/)).toBeInTheDocument();
   });
@@ -146,7 +168,7 @@ describe('RefundLinkModal', () => {
     expect(screen.getAllByText(/300,000원/).length).toBeGreaterThan(0);
   });
 
-  it('생성된 링크 payload 에 memberMembershipSeq 와 refundAmount 가 포함된다', async () => {
+  it('생성된 링크는 publicLinkApi.create 가 memberMembershipSeq 와 refundAmount 를 포함해 호출된다', async () => {
     mockGetMemberships.mockResolvedValue({
       success: true,
       data: [makeMembership({ seq: 999, price: '300000', totalCount: 30, usedCount: 6 })],
@@ -154,15 +176,14 @@ describe('RefundLinkModal', () => {
     const { default: RefundLinkModal } = await importModal();
     renderModal(<RefundLinkModal memberSeq={10} memberName="홍길동" memberPhone="010" onClose={() => {}} />);
 
-    // URL 필드가 렌더되면 d 쿼리를 디코드해서 검증
+    // 환불 URL 표시까지 기다림 (debounce 300ms 후 publicLinkApi.create 호출됨)
     await screen.findByText(/환불 요청 URL/);
-    const urlEl = screen.getByDisplayValue(/\/public\/refund\?d=/) as HTMLInputElement;
-    const url = urlEl.value;
-    const d = new URL(url).searchParams.get('d')!;
-    const payload = JSON.parse(decodeURIComponent(atob(d))) as Record<string, unknown>;
-
-    expect(payload.memberMembershipSeq).toBe(999);
-    expect(payload.refundAmount).toBe(240000); // 300000 × 24/30
+    expect(mockPublicLinkCreate).toHaveBeenCalledWith(expect.objectContaining({
+      memberSeq: 10,
+      kind: '환불',
+      memberMembershipSeq: 999,
+      refundAmount: 240000, // 300000 × 24/30
+    }));
   });
 });
 
@@ -233,6 +254,7 @@ describe('PostponementLinkModal', () => {
     expect(await screen.findByText('연기 요청이 불가능합니다')).toBeInTheDocument();
     expect(screen.getByText(/미수금이 남아있어/)).toBeInTheDocument();
     expect(screen.queryByText(/연기 요청 URL/)).not.toBeInTheDocument();
+    expect(mockPublicLinkCreate).not.toHaveBeenCalled();
   });
 
   it('모든 활성 멤버십의 연기 횟수가 소진되면 UnavailableNotice 표시', async () => {
@@ -260,5 +282,8 @@ describe('PostponementLinkModal', () => {
 
     expect(await screen.findByText(/연기 요청 URL/)).toBeInTheDocument();
     expect(screen.queryByText('연기 요청이 불가능합니다')).not.toBeInTheDocument();
+    expect(mockPublicLinkCreate).toHaveBeenCalledWith(expect.objectContaining({
+      memberSeq: 10, kind: '연기',
+    }));
   });
 });

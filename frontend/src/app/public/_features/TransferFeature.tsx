@@ -1,35 +1,28 @@
 'use client';
 
-import { Suspense, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState } from 'react';
 import { publicTransferApi, type TransferPublicInfo } from '@/lib/api';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { queryClient } from '@/lib/queryClient';
 
-export default function PublicTransferPage() {
-  return <Suspense fallback={null}><Inner /></Suspense>;
+interface Props {
+  transferToken: string;
 }
 
-function Inner() {
-  const searchParams = useSearchParams();
-  const token = searchParams.get('token') ?? '';
-
+export default function TransferFeature({ transferToken }: Props) {
   const { data: info, isLoading: loading, error: queryError } = useApiQuery<TransferPublicInfo>(
-    ['publicTransfer', token],
-    () => publicTransferApi.getByToken(token),
-    { enabled: !!token },
+    ['publicTransfer', transferToken],
+    () => publicTransferApi.getByToken(transferToken),
   );
 
-  const error = !token ? '유효하지 않은 링크입니다.'
-    : queryError ? (queryError.message || '양도 요청을 찾을 수 없습니다.')
-    : '';
+  const error = queryError ? (queryError.message || '양도 요청을 찾을 수 없습니다.') : '';
   const [confirming, setConfirming] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const handleConfirm = async () => {
     setConfirming(true);
-    const res = await publicTransferApi.confirm(token);
-    if (res.success) queryClient.invalidateQueries({ queryKey: ['publicTransfer', token] });
+    const res = await publicTransferApi.confirm(transferToken);
+    if (res.success) queryClient.invalidateQueries({ queryKey: ['publicTransfer', transferToken] });
     setConfirming(false);
   };
 
@@ -57,7 +50,6 @@ function Inner() {
 
         {info && (
           <>
-            {/* 멤버십 정보 */}
             <div style={{ padding: 14, background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: 10, marginBottom: 12 }}>
               <div style={{ fontSize: '0.75rem', color: '#1e40af', fontWeight: 700, marginBottom: 6 }}>양도 멤버십</div>
               <div style={{ fontWeight: 700, fontSize: '1.05rem', color: '#1e3a8a', marginBottom: 4 }}>{info.membershipName}</div>
@@ -68,7 +60,6 @@ function Inner() {
               </div>
             </div>
 
-            {/* 양도비 */}
             <div style={{ padding: 14, background: '#fef3c7', border: '1.5px solid #fde68a', borderRadius: 10, marginBottom: 20 }}>
               <div style={{ fontSize: '0.75rem', color: '#92400e', fontWeight: 700, marginBottom: 4 }}>양도비</div>
               <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#92400e' }}>
@@ -76,11 +67,10 @@ function Inner() {
               </div>
             </div>
 
-            {/* 초대 URL 미생성 → 진행 버튼 */}
             {!info.inviteToken && (
               <>
                 <div style={{ padding: 12, background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, marginBottom: 16, fontSize: '0.82rem', color: '#4b5563', lineHeight: 1.5 }}>
-                  "진행하기"를 누르면 양수자에게 전달할 초대 링크가 생성됩니다.<br />
+                  &quot;진행하기&quot;를 누르면 양수자에게 전달할 초대 링크가 생성됩니다.<br />
                   초대 링크를 통해 양수자가 정보를 입력하면 양도 절차가 시작됩니다.
                 </div>
                 <button onClick={handleConfirm} disabled={confirming}
@@ -90,7 +80,6 @@ function Inner() {
               </>
             )}
 
-            {/* 초대 URL 생성됨 → URL 표시 + 복사 */}
             {info.inviteToken && inviteUrl && (
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '0.85rem', color: '#15803d', fontWeight: 600, marginBottom: 12 }}>
