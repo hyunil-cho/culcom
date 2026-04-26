@@ -9,8 +9,10 @@ import { queryClient } from '@/lib/queryClient';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import s from './calendar.module.css';
 
-type EventFormState = { title: string; content: string; startTime: string; endTime: string };
-const EMPTY_FORM: EventFormState = { title: '', content: '', startTime: '09:00', endTime: '10:00' };
+type EventFormState = { title: string; content: string; eventDate: string; startTime: string; endTime: string };
+const buildEmptyForm = (date: Date): EventFormState => ({
+  title: '', content: '', eventDate: formatDateKey(date), startTime: '09:00', endTime: '10:00',
+});
 
 export default function DayDetailPanel({ date, reservations, events, onClose, onReservationClick }: {
   date: Date;
@@ -23,7 +25,7 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
 
   const [showForm, setShowForm] = useState(false);
   const [editingSeq, setEditingSeq] = useState<number | null>(null);
-  const [form, setForm] = useState<EventFormState>(EMPTY_FORM);
+  const [form, setForm] = useState<EventFormState>(() => buildEmptyForm(date));
   const deleteEventModal = useModal<number>();
 
   const invalidateEvents = () => queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
@@ -32,7 +34,7 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
     (data) => calendarApi.createEvent(data),
     {
       onSuccess: () => {
-        setForm(EMPTY_FORM);
+        setForm(buildEmptyForm(date));
         setShowForm(false);
         invalidateEvents();
       },
@@ -44,7 +46,7 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
     ({ seq, data }) => calendarApi.updateEvent(seq, data),
     {
       onSuccess: () => {
-        setForm(EMPTY_FORM);
+        setForm(buildEmptyForm(date));
         setEditingSeq(null);
         setShowForm(false);
         invalidateEvents();
@@ -80,11 +82,12 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
 
   const handleSubmit = () => {
     if (!form.title.trim()) return;
+    if (!form.eventDate) return;
     if (timeError) return;
     const payload: CalendarEventRequest = {
       title: form.title,
       content: form.content || undefined,
-      eventDate: formatDateKey(date),
+      eventDate: form.eventDate,
       startTime: form.startTime,
       endTime: form.endTime,
     };
@@ -100,6 +103,7 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
     setForm({
       title: ev.title,
       content: ev.content ?? '',
+      eventDate: formatDateKey(date),
       startTime: ev.startTime,
       endTime: ev.endTime,
     });
@@ -109,7 +113,7 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
   const handleCancelForm = () => {
     setShowForm(false);
     setEditingSeq(null);
-    setForm(EMPTY_FORM);
+    setForm(buildEmptyForm(date));
   };
 
   const handleDelete = (seq: number) => {
@@ -143,7 +147,7 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
       <div className={s.panelBody}>
         {/* 일정 추가/수정 폼 */}
         {!showForm ? (
-          <button onClick={() => { setEditingSeq(null); setForm(EMPTY_FORM); setShowForm(true); }} className={s.addEventBtn}>+ 일정 추가</button>
+          <button onClick={() => { setEditingSeq(null); setForm(buildEmptyForm(date)); setShowForm(true); }} className={s.addEventBtn}>+ 일정 추가</button>
         ) : (
           <div className={s.eventForm}>
             <div className={s.eventFormTitle}>{editingSeq != null ? '일정 수정' : '일정 추가'}</div>
@@ -153,6 +157,12 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
             <textarea placeholder="상세 내용" value={form.content} rows={2}
               onChange={(e) => setForm({ ...form, content: e.target.value })}
               className={s.eventFormTextarea} />
+            <label className={s.eventFormTimeLabel} style={{ width: '100%' }}>
+              날짜
+              <input type="date" value={form.eventDate}
+                onChange={(e) => setForm({ ...form, eventDate: e.target.value })}
+                className={s.eventFormTimeInput} />
+            </label>
             <div className={s.eventFormTimeRow}>
               <label className={s.eventFormTimeLabel}>
                 시작
@@ -171,7 +181,7 @@ export default function DayDetailPanel({ date, reservations, events, onClose, on
             <div className={s.eventFormActions}>
               <button onClick={handleCancelForm} className={s.eventFormCancelBtn}>취소</button>
               <button onClick={handleSubmit}
-                disabled={isPending || !form.title.trim() || !!timeError}
+                disabled={isPending || !form.title.trim() || !form.eventDate || !!timeError}
                 className={s.eventFormSaveBtn}>
                 {isPending ? '저장 중...' : '저장'}
               </button>

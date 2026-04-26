@@ -68,7 +68,7 @@
 
 /* ── ReservationStatusModal ── */
 .statusModalOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 10001; display: flex; align-items: center; justify-content: center; }
-.statusModalContent { background: white; border-radius: var(--radius-lg); width: 90%; max-width: 440px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+.statusModalContent { background: white; border-radius: var(--radius-lg); width: 90%; max-width: 720px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
 .statusModalHeader { padding: 1.25rem 1.5rem; border-bottom: 1px solid #e5e7eb; }
 .statusModalHeaderRow { display: flex; justify-content: space-between; align-items: center; }
 .statusModalTitle { margin: 0; font-size: 1.1rem; font-weight: 700; }

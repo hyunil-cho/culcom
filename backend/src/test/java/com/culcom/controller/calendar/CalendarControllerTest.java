@@ -2,6 +2,7 @@ package com.culcom.controller.calendar;
 
 import com.culcom.config.security.CustomUserPrincipal;
 import com.culcom.dto.calendar.CalendarEventResponse;
+import com.culcom.dto.calendar.CalendarReservationResponse;
 import com.culcom.entity.enums.UserRole;
 import com.culcom.service.CalendarService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -87,6 +88,34 @@ class CalendarControllerTest {
                             .with(auth())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(Map.of("status", ""))))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void 예약_일시_변경_성공() throws Exception {
+            given(calendarService.updateReservationDate(eq(1L), any()))
+                    .willReturn(CalendarReservationResponse.builder()
+                            .seq(1L).interviewDate("2026-05-01 14:30:00")
+                            .customerName("홍길동").customerPhone("01012345678")
+                            .caller("A").status("예약확정").build());
+
+            mockMvc.perform(put("/api/calendar/reservations/{seq}/interview-date", 1L)
+                            .with(auth())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(Map.of(
+                                    "interviewDate", "2026-05-01T14:30:00"))))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("예약 일시가 변경되었습니다."))
+                    .andExpect(jsonPath("$.data.interviewDate").value("2026-05-01 14:30:00"));
+        }
+
+        @Test
+        void 예약_일시_변경시_interviewDate_누락이면_400() throws Exception {
+            mockMvc.perform(put("/api/calendar/reservations/{seq}/interview-date", 1L)
+                            .with(auth())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{}"))
                     .andExpect(status().isBadRequest());
         }
     }

@@ -145,12 +145,19 @@ describe('MembershipChangeModal', () => {
     renderWith(<Modal memberSeq={10} current={current} onClose={vi.fn()} onSuccess={onSuccess} />);
     await selectNewProduct('200');
 
+    // 1단계: 입력 검증 후 확인 모달이 열린다
     fireEvent.click(screen.getByText('업그레이드 확정'));
+    // 2단계: 확인 모달의 "변경 확정"을 눌러야 실제 API 호출
+    fireEvent.click(await screen.findByText('변경 확정'));
 
     await waitFor(() => {
       expect(mockChange).toHaveBeenCalledWith(10, 1, expect.objectContaining({
         newMembershipSeq: 200,
       }));
+    });
+    // 결과 모달의 "확인"을 누르면 onSuccess 가 호출된다
+    fireEvent.click(await screen.findByRole('button', { name: '확인' }));
+    await waitFor(() => {
       expect(onSuccess).toHaveBeenCalled();
     });
     // 삭제된 필드들은 페이로드에 포함되지 않아야 한다

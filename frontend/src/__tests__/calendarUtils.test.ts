@@ -151,6 +151,22 @@ describe('toReservationMap', () => {
     const map = toReservationMap(items);
     expect(map['2026-04-14'][0].memo).toBeUndefined();
   });
+
+  it('Reservation 에 날짜 필드(date)가 포함된다 — 날짜 변경 모달이 기존 일자 기본값으로 열기 위함', () => {
+    const items: CalendarReservation[] = [
+      { seq: 1, interviewDate: '2026-04-14 10:00', customerName: '홍', customerPhone: '010', caller: 'IN', status: '신규', memo: null },
+    ];
+    const map = toReservationMap(items);
+    expect(map['2026-04-14'][0].date).toBe('2026-04-14');
+  });
+
+  it('time 은 초 부분이 있어도 HH:mm 으로 정규화된다 — input[type=time] 호환', () => {
+    const items: CalendarReservation[] = [
+      { seq: 1, interviewDate: '2026-04-14 10:30:45', customerName: '홍', customerPhone: '010', caller: 'IN', status: '신규', memo: null },
+    ];
+    const map = toReservationMap(items);
+    expect(map['2026-04-14'][0].time).toBe('10:30');
+  });
 });
 
 describe('toEventMap', () => {

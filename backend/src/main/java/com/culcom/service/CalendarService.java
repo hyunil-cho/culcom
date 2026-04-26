@@ -49,6 +49,28 @@ public class CalendarService {
     }
 
     @Transactional
+    public CalendarReservationResponse updateReservationDate(Long seq, LocalDateTime interviewDate) {
+        ReservationInfo r = reservationInfoRepository.findById(seq)
+                .orElseThrow(() -> new EntityNotFoundException("예약"));
+
+        r.setInterviewDate(interviewDate);
+        reservationInfoRepository.save(r);
+
+        return CalendarReservationResponse.builder()
+                .seq(r.getSeq())
+                .customerSeq(r.getCustomer() != null ? r.getCustomer().getSeq() : null)
+                .interviewDate(DateTimeUtils.format(r.getInterviewDate()))
+                .customerName(r.getCustomer() != null ? r.getCustomer().getName() : "-")
+                .customerPhone(r.getCustomer() != null ? r.getCustomer().getPhoneNumber() : "-")
+                .caller(r.getCaller())
+                .status(r.getCustomer() != null ? r.getCustomer().getStatus().name() : "-")
+                .memo(r.getCustomer() != null ? r.getCustomer().getComment() : null)
+                .createdDate(r.getCreatedDate() != null ? DateTimeUtils.format(r.getCreatedDate()) : null)
+                .lastUpdateDate(r.getLastUpdateDate() != null ? DateTimeUtils.format(r.getLastUpdateDate()) : null)
+                .build();
+    }
+
+    @Transactional
     public CalendarReservationResponse updateReservationStatus(Long seq, String status) {
         ReservationInfo r = reservationInfoRepository.findById(seq)
                 .orElseThrow(() -> new EntityNotFoundException("예약"));

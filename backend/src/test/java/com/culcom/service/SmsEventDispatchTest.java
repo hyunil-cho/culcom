@@ -121,12 +121,13 @@ class SmsEventDispatchTest {
         clearInvocations(smsService);
 
         ComplexMemberRequest req = new ComplexMemberRequest();
-        req.setName("홍길동");
+        String 홍길동 = UUID.randomUUID().toString();
+        req.setName(홍길동);
         req.setPhoneNumber("01011112222");
         complexMemberService.create(req, b.getSeq());
 
         verify(smsService, atLeastOnce()).sendEventSmsIfConfigured(
-                eq(b.getSeq()), eq(SmsEventType.회원등록), eq("홍길동"), eq("01011112222"));
+                eq(b.getSeq()), eq(SmsEventType.회원등록), eq(홍길동), eq("01011112222"));
     }
 
     // ── 2) 연기 승인/반려 ─ 현재 미구현 (예상 실패) ────────────────────

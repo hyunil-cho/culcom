@@ -13,6 +13,7 @@ export interface CalendarEventItem {
 
 export interface Reservation {
   seq: number;
+  date: string;       // "YYYY-MM-DD"
   time: string;       // "HH:mm"
   name: string;
   phone: string;
@@ -92,7 +93,8 @@ export function toReservationMap(items: CalendarReservation[]): Record<string, R
     if (!map[datePart]) map[datePart] = [];
     map[datePart].push({
       seq: item.seq,
-      time: timePart || '00:00',
+      date: datePart,
+      time: timePart ? timePart.substring(0, 5) : '00:00',
       name: item.customerName,
       phone: item.customerPhone,
       caller: item.caller,

@@ -33,6 +33,8 @@ export const calendarApi = {
     api.get<CalendarReservation[]>(`${API.CALENDAR_RESERVATIONS}?startDate=${startDate}&endDate=${endDate}`),
   updateReservationStatus: (seq: number, status: string) =>
     api.put<CalendarReservation>(API.CALENDAR_RESERVATION_STATUS(seq), { status }),
+  updateReservationDate: (seq: number, interviewDate: string) =>
+    api.put<CalendarReservation>(API.CALENDAR_RESERVATION_DATE(seq), { interviewDate }),
   getEvents: (startDate: string, endDate: string) =>
     api.get<CalendarEvent[]>(`${API.CALENDAR_EVENTS}?startDate=${startDate}&endDate=${endDate}`),
   createEvent: (data: CalendarEventRequest) =>

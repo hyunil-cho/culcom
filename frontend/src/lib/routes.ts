@@ -278,6 +278,7 @@ export const API = {
   // 캘린더
   CALENDAR_RESERVATIONS: `${A.CALENDAR}/reservations`,
   CALENDAR_RESERVATION_STATUS: (seq: number) => `${A.CALENDAR}/reservations/${seq}/status`,
+  CALENDAR_RESERVATION_DATE: (seq: number) => `${A.CALENDAR}/reservations/${seq}/interview-date`,
   CALENDAR_EVENTS: `${A.CALENDAR}/events`,
   CALENDAR_EVENT: (seq: number) => `${A.CALENDAR}/events/${seq}`,
 
